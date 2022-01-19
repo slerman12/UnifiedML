@@ -206,6 +206,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if steps < np.inf:
             task_data = task_data[task_data['Step'] <= steps]
 
+        y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
         # High-low-normalize
         for task in task_data.Task.unique():
             for t in low:
@@ -213,14 +215,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", category=SettingWithCopyWarning)
 
-                        task_data.loc[task_data['Task'] == task, 'Reward'] -= low[t]
-                        task_data.loc[task_data['Task'] == task, 'Reward'] /= high[t] - low[t]
+                        task_data.loc[task_data['Task'] == task, y_axis] -= low[t]
+                        task_data.loc[task_data['Task'] == task, y_axis] /= high[t] - low[t]
                         continue
 
         ax = axs[col] if num_cols > 1 else axs
         hue_order = np.sort(task_data.Agent.unique())
-
-        y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax)
         ax.set_title(f'{suite}')
