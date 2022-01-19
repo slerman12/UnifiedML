@@ -67,20 +67,20 @@ Let's get to business.
 ## 1. Clone The Repo
 
 ```
-git clone git@github.com:agi-init/UnifiedRL.git
-cd UnifiedRL
+git clone git@github.com:agi-init/UnifiedML.git
+cd UnifiedML
 ```
 
 ## 2. Gemme Some Dependencies
 
 ```
-conda env create --name RL --file=Conda.yml
+conda env create --name ML --file=Conda.yml
 ```
 
 ## 3. Activate Your Conda Env.
 
 ```
-conda activate RL
+conda activate ML
 ```
 
 Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
