@@ -1,0 +1,279 @@
+![alt text](https://i.imgur.com/0CrFXpN.png)
+
+### Quick Links
+
+- [Setup](#wrench-setting-up)
+
+- [Examples](#mag-sample-scripts)
+
+- [Agents and performances](#bar_chart-agents--performances)
+
+# :runner: Running The Code
+
+To start a train session, once installed:
+
+```
+python Run.py
+```
+
+Defaults:
+
+```Agent=Agents.DQNAgent```
+
+```task=atari/pong```
+
+Plots, logs, and videos are automatically stored in: ```./Benchmarking```.
+
+![alt text](https://i.imgur.com/2jhOPib.gif)
+
+Welcome ye, weary Traveller.
+
+>Stop here and rest at our local tavern,
+>
+> Where all your reinforcements and supervisions be served, à la carte!
+
+Drink up! :beers:
+
+# :pen: Paper & Citing
+
+For detailed documentation, [see our :scroll:](https://arxiv.com).
+
+```
+@inproceedings{yarats2021image,
+  title={bla},
+  author={Sam Lerman and Chenliang Xu},
+  booktitle={bla},
+  year={2022},
+  url={https://openreview.net}
+}
+```
+
+If you use any part of this code, **be sure to cite the above!**
+
+An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excellent [DrQV2 repo](https://github.com/facebookresearch/drqv2) inspired much of this library and its design.
+
+# :open_umbrella: Unified Learning?
+
+Yes.
+
+All agents support discrete and continuous control, classification, and generative modeling.
+
+See example scripts of various configurations [below](#mag-sample-scripts).
+
+# :wrench: Setting Up 
+
+Let's get to business.
+
+## 1. Clone The Repo
+
+```
+git clone git@github.com:agi-init/UnifiedRL.git
+cd UnifiedRL
+```
+
+## 2. Gemme Some Dependencies
+
+```
+conda env create --name RL --file=Conda.yml
+```
+
+## 3. Activate Your Conda Env.
+
+```
+conda activate RL
+```
+
+Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
+
+# :joystick: Installing The Suites
+
+## 1. Classify
+
+Comes preinstalled.
+
+## 2. Atari Arcade
+
+You can use ```AutoROM``` if you accept the license.
+
+```
+pip install autorom
+AutoROM --accept-license
+```
+Then:
+```
+mkdir ./Datasets/Suites/Atari_ROMS
+AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
+ale-import-roms ./Datasets/Suites/Atari_ROMS
+```
+## 3. DeepMind Control
+
+Download MuJoCo from here: https://mujoco.org/download.
+
+Make a ```.mujoco``` folder in your home directory:
+
+```
+mkdir ~/.mujoco
+```
+
+Extract and move downloaded MuJoCo folder into ```~/.mujoco```. For a linux x86_64 architecture, this looks like:
+
+```
+tar -xf mujoco210-linux-x86_64.tar.gz
+mv mujoco210/ ~/.mujoco/ 
+```
+
+And run:
+
+```
+pip install --user dm_control
+```
+
+to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
+
+# :file_cabinet: Key files
+
+```Run.py``` handles training and evaluation loops, saving, distributed training, logging, plotting.
+
+```Environment.py``` handles rollouts.
+
+```./Agents``` contains self-contained agents.
+
+# :mag: Sample scripts
+
+### Discrete and continuous action spaces in RL
+
+Humanoid example: 
+```
+python Run.py task=dmc/humanoid_run
+```
+
+DrQV2 Agent in Atari:
+```
+python Run.py Agent=Agents.DrQV2Agent task=atari/battlezone
+```
+
+SPR Agent in DeepMind Control:
+```
+python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
+```
+
+### Classification
+
+DQN Agent in CIFAR-10:
+
+```
+python Run.py Agent=Agents.DQNAgent task=classify/cifar10 RL=false
+```
+
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```classify=False``` will *only* supervise via RL ```reward = -error``` (**experimental**).
+
+Or:
+
+```
+python Run.py Agent=Agents.DQNAgent task=classify/cifar10 RL=false offline=true
+```
+
+```offline=true``` loads data from a saved replay instead of rollouts. Rollouts, rather than all-in-one loading, can be sufficient either way and may be especially useful for curriculum learning or dynamic/intractably large datasets.
+
+[comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
+
+### Generative Modeling
+
+Via the ```generate=true``` flag:
+```
+python Run.py task=classify/mnist generate=true
+```
+
+Can also work with RL:
+
+```
+python Run.py task=atari/breakout generate=true
+```
+
+Implicitly treats as offline except for default saving of the replay, and assumes a replay is saved that can be loaded.
+
+### Offline RL
+
+From a saved experience replay, sans additional rollouts:
+
+```
+python Run.py task=atari/breakout offline=true
+```
+
+Assumes a replay [is saved](#saving).
+
+Implicitly treats ```replay.load=true``` and ```replay.save=true```.
+
+### Experiment naming, plotting
+
+The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
+
+```
+python Run.py experiment=ExpName1 "plotting.plot_experiments=['ExpName1']"
+```
+
+A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
+
+### Saving
+
+Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
+
+```
+python Run.py save_per_steps=100000 load=true
+```
+
+An experience replay can be saved or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
+
+```
+python Run.py replay.save=true replay.load=true
+```
+
+Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per a unique experiment and date-time.
+
+Careful, without ```replay.save=true``` a loaded replay will be deleted upon terminate.
+
+In case of multiple saved replays per a unique experiment, the most recent is loaded.
+
+### Distributed
+
+You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. 
+
+For example, a data-collector agent and an update agent,
+
+```
+python Run.py update_per_steps=0 replay.save=true load_per_steps=1 
+```
+
+```
+python Run.py offline=true save_per_steps=2
+```
+
+in concurrent processes.
+
+Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
+
+# :bar_chart: Agents & Performances
+
+# :interrobang: How is this possible
+
+We use our new Creator framework to unify RL discrete and continuous action spaces, as elaborated in our [paper](https://arxiv.com).
+
+Then we frame actions as "predictions" in supervised learning. We can even augment supervised learning with an RL phase, treating reward as negative error.
+
+For generative modeling, well, it turns out that the difference between a Generator-Discriminator and Actor-Critic is rather nominal.
+
+# :mortar_board: Pedagogy and Research
+
+All files are designed to be useful for educational and innovational purposes in their simplicity and structure.
+
+# Note
+
+### If you are only interested in the RL portion,
+
+Check out our [**UnifiedRL**](https:github.com/agi-init/UnifiedRL) library.
+
+It does with RL to this library what PyCharm does with Python to IntelliJ, i.e., waters it down mildly and rebrands a little.~
+
+<hr class="solid">
+
+[MIT license Included.](MIT_LICENSE)
