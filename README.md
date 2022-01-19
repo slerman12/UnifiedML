@@ -140,7 +140,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 # :mag: Sample scripts
 
-### Discrete and continuous action spaces in RL
+### RL
 
 Humanoid example: 
 ```
@@ -204,16 +204,6 @@ Assumes a replay [is saved](#saving).
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```.
 
-### Experiment naming, plotting
-
-The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
-
-```
-python Run.py experiment=ExpName1 "plotting.plot_experiments=['ExpName1']"
-```
-
-A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
-
 ### Saving
 
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
@@ -251,6 +241,16 @@ python Run.py offline=true save_per_steps=2
 in concurrent processes.
 
 Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
+
+### Experiment naming, plotting
+
+The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
+
+```
+python Run.py experiment=ExpName1 "plotting.plot_experiments=['ExpName1']"
+```
+
+A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
 
 # :bar_chart: Agents & Performances
 
