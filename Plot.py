@@ -153,6 +153,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         suite = title.split('(')[1].split(')')[0]
 
+        y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
         # Aggregate tabular data over all seeds/runs
         for agent in task_data.Agent.unique():
             for tabular in [tabular_mean, tabular_median, tabular_normalized_mean, tabular_normalized_median]:
@@ -160,7 +162,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     tabular[agent] = {}
                 if suite not in tabular[agent]:
                     tabular[agent][suite] = {}
-            scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), 'Reward']
+            scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
             for t in low:
                 if t.lower() in task.lower():
                     tabular_mean[agent][suite][t] = scores.mean()
@@ -169,8 +171,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     tabular_normalized_mean[agent][suite][t] = normalized.mean()
                     tabular_normalized_median[agent][suite][t] = normalized.median()
                     continue
-
-        y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax)
         ax.set_title(f'{title}')
