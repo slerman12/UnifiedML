@@ -76,6 +76,7 @@ def main(args):
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:
+                print("ya")
                 replay.add(store=True)  # Only store full episodes
 
         converged = agent.step >= args.train_steps
