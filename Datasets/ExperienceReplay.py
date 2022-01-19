@@ -27,7 +27,7 @@ class ExperienceReplay:
         if load or offline or generate:
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
-            save = offline or save
+            save = offline or generate or save
         else:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)

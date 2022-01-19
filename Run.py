@@ -57,7 +57,7 @@ def main(args):
 
             logger.dump_logs('Eval')
 
-            if args.log_video:
+            if args.log_video or args.generate:
                 vlogger.dump_vlogs(vlogs, f'{agent.step}')
 
         if args.plot_per_steps and agent.step % args.plot_per_steps == 0:

@@ -22,7 +22,7 @@ Defaults:
 
 ```task=atari/pong```
 
-Plots, logs, and videos are automatically stored in: ```./Benchmarking```.
+Plots, logs, generated images, and videos are automatically stored in: ```./Benchmarking```.
 
 ![alt text](https://i.imgur.com/2jhOPib.gif)
 
@@ -173,7 +173,7 @@ Or:
 python Run.py Agent=Agents.DQNAgent task=classify/cifar10 RL=false offline=true
 ```
 
-```offline=true``` loads data from a saved replay instead of rollouts. Rollouts, rather than all-in-one loading, can be sufficient either way and may be especially useful for curriculum learning or dynamic/intractably large datasets.
+```offline=true``` loads data from a saved replay instead of rollouts. Rollouts, rather than all-in-one loading, are sufficient either way and may be especially useful for curriculum learning or intractably large datasets.
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -190,7 +190,7 @@ Can also work with RL:
 python Run.py task=atari/breakout generate=true
 ```
 
-Implicitly treats as offline except for default saving of the replay, and assumes a replay is saved that can be loaded.
+Implicitly treats as offline, and assumes a replay is saved that can be loaded.
 
 ### Offline RL
 
@@ -202,7 +202,7 @@ python Run.py task=atari/breakout offline=true
 
 Assumes a replay [is saved](#saving).
 
-Implicitly treats ```replay.load=true``` and ```replay.save=true```.
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does rollouts for evaluation.
 
 ### Saving
 
@@ -218,11 +218,11 @@ An experience replay can be saved or loaded with the ```replay.save=true``` or `
 python Run.py replay.save=true replay.load=true
 ```
 
-Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per a unique experiment and date-time.
+Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per a unique experiment.
 
 Careful, without ```replay.save=true``` a loaded replay will be deleted upon terminate.
 
-In case of multiple saved replays per a unique experiment, the most recent is loaded.
+Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
 ### Distributed
 

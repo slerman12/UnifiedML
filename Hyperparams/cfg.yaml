@@ -104,7 +104,7 @@ logger:
 
 vlogger:
   _target_: Vlogger.Vlogger
-  path: ./Benchmarking/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Video
+  path: ./Benchmarking/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Video_Image
   fps: 20
   reel: ${generate}
 
