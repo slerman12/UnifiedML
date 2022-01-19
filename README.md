@@ -202,7 +202,7 @@ python Run.py task=atari/breakout offline=true
 
 Assumes a replay [is saved](#saving).
 
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does rollouts for evaluation.
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
 ### Saving
 
