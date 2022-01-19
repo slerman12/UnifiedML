@@ -192,18 +192,6 @@ python Run.py task=atari/breakout generate=true
 
 Implicitly treats as offline, and assumes a replay is saved that can be loaded.
 
-### Offline RL
-
-From a saved experience replay, sans additional rollouts:
-
-```
-python Run.py task=atari/breakout offline=true
-```
-
-Assumes a replay [is saved](#saving).
-
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
-
 ### Saving
 
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
@@ -223,6 +211,18 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 Careful, without ```replay.save=true``` a loaded replay will be deleted upon terminate.
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+
+### Offline RL
+
+From a saved experience replay, sans additional rollouts:
+
+```
+python Run.py task=atari/breakout offline=true
+```
+
+Assumes a replay [is saved](#saving).
+
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
 ### Distributed
 
