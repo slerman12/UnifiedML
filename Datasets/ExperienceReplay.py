@@ -136,6 +136,7 @@ class ExperienceReplay:
         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
         num_episodes = len(self)
         episode_name = f'{timestamp}_{num_episodes}_{self.episode_len}.npz'
+        print(episode_name)
 
         # Save episode
         save_path = self.path / episode_name
