@@ -47,6 +47,7 @@ class Environment:
         if (self.offline or self.depleted or self.generate) and agent.training:
             agent.step += 1
             agent.episode += 1
+            self.episode_done = True
             return None, None, None
 
         self.episode_done = False
