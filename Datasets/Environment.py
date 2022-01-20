@@ -49,9 +49,6 @@ class Environment:
             agent.episode += 1
             return None, None, None
 
-        if self.depleted and not self.generate:
-            return None, None, None
-
         self.episode_done = False
 
         step = 0
