@@ -74,7 +74,8 @@ class DQNAgent(torch.nn.Module):
                 else self.creator(obs, self.step).sample(self.num_actions)
 
             # DQN actor is based on critic
-            Pi = self.actor(self.critic(obs, creations), self.step)
+            Pi = self.actor(self.critic(obs, creations), self.step) if self.RL or self.generate \
+                else creations[:, 0]
 
             action = Pi.sample() if self.training \
                 else Pi.best
@@ -132,7 +133,7 @@ class DQNAgent(torch.nn.Module):
 
             # Inference
             y_predicted = self.actor(self.critic(x[instruction], creations), self.step).best if self.RL \
-                else creations[:, torch.randint(creations.shape[1], [1]).item()]
+                else creations[:, 0]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
