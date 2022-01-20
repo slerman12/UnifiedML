@@ -20,7 +20,7 @@ from Losses import QLearning, PolicyLearning
 
 class DQNAgent(torch.nn.Module):
     """Deep Q Network
-    Generalized to continuous action spaces and classification"""
+    Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
                  obs_shape, action_shape, feature_dim, hidden_dim,  # Architecture
                  lr, target_tau,  # Optimization

@@ -19,7 +19,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 class SPRAgent(torch.nn.Module):
     """Self-Predictive Representations (https://arxiv.org/abs/2007.05929)
-    Modifies generalized-DQN for continuous/classification support"""
+    Generalized for continuous, classification, and generative modeling support"""
     def __init__(self,
                  obs_shape, action_shape, feature_dim, hidden_dim,  # Architecture
                  lr, target_tau,  # Optimization
