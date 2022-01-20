@@ -132,7 +132,7 @@ class DQNAgent(torch.nn.Module):
 
             # Inference
             y_predicted = self.actor(self.critic(x[instruction], creations), self.step).best if self.RL \
-                else creations[:, torch.randint(low=0, high=creations.shape[1] - 1, size=[1]).item()].unsqueeze(1)
+                else creations[:, torch.randint(low=0, high=creations.shape[1] - 1, size=[1]).item()]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
