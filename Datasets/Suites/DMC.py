@@ -5,7 +5,7 @@
 
 
 def make(task, frame_stack=3, action_repeat=2, max_episode_frames=None, truncate_episode_frames=None,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
+         offline=False, generate=False, train=True, seed=1, batch_size=1, num_workers=1):
     # Imports in make() to avoid glfw warning when using other envs
     from dm_control import manipulation, suite
     from dm_control.suite.wrappers import action_scale, pixels

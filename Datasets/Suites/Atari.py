@@ -193,7 +193,7 @@ class AtariPreprocessing(dm_env.Environment):
 
 
 def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate_episode_frames=None,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
+         offline=False, generate=False, train=True, seed=1, batch_size=1, num_workers=1):
     task = f'ALE/{task}-v5'
 
     # Recommended vs. original settings

@@ -16,7 +16,7 @@ class Environment:
         self.generate = generate
 
         self.env = self.raw_env.make(task_name, frame_stack, action_repeat, max_episode_frames,
-                                     truncate_episode_frames, offline, train, seed, batch_size, num_workers)
+                                     truncate_episode_frames, offline, generate, train, seed, batch_size, num_workers)
 
         self.env.reset()
 
@@ -64,11 +64,11 @@ class Environment:
 
             experiences.append(exp)
 
-            # if vlog or self.generate:
-            #     frame = action[0].view(exp.observation.shape[1:]) if self.generate \
-            #         else self.env.physics.render(height=256, width=256, camera_id=0) \
-            #         if hasattr(self.env, 'physics') else self.env.render()
-            #     video_image.append(frame)
+            if vlog or self.generate:
+                frame = action[0].view(exp.observation.shape[1:]) if self.generate \
+                    else self.env.physics.render(height=256, width=256, camera_id=0) \
+                    if hasattr(self.env, 'physics') else self.env.render()
+                video_image.append(frame)
 
             # Tally reward, done, step
             self.episode_reward += exp.reward.mean()

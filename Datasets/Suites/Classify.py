@@ -61,7 +61,7 @@ class ClassifyEnv:
     @property
     def depleted(self):
         # '+1 due to the call to self.batch in observation_spec
-        is_depleted = self.count > self.length + 1 and self.enable_depletion or self.offline
+        is_depleted = self.count > self.length + 1 and self.enable_depletion or self.offline or self.generate
 
         if self.verbose:
             if is_depleted:
@@ -106,7 +106,7 @@ class ClassifyEnv:
 
 
 def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate_episode_frames=None,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
+         offline=False, generate=False, train=True, seed=1, batch_size=1, num_workers=1):
     """
     'task' options:
 
@@ -150,7 +150,7 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
     enable_depletion = train
 
     env = ClassifyEnv(experiences, batch_size if train else len(experiences),
-                      num_workers, offline, train, enable_depletion, verbose=train)
+                      num_workers, offline or generate, train, enable_depletion, verbose=train)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
