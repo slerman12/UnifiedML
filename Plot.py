@@ -229,8 +229,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Human-Normalized Score')
         elif suite.lower() == 'dmc':
-            ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel('DrQV2-Normalized Score')
+            ax.set_ybound(0, 1000)
         elif suite.lower() == 'classify':
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))

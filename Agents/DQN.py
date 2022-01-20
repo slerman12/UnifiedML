@@ -159,7 +159,7 @@ class DQNAgent(torch.nn.Module):
                 reward[instruction] = -mistake[:, None].detach()
                 next_obs[instruction, :] = float('nan')
 
-        # Reinforcement learning / Generative Modeling
+        # Reinforcement learning / generative modeling
         if self.RL or self.generate:
             # "Perceive"
 
@@ -202,6 +202,6 @@ class DQNAgent(torch.nn.Module):
 
                 # Update actor
                 Utils.optimize(actor_loss,
-                               self.creator)
+                               self.creator, self.encoder)
 
         return logs
