@@ -78,7 +78,7 @@ agent:
   classify: ${classify}
   generate: ${generate}
   device: ${device}
-  log: false
+  log: ${classify}
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay
