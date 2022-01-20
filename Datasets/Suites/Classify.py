@@ -68,7 +68,7 @@ class ClassifyEnv:
                 self.verbose = False
             elif self.count == 0:
                 print(f'Seeding replay... training of classifier has not begun yet. '
-                      f'\n{self.length} batches (one per episode) need to be loaded into the experience replay.')
+                      f'\n{self.length} segments need to be loaded into the experience replay.')
 
         return is_depleted
 
