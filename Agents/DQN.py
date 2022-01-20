@@ -71,16 +71,18 @@ class DQNAgent(torch.nn.Module):
 
             # "Candidate actions"
             creations = None if self.discrete \
-                else self.creator(obs, self.step).sample(self.num_actions)
+                else self.creator(obs, self.step)
+            creations = creations.sample(self.num_actions) if self.training \
+                else creations.mean
 
-            if self.RL or self.generate:
-                # DQN actor is based on critic
-                Pi = self.actor(self.critic(obs, creations), self.step)
+            # DQN actor is based on critic
+            Pi = self.actor(self.critic(obs, creations), self.step)
 
-                action = Pi.sample() if self.training \
-                    else Pi.best
-            else:
-                action = creations[:, 0, 0]  # TODO i don't like this
+            action = Pi.sample() if self.training \
+                else Pi.best
+
+            if not self.RL and not self.generate:
+                action = creations[:, 0]
 
             if self.training:
                 self.step += 1
