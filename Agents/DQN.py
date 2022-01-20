@@ -80,7 +80,7 @@ class DQNAgent(torch.nn.Module):
                 action = Pi.sample() if self.training \
                     else Pi.best
             else:
-                action = creations[:, 0]
+                action = creations[:, 0, 0]  # TODO i don't like this
 
             if self.training:
                 self.step += 1
