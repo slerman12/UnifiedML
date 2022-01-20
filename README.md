@@ -167,6 +167,8 @@ python Run.py Agent=Agents.DQNAgent task=classify/cifar10 RL=false
 
 *Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```classify=False``` will *only* supervise via RL ```reward = -error``` (**experimental**).
 
+Train accuracies can be printed with ```agent.log=true```.
+
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
 ### Generative Modeling
