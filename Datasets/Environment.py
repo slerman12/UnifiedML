@@ -12,7 +12,7 @@ class Environment:
     def __init__(self, task_name, frame_stack, action_repeat, max_episode_frames, truncate_episode_frames,
                  seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
-        self.offline = offline or generate
+        self.offline = offline
         self.generate = generate
 
         self.env = self.raw_env.make(task_name, frame_stack, action_repeat, max_episode_frames,
@@ -44,7 +44,7 @@ class Environment:
 
         exp = self.exp
 
-        if (self.offline or self.depleted) and agent.training:
+        if (self.offline or self.depleted or self.generate) and agent.training:
             agent.step += 1
             agent.episode += 1
             return None, None, None
