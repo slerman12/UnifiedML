@@ -159,10 +159,10 @@ python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 
 ### Classification
 
-DQN Agent in CIFAR-10:
+DQN Agent on MNIST:
 
 ```
-python Run.py Agent=Agents.DQNAgent task=classify/cifar10 RL=false
+python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 ```
 
 *Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```classify=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
@@ -178,13 +178,13 @@ Via the ```generate=true``` flag:
 python Run.py task=classify/mnist generate=true
 ```
 
-Can also work with RL:
+Can also work with RL, but make sure replay is generated from ```frame_stack=1``` when initially trained:
 
 ```
 python Run.py task=atari/breakout generate=true
 ```
 
-Implicitly treats as offline, and assumes a replay is saved that can be loaded.
+Implicitly treats as offline, and assumes a replay [is saved](#saving) that can be loaded.
 
 ### Offline RL
 
