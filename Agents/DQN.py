@@ -40,6 +40,9 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
+        if not (self.RL or self.generate):
+            num_actors = num_actions = 1
+
         self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
@@ -71,18 +74,14 @@ class DQNAgent(torch.nn.Module):
 
             # "Candidate actions"
             creations = None if self.discrete \
-                else self.creator(obs, self.step)
-            creations = creations.sample(self.num_actions) if self.training \
-                else creations.mean
+                else self.creator(obs, self.step).sample(self.num_actions) if self.training \
+                else self.creator(obs, self.step).mean
 
             # DQN actor is based on critic
             Pi = self.actor(self.critic(obs, creations), self.step)
 
             action = Pi.sample() if self.training \
                 else Pi.best
-
-            if not self.RL and not self.generate and not self.training:
-                action = creations[:, 0]  # TODO eh
 
             if self.training:
                 self.step += 1
@@ -136,8 +135,7 @@ class DQNAgent(torch.nn.Module):
             creations = self.creator(x[instruction], self.step).mean
 
             # Inference
-            y_predicted = self.actor(self.critic(x[instruction], creations), self.step).best if self.RL \
-                else creations[:, 0]
+            y_predicted = self.actor(self.critic(x[instruction], creations), self.step).best
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 

@@ -75,7 +75,8 @@ class SPRAgent(torch.nn.Module):
 
             # "Candidate actions"
             creations = None if self.discrete \
-                else self.creator(obs, self.step).sample()
+                else self.creator(obs, self.step).sample(self.num_actions) if self.training \
+                else self.creator(obs, self.step).mean
 
             # DQN actor is based on critic
             Pi = self.actor(self.critic(obs, creations), self.step)
