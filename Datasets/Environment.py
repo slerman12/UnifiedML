@@ -16,7 +16,7 @@ class Environment:
         self.generate = generate
 
         self.env = self.raw_env.make(task_name, frame_stack, action_repeat, max_episode_frames,
-                                     truncate_episode_frames, train, seed, batch_size, num_workers)
+                                     truncate_episode_frames, offline, train, seed, batch_size, num_workers)
 
         self.env.reset()
 
@@ -44,13 +44,13 @@ class Environment:
 
         exp = self.exp
 
+        self.episode_done = False
+
         if (self.offline or self.depleted or self.generate) and agent.training:
             agent.step += 1
             agent.episode += 1
             self.episode_done = True
             return None, None, None
-
-        self.episode_done = False
 
         step = 0
         while not self.episode_done and step < steps:

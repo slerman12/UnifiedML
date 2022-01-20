@@ -16,7 +16,7 @@ from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrappe
 
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, num_workers, train, enable_depletion=True, verbose=False):
+    def __init__(self, experiences, batch_size, num_workers, offline, train, enable_depletion=True, verbose=False):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -25,6 +25,7 @@ class ClassifyEnv:
 
         self.num_classes = len(experiences.classes)
         self.action_repeat = 1
+        self.offline = offline
         self.train = train
         self.enable_depletion = enable_depletion
         self.verbose = verbose
@@ -60,7 +61,7 @@ class ClassifyEnv:
     @property
     def depleted(self):
         # '+1 due to the call to self.batch in observation_spec
-        is_depleted = self.count > self.length + 1 and self.enable_depletion
+        is_depleted = self.count > self.length + 1 and self.enable_depletion or self.offline
 
         if self.verbose:
             if is_depleted:
@@ -105,7 +106,7 @@ class ClassifyEnv:
 
 
 def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate_episode_frames=None,
-         train=True, seed=1, batch_size=1, num_workers=1):
+         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     """
     'task' options:
 
@@ -149,7 +150,7 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
     enable_depletion = train
 
     env = ClassifyEnv(experiences, batch_size if train else len(experiences),
-                      num_workers, train, enable_depletion, verbose=train)
+                      num_workers, offline, train, enable_depletion, verbose=train)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
