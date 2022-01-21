@@ -33,7 +33,7 @@ class CNNEncoder(nn.Module):
 
         self.test = nn.Sequential(nn.Conv2d(self.in_channels, self.out_channels, 3, stride=2),
                                   nn.ReLU(),
-                                  nn.Conv2d(self.out_channels, self.out_channels, 3, 2),
+                                  # nn.Conv2d(self.out_channels, self.out_channels, 3, 1),
                                   # nn.ReLU(),
                                   # nn.Conv2d(self.out_channels, self.out_channels, 3, 1),
                                   # nn.ReLU(),
