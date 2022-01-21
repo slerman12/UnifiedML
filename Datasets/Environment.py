@@ -72,8 +72,7 @@ class Environment:
 
             # Tally reward, done, step
             self.episode_reward += exp.reward.mean()
-            self.episode_done = exp.last()
-            print(self.episode_done)
+            self.episode_done = exp.last() or self.generate
             step += 1
 
         self.episode_step += step
