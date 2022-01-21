@@ -167,6 +167,7 @@ class DQNAgent(torch.nn.Module):
             obs = self.encoder(obs)
             with torch.no_grad():
                 next_obs = self.encoder(next_obs)
+                print(Utils.non_nan_or_inf(next_obs))
 
             # "Imagine"
 
