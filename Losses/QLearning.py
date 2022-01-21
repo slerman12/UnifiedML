@@ -37,8 +37,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
         target_q = reward
 
-        print(target_q.mean().item())
-
         if has_future.any():
             next_Q = critic.target(next_obs, next_actions)
 
@@ -50,7 +48,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             next_v[has_future] = torch.sum(next_q * next_probs, -1, keepdim=True)
 
             target_q += discount * next_v
-            print(target_q.mean().item(), "ohhhh")
 
     Q = critic(obs, action)
 
