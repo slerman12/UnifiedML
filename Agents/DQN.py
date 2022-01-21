@@ -112,7 +112,7 @@ class DQNAgent(torch.nn.Module):
             action = obs.flatten(-3) / 122.5 - 1
             obs.uniform_()
             next_obs[:] = label[:] = float('nan')
-            reward[:] = -100
+            reward[:] = 0
 
         # "Journal teachings"
 
@@ -178,8 +178,8 @@ class DQNAgent(torch.nn.Module):
                 generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
 
                 action[:len(obs) // 2] = generated_image
-                reward[:len(obs) // 2] = 100  # Discriminate
-                print(reward.mean().item())
+                reward[:len(obs) // 2] = 10  # Discriminate
+                print(reward.mean())
 
             # "Predict" / "Discern" / "Learn" / "Grow"
 
