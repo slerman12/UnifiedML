@@ -109,10 +109,10 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action = obs.clone().flatten(-3)
+            action = obs.flatten(-3) / 122.5 - 1
             obs.uniform_()
             next_obs[:] = label[:] = float('nan')
-            reward[:] = 0
+            reward[:] = -100
 
         # "Journal teachings"
 
@@ -176,7 +176,6 @@ class DQNAgent(torch.nn.Module):
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean
 
                 generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
-                generated_image = torch.round(generated_image * 255 + 255) / 2
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 100  # Discriminate
