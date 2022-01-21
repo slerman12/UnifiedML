@@ -22,6 +22,7 @@ import seaborn as sns
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
+         plot_tabular=False,
          include_train=False):  # TODO
     include_train = False
 
@@ -156,22 +157,23 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
-        # Aggregate tabular data over all seeds/runs
-        for agent in task_data.Agent.unique():
-            for tabular in [tabular_mean, tabular_median, tabular_normalized_mean, tabular_normalized_median]:
-                if agent not in tabular:
-                    tabular[agent] = {}
-                if suite not in tabular[agent]:
-                    tabular[agent][suite] = {}
-            scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
-            for t in low:
-                if t.lower() in suite_task.lower():
-                    tabular_mean[agent][suite][task] = scores.mean()
-                    tabular_median[agent][suite][task] = scores.median()
-                    normalized = (scores - low[t]) / (high[t] - low[t])
-                    tabular_normalized_mean[agent][suite][task] = normalized.mean()
-                    tabular_normalized_median[agent][suite][task] = normalized.median()
-                    continue
+        if plot_tabular:
+            # Aggregate tabular data over all seeds/runs
+            for agent in task_data.Agent.unique():
+                for tabular in [tabular_mean, tabular_median, tabular_normalized_mean, tabular_normalized_median]:
+                    if agent not in tabular:
+                        tabular[agent] = {}
+                    if suite not in tabular[agent]:
+                        tabular[agent][suite] = {}
+                scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
+                for t in low:
+                    if t.lower() in suite_task.lower():
+                        tabular_mean[agent][suite][task] = scores.mean()
+                        tabular_median[agent][suite][task] = scores.median()
+                        normalized = (scores - low[t]) / (high[t] - low[t])
+                        tabular_normalized_mean[agent][suite][task] = normalized.mean()
+                        tabular_normalized_median[agent][suite][task] = normalized.median()
+                        continue
 
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax)
         ax.set_title(f'{title}')
@@ -242,23 +244,24 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     plt.close()
 
     # Tabular data
-    f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")
-    tabular_data = {'Mean': tabular_mean,
-                    'Median': tabular_median,
-                    'Normalized Mean': tabular_normalized_mean,
-                    'Normalized Median': tabular_normalized_median}
-    for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
-        for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
-            tabular_data.update({
-                f'{agg_name} Normalized-{name}': {
-                    agent: {
-                        suite:
-                            agg([val for val in tabular[agent][suite].values()])
-                        for suite in tabular[agent]}
-                    for agent in tabular}
-            })
-    json.dump(tabular_data, f, indent=2)
-    f.close()
+    if plot_tabular:
+        f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")
+        tabular_data = {'Mean': tabular_mean,
+                        'Median': tabular_median,
+                        'Normalized Mean': tabular_normalized_mean,
+                        'Normalized Median': tabular_normalized_median}
+        for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
+            for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
+                tabular_data.update({
+                    f'{agg_name} Normalized-{name}': {
+                        agent: {
+                            suite:
+                                agg([val for val in tabular[agent][suite].values()])
+                            for suite in tabular[agent]}
+                        for agent in tabular}
+                })
+        json.dump(tabular_data, f, indent=2)
+        f.close()
 
 
 # Lows and highs for normalization
@@ -349,6 +352,12 @@ if __name__ == "__main__":
     # Experiments to plot
     plot_experiments = sys.argv[1:] if len(sys.argv) > 1 else 'Exp'
 
+    # Optionally pass in number of steps to plot
+    steps = np.inf
+    if 'steps=' in sys.argv[-1]:
+        plot_experiments = plot_experiments[:-1]
+        steps = int(sys.argv[-1].split('=')[1])
+
     path = f"./Benchmarking/{'_'.join(plot_experiments)}/Plots"
 
-    plot(path, plot_experiments=plot_experiments)
+    plot(path, plot_experiments=plot_experiments, plot_tabular=True, steps=steps)
