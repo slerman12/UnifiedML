@@ -91,7 +91,6 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        print(self.test(obs))
         h = self.CNN(obs)
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])

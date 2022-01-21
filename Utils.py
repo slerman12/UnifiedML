@@ -242,3 +242,7 @@ class ReNormalize(nn.Module):
         y = y - y.min(-1, keepdim=True)[0]
         y = y / y.max(-1, keepdim=True)[0]
         return y.view(*x.shape)
+
+
+def non_nan_or_inf(x):
+    return ~(torch.isnan(x) | torch.isinf(x))
