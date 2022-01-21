@@ -39,6 +39,7 @@ class DQNAgent(torch.nn.Module):
         self.step = self.episode = 0
         self.explore_steps = explore_steps
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
+        print(self.action_dim)
 
         if not (self.RL or self.generate):
             num_actors = num_actions = 1
