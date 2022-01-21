@@ -31,15 +31,6 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.pixels = pixels
 
-        self.test = nn.Sequential(nn.Conv2d(self.in_channels, self.out_channels, 3, stride=2),
-                                  nn.ReLU(),
-                                  nn.Conv2d(self.out_channels, self.out_channels, 3, 1),
-                                  # nn.ReLU(),
-                                  # nn.Conv2d(self.out_channels, self.out_channels, 3, 1),
-                                  # nn.ReLU(),
-                                  # nn.Conv2d(self.out_channels, self.out_channels, 3, 1)
-                                  )
-
         # CNN
         self.CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
                                                   self.out_channels, 3, stride=2 if i == 0 else 1),
