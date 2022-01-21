@@ -61,7 +61,7 @@ class ClassifyEnv:
     @property
     def depleted(self):
         # '+1 due to the call to self.batch in observation_spec
-        is_depleted = self.count > self.length + 1 and self.enable_depletion or self.offline or self.generate
+        is_depleted = self.count > self.length + 1 and self.enable_depletion or self.offline
 
         if self.verbose:
             if is_depleted:
