@@ -10,8 +10,8 @@ import Utils
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step,
                       num_actions=1, priority_temp=0, logs=None):
-    # Non-NaN/inf next_obs
-    has_future = Utils.non_nan_or_inf(next_obs.flatten(1).sum(1))
+    # Non-NaN next_obs
+    has_future = ~torch.isnan(next_obs.flatten(1).sum(1))
     next_obs = next_obs[has_future]
 
     # Compute Bellman target
