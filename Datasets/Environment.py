@@ -66,7 +66,7 @@ class Environment:
 
             if vlog or self.generate:
                 num_channels = min(exp.observation.shape[1], 3)  # Un-frame-stack
-                frame = action[:8].view(-1, num_channels, *exp.observation.shape[2:]) if self.generate \
+                frame = action[0].view(-1, num_channels, *exp.observation.shape[2:]) if self.generate \
                     else self.env.physics.render(height=256, width=256, camera_id=0) \
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
