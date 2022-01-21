@@ -55,7 +55,7 @@ class DQNAgent(torch.nn.Module):
                                        optim_lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
-                                      sigmoid=generate, discrete=discrete,
+                                      sigmoid=False, discrete=discrete,
                                       optim_lr=lr, target_tau=target_tau)
 
         self.actor = CategoricalCriticActor(stddev_schedule)
@@ -179,7 +179,7 @@ class DQNAgent(torch.nn.Module):
                 generated_image = torch.round(generated_image * 255 + 255) / 2
 
                 action[:len(obs) // 2] = generated_image
-                reward[:len(obs) // 2] = 1  # Discriminate
+                reward[:len(obs) // 2] = 100  # Discriminate
 
             # "Predict" / "Discern" / "Learn" / "Grow"
 
