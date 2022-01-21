@@ -31,6 +31,9 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.pixels = pixels
 
+        self.test = nn.Conv2d(self.in_channels,
+                              self.out_channels, 3, stride=2)
+
         # CNN
         self.CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
                                                   self.out_channels, 3, stride=2 if i == 0 else 1),
@@ -82,9 +85,8 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        print(~torch.isnan(obs.flatten(1).sum(1)).any(), '1')
+        print(~torch.isnan(self.test(obs).flatten(1).sum(1)))
         h = self.CNN(obs)
-        print(~torch.isnan(h.flatten(1).sum(1)).any(), '2')
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
