@@ -28,9 +28,9 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
 
     if logs is not None:
         assert isinstance(logs, dict)
-        logs['exploit_explore_loss'] = policy_loss.item()
-        logs['avg_Q_stddev'] = Q.stddev.mean().item()
-        logs['avg_Pi_prob'] = Pi.log_prob(actions).exp().mean().item()
-        logs['avg_u'] = q.mean().item()
+        logs['policy_loss'] = policy_loss.item()
+        logs['DPG_q_stddev'] = Q.stddev.mean().item()
+        logs['Pi_prob'] = Pi.log_prob(actions).exp().mean().item()
+        logs['DPG_q_mean'] = q.mean().item()
 
     return policy_loss
