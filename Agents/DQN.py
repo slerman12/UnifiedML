@@ -110,7 +110,7 @@ class DQNAgent(torch.nn.Module):
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action = obs.clone().flatten(-3)
-            obs._uniform()
+            obs.uniform_()
             next_obs[:] = label[:] = float('nan')
             reward[:] = 0
 
