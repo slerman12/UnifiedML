@@ -63,7 +63,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Parse files
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
         task_seed = task_seed_eval.split('_')
-        task, seed, eval = '_'.join(task_seed[:-2]), task_seed[-2], task_seed[-1].replace('.csv', '')
+        suite_task, seed, eval = '_'.join(task_seed[:-2]), task_seed[-2], task_seed[-1].replace('.csv', '')
 
         # Map suite names to properly-cased names
         suite = {k.lower(): k for k in ['Atari', 'DMC', 'Classify']}[suite.lower()]
@@ -74,7 +74,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if not include_train and eval.lower() != 'eval':
             include = False
 
-        datums = [experiment, suite.lower(), task, agent]
+        datums = [experiment, suite.lower(), suite_task, agent]
         for i, spec in enumerate(specs):
             if spec is not None and datums[i] not in spec:
                 include = False
@@ -92,7 +92,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Min number of steps
         min_steps = min(min_steps, length)
 
-        found_suite_task = task + ' (' + suite + ')'
+        found_suite_task = suite_task + ' (' + suite + ')'
         csv['Agent'] = agent + ' (' + experiment + ')'
         csv['Suite'] = suite
         csv['Task'] = found_suite_task
@@ -132,8 +132,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(4 * num_cols, 3 * num_rows))
 
     # Plot tasks
-    for i, task in enumerate(found_suite_tasks):
-        task_data = df[df['Task'] == task]
+    for i, suite_task in enumerate(found_suite_tasks):
+        task_data = df[df['Task'] == suite_task]
 
         # Capitalize column names
         task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
@@ -149,9 +149,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         hue_order = np.sort(task_data.Agent.unique())
 
         # Format title
-        title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in task.split('_')])
+        title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
 
         suite = title.split('(')[1].split(')')[0]
+        task = title.split('(')[0]
 
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
@@ -164,18 +165,18 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     tabular[agent][suite] = {}
             scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
             for t in low:
-                if t.lower() in task.lower():
-                    tabular_mean[agent][suite][t] = scores.mean()
-                    tabular_median[agent][suite][t] = scores.median()
+                if t.lower() in suite_task.lower():
+                    tabular_mean[agent][suite][task] = scores.mean()
+                    tabular_median[agent][suite][task] = scores.median()
                     normalized = (scores - low[t]) / (high[t] - low[t])
-                    tabular_normalized_mean[agent][suite][t] = normalized.mean()
-                    tabular_normalized_median[agent][suite][t] = normalized.median()
+                    tabular_normalized_mean[agent][suite][task] = normalized.mean()
+                    tabular_normalized_median[agent][suite][task] = normalized.median()
                     continue
 
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax)
         ax.set_title(f'{title}')
 
-        if 'classify' in task.lower():
+        if 'classify' in suite.lower():
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
@@ -209,14 +210,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         # High-low-normalize
-        for task in task_data.Task.unique():
+        for suite_task in task_data.Task.unique():
             for t in low:
-                if t.lower() in task.lower():
+                if t.lower() in suite_task.lower():
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", category=SettingWithCopyWarning)
 
-                        task_data.loc[task_data['Task'] == task, y_axis] -= low[t]
-                        task_data.loc[task_data['Task'] == task, y_axis] /= high[t] - low[t]
+                        task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
+                        task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
                         continue
 
         ax = axs[col] if num_cols > 1 else axs
