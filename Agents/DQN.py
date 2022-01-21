@@ -179,6 +179,7 @@ class DQNAgent(torch.nn.Module):
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 100  # Discriminate
+                print(reward.mean().item())
 
             # "Predict" / "Discern" / "Learn" / "Grow"
 
