@@ -203,6 +203,5 @@ class DQNAgent(torch.nn.Module):
                 # Update actor
                 Utils.optimize(actor_loss,
                                self.creator)
-            print("ya")
 
         return logs

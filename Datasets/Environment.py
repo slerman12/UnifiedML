@@ -69,6 +69,7 @@ class Environment:
                     else self.env.physics.render(height=256, width=256, camera_id=0) \
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
+            print("ja")
 
             # Tally reward, done, step
             self.episode_reward += exp.reward.mean()
