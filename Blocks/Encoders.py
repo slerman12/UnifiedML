@@ -31,8 +31,8 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.pixels = pixels
 
-        self.test = nn.Conv2d(self.in_channels,
-                              self.out_channels, 3, stride=2)
+        self.test = nn.Sequential(nn.Conv2d(self.in_channels,
+                              self.out_channels, 3, stride=2), nn.ReLU())
 
         # CNN
         self.CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
@@ -85,7 +85,7 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        print(~torch.isnan(self.test(obs).flatten(1).sum(1)))
+        print(~torch.isnan(self.test(obs).flatten(1).sum(1)).any())
         h = self.CNN(obs)
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
