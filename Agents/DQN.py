@@ -164,7 +164,9 @@ class DQNAgent(torch.nn.Module):
             # "Perceive"
 
             # Encode
+            print("ignore start")
             obs = self.encoder(obs)
+            print("ignore done")
             with torch.no_grad():
                 next_obs = self.encoder(next_obs)
 

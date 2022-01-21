@@ -69,7 +69,7 @@ class CNNEncoder(nn.Module):
     # Encodes
     def forward(self, obs, *context, flatten=True):
         obs_shape = obs.shape  # Preserve leading dims
-        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape'
+        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
         # Normalizes pixels
@@ -82,9 +82,9 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        print(obs.any(), "1")
+        print(~torch.isnan(obs.flatten(1).sum(1)).any(), '1')
         h = self.CNN(obs)
-        print(h.any(), "2")
+        print(~torch.isnan(h.flatten(1).sum(1)).any(), '2')
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
