@@ -72,6 +72,9 @@ class DQNAgent(torch.nn.Module):
             # "See"
             obs = self.encoder(obs)
 
+            if self.generate:
+                obs = obs.uniform_()
+
             # "Candidate actions"
             creations = None if self.discrete \
                 else self.creator(obs, self.step).sample(self.num_actions) if self.training \
@@ -171,6 +174,8 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
+                obs = obs.uniform_()
+
                 # "Candidate generations"
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean
 
