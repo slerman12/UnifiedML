@@ -73,7 +73,7 @@ class DQNAgent(torch.nn.Module):
             obs = self.encoder(obs)
 
             if self.generate:
-                obs.uniform_()
+                obs = obs.uniform_()
 
             # "Candidate actions"
             creations = None if self.discrete \
