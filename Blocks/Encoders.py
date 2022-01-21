@@ -74,7 +74,7 @@ class CNNEncoder(nn.Module):
 
         # Normalizes pixels
         if self.pixels:
-            obs = obs / 255.0 - 0.5
+            obs = obs / 127.5 - 1
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
