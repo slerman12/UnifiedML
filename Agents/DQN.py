@@ -55,7 +55,7 @@ class DQNAgent(torch.nn.Module):
                                        optim_lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
-                                      sigmoid=False, discrete=discrete, ensemble_size=1,
+                                      sigmoid=False, discrete=discrete,
                                       optim_lr=lr, target_tau=target_tau)
 
         self.actor = CategoricalCriticActor(stddev_schedule)
