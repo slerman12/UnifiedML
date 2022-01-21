@@ -73,7 +73,7 @@ class DQNAgent(torch.nn.Module):
             obs = self.encoder(obs)
 
             if self.generate:
-                obs[:] = 0
+                obs.uniform_()
 
             # "Candidate actions"
             creations = None if self.discrete \
@@ -174,7 +174,7 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-                obs = obs.detach.data.fill_(0.0)
+                obs = obs.detach().uniform_()
 
                 # "Candidate generations"
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean
