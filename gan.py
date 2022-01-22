@@ -27,8 +27,8 @@ class Transform:
 transform = Transform()
 
 
-train_dataset = datasets.MNIST(root='./mnist_data/', train=True, transform=transform, download=True)
-test_dataset = datasets.MNIST(root='./mnist_data/', train=False, transform=transform, download=False)
+train_dataset = datasets.MNIST(root='./Datasets/ReplayBuffer/Classify/MNIST_Train', train=True, transform=transform, download=True)
+test_dataset = datasets.MNIST(root='./Datasets/ReplayBuffer/Classify/MNIST_Eval', train=False, transform=transform, download=False)
 
 # Data Loader (Input Pipeline)
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bs, shuffle=True)
@@ -144,4 +144,4 @@ with torch.no_grad():
     test_z = Variable(torch.randn(bs, z_dim).to(device))
     generated = G(test_z)
 
-    save_image(generated.view(generated.size(0), 1, 28, 28), './samples/sample_' + '.png')
+    save_image(generated.view(generated.size(0), 1, 28, 28), './Benchmarking/g/g/g/g//sample_' + '.png')
