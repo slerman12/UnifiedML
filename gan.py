@@ -1,4 +1,6 @@
 # prerequisites
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -144,4 +146,5 @@ with torch.no_grad():
     test_z = Variable(torch.randn(bs, z_dim).to(device))
     generated = G(test_z)
 
-    save_image(generated.view(generated.size(0), 1, 28, 28), './Benchmarking/g/g/g/g//sample_' + '.png')
+    Path('./Benchmarking/g/g/g/g/').mkdir(exist_ok=True, parents=True)
+    save_image(generated.view(generated.size(0), 1, 28, 28), './Benchmarking/g/g/g/g/sample_' + '.png')
