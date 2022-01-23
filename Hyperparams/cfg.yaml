@@ -14,7 +14,7 @@ lr: 1e-4
 discrete: ??? # To be specified later
 offline: false
 RL: true
-classify: true
+supervise: true
 generate: false
 # Replay
 obs_spec: ??? # To be specified later
@@ -75,7 +75,7 @@ agent:
   target_tau: 0.01
   discrete: ${discrete}
   RL: ${RL}
-  classify: ${classify}
+  supervise: ${supervise}
   generate: ${generate}
   device: ${device}
   log: false

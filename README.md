@@ -165,7 +165,7 @@ DQN Agent on MNIST:
 python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 ```
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```classify=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
 
 Train accuracies can be printed with ```agent.log=true```.
 

@@ -31,7 +31,7 @@ class DQNAgent(torch.nn.Module):
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
-        self.classify = classify  # And classification...
+        self.supervise = classify  # And classification...
         self.RL = RL
         self.generate = generate  # And generative modeling, too
         self.device = device
@@ -44,8 +44,7 @@ class DQNAgent(torch.nn.Module):
         if not (self.RL or self.generate):
             num_actors = num_actions = 1
 
-        self.num_actions = num_actions  # Num actions sampled per actor
-        # self.num_actions = num_actions if self.RL or self.generate else 1  # Num actions sampled per actor
+        self.num_actions = num_actions if self.RL or self.generate else 1  # Num actions sampled per actor
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
@@ -134,7 +133,7 @@ class DQNAgent(torch.nn.Module):
 
         supervised_loss = critic_loss = 0
 
-        # Supervised learning
+        # Classification
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
@@ -146,7 +145,8 @@ class DQNAgent(torch.nn.Module):
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-            if self.classify:
+            # Supervised learning
+            if self.supervise:
                 # Supervised loss
                 supervised_loss = mistake.mean()
 
@@ -197,7 +197,6 @@ class DQNAgent(torch.nn.Module):
         # Update encoder
         self.encoder.optim.step()
         self.encoder.optim.zero_grad(set_to_none=True)
-        # Note: really high acc when calling Utils.optimize(None, encoder, clear_grads=false) or not zero_grad
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
