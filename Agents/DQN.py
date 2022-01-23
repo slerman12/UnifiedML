@@ -44,7 +44,7 @@ class DQNAgent(torch.nn.Module):
         if not (self.RL or self.generate):
             num_actors = num_actions = 1
 
-        self.num_actions = num_actions if self.RL or self.generate else 1  # Num actions sampled per actor
+        self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
@@ -131,14 +131,13 @@ class DQNAgent(torch.nn.Module):
 
         # "Acquire Wisdom"
 
-        supervised_loss = critic_loss = 0
-
         # Classification
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
             # "Candidate classifications"
-            creations = self.creator(obs[instruction], self.step).mean
+            creations = self.creator(obs[instruction], self.step).rsample(self.num_actions) if self.RL \
+                else self.creator(obs[instruction], self.step).mean
 
             # Inference
             y_predicted = self.actor(self.critic(obs[instruction], creations), self.step).best
@@ -152,7 +151,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.creator, retain_graph=True)
+                               self.creator, retain_graph=self.RL)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
