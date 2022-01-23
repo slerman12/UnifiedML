@@ -26,12 +26,13 @@ class DQNAgent(torch.nn.Module):
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, classify, generate, device, log,  # On-boarding
-                 num_actors=5, num_actions=2):  # DQN (for non-discrete support)
+                 num_actors=5,  # AC2
+                 num_actions=2, num_critics=2):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
-        self.RL = RL
         self.classify = classify  # And classification...
+        self.RL = RL
         self.generate = generate  # And generative modeling, too
         self.device = device
         self.log = log
@@ -44,6 +45,7 @@ class DQNAgent(torch.nn.Module):
             num_actors = num_actions = 1
 
         self.num_actions = num_actions  # Num actions sampled per actor
+        # self.num_actions = num_actions if self.RL or self.generate else 1  # Num actions sampled per actor
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
@@ -55,7 +57,7 @@ class DQNAgent(torch.nn.Module):
                                        optim_lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
-                                      sigmoid=False, discrete=discrete,
+                                      ensemble_size=num_critics, sigmoid=False, discrete=discrete,
                                       optim_lr=lr, target_tau=target_tau)
 
         self.actor = CategoricalCriticActor(stddev_schedule)
@@ -69,11 +71,9 @@ class DQNAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.creator, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
-            # "See"
-            obs = self.encoder(obs)
-
-            if self.generate:
-                obs = torch.randn_like(obs)
+            # "Imagine" / "See"
+            obs = torch.randn(self.encoder.repr_dim) if self.generate \
+                else self.encoder(obs)
 
             # "Candidate actions"
             creations = None if self.discrete \
@@ -195,8 +195,8 @@ class DQNAgent(torch.nn.Module):
             self.critic.update_target_params()
 
         # Update encoder
-        Utils.optimize(supervised_loss + critic_loss,
-                       self.encoder)
+        Utils.optimize(None,
+                       self.encoder, clear_grads=False)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
