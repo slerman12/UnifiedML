@@ -104,16 +104,22 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
 
-        # "Envision"
+        # "Envision" / "Perceive"
 
         # Augment
         obs = self.aug(obs)
         next_obs = self.aug(next_obs)
 
+        # Encode
+        obs = self.encoder(obs)
+        with torch.no_grad():
+            next_obs = self.encoder(next_obs)
+
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action = obs.flatten(-3) / 127.5 - 1
-            next_obs[:] = label[:] = float('nan')
+            next_obs[:] = float('nan')
+            label[:] = float('nan')
             reward[:] = 0
 
         # "Journal teachings"
@@ -126,18 +132,17 @@ class DQNAgent(torch.nn.Module):
 
         # "Acquire Wisdom"
 
+        supervised_loss = critic_loss = 0
+
         # Supervised learning
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
-            # Supervised input
-            x = self.encoder(obs)
-
             # "Candidate classifications"
-            creations = self.creator(x[instruction], self.step).mean
+            creations = self.creator(obs[instruction], self.step).mean
 
             # Inference
-            y_predicted = self.actor(self.critic(x[instruction], creations), self.step).best
+            y_predicted = self.actor(self.critic(obs[instruction], creations), self.step).best
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -147,7 +152,6 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.encoder,
                                self.creator)
 
                 if self.log:
@@ -157,19 +161,12 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                action[instruction] = y_predicted.detach()
+                action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
                 next_obs[instruction, :] = float('nan')
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
-            # "Perceive"
-
-            # Encode
-            obs = self.encoder(obs)
-            with torch.no_grad():
-                next_obs = self.encoder(next_obs)
-
             # "Imagine"
 
             # Generative modeling
@@ -183,9 +180,8 @@ class DQNAgent(torch.nn.Module):
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 10  # Discriminate
-                next_obs[:] = float('nan')
 
-            # "Predict" / "Discern" / "Learn" / "Grow"
+            # "Discern"
 
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.creator,
@@ -194,18 +190,23 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.encoder,
                            self.critic)
 
             self.critic.update_target_params()
 
-            if not self.discrete:
-                # Actor loss
-                actor_loss = PolicyLearning.deepPolicyGradient(self.creator, self.critic, obs.detach(),
-                                                               self.step, self.num_actions, logs=logs)
+        # Update encoder
+        Utils.optimize(supervised_loss + critic_loss,
+                       self.encoder)
 
-                # Update actor
-                Utils.optimize(actor_loss,
-                               self.creator)
+        if self.generate or self.RL and not self.discrete:
+            # "Change" / "Grow"
+
+            # Actor loss
+            actor_loss = PolicyLearning.deepPolicyGradient(self.creator, self.critic, obs.detach(),
+                                                           self.step, self.num_actions, logs=logs)
+
+            # Update actor
+            Utils.optimize(actor_loss,
+                           self.creator)
 
         return logs

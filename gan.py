@@ -36,6 +36,7 @@ test_dataset = datasets.MNIST(root='./Datasets/ReplayBuffer/Classify/MNIST_Eval'
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bs, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs, shuffle=False)
 
+
 class Generator(nn.Module):
     def __init__(self, g_input_dim, g_output_dim):
         super(Generator, self).__init__()
@@ -70,6 +71,7 @@ class Discriminator(nn.Module):
         x = F.dropout(x, 0.3)
         return torch.sigmoid(self.fc4(x))
 
+
 # build network
 z_dim = 100
 mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
@@ -87,7 +89,7 @@ D_optimizer = optim.Adam(D.parameters(), lr = lr)
 
 
 def D_train(x):
-    #=======================Train the discriminator=======================#
+    # =======================Train the discriminator=======================#
     D.zero_grad()
 
     # train discriminator on real
@@ -115,7 +117,7 @@ def D_train(x):
 
 
 def G_train(x):
-    #=======================Train the generator=======================#
+    # =======================Train the generator=======================#
     G.zero_grad()
 
     z = Variable(torch.randn(bs, z_dim).to(device))

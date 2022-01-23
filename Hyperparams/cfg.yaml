@@ -24,8 +24,8 @@ batch_size: 256
 discount: 0.99
 # Training
 seed_steps: 2000
-update_per_steps: 2
-post_updates: 1000
+learn_per_steps: 2
+learn_steps_after: 1000
 # Evaluating
 evaluate_per_steps: 5000
 evaluate_episodes: 10

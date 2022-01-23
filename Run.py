@@ -82,9 +82,9 @@ def main(args):
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or env.depleted
 
         # Train agent
-        if training and args.update_per_steps and agent.step % args.update_per_steps == 0 or converged:
+        if training and args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged:
 
-            for _ in range(args.post_updates if converged else 1):  # Additional updates after all rollouts
+            for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
                 logs = agent.train().learn(replay)  # Trains the agent
                 if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:
                     logger.log(logs, 'Train')
