@@ -196,10 +196,8 @@ class DQNAgent(torch.nn.Module):
 
         # Update encoder
         self.encoder.optim.step()
-        # self.encoder.optim.zero_grad(set_to_none=True)
-        # Note: really high acc when calling Utils.optimize(None, encoder, clear_grads=false)
-        # Utils.optimize(None,
-        #                self.encoder, clear_grads=False)
+        self.encoder.optim.zero_grad(set_to_none=True)
+        # Note: really high acc when calling Utils.optimize(None, encoder, clear_grads=false) or not zero_grad
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
