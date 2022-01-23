@@ -25,13 +25,13 @@ class DQNAgent(torch.nn.Module):
                  obs_shape, action_shape, feature_dim, hidden_dim,  # Architecture
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, RL, classify, generate, device, log,  # On-boarding
+                 discrete, RL, supervise, generate, device, log,  # On-boarding
                  num_actors=5,  # AC2
                  num_actions=2, num_critics=2):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
-        self.supervise = classify  # And classification...
+        self.supervise = supervise  # And classification...
         self.RL = RL
         self.generate = generate  # And generative modeling, too
         self.device = device
