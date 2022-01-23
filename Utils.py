@@ -202,7 +202,7 @@ def to_torch(xs, device):
 
 
 # Backward pass on a loss; clear the grads of models; step their optimizers
-def optimize(loss=None, *models, clear_grads=True, backward=True, step_optim=True):
+def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True):
     # Clear grads
     if clear_grads:
         for model in models:
@@ -210,7 +210,7 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, step_optim=Tru
 
     # Backward
     if backward and loss is not None:
-        loss.backward()
+        loss.backward(retain_graph=retain_graph)
 
     # Optimize
     if step_optim:

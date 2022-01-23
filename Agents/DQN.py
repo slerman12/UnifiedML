@@ -152,7 +152,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.creator)
+                               self.creator, retain_graph=True)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
@@ -195,8 +195,8 @@ class DQNAgent(torch.nn.Module):
             self.critic.update_target_params()
 
         # Update encoder
-        Utils.optimize(None,
-                       self.encoder, clear_grads=False)
+        self.encoder.optim.step()
+        self.encoder.optim.zero_grad(set_to_none=True)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
