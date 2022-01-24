@@ -79,7 +79,7 @@ z_dim = 100
 mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
 
 # G = Generator(g_input_dim = z_dim, g_output_dim = mnist_dim).to(device)
-G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1)
+G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1).to(device)
 D = Discriminator(mnist_dim).to(device)
 
 # loss
