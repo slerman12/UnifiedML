@@ -47,9 +47,9 @@ def D_train(x, z):
     half = x.shape[0] // 2
     x_real[:half], y_real[:half] = G(z[:half]).mean[:, 0], 0
 
-    D_output = torch.min(D(z, x_real).Qs, 0)[0]
+    D_output = D(z, x_real)
 
-    D_loss = loss(D_output, y_real)
+    D_loss = loss(D_output.Qs, y_real.expand_as(D_output.Qs))
 
     D_loss.backward()
     D.optim.step()

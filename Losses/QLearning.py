@@ -38,7 +38,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
         target_q = reward
 
         if has_future.any():
-            print("nnnnn")
             next_Q = critic.target(next_obs, next_actions)
 
             next_q = torch.min(next_Q.Qs, 0)[0]
