@@ -104,14 +104,14 @@ def D_train(x):
 
     z = torch.randn(bs, z_dim).to(device)
 
-    D_output = torch.min(D(x_real, z).Qs, 0)[0]
+    D_output = torch.min(D(z, x_real).Qs, 0)[0]
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
 
     # train discriminator on facke
     x_fake, y_fake = G(z).mean[:, 0], torch.zeros(bs, 1).to(device)
 
-    D_output = torch.min(D(x_fake, z).Qs, 0)[0]
+    D_output = torch.min(D(z, x_fake).Qs, 0)[0]
     D_fake_loss = criterion(D_output, y_fake)
     D_fake_score = D_output
 
@@ -131,7 +131,7 @@ def G_train(x):
     y = torch.ones(bs, 1).to(device)
 
     G_output = G(z).mean[:, 0]
-    D_output = torch.min(D(G_output, z).Qs, 0)[0]
+    D_output = torch.min(D(z, G_output).Qs, 0)[0]
     G_loss = -D_output.mean()
 
     # gradient backprop & optimize ONLY G's parameters
