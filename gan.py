@@ -10,6 +10,8 @@ from torch.autograd import Variable
 from torchvision.transforms import functional as FF
 from torchvision.utils import save_image
 
+from Blocks.Actors import GaussianActorEnsemble
+
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -76,7 +78,8 @@ class Discriminator(nn.Module):
 z_dim = 100
 mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
 
-G = Generator(g_input_dim = z_dim, g_output_dim = mnist_dim).to(device)
+# G = Generator(g_input_dim = z_dim, g_output_dim = mnist_dim).to(device)
+G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1)
 D = Discriminator(mnist_dim).to(device)
 
 # loss
@@ -102,7 +105,7 @@ def D_train(x):
 
     # train discriminator on facke
     z = Variable(torch.randn(bs, z_dim).to(device))
-    x_fake, y_fake = G(z), Variable(torch.zeros(bs, 1).to(device))
+    x_fake, y_fake = G(z).mean[:, 0], Variable(torch.zeros(bs, 1).to(device))
 
     D_output = D(x_fake)
     D_fake_loss = criterion(D_output, y_fake)
@@ -123,7 +126,7 @@ def G_train(x):
     z = Variable(torch.randn(bs, z_dim).to(device))
     y = Variable(torch.ones(bs, 1).to(device))
 
-    G_output = G(z)
+    G_output = G(z).mean[:, 0]
     D_output = D(G_output)
     G_loss = criterion(D_output, y)
 
@@ -146,7 +149,7 @@ for epoch in range(1, n_epoch+1):
 
 with torch.no_grad():
     test_z = Variable(torch.randn(bs, z_dim).to(device))
-    generated = G(test_z)
+    generated = G(test_z).mean[:, 0]
 
     Path('./Benchmarking/g/g/g/g/').mkdir(exist_ok=True, parents=True)
     save_image(generated.view(generated.size(0), 1, 28, 28), './Benchmarking/g/g/g/g/sample_' + '.png')
