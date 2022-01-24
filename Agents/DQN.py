@@ -122,6 +122,7 @@ class DQNAgent(torch.nn.Module):
             print(next_obs.shape, (~torch.isnan(next_obs.flatten(1).sum(1))).any())
             next_obs = self.encoder(next_obs)
             print(next_obs.shape, (~torch.isnan(next_obs.flatten(1).sum(1))).any())
+            print(next_obs[0, :10])
 
         # "Journal teachings"
 
