@@ -116,12 +116,17 @@ class DQNAgent(torch.nn.Module):
             next_obs[:] = label[:] = float('nan')
             reward[:] = 0
 
+
+        cnn = self.encoder
+        x = torch.full([128, 1, 28, 28], float('nan'))
+        print(x.shape, torch.isnan(x).all())
+        y = cnn(x)
+        print(y.shape, torch.isnan(y).all())
         # Encode
         obs = self.encoder(obs)
         with torch.no_grad():
-            print(next_obs.shape, (~torch.isnan(next_obs)).any())
             next_obs = self.encoder(next_obs)
-            print(next_obs.shape, (~torch.isnan(next_obs)).any())
+            # print(next_obs.shape, (~torch.isnan(next_obs)).any())
             # print(next_obs[0, :10])
 
         # "Journal teachings"
@@ -136,7 +141,6 @@ class DQNAgent(torch.nn.Module):
 
         # Classification
         if instruction.any():
-            print("JJJJJJJJJJ")
             # "Via Example" / "Parental Support" / "School"
 
             # "Candidate classifications"
