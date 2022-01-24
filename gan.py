@@ -128,7 +128,7 @@ def G_train(x):
 
     G_output = G(z).mean[:, 0]
     D_output = D(G_output)
-    G_loss = -D_output
+    G_loss = -D_output.mean()
 
     # gradient backprop & optimize ONLY G's parameters
     G_loss.backward()
