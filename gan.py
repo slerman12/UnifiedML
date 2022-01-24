@@ -82,7 +82,9 @@ for epoch in range(1, epochs + 1):
         epoch, epochs, torch.tensor(D_losses).mean(), torch.tensor(G_losses).mean()))
 
 with torch.no_grad():
-    generated = G(torch.randn(batch_size, z_dim).to(device)).mean[:, 0]
+    z = torch.randn(batch_size, z_dim).to(device)
+    generated = G(z).mean[:, 0]
 
-    Path('./Benchmarking/g/g/g/g/').mkdir(exist_ok=True, parents=True)
-    save_image(generated.view(generated.size(0), 1, 28, 28), './Benchmarking/g/g/g/g/sample_' + '.png')
+    path = './Benchmarking/g/g/g/g/'
+    Path(path).mkdir(exist_ok=True, parents=True)
+    save_image(generated.view(generated.size(0), 1, 28, 28), path + 'sample.png')
