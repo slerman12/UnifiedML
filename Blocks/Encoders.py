@@ -79,9 +79,9 @@ class CNNEncoder(nn.Module):
             obs = obs / 127.5 - 1
 
         # Optionally append context to channels assuming dimensions allow
-        context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-                   for c in context]
-        obs = torch.cat([obs, *context], 1)
+        # context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
+        #            for c in context]
+        # obs = torch.cat([obs, *context], 1)
 
         # CNN encode
         h = self.CNN(obs)
