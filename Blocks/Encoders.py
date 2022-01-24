@@ -46,7 +46,7 @@ class CNNEncoder(nn.Module):
 
     def init(self, optim_lr=None, target_tau=None):
         # Initialize weights
-        # self.apply(Utils.weight_init)
+        self.apply(Utils.weight_init)
 
         # Optimizer
         if optim_lr is not None:
