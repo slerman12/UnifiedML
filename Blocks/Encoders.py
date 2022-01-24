@@ -79,12 +79,14 @@ class CNNEncoder(nn.Module):
             obs = obs / 127.5 - 1
 
         # Optionally append context to channels assuming dimensions allow
-        # context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-        #            for c in context]
-        # obs = torch.cat([obs, *context], 1)
+        context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
+                   for c in context]
+        obs = torch.cat([obs, *context], 1)
 
         # CNN encode
+        print(obs)
         h = self.CNN(obs)
+        print(h)
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
