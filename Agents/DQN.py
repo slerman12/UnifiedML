@@ -45,6 +45,7 @@ class DQNAgent(torch.nn.Module):
         #     num_actors = num_actions = 1
 
         self.num_actions = num_actions  # Num actions sampled per actor
+        self.num_actions = 1
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
@@ -179,7 +180,7 @@ class DQNAgent(torch.nn.Module):
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 1  # Discriminate
-                next_obs[:] = float('nan')
+                next_obs[:] = float('nan')  # TODO shouldn't need this https://discuss.pytorch.org/t/when-does-nan-get-turned-into-inf/142191
 
             # "Discern"
 
