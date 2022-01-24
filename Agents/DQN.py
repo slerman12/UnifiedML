@@ -48,7 +48,7 @@ class DQNAgent(torch.nn.Module):
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
-        cnn = self.encoder
+        cnn = self.encoder.to(device)
         x = torch.full([128, 1, 28, 28], float('nan')).to(device)
         print(x.shape, torch.isnan(x).all())
         y = cnn(x)
