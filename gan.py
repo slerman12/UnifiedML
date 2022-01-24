@@ -30,11 +30,11 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch
 
 mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
 
-z_dim = 50
+z_dim = 1568
 lr = 0.0002
 
-G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1, optim_lr=lr).to(device)
-D = EnsembleQCritic([z_dim], 1024, 512, mnist_dim, optim_lr=lr).to(device)
+G = GaussianActorEnsemble([z_dim], 50, 1024, mnist_dim, 1, optim_lr=lr).to(device)
+D = EnsembleQCritic([z_dim], 50, 1024, mnist_dim, optim_lr=lr).to(device)
 
 loss = nn.MSELoss()
 
