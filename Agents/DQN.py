@@ -48,13 +48,6 @@ class DQNAgent(torch.nn.Module):
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
-        print(obs_shape, lr)
-        cnn = self.encoder.to(device)
-        x = torch.full([128, 1, 28, 28], float('nan')).to(device)
-        print(x.shape, torch.isnan(x).all())
-        y = cnn(x)
-        print(y.shape, torch.isnan(y).all())
-
         # Continuous actions creator
         self.creator = None if self.discrete \
             else GaussianActorEnsemble(self.encoder.repr_shape, feature_dim, hidden_dim,
@@ -127,8 +120,6 @@ class DQNAgent(torch.nn.Module):
         obs = self.encoder(obs)
         with torch.no_grad():
             next_obs = self.encoder(next_obs)
-            # print(next_obs.shape, (~torch.isnan(next_obs)).any())
-            # print(next_obs[0, :10])
 
         # "Journal teachings"
 
@@ -188,6 +179,7 @@ class DQNAgent(torch.nn.Module):
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 1  # Discriminate
+                next_obs[:] = float('nan')
 
             # "Discern"
 
