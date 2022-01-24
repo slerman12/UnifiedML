@@ -114,14 +114,14 @@ class DQNAgent(torch.nn.Module):
         if self.generate:
             action = obs.flatten(-3) / 127.5 - 1
             next_obs[:] = label[:] = float('nan')
-            print(next_obs.shape, label.shape)
             reward[:] = 0
 
         # Encode
         obs = self.encoder(obs)
         with torch.no_grad():
+            print(next_obs.shape, (~torch.isnan(next_obs.flatten(1).sum(1))).any())
             next_obs = self.encoder(next_obs)
-            # print(next_obs.shape, (~torch.isnan(next_obs.flatten(1).sum(1))).any())
+            print(next_obs.shape, (~torch.isnan(next_obs.flatten(1).sum(1))).any())
 
         # "Journal teachings"
 
