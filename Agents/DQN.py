@@ -46,7 +46,7 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
-        self.encoder = CNNEncoder(torch.Size(obs_shape), optim_lr=lr)
+        self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
         print(obs_shape, lr)
         cnn = self.encoder.to(device)
