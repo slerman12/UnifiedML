@@ -109,17 +109,17 @@ class DQNAgent(torch.nn.Module):
         obs = self.aug(obs)
         next_obs = self.aug(next_obs)
 
-        # Encode
-        obs = self.encoder(obs)
-        with torch.no_grad():
-            next_obs = self.encoder(next_obs)
-
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action = obs.flatten(-3) / 127.5 - 1
             next_obs[:] = float('nan')
             label[:] = float('nan')
             reward[:] = 0
+
+        # Encode
+        obs = self.encoder(obs)
+        with torch.no_grad():
+            next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
