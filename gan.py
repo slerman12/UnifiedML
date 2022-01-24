@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from torch.autograd import Variable
 from torchvision.transforms import functional as FF
 from torchvision.utils import save_image
 
@@ -71,7 +70,8 @@ class Discriminator(nn.Module):
         x = F.dropout(x, 0.3)
         x = F.leaky_relu(self.fc3(x), 0.2)
         x = F.dropout(x, 0.3)
-        return torch.sigmoid(self.fc4(x))
+        # return torch.sigmoid(self.fc4(x))
+        return self.fc4(x)
 
 
 # build network
@@ -83,7 +83,7 @@ G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1)
 D = Discriminator(mnist_dim).to(device)
 
 # loss
-criterion = nn.BCELoss()
+criterion = nn.MSELoss()
 
 # optimizer
 lr = 0.0002
@@ -97,15 +97,15 @@ def D_train(x):
 
     # train discriminator on real
     x_real, y_real = x.view(-1, mnist_dim), torch.ones(bs, 1)
-    x_real, y_real = Variable(x_real.to(device)), Variable(y_real.to(device))
+    x_real, y_real = x_real.to(device), y_real.to(device)
 
     D_output = D(x_real)
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
 
     # train discriminator on facke
-    z = Variable(torch.randn(bs, z_dim).to(device))
-    x_fake, y_fake = G(z).mean[:, 0], Variable(torch.zeros(bs, 1).to(device))
+    z = torch.randn(bs, z_dim).to(device)
+    x_fake, y_fake = G(z).mean[:, 0], torch.zeros(bs, 1).to(device)
 
     D_output = D(x_fake)
     D_fake_loss = criterion(D_output, y_fake)
@@ -123,12 +123,12 @@ def G_train(x):
     # =======================Train the generator=======================#
     G.zero_grad()
 
-    z = Variable(torch.randn(bs, z_dim).to(device))
-    y = Variable(torch.ones(bs, 1).to(device))
+    z = torch.randn(bs, z_dim).to(device)
+    y = torch.ones(bs, 1).to(device)
 
     G_output = G(z).mean[:, 0]
     D_output = D(G_output)
-    G_loss = criterion(D_output, y)
+    G_loss = -D_output
 
     # gradient backprop & optimize ONLY G's parameters
     G_loss.backward()
@@ -148,7 +148,7 @@ for epoch in range(1, n_epoch+1):
         (epoch), n_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
 
 with torch.no_grad():
-    test_z = Variable(torch.randn(bs, z_dim).to(device))
+    test_z = torch.randn(bs, z_dim).to(device)
     generated = G(test_z).mean[:, 0]
 
     Path('./Benchmarking/g/g/g/g/').mkdir(exist_ok=True, parents=True)
