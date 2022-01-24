@@ -71,7 +71,7 @@ class DQNAgent(torch.nn.Module):
             obs = torch.as_tensor(obs, device=self.device)
 
             # "Imagine" / "See"
-            obs = torch.randn(self.encoder.repr_dim) if self.generate \
+            obs = torch.randn(self.encoder.flat_dim) if self.generate \
                 else self.encoder(obs)
 
             # "Candidate actions"
@@ -178,7 +178,7 @@ class DQNAgent(torch.nn.Module):
                 generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
 
                 action[:len(obs) // 2] = generated_image
-                reward[:len(obs) // 2] = 10  # Discriminate
+                reward[:len(obs) // 2] = 1  # Discriminate
 
             # "Discern"
 

@@ -55,7 +55,7 @@ class CNNEncoder(nn.Module):
         height, width = Utils.cnn_output_shape(height, width, self.CNN)
 
         self.repr_shape = (self.out_channels, height, width)  # Feature map shape
-        self.flattened_dim = math.prod(self.repr_shape)  # Flattened features dim
+        self.flat_dim = math.prod(self.repr_shape)  # Flattened features dim
 
         # EMA
         if target_tau is not None:

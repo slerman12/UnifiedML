@@ -10,11 +10,12 @@ from torchvision.transforms import functional as FF
 from torchvision.utils import save_image
 
 from Blocks.Actors import GaussianActorEnsemble
+from Blocks.Critics import EnsembleQCritic
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-bs = 100
+bs = 256
 
 
 # MNIST Dataset
@@ -81,7 +82,8 @@ mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
 
 # G = Generator(g_input_dim = z_dim, g_output_dim = mnist_dim).to(device)
 G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1).to(device)
-D = Discriminator(mnist_dim).to(device)
+# D = Discriminator(mnist_dim).to(device)
+D = EnsembleQCritic(z_dim, 1024, 512, mnist_dim).to(device)
 
 # loss
 criterion = nn.MSELoss()
@@ -102,14 +104,14 @@ def D_train(x):
 
     z = torch.randn(bs, z_dim).to(device)
 
-    D_output = D(x_real, z)
+    D_output = torch.min(D(x_real, z).Qs, 0)[0]
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
 
     # train discriminator on facke
     x_fake, y_fake = G(z).mean[:, 0], torch.zeros(bs, 1).to(device)
 
-    D_output = D(x_fake, z)
+    D_output = torch.min(D(x_fake, z).Qs, 0)[0]
     D_fake_loss = criterion(D_output, y_fake)
     D_fake_score = D_output
 
@@ -129,7 +131,7 @@ def G_train(x):
     y = torch.ones(bs, 1).to(device)
 
     G_output = G(z).mean[:, 0]
-    D_output = D(G_output, z)
+    D_output = torch.min(D(G_output, z).Qs, 0)[0]
     G_loss = -D_output.mean()
 
     # gradient backprop & optimize ONLY G's parameters

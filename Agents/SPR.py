@@ -51,7 +51,7 @@ class SPRAgent(torch.nn.Module):
                                              renormalize=True, pixels=False, isotropic=True,
                                              optim_lr=lr)
 
-        self.projector = MLPBlock(self.encoder.flattened_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,
+        self.projector = MLPBlock(self.encoder.flat_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,
                                   target_tau=target_tau, optim_lr=lr)
 
         self.predictor = MLPBlock(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2, optim_lr=lr)
