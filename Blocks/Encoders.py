@@ -91,8 +91,8 @@ class CNNEncoder(nn.Module):
         assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
 
         if flatten:
+            print(h.flatten(-3).shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
             return h.flatten(-3)
-        print(h.shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
         return h
 
 
