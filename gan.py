@@ -42,14 +42,14 @@ loss = nn.MSELoss()
 def D_train(x, z):
     D.zero_grad()
 
-    x_real, y_real = x.view(-1, mnist_dim).to(device), torch.ones(x.shape[0], 1).to(device)
+    x, y = x.flatten(-3).to(device), torch.ones(x.shape[0], 1).to(device)
 
     half = x.shape[0] // 2
-    x_real[:half], y_real[:half] = G(z[:half]).mean[:, 0], 0
+    x[:half], y[:half] = G(z[:half]).mean[:, 0], 0
 
-    D_output = D(z, x_real)
+    D_output = D(z, x)
 
-    D_loss = loss(D_output.Qs, y_real.expand_as(D_output.Qs))
+    D_loss = loss(D_output.Qs, y.expand_as(D_output.Qs))
 
     D_loss.backward()
     D.optim.step()

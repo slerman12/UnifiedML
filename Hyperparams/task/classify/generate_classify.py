@@ -32,7 +32,6 @@ if __name__ == '__main__':
     seed_steps: 10000
     explore_steps: 0
     log_per_episodes: 10
-    agent_log: true
     task_name: {}""".format(task))
         f.close()
         out += ' "' + task.lower() + '"'
