@@ -136,6 +136,7 @@ class DQNAgent(torch.nn.Module):
 
         # Classification
         if instruction.any():
+            print("JJJJJJJJJJ")
             # "Via Example" / "Parental Support" / "School"
 
             # "Candidate classifications"
