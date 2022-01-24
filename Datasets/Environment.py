@@ -49,7 +49,7 @@ class Environment:
         if (self.offline or self.depleted or self.generate) and agent.training:
             agent.step += 1
             agent.episode += 1
-            self.episode_done = True
+            self.episode_done = True  # TODO
             return None, None, None
 
         step = 0
@@ -72,7 +72,7 @@ class Environment:
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
                 import torch
-                video_image.append(torch.tensor(exp.observation[:num_images]).view(-1, num_channels, *exp.observation.shape[2:]).to(action.device) / 127.5 - 1)
+                video_image.append(torch.tensor(exp.observation[:num_images]).to(action.device) / 127.5 - 1)
 
             # Tally reward, done, step
             self.episode_reward += exp.reward.mean()
