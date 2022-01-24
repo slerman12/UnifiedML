@@ -7,7 +7,7 @@ from Blocks.Encoders import CNNEncoder
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.CNN = nn.Sequential(nn.Conv2d(1, 32, 3, stride=2), nn.ReLU(), nn.Conv2d(32, 32, 3, stride=1))
+        self.CNN = nn.Sequential(nn.Conv2d(1, 32, 3, stride=2))
 
     def forward(self, x, *context):
         return self.CNN(x)
