@@ -48,7 +48,6 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = 1
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
-        print(self.encoder.flat_dim)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
@@ -181,7 +180,9 @@ class DQNAgent(torch.nn.Module):
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 1  # Discriminate
-                next_obs[:] = float('nan')  # TODO shouldn't need this https://discuss.pytorch.org/t/when-does-nan-get-turned-into-inf/142191
+
+                # TODO (https://discuss.pytorch.org/t/when-does-nan-get-turned-into-inf/142191)
+                next_obs[:] = float('nan')
 
             # "Discern"
 
