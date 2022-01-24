@@ -105,6 +105,7 @@ class Logger:
         with file_name.open('w') as f:
             writer = csv.DictWriter(f,
                                     fieldnames=logs.keys(),
+                                    extrasaction='ignore',
                                     restval=0.0)
             writer.writeheader()
             for row in rows:
