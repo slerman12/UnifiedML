@@ -120,6 +120,7 @@ class DQNAgent(torch.nn.Module):
         # Encode
         obs = self.encoder(obs)
         with torch.no_grad():
+            print(next_obs.shape)
             next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
