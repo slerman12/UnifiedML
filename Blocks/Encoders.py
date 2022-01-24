@@ -31,15 +31,13 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.pixels = pixels
 
-        self.CNN = nn.Sequential(nn.Conv2d(1, 32, 3, stride=2), nn.ReLU(), nn.Conv2d(32, 32, 3, stride=1))
-
         # CNN
-        # self.CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
-        #                                           self.out_channels, 3, stride=2 if i == 0 else 1),
-        #                                 nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-        #                                 nn.ReLU())
-        #                                for i in range(depth + 1)], ()),
-        #                          Utils.ReNormalize(-3) if renormalize else nn.Identity())
+        self.CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
+                                                  self.out_channels, 3, stride=2 if i == 0 else 1),
+                                        nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
+                                        nn.ReLU())
+                                       for i in range(depth + 1)], ()),
+                                 Utils.ReNormalize(-3) if renormalize else nn.Identity())
 
         # Initialize model
         self.init(optim_lr, target_tau)
@@ -70,27 +68,26 @@ class CNNEncoder(nn.Module):
 
     # Encodes
     def forward(self, obs, *context, flatten=True):
-        # obs_shape = obs.shape  # Preserve leading dims
-        # assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
-        # obs = obs.flatten(0, -4)  # Encode last 3 dims
-        #
-        # # Normalizes pixels
-        # if self.pixels:
-        #     obs = obs / 127.5 - 1
-        #
-        # # Optionally append context to channels assuming dimensions allow
-        # context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-        #            for c in context]
-        # obs = torch.cat([obs, *context], 1)
-        #
-        # # CNN encode
-        # obs = torch.full_like(obs, float('nan'))
+        obs_shape = obs.shape  # Preserve leading dims
+        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
+        obs = obs.flatten(0, -4)  # Encode last 3 dims
+
+        # Normalizes pixels
+        if self.pixels:
+            obs = obs / 127.5 - 1
+
+        # Optionally append context to channels assuming dimensions allow
+        context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
+                   for c in context]
+        obs = torch.cat([obs, *context], 1)
+
+        # CNN encode
         print(obs.shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
         h = self.CNN(obs)
         print(h.shape, (~torch.isnan(h.flatten(1).sum(1))).any())
 
-        # h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        # assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
+        h = h.view(*obs_shape[:-3], *h.shape[-3:])
+        assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
 
         if flatten:
             return h.flatten(-3)
