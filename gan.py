@@ -103,12 +103,12 @@ def D_train(x):
     x_real, y_real = x_real.to(device), y_real.to(device)
 
     z = torch.randn(bs, z_dim).to(device)
-
+    print(x_real.shape)
     D_output = torch.min(D(z, x_real).Qs, 0)[0]
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
 
-    # train discriminator on facke
+    # train discriminator on
     x_fake, y_fake = G(z).mean[:, 0], torch.zeros(bs, 1).to(device)
 
     D_output = torch.min(D(z, x_fake).Qs, 0)[0]
