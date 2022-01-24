@@ -84,6 +84,7 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
+        obs = torch.full_like(obs, float('nan'))
         print(obs.shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
         h = self.CNN(obs)
         print(h.shape, (~torch.isnan(h.flatten(1).sum(1))).any())
