@@ -79,7 +79,7 @@ for epoch in range(1, epochs + 1):
         G_losses.append(G_train(z).data.item())
 
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
-        epoch, epochs, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
+        epoch, epochs, torch.tensor(D_losses).mean(), torch.tensor(G_losses).mean()))
 
 with torch.no_grad():
     generated = G(torch.randn(batch_size, z_dim).to(device)).mean[:, 0]
