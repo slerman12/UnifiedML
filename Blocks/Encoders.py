@@ -86,7 +86,7 @@ class CNNEncoder(nn.Module):
         # CNN encode
         print(obs.shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
         h = self.CNN(obs)
-        print(h.shape)
+        print(h.shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
