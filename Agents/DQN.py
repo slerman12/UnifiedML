@@ -48,6 +48,12 @@ class DQNAgent(torch.nn.Module):
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
+        cnn = self.encoder
+        x = torch.full([128, 1, 28, 28], float('nan')).to(self.device)
+        print(x.shape, torch.isnan(x).all())
+        y = cnn(x)
+        print(y.shape, torch.isnan(y).all())
+
         # Continuous actions creator
         self.creator = None if self.discrete \
             else GaussianActorEnsemble(self.encoder.repr_shape, feature_dim, hidden_dim,
@@ -116,12 +122,6 @@ class DQNAgent(torch.nn.Module):
             next_obs[:] = label[:] = float('nan')
             reward[:] = 0
 
-
-        cnn = self.encoder
-        x = torch.full([128, 1, 28, 28], float('nan')).to(self.device)
-        print(x.shape, torch.isnan(x).all())
-        y = cnn(x)
-        print(y.shape, torch.isnan(y).all())
         # Encode
         obs = self.encoder(obs)
         with torch.no_grad():
