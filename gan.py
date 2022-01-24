@@ -39,15 +39,13 @@ D = EnsembleQCritic([z_dim], 1024, 512, mnist_dim, optim_lr=lr).to(device)
 loss = nn.MSELoss()
 
 
-def D_train(x):
+def D_train(x, z):
     D.zero_grad()
 
     x_real, y_real = x.view(-1, mnist_dim).to(device), torch.ones(x.shape[0], 1).to(device)
 
-    z = torch.randn(x.shape[0], z_dim).to(device)
-    shape = x.shape[0] // 2
-
-    x_real[:shape], y_real[:shape] = G(z[:shape]).mean[:, 0], 0
+    half = x.shape[0] // 2
+    x_real[:half], y_real[:half] = G(z[:half]).mean[:, 0], 0
 
     D_output = torch.min(D(z, x_real).Qs, 0)[0]
 
@@ -56,13 +54,11 @@ def D_train(x):
     D_loss.backward()
     D.optim.step()
 
-    return D_loss.data.item()
+    return D_loss
 
 
-def G_train(x):
+def G_train(z):
     G.zero_grad()
-
-    z = torch.randn(batch_size, z_dim).to(device)
 
     G_output = G(z).mean[:, 0]
     D_output = torch.min(D(z, G_output).Qs, 0)[0]
@@ -71,15 +67,16 @@ def G_train(x):
     G_loss.backward()
     G.optim.step()
 
-    return G_loss.data.item()
+    return G_loss
 
 
 epochs = 200
 for epoch in range(1, epochs + 1):
     D_losses, G_losses = [], []
     for batch_idx, (x, _) in enumerate(train_loader):
-        D_losses.append(D_train(x))
-        G_losses.append(G_train(x))
+        z = torch.randn(x.shape[0], z_dim).to(device)
+        D_losses.append(D_train(x, z).data.item())
+        G_losses.append(G_train(z).data.item())
 
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
         epoch, epochs, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
