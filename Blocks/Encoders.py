@@ -28,7 +28,7 @@ class CNNEncoder(nn.Module):
         self.in_channels = obs_shape[0]
         self.out_channels = out_channels
 
-        self.obs_shape = obs_shape
+        self.obs_shape = torch.Size(obs_shape)
         self.pixels = pixels
 
         # CNN
