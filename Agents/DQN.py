@@ -71,7 +71,7 @@ class DQNAgent(torch.nn.Module):
             obs = torch.as_tensor(obs, device=self.device)
 
             # "Imagine" / "See"
-            obs = torch.randn([1, self.encoder.flat_dim], device=obs.device) if self.generate \
+            obs = torch.randn([obs.shape[0], self.encoder.flat_dim], device=obs.device) if self.generate \
                 else self.encoder(obs)
 
             # "Candidate actions"
