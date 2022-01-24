@@ -1,4 +1,3 @@
-# prerequisites
 from pathlib import Path
 
 import torch
@@ -18,11 +17,7 @@ batch_size = 256
 
 class Transform:
     def __call__(self, sample):
-        sample = FF.to_tensor(sample) * 2 - 1
-        # sample *= 255  # Encoder expects pixels  # TODO maybe reconfigure that
-        # mean = stddev = [0.5] * sample.shape[0]  # Depending on num channels
-        # sample = F.normalize(sample, mean, stddev)  # Generic normalization
-        return sample
+        return FF.to_tensor(sample) * 2 - 1
 
 
 transform = Transform()
@@ -45,14 +40,14 @@ loss = nn.MSELoss()
 
 
 def D_train(x):
-    # =======================Train the discriminator=======================#
     D.zero_grad()
 
     x_real, y_real = x.view(-1, mnist_dim).to(device), torch.ones(x.shape[0], 1).to(device)
 
-    z = torch.randn(x.shape[0] // 2, z_dim).to(device)
+    z = torch.randn(x.shape[0], z_dim).to(device)
+    shape = x.shape[0] // 2
 
-    x_real[:x.shape[0] // 2], y_real[:x.shape[0] // 2] = G(z).mean[:, 0], torch.zeros(x.shape[0] // 2, 1).to(device)
+    x_real[:shape], y_real[:shape] = G(z[:shape]).mean[:, 0], torch.zeros(shape, 1).to(device)
 
     D_output = torch.min(D(z, x_real).Qs, 0)[0]
 
@@ -65,7 +60,6 @@ def D_train(x):
 
 
 def G_train(x):
-    # =======================Train the generator=======================#
     G.zero_grad()
 
     z = torch.randn(batch_size, z_dim).to(device)
@@ -74,26 +68,24 @@ def G_train(x):
     D_output = torch.min(D(z, G_output).Qs, 0)[0]
     G_loss = -D_output.mean()
 
-    # gradient backprop & optimize ONLY G's parameters
     G_loss.backward()
     G.optim.step()
 
     return G_loss.data.item()
 
 
-n_epoch = 200
-for epoch in range(1, n_epoch+1):
+epochs = 200
+for epoch in range(1, epochs + 1):
     D_losses, G_losses = [], []
     for batch_idx, (x, _) in enumerate(train_loader):
         D_losses.append(D_train(x))
         G_losses.append(G_train(x))
 
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
-        (epoch), n_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
+        epoch, epochs, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
 
 with torch.no_grad():
-    test_z = torch.randn(batch_size, z_dim).to(device)
-    generated = G(test_z).mean[:, 0]
+    generated = G(torch.randn(batch_size, z_dim).to(device)).mean[:, 0]
 
     Path('./Benchmarking/g/g/g/g/').mkdir(exist_ok=True, parents=True)
     save_image(generated.view(generated.size(0), 1, 28, 28), './Benchmarking/g/g/g/g/sample_' + '.png')
