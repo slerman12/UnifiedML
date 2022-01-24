@@ -26,7 +26,7 @@ class DQNAgent(torch.nn.Module):
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, log,  # On-boarding
-                 num_actors=5,  # AC2
+                 # num_actors=5,  # AC2
                  num_actions=2, num_critics=2):  # DQN
         super().__init__()
 
@@ -41,8 +41,8 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
-        if not (self.RL or self.generate):
-            num_actors = num_actions = 1
+        # if not (self.RL or self.generate):
+        #     num_actors = num_actions = 1
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
@@ -51,7 +51,8 @@ class DQNAgent(torch.nn.Module):
         # Continuous actions creator
         self.creator = None if self.discrete \
             else GaussianActorEnsemble(self.encoder.repr_shape, feature_dim, hidden_dim,
-                                       self.action_dim, ensemble_size=num_actors,
+                                       self.action_dim, ensemble_size=1,
+                                       # ensemble_size=num_actors,
                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        optim_lr=lr)
 
@@ -205,6 +206,9 @@ class DQNAgent(torch.nn.Module):
                                                            self.step, self.num_actions, logs=logs)
 
             # Update actor
+            # self.creator.zero_grad(set_to_none=True)
+            # actor_loss.backward()
+            # self.creator.optim.step()
             Utils.optimize(actor_loss,
                            self.creator)
 
