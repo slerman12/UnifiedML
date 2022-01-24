@@ -70,21 +70,21 @@ class CNNEncoder(nn.Module):
 
     # Encodes
     def forward(self, obs, *context, flatten=True):
-        obs_shape = obs.shape  # Preserve leading dims
-        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
-        obs = obs.flatten(0, -4)  # Encode last 3 dims
-
-        # Normalizes pixels
-        if self.pixels:
-            obs = obs / 127.5 - 1
-
-        # Optionally append context to channels assuming dimensions allow
-        context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-                   for c in context]
-        obs = torch.cat([obs, *context], 1)
-
-        # CNN encode
-        obs = torch.full_like(obs, float('nan'))
+        # obs_shape = obs.shape  # Preserve leading dims
+        # assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
+        # obs = obs.flatten(0, -4)  # Encode last 3 dims
+        #
+        # # Normalizes pixels
+        # if self.pixels:
+        #     obs = obs / 127.5 - 1
+        #
+        # # Optionally append context to channels assuming dimensions allow
+        # context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
+        #            for c in context]
+        # obs = torch.cat([obs, *context], 1)
+        #
+        # # CNN encode
+        # obs = torch.full_like(obs, float('nan'))
         print(obs.shape, (~torch.isnan(obs.flatten(1).sum(1))).any())
         h = self.CNN(obs)
         print(h.shape, (~torch.isnan(h.flatten(1).sum(1))).any())
