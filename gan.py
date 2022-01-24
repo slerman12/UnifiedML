@@ -47,7 +47,7 @@ def D_train(x):
     z = torch.randn(x.shape[0], z_dim).to(device)
     shape = x.shape[0] // 2
 
-    x_real[:shape], y_real[:shape] = G(z[:shape]).mean[:, 0], torch.zeros(shape, 1).to(device)
+    x_real[:shape], y_real[:shape] = G(z[:shape]).mean[:, 0], 0
 
     D_output = torch.min(D(z, x_real).Qs, 0)[0]
 
