@@ -99,17 +99,17 @@ def D_train(x):
     D.zero_grad()
 
     # train discriminator on real
-    x_real, y_real = x.view(-1, mnist_dim), torch.ones(bs, 1)
+    x_real, y_real = x.view(-1, mnist_dim), torch.ones(x.shape[0], 1)
     x_real, y_real = x_real.to(device), y_real.to(device)
 
-    z = torch.randn(x_real.shape[0], z_dim).to(device)
+    z = torch.randn(x.shape[0], z_dim).to(device)
 
     D_output = torch.min(D(z, x_real).Qs, 0)[0]
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
 
     # train discriminator on
-    x_fake, y_fake = G(z).mean[:, 0], torch.zeros(bs, 1).to(device)
+    x_fake, y_fake = G(z).mean[:, 0], torch.zeros(x.shape[0], 1).to(device)
 
     D_output = torch.min(D(z, x_fake).Qs, 0)[0]
     D_fake_loss = criterion(D_output, y_fake)
