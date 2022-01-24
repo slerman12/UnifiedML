@@ -57,13 +57,14 @@ class Generator(nn.Module):
 class Discriminator(nn.Module):
     def __init__(self, d_input_dim):
         super(Discriminator, self).__init__()
-        self.fc1 = nn.Linear(d_input_dim, 1024)
+        self.fc1 = nn.Linear(d_input_dim + 100, 1024)
         self.fc2 = nn.Linear(self.fc1.out_features, self.fc1.out_features//2)
         self.fc3 = nn.Linear(self.fc2.out_features, self.fc2.out_features//2)
         self.fc4 = nn.Linear(self.fc3.out_features, 1)
 
     # forward method
-    def forward(self, x):
+    def forward(self, *x):
+        x = torch.cat(x, -1)
         x = F.leaky_relu(self.fc1(x), 0.2)
         x = F.dropout(x, 0.3)
         x = F.leaky_relu(self.fc2(x), 0.2)
@@ -99,15 +100,16 @@ def D_train(x):
     x_real, y_real = x.view(-1, mnist_dim), torch.ones(bs, 1)
     x_real, y_real = x_real.to(device), y_real.to(device)
 
-    D_output = D(x_real)
+    z = torch.randn(bs, z_dim).to(device)
+
+    D_output = D(x_real, z)
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
 
     # train discriminator on facke
-    z = torch.randn(bs, z_dim).to(device)
     x_fake, y_fake = G(z).mean[:, 0], torch.zeros(bs, 1).to(device)
 
-    D_output = D(x_fake)
+    D_output = D(x_fake, z)
     D_fake_loss = criterion(D_output, y_fake)
     D_fake_score = D_output
 
@@ -127,7 +129,7 @@ def G_train(x):
     y = torch.ones(bs, 1).to(device)
 
     G_output = G(z).mean[:, 0]
-    D_output = D(G_output)
+    D_output = D(G_output, z)
     G_loss = -D_output.mean()
 
     # gradient backprop & optimize ONLY G's parameters
