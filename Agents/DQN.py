@@ -121,6 +121,7 @@ class DQNAgent(torch.nn.Module):
         obs = self.encoder(obs)
         with torch.no_grad():
             next_obs = self.encoder(next_obs)
+            # print(next_obs.shape, (~torch.isnan(next_obs.flatten(1).sum(1))).any())
 
         # "Journal teachings"
 
