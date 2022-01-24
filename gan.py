@@ -30,7 +30,7 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch
 
 mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
 
-z_dim = 100
+z_dim = 50
 lr = 0.0002
 
 G = GaussianActorEnsemble([z_dim], 512, 256, mnist_dim, 1, optim_lr=lr).to(device)

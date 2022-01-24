@@ -48,6 +48,7 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = 1
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
+        print(self.encoder.flat_dim)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
