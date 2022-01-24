@@ -102,8 +102,8 @@ def D_train(x):
     x_real, y_real = x.view(-1, mnist_dim), torch.ones(bs, 1)
     x_real, y_real = x_real.to(device), y_real.to(device)
 
-    z = torch.randn(bs, z_dim).to(device)
-    print(x_real.shape)
+    z = torch.randn(x_real.shape[0], z_dim).to(device)
+
     D_output = torch.min(D(z, x_real).Qs, 0)[0]
     D_real_loss = criterion(D_output, y_real)
     D_real_score = D_output
