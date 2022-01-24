@@ -42,7 +42,7 @@ class CNNEncoder(nn.Module):
         #                          Utils.ReNormalize(-3) if renormalize else nn.Identity())
 
         # Initialize model
-        self.init(optim_lr, target_tau)
+        # self.init(optim_lr, target_tau)
 
     def init(self, optim_lr=None, target_tau=None):
         # Initialize weights
