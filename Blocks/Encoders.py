@@ -28,7 +28,7 @@ class CNNEncoder(nn.Module):
         self.in_channels = obs_shape[0]
         self.out_channels = out_channels
 
-        self.obs_shape = torch.Size(obs_shape)
+        self.obs_shape = obs_shape
         self.pixels = pixels
 
         # CNN
@@ -69,7 +69,7 @@ class CNNEncoder(nn.Module):
     # Encodes
     def forward(self, obs, *context, flatten=True):
         obs_shape = obs.shape  # Preserve leading dims
-        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape[-3:]}'
+        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
         # Normalizes pixels
