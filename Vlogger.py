@@ -20,7 +20,9 @@ class Vlogger:
 
     def dump_vlogs(self, vlogs, name="Video_Image"):
         if self.reel:
-            save_image(torch.stack(vlogs).view(-1, *vlogs[0].shape[-3:]), str(self.save_path / (name + '.png')))
+            num_channels = min(vlogs[0].shape[-3], 3)  # Undoing frame-stack if necessary
+            hw = vlogs[0].shape[-2:]
+            save_image(torch.stack(vlogs).view(-1, num_channels, *hw), str(self.save_path / (name + '.png')))
         else:
             imageio.mimsave(str(self.save_path / (name + '.mp4')), vlogs, fps=self.fps)
 
