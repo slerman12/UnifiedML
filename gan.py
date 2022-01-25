@@ -7,6 +7,7 @@ from torchvision import datasets
 from torchvision.transforms import functional as FF
 from torchvision.utils import save_image
 
+import Utils
 from Blocks.Actors import GaussianActorEnsemble
 from Blocks.Critics import EnsembleQCritic
 from Blocks.Augmentations import RandomShiftsAug
@@ -42,8 +43,6 @@ loss = nn.MSELoss()
 
 
 def D_train(x, z):
-    D.zero_grad()
-
     x, y = x.flatten(-3).to(device), torch.ones(x.shape[0], 1).to(device)
 
     half = x.shape[0] // 2
@@ -53,21 +52,17 @@ def D_train(x, z):
 
     D_loss = loss(D_output.Qs, y.expand_as(D_output.Qs))
 
-    D_loss.backward()
-    D.optim.step()
+    Utils.optimize(D_loss, D)
 
     return D_loss
 
 
 def G_train(z):
-    G.zero_grad()
-
     G_output = G(z).mean[:, 0]
     D_output = torch.min(D(z, G_output).Qs, 0)[0]
     G_loss = -D_output.mean()
 
-    G_loss.backward()
-    G.optim.step()
+    Utils.optimize(G_loss, G)
 
     return G_loss
 

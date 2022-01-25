@@ -117,10 +117,14 @@ class DQNAgent(torch.nn.Module):
             next_obs[:] = label[:] = float('nan')
             reward[:] = 0
 
+            obs = torch.randn([obs.shape[0], self.encoder.flat_dim], device=obs.device)
+            next_obs = torch.full_like(obs, float('nan'))
+
         # Encode
-        obs = self.encoder(obs)
-        with torch.no_grad():
-            next_obs = self.encoder(next_obs)
+        else:
+            obs = self.encoder(obs)
+            with torch.no_grad():
+                next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
@@ -171,8 +175,6 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-                obs = torch.randn_like(obs)
-
                 # "Candidate generations"
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean
 
@@ -180,9 +182,6 @@ class DQNAgent(torch.nn.Module):
 
                 action[:len(obs) // 2] = generated_image
                 reward[:len(obs) // 2] = 1  # Discriminate
-
-                # TODO (https://discuss.pytorch.org/t/when-does-nan-get-turned-into-inf/142191)
-                next_obs[:] = float('nan')
 
             # "Discern"
 
