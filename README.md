@@ -181,7 +181,7 @@ python Run.py task=classify/mnist generate=true
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```
-python Run.py task=atari/breakout update_per_steps=1 evaluate_episodes=1 action_repeat=1 generate=true
+python Run.py task=atari/breakout evaluate_episodes=1 action_repeat=1 generate=true
 ```
 
 Implicitly treats as offline, and assumes a replay [is saved](#saving) that can be loaded.
