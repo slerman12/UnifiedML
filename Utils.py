@@ -232,7 +232,7 @@ def schedule(schedule, step):
 
 # Min-max normalizes to [0, 1]
 # "Re-normalization", as in SPR (https://arxiv.org/abs/2007.05929), or at least in their code
-class ReNormalize(nn.Module):
+class ShiftNorm(nn.Module):
     def __init__(self, start_dim=-1):
         super().__init__()
         self.start_dim = start_dim
@@ -242,3 +242,9 @@ class ReNormalize(nn.Module):
         y = y - y.min(-1, keepdim=True)[0]
         y = y / y.max(-1, keepdim=True)[0]
         return y.view(*x.shape)
+
+
+# Replaces tensor with Normal-sampled random values
+class Rand(nn.Module):
+    def forward(self, x):
+        return torch.randn_like(x)

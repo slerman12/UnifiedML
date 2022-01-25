@@ -39,7 +39,7 @@ class SPRAgent(torch.nn.Module):
 
         self.depth = depth
 
-        self.encoder = CNNEncoder(obs_shape, renormalize=True, optim_lr=lr, target_tau=target_tau)
+        self.encoder = CNNEncoder(obs_shape, shift_norm=True, optim_lr=lr, target_tau=target_tau)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
@@ -48,7 +48,7 @@ class SPRAgent(torch.nn.Module):
                                         optim_lr=lr)
 
         self.dynamics = ResidualBlockEncoder(self.encoder.repr_shape, self.action_dim,
-                                             renormalize=True, pixels=False, isotropic=True,
+                                             shift_norm=True, pixels=False, isotropic=True,
                                              optim_lr=lr)
 
         self.projector = MLPBlock(self.encoder.flat_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,

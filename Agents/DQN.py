@@ -42,7 +42,7 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
-        self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
+        self.encoder = CNNEncoder(obs_shape, rand=generate, optim_lr=lr)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
@@ -65,11 +65,8 @@ class DQNAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.creator, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
-            # "Imagine" / "See"
-            obs = torch.randn((obs.shape[0], self.encoder.flat_dim), device=obs.device) if self.generate \
-                else self.encoder(obs)
             # # "See"
-            # obs = self.encoder(obs)
+            obs = self.encoder(obs)
 
             # "Candidate actions"
             creations = None if self.discrete \
@@ -165,8 +162,6 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-                obs = torch.randn_like(obs)
-                # obs = obs.detach()
                 next_obs[:] = float('nan')
 
                 # "Candidate generations"

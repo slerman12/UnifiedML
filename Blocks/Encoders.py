@@ -18,7 +18,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, renormalize=False, pixels=True,
+    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_norm=False, rand=False, pixels=True,
                  optim_lr=None, target_tau=None):
 
         super().__init__()
@@ -37,7 +37,8 @@ class CNNEncoder(nn.Module):
                                         nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
                                         nn.ReLU())
                                        for i in range(depth + 1)], ()),
-                                 Utils.ReNormalize(-3) if renormalize else nn.Identity())
+                                 Utils.ShiftNorm(-3) if shift_norm else nn.Identity(),
+                                 Utils.Rand() if rand else nn.Identity())
 
         # Initialize model
         self.init(optim_lr, target_tau)
@@ -99,7 +100,7 @@ class ResidualBlockEncoder(CNNEncoder):
     e.g., Efficient-Zero (https://arxiv.org/pdf/2111.00210.pdf) or SPR (https://arxiv.org/abs/2007.05929).
     """
 
-    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, renormalize=False,
+    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_norm=False,
                  pixels=True, pre_residual=False, isotropic=False,
                  optim_lr=None, target_tau=None):
 
@@ -126,7 +127,7 @@ class ResidualBlockEncoder(CNNEncoder):
                                    for _ in range(num_blocks)],
                                  nn.Conv2d(hidden_channels, self.out_channels, kernel_size=3, padding=1),
                                  nn.ReLU(inplace=True),
-                                 Utils.ReNormalize(-3) if renormalize else nn.Identity())
+                                 Utils.ShiftNorm(-3) if shift_norm else nn.Identity())
 
         self.init(optim_lr, target_tau)
 
