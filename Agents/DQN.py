@@ -42,7 +42,8 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
-        self.encoder = CNNEncoder(obs_shape, rand=generate, optim_lr=lr)
+        self.encoder = Utils.Rand(feature_dim) if generate \
+            else CNNEncoder(obs_shape, optim_lr=lr)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
@@ -186,8 +187,9 @@ class DQNAgent(torch.nn.Module):
             self.critic.update_target_params()
 
         # Update encoder
-        self.encoder.optim.step()
-        self.encoder.optim.zero_grad(set_to_none=True)
+        if not self.generate:
+            self.encoder.optim.step()
+            self.encoder.optim.zero_grad(set_to_none=True)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"

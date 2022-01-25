@@ -245,6 +245,14 @@ class ShiftNorm(nn.Module):
 
 
 # Replaces tensor with Normal-sampled random values
+# class Rand(nn.Module):
+#     def forward(self, x):
+#         return torch.randn_like(x)
+# Replaces tensor's batch items with Normal-sampled random values
 class Rand(nn.Module):
+    def __init__(self, size=1):
+        super().__init__()
+        self.size = size
+
     def forward(self, x):
-        return torch.randn_like(x)
+        return torch.randn(x.shape[0], self.size)
