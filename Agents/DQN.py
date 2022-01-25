@@ -62,7 +62,7 @@ class DQNAgent(torch.nn.Module):
 
         # Birth
 
-    def act(self, obs):
+    def act(self, obs):  # TODO test ema actor
         with torch.no_grad(), Utils.act_mode(self.encoder, self.creator, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
