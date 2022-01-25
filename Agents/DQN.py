@@ -12,7 +12,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import GaussianActorEnsemble, CategoricalCriticActor
+from Blocks.Actors import TruncatedGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -41,21 +41,15 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
-        # if not (self.RL or self.generate):
-        #     num_actors = num_actions = 1
-
         self.num_actions = num_actions  # Num actions sampled per actor
-        self.num_actions = 1
 
-        self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
+        self.encoder = CNNEncoder(obs_shape, renormalize=generate, optim_lr=lr)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
-            else GaussianActorEnsemble(self.encoder.repr_shape, feature_dim, hidden_dim,
-                                       self.action_dim, ensemble_size=1,
-                                       # ensemble_size=num_actors,
-                                       stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       optim_lr=lr)
+            else TruncatedGaussianActor(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
+                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                        optim_lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
                                       ensemble_size=num_critics, sigmoid=False, discrete=discrete,
@@ -72,6 +66,9 @@ class DQNAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.creator, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
+            # # "Imagine" / "See"
+            # obs = torch.randn((obs.shape[0], self.encoder.flat_dim), device=obs.device) if self.generate \
+            #     else self.encoder(obs)
             # "See"
             obs = self.encoder(obs)
 
@@ -104,12 +101,12 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
 
-        # "Envision" / "Perceive"
-
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
             next_obs[:] = label[:] = float('nan')
+
+        # "Envision" / "Perceive"
 
         # Augment
         obs = self.aug(obs)
@@ -169,6 +166,7 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
+                # obs = torch.randn_like(obs)
                 next_obs[:] = float('nan')
 
                 # "Candidate generations"
@@ -204,9 +202,6 @@ class DQNAgent(torch.nn.Module):
                                                            self.step, self.num_actions, logs=logs)
 
             # Update actor
-            # self.creator.zero_grad(set_to_none=True)
-            # actor_loss.backward()
-            # self.creator.optim.step()
             Utils.optimize(actor_loss,
                            self.creator)
 
