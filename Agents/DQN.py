@@ -26,7 +26,6 @@ class DQNAgent(torch.nn.Module):
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, log,  # On-boarding
-                 # num_actors=5,  # AC2
                  num_actions=2, num_critics=2):  # DQN
         super().__init__()
 
@@ -167,6 +166,7 @@ class DQNAgent(torch.nn.Module):
             # Generative modeling
             if self.generate:
                 # obs = torch.randn_like(obs)
+                obs = obs.detach()
                 next_obs[:] = float('nan')
 
                 # "Candidate generations"
