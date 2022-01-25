@@ -20,17 +20,17 @@ class Vlogger:
 
     def dump_vlogs(self, vlogs, name="Video_Image"):
         if self.reel:
-            num_channels = min(vlogs[0].shape[-3], 3)  # Undoing frame-stack if necessary
-            hw = vlogs[0].shape[-2:]
-            save_image(torch.stack(vlogs).view(-1, num_channels, *hw), str(self.save_path / (name + '.png')))
+            c, h, w = (min(vlogs[0].shape[-3], 3),  # Undoing frame-stack if necessary (max = 3 channels per image)
+                       vlogs[0].shape[-2], *vlogs[0].shape[-1])
+            save_image(torch.stack(vlogs).view(-1, c, h, w), str(self.save_path / (name + '.png')))
         else:
             imageio.mimsave(str(self.save_path / (name + '.mp4')), vlogs, fps=self.fps)
 
 
 # Note: May be able to video record more efficiently with:
 
-    # frame = cv2.resize(exp.obs[-3:].transpose(1, 2, 0),
-    #                    dsize=(self.render_size, self.render_size),
-    #                    interpolation=cv2.INTER_CUBIC)
+# frame = cv2.resize(exp.obs[-3:].transpose(1, 2, 0),
+#                    dsize=(self.render_size, self.render_size),
+#                    interpolation=cv2.INTER_CUBIC)
 
 # in Environment.py
