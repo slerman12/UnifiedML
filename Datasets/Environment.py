@@ -70,6 +70,9 @@ class Environment:
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
 
+                import torch
+                video_image.append(torch.tensor(exp.observation[:24]).to(action.device) / 127.5 - 1)
+
             # Tally reward, done, step
             self.episode_reward += exp.reward.mean()
             self.episode_done = exp.last() or self.generate
