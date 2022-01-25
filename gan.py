@@ -69,7 +69,7 @@ epochs = 200
 for epoch in range(1, epochs + 1):
     D_losses, G_losses = [], []
     for x, _ in train_loader:
-        x = aug(x)
+        # x = aug(x)
         z = torch.randn(x.shape[0], z_dim).to(device)
         D_losses.append(D_train(x, z).data.item())
         G_losses.append(G_train(z).data.item())

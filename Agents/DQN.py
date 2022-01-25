@@ -73,7 +73,7 @@ class DQNAgent(torch.nn.Module):
             obs = torch.as_tensor(obs, device=self.device)
 
             # "Imagine" / "See"
-            obs = torch.randn([obs.shape[0], self.encoder.flat_dim], device=obs.device) if self.generate \
+            obs = torch.randn((obs.shape[0], self.encoder.flat_dim), device=obs.device) if self.generate \
                 else self.encoder(obs)
 
             # "Candidate actions"
@@ -113,18 +113,13 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action = obs.flatten(-3) / 127.5 - 1
+            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
             next_obs[:] = label[:] = float('nan')
-            reward[:] = 1
-
-            obs = torch.randn([obs.shape[0], self.encoder.flat_dim], device=obs.device)
-            next_obs = torch.full_like(obs, float('nan'))
 
         # Encode
-        else:
-            obs = self.encoder(obs)
-            with torch.no_grad():
-                next_obs = self.encoder(next_obs)
+        obs = self.encoder(obs)
+        with torch.no_grad():
+            next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
@@ -175,14 +170,16 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
+                obs = torch.randn_like(obs)
+                next_obs[:] = float('nan')
+
                 # "Candidate generations"
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean
 
-                # generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
-                generated_image = creations[:, 0]
+                generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
 
-                action[:len(obs) // 2] = generated_image
-                reward[:len(obs) // 2] = 0  # Discriminate
+                half = len(obs) // 2
+                action[:half], reward[:half] = generated_image, 0  # Discriminate
 
             # "Discern"
 
