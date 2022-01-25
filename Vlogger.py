@@ -24,7 +24,7 @@ class Vlogger:
                        vlogs[0].shape[-2], vlogs[0].shape[-1])
             save_image(torch.stack(vlogs).view(-1, c, h, w), str(self.save_path / (name + '.png')))
         else:
-            # Assumes channel-last notation
+            # Assumes channel-last format
             imageio.mimsave(str(self.save_path / (name + '.mp4')), vlogs, fps=self.fps)
 
 
