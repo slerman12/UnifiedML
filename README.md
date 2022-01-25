@@ -39,7 +39,7 @@ Drink up! :beers:
 For detailed documentation, [see our :scroll:](https://arxiv.com).
 
 ```
-@inproceedings{yarats2021image,
+@inproceedings{cool,
   title={bla},
   author={Sam Lerman and Chenliang Xu},
   booktitle={bla},
