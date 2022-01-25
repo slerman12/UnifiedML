@@ -253,6 +253,7 @@ class Rand(nn.Module):
     def __init__(self, size=1):
         super().__init__()
         self.size = size
+        self.repr_shape = [size]
 
     def forward(self, x):
         return torch.randn(x.shape[0], self.size)
