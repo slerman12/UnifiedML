@@ -256,4 +256,4 @@ class Rand(nn.Module):
         self.repr_shape = [size]
 
     def forward(self, x):
-        return torch.randn(x.shape[0], self.size)
+        return torch.randn((x.shape[0], self.size), device=x.device)
