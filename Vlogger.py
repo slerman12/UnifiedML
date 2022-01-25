@@ -20,6 +20,7 @@ class Vlogger:
 
     def dump_vlogs(self, vlogs, name="Video_Image"):
         if self.reel:
+            # Assumes channel-first format
             c, h, w = (min(vlogs[0].shape[-3], 3),  # Undoing frame-stack if necessary (max = 3 channels per image)
                        vlogs[0].shape[-2], vlogs[0].shape[-1])
             save_image(torch.stack(vlogs).view(-1, c, h, w), str(self.save_path / (name + '.png')))
