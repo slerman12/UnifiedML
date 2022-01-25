@@ -9,6 +9,7 @@ from torchvision.utils import save_image
 
 from Blocks.Actors import GaussianActorEnsemble
 from Blocks.Critics import EnsembleQCritic
+from Blocks.Augmentations import RandomShiftsAug
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -35,6 +36,7 @@ lr = 0.0002
 
 G = GaussianActorEnsemble([z_dim], 50, 1024, mnist_dim, 1, optim_lr=lr).to(device)
 D = EnsembleQCritic([z_dim], 50, 1024, mnist_dim, optim_lr=lr).to(device)
+aug = RandomShiftsAug(4)
 
 loss = nn.MSELoss()
 
@@ -73,7 +75,8 @@ def G_train(z):
 epochs = 200
 for epoch in range(1, epochs + 1):
     D_losses, G_losses = [], []
-    for batch_idx, (x, _) in enumerate(train_loader):
+    for x, _ in train_loader:
+        x = aug(x)
         z = torch.randn(x.shape[0], z_dim).to(device)
         D_losses.append(D_train(x, z).data.item())
         G_losses.append(G_train(z).data.item())
