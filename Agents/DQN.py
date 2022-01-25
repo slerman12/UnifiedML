@@ -115,7 +115,7 @@ class DQNAgent(torch.nn.Module):
         if self.generate:
             action = obs.flatten(-3) / 127.5 - 1
             next_obs[:] = label[:] = float('nan')
-            reward[:] = 0
+            reward[:] = 1
 
             obs = torch.randn([obs.shape[0], self.encoder.flat_dim], device=obs.device)
             next_obs = torch.full_like(obs, float('nan'))
@@ -178,10 +178,11 @@ class DQNAgent(torch.nn.Module):
                 # "Candidate generations"
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean
 
-                generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
+                # generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
+                generated_image = creations[:, 0]
 
                 action[:len(obs) // 2] = generated_image
-                reward[:len(obs) // 2] = 1  # Discriminate
+                reward[:len(obs) // 2] = 0  # Discriminate
 
             # "Discern"
 

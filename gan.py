@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import torch
-import torch.nn as nn
+from torch.nn import functional as F
 
 from torchvision import datasets
 from torchvision.transforms import functional as FF
@@ -39,18 +39,16 @@ G = GaussianActorEnsemble([z_dim], 50, 1024, mnist_dim, 1, optim_lr=lr).to(devic
 D = EnsembleQCritic([z_dim], 50, 1024, mnist_dim, optim_lr=lr).to(device)
 aug = RandomShiftsAug(4)
 
-loss = nn.MSELoss()
-
 
 def D_train(x, z):
     x, y = x.flatten(-3).to(device), torch.ones(x.shape[0], 1).to(device)
 
-    half = x.shape[0] // 2
+    half = len(x) // 2
     x[:half], y[:half] = G(z[:half]).mean[:, 0], 0
 
     D_output = D(z, x)
 
-    D_loss = loss(D_output.Qs, y.expand_as(D_output.Qs))
+    D_loss = F.mse_loss(D_output.Qs, y.expand_as(D_output.Qs))
 
     Utils.optimize(D_loss, D)
 
