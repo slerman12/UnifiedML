@@ -65,7 +65,6 @@ class Environment:
             experiences.append(exp)
 
             if vlog or self.generate:
-                print(exp.observation.shape)
                 frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
                     else self.env.physics.render(height=256, width=256, camera_id=0) \
                     if hasattr(self.env, 'physics') else self.env.render()
