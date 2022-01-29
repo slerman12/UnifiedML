@@ -34,7 +34,7 @@ def make(task, frame_stack=3, action_repeat=2, max_episode_frames=None, truncate
     # Add extra info to action specs
     env = ActionSpecWrapper(env, np.float32)
 
-    # Repeats actions n times  (frame skip)
+    # Repeats actions n times  (frame skip)  TODO only for training, change generative modeling readme
     env = ActionRepeatWrapper(env, action_repeat if train else action_repeat)
 
     # Rescales actions to range

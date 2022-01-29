@@ -52,7 +52,7 @@ class DQNAgent(torch.nn.Module):
                                         optim_lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
-                                      ensemble_size=num_critics, sigmoid=False, discrete=discrete,
+                                      ensemble_size=num_critics, discrete=self.discrete,
                                       optim_lr=lr, target_tau=target_tau)
 
         self.actor = CategoricalCriticActor(stddev_schedule)
@@ -163,7 +163,7 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-                next_obs[:] = float('nan')
+                next_obs[:] = float('nan')  # todo delete
 
                 # "Candidate generations"
                 creations = self.creator(obs[:len(obs) // 2], self.step).mean

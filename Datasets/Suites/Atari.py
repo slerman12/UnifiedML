@@ -203,8 +203,8 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
 
     # Different train/eval settings?
     if not train:
-        sticky_action_proba = sticky_action_proba
-        action_repeat = action_repeat
+        sticky_action_proba = sticky_action_proba  # TODO only for training?
+        action_repeat = action_repeat  # TODO only for training, change generative modeling readme
 
     env = gym.make(task,
                    obs_type='rgb',                   # ram | rgb | grayscale

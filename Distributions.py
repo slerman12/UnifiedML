@@ -11,12 +11,11 @@ import Utils
 
 # A Gaussian Normal distribution with its standard deviation clipped
 class TruncatedNormal(pyd.Normal):
-    def __init__(self, loc, scale, low=None, high=None, eps=1e-6, stddev_clip=None, one_hot=False):
+    def __init__(self, loc, scale, low=None, high=None, eps=1e-6, stddev_clip=None):
         super().__init__(loc, scale)
         self.low, self.high = low, high
         self.eps = eps
         self.stddev_clip = stddev_clip
-        self.one_hot = one_hot
 
     def log_prob(self, value):
         try:
