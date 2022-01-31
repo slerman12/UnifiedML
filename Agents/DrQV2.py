@@ -20,7 +20,7 @@ class DrQV2Agent(torch.nn.Module):
     """Data-Regularized Q-Network V2 (https://arxiv.org/abs/2107.09645)
     Generalized to discrete control, supervised learning, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, feature_dim, hidden_dim,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim,  # Architecture
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, device, log,  # On-boarding
@@ -36,10 +36,10 @@ class DrQV2Agent(torch.nn.Module):
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
-        self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, action_shape[-1],
+        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_shape[-1],
                                       optim_lr=lr, target_tau=target_tau)
 
-        self.actor = TruncatedGaussianActor(self.encoder.repr_shape, feature_dim, hidden_dim, action_shape[-1],
+        self.actor = TruncatedGaussianActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_shape[-1],
                                             discrete=discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                             optim_lr=lr)
 

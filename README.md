@@ -218,6 +218,8 @@ Careful, without ```replay.save=true``` a loaded replay will be deleted upon ter
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
+Individual agent attributes can be saved with ```save_attr```, e.g., ```'save_attr=["encoder", "critic"]'```.
+
 ### Distributed
 
 You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. 

@@ -26,9 +26,10 @@ def set_seeds(seed):
 
 
 # Saves module + attributes
-def save(path, module, **attributes):
+def save(path, module, *attributes):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
+    attributes = {attr: attr for attr in attributes}
     attributes.update({'state_dict': module.state_dict()})
     torch.save(attributes, path)
 
@@ -51,6 +52,13 @@ def load(path, module):
         except:
             warnings.warn(f'Load conflict')  # For distributed training
             pass
+
+
+# Assigns a default value to x if x is None
+def default(x, value):
+    if x is None:
+        x = value
+    return x
 
 
 # Initializes model weights according to common distributions

@@ -19,7 +19,7 @@ class EnsembleQCritic(nn.Module):
     MLP-based Critic network, employs ensemble Q learning,
     returns a Normal distribution over the ensemble.
     """
-    def __init__(self, repr_shape, feature_dim, hidden_dim, action_dim, ensemble_size=2, l2_norm=False,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2, l2_norm=False,
                  sigmoid=False, discrete=False, target_tau=None, optim_lr=None):
         super().__init__()
 
@@ -28,10 +28,10 @@ class EnsembleQCritic(nn.Module):
 
         repr_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, feature_dim),
-                                   nn.LayerNorm(feature_dim), nn.Tanh())
+        self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
+                                   nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        in_dim = feature_dim if discrete else feature_dim + action_dim
+        in_dim = trunk_dim if discrete else trunk_dim + action_dim
         out_dim = action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2, binary=sigmoid, l2_norm=l2_norm)

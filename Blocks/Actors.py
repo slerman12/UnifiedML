@@ -17,8 +17,8 @@ from Blocks.Architectures.MLP import MLP
 
 
 class TruncatedGaussianActor(nn.Module):
-    def __init__(self, repr_shape, feature_dim, hidden_dim, action_dim, l2_norm=False,
-                 discrete=False, stddev_schedule=None,  stddev_clip=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm=False,
+                 discrete=False, stddev_schedule=None, stddev_clip=None,
                  target_tau=None, optim_lr=None):
         super().__init__()
 
@@ -30,12 +30,12 @@ class TruncatedGaussianActor(nn.Module):
 
         repr_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, feature_dim),
-                                   nn.LayerNorm(feature_dim), nn.Tanh())
+        self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
+                                   nn.LayerNorm(trunk_dim), nn.Tanh())
 
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.Pi_head = MLP(feature_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
+        self.Pi_head = MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
 
         self.init(optim_lr, target_tau)
 
@@ -113,15 +113,15 @@ class CategoricalCriticActor(nn.Module):
 class GaussianActorEnsemble(TruncatedGaussianActor):
     """"Ensembles actions output by Gaussian actors,
     returns all actor outputs unaltered, simply grouped"""
-    def __init__(self, repr_shape, feature_dim, hidden_dim, action_dim, ensemble_size=2,
-                 l2_norm=False, discrete=False, stddev_schedule=None,  stddev_clip=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2,
+                 l2_norm=False, discrete=False, stddev_schedule=None, stddev_clip=None,
                  target_tau=None, optim_lr=None):
-        super().__init__(repr_shape, feature_dim, hidden_dim, action_dim, l2_norm,
+        super().__init__(repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm,
                          discrete, stddev_schedule, stddev_clip)
 
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.Pi_head = Utils.Ensemble([MLP(feature_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
+        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
                                        for _ in range(ensemble_size)])
 
         self.init(optim_lr, target_tau)

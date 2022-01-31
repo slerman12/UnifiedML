@@ -22,7 +22,7 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, feature_dim, hidden_dim,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim,  # Architecture
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, log,  # On-boarding
@@ -42,20 +42,20 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
-        self.encoder = Utils.Rand(feature_dim) if generate \
+        self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, optim_lr=lr)
 
-        # Continuous actions creator
-        self.creator = None if self.discrete \
-            else TruncatedGaussianActor(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
+        # Continuous actions
+        self.actor = None if self.discrete \
+            else TruncatedGaussianActor(self.encoder.repr_shape, trunk_dim, hidden_dim, self.action_dim,
                                         stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                         optim_lr=lr)
 
-        self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
+        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, self.action_dim,
                                       ensemble_size=num_critics, discrete=self.discrete,
                                       optim_lr=lr, target_tau=target_tau)
 
-        self.actor = CategoricalCriticActor(stddev_schedule)
+        self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Data augmentation
         self.aug = IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
@@ -63,19 +63,18 @@ class DQNAgent(torch.nn.Module):
         # Birth
 
     def act(self, obs):  # TODO test ema actor
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.creator, self.critic, self.actor):
+        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
-            # # "See"
+            # "See"
             obs = self.encoder(obs)
 
-            # "Candidate actions"
-            creations = None if self.discrete \
-                else self.creator(obs, self.step).sample(self.num_actions) if self.training \
-                else self.creator(obs, self.step).mean
+            actions = None if self.discrete \
+                else self.actor(obs, self.step).sample(self.num_actions) if self.training \
+                else self.actor(obs, self.step).mean
 
-            # DQN actor is based on critic
-            Pi = self.actor(self.critic(obs, creations), self.step)
+            # DQN action selector is based on critic
+            Pi = self.action_selector(self.critic(obs, actions), self.step)
 
             action = Pi.sample() if self.training \
                 else Pi.best
@@ -128,12 +127,11 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
-            # "Candidate classifications"
-            creations = self.creator(obs[instruction], self.step).rsample(self.num_actions) if self.RL \
-                else self.creator(obs[instruction], self.step).mean
+            actions = self.actor(obs[instruction], self.step).rsample(self.num_actions) if self.RL \
+                else self.actor(obs[instruction], self.step).mean
 
             # Inference
-            y_predicted = self.actor(self.critic(obs[instruction], creations), self.step).best
+            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -144,7 +142,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.creator, retain_graph=self.RL)
+                               self.actor, retain_graph=self.RL)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
@@ -165,10 +163,9 @@ class DQNAgent(torch.nn.Module):
             if self.generate:
                 next_obs[:] = float('nan')  # todo delete
 
-                # "Candidate generations"
-                creations = self.creator(obs[:len(obs) // 2], self.step).mean
+                actions = self.actor(obs[:len(obs) // 2], self.step).mean
 
-                generated_image = self.actor(self.critic(obs[:len(obs) // 2], creations), self.step).best
+                generated_image = self.action_selector(self.critic(obs[:len(obs) // 2], actions), self.step).best
 
                 half = len(obs) // 2
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
@@ -176,7 +173,7 @@ class DQNAgent(torch.nn.Module):
             # "Discern"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.creator,
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs,
                                                       self.step, self.num_actions, logs=logs)
 
@@ -195,11 +192,11 @@ class DQNAgent(torch.nn.Module):
             # "Change" / "Grow"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.creator, self.critic, obs.detach(),
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
                                                            self.step, self.num_actions, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.creator)
+                           self.actor)
 
         return logs

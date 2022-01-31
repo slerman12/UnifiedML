@@ -6,7 +6,7 @@ defaults:
 # Agent
 obs_shape: ???  # To be specified later
 action_shape: ??? # To be specified later
-feature_dim: 50
+trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
 lr: 1e-4
@@ -33,6 +33,7 @@ evaluate_episodes: 10
 save: true
 save_per_steps: 0
 save_path: ./Checkpoints/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Agent.pt
+save_attr: []
 load: false
 load_per_steps: 0
 # Logging
@@ -66,7 +67,7 @@ agent:
   _target_: ${Agent}
   obs_shape: ${obs_shape}
   action_shape: ${action_shape}
-  feature_dim: ${feature_dim}
+  trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
   explore_steps: ${explore_steps}
   stddev_schedule: ${stddev_schedule} # Specified in task/100K,500K,etc.

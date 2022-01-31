@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import hydra
-from hydra.utils import instantiate
+from hydra.utils import instantiate, call
 
 import Utils
 
@@ -61,7 +61,7 @@ def main(args):
                 vlogger.dump_vlogs(vlogs, f'{agent.step}')
 
         if args.plot_per_steps and agent.step % args.plot_per_steps == 0:
-            instantiate(args.plotting)
+            call(args.plotting)
 
         if converged:
             break
@@ -90,7 +90,7 @@ def main(args):
                     logger.log(logs, 'Train')
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):
-            Utils.save(args.save_path, agent, step=agent.step, episode=agent.episode)
+            Utils.save(args.save_path, agent, 'step', 'episode', *args.save_attr)
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
             Utils.load(args.save_path, agent)

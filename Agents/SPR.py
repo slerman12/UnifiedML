@@ -21,7 +21,7 @@ class SPRAgent(torch.nn.Module):
     """Self-Predictive Representations (https://arxiv.org/abs/2007.05929)
     Generalized for continuous, classification, and generative modeling support"""
     def __init__(self,
-                 obs_shape, action_shape, feature_dim, hidden_dim,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim,  # Architecture
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, device, log,  # On-boarding
@@ -43,7 +43,7 @@ class SPRAgent(torch.nn.Module):
 
         # Continuous actions creator
         self.creator = None if self.discrete \
-            else TruncatedGaussianActor(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
+            else TruncatedGaussianActor(self.encoder.repr_shape, trunk_dim, hidden_dim, self.action_dim,
                                         stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                         optim_lr=lr)
 
@@ -56,7 +56,7 @@ class SPRAgent(torch.nn.Module):
 
         self.predictor = MLPBlock(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2, optim_lr=lr)
 
-        self.critic = EnsembleQCritic(self.encoder.repr_shape, feature_dim, hidden_dim, self.action_dim,
+        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, self.action_dim,
                                       discrete=discrete, optim_lr=lr, target_tau=target_tau)
 
         self.actor = CategoricalCriticActor(stddev_schedule)
