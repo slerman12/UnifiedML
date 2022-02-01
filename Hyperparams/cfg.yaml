@@ -9,13 +9,14 @@ action_shape: ??? # To be specified later
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
+ema: false
 lr: 1e-4
 # Domains
 discrete: ??? # To be specified later
 offline: false
 RL: true
 supervise: true
-generate: false
+generate: true
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
@@ -33,7 +34,6 @@ evaluate_episodes: 10
 save: true
 save_per_steps: 0
 save_path: ./Checkpoints/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Agent.pt
-save_attr: []
 load: false
 load_per_steps: 0
 # Logging
@@ -65,15 +65,18 @@ environment:
 
 agent:
   _target_: ${Agent}
+  _recursive_: false
   obs_shape: ${obs_shape}
   action_shape: ${action_shape}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
+  recipes: ${recipes}
+  lr: ${lr}
+  target_tau: 0.01
   explore_steps: ${explore_steps}
   stddev_schedule: ${stddev_schedule} # Specified in task/100K,500K,etc.
   stddev_clip: 0.3
-  lr: ${lr}
-  target_tau: 0.01
+  ema: ${ema}
   discrete: ${discrete}
   RL: ${RL}
   supervise: ${supervise}
@@ -116,6 +119,39 @@ plotting:
   plot_suites: null
   plot_tasks: null
   steps: ${train_steps}
+
+# Can optionally pass in custom architectures such as those defined in ./Blocks/Recipes
+recipes:
+  Encoder:
+    trunk: null
+    cnn: null
+    pool: null
+  Actor:
+    trunk: null
+    pi_head: null
+  Critic:
+    trunk: null
+    q_head: null
+  Aug: null
+  encoder:
+    trunk:
+      _target_: ${recipes.Encoder.trunk}
+    cnn:
+      _target_: ${recipes.Encoder.cnn}
+    pool:
+      _target_: ${recipes.Encoder.pool}
+  actor:
+    trunk:
+      _target_: ${recipes.Actor.trunk}
+    pi_head:
+      _target_: ${recipes.Actor.pi_head}
+  critic:
+    trunk:
+      _target_: ${recipes.Critic.trunk}
+    q_head:
+      _target_: ${recipes.Critic.q_head}
+  aug:
+    _target_: ${recipes.Aug}
 
 hydra:
   run:

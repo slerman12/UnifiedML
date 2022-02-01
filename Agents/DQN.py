@@ -5,6 +5,7 @@
 import time
 import math
 
+import hydra
 import torch
 from torch.nn.functional import cross_entropy
 
@@ -22,9 +23,10 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
                  lr, target_tau,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
+                 ema,  # Evaluation
                  discrete, RL, supervise, generate, device, log,  # On-boarding
                  num_actions=2, num_critics=2):  # DQN
         super().__init__()
@@ -38,21 +40,22 @@ class DQNAgent(torch.nn.Module):
         self.birthday = time.time()
         self.step = self.episode = 0
         self.explore_steps = explore_steps
+        self.ema = ema
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, optim_lr=lr)
+            else CNNEncoder(obs_shape, optim_lr=lr, target_tau=target_tau if ema else None)
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else TruncatedGaussianActor(self.encoder.repr_shape, trunk_dim, hidden_dim, self.action_dim,
+            else TruncatedGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
                                         stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                        optim_lr=lr)
+                                        optim_lr=lr, target_tau=target_tau if ema else None)
 
-        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, self.action_dim,
-                                      ensemble_size=num_critics, discrete=self.discrete,
+        self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
+                                      ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       optim_lr=lr, target_tau=target_tau)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
@@ -62,16 +65,20 @@ class DQNAgent(torch.nn.Module):
 
         # Birth
 
-    def act(self, obs):  # TODO test ema actor
+    def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
+            # EMA targets
+            encoder = self.encoder.target if self.ema else self.encoder
+            actor = self.actor.target if self.ema else self.actor
+
             # "See"
-            obs = self.encoder(obs)
+            obs = encoder(obs)
 
             actions = None if self.discrete \
-                else self.actor(obs, self.step).sample(self.num_actions) if self.training \
-                else self.actor(obs, self.step).mean
+                else actor(obs, self.step).sample(self.num_actions) if self.training \
+                else actor(obs, self.step).mean
 
             # DQN action selector is based on critic
             Pi = self.action_selector(self.critic(obs, actions), self.step)
@@ -161,8 +168,7 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-                next_obs[:] = float('nan')  # todo delete
-
+                next_obs[:] = float('nan')
                 actions = self.actor(obs[:len(obs) // 2], self.step).mean
 
                 generated_image = self.action_selector(self.critic(obs[:len(obs) // 2], actions), self.step).best

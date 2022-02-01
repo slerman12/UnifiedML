@@ -26,10 +26,9 @@ def set_seeds(seed):
 
 
 # Saves module + attributes
-def save(path, module, *attributes):
+def save(path, module, **attributes):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    attributes = {attr: attr for attr in attributes}
     attributes.update({'state_dict': module.state_dict()})
     torch.save(attributes, path)
 
@@ -252,16 +251,12 @@ class ShiftNorm(nn.Module):
         return y.view(*x.shape)
 
 
-# Replaces tensor with Normal-sampled random values
-# class Rand(nn.Module):
-#     def forward(self, x):
-#         return torch.randn_like(x)
 # Replaces tensor's batch items with Normal-sampled random values
 class Rand(nn.Module):
     def __init__(self, size=1):
         super().__init__()
         self.size = size
-        self.repr_shape = [size]
+        self.feature_shape = [size]
 
     def forward(self, x):
         return torch.randn((x.shape[0], self.size), device=x.device)

@@ -36,10 +36,10 @@ class DrQV2Agent(torch.nn.Module):
 
         self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
 
-        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_shape[-1],
+        self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
                                       optim_lr=lr, target_tau=target_tau)
 
-        self.actor = TruncatedGaussianActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_shape[-1],
+        self.actor = TruncatedGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
                                             discrete=discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                             optim_lr=lr)
 

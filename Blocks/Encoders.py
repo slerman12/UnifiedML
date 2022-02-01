@@ -55,8 +55,8 @@ class CNNEncoder(nn.Module):
         _, height, width = self.obs_shape
         height, width = Utils.cnn_output_shape(height, width, self.CNN)
 
-        self.repr_shape = (self.out_channels, height, width)  # Feature map shape
-        self.flat_dim = math.prod(self.repr_shape)  # Flattened features dim
+        self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
+        self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
 
         # EMA
         if target_tau is not None:
@@ -86,7 +86,7 @@ class CNNEncoder(nn.Module):
         h = self.CNN(obs)
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        assert tuple(h.shape[-3:]) == self.repr_shape, 'pre-computed repr_shape does not match output CNN shape'
+        assert tuple(h.shape[-3:]) == self.feature_shape, 'pre-computed repr_shape does not match output CNN shape'
 
         if flatten:
             return h.flatten(-3)
@@ -133,5 +133,5 @@ class ResidualBlockEncoder(CNNEncoder):
 
         # Isotropic
         if isotropic:
-            assert obs_shape[-2] == self.repr_shape[1]
-            assert obs_shape[-1] == self.repr_shape[2]
+            assert obs_shape[-2] == self.feature_shape[1]
+            assert obs_shape[-1] == self.feature_shape[2]

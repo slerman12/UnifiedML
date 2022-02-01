@@ -20,18 +20,21 @@ class EnsembleQCritic(nn.Module):
     returns a Normal distribution over the ensemble.
     """
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2, l2_norm=False,
-                 sigmoid=False, discrete=False, target_tau=None, optim_lr=None):
+                 sigmoid=False, discrete=False, ignore_obs=False, target_tau=None, optim_lr=None):
         super().__init__()
 
         self.discrete = discrete
         self.action_dim = action_dim
+
+        assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
+        self.ignore_obs = ignore_obs
 
         repr_dim = math.prod(repr_shape)
 
         self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
                                    nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        in_dim = trunk_dim if discrete else trunk_dim + action_dim
+        in_dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         out_dim = action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2, binary=sigmoid, l2_norm=l2_norm)
@@ -57,7 +60,8 @@ class EnsembleQCritic(nn.Module):
         Utils.param_copy(self, self.target, self.target_tau)
 
     def forward(self, obs, action=None, context=None):
-        h = self.trunk(obs)
+        h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
+            else self.trunk(obs)
 
         if context is None:
             context = torch.empty(0, device=h.device)

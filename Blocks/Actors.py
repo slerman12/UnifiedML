@@ -28,9 +28,9 @@ class TruncatedGaussianActor(nn.Module):
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
 
-        repr_dim = math.prod(repr_shape)
+        feature_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
+        self.trunk = nn.Sequential(nn.Linear(feature_dim, trunk_dim),
                                    nn.LayerNorm(trunk_dim), nn.Tanh())
 
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim

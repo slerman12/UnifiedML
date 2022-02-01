@@ -83,7 +83,7 @@ conda env create --name ML --file=Conda.yml
 conda activate ML
 ```
 
-Optionally, for GPU support, install Pytorch with CUDA >11 from https://pytorch.org/get-started/locally/.
+Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
 
 # :joystick: Installing The Suites
 
@@ -169,6 +169,8 @@ python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 
 Train accuracies can be printed with ```agent.log=true```.
 
+Evaluation with exponential moving average of params can be toggled with ```ema=true```.
+
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
 ### Generative Modeling
@@ -177,14 +179,13 @@ Via the ```generate=true``` flag:
 ```
 python Run.py task=classify/mnist generate=true
 ```
+Implicitly treats as offline, and assumes a replay [is saved](#saving) that can be loaded.
 
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```
 python Run.py task=atari/breakout evaluate_episodes=1 action_repeat=1 generate=true
 ```
-
-Implicitly treats as offline, and assumes a replay [is saved](#saving) that can be loaded.
 
 ### Offline RL
 
@@ -218,7 +219,13 @@ Careful, without ```replay.save=true``` a loaded replay will be deleted upon ter
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
-Individual agent attributes can be saved with ```save_attr```, e.g., ```'save_attr=["encoder", "critic"]'```.
+### Custom Architectures
+
+Can also optionally pass in custom architectures such as those defined in ```./Blocks/Recipes```. 
+
+Here is for example a pretty standard GAN with a CNN Discriminator and a U-Net Generator:
+
+```python Run.py generate=True recipes.Critic.q_head=Blocks.Recipes.CNN recipes.Actor.pi_head=Blocks.Recipes.UNet```
 
 ### Distributed
 
