@@ -1,0 +1,121 @@
+import math
+
+import torch
+from torch import nn
+
+from Blocks.Architectures.Residual import Residual
+
+import Utils
+
+
+class Conv2DInvariant(nn.Conv2d):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding=0,
+                 groups=1, bias=True, padding_mode='zeros', num_dilations=4, num_rotations=4):
+        super().__init__(in_channels, out_channels,
+                         kernel_size, stride, padding, (1, 1), groups, bias, padding_mode)
+
+        self.num_dilations, self.num_rotations = num_dilations, num_rotations
+
+    def forward(self, input):
+        shape = input.shape
+        input = input.view(-1, *shape[-3:])
+
+        convs = []
+
+        for dila in reversed(range(1, self.num_dilations + 1)):
+            self.dilation = (dila, dila)
+
+            for _ in range(self.num_rotations):
+                convs.append(self._conv_forward(input, self.weight, self.bias))
+
+                # Rotation
+                phi = torch.tensor(math.pi / self.num_rotations)
+                s, c = torch.sin(phi), torch.cos(phi)
+                rota = torch.stack([torch.stack([c, -s]),
+                                    torch.stack([s, c])])
+                self.weight = torch.matmul(self.weight, rota)
+
+        convs = torch.stack(convs, 1)
+        return convs.view(*shape[:-3], *convs.shape[1:])
+
+
+class NonLocalityCNN(nn.Module):
+    def __init__(self, in_channels=3, out_channels=64, groups=8,
+                 num_dilations=4, num_rotations=4, depth=3):
+        super().__init__()
+
+        def layer_norm():
+            return nn.Sequential(Utils.ChannelSwap(),
+                                 nn.LayerNorm(out_channels // groups),
+                                 Utils.ChannelSwap())
+
+        kwargs = dict(num_dilations=num_dilations, num_rotations=num_rotations)
+
+        self.trunk = nn.Sequential(
+            Conv2DInvariant(in_channels,
+                            out_channels, (4, 4), **kwargs),
+            Utils.ChannelSwap(),
+            nn.GELU(),
+            layer_norm(),
+            Utils.ChannelSwap()
+        )
+
+        self.CNN = nn.Sequential(
+            *[Residual(nn.Sequential(
+                Conv2DInvariant(out_channels,
+                                out_channels, (2, 2), padding='same', groups=groups, **kwargs),
+                Utils.ChannelSwap(),
+                nn.GELU(),
+                layer_norm(),
+                Utils.ChannelSwap()
+            )
+            ) for _ in range(depth)])
+
+        # self.CNN = nn.Sequential(
+        #     *[Residual(nn.Sequential(
+        #         nn.Flatten(0, 1),
+        #         nn.Conv2d(out_channels, out_channels, (2, 2), padding='same', groups=groups),
+        #         Unflatten(-1, num_dilations * num_rotations, 1, 1, 1),
+        #         Utils.ChannelSwap(),
+        #         nn.GELU(),
+        #         layer_norm(),
+        #         Utils.ChannelSwap()
+        #     )
+        #     ) for _ in range(depth)])
+
+    def forward(self, x):
+        return self.CNN(self.trunk(x))
+
+
+# class Unflatten(nn.Module):  # Can use einops.layers.torch.Rearrange
+#     def __init__(self, *dims):
+#         super().__init__()
+#         self.dims = dims
+#
+#     def forward(self, x):
+#         return x.view(dim if dim and dim != 1 else x.shape[i] for i, dim in enumerate(self.dims))
+
+# CNNs of various kernal size concatenated channel-wise
+# class CrossEmbedLayer(nn.Module):
+#     def __init__(
+#             self,
+#             dim_in,
+#             dim_out,
+#             kernel_sizes,
+#             stride = 2
+#     ):
+#         super().__init__()
+#         kernel_sizes = sorted(kernel_sizes)
+#         num_scales = len(kernel_sizes)
+#
+#         # calculate the dimension at each scale
+#         dim_scales = [int(dim_out / (2 ** i)) for i in range(1, num_scales)]
+#         dim_scales = [*dim_scales, dim_out - sum(dim_scales)]
+#
+#         self.convs = nn.ModuleList([])
+#         for kernel, dim_scale in zip(kernel_sizes, dim_scales):
+#             self.convs.append(nn.Conv2d(dim_in, dim_scale, kernel, stride = stride, padding = (kernel - stride) // 2))
+#
+#     def forward(self, x):
+#         fmaps = tuple(map(lambda conv: conv(x), self.convs))
+#         return torch.cat(fmaps, dim = 1)

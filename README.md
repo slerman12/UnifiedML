@@ -167,6 +167,8 @@ python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 
 *Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
 
+[comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
+
 Train accuracies can be printed with ```agent.log=true```.
 
 Evaluation with exponential moving average of params can be toggled with ```ema=true```.
@@ -186,6 +188,12 @@ Can also work with RL (due to frame stack, the generated images are technically 
 ```
 python Run.py task=atari/breakout evaluate_episodes=1 action_repeat=1 generate=true
 ```
+
+[comment]: <> (ensemble could help this:)
+
+[comment]: <> (Extensions. Analyzing and extending the amortization components has been a key development in AVI methods. Cremer et al. &#40;2018&#41; investigate suboptimality in these models are categorize it as coming from an amortization gap where the amortized model for eq. &#40;30&#41; does not properly solve it, or the approximation gap where the variational posterior is incapable of approximating the true distribution. Semi-amortization plays a crucial role in addressing the amortization gap and is explored in the semi-amortized VAE &#40;SAVAE&#41; by)
+
+[comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
 ### Offline RL
 

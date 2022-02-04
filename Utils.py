@@ -163,6 +163,7 @@ def rclamp(x, min, max):
 
 # (Multi-dim) indexing
 def gather_indices(item, ind, dim=-1):
+    assert item.shape[-len(ind.shape):dim] == ind.shape[:-1], "Can't broadcast index to item"
     ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
     if -1 < dim < len(item.shape) - 1:
         trail_shape = item.shape[dim + 1:]
@@ -260,3 +261,10 @@ class Rand(nn.Module):
 
     def forward(self, x):
         return torch.randn((x.shape[0], self.size), device=x.device)
+
+
+# Swaps image dims between channel-last and channel-first format
+class ChannelSwap(nn.Module):
+    def forward(self, x):
+        return x.transpose(-1, -3)
+
