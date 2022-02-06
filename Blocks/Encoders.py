@@ -19,7 +19,7 @@ class CNNEncoder(nn.Module):
     """
 
     def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_norm=False, rand=False, pixels=True,
-                 optim_lr=None, target_tau=None):
+                 optim_lr=None, ema_tau=None):
 
         super().__init__()
 
@@ -41,9 +41,9 @@ class CNNEncoder(nn.Module):
                                  Utils.Rand() if rand else nn.Identity())
 
         # Initialize model
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)
 
-    def init(self, optim_lr=None, target_tau=None):
+    def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -59,13 +59,13 @@ class CNNEncoder(nn.Module):
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
 
         # EMA
-        if target_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.target_tau = target_tau
+        if ema_tau is not None:
+            self.ema = copy.deepcopy(self)
+            self.ema_tau = ema_tau
 
-    def update_target_params(self):
-        assert hasattr(self, 'target')
-        Utils.param_copy(self, self.target, self.target_tau)
+    def update_ema_params(self):
+        assert hasattr(self, 'ema')
+        Utils.param_copy(self, self.ema, self.ema_tau)
 
     # Encodes
     def forward(self, obs, *context, flatten=True):
@@ -102,7 +102,7 @@ class ResidualBlockEncoder(CNNEncoder):
 
     def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_norm=False,
                  pixels=True, pre_residual=False, isotropic=False,
-                 optim_lr=None, target_tau=None):
+                 optim_lr=None, ema_tau=None):
 
         super().__init__(obs_shape, hidden_channels, 0, pixels)
 
@@ -129,7 +129,7 @@ class ResidualBlockEncoder(CNNEncoder):
                                  nn.ReLU(inplace=True),
                                  Utils.ShiftNorm(-3) if shift_norm else nn.Identity())
 
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)
 
         # Isotropic
         if isotropic:

@@ -27,7 +27,7 @@ class Residual(nn.Module):
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1, down_sample=None, optim_lr=None, target_tau=None):
+    def __init__(self, in_channels, out_channels, stride=1, down_sample=None, optim_lr=None, ema_tau=None):
         super().__init__()
 
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
@@ -41,9 +41,9 @@ class ResidualBlock(nn.Module):
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
                                             nn.ReLU(inplace=True))
 
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)
 
-    def init(self, optim_lr=None, target_tau=None):
+    def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -52,13 +52,13 @@ class ResidualBlock(nn.Module):
             self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
 
         # EMA
-        if target_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.target_tau = target_tau
+        if ema_tau is not None:
+            self.ema = copy.deepcopy(self)
+            self.ema_tau = ema_tau
 
-    def update_target_params(self):
-        assert hasattr(self, 'target_tau')
-        Utils.param_copy(self, self.target, self.target_tau)
+    def update_ema_params(self):
+        assert hasattr(self, 'ema_tau')
+        Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, x):
         return self.Residual_block(x)

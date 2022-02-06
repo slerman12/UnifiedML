@@ -74,10 +74,10 @@ def weight_init(m):
 
 
 # Copies parameters from one model to another, with optional EMA
-def param_copy(net, target_net, tau=1):
+def param_copy(net, target_net, ema_tau=1):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
-        target_param.data.copy_(tau * param.data +
-                                (1 - tau) * target_param.data)
+        target_param.data.copy_(ema_tau * param.data +
+                                (1 - ema_tau) * target_param.data)
 
 
 # Compute the output shape of a CNN layer
@@ -210,7 +210,7 @@ def to_torch(xs, device):
 
 
 # Backward pass on a loss; clear the grads of models; step their optimizers
-def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True):
+def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, ema=True):
     # Clear grads
     if clear_grads:
         for model in models:
@@ -225,6 +225,9 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
         for model in models:
             model.optim.step()
 
+            #  Update ema target
+            if ema and hasattr(model, 'ema'):
+                model.update_ema_params()
 
 # Increment/decrement a value in proportion to a step count based on a string-formatted schedule (only supports linear)
 def schedule(schedule, step):

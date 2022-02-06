@@ -11,7 +11,7 @@ import Utils
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None):
+    def __init__(self, dim=32, heads=8, context_dim=None, th=False):
         super().__init__()
 
         assert heads % dim == 0
@@ -24,6 +24,11 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(dim, dim, bias=False)
         self.to_kv = nn.Linear(context_dim, dim * 2, bias=False)
 
+        # "Talking heads" (https://arxiv.org/abs/2003.02436)
+        self.talk_h = nn.Sequential(Utils.ChannelSwap(),
+                                    nn.Linear(heads, heads, bias=False),
+                                    nn.LayerNorm(heads), Utils.ChannelSwap()) if th else nn.Identity()
+
     def forward(self, x, context):
         # Conserves shape
         shape = x.shape
@@ -35,14 +40,17 @@ class CrossAttention(nn.Module):
         q = self.to_q(x)
         k, v = self.to_kv(context).chunk(2, dim=-1)
 
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=self.heads), (q, k, v))
+        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        sim = einsum('b i d, b j d -> b i j', q, k) * self.dim ** -0.5
+        dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
-        attn = sim.softmax(dim=-1)
+        attn = dots.softmax(dim=-1)
 
-        out = einsum('b i j, b j d -> b i d', attn, v)
-        out = rearrange(out, '(b h) n d -> b n (h d)', h=self.heads)
+        # "Talking heads"
+        attn = self.talk_h(attn)
+
+        out = einsum('b h i j, b h j d -> b h i d', attn, v)
+        out = rearrange(out, 'b h n d -> b n (h d)')
 
         # Restores original shape
         return out.view(shape)
@@ -54,7 +62,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, optim_lr=None, target_tau=None):
+    def __init__(self, dim=32, heads=8, context_dim=None, th=False, optim_lr=None, target_tau=None):
         super().__init__()
 
         self.dim = dim
@@ -62,12 +70,12 @@ class CrossAttentionBlock(nn.Module):
 
         self.ln1 = nn.LayerNorm(dim)
         self.ln2 = nn.LayerNorm(dim)
-        self.attn = CrossAttention(dim, heads, context_dim)
+        self.attn = CrossAttention(dim, heads, context_dim, th)
         self.mlp = MLP(dim, dim, dim, 2, nn.GELU())
 
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)
 
-    def init(self, optim_lr=None, target_tau=None):
+    def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -76,9 +84,9 @@ class CrossAttentionBlock(nn.Module):
             self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
 
         # EMA
-        if target_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.target_tau = target_tau
+        if ema_tau is not None:
+            self.ema = copy.deepcopy(self)
+            self.ema_tau = ema_tau
 
     def forward(self, x, context):
         attn = self.ln1(self.attn(x, context)) + x

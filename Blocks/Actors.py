@@ -19,7 +19,7 @@ from Blocks.Architectures.MLP import MLP
 class TruncatedGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm=False,
                  discrete=False, stddev_schedule=None, stddev_clip=None,
-                 target_tau=None, optim_lr=None):
+                 ema_tau=None, optim_lr=None):
         super().__init__()
 
         self.discrete = discrete
@@ -37,9 +37,9 @@ class TruncatedGaussianActor(nn.Module):
 
         self.Pi_head = MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
 
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)
 
-    def init(self, optim_lr=None, target_tau=None):
+    def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -48,13 +48,13 @@ class TruncatedGaussianActor(nn.Module):
             self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
 
         # EMA
-        if target_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.target_tau = target_tau
+        if ema_tau is not None:
+            self.ema = copy.deepcopy(self)
+            self.ema_tau = ema_tau
 
-    def update_target_params(self):
-        assert hasattr(self, 'target')
-        Utils.param_copy(self, self.target, self.target_tau)
+    def update_ema_params(self):
+        assert hasattr(self, 'ema')
+        Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, obs, step=None):
         h = self.trunk(obs)
@@ -115,7 +115,7 @@ class GaussianActorEnsemble(TruncatedGaussianActor):
     returns all actor outputs unaltered, simply grouped"""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2,
                  l2_norm=False, discrete=False, stddev_schedule=None, stddev_clip=None,
-                 target_tau=None, optim_lr=None):
+                 ema_tau=None, optim_lr=None):
         super().__init__(repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm,
                          discrete, stddev_schedule, stddev_clip)
 
@@ -124,4 +124,4 @@ class GaussianActorEnsemble(TruncatedGaussianActor):
         self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
                                        for _ in range(ensemble_size)])
 
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)

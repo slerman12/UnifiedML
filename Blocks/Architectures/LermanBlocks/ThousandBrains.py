@@ -13,7 +13,8 @@ from torch.optim import Adam
 def write(grid, window, src):
     value_shape = grid.shape[len(window.shape) - 2:]
     index = window_to_index(window, grid)
-    grid.view(-1, *value_shape).scatter_(0, index, src.view(-1, *value_shape))
+    grid.view(-1, *value_shape).scatter_(0, index.long(), src.view(-1, *value_shape))
+    # grid.view(-1, *value_shape)[index.long()] = src.view(-1, *value_shape)
 
 
 # Given N1 x ... x Nn x V1 x ... x Vm grid,
@@ -24,7 +25,7 @@ def lookup(grid, window):
 
     index = window_to_index(window, grid)
 
-    out = grid.view(-1, *value_shape).gather(0, index)
+    out = grid.view(-1, *value_shape).gather(0, index.long())
     # out = grid.view(-1, *value_shape)[index]
 
     return out.view(*window.shape[:-1], *value_shape)
@@ -37,20 +38,20 @@ def window_to_index(window, grid):
     grid_size = grid.shape[0]
     value_shape = grid.shape[len(window.shape) - 2:]
 
-    index_lead = torch.matmul(window, grid_size ** reversed(torch.arange(axes)))
-    index = index_lead.view(-1, *([1] * len(value_shape))).expand(-1, *value_shape)
+    index_lead = torch.matmul(window, grid_size ** reversed(torch.arange(axes, dtype=window.dtype)))
+    index = index_lead.view(-1, *[1 for _ in value_shape]).expand(-1, *value_shape)
 
     return index
 
 
 # Given B x n coord,
 # returns B x M1 x ... x Mn x n window
-def coord_to_window(coord, window_size, grid_size):
+def coord_to_window(coord, window_size):
     axes = coord.shape[1]
     range = torch.arange(window_size) - window_size // 2
     mesh = torch.stack(torch.meshgrid(*([range] * axes)), -1)
     window = coord.view(-1, *([1] * axes), axes).expand(-1, *([window_size] * axes), -1) + mesh
-    return window % grid_size
+    return window
 
 
 def northity(input, radius=0.5, axis_dim=None, one_hot=False):
@@ -65,17 +66,41 @@ def northity(input, radius=0.5, axis_dim=None, one_hot=False):
     return F.cosine_similarity(needle, north, -1) * radius
 
 
+class Northity(torch.nn.Module):
+    def __init__(self, radius=0.5, axis_dim=None, one_hot=False):
+        super().__init__()
+
+        self.radius = radius
+        self.axis_dim = axis_dim
+        self.one_hot = one_hot
+
+    def forward(self, input):
+        return northity(input, self.radius, self.axis_dim, self.one_hot)
+
+
 def compass_wheel_localize(input, num_degrees=10, axis_dim=None, one_hot=False):
     nrt = northity(input, num_degrees / 2, axis_dim, one_hot) + num_degrees / 2
     quant = torch.round(nrt)
-    return (nrt - (nrt - quant).detach()).long()
+    return nrt - (nrt - quant).detach()
+
+
+class CompassWheelLocalize(torch.nn.Module):
+    def __init__(self, num_degrees=10, axis_dim=None, one_hot=False):
+        super().__init__()
+
+        self.num_degrees = num_degrees
+        self.axis_dim = axis_dim
+        self.one_hot = one_hot
+
+    def forward(self, input):
+        return compass_wheel_localize(input, self.num_degrees, self.axis_dim, self.one_hot)
 
 
 axes = 2
 compass_axis_dim = 2
 north_one_hot = False
 grid_size = 3
-value_shape = []
+value_shape = torch.Size([])
 window_size = 3
 batch_dim = 3
 
@@ -90,7 +115,10 @@ P = compass_wheel_localize(P, grid_size - 1, compass_axis_dim, north_one_hot)
 print("quant:")
 print(P.shape)
 print(P)
-W = coord_to_window(P, window_size, grid_size)  # B x (M x ...) n times x n
+W = coord_to_window(P, window_size) % grid_size  # B x (M x ...) n times x n
+
+param = torch.nn.Parameter(torch.randn((batch_dim, *([window_size] * axes), *value_shape)))
+optim = Adam([param], lr=0.8)
 
 t = time.time()
 mem = lookup(G, W)  # B x (M x ...) n times x V1 x ...
@@ -100,9 +128,11 @@ print('mem:')
 print(mem.shape)
 print(mem)
 
-mem.requires_grad = True
-optim = Adam([mem], lr=0.8)
-loss = mem.mean()
+# Is this too expensive compared to just using mem.requires_grad = True ?
+param.data.copy_(mem.data)
+
+loss = param.mean()
+
 t - time.time()
 loss.backward()
 optim.step()
@@ -111,8 +141,16 @@ print('back time', time.time() - t)
 clone_G = G.clone()
 
 t - time.time()
-write(G, W, mem)
+write(G, W, param)
 print('write time', time.time() - t)
 
-assert (G == clone_G).all()
+# assert (G == clone_G).all()
 
+# Scatter/indexing slows with tensor size?
+for size in [100, 100000, 100000000]:
+    src = torch.arange(100)[None, :]
+    index = torch.ones_like(src)
+    x = torch.zeros(size, dtype=src.dtype)
+    t = time.time()
+    x.view(-1, 100).scatter_(1, index, src)
+    print('time', time.time() - t)

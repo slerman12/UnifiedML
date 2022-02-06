@@ -20,7 +20,7 @@ class EnsembleQCritic(nn.Module):
     returns a Normal distribution over the ensemble.
     """
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2, l2_norm=False,
-                 sigmoid=False, discrete=False, ignore_obs=False, target_tau=None, optim_lr=None):
+                 sigmoid=False, discrete=False, ignore_obs=False, ema_tau=None, optim_lr=None):
         super().__init__()
 
         self.discrete = discrete
@@ -40,9 +40,9 @@ class EnsembleQCritic(nn.Module):
         self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2, binary=sigmoid, l2_norm=l2_norm)
                                      for _ in range(ensemble_size)], 0)
 
-        self.init(optim_lr, target_tau)
+        self.init(optim_lr, ema_tau)
 
-    def init(self, optim_lr=None, target_tau=None):
+    def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -51,13 +51,13 @@ class EnsembleQCritic(nn.Module):
             self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
 
         # EMA
-        if target_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.target_tau = target_tau
+        if ema_tau is not None:
+            self.ema = copy.deepcopy(self)
+            self.ema_tau = ema_tau
 
-    def update_target_params(self):
-        assert hasattr(self, 'target')
-        Utils.param_copy(self, self.target, self.target_tau)
+    def update_ema_params(self):
+        assert hasattr(self, 'ema')
+        Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, obs, action=None, context=None):
         h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \

@@ -5,3 +5,4 @@
 from Agents.DQN import DQNAgent
 from Agents.DrQV2 import DrQV2Agent
 from Agents.SPR import SPRAgent
+from Agents.Random import RandomAgent

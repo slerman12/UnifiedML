@@ -11,11 +11,11 @@ import Utils
 def bootstrapYourOwnLatent(obs, positive, encoder, projector, predictor, logs=None):
     """
     Bootstrap Your Own Latent (https://arxiv.org/abs/2006.07733),
-    self-supervision via EMA target
+    self-supervision via EMA ema
     """
     with torch.no_grad():
-        positive = encoder.target(positive)
-        positive = projector.target(positive)
+        positive = encoder.ema(positive)
+        positive = projector.ema(positive)
 
     # Assumes obs already encoded
     anchor = predictor(projector(obs))

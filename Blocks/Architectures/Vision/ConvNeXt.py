@@ -63,7 +63,7 @@ class ConvNeXt(nn.Module):
 
         self.init(None, None)
 
-    def init(self, optim_lr, target_tau):
+    def init(self, optim_lr, ema_tau):
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.trunc_normal_(m.weight, std=.02)
@@ -77,13 +77,13 @@ class ConvNeXt(nn.Module):
                                            eps=1e-8, weight_decay=0.05)
 
         # EMA
-        if target_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.target_tau = target_tau
+        if ema_tau is not None:
+            self.ema = copy.deepcopy(self)
+            self.ema_tau = ema_tau
 
-    def update_target_params(self):
-        assert hasattr(self, 'target_tau')
-        Utils.param_copy(self, self.target, self.target_tau)
+    def update_ema_params(self):
+        assert hasattr(self, 'ema_tau')
+        Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, x):
         x = self.net(x)

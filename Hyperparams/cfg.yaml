@@ -9,7 +9,6 @@ action_shape: ??? # To be specified later
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
-ema: false
 lr: 1e-4
 # Domains
 discrete: ??? # To be specified later
@@ -30,6 +29,7 @@ learn_steps_after: 1000
 # Evaluating
 evaluate_per_steps: 5000
 evaluate_episodes: 10
+ema: false
 # Saving
 save: true
 save_per_steps: 0
@@ -72,11 +72,11 @@ agent:
   hidden_dim: ${hidden_dim}
   recipes: ${recipes}
   lr: ${lr}
-  target_tau: 0.01
+  ema_tau: 0.01
+  ema: ${ema}
   explore_steps: ${explore_steps}
   stddev_schedule: ${stddev_schedule} # Specified in task/100K,500K,etc.
   stddev_clip: 0.3
-  ema: ${ema}
   discrete: ${discrete}
   RL: ${RL}
   supervise: ${supervise}

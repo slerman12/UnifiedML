@@ -24,9 +24,8 @@ class DQNAgent(torch.nn.Module):
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
-                 lr, target_tau,  # Optimization
+                 lr, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 ema,  # Evaluation
                  discrete, RL, supervise, generate, device, log,  # On-boarding
                  num_actions=2, num_critics=2):  # DQN
         super().__init__()
@@ -46,17 +45,17 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, optim_lr=lr, target_tau=target_tau if ema else None)
+            else CNNEncoder(obs_shape, optim_lr=lr, ema_tau=ema_tau if ema else None)
 
         # Continuous actions
         self.actor = None if self.discrete \
             else TruncatedGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
                                         stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                        optim_lr=lr, target_tau=target_tau if ema else None)
+                                        optim_lr=lr, ema_tau=ema_tau if ema else None)
 
         self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
-                                      optim_lr=lr, target_tau=target_tau)
+                                      optim_lr=lr, ema_tau=ema_tau)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
@@ -70,8 +69,8 @@ class DQNAgent(torch.nn.Module):
             obs = torch.as_tensor(obs, device=self.device)
 
             # EMA targets
-            encoder = self.encoder.target if self.ema else self.encoder
-            actor = self.actor.target if self.ema else self.actor
+            encoder = self.encoder.ema if self.ema else self.encoder
+            actor = self.actor.ema if self.ema else self.actor
 
             # "See"
             obs = encoder(obs)
@@ -187,12 +186,14 @@ class DQNAgent(torch.nn.Module):
             Utils.optimize(critic_loss,
                            self.critic)
 
-            self.critic.update_target_params()
-
         # Update encoder
         if not self.generate:
             self.encoder.optim.step()
             self.encoder.optim.zero_grad(set_to_none=True)
+
+            # Update ema
+            if self.ema:
+                self.encoder.update_ema_params()
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
