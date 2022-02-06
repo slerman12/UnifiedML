@@ -19,7 +19,7 @@ agents = [
     # 'Random'
           ]
 seeds = [1]
-experiment = 'Default'
+experiment = '5 Sampled Actions'
 
 common_params = f'experiment={experiment}'
 
