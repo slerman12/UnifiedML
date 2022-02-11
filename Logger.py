@@ -111,7 +111,7 @@ class Logger:
             for row in rows:
                 writer.writerow(row)
 
-    def dump_to_csv(self, logs, name):  # tODO bug when pre-existing enties w/o agent.log now with agent.log
+    def dump_to_csv(self, logs, name):
         logs = dict(logs)
 
         assert 'step' in logs

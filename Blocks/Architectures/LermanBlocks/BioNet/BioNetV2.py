@@ -1,14 +1,10 @@
 from torch import nn
 
-from Blocks.Architectures.LermanBlocks.NonLocalityCNN import NonLocalityCNN
-from Blocks.Architectures.LermanBlocks.LocalityViT import LocalityViT
+import Utils
+
+from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
+from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
-
-
-# Swaps image dims between channel-last and channel-first format
-class ChannelSwap(nn.Module):  # Can use einops.Rearrange
-    def forward(self, x):
-        return x.transpose(-1, -3)
 
 
 class BioNet(nn.Module):
@@ -24,9 +20,9 @@ class BioNet(nn.Module):
         self.cross_talk = [CrossAttentionBlock(dim=out_channels, heads=8)
                            for _ in range(depth)]
 
-        self.repr = nn.Sequential(ChannelSwap(),
+        self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=8),
-                                  ChannelSwap(),
+                                  Utils.ChannelSwap(),  # Todo just use einops rearange
                                   nn.AdaptiveAvgPool2d(output_dim ** 0.5),
                                   nn.Flatten())
 
@@ -34,14 +30,19 @@ class BioNet(nn.Module):
         ventral = self.ventral_stream.trunk(input)
         dorsal = self.dorsal_stream.trunk(input)
 
-        t = ChannelSwap()
+        t = Utils.ChannelSwap()
 
         for what, where, talk in zip(self.ventral_stream.CNN,
                                      self.dorsal_stream.ViT,
                                      self.cross_talk):
             ventral = what(ventral)
             dorsal = t(talk(t(where(dorsal)),
-                            t(ventral).view(*t(ventral).shape[:-1], 2, -1)))  # Feature redundancy
+                            t(ventral).view(*t(ventral).shape[:-1], 2, -1)))  # Feature redundancy(? till convolved)
+
+            # if self_supervise:
+            #     loss = t(byol(talk2(t(ventral).view(*t(ventral).shape[:-1], 2, -1)), t(dorsal)), t(dorsal).mean(-1))
+            #     Utils.optimize(loss,
+            #                    self)
 
         out = self.repr(dorsal)
         return out
@@ -56,7 +57,7 @@ class BioNet(nn.Module):
     
     [eye,, self attend + average <- CNNs,: ViTs <- input
     
-    Now, let's go over the specicifics of the CNN and ViT. 
+    Now, let's go over the specifics of the CNN and ViT. 
     
     Let's overview a Patched Ftheta for any neural network function Ftheta.
     
@@ -88,7 +89,7 @@ class BioNet(nn.Module):
     to occupy a smaller region centered around the fovea, 
     compared to the retina-spanning dorsal estuary of the same inputs, consistent with this idea.
     
-    We would also expect a more involved routing system to handle convolution via sequencing and spike 
+    We would also expect a more involved routing system to handle convolution via sequencing and spiking 
     rest potential resets. 
     It is indeed observed that the optic nerve stretches out-of-its-way-far from the eye to the back of the head,
     to reach the occipital entrance.
@@ -112,3 +113,12 @@ class BioNet(nn.Module):
 
 # For that matter, the residual blocks could also be Vision Transformer layers,
 # but this would introduce quadratic complexity.
+
+# Can "max-pool" relation-disentanglement style layer by layer using cross attentions and gumbel softmax for escaping
+# local hard-attention optima. Can also try to predict dorsal from ventral cross attend as self-supervision.
+# Fully architectural. No data augmentation, perturbing, or masking. Debatable whether it can even be called
+# self-supervision or if it's just a really good architecture! (Not even locality embeddings)
+# Architectural form of this kind of:
+# https://medium.com/syncedreview/
+# a-leap-forward-in-computer-vision-facebook-ai-says-masked-autoencoders-are-scalable-vision-32c08fadd41f
+

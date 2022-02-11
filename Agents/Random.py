@@ -2,23 +2,21 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
 import time
 
 import torch
 
 import Utils
 
-from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import TruncatedGaussianActor
-
 
 class RandomAgent(torch.nn.Module):
     """Random Agent"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim,  # Architecture
-                 lr, target_tau,  # Optimization
+                 obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
+                 lr, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, device, log,  # On-boarding
+                 discrete, RL, supervise, generate, device, log  # On-boarding
                  ):
         super().__init__()
 
@@ -26,32 +24,22 @@ class RandomAgent(torch.nn.Module):
         self.birthday = time.time()
         self.step = self.episode = 0
 
-        self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
-
-        self.actor = TruncatedGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
-                                            discrete=discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip)
+        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         # Birth
 
-    def act(self, obs):
+    def act(self, obs=None):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor):
-            obs = torch.as_tensor(obs, device=self.device)
+            action = torch.ones((1, self.action_dim)).to(self.device)
 
-            # "See"
-            obs = self.encoder(obs)
-
-            Pi = self.actor(obs, self.step)
-
-            action = Pi.sample() if self.training \
-                else Pi.mean
-
-            self.step += 1
+            if self.training:
+                self.step += 1
 
             # Randomize
             action = action.uniform_(-1, 1)
 
             if self.discrete:
-                action = torch.argmax(action, -1)  # Since using vector representations
+                action = torch.argmax(action, -1)
 
             return action
 

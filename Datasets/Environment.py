@@ -44,12 +44,13 @@ class Environment:
 
         exp = self.exp
 
+        self.offline = self.offline or self.env.depleted or self.generate
         self.episode_done = False
 
-        if (self.offline or self.depleted or self.generate) and agent.training:
+        if self.offline and agent.training:
             agent.step += 1
             agent.episode += 1
-            self.episode_done = True  # TODO
+            self.episode_done = True
             return None, None, None
 
         step = 0

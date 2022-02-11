@@ -22,11 +22,15 @@ seeds = [1]
 experiment = '5 Sampled Actions'
 
 common_params = f'experiment={experiment}'
+classify_RL = 'false'
+classify_supervise = 'true'
 
 common_sweeps = {'atari': [f'task=atari/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in atari_tasks for agent in agents for seed in seeds],
                  'dmc': [f'task=dmc/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in easy + medium + hard for agent in agents for seed in seeds],
-                 'classify': [f'task=classify/{task.lower()} Agent=Agents.{agent}Agent RL=false seed={seed}' for task in ['mnist', 'cifar10'] for agent in agents for seed in seeds]}
+                 'classify': [f'task=classify/{task.lower()} Agent=Agents.{agent}Agent RL={classify_RL} supervise={classify_supervise} seed={seed}' for task in ['mnist', 'cifar10'] for agent in agents for seed in seeds]}
 common_sweeps.update({'all': sum(common_sweeps.values(), [])})
+common_sweeps.update({'rl': common_sweeps['dmc'] + common_sweeps['atari']})
+common_sweeps.update({'continuous': common_sweeps['dmc'] + common_sweeps['classify']})
 
 # Arguments
 parser = argparse.ArgumentParser()

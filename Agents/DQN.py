@@ -5,7 +5,8 @@
 import time
 import math
 
-import hydra
+from hydra.utils import call
+
 import torch
 from torch.nn.functional import cross_entropy
 
@@ -13,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import TruncatedGaussianActor, CategoricalCriticActor
+from Blocks.Actors import GaussianActorEnsemble, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -40,27 +41,31 @@ class DQNAgent(torch.nn.Module):
         self.step = self.episode = 0
         self.explore_steps = explore_steps
         self.ema = ema
+
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, optim_lr=lr, ema_tau=ema_tau if ema else None)
+            else CNNEncoder(obs_shape, recipe=recipes.Encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
+
+        feature_shape = (trunk_dim,) if generate else self.encoder.feature_shape
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else TruncatedGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
-                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                        optim_lr=lr, ema_tau=ema_tau if ema else None)
+            else GaussianActorEnsemble(feature_shape, trunk_dim, hidden_dim, self.action_dim, recipes.Actor,
+                                       ensemble_size=1,
+                                       stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                       optim_lr=lr, ema_tau=ema_tau if ema else None)
 
-        self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
+        self.critic = EnsembleQCritic(feature_shape, trunk_dim, hidden_dim, self.action_dim, generate, recipes.Critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       optim_lr=lr, ema_tau=ema_tau)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Data augmentation
-        self.aug = IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+        self.aug = Utils.default(call(recipes.Aug), IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4))
 
         # Birth
 
@@ -88,7 +93,7 @@ class DQNAgent(torch.nn.Module):
             if self.training:
                 self.step += 1
 
-                # Explore phase  TODO test without
+                # Explore phase
                 if self.step < self.explore_steps and not self.generate:
                     action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
@@ -188,12 +193,8 @@ class DQNAgent(torch.nn.Module):
 
         # Update encoder
         if not self.generate:
-            self.encoder.optim.step()
-            self.encoder.optim.zero_grad(set_to_none=True)
-
-            # Update ema
-            if self.ema:
-                self.encoder.update_ema_params()
+            Utils.optimize(None,  # Using gradients from previous losses
+                           self.encoder)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"

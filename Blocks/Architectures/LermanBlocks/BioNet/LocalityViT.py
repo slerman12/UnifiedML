@@ -1,6 +1,6 @@
 from torch import nn
 
-from Blocks.Architectures.LermanBlocks.LocalityCNN import Conv2DLocalized
+from Blocks.Architectures.LermanBlocks.BioNet.LocalityCNN import Conv2DLocalized
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 from Blocks.Architectures.Residual import Residual
 

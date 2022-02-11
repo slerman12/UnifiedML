@@ -107,7 +107,7 @@ batch_dim = 3
 G = torch.randn(*([grid_size] * axes), *value_shape)  # (N x ...) n times x V1 x ...
 print("grid:")
 print(G)
-# Sample
+# Sample, and to make more stable temporally, can traverse as velocity
 P = torch.rand((batch_dim, compass_axis_dim * axes)) - 0.5  # B x 2 * n
 print("pos:")
 print(P)

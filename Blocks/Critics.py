@@ -5,6 +5,8 @@
 import math
 import copy
 
+from hydra.utils import call
+
 import torch
 from torch import nn
 from torch.distributions import Normal
@@ -19,8 +21,8 @@ class EnsembleQCritic(nn.Module):
     MLP-based Critic network, employs ensemble Q learning,
     returns a Normal distribution over the ensemble.
     """
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2, l2_norm=False,
-                 sigmoid=False, discrete=False, ignore_obs=False, ema_tau=None, optim_lr=None):
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm=False, sigmoid=False, recipe=None,
+                 ensemble_size=2, discrete=False, ignore_obs=False, ema_tau=None, optim_lr=None):
         super().__init__()
 
         self.discrete = discrete
@@ -31,14 +33,24 @@ class EnsembleQCritic(nn.Module):
 
         repr_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
-                                   nn.LayerNorm(trunk_dim), nn.Tanh())
+        trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
+                              nn.LayerNorm(trunk_dim), nn.Tanh())
+
+        kwargs = dict(repr_shape=repr_shape, trunk_dim=trunk_dim)
+        self.trunk = Utils.default(call(recipe.trunk, **kwargs), trunk)
 
         in_dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         out_dim = action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2, binary=sigmoid, l2_norm=l2_norm)
-                                     for _ in range(ensemble_size)], 0)
+                                      for _ in range(ensemble_size)], 0)
+
+        # From pre-defined recipe
+        if recipe.Q_head is not None:
+            kwargs = dict(in_dim=in_dim, out_dim=out_dim, hidden_dim=hidden_dim,
+                          binary=sigmoid, l2_norm=l2_norm)
+            self.Q_head = Utils.Ensemble([call(recipe.Q_head, **kwargs)
+                                          for _ in range(ensemble_size)], 0)
 
         self.init(optim_lr, ema_tau)
 
@@ -91,7 +103,7 @@ class EnsembleQCritic(nn.Module):
 
         # Dist
         stddev, mean = torch.std_mean(Qs, dim=0)
-        Q = Normal(mean, stddev + 1e-3)
+        Q = Normal(mean, stddev + 1e-6)
         Q.__dict__.update({'Qs': Qs,
                            'action': action})
 

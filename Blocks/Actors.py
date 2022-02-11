@@ -5,6 +5,8 @@
 import math
 import copy
 
+from hydra.utils import call
+
 import torch
 from torch import nn
 from torch.distributions import Categorical
@@ -16,8 +18,8 @@ import Utils
 from Blocks.Architectures.MLP import MLP
 
 
-class TruncatedGaussianActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm=False,
+class GaussianActorEnsemble(nn.Module):
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe, l2_norm=False, ensemble_size=2,
                  discrete=False, stddev_schedule=None, stddev_clip=None,
                  ema_tau=None, optim_lr=None):
         super().__init__()
@@ -30,12 +32,20 @@ class TruncatedGaussianActor(nn.Module):
 
         feature_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(feature_dim, trunk_dim),
-                                   nn.LayerNorm(trunk_dim), nn.Tanh())
+        trunk = nn.Sequential(nn.Linear(feature_dim, trunk_dim),
+                              nn.LayerNorm(trunk_dim), nn.Tanh())
+
+        self.trunk = Utils.default(call(recipe.trunk, feature_dim=feature_dim, trunk_dim=trunk_dim), trunk)
 
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.Pi_head = MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
+        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
+                                       for _ in range(ensemble_size)])
+
+        # Pre-defined recipe, if provided
+        if recipe.Pi_head is not None:
+            kwargs = dict(trunk_dim=trunk_dim, out_dim=out_dim, hidden_dim=hidden_dim, l2_norm=l2_norm)
+            self.Pi_head = Utils.Ensemble([call(recipe.Pi_head, **kwargs) for _ in range(ensemble_size)])
 
         self.init(optim_lr, ema_tau)
 
@@ -108,20 +118,3 @@ class CategoricalCriticActor(nn.Module):
                               'actions': Q.action,
                               'u': u})
         return Q_Pi
-
-
-class GaussianActorEnsemble(TruncatedGaussianActor):
-    """"Ensembles actions output by Gaussian actors,
-    returns all actor outputs unaltered, simply grouped"""
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, ensemble_size=2,
-                 l2_norm=False, discrete=False, stddev_schedule=None, stddev_clip=None,
-                 ema_tau=None, optim_lr=None):
-        super().__init__(repr_shape, trunk_dim, hidden_dim, action_dim, l2_norm,
-                         discrete, stddev_schedule, stddev_clip)
-
-        out_dim = action_dim * 2 if stddev_schedule is None else action_dim
-
-        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2, l2_norm=l2_norm)
-                                       for _ in range(ensemble_size)])
-
-        self.init(optim_lr, ema_tau)

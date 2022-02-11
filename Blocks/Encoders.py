@@ -5,12 +5,14 @@
 import math
 import copy
 
+from hydra.utils import call
+
 import torch
 from torch import nn
 
 import Utils
 
-from Blocks.Architectures.Residual import ResidualBlock, Residual
+from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 
 class CNNEncoder(nn.Module):
@@ -18,8 +20,8 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_norm=False, rand=False, pixels=True,
-                 optim_lr=None, ema_tau=None):
+    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
+                 recipe=None, optim_lr=None, ema_tau=None):
 
         super().__init__()
 
@@ -32,13 +34,17 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
-                                                  self.out_channels, 3, stride=2 if i == 0 else 1),
-                                        nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-                                        nn.ReLU())
-                                       for i in range(depth + 1)], ()),
-                                 Utils.ShiftNorm(-3) if shift_norm else nn.Identity(),
-                                 Utils.Rand() if rand else nn.Identity())
+        CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
+                                             self.out_channels, 3, stride=2 if i == 0 else 1),
+                                   nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
+                                   nn.ReLU())
+                                  for i in range(depth + 1)], ()),
+                            Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+
+        # From pre-defined recipe
+        kwargs = dict(obs_shape=obs_shape, out_channels=out_channels, depth=depth,
+                      batch_norm=batch_norm, shift_norm=shift_max_norm, pixels=pixels)
+        self.CNN = Utils.default(call(recipe.CNN, **kwargs), CNN)
 
         # Initialize model
         self.init(optim_lr, ema_tau)
@@ -97,10 +103,9 @@ class ResidualBlockEncoder(CNNEncoder):
     """
     Residual block-based CNN encoder,
     Isotropic means no bottleneck / dimensionality conserving
-    e.g., Efficient-Zero (https://arxiv.org/pdf/2111.00210.pdf) or SPR (https://arxiv.org/abs/2007.05929).
     """
 
-    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_norm=False,
+    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_max_norm=True,
                  pixels=True, pre_residual=False, isotropic=False,
                  optim_lr=None, ema_tau=None):
 
@@ -111,23 +116,10 @@ class ResidualBlockEncoder(CNNEncoder):
         self.out_channels = obs_shape[0] if isotropic else out_channels
         hidden_channels = self.in_channels if pre_residual else hidden_channels
 
-        pre = nn.Sequential(nn.Conv2d(self.in_channels, hidden_channels, kernel_size=3, padding=1),
-                            nn.BatchNorm2d(hidden_channels))
-
-        # Add a concurrent stream to pre
-        if pre_residual:
-            pre = Residual(pre, down_sample=nn.Sequential(nn.Conv2d(self.in_channels, hidden_channels,
-                                                                    kernel_size=3, padding=1),
-                                                          nn.BatchNorm2d(hidden_channels)))
-
         # CNN ResNet-ish
-        self.CNN = nn.Sequential(pre,
-                                 nn.ReLU(inplace=True),  # MaxPool after this?
-                                 *[ResidualBlock(hidden_channels, hidden_channels)
-                                   for _ in range(num_blocks)],
-                                 nn.Conv2d(hidden_channels, self.out_channels, kernel_size=3, padding=1),
-                                 nn.ReLU(inplace=True),
-                                 Utils.ShiftNorm(-3) if shift_norm else nn.Identity())
+        self.CNN = nn.Sequential(MiniResNet(self.in_channels, hidden_channels, self.out_channels, num_blocks,
+                                            pre_residual),
+                                 Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
         self.init(optim_lr, ema_tau)
 

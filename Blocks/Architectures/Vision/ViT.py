@@ -1,3 +1,7 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
 import torch
 from torch import nn
 
@@ -41,7 +45,7 @@ class ViT(nn.Module):
         x = torch.cat((cls_tokens, x), dim=1)
         x += self.pos_embedding[:, :(n + 1)]
 
-        x = self.transformer(x)
+        x = self.attn(x)
 
         x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
 

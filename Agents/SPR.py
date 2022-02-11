@@ -10,7 +10,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder, ResidualBlockEncoder
-from Blocks.Actors import CategoricalCriticActor, TruncatedGaussianActor
+from Blocks.Actors import CategoricalCriticActor, GaussianActorEnsemble
 from Blocks.Critics import EnsembleQCritic
 from Blocks.Architectures.MLP import MLPBlock
 
@@ -39,16 +39,16 @@ class SPRAgent(torch.nn.Module):
 
         self.depth = depth
 
-        self.encoder = CNNEncoder(obs_shape, shift_norm=True, optim_lr=lr, target_tau=target_tau)
+        self.encoder = CNNEncoder(obs_shape, shift_max_norm=True, optim_lr=lr, target_tau=target_tau)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
-            else TruncatedGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
-                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                        optim_lr=lr)
+            else GaussianActorEnsemble(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
+                                       stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                       optim_lr=lr)
 
         self.dynamics = ResidualBlockEncoder(self.encoder.feature_shape, self.action_dim,
-                                             shift_norm=True, pixels=False, isotropic=True,
+                                             shift_max_norm=True, pixels=False, isotropic=True,
                                              optim_lr=lr)
 
         self.projector = MLPBlock(self.encoder.feature_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,

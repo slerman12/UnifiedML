@@ -120,36 +120,33 @@ plotting:
   plot_tasks: null
   steps: ${train_steps}
 
-# Can optionally pass in custom architectures such as those defined in ./Blocks/Recipes
+# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures/Recipes
 recipes:
   Encoder:
-    trunk: null
-    cnn: null
+    CNN: null
     pool: null
   Actor:
     trunk: null
-    pi_head: null
+    Pi_head: null
   Critic:
     trunk: null
-    q_head: null
+    Q_head: null
   Aug: null
   encoder:
-    trunk:
-      _target_: ${recipes.Encoder.trunk}
     cnn:
-      _target_: ${recipes.Encoder.cnn}
+      _target_: ${recipes.Encoder.CNN}
     pool:
       _target_: ${recipes.Encoder.pool}
   actor:
     trunk:
       _target_: ${recipes.Actor.trunk}
     pi_head:
-      _target_: ${recipes.Actor.pi_head}
+      _target_: ${recipes.Actor.Pi_head}
   critic:
     trunk:
       _target_: ${recipes.Critic.trunk}
     q_head:
-      _target_: ${recipes.Critic.q_head}
+      _target_: ${recipes.Critic.Q_head}
   aug:
     _target_: ${recipes.Aug}
 

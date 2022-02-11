@@ -73,7 +73,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Copies parameters from one model to another, with optional EMA
+# Copies parameters from one model to another, with optionally EMA weighing
 def param_copy(net, target_net, ema_tau=1):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(ema_tau * param.data +
@@ -141,6 +141,16 @@ class MergeCritics(nn.Module):
         return merged_Q
 
 
+# Replaces tensor's batch items with Normal-sampled random latent
+class Rand(nn.Module):
+    def __init__(self, size=1):
+        super().__init__()
+        self.size = size
+
+    def forward(self, x):
+        return torch.randn((x.shape[0], self.size), device=x.device)
+
+
 # (Multi-dim) one-hot encoding
 def one_hot(x, num_classes):
     assert x.shape[-1] == 1
@@ -182,6 +192,26 @@ class L2Norm(nn.Module):
         return F.normalize(x, dim=-1, eps=self.eps)
 
 
+# Min-max normalizes to [0, 1]
+# "Re-normalization", as in SPR (https://arxiv.org/abs/2007.05929), or at least in their code
+class ShiftMaxNorm(nn.Module):
+    def __init__(self, start_dim=-1):
+        super().__init__()
+        self.start_dim = start_dim
+
+    def forward(self, x):
+        y = x.flatten(self.start_dim)
+        y -= y.min(-1, keepdim=True)[0]
+        y /= y.max(-1, keepdim=True)[0]
+        return y.view(*x.shape)
+
+
+# Swaps image dims between channel-last and channel-first format
+class ChannelSwap(nn.Module):
+    def forward(self, x):
+        return x.transpose(-1, -3)
+
+
 # Context manager that temporarily switches on eval() mode for specified models; then resets them
 class act_mode:
     def __init__(self, *models):
@@ -209,10 +239,10 @@ def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
 
-# Backward pass on a loss; clear the grads of models; step their optimizers
+# Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
 def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, ema=True):
     # Clear grads
-    if clear_grads:
+    if clear_grads and loss is not None:
         for model in models:
             model.optim.zero_grad(set_to_none=True)
 
@@ -229,6 +259,10 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
             if ema and hasattr(model, 'ema'):
                 model.update_ema_params()
 
+            if loss is None and clear_grads:
+                model.optim.zero_grad(set_to_none=True)
+
+
 # Increment/decrement a value in proportion to a step count based on a string-formatted schedule (only supports linear)
 def schedule(schedule, step):
     try:
@@ -239,35 +273,4 @@ def schedule(schedule, step):
             start, stop, duration = [float(g) for g in match.groups()]
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * start + mix * stop
-
-
-# Min-max normalizes to [0, 1]
-# "Re-normalization", as in SPR (https://arxiv.org/abs/2007.05929), or at least in their code
-class ShiftNorm(nn.Module):
-    def __init__(self, start_dim=-1):
-        super().__init__()
-        self.start_dim = start_dim
-
-    def forward(self, x):
-        y = x.flatten(self.start_dim)
-        y = y - y.min(-1, keepdim=True)[0]
-        y = y / y.max(-1, keepdim=True)[0]
-        return y.view(*x.shape)
-
-
-# Replaces tensor's batch items with Normal-sampled random values
-class Rand(nn.Module):
-    def __init__(self, size=1):
-        super().__init__()
-        self.size = size
-        self.feature_shape = [size]
-
-    def forward(self, x):
-        return torch.randn((x.shape[0], self.size), device=x.device)
-
-
-# Swaps image dims between channel-last and channel-first format
-class ChannelSwap(nn.Module):
-    def forward(self, x):
-        return x.transpose(-1, -3)
 
