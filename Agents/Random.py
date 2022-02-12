@@ -30,16 +30,13 @@ class RandomAgent(torch.nn.Module):
 
     def act(self, obs=None):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor):
-            action = torch.ones((1, self.action_dim)).to(self.device)
-
-            if self.training:
-                self.step += 1
-
-            # Randomize
-            action = action.uniform_(-1, 1)
+            action = torch.rand((1, self.action_dim)).to(self.device) * 2 - 1  # [-1, 1]
 
             if self.discrete:
                 action = torch.argmax(action, -1)
+
+            if self.training:
+                self.step += 1
 
             return action
 

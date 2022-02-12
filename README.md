@@ -171,7 +171,7 @@ python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average of params can be toggled with ```ema=true```.
+Evaluation with exponential moving average (EMA) of params can be toggled with ```ema=true```.
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -229,11 +229,11 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 ### Custom Architectures
 
-Can also optionally pass in custom architectures such as those defined in ```./Blocks/Recipes```. 
+Can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures/Recipes```. 
 
-Here is for example a pretty standard GAN with a CNN Discriminator and a U-Net Generator:
+Here is, for example, a pretty standard GAN with a CNN Discriminator and a U-Net Generator:
 
-```python Run.py generate=True recipes.Critic.q_head=Blocks.Recipes.CNN recipes.Actor.pi_head=Blocks.Recipes.UNet```
+```python Run.py generate=True recipes.Critic.Q_head=Blocks.Recipes.CNN recipes.Actor.Pi_head=Blocks.Recipes.UNet```
 
 ### Distributed
 
