@@ -25,7 +25,6 @@ class EnsembleGaussianActor(nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.action_dim = action_dim
 
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
@@ -33,11 +32,13 @@ class EnsembleGaussianActor(nn.Module):
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.Pi_head = Utils.Ensemble([nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                                     nn.LayerNorm(trunk_dim),
-                                                     nn.Tanh(),
-                                                     MLP(trunk_dim, out_dim, hidden_dim, 2)) if recipe.pi_head is None
-                                       else instantiate(recipe.pi_head) for _ in range(ensemble_size)])
+        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
+                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk is None \
+            else instantiate(recipe.trunk)
+
+        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2) if recipe.pi_head is None
+                                       else instantiate(recipe.pi_head)
+                                       for _ in range(ensemble_size)])
 
         self.init(optim_lr, ema_tau)
 
@@ -59,6 +60,8 @@ class EnsembleGaussianActor(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, obs, step=None):
+        obs = self.trunk(obs)
+
         if self.stddev_schedule is None or step is None:
             mean_tanh, log_stddev = self.Pi_head(obs).chunk(2, dim=-1)
             stddev = torch.exp(log_stddev)
@@ -73,7 +76,7 @@ class EnsembleGaussianActor(nn.Module):
         return Pi
 
 
-class CategoricalCriticActor(nn.Module):  # A.K.A. Creator
+class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
     def __init__(self, entropy_sched=1):
         super().__init__()
 

@@ -125,6 +125,7 @@ recipes:
   Encoder:
     CNN: null
   Actor:
+    trunk: null
     Pi_head: null
   Critic:
     trunk: null
@@ -134,6 +135,8 @@ recipes:
     cnn:
       _target_: ${recipes.Encoder.CNN}
   actor:
+    trunk:
+      _target_: ${recipes.Actor.trunk}
     pi_head:
       _target_: ${recipes.Actor.Pi_head}
   critic:
