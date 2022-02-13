@@ -186,7 +186,7 @@ Implicitly treats as offline, and assumes a replay [is saved](#saving) that can 
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```
-python Run.py task=atari/breakout evaluate_episodes=1 action_repeat=1 generate=true
+python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 
 ```
 
 [comment]: <> (ensemble could help this:)
@@ -233,7 +233,9 @@ One can also optionally pass in custom architectures such as those defined in ``
 
 Here is, for example, a GAN with a CNN Discriminator and a U-Net Generator:
 
-```python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN +recipes.critic.trunk.obs_shape=${obs_shape} +recipes.critic.trunk.out_dim=${trunk_dim} recipes.Actor.Pi_head=Blocks.Architectures.Vision.UNet.UNet +recipes.actor.pi_head.in_dim=${trunk_dim}```
+```
+python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN +recipes.critic.trunk.obs_shape=${obs_shape} +recipes.critic.trunk.out_dim=${trunk_dim} recipes.Actor.Pi_head=Blocks.Architectures.Vision.UNet.UNet +recipes.actor.pi_head.in_dim=${trunk_dim}
+```
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
