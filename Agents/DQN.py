@@ -58,7 +58,7 @@ class DQNAgent(torch.nn.Module):
                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        optim_lr=lr, ema_tau=ema_tau if ema else None)
 
-        self.critic = EnsembleQCritic(feature_shape, trunk_dim, hidden_dim, self.action_dim, False, recipes.critic,
+        self.critic = EnsembleQCritic(feature_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       optim_lr=lr, ema_tau=ema_tau)
 
