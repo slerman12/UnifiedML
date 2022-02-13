@@ -41,5 +41,5 @@ class RandomAgent(torch.nn.Module):
             return action
 
     # "Dream"
-    def learn(self, replay):
+    def learn(self, replay=None):
         return

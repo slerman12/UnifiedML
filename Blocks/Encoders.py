@@ -34,11 +34,12 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.CNN = nn.Sequential(*[nn.Sequential(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
-                                                           self.out_channels, 3, stride=2 if i == 0 else 1),
-                                   nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-                                   nn.ReLU()) for i in range(depth + 1)],
-                                 Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()) if recipe.cnn is None \
+        self.CNN = nn.Sequential(*[nn.Sequential(
+            nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
+                      self.out_channels, 3, stride=2 if i == 0 else 1),
+            nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
+            nn.ReLU()) for i in range(depth + 1)
+        ], Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()) if recipe.cnn._target_ is None \
             else instantiate(recipe.cnn)
 
         # Initialize model

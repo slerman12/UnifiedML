@@ -33,10 +33,10 @@ class EnsembleGaussianActor(nn.Module):
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
         self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk is None \
+                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk._target_ is None \
             else instantiate(recipe.trunk)
 
-        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2) if recipe.pi_head is None
+        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2) if recipe.pi_head._target_ is None
                                        else instantiate(recipe.pi_head)
                                        for _ in range(ensemble_size)])
 
@@ -89,23 +89,23 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
         entropy_temp = Utils.schedule(self.entropy_sched, step)
-        Q_Pi = Categorical(logits=u_logits / entropy_temp + actions_log_prob)
+        Psi = Categorical(logits=u_logits / entropy_temp + actions_log_prob)
 
         best_eps, best_ind = torch.max(u, -1)
         best_action = Utils.gather_indices(Q.action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
-        sample = Q_Pi.sample
+        sample = Psi.sample
 
         def action_sampler(sample_shape=torch.Size()):
             i = sample(sample_shape)
             return Utils.gather_indices(Q.action, i.unsqueeze(-1), 1).squeeze(1)
 
-        Q_Pi.__dict__.update({'best': best_action,
-                              'best_u': best_eps,
-                              'sample_ind': sample,
-                              'sample': action_sampler,
-                              'Q': Q,
-                              'q': q,
-                              'actions': Q.action,
-                              'u': u})
-        return Q_Pi
+        Psi.__dict__.update({'best': best_action,
+                             'best_u': best_eps,
+                             'sample_ind': sample,
+                             'sample': action_sampler,
+                             'Q': Q,
+                             'q': q,
+                             'actions': Q.action,
+                             'u': u})
+        return Psi

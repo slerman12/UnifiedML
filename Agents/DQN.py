@@ -65,7 +65,7 @@ class DQNAgent(torch.nn.Module):
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Data augmentation
-        self.aug = instantiate(recipes.aug) if recipes.aug is not None \
+        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
             else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
         # Birth

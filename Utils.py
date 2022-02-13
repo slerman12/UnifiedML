@@ -173,7 +173,6 @@ def rclamp(x, min, max):
 
 # (Multi-dim) indexing
 def gather_indices(item, ind, dim=-1):
-    assert item.shape[-len(ind.shape):dim] == ind.shape[:-1], "Can't broadcast index to item"
     ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
     if -1 < dim < len(item.shape) - 1:
         trail_shape = item.shape[dim + 1:]

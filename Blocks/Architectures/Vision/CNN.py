@@ -46,7 +46,7 @@ class CNN(nn.Module):
 
 
 class SimpleDecoder(nn.Module):
-    def __init__(self, out_shape, depth=4):
+    def __init__(self, out_shape, depth=3):
         super().__init__()
 
         channels_in = 3
