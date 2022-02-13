@@ -120,7 +120,7 @@ plotting:
   plot_tasks: null
   steps: ${train_steps}
 
-# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures/Recipes
+# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 recipes:
   Encoder:
     CNN: null
