@@ -15,7 +15,7 @@ discrete: ??? # To be specified later
 offline: false
 RL: true
 supervise: true
-generate: true
+generate: false
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
