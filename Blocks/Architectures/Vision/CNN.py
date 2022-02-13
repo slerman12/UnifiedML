@@ -44,3 +44,18 @@ class CNN(nn.Module):
 
         return out
 
+
+class SimpleDecoder(nn.Module):
+    def __init__(self, out_shape, depth=4):
+        super().__init__()
+
+        channels_in = 3
+        channels_out = out_shape[0]
+
+        self.CNN = nn.Sequential(*[nn.Sequential(
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(channels_in // 2 ** (i - 1), channels_out if i == depth else channels_in // 2 ** i, 3, padding=1),
+            nn.GLU(1)) for i in range(depth + 1)])
+
+    def forward(self, x):
+        return self.CNN(x)
