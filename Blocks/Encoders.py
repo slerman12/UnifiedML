@@ -101,7 +101,7 @@ class ResidualBlockEncoder(CNNEncoder):
     """
 
     def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_max_norm=True,
-                 pixels=True, pre_residual=False, isotropic=False,
+                 pixels=True, pre_residual=False, isotropic=False, recipe=None,
                  optim_lr=None, ema_tau=None):
 
         super().__init__(obs_shape, hidden_channels, 0, pixels)

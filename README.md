@@ -165,13 +165,13 @@ DQN Agent on MNIST:
 python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 ```
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning plase s.t. ```reward = -error```. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning phase s.t. ```reward = -error```. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average (EMA) of params can be toggled with ```ema=true```.
+Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag.
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -223,17 +223,19 @@ python Run.py replay.save=true replay.load=true
 
 Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per a unique experiment.
 
-Careful, without ```replay.save=true``` a loaded replay will be deleted upon terminate.
+Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
 ### Custom Architectures
 
-Can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```. 
+One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```. 
 
 Here is, for example, a GAN with a CNN Discriminator and a U-Net Generator:
 
 ```python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN +recipes.critic.trunk.obs_shape=${obs_shape} +recipes.critic.trunk.out_dim=${trunk_dim} recipes.Actor.Pi_head=Blocks.Architectures.Vision.UNet.UNet```
+
+Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
 ### Distributed
 
