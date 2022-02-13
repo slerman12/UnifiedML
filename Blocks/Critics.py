@@ -5,7 +5,7 @@
 import math
 import copy
 
-from hydra.utils import call
+from hydra.utils import instantiate
 
 import torch
 from torch import nn
@@ -33,24 +33,17 @@ class EnsembleQCritic(nn.Module):
 
         repr_dim = math.prod(repr_shape)
 
-        trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
-                              nn.LayerNorm(trunk_dim), nn.Tanh())
-
-        kwargs = dict(repr_shape=repr_shape, trunk_dim=trunk_dim)
-        self.trunk = Utils.default(call(recipe.trunk, **kwargs), trunk)
+        self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
+                                   nn.LayerNorm(trunk_dim),
+                                   nn.Tanh()) if recipe.trunk is None \
+            else instantiate(recipe.trunk)
 
         in_dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         out_dim = action_dim if discrete else 1
 
-        self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2, binary=sigmoid, l2_norm=l2_norm)
-                                      for _ in range(ensemble_size)], 0)
-
-        # From pre-defined recipe
-        if recipe.Q_head is not None:
-            kwargs = dict(in_dim=in_dim, out_dim=out_dim, hidden_dim=hidden_dim,
-                          binary=sigmoid, l2_norm=l2_norm)
-            self.Q_head = Utils.Ensemble([call(recipe.Q_head, **kwargs)
-                                          for _ in range(ensemble_size)], 0)
+        self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2,
+                                          binary=sigmoid, l2_norm=l2_norm) if recipe.q_head is None
+                                      else instantiate(recipe.q_head) for _ in range(ensemble_size)], 0)
 
         self.init(optim_lr, ema_tau)
 

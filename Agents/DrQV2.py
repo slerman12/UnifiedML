@@ -10,7 +10,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import GaussianActorEnsemble
+from Blocks.Actors import EnsembleGaussianActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -39,7 +39,7 @@ class DrQV2Agent(torch.nn.Module):
         self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
                                       optim_lr=lr, target_tau=target_tau)
 
-        self.actor = GaussianActorEnsemble(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
+        self.actor = EnsembleGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
                                            discrete=discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                            optim_lr=lr)
 

@@ -5,7 +5,7 @@
 import time
 import math
 
-from hydra.utils import call
+from hydra.utils import instantiate
 
 import torch
 from torch.nn.functional import cross_entropy
@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import GaussianActorEnsemble, CategoricalCriticActor
+from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -47,25 +47,26 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, recipe=recipes.Encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
+            else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
 
         feature_shape = (trunk_dim,) if generate else self.encoder.feature_shape
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else GaussianActorEnsemble(feature_shape, trunk_dim, hidden_dim, self.action_dim, recipes.Actor,
+            else EnsembleGaussianActor(feature_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
                                        ensemble_size=1,
                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        optim_lr=lr, ema_tau=ema_tau if ema else None)
 
-        self.critic = EnsembleQCritic(feature_shape, trunk_dim, hidden_dim, self.action_dim, generate, recipes.Critic,
+        self.critic = EnsembleQCritic(feature_shape, trunk_dim, hidden_dim, self.action_dim, generate, recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       optim_lr=lr, ema_tau=ema_tau)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Data augmentation
-        self.aug = Utils.default(call(recipes.Aug), IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4))
+        self.aug = instantiate(recipes.aug) if recipes.aug is not None \
+            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
         # Birth
 

@@ -229,11 +229,11 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 ### Custom Architectures
 
-Can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures/Recipes```. 
+Can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```. 
 
-Here is, for example, a pretty standard GAN with a CNN Discriminator and a U-Net Generator:
+Here is, for example, a GAN with a CNN Discriminator and a U-Net Generator:
 
-```python Run.py generate=True recipes.Critic.Q_head=Blocks.Recipes.CNN recipes.Actor.Pi_head=Blocks.Recipes.UNet```
+```python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN +recipes.critic.trunk.obs_shape=\\${obs_shape} +recipes.critic.trunk.out_dim=\\${trunk_dim} recipes.Actor.Pi_head=Blocks.Architectures.Vision.UNet.UNet```
 
 ### Distributed
 

@@ -5,7 +5,7 @@
 import math
 import copy
 
-from hydra.utils import call
+from hydra.utils import instantiate
 
 import torch
 from torch import nn
@@ -34,17 +34,12 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        CNN = nn.Sequential(*sum([(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
-                                             self.out_channels, 3, stride=2 if i == 0 else 1),
+        self.CNN = nn.Sequential(*[nn.Sequential(nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
+                                                           self.out_channels, 3, stride=2 if i == 0 else 1),
                                    nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-                                   nn.ReLU())
-                                  for i in range(depth + 1)], ()),
-                            Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
-
-        # From pre-defined recipe
-        kwargs = dict(obs_shape=obs_shape, out_channels=out_channels, depth=depth,
-                      batch_norm=batch_norm, shift_norm=shift_max_norm, pixels=pixels)
-        self.CNN = Utils.default(call(recipe.CNN, **kwargs), CNN)
+                                   nn.ReLU()) for i in range(depth + 1)],
+                                 Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()) if recipe.cnn is None \
+            else instantiate(recipe.cnn)
 
         # Initialize model
         self.init(optim_lr, ema_tau)

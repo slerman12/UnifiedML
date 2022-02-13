@@ -10,7 +10,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder, ResidualBlockEncoder
-from Blocks.Actors import CategoricalCriticActor, GaussianActorEnsemble
+from Blocks.Actors import CategoricalCriticActor, EnsembleGaussianActor
 from Blocks.Critics import EnsembleQCritic
 from Blocks.Architectures.MLP import MLPBlock
 
@@ -43,7 +43,7 @@ class SPRAgent(torch.nn.Module):
 
         # Continuous actions creator
         self.creator = None if self.discrete \
-            else GaussianActorEnsemble(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
+            else EnsembleGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        optim_lr=lr)
 

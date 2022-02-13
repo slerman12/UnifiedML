@@ -124,9 +124,7 @@ plotting:
 recipes:
   Encoder:
     CNN: null
-    pool: null
   Actor:
-    trunk: null
     Pi_head: null
   Critic:
     trunk: null
@@ -135,11 +133,7 @@ recipes:
   encoder:
     cnn:
       _target_: ${recipes.Encoder.CNN}
-    pool:
-      _target_: ${recipes.Encoder.pool}
   actor:
-    trunk:
-      _target_: ${recipes.Actor.trunk}
     pi_head:
       _target_: ${recipes.Actor.Pi_head}
   critic:
