@@ -9,6 +9,7 @@ class CNN(nn.Module):
         super().__init__()
         print(obs_shape)
         print("jsjjjjjjjjjjjjjjjjjjjjj")
+        print(out_dim)
 
         self.obs_shape = obs_shape
         in_channels = obs_shape[0]
