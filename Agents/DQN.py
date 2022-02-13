@@ -28,7 +28,7 @@ class DQNAgent(torch.nn.Module):
                  lr, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, log,  # On-boarding
-                 num_actions=2, num_critics=2):  # DQN
+                 num_actions=5, num_critics=2):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
@@ -86,7 +86,7 @@ class DQNAgent(torch.nn.Module):
                 else actor(obs, self.step).mean
 
             # DQN action selector is based on critic
-            Pi = self.action_selector(self.critic(obs, actions), self.step)
+            Pi = self.action_selector(self.critic(obs, actions), self.step)  # todo num actors 0 for just classify?
 
             action = Pi.sample() if self.training \
                 else Pi.best
@@ -143,7 +143,7 @@ class DQNAgent(torch.nn.Module):
                 else self.actor(obs[instruction], self.step).mean
 
             # Inference
-            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
+            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best #todo use all actions
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
