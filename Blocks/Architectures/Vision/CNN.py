@@ -32,9 +32,10 @@ class CNN(nn.Module):
     def forward(self, *x):
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
-            context = [c.reshape(x[0].shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-                       for c in x[1:]]
-            x = torch.cat([x[0], *context], 1)
+            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
+                     for context in x[1:]]
+
+        x = torch.cat(x, 1)
 
         out = self.CNN(x.view(self.obs_shape))
 
