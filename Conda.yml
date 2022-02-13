@@ -1,4 +1,4 @@
-name: RL
+name: ML
 channels:
   - defaults
 dependencies:
@@ -31,3 +31,4 @@ dependencies:
       - PyOpenGL-accelerate
       - ale-py
       - gym
+      - einops

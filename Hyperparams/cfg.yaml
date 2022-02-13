@@ -119,6 +119,7 @@ plotting:
   plot_suites: null
   plot_tasks: null
   steps: ${train_steps}
+  plot_tabular: false
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 recipes:
