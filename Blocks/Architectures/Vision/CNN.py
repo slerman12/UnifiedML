@@ -8,6 +8,7 @@ class CNN(nn.Module):
     def __init__(self, obs_shape=torch.Size([3, 84, 84]), out_channels=32, depth=3, flatten=True, out_dim=None):
         super().__init__()
         print(obs_shape)
+        print("jsjjjjjjjjjjjjjjjjjjjjj")
 
         self.obs_shape = obs_shape
         in_channels = obs_shape[0]
