@@ -233,7 +233,7 @@ One can also optionally pass in custom architectures such as those defined in ``
 
 Here is, for example, a GAN with a CNN Discriminator and a U-Net Generator:
 
-```python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN +recipes.critic.trunk.obs_shape=${obs_shape} +recipes.critic.trunk.out_dim=${trunk_dim} recipes.Actor.Pi_head=Blocks.Architectures.Vision.UNet.UNet```
+```python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN +recipes.critic.trunk.obs_shape=${obs_shape} +recipes.critic.trunk.out_dim=${trunk_dim} recipes.Actor.Pi_head=Blocks.Architectures.Vision.UNet.UNet +recipes.actor.pi_head.in_dim=${trunk_dim}```
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
