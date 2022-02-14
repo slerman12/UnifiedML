@@ -31,6 +31,10 @@ class CNN(nn.Module):
 
         self.apply(Utils.weight_init)
 
+    def output_shape(self, h, w):
+        return Utils.cnn_output_shape(h, w, self.CNN) if self.output_dim is None \
+            else (1, self.output_dim)
+
     def forward(self, *x):
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:

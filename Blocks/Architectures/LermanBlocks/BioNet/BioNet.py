@@ -10,7 +10,7 @@ from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAtt
 class BioNet(nn.Module):
     """Disentangling "What" And "Where" Pathways In CNNs"""
 
-    def __init__(self, input_shape, out_channels, depth=3, output_dim=128):
+    def __init__(self, input_shape, out_channels=32, depth=3, output_dim=128):
         super().__init__()
         in_channels = input_shape[0]
 
