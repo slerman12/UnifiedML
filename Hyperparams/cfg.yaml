@@ -134,7 +134,7 @@ recipes:
   Aug: null
   encoder:
     eyes:
-      _target_: ${recipes.Encoder.CNN}
+      _target_: ${recipes.Encoder.Eyes}
   actor:
     trunk:
       _target_: ${recipes.Actor.trunk}
