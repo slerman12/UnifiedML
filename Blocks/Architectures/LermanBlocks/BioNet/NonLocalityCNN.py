@@ -29,7 +29,7 @@ class Conv2DInvariant(nn.Conv2d):
                 convs.append(self._conv_forward(input, self.weight, self.bias))
 
                 # Rotation
-                phi = torch.tensor(math.pi / self.num_rotations)
+                phi = torch.tensor(math.pi / self.num_rotations, device=self.weight.device)
                 s, c = torch.sin(phi), torch.cos(phi)
                 rota = torch.stack([torch.stack([c, -s]),
                                     torch.stack([s, c])])
