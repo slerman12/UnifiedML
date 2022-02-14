@@ -20,6 +20,9 @@ class ConvNeXtBlock(nn.Module):
                                  nn.Linear(4 * dim, dim))
         self.gamma = nn.Parameter(torch.full((dim,), 1e-6))
 
+    def output_shape(self, h, w):
+        return Utils.cnn_output_shape(h, w, self.conv)
+
     def forward(self, x):
         input = x
         x = self.conv(x)
@@ -60,7 +63,7 @@ class ConvNeXt(nn.Module):
                                    *[ConvNeXtBlock(dims[i + 1])
                                      for _ in range(depths[i])])  # Conv, MLP, Residuals
                                    for i in range(4)],
-                                 nn.AdaptiveAvgPool2d(1, 1),
+                                 nn.AdaptiveAvgPool2d((1, 1)),
                                  nn.Sequential(Utils.ChannelSwap(),
                                                nn.LayerNorm(dims[-1]),
                                                Utils.ChannelSwap()),
@@ -69,6 +72,9 @@ class ConvNeXt(nn.Module):
                                  )
 
         self.init(None, None)
+
+    def output_shape(self, h, w):
+        return Utils.cnn_output_shape(h, w, self.CNN)
 
     def init(self, optim_lr, ema_tau):
         def weight_init(m):

@@ -237,10 +237,10 @@ Here is, for example, a GAN with a CNN Discriminator:
 python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN '+recipes.critic.trunk.obs_shape=${obs_shape}' '+recipes.critic.trunk.output_dim=${trunk_dim}' 
 ```
 
-See also, how easy it is to train MNIST with the new ConvMixer architecture as encoder:
+See also, how easy it is to train MNIST with the new ConvNeXt architecture as encoder:
 
 ```
-python Run.py task=classify/mnist recipes.Encoder.Eyes=Blocks.Architectures.Vision.ConvMixer.ConvMixer '+recipes.encoder.eyes.input_shape=${obs_shape}'
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.Vision.ConvNeXt.ConvNeXt '+recipes.encoder.eyes.input_shape=${obs_shape}'
 ```
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
