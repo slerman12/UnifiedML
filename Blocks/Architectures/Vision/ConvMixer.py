@@ -7,22 +7,28 @@ import torch.nn as nn
 from Blocks.Architectures.Residual import Residual
 
 
-def ConvMixer(in_channels, dim, depth, kernel_size=9, patch_size=7, n_classes=1000):
-    return nn.Sequential(
-        nn.Conv2d(in_channels, dim, kernel_size=patch_size, stride=patch_size),
-        nn.GELU(),
-        nn.BatchNorm2d(dim),
-        *[nn.Sequential(
-            Residual(nn.Sequential(
-                nn.Conv2d(dim, dim, kernel_size, groups=dim, padding="same"),
+class ConvMixer(nn.Module):
+    def __init__(self, in_channels=3, dim=32, depth=3, kernel_size=9, patch_size=7, n_classes=1000):
+        super().__init__()
+
+        self.CNN = nn.Sequential(
+            nn.Conv2d(in_channels, dim, kernel_size=patch_size, stride=patch_size),
+            nn.GELU(),
+            nn.BatchNorm2d(dim),
+            *[nn.Sequential(
+                Residual(nn.Sequential(
+                    nn.Conv2d(dim, dim, kernel_size, groups=dim, padding="same"),
+                    nn.GELU(),
+                    nn.BatchNorm2d(dim)
+                )),
+                nn.Conv2d(dim, dim, kernel_size=1),
                 nn.GELU(),
                 nn.BatchNorm2d(dim)
-            )),
-            nn.Conv2d(dim, dim, kernel_size=1),
-            nn.GELU(),
-            nn.BatchNorm2d(dim)
-        ) for _ in range(depth)],
-        nn.AdaptiveAvgPool2d((1,1)),
-        nn.Flatten(),
-        nn.Linear(dim, n_classes)
-    )
+            ) for _ in range(depth)],
+            nn.AdaptiveAvgPool2d((1,1)),
+            nn.Flatten(),
+            nn.Linear(dim, n_classes)
+        )
+
+    def forward(self, x):
+        return self.CNN(x)
