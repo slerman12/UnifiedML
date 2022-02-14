@@ -23,7 +23,7 @@ class Conv2DInvariant(nn.Conv2d):
         convs = []
 
         for dila in reversed(range(1, self.num_dilations + 1)):
-            self.dilation = (dila, dila)
+            self.dilation = (dila, dila)  # todo different heights/widths for diff dilations, breaks!
 
             for _ in range(4):
                 convs.append(self._conv_forward(input, self.weight, self.bias))
@@ -37,7 +37,7 @@ class Conv2DInvariant(nn.Conv2d):
 
 class NonLocalityCNN(nn.Module):
     def __init__(self, in_channels=3, out_channels=64, groups=8,
-                 num_dilations=4, depth=3):
+                 num_dilations=1, depth=3):
         super().__init__()
 
         def layer_norm():
