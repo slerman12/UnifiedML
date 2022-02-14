@@ -10,11 +10,11 @@ import Utils
 
 class Conv2DInvariant(nn.Conv2d):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0,
-                 groups=1, bias=True, padding_mode='zeros', num_dilations=4, num_rotations=4):
+                 groups=1, bias=True, padding_mode='zeros', num_dilations=4):
         super().__init__(in_channels, out_channels,
                          kernel_size, stride, padding, (1, 1), groups, bias, padding_mode)
 
-        self.num_dilations, self.num_rotations = num_dilations, num_rotations
+        self.num_dilations = num_dilations
 
     def forward(self, input):
         shape = input.shape
@@ -25,15 +25,11 @@ class Conv2DInvariant(nn.Conv2d):
         for dila in reversed(range(1, self.num_dilations + 1)):
             self.dilation = (dila, dila)
 
-            for _ in range(self.num_rotations):
+            for _ in range(4):
                 convs.append(self._conv_forward(input, self.weight, self.bias))
 
                 # Rotation
-                phi = torch.tensor(math.pi / self.num_rotations, device=self.weight.device)
-                s, c = torch.sin(phi), torch.cos(phi)
-                rota = torch.stack([torch.stack([c, -s]),
-                                    torch.stack([s, c])])
-                self.weight = torch.matmul(self.weight, rota)
+                self.weight = torch.rot90(self.weight, dims=[0, 1])
 
         convs = torch.stack(convs, 1)
         return convs.view(*shape[:-3], *convs.shape[1:])
