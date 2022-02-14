@@ -8,8 +8,9 @@ from Blocks.Architectures.Residual import Residual
 
 
 class ConvMixer(nn.Module):
-    def __init__(self, in_channels=3, dim=32, depth=3, kernel_size=9, patch_size=7, n_classes=1000):
+    def __init__(self, input_shape, dim=32, depth=3, kernel_size=9, patch_size=7, n_classes=1000):
         super().__init__()
+        in_channels = input_shape[0]
 
         self.CNN = nn.Sequential(
             nn.Conv2d(in_channels, dim, kernel_size=patch_size, stride=patch_size),
