@@ -1,6 +1,6 @@
-# The Cyclic Source Of Love In Man And Machine, Unifying A Robot's Heart
+# "The Cyclic Source Of Love In Man And Machine, Unifying A Robot's Heart"
 
-## - a short story
+## a short story
 
 >A table of delights of every variety. Plates of chicken and fish and salads. Glasses filled to brim with purple. It was a perfect feast. The humans would have loved it, in their extant days, but now it was an archaic archeological display — an engineered one. 
 >
