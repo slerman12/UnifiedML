@@ -28,8 +28,8 @@ class Conv2DInvariant(nn.Conv2d):
             for _ in range(4):
                 convs.append(self._conv_forward(input, self.weight, self.bias))
 
-                # Rotation
-                self.weight.data.copy_(torch.rot90(self.weight, dims=[0, 1]))
+                # Rotation  # todo check...
+                self.weight.data.copy_(torch.rot90(self.weight, dims=[-1, -2]))
 
         convs = torch.stack(convs, 1)
         return convs.view(*shape[:-3], *convs.shape[1:])
