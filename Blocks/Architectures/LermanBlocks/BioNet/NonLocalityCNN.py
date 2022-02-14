@@ -40,17 +40,12 @@ class NonLocalityCNN(nn.Module):
                  num_dilations=1, depth=3):
         super().__init__()
 
-        def layer_norm():
-            return nn.Sequential(Utils.ChannelSwap(),
-                                 nn.LayerNorm(out_channels // groups),
-                                 Utils.ChannelSwap())
-
         self.trunk = nn.Sequential(
             Conv2DInvariant(in_channels,
                             out_channels, (4, 4), num_dilations=num_dilations),
             Utils.ChannelSwap(),
             nn.GELU(),
-            layer_norm(),
+            nn.LayerNorm(out_channels),
             Utils.ChannelSwap()
         )
 
@@ -60,7 +55,7 @@ class NonLocalityCNN(nn.Module):
                                 out_channels, (2, 2), padding='same', groups=groups, num_dilations=num_dilations),
                 Utils.ChannelSwap(),
                 nn.GELU(),
-                layer_norm(),
+                nn.LayerNorm(out_channels),
                 Utils.ChannelSwap()
             )
             ) for _ in range(depth)])
