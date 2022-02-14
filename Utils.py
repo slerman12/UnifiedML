@@ -200,8 +200,8 @@ class ShiftMaxNorm(nn.Module):
 
     def forward(self, x):
         y = x.flatten(self.start_dim)
-        y -= y.min(-1, keepdim=True)[0]
-        y /= y.max(-1, keepdim=True)[0]
+        y = y - y.min(-1, keepdim=True)[0]
+        y = y / y.max(-1, keepdim=True)[0]
         return y.view(*x.shape)
 
 
@@ -254,7 +254,7 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
         for model in models:
             model.optim.step()
 
-            #  Update ema target
+            # Update ema target
             if ema and hasattr(model, 'ema'):
                 model.update_ema_params()
 

@@ -66,7 +66,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, th=False, optim_lr=None, target_tau=None):
+    def __init__(self, dim=32, heads=8, context_dim=None, th=False, optim_lr=None, ema_tau=None):
         super().__init__()
 
         self.dim = dim

@@ -13,7 +13,6 @@ class BioNet(nn.Module):
     def __init__(self, input_shape, out_channels, depth=3, output_dim=128):
         super().__init__()
         in_channels = input_shape[0]
-        self.output_dim = output_dim
 
         self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
         self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
@@ -24,11 +23,12 @@ class BioNet(nn.Module):
         self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=8),
                                   Utils.ChannelSwap(),  # Todo just use einops rearange
-                                  nn.AdaptiveAvgPool2d(output_dim ** 0.5),
-                                  nn.Flatten())
+                                  # nn.AdaptiveAvgPool2d(output_dim ** 0.5),
+                                  # nn.Flatten()
+                                  )
 
     def output_shape(self, h, w):
-        return 1, self.output_dim
+        return Utils.cnn_output_shape(h, w, self.dorsal_stream)
 
     def forward(self, input):
         ventral = self.ventral_stream.trunk(input)

@@ -11,7 +11,7 @@ import torch
 torch.backends.cudnn.benchmark = True
 
 
-# Hydra conveniently and cleanly manages sys args  # TODO re-gen dmc original with seed!
+# Hydra conveniently and cleanly manages sys args
 # Hyper-param cfg files located in ./Hyperparams
 
 @hydra.main(config_path='Hyperparams', config_name='cfg')
