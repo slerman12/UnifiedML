@@ -1,67 +1,67 @@
-import math
-
 from torch import nn
 
-from Blocks.Architectures.Residual import ResidualBlock, Residual
-from Blocks.Architectures.MLP import MLP
-from Blocks.Architectures.MultiHeadAttention import CrossAttention, SelfAttention
+import Utils
+
+from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
+from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
+from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
 
 
 class BioNet(nn.Module):
     """Disentangling "What" And "Where" Pathways In CNNs"""
 
-    def __init__(self, input_shape, out_channels, num_patches, depth=3, output_dim=128):
+    def __init__(self, input_shape, out_channels, depth=3, output_dim=128):
         super().__init__()
         in_channels = input_shape[0]
-        out_channels = out_channels
+        self.output_dim = output_dim
 
-        assert len(num_patches) == 2
-        num_patches = [1, *num_patches]  # Channel dimension
+        self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
+        self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
 
-        # For MLP
-        patch_dim = math.prod(input_shape) / math.prod(num_patches)
+        self.cross_talk = [CrossAttentionBlock(dim=out_channels, heads=8)
+                           for _ in range(depth)]
 
-        mlp = lambda **args: nn.Sequential(nn.Flatten(-3), MLP(**args))
-        mlp_args = dict(out_dim=out_channels, hidden_dim=out_channels, depth=3)
+        self.repr = nn.Sequential(Utils.ChannelSwap(),
+                                  SelfAttentionBlock(dim=out_channels, heads=8),
+                                  Utils.ChannelSwap(),  # Todo just use einops rearange
+                                  nn.AdaptiveAvgPool2d(output_dim ** 0.5),
+                                  nn.Flatten())
 
-        self.ventral_stream = [ResidualBlock(in_channels, out_channels)]
-        self.dorsal_stream = [Patched(mlp, num_patches, in_dim=patch_dim, **mlp_args)]
-
-        for _ in range(depth - 1):
-            self.ventral_stream.append(ResidualBlock(out_channels, out_channels))
-            self.dorsal_stream.append(Patched(mlp, num_patches, in_dim=out_channels, **mlp_args))
-
-        self.cross_talk = [CrossAttention(out_channels, heads=8) for _ in range(depth)]
-
-        self.attn = SelfAttention(out_channels, heads=8)
-        self.pool = nn.AdaptiveAvgPool2d(output_dim ** 0.5)
+    def output_shape(self, h, w):
+        return 1, self.output_dim
 
     def forward(self, input):
-        ventral = dorsal = input
-        for what, where, talk in zip(self.ventral_stream,
-                                     self.dorsal_stream,
+        ventral = self.ventral_stream.trunk(input)
+        dorsal = self.dorsal_stream.trunk(input)
+
+        t = Utils.ChannelSwap()
+
+        for what, where, talk in zip(self.ventral_stream.CNN,
+                                     self.dorsal_stream.ViT,
                                      self.cross_talk):
             ventral = what(ventral)
-            dorsal = talk(where(dorsal), ventral.transpose(1, -1))
+            dorsal = t(talk(t(where(dorsal)),
+                            t(ventral).view(*t(ventral).shape[:-1], 2, -1)))  # Feature redundancy(? till convolved)
 
-        out = self.attn(dorsal).mean(-1)
-        # out = self.attn(dorsal).flatten(4).mean(-1)  # for vits
-        out = self.pool(out).flatten(1)
+            # if self_supervise:
+            #     loss = t(byol(talk2(t(ventral).view(*t(ventral).shape[:-1], 2, -1)), t(dorsal)), t(dorsal).mean(-1))
+            #     Utils.optimize(loss,
+            #                    self)
+
+        out = self.repr(dorsal)
         return out
 
     """Aside from the way the modules are put together (via two disentangled streams), 
-    there is only one part of this that we have not seen before, and that is the /Patched/ MLP. 
+    there is not much that we have not seen before in some form
     
-    Besides that, we have a ResidualBlock [resnet], CrossAttention [perceiver], 
-    and SelfAttention [all you need].
+    We have a CNN [resnet, convmixer], ViT [worth 1000 words], CrossAttention [perceiver], 
+    SelfAttention [all you need], and average pooling [pool].
     
     Here is a schematic visualization for those unfamiliar with Pytorch:
     
-    [eye,, self attend + average <- resblocks,: patched mlps <- input
+    [eye,, self attend + average <- CNNs,: ViTs <- input
     
-    Now, let's go over the Patched MLP. 
-    Note that to make this extendable to arbitrary grid/set/sequence sizes,
-    we could use a Patched CNN with locality coords or even a Patched SelfAttention, all generalities preserved.
+    Now, let's go over the specifics of the CNN and ViT. 
     
     Let's overview a Patched Ftheta for any neural network function Ftheta.
     
@@ -93,13 +93,13 @@ class BioNet(nn.Module):
     to occupy a smaller region centered around the fovea, 
     compared to the retina-spanning dorsal estuary of the same inputs, consistent with this idea.
     
-    We would also expect a more involved routing system to handle sequential convolution and spike 
+    We would also expect a more involved routing system to handle convolution via sequencing and spiking 
     rest potential resets. 
     It is indeed observed that the optic nerve stretches out-of-its-way-far from the eye to the back of the head,
     to reach the occipital entrance.
     
     This model reconciles both the what/where-pathway hypothesis, with two disentangled streams,
-    and the perceptual/motor-pathway hypothesis, with dorsal-mediated visuo-attention-based motor control.
+    and the perceptual/motor-pathway hypothesis, with dorsal-mediated visuo-attention and motor control.
     
     The improved performance is a strong argument for the model. We think the concepts and noted advantages of 
     non-locality, cross-attention with skip connections, and representational disentanglement defined in deep learning
@@ -118,18 +118,11 @@ class BioNet(nn.Module):
 # For that matter, the residual blocks could also be Vision Transformer layers,
 # but this would introduce quadratic complexity.
 
+# Can "max-pool" relation-disentanglement style layer by layer using cross attentions and gumbel softmax for escaping
+# local hard-attention optima. Can also try to predict dorsal from ventral cross attend as self-supervision.
+# Fully architectural. No data augmentation, perturbing, or masking. Debatable whether it can even be called
+# self-supervision or if it's just a really good architecture! (Not even locality embeddings)
+# Architectural form of this kind of:
+# https://medium.com/syncedreview/
+# a-leap-forward-in-computer-vision-facebook-ai-says-masked-autoencoders-are-scalable-vision-32c08fadd41f
 
-# Unique instance of a module applied per patch
-class Patched(nn.Module):
-    def __init__(self, module, num_patches, **module_args):
-        super().__init__()
-        self.num_patches = num_patches
-        self.modules = nn.ModuleList([module(**module_args) for _ in range(math.prod(num_patches))])
-
-    def forward(self, x):
-        shape = x.shape[:-len(self.num_patches)]
-        tail_shape = x.shape[-len(self.num_patches):]
-        patch_shape = [whole / part for whole, part in zip(tail_shape, self.num_patches)]
-        x = x.view(-1, *self.num_patches, *patch_shape)
-        out = torch.stack([module(patch) for patch, module in zip(x, self.modules)])
-        return out.view(*shape, *out.shape[len(shape):])

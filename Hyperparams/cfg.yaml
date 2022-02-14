@@ -124,7 +124,7 @@ plotting:
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 recipes:
   Encoder:
-    CNN: null
+    Eyes: null
   Actor:
     trunk: null
     Pi_head: null
@@ -133,7 +133,7 @@ recipes:
     Q_head: null
   Aug: null
   encoder:
-    cnn:
+    eyes:
       _target_: ${recipes.Encoder.CNN}
   actor:
     trunk:

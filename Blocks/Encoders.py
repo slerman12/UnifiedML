@@ -12,6 +12,7 @@ from torch import nn
 
 import Utils
 
+from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 
@@ -34,13 +35,10 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.CNN = nn.Sequential(*[nn.Sequential(
-            nn.Conv2d(self.in_channels if i == 0 else self.out_channels,
-                      self.out_channels, 3, stride=2 if i == 0 else 1),
-            nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-            nn.ReLU()) for i in range(depth + 1)
-        ], Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()) if recipe.cnn._target_ is None \
-            else instantiate(recipe.cnn)
+        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm, False),
+                                  Utils.ShiftMaxNorm(-3) if shift_max_norm
+                                  else nn.Identity()) if recipe.eyes._target_ is None \
+            else instantiate(recipe.eyes)
 
         # Initialize model
         self.init(optim_lr, ema_tau)
@@ -55,7 +53,7 @@ class CNNEncoder(nn.Module):
 
         # Dimensions
         _, height, width = self.obs_shape
-        height, width = Utils.cnn_output_shape(height, width, self.CNN)
+        height, width = Utils.cnn_output_shape(height, width, self.Eyes)
 
         self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
@@ -113,9 +111,9 @@ class ResidualBlockEncoder(CNNEncoder):
         hidden_channels = self.in_channels if pre_residual else hidden_channels
 
         # CNN ResNet-ish
-        self.CNN = nn.Sequential(MiniResNet(self.in_channels, hidden_channels, self.out_channels, num_blocks,
-                                            pre_residual),
-                                 Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+        self.Eyes = nn.Sequential(MiniResNet(self.in_channels, hidden_channels, self.out_channels, num_blocks,
+                                             pre_residual),
+                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
         self.init(optim_lr, ema_tau)
 
