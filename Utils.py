@@ -104,6 +104,8 @@ def cnn_output_shape(height, width, block):
                                                kernel_size=block.kernel_size,
                                                stride=block.stride,
                                                padding=block.padding)
+    elif isinstance(block, nn.AdaptiveAvgPool2d):
+        return block.output_size
     elif hasattr(block, 'output_shape'):
         height, width = block.output_shape(height, width)
     elif hasattr(block, 'modules'):

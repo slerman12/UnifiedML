@@ -26,7 +26,7 @@ class ConvMixer(nn.Module):
                 nn.GELU(),
                 nn.BatchNorm2d(dim)
             ) for _ in range(depth)],
-            # nn.AdaptiveAvgPool2d((1,1)),
+            nn.AdaptiveAvgPool2d((1,1)),
             # nn.Flatten(),
             # nn.Linear(dim, n_classes)
         )
