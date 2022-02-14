@@ -47,10 +47,10 @@ class ConvNeXt(nn.Module):
         channels_in = input_shape[0]
 
         if dims is None:
-            dims = [channels_in, 96, 192, 384, 768]
+            dims = [channels_in, 96]
 
         if depths is None:
-            depths = [3, 3, 9, 3]
+            depths = [3]
 
         self.CNN = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
                                                            dims[i + 1],
