@@ -82,6 +82,8 @@ def param_copy(net, target_net, ema_tau=1):
 
 # Compute the output shape of a CNN layer
 def cnn_layer_output_shape(in_height, in_width, kernel_size=1, stride=1, padding=0, dilation=1):
+    if padding == 'same':
+        return in_height, in_width
     if type(kernel_size) is not tuple:
         kernel_size = (kernel_size, kernel_size)
     if type(stride) is not tuple:
