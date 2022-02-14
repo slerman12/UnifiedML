@@ -9,7 +9,7 @@ import Utils
 
 
 class Conv2DInvariant(nn.Conv2d):
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding=0,
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0,
                  groups=1, bias=True, padding_mode='zeros', num_dilations=4, num_rotations=4):
         super().__init__(in_channels, out_channels,
                          kernel_size, stride, padding, (1, 1), groups, bias, padding_mode)
