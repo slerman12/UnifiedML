@@ -83,7 +83,7 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        h = self.CNN(obs)
+        h = self.Eyes(obs)
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.feature_shape, 'pre-computed repr_shape does not match output CNN shape'
