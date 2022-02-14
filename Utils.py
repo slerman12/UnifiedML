@@ -88,8 +88,10 @@ def cnn_layer_output_shape(in_height, in_width, kernel_size=1, stride=1, padding
         stride = (stride, stride)
     if type(padding) is not tuple:
         padding = (padding, padding)
-    out_height = math.floor(((in_height + (2 * padding[0]) - (dilation * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
-    out_width = math.floor(((in_width + (2 * padding[1]) - (dilation * (kernel_size[1] - 1)) - 1) / stride[1]) + 1)
+    if type(dilation) is not tuple:
+        dilation = (dilation, dilation)
+    out_height = math.floor(((in_height + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
+    out_width = math.floor(((in_width + (2 * padding[1]) - (dilation[1] * (kernel_size[1] - 1)) - 1) / stride[1]) + 1)
     return out_height, out_width
 
 
