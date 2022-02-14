@@ -38,28 +38,35 @@ class ConvNeXt(nn.Module):
         depths (tuple(int)): Number of blocks at each stage. Default: [3, 3, 9, 3]
         num_classes (int): Number of classes for classification head. Default: 1000
     """
-    def __init__(self, dims=None, depths=None, num_classes=1000):
+    def __init__(self, input_shape, dims=None, depths=None, num_classes=1000):
         super().__init__()
 
+        channels_in = input_shape[0]
+
         if dims is None:
-            dims = [3, 96, 192, 384, 768]
+            dims = [channels_in, 96, 192, 384, 768]
 
         if depths is None:
             depths = [3, 3, 9, 3]
 
-        self.net = nn.Sequential(*sum([[nn.Conv2d(dims[i],
-                                                  dims[i + 1],
-                                                  kernel_size=4 if i == 0 else 2,
-                                                  stride=4 if i == 0 else 2),  # Conv
-                                        nn.Sequential(Utils.ChannelSwap(),
-                                                      nn.LayerNorm(dims[i + 1]),
-                                                      Utils.ChannelSwap()) if i < 3 else nn.Identity(),  # LayerNorm
-                                        *[ConvNeXtBlock(dims[i + 1])
-                                          for _ in range(depths[i])]]  # Conv, MLP, Residuals
-                                       for i in range(4)], []))
-
-        self.norm = nn.LayerNorm(dims[-1])
-        self.head = nn.Linear(dims[-1], num_classes)
+        self.CNN = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
+                                                           dims[i + 1],
+                                                           kernel_size=4 if i == 0 else 2,
+                                                           stride=4 if i == 0 else 2),  # Conv
+                                                 nn.Sequential(Utils.ChannelSwap(),
+                                                               nn.LayerNorm(dims[i + 1]),
+                                                               Utils.ChannelSwap()) if i < 3
+                                                 else nn.Identity(),  # LayerNorm
+                                   *[ConvNeXtBlock(dims[i + 1])
+                                     for _ in range(depths[i])])  # Conv, MLP, Residuals
+                                   for i in range(4)],
+                                 nn.AdaptiveAvgPool2d(1, 1),
+                                 nn.Sequential(Utils.ChannelSwap(),
+                                               nn.LayerNorm(dims[-1]),
+                                               Utils.ChannelSwap()),
+                                 # nn.Flatten(),
+                                 # nn.Linear(dims[-1], num_classes)
+                                 )
 
         self.init(None, None)
 
@@ -86,10 +93,7 @@ class ConvNeXt(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, x):
-        x = self.net(x)
-        x = self.norm(x.mean([-2, -1]))  # Global average pooling, (N, C, H, W) -> (N, C)
-        x = self.head(x)
-        return x
+        return self.CNN(x)
 
 
 def convnext_tiny(num_classes=1000):
