@@ -18,7 +18,7 @@ class CrossAttention(nn.Module):
     def __init__(self, dim=32, heads=8, context_dim=None, th=False):
         super().__init__()
 
-        assert heads % dim == 0
+        assert dim % heads == 0
         self.dim = dim
         self.heads = heads
 
