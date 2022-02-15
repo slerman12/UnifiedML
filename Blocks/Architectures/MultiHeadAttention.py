@@ -62,7 +62,7 @@ class CrossAttention(nn.Module):
 
 class SelfAttention(CrossAttention):
     def forward(self, x, *args):
-        return super()(x, x)
+        return super().forward(x, x)
 
 
 class CrossAttentionBlock(nn.Module):
@@ -101,4 +101,4 @@ class CrossAttentionBlock(nn.Module):
 
 class SelfAttentionBlock(CrossAttentionBlock):
     def forward(self, x, *_):
-        return super()(x, x)
+        return super().forward(x, x)
