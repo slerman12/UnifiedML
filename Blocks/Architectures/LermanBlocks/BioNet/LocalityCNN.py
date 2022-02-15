@@ -29,9 +29,9 @@ class Conv2DLocalized(nn.Module):
 
         self.shape = (out_channels, height, width)
 
-        self.linear_W = nn.Parameter(torch.empty(height, width, out_channels, out_channels))
+        self.linear_W = nn.Parameter(torch.empty(height, width, out_channels, out_channels)).to(self.conv.device)
 
-        self.linear_B = nn.Parameter(torch.empty(height, width, out_channels))
+        self.linear_B = nn.Parameter(torch.empty(height, width, out_channels)).to(self.conv.device)
 
         self.ln = layer_norm()
 
