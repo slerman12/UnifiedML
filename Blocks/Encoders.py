@@ -86,7 +86,8 @@ class CNNEncoder(nn.Module):
         h = self.norm(self.Eyes(obs))
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        assert tuple(h.shape[-3:]) == self.feature_shape, 'pre-computed repr_shape does not match output CNN shape'
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_shape does not match output CNN shape ' \
+                                                          f'{tuple(h.shape[-3:])}≠{self.feature_shape}'
 
         if flatten:
             return h.flatten(-3)
