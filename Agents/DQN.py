@@ -111,8 +111,7 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
-            next_obs[:] = label[:] = float('nan')
+            action, reward[:], label[:] = obs.flatten(-3) / 127.5 - 1, 1, float('nan')
 
         # "Envision" / "Perceive"
 
@@ -159,17 +158,18 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                actions = self.actor(obs[instruction], self.step).rsample(self.num_actions)
+                action[instruction] = Utils.one_hot(y_actual, self.action_dim)
 
-                y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
+                half = len(instruction) // 2
+                action[instruction][:half].uniform_()
 
-                half = len(y_predicted) // 2
-                y_predicted[:half].uniform_()
-
-                mistake = cross_entropy(y_predicted, y_actual, reduction='none')
+                mistake = cross_entropy(action[instruction], y_actual, reduction='none')
 
                 reward[instruction] = -mistake[:, None].detach()
-                action[instruction], next_obs[instruction] = y_predicted.softmax(-1).detach(), float('nan')
+
+                action[instruction][:half] = action[instruction][:half].softmax(-1).detach()
+
+                next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
