@@ -102,3 +102,18 @@ class CrossAttentionBlock(nn.Module):
 class SelfAttentionBlock(CrossAttentionBlock):
     def forward(self, x, *_):
         return super().forward(x, x)
+
+
+class AttentionPool(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+
+        self.pool = nn.Sequential(Utils.ChannelSwap(),
+                                  SelfAttentionBlock(dim=input_dim, heads=8),
+                                  Utils.ChannelSwap(),
+                                  nn.AdaptiveAvgPool2d((1, 1)),
+                                  nn.Flatten(),
+                                  nn.Linear(input_dim, output_dim))
+
+    def forward(self, x):
+        return self.pool(x)

@@ -38,6 +38,7 @@ class MiniResNet(nn.Module):
     def __init__(self, input_shape, hidden_channels=32, out_channels=32, depth=3, pre_residual=False, output_dim=None):
         super().__init__()
 
+        self.input_shape = input_shape
         in_channels = input_shape[0]
 
         pre = nn.Sequential(nn.Conv2d(in_channels, hidden_channels, kernel_size=3, padding=1),

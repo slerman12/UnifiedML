@@ -14,6 +14,8 @@ from Blocks.Architectures.Residual import Residual
 class ConvMixer(nn.Module):
     def __init__(self, input_shape, out_channels=32, depth=3, kernel_size=9, patch_size=7, output_dim=None):
         super().__init__()
+
+        self.input_shape = input_shape
         in_channels = input_shape[0]
 
         self.CNN = nn.Sequential(

@@ -39,6 +39,7 @@ class ConvNeXt(nn.Module):
     def __init__(self, input_shape, dims=None, depths=None, output_dim=None):
         super().__init__()
 
+        self.input_shape = input_shape
         channels_in = input_shape[0]
 
         if dims is None:

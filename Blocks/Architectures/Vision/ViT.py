@@ -17,6 +17,7 @@ class ViT(nn.Module):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__()
 
+        self.input_shape = input_shape
         in_channels = input_shape[0]
         image_size = input_shape[1]
         self.patch_size = patch_size

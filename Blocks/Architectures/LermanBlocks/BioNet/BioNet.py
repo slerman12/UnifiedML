@@ -22,11 +22,12 @@ class BioNet(nn.Module):
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=8),
-                                  Utils.ChannelSwap(),  # Todo just use einops rearange
-                                  nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                                                nn.Flatten(),
-                                                nn.Linear(out_channels, output_dim)) if output_dim is not None
-                                  else nn.Identity())
+                                  Utils.ChannelSwap())  # Todo just use einops rearange
+
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               nn.Linear(out_channels, output_dim))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.dorsal_stream)
@@ -50,7 +51,7 @@ class BioNet(nn.Module):
             #     Utils.optimize(loss,
             #                    self)
 
-        out = self.repr(dorsal)
+        out = self.projection(self.repr(dorsal))
         return out
 
     """Aside from the way the modules are put together (via two disentangled streams), 
