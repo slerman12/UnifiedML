@@ -53,7 +53,7 @@ class CNN(nn.Module):
         out = self.CNN(x)
 
         # Restore shape
-        out = out.view(*lead_shape, out.shape[-3:])
+        out = out.view(*lead_shape, *out.shape[-3:])
 
         if self.output_dim is not None:
             out = self.projection(out)
