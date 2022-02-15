@@ -25,9 +25,8 @@ class CNN(nn.Module):
         height, width = Utils.cnn_feature_shape(*input_shape[1:], self.CNN)
 
         self.projection = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                               nn.Flatten(-3),
-                               nn.Linear(out_channels, output_dim))
+            else nn.Sequential(nn.Flatten(-3),
+                               nn.Linear(out_channels * height * width, output_dim))
 
         self.apply(Utils.weight_init)
 
@@ -49,6 +48,7 @@ class CNN(nn.Module):
 
         # Operate on last 3 dims
         x = x.view(-1, *self.input_shape)
+        print(x.shape)
 
         out = self.CNN(x)
 
