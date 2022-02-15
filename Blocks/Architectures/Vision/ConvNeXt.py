@@ -70,7 +70,7 @@ class ConvNeXt(nn.Module):
                                              nn.LayerNorm(dims[-1]),
                                              Utils.ChannelSwap()),
                                nn.Flatten(),
-                               MLP(dims[-1], output_dim, 1024, 2))
+                               MLP(dims[-1], output_dim, 1024, 1))
 
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):

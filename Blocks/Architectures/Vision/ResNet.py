@@ -62,7 +62,7 @@ class MiniResNet(nn.Module):
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
-                               MLP(out_channels, output_dim, 1024, 2))
+                               MLP(out_channels, output_dim, 1024, 1))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.CNN)

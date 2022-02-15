@@ -49,7 +49,7 @@ class ViT(nn.Module):
 
             self.repr = nn.Sequential(
                 nn.LayerNorm(out_channels),
-                MLP(out_channels, output_dim, 1024, 2)
+                MLP(out_channels, output_dim, 1024, 1)
             )
 
     def feature_shape(self, h, w):
