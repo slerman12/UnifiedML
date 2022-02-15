@@ -243,7 +243,7 @@ Or Atari with ResNet:
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
 ```
 
-A little more complicated, here is a GAN with a CNN Discriminator:
+A GAN with a CNN Discriminator:
 
 ```
 python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
