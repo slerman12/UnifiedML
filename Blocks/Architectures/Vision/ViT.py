@@ -47,8 +47,7 @@ class ViT(nn.Module):
         # )
 
     def output_shape(self, h, w):
-        print(h, self.patch_size, h // self.patch_size)
-        return h // self.patch_size, w // self.patch_size
+        return h // self.patch_size + 1, w // self.patch_size  # +1 for cls_token
 
     def forward(self, img):
         x = self.to_patch_embedding(img)
@@ -59,7 +58,6 @@ class ViT(nn.Module):
         x += self.pos_embedding[:, :(n + 1)]
 
         x = self.attn(x)
-        print(x.shape)
 
         return x
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
