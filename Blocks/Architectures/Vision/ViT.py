@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
+
 import torch
 from torch import nn
 
@@ -52,15 +54,20 @@ class ViT(nn.Module):
         return 1, (h // self.patch_size) * (w // self.patch_size) + 1
 
     def forward(self, *x):
-        x = list(x)
-        x[0] = x[0].view(-1, *self.input_shape)
-
-        # Optionally append extra data to channels assuming dimensions allow
+        # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
-            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
-                     for context in x[1:]]
+            # Warning: merely reshapes context where permitted, rather than expanding it to height and width
+            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                 % math.prod(self.input_shape) == 0
+                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
+                 for context in x if len(context.shape) < 4 and context.shape[-1]]
+        x = torch.cat(x, -3)
 
-        x = torch.cat(x, 1)
+        # Conserve leading dims
+        lead_shape = x.shape[:-3]
+
+        # Operate on last 3 dims
+        x = x.view(-1, *self.input_shape)
 
         x = self.to_patch_embedding(x)
         b, n, _ = x.shape
@@ -75,5 +82,9 @@ class ViT(nn.Module):
             x = x.transpose(-1, -3)  # Channels last
             x = x.flatten(1, -2)
             x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
-            return self.repr(x)
-        return x
+            x = self.repr(x)
+
+        # Restore leading dims
+        out = x.view(*lead_shape, *x.shape[1:])
+
+        return out

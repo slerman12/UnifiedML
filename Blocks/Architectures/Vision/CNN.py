@@ -22,13 +22,12 @@ class CNN(nn.Module):
 
         self.output_dim = output_dim
 
-        if output_dim is not None:
-            height, width = Utils.cnn_feature_shape(*input_shape[1:], self.CNN)
+        height, width = Utils.cnn_feature_shape(*input_shape[1:], self.CNN)
 
-            self.projection = nn.Sequential(
-                nn.Flatten(-3),
-                nn.Linear(out_channels * height * width, output_dim),
-                nn.ReLU(inplace=True))
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.Flatten(-3),
+                               nn.Linear(out_channels * height * width, output_dim),
+                               nn.ReLU(inplace=True))
 
         self.apply(Utils.weight_init)
 
@@ -38,6 +37,7 @@ class CNN(nn.Module):
     def forward(self, *x):
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
+            # Warning: merely reshapes context where permitted, rather than expanding it to height and width
             x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                  % math.prod(self.input_shape) == 0
                  else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
@@ -52,11 +52,10 @@ class CNN(nn.Module):
 
         out = self.CNN(x)
 
-        # Restore shape
-        out = out.view(*lead_shape, *out.shape[-3:])
+        out = self.projection(out)
 
-        if self.output_dim is not None:
-            out = self.projection(out)
+        # Restore leading dims
+        out = out.view(*lead_shape, *out.shape[1:])
 
         return out
 

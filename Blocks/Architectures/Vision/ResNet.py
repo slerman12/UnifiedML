@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
+
 import torch
 from torch import nn
 
@@ -53,24 +55,37 @@ class MiniResNet(nn.Module):
                                  *[ResidualBlock(hidden_channels, hidden_channels)
                                    for _ in range(depth)],
                                  nn.Conv2d(hidden_channels, out_channels, kernel_size=3, padding=1),
-                                 nn.ReLU(inplace=True),
-                                 nn.Sequential(nn.AdaptiveAvgPool2d((1,1)),
-                                               nn.Flatten(),
-                                               nn.Linear(out_channels, output_dim)) if output_dim is not None
-                                 else nn.Identity())
+                                 nn.ReLU(inplace=True))
+
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               nn.Linear(out_channels, output_dim))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
-        # x = list(x)
-        # x[0] = x[0].view(-1, *self.input_shape)
-        #
-        # # Optionally append context to channels assuming dimensions allow
-        # if len(x) > 1:
-        #     x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
-        #              for context in x[1:]]
+        # Optionally append context to channels assuming dimensions allow
+        if len(x) > 1:
+            # Warning: merely reshapes context where permitted, rather than expanding it to height and width
+            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                 % math.prod(self.input_shape) == 0
+                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
+                 for context in x if len(context.shape) < 4 and context.shape[-1]]
+        x = torch.cat(x, -3)
 
-        x = torch.cat(x, 1)
-        print(x.shape)
-        return self.CNN(x)
+        # Conserve leading dims
+        lead_shape = x.shape[:-3]
+
+        # Operate on last 3 dims
+        x = x.view(-1, *self.input_shape)
+
+        out = self.CNN(x)
+
+        out = self.projection(out)
+
+        # Restore leading dims
+        out = out.view(*lead_shape, *out.shape[1:])
+
+        return out
