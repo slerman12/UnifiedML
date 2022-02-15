@@ -54,7 +54,7 @@ class NonLocalityCNN(nn.Module):
             *[Residual(nn.Sequential(
                 # Conv2DInvariant(out_channels,
                 #                 out_channels, (2, 2), padding='same', groups=groups, num_dilations=num_dilations),
-                nn.Conv2d(in_channels, out_channels, (2, 2), padding='same', groups=groups),
+                nn.Conv2d(in_channels, out_channels, (2, 2), padding='same'),
                 Utils.ChannelSwap(),
                 nn.GELU(),
                 nn.LayerNorm(out_channels),
