@@ -1,6 +1,7 @@
 from torch import nn
 
 import Utils
+
 from Blocks.Architectures.LermanBlocks.BioNet.LocalityCNN import Conv2DLocalized
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 from Blocks.Architectures.Residual import Residual
@@ -13,7 +14,7 @@ class LocalityViT(nn.Module):
         self.trunk = Conv2DLocalized(input_shape, out_channels, (16, 16), (16, 16))
 
         self.ViT = nn.Sequential(
-            *[nn.Sequential(SelfAttentionBlock(out_channels),
+            *[nn.Sequential(Utils.ChannelSwap(), SelfAttentionBlock(out_channels), Utils.ChannelSwap(),
                             Residual(Conv2DLocalized(self.trunk.shape, out_channels, (2, 2), padding='same')))
               for _ in range(depth)])
 
