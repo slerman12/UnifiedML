@@ -18,6 +18,7 @@ class ViT(nn.Module):
         in_channels = input_shape[0]
         image_size = input_shape[1]
         self.patch_size = patch_size
+        self.output_dim = output_dim
 
         assert input_shape[1] == input_shape[2], 'Compatible with square images only'
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
@@ -39,12 +40,13 @@ class ViT(nn.Module):
                                   Rearrange('b (h w) c -> b c h w', h=h, w=w)  # Channels 1st
                                   )
 
-        self.pool = pool
+        if output_dim is not None:
+            self.pool = pool
 
-        self.repr = nn.Sequential(
-            nn.LayerNorm(out_channels),
-            nn.Linear(out_channels, output_dim)
-        )
+            self.repr = nn.Sequential(
+                nn.LayerNorm(out_channels),
+                nn.Linear(out_channels, output_dim)
+            )
 
     def feature_shape(self, h, w):
         return 1, (h // self.patch_size) * (w // self.patch_size) + 1
