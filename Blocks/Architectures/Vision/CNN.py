@@ -34,9 +34,9 @@ class CNN(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
+        print(x[0].shape, len(x), len(list(x)))
         x = list(x)
         x[0] = x[0].view(-1, *self.input_shape)
-        print(x[0].shape)
 
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
