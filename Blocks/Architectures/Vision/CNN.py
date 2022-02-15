@@ -21,7 +21,7 @@ class CNN(nn.Module):
         self.output_dim = output_dim
 
         if output_dim is not None:
-            height, width = Utils.cnn_output_shape(*input_shape[1:], self.CNN)
+            height, width = Utils.cnn_feature_shape(*input_shape[1:], self.CNN)
 
             self.projection = nn.Sequential(
                 nn.Flatten(),
@@ -30,9 +30,8 @@ class CNN(nn.Module):
 
         self.apply(Utils.weight_init)
 
-    def output_shape(self, h, w):
-        return Utils.cnn_output_shape(h, w, self.CNN) if self.output_dim is None \
-            else (1, self.output_dim)
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
         x = list(x)

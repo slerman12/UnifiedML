@@ -234,13 +234,13 @@ One can also optionally pass in custom architectures such as those defined in ``
 Here is, for example, a GAN with a CNN Discriminator:
 
 ```
-python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.CNN '+recipes.critic.trunk.input_shape=${obs_shape}' '+recipes.critic.trunk.output_dim=${trunk_dim}' 
+python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.CNN '+recipes.critic.trunk.input_shape=${obs_shape}' 
 ```
 
-To train MNIST with the ConvNeXt architecture as the Encoder:
+To train MNIST with a Vision Transformer as the Encoder:
 
 ```
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt '+recipes.encoder.eyes.input_shape=${obs_shape}'
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.

@@ -27,8 +27,8 @@ class BioNet(nn.Module):
                                   # nn.Flatten()
                                   )
 
-    def output_shape(self, h, w):
-        return Utils.cnn_output_shape(h, w, self.dorsal_stream)
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.dorsal_stream)
 
     def forward(self, input):
         ventral = self.ventral_stream.trunk(input)

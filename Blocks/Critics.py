@@ -31,19 +31,20 @@ class EnsembleQCritic(nn.Module):
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
         self.ignore_obs = ignore_obs
 
-        repr_dim = math.prod(repr_shape)
+        in_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(repr_dim, trunk_dim),
+        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
                                    nn.LayerNorm(trunk_dim),
                                    nn.Tanh()) if recipe.trunk._target_ is None \
-            else instantiate(recipe.trunk)
+            else instantiate(recipe.trunk, input_shape=in_dim)
 
-        in_dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
+        dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
+        shape = Utils.default(recipe.q_head.input_shape, dim)
         out_dim = action_dim if discrete else 1
 
-        self.Q_head = Utils.Ensemble([MLP(in_dim, out_dim, hidden_dim, 2,
-                                          binary=sigmoid) if recipe.q_head._target_ is None
-                                      else instantiate(recipe.q_head) for _ in range(ensemble_size)], 0)
+        self.Q_head = Utils.Ensemble([MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid) if recipe.q_head._target_ is None
+                                      else instantiate(recipe.q_head, input_shape=shape, output_dim=out_dim)
+                                      for _ in range(ensemble_size)], 0)
 
         self.init(optim_lr, ema_tau)
 

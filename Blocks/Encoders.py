@@ -2,16 +2,14 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import math
 import copy
-
-from hydra.utils import instantiate
+import math
 
 import torch
+from hydra.utils import instantiate
 from torch import nn
 
 import Utils
-
 from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
@@ -35,10 +33,9 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.Eyes = CNN(obs_shape, out_channels, depth, batch_norm, False) if recipe.eyes._target_ is None \
-            else instantiate(recipe.eyes)
-
-        self.norm = Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()
+        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm, False) if recipe.eyes._target_ is None
+                                  else instantiate(recipe.eyes),
+                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
         # Initialize model
         self.init(optim_lr, ema_tau)
@@ -53,7 +50,7 @@ class CNNEncoder(nn.Module):
 
         # Dimensions
         _, height, width = self.obs_shape
-        height, width = Utils.cnn_output_shape(height, width, self.Eyes)
+        height, width = Utils.cnn_feature_shape(height, width, self.Eyes)
 
         self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
@@ -83,7 +80,7 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        h = self.norm(self.Eyes(obs))
+        h = self.Eyes(obs)
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_shape does not match output CNN shape ' \

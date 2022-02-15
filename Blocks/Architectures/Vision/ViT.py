@@ -12,7 +12,7 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
 class ViT(nn.Module):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls'):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__()
 
         in_channels = input_shape[0]
@@ -30,38 +30,38 @@ class ViT(nn.Module):
             nn.Linear(patch_dim, out_channels),
         )
 
-        # self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
-        # self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels)
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, out_channels))
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
 
-        h, w = self.output_shape(*input_shape[1:])
+        h, w = self.feature_shape(*input_shape[1:])
 
         self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)],
                                   Rearrange('b (h w) c -> b c h w', h=h, w=w)  # Channels 1st
                                   )
 
-        # self.pool = pool
-        #
-        # self.repr = nn.Sequential(
-        #     nn.LayerNorm(dim),
-        #     nn.Linear(dim, num_classes)
-        # )
+        self.pool = pool
 
-    def output_shape(self, h, w):
-        return h // self.patch_size, w // self.patch_size
+        self.repr = nn.Sequential(
+            nn.LayerNorm(out_channels),
+            nn.Linear(out_channels, output_dim)
+        )
+
+    def feature_shape(self, h, w):
+        return 1, (h // self.patch_size) * (w // self.patch_size) + 1
 
     def forward(self, x):
         x = self.to_patch_embedding(x)
         b, n, _ = x.shape
 
-        # cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
-        # x = torch.cat((cls_tokens, x), dim=1)
-        # x += self.pos_embedding[:, :(n + 1)]
-        x += self.pos_embedding
+        cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
+        x = torch.cat((cls_tokens, x), dim=1)
+        x += self.pos_embedding[:, :(n + 1)]
 
         x = self.attn(x)
 
+        if self.output_dim is not None:
+            x = x.transpose(-1, -3)  # Channels last
+            x = x.flatten(1, -2)
+            x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
+            return self.repr(x)
         return x
-        # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
-        #
-        # return self.repr(x)

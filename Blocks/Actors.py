@@ -34,10 +34,10 @@ class EnsembleGaussianActor(nn.Module):
 
         self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
                                    nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk._target_ is None \
-            else instantiate(recipe.trunk)
+            else instantiate(recipe.trunk, input_shape=in_dim)
 
         self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2) if recipe.pi_head._target_ is None
-                                       else instantiate(recipe.pi_head)
+                                       else instantiate(recipe.pi_head, output_dim=out_dim)
                                        for _ in range(ensemble_size)])
 
         self.init(optim_lr, ema_tau)

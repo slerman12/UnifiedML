@@ -17,8 +17,8 @@ class LocalityViT(nn.Module):
                             Residual(Conv2DLocalized(self.trunk.shape, out_channels, (2, 2), padding='same')))
               for _ in range(depth)])
 
-    def output_shape(self, h, w):
-        return Utils.cnn_output_shape(h, w, self.trunk)
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.trunk)
 
     def forward(self, x):
         return self.ViT(self.trunk(x))

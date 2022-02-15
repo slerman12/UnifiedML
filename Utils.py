@@ -81,7 +81,7 @@ def param_copy(net, target_net, ema_tau=1):
 
 
 # Compute the output shape of a CNN layer
-def cnn_layer_output_shape(in_height, in_width, kernel_size=1, stride=1, padding=0, dilation=1):
+def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, padding=0, dilation=1):
     if padding == 'same':
         return in_height, in_width
     if type(kernel_size) is not tuple:
@@ -98,23 +98,23 @@ def cnn_layer_output_shape(in_height, in_width, kernel_size=1, stride=1, padding
 
 
 # Compute the output shape of a whole CNN
-def cnn_output_shape(height, width, block):
+def cnn_feature_shape(height, width, block):
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d)):
-        height, width = cnn_layer_output_shape(height, width,
+        height, width = cnn_layer_feature_shape(height, width,
                                                kernel_size=block.kernel_size,
                                                stride=block.stride,
                                                padding=block.padding)
     elif isinstance(block, nn.AdaptiveAvgPool2d):
         return block.output_size
-    elif hasattr(block, 'output_shape'):
-        height, width = block.output_shape(height, width)
+    elif hasattr(block, 'feature_shape'):
+        height, width = block.feature_shape(height, width)
     elif hasattr(block, 'modules'):
         for module in block.children():
-            height, width = cnn_output_shape(height, width, module)
+            height, width = cnn_feature_shape(height, width, module)
 
-    output_shape = (height, width)  # TODO should probably do (width, height) universally
+    feature_shape = (height, width)  # TODO should probably do (width, height) universally
 
-    return output_shape
+    return feature_shape
 
 
 # "Ensembles" (stacks) multiple modules' outputs

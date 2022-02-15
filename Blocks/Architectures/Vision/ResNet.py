@@ -24,15 +24,15 @@ class ResidualBlock(nn.Module):
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
                                             nn.ReLU(inplace=True))
 
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.Residual_block)
+
     def forward(self, x):
         return self.Residual_block(x)
 
-    def output_shape(self, height, width):
-        return Utils.cnn_output_shape(height, width, self.Residual_block)
-
 
 class MiniResNet(nn.Module):
-    def __init__(self, input_shape, hidden_channels=32, out_channels=32, depth=3, pre_residual=False):
+    def __init__(self, input_shape, hidden_channels=32, out_channels=32, depth=3, pre_residual=False, output_dim=None):
         super().__init__()
 
         in_channels = input_shape[0]
@@ -52,7 +52,14 @@ class MiniResNet(nn.Module):
                                  *[ResidualBlock(hidden_channels, hidden_channels)
                                    for _ in range(depth)],
                                  nn.Conv2d(hidden_channels, out_channels, kernel_size=3, padding=1),
-                                 nn.ReLU(inplace=True))
+                                 nn.ReLU(inplace=True),
+                                 nn.Sequential(nn.AdaptiveAvgPool2d((1,1)),
+                                               nn.Flatten(),
+                                               nn.Linear(out_channels, output_dim)) if output_dim is not None
+                                 else nn.Identity())
+
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, x):
         return self.CNN(x)
