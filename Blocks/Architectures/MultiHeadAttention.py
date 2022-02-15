@@ -15,7 +15,7 @@ import Utils
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, th=False):
+    def __init__(self, dim=32, heads=8, context_dim=None, talk_h=False):
         super().__init__()
 
         assert dim % heads == 0
@@ -31,7 +31,7 @@ class CrossAttention(nn.Module):
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChannelSwap(),
                                     nn.Linear(heads, heads, bias=False),
-                                    nn.LayerNorm(heads), Utils.ChannelSwap()) if th else nn.Identity()
+                                    nn.LayerNorm(heads), Utils.ChannelSwap()) if talk_h else nn.Identity()
 
     def forward(self, x, context):
         # Conserves shape

@@ -40,7 +40,7 @@ class Conv2DLocalized(nn.Module):
 
     def forward(self, input):
         x = self.conv(input)
-        x = einsum('b c h w, h w d c, h w d -> b c h w', x, self.linear_W.to(input.device), self.linear_B.to(input.device))
+        x = einsum('b c h w, h w d c, h w d -> b c h w', x, self.linear_W, self.linear_B)
         x = F.gelu(x)
         x = self.ln(x)
         return x
