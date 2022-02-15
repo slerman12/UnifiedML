@@ -5,8 +5,6 @@ from torch import nn
 
 import Utils
 
-from Blocks.Architectures import MLP
-
 
 class CNN(nn.Module):
     def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, output_dim=None):
@@ -28,7 +26,9 @@ class CNN(nn.Module):
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.Flatten(-3),
-                               MLP(out_channels * height * width, output_dim, 1024, 1))
+                               nn.Linear(out_channels * height * width, 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
         self.apply(Utils.weight_init)
 

@@ -9,7 +9,6 @@ from torch import nn
 
 import Utils
 
-from Blocks.Architectures import MLP
 from Blocks.Architectures.Residual import Residual
 
 
@@ -62,7 +61,9 @@ class MiniResNet(nn.Module):
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
-                               MLP(out_channels, output_dim, 1024, 1))
+                               nn.Linear(out_channels, 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.CNN)
