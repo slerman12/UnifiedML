@@ -29,9 +29,9 @@ class Conv2DLocalized(nn.Module):
 
         self.shape = (out_channels, height, width)
 
-        self.linear_W = nn.Parameter(torch.empty(height, width, out_channels, out_channels)).to(self.conv.device)
+        self.linear_W = nn.Parameter(torch.empty(height, width, out_channels, out_channels))
 
-        self.linear_B = nn.Parameter(torch.empty(height, width, out_channels)).to(self.conv.device)
+        self.linear_B = nn.Parameter(torch.empty(height, width, out_channels))
 
         self.ln = layer_norm()
 
@@ -40,7 +40,7 @@ class Conv2DLocalized(nn.Module):
 
     def forward(self, input):
         x = self.conv(input)
-        x = einsum('b c h w, h w d c, h w d -> b c h w', x, self.linear_W, self.linear_B)
+        x = einsum('b c h w, h w d c, h w d -> b c h w', x, self.linear_W.to(input.device), self.linear_B.to(input.device))
         x = F.gelu(x)
         x = self.ln(x)
         return x
