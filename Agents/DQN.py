@@ -139,6 +139,7 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
+            # Ground truth
             y_actual = label[instruction].long()
 
             # Supervised learning
@@ -159,8 +160,14 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                mistake = cross_entropy(action[instruction].uniform_(),
-                                        y_actual, reduction='none')
+                actions = self.actor(obs[instruction], self.step).rsample(self.num_actions)
+
+                y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
+
+                half = len(y_predicted) // 2
+                y_predicted[:half].uniform_()
+
+                mistake = cross_entropy(y_predicted, y_actual, reduction='none')
 
                 reward[instruction] = -mistake[:, None].detach()
 
