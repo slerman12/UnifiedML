@@ -43,7 +43,7 @@ class ViT(nn.Module):
         # )
 
     def output_shape(self, h, w):
-        return h / self.patch_size, w / self.patch_size
+        return h // self.patch_size, w // self.patch_size
 
     def forward(self, img):
         x = self.to_patch_embedding(img)
