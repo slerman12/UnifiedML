@@ -237,7 +237,7 @@ Here is, for example, a GAN with a CNN Discriminator:
 python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.Vision.CNN.CNN '+recipes.critic.trunk.input_shape=${obs_shape}' '+recipes.critic.trunk.output_dim=${trunk_dim}' 
 ```
 
-See also, to train MNIST with the new ConvNeXt architecture as encoder:
+To train MNIST with the ConvNeXt architecture as the Encoder:
 
 ```
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.Vision.ConvNeXt.ConvNeXt '+recipes.encoder.eyes.input_shape=${obs_shape}'
