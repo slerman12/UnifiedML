@@ -26,11 +26,11 @@ class ConvNeXtBlock(nn.Module):
     def forward(self, x):
         input = x
         x = self.conv(x)
-        x = x.permute(0, 2, 3, 1)  # (N, C, H, W) -> (N, H, W, C)
+        x = x.transpose(-1, -3)  # Channel swap
         x = self.ln(x)
         x = self.mlp(x)
         x = self.gamma * x
-        x = x.permute(0, 3, 1, 2)  # (N, H, W, C) -> (N, C, H, W)
+        x = x.transpose(-1, -3)  # Channel swap
         return x + input
 
 
@@ -60,13 +60,13 @@ class ConvNeXt(nn.Module):
                                                                nn.LayerNorm(dims[i + 1]),
                                                                Utils.ChannelSwap()) if i < 3
                                                  else nn.Identity(),  # LayerNorm
-                                                 *[ConvNeXtBlock(dims[i])
+                                                 *[ConvNeXtBlock(dims[i + 1])
                                                    for _ in range(depth)])  # Conv, MLP, Residuals
                                    for i, depth in enumerate(depths)],
                                  nn.AdaptiveAvgPool2d((1, 1)),
                                  nn.Sequential(Utils.ChannelSwap(),
                                                nn.LayerNorm(dims[-1]),
-                                               Utils.ChannelSwap()),
+                                               Utils.ChannelSwap()),  # LayerNorm
                                  # nn.Flatten(),
                                  # nn.Linear(dims[-1], num_classes)
                                  )
