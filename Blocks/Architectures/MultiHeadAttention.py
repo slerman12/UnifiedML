@@ -40,7 +40,7 @@ class CrossAttention(nn.Module):
 
         x = x.flatten(1, -2)
         context = context.flatten(1, -2)
-
+        print(x.device, self.to_q.weight.device)
         q = self.to_q(x)
         k, v = self.to_kv(context).chunk(2, dim=-1)
 
@@ -66,7 +66,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, th=False, optim_lr=None, ema_tau=None):
+    def __init__(self, dim=32, heads=8, context_dim=None, talk_h=False, optim_lr=None, ema_tau=None):
         super().__init__()
 
         self.dim = dim
@@ -74,7 +74,7 @@ class CrossAttentionBlock(nn.Module):
 
         self.ln1 = nn.LayerNorm(dim)
         self.ln2 = nn.LayerNorm(dim)
-        self.attn = CrossAttention(dim, heads, context_dim, th)
+        self.attn = CrossAttention(dim, heads, context_dim, talk_h)
         self.mlp = MLP(dim, dim, dim, 2, nn.GELU())
 
         self.init(optim_lr, ema_tau)
