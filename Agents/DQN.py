@@ -167,7 +167,7 @@ class DQNAgent(torch.nn.Module):
 
                 reward[instruction] = -mistake[:, None].detach()
                 reward[instruction][half:] = 0
-                action[instruction][half:] = actions[half:].softmax(-1).detach()
+                action[instruction][:half] = actions[:half].softmax(-1).detach()
 
                 next_obs[instruction] = float('nan')
 
