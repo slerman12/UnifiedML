@@ -30,8 +30,9 @@ class ViT(nn.Module):
             nn.Linear(patch_dim, out_channels),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
-        self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
+        # self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
+        # self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels)
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, out_channels))
 
         h, w = self.output_shape(*input_shape[1:])
 
@@ -49,13 +50,14 @@ class ViT(nn.Module):
     def output_shape(self, h, w):
         return h // self.patch_size, w // self.patch_size
 
-    def forward(self, img):
-        x = self.to_patch_embedding(img)
+    def forward(self, x):
+        x = self.to_patch_embedding(x)
         b, n, _ = x.shape
 
         # cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
         # x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
+        # x += self.pos_embedding[:, :(n + 1)]
+        x += self.pos_embedding
 
         x = self.attn(x)
 
