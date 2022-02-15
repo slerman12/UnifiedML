@@ -53,14 +53,13 @@ class ViT(nn.Module):
         x = self.to_patch_embedding(img)
         b, n, _ = x.shape
 
-        cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
-        x = torch.cat((cls_tokens, x), dim=1)
+        # cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
+        # x = torch.cat((cls_tokens, x), dim=1)
         x += self.pos_embedding[:, :(n + 1)]
-        print(x.shape)
 
         x = self.attn(x)
 
-        return x[:, 1:]
+        return x
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
         #
         # return self.repr(x)
