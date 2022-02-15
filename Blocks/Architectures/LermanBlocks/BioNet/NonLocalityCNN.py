@@ -54,13 +54,13 @@ class NonLocalityCNN(nn.Module):
             *[Residual(nn.Sequential(
                 # Conv2DInvariant(out_channels,
                 #                 out_channels, (2, 2), padding='same', groups=groups, num_dilations=num_dilations),
-                nn.Conv2d(in_channels if i == 0 else out_channels, out_channels, (2, 2), padding='same'),
+                nn.Conv2d(out_channels, out_channels, (2, 2), padding='same'),
                 Utils.ChannelSwap(),
                 nn.GELU(),
                 nn.LayerNorm(out_channels),
                 Utils.ChannelSwap()
             )
-            ) for i in range(depth)])
+            ) for _ in range(depth)])
 
         # self.CNN = nn.Sequential(
         #     *[Residual(nn.Sequential(
