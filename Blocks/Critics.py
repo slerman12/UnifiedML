@@ -93,7 +93,6 @@ class EnsembleQCritic(nn.Module):
             action = action.reshape(batch_size, -1, self.action_dim)  # [b, n, d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
-            print(h.shape)
 
             # Q-values for continuous action(s)
             Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n]
