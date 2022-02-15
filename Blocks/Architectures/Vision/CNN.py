@@ -38,11 +38,11 @@ class CNN(nn.Module):
     def forward(self, *x):
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
-            batch_size = x[0].shape[0]
-            x = [context.view(-1, *self.input_shape) if context.shape[1] % math.prod(self.input_shape) == 0
-                 else context.view(batch_size, -1, 1, 1).expand(batch_size, -1, *self.input_shape[1:])
-                 for context in x if len(context.shape) == 2 and context.shape[1]]
-        x = torch.cat(x, 1)
+            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                 % math.prod(self.input_shape) == 0
+                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
+                 for context in x if len(context.shape) < 4 and context.shape[-1]]
+        x = torch.cat(x, -3)
 
         out = self.CNN(x)
 
