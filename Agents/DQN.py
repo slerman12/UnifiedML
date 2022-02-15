@@ -160,7 +160,7 @@ class DQNAgent(torch.nn.Module):
             if self.RL:
                 half = len(instruction) // 2
 
-                actions = Utils.one_hot(y_actual[half:], self.action_dim)
+                actions = Utils.one_hot(y_actual[half:].unsqueeze(-1), self.action_dim)
                 action[instruction][half:] = actions
                 reward[instruction][half:] = 0
 
