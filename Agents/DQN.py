@@ -139,13 +139,17 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
+            label[instruction] = label[instruction].long()
+
             # Supervised learning
             if self.supervise:
                 actions = self.actor(obs[instruction], self.step).mean
-                labels = label[instruction].long().unsqueeze(1).expand(*actions.shape[:-1])
+
+                y_predicted = actions.view(-1, self.action_dim)
+                y_actual = label[instruction].repeat_interleave(self.num_actions)
 
                 # Supervised loss
-                supervised_loss = cross_entropy(actions.view(-1, self.action_dim), labels.view(-1))
+                supervised_loss = cross_entropy(y_predicted, y_actual)
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
@@ -153,13 +157,14 @@ class DQNAgent(torch.nn.Module):
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
-                    logs.update({'accuracy': (torch.argmax(actions, -1) == labels).float().mean().item()})
+                    logs.update({'accuracy': (torch.argmax(y_predicted, -1)
+                                              == y_actual).float().mean().item()})
 
             # (Auxiliary) reinforcement
             if self.RL:
-                action[instruction] = torch.softmax(action[instruction].uniform_(), -1).detach()
-                mistake = cross_entropy(action[instruction], label[instruction].long(), reduction='none')
+                mistake = cross_entropy(action[instruction].uniform_(), label[instruction], reduction='none')
                 reward[instruction] = -mistake[:, None].detach()
+                action[instruction] = action[instruction].softmax(-1)
                 next_obs[instruction, :] = float('nan')
 
         # Reinforcement learning / generative modeling
