@@ -234,7 +234,7 @@ One can also optionally pass in custom architectures such as those defined in ``
 Here is, for example, a GAN with a CNN Discriminator:
 
 ```
-python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.CNN '+recipes.critic.trunk.input_shape=${obs_shape}' 
+python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.CNN recipes.critic.trunk.input_shape='${obs_shape}' 
 ```
 
 To train, for example MNIST, using a Vision Transformer as the Encoder:
