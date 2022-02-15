@@ -35,10 +35,10 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm, False),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm
-                                  else nn.Identity()) if recipe.eyes._target_ is None \
+        self.Eyes = CNN(obs_shape, out_channels, depth, batch_norm, False) if recipe.eyes._target_ is None \
             else instantiate(recipe.eyes)
+
+        self.norm = Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()
 
         # Initialize model
         self.init(optim_lr, ema_tau)
@@ -83,7 +83,7 @@ class CNNEncoder(nn.Module):
         obs = torch.cat([obs, *context], 1)
 
         # CNN encode
-        h = self.Eyes(obs)
+        h = self.norm(self.Eyes(obs))
 
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
         assert tuple(h.shape[-3:]) == self.feature_shape, 'pre-computed repr_shape does not match output CNN shape'

@@ -47,10 +47,10 @@ class ConvNeXt(nn.Module):
         channels_in = input_shape[0]
 
         if dims is None:
-            dims = [channels_in, 96]
+            dims = [channels_in, 96, 192, 384, 768]
 
         if depths is None:
-            depths = [3]
+            depths = [3, 3, 9, 3]
 
         self.CNN = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
                                                            dims[i + 1],
@@ -60,9 +60,9 @@ class ConvNeXt(nn.Module):
                                                                nn.LayerNorm(dims[i + 1]),
                                                                Utils.ChannelSwap()) if i < 3
                                                  else nn.Identity(),  # LayerNorm
-                                   *[ConvNeXtBlock(dims[i + 1])
-                                     for _ in range(depths[i])])  # Conv, MLP, Residuals
-                                   for i in range(4)],
+                                                 *[ConvNeXtBlock(dims[i])
+                                                   for _ in range(depth)])  # Conv, MLP, Residuals
+                                   for i, depth in enumerate(depths)],
                                  nn.AdaptiveAvgPool2d((1, 1)),
                                  nn.Sequential(Utils.ChannelSwap(),
                                                nn.LayerNorm(dims[-1]),
@@ -100,11 +100,3 @@ class ConvNeXt(nn.Module):
 
     def forward(self, x):
         return self.CNN(x)
-
-
-def convnext_tiny(num_classes=1000):
-    return ConvNeXt([3, 96, 192, 384, 768], [3, 3, 9, 3], num_classes)
-
-
-def convnext_base(num_classes=1000):
-    return ConvNeXt([3, 128, 256, 512, 1024], [3, 3, 27, 3], num_classes)
