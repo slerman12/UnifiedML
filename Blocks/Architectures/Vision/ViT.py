@@ -12,7 +12,7 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
 class ViT(nn.Module):
-    def __init__(self, input_shape, patch_size=8, dim=32, heads=8, depth=3, num_classes=1000, pool='cls'):
+    def __init__(self, input_shape, patch_size=4, dim=32, heads=8, depth=3, num_classes=1000, pool='cls'):
         super().__init__()
 
         in_channels = input_shape[0]
