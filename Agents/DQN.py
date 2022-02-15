@@ -161,11 +161,11 @@ class DQNAgent(torch.nn.Module):
             if self.RL:
                 mistake = cross_entropy(action[instruction].uniform_(),
                                         label[instruction], reduction='none')
+
                 reward[instruction] = -mistake[:, None].detach()
 
                 action[instruction] = action[instruction].softmax(-1).detach()
-
-                next_obs[instruction, :] = float('nan')
+                next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
