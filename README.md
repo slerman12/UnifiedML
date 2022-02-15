@@ -237,7 +237,7 @@ Here is, for example, a GAN with a CNN Discriminator:
 python Run.py generate=True recipes.Critic.trunk=Blocks.Architectures.CNN '+recipes.critic.trunk.input_shape=${obs_shape}' 
 ```
 
-To train MNIST with a Vision Transformer as the Encoder:
+To train, for example MNIST, using a Vision Transformer as the Encoder:
 
 ```
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT 
