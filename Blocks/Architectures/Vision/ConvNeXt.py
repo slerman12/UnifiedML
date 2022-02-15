@@ -2,8 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import copy
-
 import torch
 import torch.nn as nn
 
@@ -35,13 +33,8 @@ class ConvNeXtBlock(nn.Module):
 
 
 class ConvNeXt(nn.Module):
-    r""" ConvNeXt  `A ConvNet for the 2020s` https://arxiv.org/pdf/2201.03545.pdf
-    Args:
-        dims (list): Feature dimension at each stage, starting with in-channels. Default: [3, 96, 192, 384, 768]
-        depths (tuple(int)): Number of blocks at each stage. Default: [3, 3, 9, 3]
-        num_classes (int): Number of classes for classification head. Default: 1000
-    """
-    def __init__(self, input_shape, dims=None, depths=None, num_classes=1000):
+    r""" ConvNeXt  `A ConvNet for the 2020s` https://arxiv.org/pdf/2201.03545.pdf"""
+    def __init__(self, input_shape, dims=None, depths=None):
         super().__init__()
 
         channels_in = input_shape[0]
@@ -73,12 +66,6 @@ class ConvNeXt(nn.Module):
                                  # nn.Linear(dims[-1], num_classes)
                                  )
 
-        self.init(None, None)
-
-    def output_shape(self, h, w):
-        return Utils.cnn_output_shape(h, w, self.CNN)
-
-    def init(self, optim_lr, ema_tau):
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.trunc_normal_(m.weight, std=.02)
@@ -86,19 +73,8 @@ class ConvNeXt(nn.Module):
 
         self.apply(weight_init)
 
-        # Optimizer
-        if optim_lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=optim_lr,
-                                           eps=1e-8, weight_decay=0.05)
-
-        # EMA
-        if ema_tau is not None:
-            self.ema = copy.deepcopy(self)
-            self.ema_tau = ema_tau
-
-    def update_ema_params(self):
-        assert hasattr(self, 'ema_tau')
-        Utils.param_copy(self, self.ema, self.ema_tau)
+    def output_shape(self, h, w):
+        return Utils.cnn_output_shape(h, w, self.CNN)
 
     def forward(self, x):
         return self.CNN(x)

@@ -32,8 +32,10 @@ class ResidualBlock(nn.Module):
 
 
 class MiniResNet(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_blocks, pre_residual=False):
+    def __init__(self, input_shape, hidden_channels=32, out_channels=32, depth=3, pre_residual=False):
         super().__init__()
+
+        in_channels = input_shape[0]
 
         pre = nn.Sequential(nn.Conv2d(in_channels, hidden_channels, kernel_size=3, padding=1),
                             nn.BatchNorm2d(hidden_channels))
@@ -48,7 +50,7 @@ class MiniResNet(nn.Module):
         self.CNN = nn.Sequential(pre,
                                  nn.ReLU(inplace=True),  # MaxPool after this?
                                  *[ResidualBlock(hidden_channels, hidden_channels)
-                                   for _ in range(num_blocks)],
+                                   for _ in range(depth)],
                                  nn.Conv2d(hidden_channels, out_channels, kernel_size=3, padding=1),
                                  nn.ReLU(inplace=True))
 
