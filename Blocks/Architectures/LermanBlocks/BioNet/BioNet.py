@@ -17,8 +17,8 @@ class BioNet(nn.Module):
         self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
         self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
 
-        self.cross_talk = [CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
-                           for _ in range(depth)]
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
+                                         for _ in range(depth)])
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=8),

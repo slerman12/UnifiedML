@@ -40,7 +40,7 @@ class CrossAttention(nn.Module):
 
         x = x.flatten(1, -2)
         context = context.flatten(1, -2)
-        print(x.device, self.to_q.weight.device)
+
         q = self.to_q(x)
         k, v = self.to_kv(context).chunk(2, dim=-1)
 
