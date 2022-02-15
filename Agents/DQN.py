@@ -142,7 +142,7 @@ class DQNAgent(torch.nn.Module):
             # Supervised learning
             if self.supervise:
                 actions = self.actor(obs[instruction], self.step).mean
-                labels = label[instruction].long().unsqueeze(1).expand_as(actions)
+                labels = label[instruction].long().unsqueeze(1).expand(*actions.shape[:-1])
 
                 # Supervised loss
                 supervised_loss = cross_entropy(actions, labels)
