@@ -86,7 +86,7 @@ class DQNAgent(torch.nn.Module):
                 else actor(obs, self.step).mean
 
             # DQN action selector is based on critic
-            Pi = self.action_selector(self.critic(obs, actions), self.step)  # todo num actors 0 for just classify?
+            Pi = self.action_selector(self.critic(obs, actions), self.step)
 
             action = Pi.sample() if self.training \
                 else Pi.best
@@ -143,7 +143,7 @@ class DQNAgent(torch.nn.Module):
                 else self.actor(obs[instruction], self.step).mean
 
             # Inference
-            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best #todo use all actions
+            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
