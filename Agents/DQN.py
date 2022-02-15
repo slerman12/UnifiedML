@@ -138,12 +138,11 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
+            y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
             y_actual = label[instruction].long()
 
             # Supervised learning
             if self.supervise:
-                y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
-
                 # Supervised loss
                 supervised_loss = cross_entropy(y_predicted, y_actual)  # view/flatten/repeat_interleave
 
@@ -159,15 +158,13 @@ class DQNAgent(torch.nn.Module):
             # (Auxiliary) reinforcement
             if self.RL:
                 half = len(instruction) // 2
+                y_predicted[:half].uniform_()
 
-                action[instruction][half:] = Utils.one_hot(y_actual[half:], self.action_dim)
+                mistake = cross_entropy(y_predicted, y_actual, reduction='none')
 
-                mistake = cross_entropy(action[instruction][:half].uniform_(),
-                                        y_actual[:half], reduction='none')
+                reward[instruction] = -mistake[:, None].detach()
+                action[instruction] = y_predicted.softmax(-1).detach()
 
-                reward[instruction][half:], reward[instruction][:half] = 0, -mistake[:, None].detach()
-
-                action[instruction][:half] = action[instruction][:half].softmax(-1).detach()
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
