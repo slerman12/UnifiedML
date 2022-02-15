@@ -1,3 +1,5 @@
+import math
+
 import torch
 from torch import nn
 
@@ -34,15 +36,12 @@ class CNN(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
-        print(x[0].shape, len(x), len(list(x)))
-        x = list(x)
-        x[0] = x[0].view(-1, *self.input_shape)
-
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
-            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
-                     for context in x[1:]]
-
+            batch_size = x[0].shape[0]
+            x = [context.view(-1, *self.input_shape) if context.shape[1] % math.prod(self.input_shape) == 0
+                 else context.view(batch_size, -1, 1, 1).expand(batch_size, -1, *self.input_shape[1:])
+                 for context in x if len(context.shape) == 2]
         x = torch.cat(x, 1)
 
         out = self.CNN(x)
