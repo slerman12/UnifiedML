@@ -33,7 +33,11 @@ class ViT(nn.Module):
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
         self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
 
-        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)])
+        h, w = self.output_shape(*input_shape[1:])
+
+        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)],
+                                  Rearrange('b (h w) c -> b c h w', h=h, w=w)  # Channels 1st
+                                  )
 
         # self.pool = pool
         #
