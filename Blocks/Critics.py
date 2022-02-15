@@ -66,7 +66,9 @@ class EnsembleQCritic(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_tau)
 
     def forward(self, obs, action=None, context=None):
-        h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
+        batch_size = obs.shape[0]
+
+        h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
 
         if context is None:
@@ -88,9 +90,10 @@ class EnsembleQCritic(nn.Module):
             assert action is not None and \
                    action.shape[-1] == self.action_dim, f'action with dim={self.action_dim} needed for continuous space'
 
-            action = action.reshape(obs.shape[0], -1, self.action_dim)  # [b, n, d]
+            action = action.reshape(batch_size, -1, self.action_dim)  # [b, n, d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
+            print(h.shape)
 
             # Q-values for continuous action(s)
             Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n]
