@@ -12,9 +12,13 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
 class ViT(nn.Module):
-    def __init__(self, in_channels, image_size, patch_size, dim=32, heads=8, depth=3, num_classes=1000, pool='cls'):
+    def __init__(self, input_shape, patch_size=8, dim=32, heads=8, depth=3, num_classes=1000, pool='cls'):
         super().__init__()
 
+        in_channels = input_shape[0]
+        image_size = input_shape[1]
+
+        assert input_shape[1] == input_shape[2], 'Compatible with square images only'
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
         num_patches = (image_size // patch_size) ** 2
         patch_dim = in_channels * patch_size ** 2
@@ -30,12 +34,12 @@ class ViT(nn.Module):
 
         self.attn = nn.Sequential(*[SelfAttentionBlock(dim, heads) for _ in range(depth)])
 
-        self.pool = pool
-
-        self.repr = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, num_classes)
-        )
+        # self.pool = pool
+        #
+        # self.repr = nn.Sequential(
+        #     nn.LayerNorm(dim),
+        #     nn.Linear(dim, num_classes)
+        # )
 
     def forward(self, img):
         x = self.to_patch_embedding(img)
@@ -47,6 +51,8 @@ class ViT(nn.Module):
 
         x = self.attn(x)
 
-        x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
+        return x
 
-        return self.repr(x)
+        # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
+        #
+        # return self.repr(x)
