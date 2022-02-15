@@ -161,7 +161,7 @@ class DQNAgent(torch.nn.Module):
 
                 # actions = Utils.one_hot(y_actual, self.action_dim)  # using y_predicted works better for no supervise
                 # actions[half:] = y_predicted[:half]
-                actions = y_predicted
+                actions = y_predicted.clone()
                 # actions[:half // 2].uniform_()
                 actions[:half].uniform_()
 
