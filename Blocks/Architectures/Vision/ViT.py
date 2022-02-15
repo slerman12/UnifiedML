@@ -52,7 +52,6 @@ class ViT(nn.Module):
         x = self.attn(x)
 
         return x
-
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
         #
         # return self.repr(x)
