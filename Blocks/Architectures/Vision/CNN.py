@@ -36,6 +36,9 @@ class CNN(nn.Module):
             else (1, self.output_dim)
 
     def forward(self, *x):
+        x = list(x)
+        x[0] = x[0].view(self.input_shape)
+
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
             x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
@@ -43,7 +46,7 @@ class CNN(nn.Module):
 
         x = torch.cat(x, 1)
 
-        out = self.CNN(x.view(self.input_shape))
+        out = self.CNN(x)
 
         if self.output_dim is not None:
             out = self.projection(out)
