@@ -145,7 +145,7 @@ class DQNAgent(torch.nn.Module):
                 labels = label[instruction].long().unsqueeze(1).expand(*actions.shape[:-1])
 
                 # Supervised loss
-                supervised_loss = cross_entropy(actions.view(-1, self.action_dim), labels.view(-1, 1))
+                supervised_loss = cross_entropy(actions.view(-1, self.action_dim), labels.view(-1))
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
