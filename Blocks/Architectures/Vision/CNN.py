@@ -9,7 +9,7 @@ class CNN(nn.Module):
                  flatten=True, output_dim=None):
         super().__init__()
 
-        self.input_shape = input_shape
+        self.input_shape = torch.Size(input_shape)
         in_channels = input_shape[0]
 
         self.CNN = nn.Sequential(
