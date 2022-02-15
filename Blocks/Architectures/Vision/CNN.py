@@ -48,7 +48,6 @@ class CNN(nn.Module):
 
         # Operate on last 3 dims
         x = x.view(-1, *self.input_shape)
-        print(x.shape)
 
         out = self.CNN(x)
 
