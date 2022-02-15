@@ -159,8 +159,8 @@ class Rand(nn.Module):
 
 # (Multi-dim) one-hot encoding
 def one_hot(x, num_classes):
-    assert x.shape[-1] == 1
-    # x = x.squeeze(-1).unsqueeze(-1)  # Or this
+    # assert x.shape[-1] == 1
+    x = x.squeeze(-1).unsqueeze(-1)  # Or this
     x = x.long()
     shape = x.shape[:-1]
     zeros = torch.zeros(*shape, num_classes, dtype=x.dtype, device=x.device)

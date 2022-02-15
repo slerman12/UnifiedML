@@ -160,16 +160,14 @@ class DQNAgent(torch.nn.Module):
             if self.RL:
                 half = len(instruction) // 2
 
-                actions = Utils.one_hot(y_actual[half:].unsqueeze(-1), self.action_dim)
-                action[instruction][half:] = actions
-                reward[instruction][half:] = 0
+                action[instruction][half:] = Utils.one_hot(y_actual[half:], self.action_dim)
 
-                action[instruction][:half].uniform_()
-                mistake = cross_entropy(action[instruction][:half], y_actual[:half], reduction='none')
-                reward[instruction][:half] = -mistake[:, None].detach()
+                mistake = cross_entropy(action[instruction][:half].uniform_(),
+                                        y_actual[:half], reduction='none')
+
+                reward[instruction][half:], reward[instruction][:half] = 0, -mistake[:, None].detach()
 
                 action[instruction][:half] = action[instruction][:half].softmax(-1).detach()
-
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
