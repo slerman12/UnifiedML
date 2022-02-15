@@ -26,8 +26,7 @@ class CNN(nn.Module):
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.Flatten(-3),
-                               nn.Linear(out_channels * height * width, output_dim),
-                               nn.ReLU(inplace=True))
+                               nn.Linear(out_channels * height * width, output_dim))
 
         self.apply(Utils.weight_init)
 

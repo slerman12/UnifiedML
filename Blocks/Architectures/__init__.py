@@ -10,3 +10,14 @@ from Blocks.Architectures.Vision.ResNet import MiniResNet
 from Blocks.Architectures.Vision.ResNet import MiniResNet as ResNet
 from Blocks.Architectures.Vision.ConvMixer import ConvMixer
 from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt
+
+
+from torch import nn
+
+
+class Null(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
+    def forward(self, *x):
+        return x

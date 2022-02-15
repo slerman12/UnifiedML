@@ -243,6 +243,12 @@ To train, for example MNIST, using a Vision Transformer as the Encoder:
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
+Or Atari with ResNet:
+
+```
+python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
+```
+
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
 ### Distributed
