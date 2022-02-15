@@ -171,7 +171,7 @@ class DQNAgent(torch.nn.Module):
 
                 reward[instruction] = -mistake[:, None].detach()
 
-                action[instruction] = action[instruction].softmax(-1).detach()
+                action[instruction] = y_predicted.softmax(-1).detach()
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
