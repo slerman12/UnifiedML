@@ -157,11 +157,14 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
+                y_predicted = self.actor(obs[instruction], self.step).rsample(self.num_actions)
+                y_predicted = self.action_selector(self.critic(obs, y_predicted), self.step).best
+
                 half = len(instruction) // 2
 
                 # actions = Utils.one_hot(y_actual, self.action_dim)  # using y_predicted works better for no supervise
                 # actions[half:] = y_predicted[:half]
-                actions = y_predicted.clone()
+                actions = y_predicted
                 # actions[:half // 2].uniform_()
                 actions[:half].uniform_()
 
