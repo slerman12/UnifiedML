@@ -41,7 +41,6 @@ class BioNet(nn.Module):
                                      self.dorsal_stream.ViT,
                                      self.cross_talk):
             ventral = what(ventral)
-            print((ventral).view(*t(ventral).shape[:-1], 2, -1).shape)
             dorsal = t(talk(t(where(dorsal)),
                             # t(ventral).view(*t(ventral).shape[:-1], 2, -1)))  # Feature redundancy(? till convolved)
                             t(ventral)))
