@@ -17,6 +17,7 @@ class ViT(nn.Module):
 
         in_channels = input_shape[0]
         image_size = input_shape[1]
+        self.patch_size = patch_size
 
         assert input_shape[1] == input_shape[2], 'Compatible with square images only'
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
@@ -40,6 +41,9 @@ class ViT(nn.Module):
         #     nn.LayerNorm(dim),
         #     nn.Linear(dim, num_classes)
         # )
+
+    def output_shape(self, h, w):
+        return h / self.patch_size, w / self.patch_size
 
     def forward(self, img):
         x = self.to_patch_embedding(img)
