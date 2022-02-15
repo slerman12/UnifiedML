@@ -229,13 +229,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 ### Custom Architectures
 
-One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```. 
-
-Here is, for example, a GAN with a CNN Discriminator:
-
-```
-python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
-```
+One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
 To train, for example MNIST, using a Vision Transformer as the Encoder:
 
@@ -247,6 +241,12 @@ Or Atari with ResNet:
 
 ```
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
+```
+
+A little more complicated, here is a GAN with a CNN Discriminator:
+
+```
+python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
