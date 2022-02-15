@@ -37,7 +37,7 @@ class CNN(nn.Module):
 
     def forward(self, *x):
         x = list(x)
-        x[0] = x[0].view(self.input_shape)
+        x[0] = x[0].view(-1, *self.input_shape)
 
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
