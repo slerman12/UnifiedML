@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import torch
 import torch.nn as nn
 
 import Utils
@@ -36,5 +37,15 @@ class ConvMixer(nn.Module):
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
-    def forward(self, x):
+    def forward(self, *x):
+        x = list(x)
+        x[0] = x[0].view(-1, *self.input_shape)
+
+        # Optionally append context to channels assuming dimensions allow
+        if len(x) > 1:
+            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
+                     for context in x[1:]]
+
+        x = torch.cat(x, 1)
+
         return self.CNN(x)

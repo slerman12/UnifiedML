@@ -51,7 +51,17 @@ class ViT(nn.Module):
     def feature_shape(self, h, w):
         return 1, (h // self.patch_size) * (w // self.patch_size) + 1
 
-    def forward(self, x):
+    def forward(self, *x):
+        x = list(x)
+        x[0] = x[0].view(-1, *self.input_shape)
+
+        # Optionally append extra data to channels assuming dimensions allow
+        if len(x) > 1:
+            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
+                     for context in x[1:]]
+
+        x = torch.cat(x, 1)
+
         x = self.to_patch_embedding(x)
         b, n, _ = x.shape
 
