@@ -44,7 +44,16 @@ class CNN(nn.Module):
                  for context in x if len(context.shape) < 4 and context.shape[-1]]
         x = torch.cat(x, -3)
 
+        # Conserve leading dims
+        lead_shape = x.shape[:-3]
+
+        # Operate on last 3 dims
+        x = x.view(-1, *self.input_shape)
+
         out = self.CNN(x)
+
+        # Restore shape
+        out = out.view(*lead_shape, out.shape[-3:])
 
         if self.output_dim is not None:
             out = self.projection(out)
