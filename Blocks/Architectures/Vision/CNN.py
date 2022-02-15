@@ -24,8 +24,9 @@ class CNN(nn.Module):
             height, width = Utils.cnn_feature_shape(*input_shape[1:], self.CNN)
 
             self.projection = nn.Sequential(
+                nn.AdaptiveAvgPool2d((1, 1)),
                 nn.Flatten(),
-                nn.Linear(out_channels * height * width, output_dim),
+                nn.Linear(out_channels, output_dim),
                 nn.ReLU(inplace=True))
 
         self.apply(Utils.weight_init)
