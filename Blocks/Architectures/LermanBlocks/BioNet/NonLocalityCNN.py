@@ -41,8 +41,9 @@ class NonLocalityCNN(nn.Module):
         super().__init__()
 
         self.trunk = nn.Sequential(
-            Conv2DInvariant(in_channels,
-                            out_channels, (4, 4), num_dilations=num_dilations),
+            # Conv2DInvariant(in_channels,
+            #                 out_channels, (4, 4), num_dilations=num_dilations),
+            nn.Conv2d(in_channels, out_channels, (4, 4)),
             Utils.ChannelSwap(),
             nn.GELU(),
             nn.LayerNorm(out_channels),
@@ -51,8 +52,9 @@ class NonLocalityCNN(nn.Module):
 
         self.CNN = nn.Sequential(
             *[Residual(nn.Sequential(
-                Conv2DInvariant(out_channels,
-                                out_channels, (2, 2), padding='same', groups=groups, num_dilations=num_dilations),
+                # Conv2DInvariant(out_channels,
+                #                 out_channels, (2, 2), padding='same', groups=groups, num_dilations=num_dilations),
+                nn.Conv2d(in_channels, out_channels, (2, 2), padding='same', groups=groups),
                 Utils.ChannelSwap(),
                 nn.GELU(),
                 nn.LayerNorm(out_channels),

@@ -5,7 +5,6 @@ import Utils
 from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
 from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
-from Blocks.Architectures import ViT
 
 
 class BioNet(nn.Module):
@@ -15,8 +14,7 @@ class BioNet(nn.Module):
         super().__init__()
         in_channels = input_shape[0]
 
-        # self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
-        self.ventral_stream = ViT(input_shape, 4, out_channels, depth=depth)
+        self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
         self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
 
         self.cross_talk = [CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
@@ -39,7 +37,7 @@ class BioNet(nn.Module):
 
         t = Utils.ChannelSwap()
 
-        for what, where, talk in zip(self.ventral_stream.attn[:-1],
+        for what, where, talk in zip(self.ventral_stream.CNN,
                                      self.dorsal_stream.ViT,
                                      self.cross_talk):
             ventral = what(ventral)
