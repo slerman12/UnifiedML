@@ -37,7 +37,6 @@ class EnsembleQCritic(nn.Module):
                                    nn.LayerNorm(trunk_dim),
                                    nn.Tanh()) if recipe.trunk._target_ is None \
             else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, in_dim))
-        print(self.trunk)
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         shape = Utils.default(recipe.q_head.input_shape, dim)
