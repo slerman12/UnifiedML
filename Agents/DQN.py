@@ -160,13 +160,13 @@ class DQNAgent(torch.nn.Module):
                 half = len(instruction) // 2
 
                 actions = Utils.one_hot(y_actual, self.action_dim)  # using y_predicted works better for no supervise
-                actions[:half] = y_predicted[:half]
-                actions[:half // 2].uniform_()
+                actions[:half].uniform_()
+                actions[:half // 2] = y_predicted[:half // 2]
 
                 mistake = cross_entropy(actions, y_actual, reduction='none')
 
                 reward[instruction] = -mistake[:, None].detach()
-                reward[instruction][:half] = 0
+                reward[instruction][:half // 2] = 0
                 action[instruction] = actions.softmax(-1).detach()
 
                 next_obs[instruction] = float('nan')
