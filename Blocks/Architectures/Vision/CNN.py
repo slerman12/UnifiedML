@@ -5,12 +5,12 @@ import Utils
 
 
 class CNN(nn.Module):
-    def __init__(self, obs_shape=torch.Size([3, 84, 84]), out_channels=32, depth=3, batch_norm=False,
+    def __init__(self, input_shape=torch.Size([3, 84, 84]), out_channels=32, depth=3, batch_norm=False,
                  flatten=True, output_dim=None):
         super().__init__()
 
-        self.obs_shape = obs_shape
-        in_channels = obs_shape[0]
+        self.input_shape = input_shape
+        in_channels = input_shape[0]
 
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
@@ -23,7 +23,7 @@ class CNN(nn.Module):
         self.output_dim = output_dim
 
         if output_dim is not None:
-            height, width = Utils.cnn_output_shape(*obs_shape[1:], self.CNN)
+            height, width = Utils.cnn_output_shape(*input_shape[1:], self.CNN)
 
             self.projection = nn.Sequential(
                 nn.Linear(out_channels * height * width, output_dim),
@@ -38,12 +38,12 @@ class CNN(nn.Module):
     def forward(self, *x):
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
-            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
+            x[1:] = [context.reshape(x[0].shape[0], context.shape[-1], 1, 1).expand(-1, -1, *self.input_shape[1:])
                      for context in x[1:]]
 
         x = torch.cat(x, 1)
 
-        out = self.CNN(x.view(self.obs_shape))
+        out = self.CNN(x.view(self.input_shape))
 
         if self.output_dim is not None:
             out = self.projection(out)
