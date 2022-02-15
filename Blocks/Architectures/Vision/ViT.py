@@ -12,7 +12,7 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
 class ViT(nn.Module):
-    def __init__(self, input_shape, patch_size=4, dim=32, heads=8, depth=3, pool='cls'):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls'):
         super().__init__()
 
         in_channels = input_shape[0]
@@ -27,13 +27,13 @@ class ViT(nn.Module):
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
-            nn.Linear(patch_dim, dim),
+            nn.Linear(patch_dim, out_channels),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
 
-        self.attn = nn.Sequential(*[SelfAttentionBlock(dim, heads) for _ in range(depth)])
+        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)])
 
         # self.pool = pool
         #
@@ -43,6 +43,7 @@ class ViT(nn.Module):
         # )
 
     def output_shape(self, h, w):
+        print(h, self.patch_size, h // self.patch_size)
         return h // self.patch_size, w // self.patch_size
 
     def forward(self, img):
@@ -54,6 +55,7 @@ class ViT(nn.Module):
         x += self.pos_embedding[:, :(n + 1)]
 
         x = self.attn(x)
+        print(x.shape)
 
         return x
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
