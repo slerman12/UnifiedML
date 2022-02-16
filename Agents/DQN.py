@@ -164,11 +164,11 @@ class DQNAgent(torch.nn.Module):
             # (Auxiliary) reinforcement
             if self.RL:
                 half = len(instruction) // 2
-                correct[:half] = (torch.argmax(y_predicted[:half].uniform_(), -1)
+                correct[:half] = (torch.argmax(y_predicted[:half].uniform_(-1, 1), -1)
                                   == label[instruction][:half]).float()
 
-                action[instruction] = (y_predicted).detach()
-                reward[instruction] = correct[:, None]  # accuracy as reward
+                action[instruction] = y_predicted.detach()
+                reward[instruction] = correct[:, None]  # Accuracy as reward
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
@@ -181,7 +181,7 @@ class DQNAgent(torch.nn.Module):
                 generated_image = self.actor(obs[:half], self.step).mean[:, 0]
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
-                next_obs[:] = float('nan')
+                next_obs[:] = float('nan')  # Delete for Cuda > 11
 
             # "Discern"
 
