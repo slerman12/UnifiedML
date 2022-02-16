@@ -40,26 +40,26 @@ class ResidualBlock(nn.Module):
 
 
 class MiniResNet(nn.Module):
-    def __init__(self, input_shape, dims=None, depths=None, output_dim=None):
+    def __init__(self, input_shape, stride=2, dims=None, depths=None, output_dim=None):
         super().__init__()
 
         self.input_shape = input_shape
         in_channels = input_shape[0]
 
         if dims is None:
-            dims = [64, 64, 128, 256, 512]  # ResNet
-            # dims = [32, 32]  # MiniResNet
+            # dims = [64, 64, 128, 256, 512]  # ResNet
+            dims = [32, 32]  # MiniResNet
 
         if depths is None:
-            depths = [2, 2, 2, 2]  # ResNet-18
+            # depths = [2, 2, 2, 2]  # ResNet-18
             # depths = [3, 4, 6, 3]  # ResNet-50
-            # depths = [3]  # MiniResNet
+            depths = [3]  # MiniResNet
 
         # CNN ResNet-ish
         self.CNN = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
                                  nn.BatchNorm2d(dims[0]),
                                  nn.ReLU(inplace=True),
-                                 *[ResidualBlock(dims[i + (j > 0)], dims[i + 1], 1 + (i > 0 and j > 0))
+                                 *[ResidualBlock(dims[i + (j > 0)], dims[i + 1], 1 + stride * (i > 0 and j > 0))
                                    for i, depth in enumerate(depths)
                                    for j in range(depth)])
 

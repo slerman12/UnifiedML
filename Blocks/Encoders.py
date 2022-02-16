@@ -19,7 +19,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=512, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
+    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
                  recipe=None, optim_lr=None, ema_tau=None):
 
         super().__init__()
@@ -39,6 +39,8 @@ class CNNEncoder(nn.Module):
 
         # Initialize model
         self.init(optim_lr, ema_tau)
+
+        print(obs_shape, self.repr_shape)
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
@@ -98,19 +100,17 @@ class ResidualBlockEncoder(CNNEncoder):
     """
 
     def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_max_norm=True,
-                 pixels=True, pre_residual=False, isotropic=False, recipe=None,
-                 optim_lr=None, ema_tau=None):
+                 pixels=True, isotropic=False, recipe=None, optim_lr=None, ema_tau=None):
 
         super().__init__(obs_shape, hidden_channels, 0, pixels)
 
         # Dimensions
         self.in_channels = obs_shape[0] + context_dim
         self.out_channels = obs_shape[0] if isotropic else out_channels
-        hidden_channels = self.in_channels if pre_residual else hidden_channels
 
         # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet(self.in_channels, hidden_channels, self.out_channels, num_blocks,
-                                             pre_residual),
+        self.Eyes = nn.Sequential(MiniResNet((self.in_channels, *obs_shape[1:]), 2 - isotropic,
+                                             [hidden_channels, self.out_channels], [num_blocks]),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
         self.init(optim_lr, ema_tau)
