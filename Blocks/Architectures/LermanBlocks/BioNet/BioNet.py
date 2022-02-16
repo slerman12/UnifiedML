@@ -21,11 +21,11 @@ class BioNet(nn.Module):
         self.dorsal_stream = CNN(input_shape, out_channels, depth)
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=heads, context_dim=out_channels)
-                                         for _ in range(depth + 1)])
+                                         for _ in range(depth - 1)])
 
-        # self.repr = nn.Sequential(Utils.ChannelSwap(),
-        #                           SelfAttentionBlock(dim=out_channels, heads=8),
-        #                           Utils.ChannelSwap())  # Todo just use einops rearange
+        self.repr = nn.Sequential(Utils.ChannelSwap(),
+                                  SelfAttentionBlock(dim=out_channels, heads=heads),
+                                  Utils.ChannelSwap())  # Todo just use einops rearange
         #
         # self.projection = nn.Identity() if output_dim is None \
         #     else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
@@ -42,8 +42,8 @@ class BioNet(nn.Module):
 
         t = Utils.ChannelSwap()
 
-        for what, where, talk in zip(self.ventral_stream.CNN,
-                                     self.dorsal_stream.CNN,
+        for what, where, talk in zip(self.ventral_stream.CNN[2:],
+                                     self.dorsal_stream.CNN[2:],
                                      self.cross_talk):
             ventral = what(ventral)
             dorsal = t(talk(t(where(dorsal)),
