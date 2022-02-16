@@ -121,7 +121,7 @@ class DQNAgent(torch.nn.Module):
         next_obs = self.aug(next_obs)
 
         # Encode
-        obs = self.encoder(obs)
+        # obs = self.encoder(obs)
         with torch.no_grad():
             next_obs = self.encoder(next_obs)
 
@@ -140,7 +140,7 @@ class DQNAgent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
+            y_predicted = self.actor(self.encoder(obs)[instruction], self.step).mean[:, 0]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -151,7 +151,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, retain_graph=True)
+                               self.actor, self.encoder)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
@@ -171,7 +171,7 @@ class DQNAgent(torch.nn.Module):
         if self.RL or self.generate:
             # "Imagine"
 
-            # obs = self.encoder(obs)
+            obs = self.encoder(obs)
 
             # Generative modeling
             if self.generate:
@@ -192,12 +192,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic)
+                           self.critic, self.encoder)
 
         # Update encoder
-        if not self.generate:
-            Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder)
+        # if not self.generate:
+        #     Utils.optimize(None,  # Using gradients from previous losses
+        #                    self.encoder)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
