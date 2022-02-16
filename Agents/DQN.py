@@ -167,8 +167,8 @@ class DQNAgent(torch.nn.Module):
                 correct[:half] = (torch.argmax(y_predicted[:half].uniform_(), -1)
                                   == label[instruction][:half]).float()
 
-                action[instruction] = Utils.rone_hot(y_predicted).detach()
-                reward[instruction] = correct[:, None]  # reward = accuracy
+                action[instruction] = (y_predicted).detach()
+                reward[instruction] = correct[:, None]  # accuracy as reward
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
