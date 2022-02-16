@@ -121,7 +121,7 @@ class DQNAgent(torch.nn.Module):
         next_obs = self.aug(next_obs)
 
         # Encode
-        # obs = self.encoder(obs)
+        obs = self.encoder(obs)
         with torch.no_grad():
             next_obs = self.encoder(next_obs)
 
@@ -140,7 +140,7 @@ class DQNAgent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            y_predicted = self.actor(self.encoder(obs)[instruction], self.step).mean[:, 0]
+            y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -151,7 +151,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, self.encoder)
+                               self.actor, retain_graph=True)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
@@ -160,9 +160,9 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                half = len(instruction) // 2
-                y_predicted[:half].uniform_()
-                mistake[:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
+                # half = len(instruction) // 2
+                # y_predicted[:half].uniform_()
+                # mistake[:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
                 action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
                 next_obs[instruction] = float('nan')
@@ -170,8 +170,6 @@ class DQNAgent(torch.nn.Module):
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
             # "Imagine"
-
-            obs = self.encoder(obs)
 
             # Generative modeling
             if self.generate:
