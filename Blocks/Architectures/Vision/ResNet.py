@@ -76,7 +76,7 @@ class MiniResNet(nn.Module):
     def forward(self, *x):
         # Optionally append context to channels assuming dimensions allow
         if len(x) > 1:
-            # Warning: merely reshapes context where permitted, rather than expanding it to height and width
+            # Warning: merely reshapes context where permitted rather than expanding it to height and width
             x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                  % math.prod(self.input_shape) == 0
                  else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
