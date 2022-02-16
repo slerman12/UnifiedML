@@ -163,13 +163,6 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                # half = len(instruction) // 2
-                # y_predicted[:half].uniform_()
-                # correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
-
-                # action[instruction] = y_predicted.softmax(-1).detach()
-                # reward[instruction] = -mistake[:, None].detach()  # reward = -error
-
                 action[instruction] = Utils.rone_hot(y_predicted).detach()
                 reward[instruction] = correct[:, None]
                 next_obs[instruction] = float('nan')
@@ -182,7 +175,9 @@ class DQNAgent(torch.nn.Module):
             if self.generate:
                 half = len(obs) // 2
 
-                action[:half] = self.actor(obs[:half], self.step).mean[:, 0]  # Generated image
+                generated_image = self.actor(obs[:half], self.step).mean[:, 0]
+
+                action[:half] = generated_image
                 reward[:half] = 0  # Discriminate
                 next_obs[:] = float('nan')
 
