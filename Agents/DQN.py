@@ -154,7 +154,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, self.encoder)
+                               self.actor, self.encoder, retain_graph=True)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
