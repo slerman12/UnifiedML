@@ -157,8 +157,9 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                y_predicted = self.actor(obs[instruction], self.step).rsample(self.num_actions)
-                y_predicted = self.action_selector(self.critic(obs, y_predicted), self.step).best
+                # y_predicted = self.actor(obs[instruction], self.step).rsample(self.num_actions)
+                # y_predicted = self.action_selector(self.critic(obs[instruction], y_predicted), self.step).best
+                # maybe just do original with a random/last batch item uniform_'ed
 
                 half = len(instruction) // 2
 
@@ -174,7 +175,7 @@ class DQNAgent(torch.nn.Module):
                 # reward[instruction][half:] = 0
                 # action[instruction][half:] = actions[half:]
                 # action[instruction][:half] = actions[:half].softmax(-1).detach()
-                action[instruction] = actions.softmax(-1).detach()
+                action[instruction] = actions.softmax(-1).detach()  # maybe encoder should be updated on the fly
 
                 next_obs[instruction] = float('nan')
 
