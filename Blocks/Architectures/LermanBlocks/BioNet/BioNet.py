@@ -44,6 +44,7 @@ class BioNet(nn.Module):
         dorsal = self.dorsal_stream.CNN[1](dorsal)
 
         t = Utils.ChannelSwap()
+        print(ventral.shape, dorsal.shape)
 
         for what, where, talk in zip(self.ventral_stream.CNN[2:],
                                      self.dorsal_stream.CNN[2:],
