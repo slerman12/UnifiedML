@@ -74,6 +74,9 @@ class NonLocalityCNN(nn.Module):
         #     )
         #     ) for _ in range(depth)])
 
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.trunk)
+
     def forward(self, x):
         return self.CNN(self.trunk(x))
 
