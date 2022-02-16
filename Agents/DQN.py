@@ -151,7 +151,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, self.encoder)
+                               self.actor, retain_graph=True)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
@@ -160,12 +160,12 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                half = len(instruction) // 2
-                y_predicted[:half].uniform_()
-                mistake[:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
+                # half = len(instruction) // 2
+                # y_predicted[:half].uniform_()
+                # mistake[:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
                 action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
-                next_obs[instruction, :] = float('nan')
+                next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
@@ -194,12 +194,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic, self.encoder)
+                           self.critic)
 
-        # Update encoder
-        # if not self.generate:
-        #     Utils.optimize(None,  # Using gradients from previous losses
-        #                    self.encoder)
+        Update encoder
+        if not self.generate:
+            Utils.optimize(None,  # Using gradients from previous losses
+                           self.encoder)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
