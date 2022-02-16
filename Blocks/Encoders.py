@@ -19,7 +19,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
+    def __init__(self, obs_shape, out_channels=512, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
                  recipe=None, optim_lr=None, ema_tau=None):
 
         super().__init__()
@@ -39,8 +39,6 @@ class CNNEncoder(nn.Module):
 
         # Initialize model
         self.init(optim_lr, ema_tau)
-
-        print(obs_shape, self.repr_shape)
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
