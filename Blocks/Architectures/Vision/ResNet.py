@@ -59,7 +59,7 @@ class MiniResNet(nn.Module):
         self.CNN = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
                                  nn.BatchNorm2d(dims[0]),
                                  nn.ReLU(inplace=True),
-                                 *[ResidualBlock(dims[i + (j > 0)], dims[i + 1], 1 + stride * (i > 0 and j > 0))
+                                 *[ResidualBlock(dims[i + (j > 0)], dims[i + 1], 1 + (stride - 1) * (i > 0 and j > 0))
                                    for i, depth in enumerate(depths)
                                    for j in range(depth)])
 
