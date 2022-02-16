@@ -112,7 +112,7 @@ class DQNAgent(torch.nn.Module):
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1  # Real
-            next_obs[:] = label[:] = float('nan')
+            next_obs[:, :] = label[:] = float('nan')
 
         # "Envision" / "Perceive"
 
