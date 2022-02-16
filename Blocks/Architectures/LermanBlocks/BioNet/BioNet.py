@@ -11,7 +11,7 @@ from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAtt
 class BioNet(nn.Module):
     """Disentangling "What" And "Where" Pathways In CNNs"""
 
-    def __init__(self, input_shape, out_channels=32, depth=3, output_dim=None):
+    def __init__(self, input_shape, out_channels=32, heads=8, depth=3, output_dim=None):
         super().__init__()
         in_channels = input_shape[0]
 
@@ -20,7 +20,7 @@ class BioNet(nn.Module):
         self.ventral_stream = CNN(input_shape, out_channels, depth)
         self.dorsal_stream = CNN(input_shape, out_channels, depth)
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=heads, context_dim=out_channels)
                                          for _ in range(depth + 1)])
 
         # self.repr = nn.Sequential(Utils.ChannelSwap(),
