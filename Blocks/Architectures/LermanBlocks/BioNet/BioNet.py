@@ -20,7 +20,7 @@ class BioNet(nn.Module):
         self.ventral_stream = CNN(input_shape, out_channels, depth)
         self.dorsal_stream = CNN(input_shape, out_channels, depth)
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=2, context_dim=out_channels)
                                          for _ in range(depth + 1)])
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
@@ -30,7 +30,9 @@ class BioNet(nn.Module):
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
-                               nn.Linear(out_channels, output_dim))
+                               nn.Linear(out_channels, 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.dorsal_stream)
