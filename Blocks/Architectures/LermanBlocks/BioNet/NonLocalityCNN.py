@@ -37,7 +37,7 @@ class Conv2DInvariant(nn.Conv2d):
 
 class NonLocalityCNN(nn.Module):
     def __init__(self, input_shape, out_channels=64, groups=8,
-                 num_dilations=1, depth=3):
+                 num_dilations=1, depth=3, output_dim=None):
         super().__init__()
 
         in_channels = input_shape[0]
