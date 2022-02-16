@@ -142,11 +142,6 @@ class DQNAgent(torch.nn.Module):
             # Inference
             y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
-            if self.RL:
-                half = len(instruction) // 2
-                y_predicted[:half] = y_predicted[:half].detach()
-                y_predicted[:half].uniform_()
-
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
             # Supervised learning
@@ -165,8 +160,11 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
+                half = len(instruction) // 2
+                y_predicted[:half].uniform_()
                 action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
+                reward[instruction][:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
                 next_obs[instruction, :] = float('nan')
 
         # Reinforcement learning / generative modeling
