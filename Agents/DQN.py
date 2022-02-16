@@ -122,8 +122,8 @@ class DQNAgent(torch.nn.Module):
 
         # Encode
         # obs = self.encoder(obs)
-        # with torch.no_grad():
-        #     next_obs = self.encoder(next_obs)
+        with torch.no_grad():
+            next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
@@ -172,8 +172,6 @@ class DQNAgent(torch.nn.Module):
             # "Imagine"
 
             obs = self.encoder(obs)
-            with torch.no_grad():
-                next_obs = self.encoder(next_obs)
 
             # Generative modeling
             if self.generate:
