@@ -111,8 +111,9 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
-            next_obs[:] = label[:] = float('nan')
+            action = obs.flatten(-3) / 127.5 - 1
+            reward[:] = 1
+            label[:] = float('nan')
 
         # "Envision" / "Perceive"
 
@@ -161,11 +162,12 @@ class DQNAgent(torch.nn.Module):
             # (Auxiliary) reinforcement
             if self.RL:
                 half = len(instruction) // 2
-                y_predicted[:half].uniform_(-1, 1)
-                mistake[:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
-                action[instruction] = torch.softmax(y_predicted, -1).detach()
+                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
+                                               label[instruction].long()[:half], reduction='none')
+
+                action[instruction] = y_predicted.softmax(-1).detach()
                 reward[instruction] = -mistake[:, None].detach()
-                next_obs[instruction, :] = float('nan')
+                next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
@@ -173,13 +175,11 @@ class DQNAgent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-                next_obs[:] = float('nan')
-                actions = self.actor(obs[:len(obs) // 2], self.step).mean
-
-                generated_image = self.action_selector(self.critic(obs[:len(obs) // 2], actions), self.step).best
-
                 half = len(obs) // 2
-                action[:half], reward[:half] = generated_image, 0  # Discriminate
+
+                action[:half] = self.actor(obs[:half], self.step).mean[:, 0]  # Generated image
+                reward[:half] = 0  # Discriminate
+                next_obs[:] = float('nan')
 
             # "Discern"
 
