@@ -167,8 +167,8 @@ class DQNAgent(torch.nn.Module):
                 #
                 # action[instruction] = y_predicted.softmax(-1).detach()
                 # reward[instruction] = -mistake[:, None].detach()  # reward = -error
-                action[instruction] = Utils.one_hot(y_predicted, self.action_dim)
-                reward[instruction] = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+                action[instruction] = Utils.rone_hot(y_predicted).detach()
+                reward[instruction] = (torch.argmax(y_predicted, -1) == label[instruction]).float().detach()
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
