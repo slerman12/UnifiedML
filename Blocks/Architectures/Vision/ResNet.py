@@ -47,10 +47,13 @@ class MiniResNet(nn.Module):
         in_channels = input_shape[0]
 
         if dims is None:
-            dims = [32, 32]
+            dims = [64, 64, 128, 256, 512]  # ResNet
+            # dims = [32, 32]  # MiniResNet
 
         if depths is None:
-            depths = [3]
+            depths = [2, 2, 2, 2]  # ResNet-18
+            # depths = [3, 4, 6, 3]  # ResNet-50
+            # depths = [3]  # MiniResNet
 
         # CNN ResNet-ish
         self.CNN = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
