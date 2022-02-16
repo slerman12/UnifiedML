@@ -139,10 +139,8 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
-            actions = self.actor(obs[instruction], self.step).mean
-
             # Inference
-            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
+            y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -162,6 +160,8 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
+                half = len(instruction) // 2
+                y_predicted[:half].uniform_()
                 action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
                 next_obs[instruction, :] = float('nan')
