@@ -45,6 +45,8 @@ class BioNet(nn.Module):
 
         t = Utils.ChannelSwap()
 
+        print(ventral.shape)
+
         for what, where, talk in zip(self.ventral_stream.CNN[2:],
                                      self.dorsal_stream.CNN[2:],
                                      self.cross_talk):
