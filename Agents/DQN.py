@@ -163,8 +163,13 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
+                half = len(instruction) // 2
+                y_predicted[:half].uniform_()
+                correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+
                 # action[instruction] = y_predicted.softmax(-1).detach()
                 # reward[instruction] = -mistake[:, None].detach()  # reward = -error
+
                 action[instruction] = Utils.rone_hot(y_predicted).detach()
                 reward[instruction] = correct[:, None]
                 next_obs[instruction] = float('nan')
