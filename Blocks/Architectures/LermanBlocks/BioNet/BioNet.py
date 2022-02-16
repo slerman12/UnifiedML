@@ -23,7 +23,7 @@ class BioNet(nn.Module):
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
                                          for _ in range(depth + 1)])
 
-        self.repr = nn.Sequential(Utils.ChannelSwap(),
+        self.repr = nn.Identity() if True else nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=8),
                                   Utils.ChannelSwap())  # Todo just use einops rearange
 
