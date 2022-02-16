@@ -196,7 +196,7 @@ class DQNAgent(torch.nn.Module):
             Utils.optimize(critic_loss,
                            self.critic)
 
-        Update encoder
+        # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
                            self.encoder)
