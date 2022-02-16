@@ -164,7 +164,7 @@ class DQNAgent(torch.nn.Module):
             # (Auxiliary) reinforcement
             if self.RL:
                 action[instruction] = Utils.rone_hot(y_predicted).detach()
-                reward[instruction] = correct[:, None]
+                reward[instruction] = correct[:, None]  # reward = accuracy
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
