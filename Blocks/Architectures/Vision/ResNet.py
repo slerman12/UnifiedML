@@ -16,6 +16,11 @@ class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, down_sample=None):
         super().__init__()
 
+        if down_sample is None and in_channels != out_channels:
+            down_sample = nn.Sequential(nn.Conv2d(in_channels, out_channels,
+                                                  kernel_size=1, stride=stride, bias=False),
+                                        nn.BatchNorm2d(out_channels))
+
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
                                                kernel_size=3, padding=1, stride=stride, bias=False),
                                      nn.BatchNorm2d(out_channels),
@@ -35,33 +40,30 @@ class ResidualBlock(nn.Module):
 
 
 class MiniResNet(nn.Module):
-    def __init__(self, input_shape, hidden_channels=32, out_channels=32, depth=3, pre_residual=False, output_dim=None):
+    def __init__(self, input_shape, dims=None, depths=None, output_dim=None):
         super().__init__()
 
         self.input_shape = input_shape
         in_channels = input_shape[0]
 
-        pre = nn.Sequential(nn.Conv2d(in_channels, hidden_channels, kernel_size=3, padding=1),
-                            nn.BatchNorm2d(hidden_channels))
+        if dims is None:
+            dims = [32, 32]
 
-        # Add a concurrent stream to pre
-        if pre_residual:
-            pre = Residual(pre, down_sample=nn.Sequential(nn.Conv2d(in_channels, hidden_channels,
-                                                                    kernel_size=3, padding=1),
-                                                          nn.BatchNorm2d(hidden_channels)))
+        if depths is None:
+            depths = [3]
 
         # CNN ResNet-ish
-        self.CNN = nn.Sequential(pre,
-                                 nn.ReLU(inplace=True),  # MaxPool after this?
-                                 *[ResidualBlock(hidden_channels, hidden_channels)
-                                   for _ in range(depth)],
-                                 nn.Conv2d(hidden_channels, out_channels, kernel_size=3, padding=1),
-                                 nn.ReLU(inplace=True))
+        self.CNN = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
+                                 nn.BatchNorm2d(dims[0]),
+                                 nn.ReLU(inplace=True),
+                                 *[ResidualBlock(dims[i + (j > 0)], dims[i + 1], 1 + (i > 0 and j > 0))
+                                   for i, depth in enumerate(depths)
+                                   for j in range(depth)])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
-                               nn.Linear(out_channels, 1024),
+                               nn.Linear(dims[-1], 1024),
                                nn.ReLU(inplace=True),
                                nn.Linear(1024, output_dim))
 
