@@ -111,7 +111,8 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:], label[:] = obs.flatten(-3) / 127.5 - 1, 1, float('nan')
+            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
+            next_obs[:] = label[:] = float('nan')
 
         # "Envision" / "Perceive"
 
@@ -138,13 +139,19 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
-            y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
-            y_actual = label[instruction].long()
+            actions = self.actor(obs[instruction], self.step).rsample(self.num_actions) if self.RL \
+                else self.actor(obs[instruction], self.step).mean
+
+            # Inference
+            y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
+            y_predicted[0].uniform_()
+
+            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
             # Supervised learning
             if self.supervise:
                 # Supervised loss
-                supervised_loss = cross_entropy(y_predicted, y_actual)
+                supervised_loss = mistake.mean()
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
@@ -153,31 +160,13 @@ class DQNAgent(torch.nn.Module):
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
                     logs.update({'accuracy': (torch.argmax(y_predicted, -1)
-                                              == y_actual).float().mean().item()})
+                                              == label[instruction]).float().mean().item()})
 
             # (Auxiliary) reinforcement
             if self.RL:
-                # y_predicted = self.actor(obs[instruction], self.step).rsample(self.num_actions)
-                # y_predicted = self.action_selector(self.critic(obs[instruction], y_predicted), self.step).best
-                # maybe just do original with a random/last batch item uniform_'ed
-
-                half = len(instruction) // 2
-
-                # actions = Utils.one_hot(y_actual, self.action_dim)  # using y_predicted works better for no supervise
-                # actions[half:] = y_predicted[:half]
-                actions = y_predicted
-                # actions[:half // 2].uniform_()
-                actions[:half].uniform_()
-
-                mistake = cross_entropy(actions, y_actual, reduction='none')
-
+                action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
-                # reward[instruction][half:] = 0
-                # action[instruction][half:] = actions[half:]
-                # action[instruction][:half] = actions[:half].softmax(-1).detach()
-                action[instruction] = actions.softmax(-1).detach()  # maybe encoder should be updated on the fly
-
-                next_obs[instruction] = float('nan')
+                next_obs[instruction, :] = float('nan')
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
