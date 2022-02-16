@@ -158,8 +158,8 @@ class DQNAgent(torch.nn.Module):
                                self.actor, retain_graph=True)
 
                 if self.log:
-                    logs.update({'supervised_loss': supervised_loss.item()})
-                    logs.update({'accuracy': correct.mean().item()})
+                    logs.update({'supervised_loss': supervised_loss.item(),
+                                 'accuracy': correct.mean().item()})
 
             # (Auxiliary) reinforcement
             if self.RL:
