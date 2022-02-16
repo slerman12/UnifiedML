@@ -38,7 +38,10 @@ class BioNet(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.dorsal_stream)
 
     def forward(self, input):
-        ventral = dorsal = input
+        ventral = self.ventral_stream.CNN[0](input)
+        ventral = self.ventral_stream.CNN[1](ventral)
+        dorsal = self.dorsal_stream.CNN[0](input)
+        dorsal = self.dorsal_stream.CNN[1](dorsal)
 
         t = Utils.ChannelSwap()
 
