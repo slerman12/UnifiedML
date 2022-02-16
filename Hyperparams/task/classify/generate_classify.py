@@ -32,6 +32,7 @@ learn_per_steps: 1
 seed_steps: 10000
 explore_steps: 0
 log_per_episodes: 10
+stddev_schedule: 1
 task_name: {}""".format(task))
         f.close()
         out += ' "' + task.lower() + '"'

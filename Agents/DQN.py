@@ -144,7 +144,6 @@ class DQNAgent(torch.nn.Module):
 
             # Inference
             y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
-            y_predicted[0].uniform_()
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
