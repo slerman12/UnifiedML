@@ -26,13 +26,13 @@ class BioNet(nn.Module):
         self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=heads),
                                   Utils.ChannelSwap())  # Todo just use einops rearange
-        #
-        # self.projection = nn.Identity() if output_dim is None \
-        #     else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-        #                        nn.Flatten(),
-        #                        nn.Linear(out_channels, 1024),
-        #                        nn.ReLU(inplace=True),
-        #                        nn.Linear(1024, output_dim))
+
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               nn.Linear(out_channels, 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.dorsal_stream)
