@@ -4,6 +4,7 @@ import Utils
 
 from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
 from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
+from Blocks.Architectures import CNN
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
 
 
@@ -14,12 +15,13 @@ class BioNet(nn.Module):
         super().__init__()
         in_channels = input_shape[0]
 
-        self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
-        self.dorsal_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
+        # self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
         # self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
+        self.ventral_stream = CNN(input_shape, out_channels, depth)
+        self.dorsal_stream = CNN(input_shape, out_channels, depth)
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
-                                         for _ in range(depth)])
+                                         for _ in range(depth + 1)])
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=8),
@@ -40,7 +42,7 @@ class BioNet(nn.Module):
         t = Utils.ChannelSwap()
 
         for what, where, talk in zip(self.ventral_stream.CNN,
-                                     self.dorsal_stream.ViT,
+                                     self.dorsal_stream.CNN,
                                      self.cross_talk):
             ventral = what(ventral)
             dorsal = t(talk(t(where(dorsal)),
