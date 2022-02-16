@@ -139,8 +139,7 @@ class DQNAgent(torch.nn.Module):
         if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
-            actions = self.actor(obs[instruction], self.step).rsample(self.num_actions) if self.RL \
-                else self.actor(obs[instruction], self.step).mean
+            actions = self.actor(obs[instruction], self.step).mean
 
             # Inference
             y_predicted = self.action_selector(self.critic(obs[instruction], actions), self.step).best
@@ -154,7 +153,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, self.encoder)
+                               self.actor, retain_graph=self.RL)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss.item()})
@@ -166,7 +165,6 @@ class DQNAgent(torch.nn.Module):
                 action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
                 next_obs[instruction, :] = float('nan')
-                obs = obs.detach()
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
@@ -191,12 +189,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic, self.encoder)
+                           self.critic)
 
         # Update encoder
-        # if not self.generate:
-        #     Utils.optimize(None,  # Using gradients from previous losses
-        #                    self.encoder)
+        if not self.generate:
+            Utils.optimize(None,  # Using gradients from previous losses
+                           self.encoder)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
