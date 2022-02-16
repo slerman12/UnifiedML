@@ -47,21 +47,23 @@ class MiniResNet(nn.Module):
         in_channels = input_shape[0]
 
         if dims is None:
-            dims = [64, 64, 128, 256, 512]  # ResNet
-            # dims = [32, 32]  # MiniResNet
+            # dims = [64, 64, 128, 256, 512]  # ResNet
+            dims = [32, 32]  # MiniResNet
 
         if depths is None:
-            depths = [2, 2, 2, 2]  # ResNet-18
+            # depths = [2, 2, 2, 2]  # ResNet-18
             # depths = [3, 4, 6, 3]  # ResNet-50
-            # depths = [3]  # MiniResNet
+            depths = [3]  # MiniResNet
+
+        self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
+                                   nn.BatchNorm2d(dims[0]),
+                                   nn.ReLU(inplace=True))
 
         # CNN ResNet-ish
-        self.CNN = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
-                                 nn.BatchNorm2d(dims[0]),
-                                 nn.ReLU(inplace=True),
-                                 *[ResidualBlock(dims[i + (j > 0)], dims[i + 1], 1 + (stride - 1) * (i > 0 and j > 0))
-                                   for i, depth in enumerate(depths)
-                                   for j in range(depth)])
+        self.ResNet = nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
+                                                    1 + (stride - 1) * (i > 0 and j > 0))
+                                      for i, depth in enumerate(depths)
+                                      for j in range(depth)])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
@@ -74,26 +76,32 @@ class MiniResNet(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
-        # Optionally append context to channels assuming dimensions allow
-        if len(x) > 1:
-            # Warning: merely reshapes context where permitted rather than expanding it to height and width
-            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                 % math.prod(self.input_shape) == 0
-                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
-                 for context in x if len(context.shape) < 4 and context.shape[-1]]
-        x = torch.cat(x, -3)
-
+        # Append context to channels assuming dimensions allow, broadcasts across many possibilities
+        x = torch.cat(
+            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
+             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                  % math.prod(self.input_shape[1:]) == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             for context in x], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
-
         # Operate on last 3 dims
-        x = x.view(-1, *self.input_shape)
+        x = x.view(-1, *x.shape[-3:])
 
-        out = self.CNN(x)
-
-        out = self.projection(out)
+        x = self.trunk(x)
+        x = self.ResNet(x)
+        x = self.projection(x)
 
         # Restore leading dims
-        out = out.view(*lead_shape, *out.shape[1:])
-
+        out = x.view(*lead_shape, *x.shape[1:])
         return out
+
+
+class ResNet18(MiniResNet):
+    def __init__(self, input_shape, output_dim=None):
+        super().__init__(input_shape, 2, [64, 64, 128, 256, 512], [2, 2, 2, 2], output_dim)
+
+
+class ResNet50(MiniResNet):
+    def __init__(self, input_shape, output_dim=None):
+        super().__init__(input_shape, 2, [64, 64, 128, 256, 512], [3, 4, 6, 3], output_dim)

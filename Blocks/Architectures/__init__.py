@@ -6,7 +6,7 @@ from Blocks.Architectures.MLP import MLP
 from Blocks.Architectures.MultiHeadAttention import AttentionPool
 from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ViT import ViT
-from Blocks.Architectures.Vision.ResNet import MiniResNet
+from Blocks.Architectures.Vision.ResNet import MiniResNet, ResNet18, ResNet50
 from Blocks.Architectures.Vision.ResNet import MiniResNet as ResNet
 from Blocks.Architectures.Vision.ConvMixer import ConvMixer
 from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt
@@ -16,8 +16,14 @@ from torch import nn
 
 
 class Null(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, input_size=None, output_size=None):
         super().__init__()
+
+        self.input_size = input_size
+        self.output_size = input_size
+
+    def feature_shape(self, c, h, w):
+        return c, h, w
 
     def forward(self, *x):
         return x
