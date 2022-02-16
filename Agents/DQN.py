@@ -163,10 +163,10 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                action[instruction] = y_predicted.softmax(-1).detach()
-                reward[instruction] = -mistake[:, None].detach()
-                # action[instruction] = Utils.rone_hot(y_predicted).detach()
-                # reward[instruction] = correct[:, None]
+                # action[instruction] = y_predicted.softmax(-1).detach()
+                # reward[instruction] = -mistake[:, None].detach()  # reward = -error
+                action[instruction] = Utils.rone_hot(y_predicted).detach()
+                reward[instruction] = correct[:, None]
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
