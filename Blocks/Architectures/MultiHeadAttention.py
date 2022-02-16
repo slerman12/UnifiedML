@@ -75,7 +75,7 @@ class CrossAttentionBlock(nn.Module):
         self.ln1 = nn.LayerNorm(dim)
         self.ln2 = nn.LayerNorm(dim)
         self.attn = CrossAttention(dim, heads, context_dim, talk_h)
-        self.mlp = MLP(dim, dim, dim, 2, nn.GELU())
+        self.mlp = MLP(dim, dim, dim, 1, nn.GELU())
 
         self.init(optim_lr, ema_tau)
 

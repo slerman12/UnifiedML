@@ -20,7 +20,7 @@ class BioNet(nn.Module):
         self.ventral_stream = CNN(input_shape, out_channels, depth)
         self.dorsal_stream = CNN(input_shape, out_channels, depth)
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=2, context_dim=out_channels)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=8, context_dim=out_channels)
                                          for _ in range(depth + 1)])
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
