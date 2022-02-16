@@ -111,9 +111,8 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action = obs.flatten(-3) / 127.5 - 1
-            reward[:] = 1  # Real
-            label[:] = float('nan')
+            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1  # Real
+            next_obs[:] = label[:] = float('nan')
 
         # "Envision" / "Perceive"
 
@@ -181,9 +180,8 @@ class DQNAgent(torch.nn.Module):
 
                 generated_image = self.actor(obs[:half], self.step).mean[:, 0]
 
-                action[:half] = generated_image
-                reward[:half] = 0  # Discriminate
-                next_obs[:] = float('nan')
+                action[:half], reward[:half] = generated_image, 0  # Discriminate
+                print(torch.isnan(next_obs).all())
 
             # "Discern"
 
