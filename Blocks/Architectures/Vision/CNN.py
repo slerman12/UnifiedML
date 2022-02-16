@@ -13,6 +13,8 @@ class CNN(nn.Module):
         self.input_shape = torch.Size(input_shape)
         in_channels = input_shape[0]
 
+        self.trunk = nn.Identity()
+
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
                                       out_channels, 3, stride=2 if i == 0 else 1),
@@ -20,13 +22,10 @@ class CNN(nn.Module):
                             nn.ReLU()) for i in range(depth + 1)],
         )
 
-        self.output_dim = output_dim
-
-        height, width = Utils.cnn_feature_shape(*input_shape[1:], self.CNN)
-
         self.projection = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.Flatten(-3),
-                               nn.Linear(out_channels * height * width, 1024),
+            else nn.Sequential(nn.AdaptiveAvgPool2d((3, 3)),
+                               nn.Flatten(-3),
+                               nn.Linear(out_channels * 3 * 3, 1024),
                                nn.ReLU(inplace=True),
                                nn.Linear(1024, output_dim))
 
@@ -36,42 +35,38 @@ class CNN(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
-        # Optionally append context to channels assuming dimensions allow
-        if len(x) > 1:
-            # Warning: reshapes context rather than expanding it to height and width if permitted
-            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                 % math.prod(self.input_shape) == 0
-                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
-                 for context in x if len(context.shape) < 4 and context.shape[-1]]
-        x = torch.cat(x, -3)
-
+        # Concatenate context along channels assuming dimensions allow, broadcast across many possibilities
+        x = torch.cat(
+            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
+             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                  % math.prod(self.input_shape[1:]) == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             for context in x], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
-
         # Operate on last 3 dims
-        x = x.view(-1, *self.input_shape)
+        x = x.view(-1, *x.shape[-3:])
 
-        out = self.CNN(x)
-
-        out = self.projection(out)
+        x = self.trunk(x)
+        x = self.CNN(x)
+        x = self.projection(x)
 
         # Restore leading dims
-        out = out.view(*lead_shape, *out.shape[1:])
-
+        out = x.view(*lead_shape, *x.shape[1:])
         return out
 
 
-class SimpleDecoder(nn.Module):
-    def __init__(self, out_shape, depth=3):
-        super().__init__()
-
-        channels_in = 3
-        channels_out = out_shape[0]
-
-        self.CNN = nn.Sequential(*[nn.Sequential(
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(channels_in // 2 ** (i - 1), channels_out if i == depth else channels_in // 2 ** i, 3, padding=1),
-            nn.GLU(1)) for i in range(depth + 1)])
-
-    def forward(self, x):
-        return self.CNN(x)
+# class SimpleDecoder(nn.Module):
+#     def __init__(self, out_shape, depth=3):
+#         super().__init__()
+#
+#         channels_in = 3
+#         channels_out = out_shape[0]
+#
+#         self.CNN = nn.Sequential(*[nn.Sequential(
+#             nn.Upsample(scale_factor=2),
+#             nn.Conv2d(channels_in // 2 ** (i - 1), channels_out if i == depth else channels_in // 2 ** i, 3, 1, 1),
+#             nn.GLU(1)) for i in range(depth + 1)])
+#
+#     def forward(self, x):
+#         return self.CNN(x)
