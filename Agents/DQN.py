@@ -161,7 +161,7 @@ class DQNAgent(torch.nn.Module):
             # (Auxiliary) reinforcement
             if self.RL:
                 half = len(instruction) // 2
-                y_predicted[:half].uniform_()
+                y_predicted[:half].uniform_(-1, 1)
                 mistake[:half] = cross_entropy(y_predicted[:half], label[instruction].long()[:half], reduction='none')
                 action[instruction] = torch.softmax(y_predicted, -1).detach()
                 reward[instruction] = -mistake[:, None].detach()
