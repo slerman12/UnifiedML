@@ -46,6 +46,10 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions  # Num actions sampled per actor
 
+        # Image augmentation
+        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
+            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
 
@@ -63,10 +67,6 @@ class DQNAgent(torch.nn.Module):
                                       optim_lr=lr, ema_tau=ema_tau)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
-
-        # Data augmentation
-        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
-            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
         # Birth
 
@@ -161,12 +161,14 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                half = len(instruction) // 2
-                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
-                                               label[instruction].long()[:half], reduction='none')
-
-                action[instruction] = y_predicted.softmax(-1).detach()
-                reward[instruction] = -mistake[:, None].detach()
+                # half = len(instruction) // 2
+                # mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
+                #                                label[instruction].long()[:half], reduction='none')
+                #
+                # action[instruction] = y_predicted.softmax(-1).detach()
+                # reward[instruction] = -mistake[:, None].detach()  # reward = -error
+                action[instruction] = Utils.one_hot(y_predicted, self.action_dim)
+                reward[instruction] = (torch.argmax(y_predicted, -1) == label[instruction]).float()
                 next_obs[instruction] = float('nan')
 
         # Reinforcement learning / generative modeling
