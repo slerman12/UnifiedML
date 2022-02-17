@@ -16,13 +16,13 @@ from torch import nn
 
 
 class Null(nn.Module):
-    def __init__(self, input_size=None, output_size=None):
+    def __init__(self, input_shape=None, output_dim=None):
         super().__init__()
 
-        self.input_size = input_size
-        self.output_size = input_size
+        self.input_shape = input_shape
+        self.output_dim = None
 
-    def feature_shape(self, c, h, w):
+    def repr_shape(self, c, h, w):
         return c, h, w
 
     def forward(self, *x):
