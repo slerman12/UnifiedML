@@ -82,7 +82,7 @@ class ConvNeXt(nn.Module):
         self.apply(weight_init)
 
     def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.CNN)
+        return Utils.cnn_feature_shape(h, w, self.ConvNeXt)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

@@ -43,7 +43,7 @@ class ConvMixer(nn.Module):
                                nn.Linear(1024, output_dim))
 
     def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.CNN)
+        return Utils.cnn_feature_shape(h, w, self.ConvMixer)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

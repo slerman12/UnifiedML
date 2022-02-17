@@ -56,7 +56,7 @@ class MiniResNet(nn.Module):
             depths = [3]  # MiniResNet
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
-                                   nn.BatchNorm2d(dims[0]),
+                                   # nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True))
 
         # CNN ResNet-ish
