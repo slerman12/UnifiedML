@@ -36,7 +36,12 @@ class CNN(nn.Module):
 
     def forward(self, *x):
         context = x[0]
-        print(x[0].shape, context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:]).shape)
+        print(bla.shape for bla in [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
+                                    else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1] and
+                                                                                                         math.prod(self.input_shape[1:])
+                                                                                                         % context.shape[-1] == 0
+        else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+                                    for context in x])
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
