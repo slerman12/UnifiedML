@@ -6,11 +6,11 @@ import math
 
 import torch
 from torch import nn
-from torch import einsum
+# from torch import einsum
 
 import copy
 from einops import rearrange
-from opt_einsum import contract
+from opt_einsum_torch import einsum
 
 from Blocks.Architectures.MLP import MLP
 
@@ -49,7 +49,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        dots = contract('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
         attn = dots.softmax(dim=-1)
 
