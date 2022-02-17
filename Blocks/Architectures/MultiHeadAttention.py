@@ -6,11 +6,10 @@ import math
 
 import torch
 from torch import nn
-# from torch import einsum
-
+from torch import einsum
+import torch_semiring_einsum
 import copy
 from einops import rearrange
-from opt_einsum_torch import einsum
 
 from Blocks.Architectures.MLP import MLP
 
@@ -56,7 +55,10 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        out = einsum('b h i j, b h j d -> b h i d', attn, v)
+        EQUATION = torch_semiring_einsum.compile_equation('b h i j, b h j d -> b h i d')
+        out = torch_semiring_einsum.log_einsum(EQUATION, attn, v, block_size=5)
+
+        # out = einsum('b h i j, b h j d -> b h i d', attn, v)
         out = rearrange(out, 'b h n d -> b n (h d)')
 
         # Restores original shape
