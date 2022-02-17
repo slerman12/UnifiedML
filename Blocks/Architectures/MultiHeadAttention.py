@@ -117,7 +117,7 @@ class AttentionPool(nn.Module):
             channels_in = input_shape[-3] if len(input_shape) >= 3 else input_shape[-1]
 
         if heads is None:
-            heads = (channels_in + 2) // 2
+            heads = (channels_in + 4) // 4
 
         self.pool = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=channels_in, heads=heads),
