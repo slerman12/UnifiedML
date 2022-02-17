@@ -48,7 +48,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        EQUATION = torch_semiring_einsum.compile_equation('b h i d, b h j d -> b h i j')
+        EQUATION = torch_semiring_einsum.compile_equation('bhid,bhjd->bhij')
         dots = torch_semiring_einsum.log_einsum(EQUATION, q, k, block_size=5)
 
         # dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
@@ -58,7 +58,7 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        EQUATION = torch_semiring_einsum.compile_equation('b h i j, b h j d -> b h i d')
+        EQUATION = torch_semiring_einsum.compile_equation('bhij,bhjd->bhid')
         out = torch_semiring_einsum.log_einsum(EQUATION, attn, v, block_size=5)
 
         # out = einsum('b h i j, b h j d -> b h i d', attn, v)
