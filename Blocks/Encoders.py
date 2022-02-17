@@ -37,8 +37,17 @@ class CNNEncoder(nn.Module):
                                   else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
+        self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
+            else instantiate(recipe.pool, input_shape=Utils.default(recipe.pool.input_shape,
+                                                                    (self.out_channels, *self._feature_shape)))
+
         # Initialize model
         self.init(optim_lr, ema_tau)
+
+    @property
+    def _feature_shape(self):
+        _, height, width = self.obs_shape
+        return Utils.cnn_feature_shape(height, width, self.Eyes)
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
@@ -49,8 +58,7 @@ class CNNEncoder(nn.Module):
             self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
 
         # Dimensions
-        _, height, width = self.obs_shape
-        height, width = Utils.cnn_feature_shape(height, width, self.Eyes)
+        height, width = self._feature_shape
 
         self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
@@ -87,7 +95,7 @@ class CNNEncoder(nn.Module):
                                                           f'{tuple(h.shape[-3:])}≠{self.feature_shape}'
 
         if flatten:
-            return h.flatten(-3)
+            return self.pool(h)
         return h
 
 

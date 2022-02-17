@@ -125,6 +125,7 @@ plotting:
 recipes:
   Encoder:
     Eyes: null
+    pool: null
   Actor:
     trunk: null
     Pi_head: null
@@ -137,6 +138,9 @@ recipes:
       _target_: ${recipes.Encoder.Eyes}
       input_shape: ${obs_shape}
       output_dim: null
+    pool:
+      _target_: ${recipes.Encoder.pool}
+      input_shape: null
   actor:
     trunk:
       _target_: ${recipes.Actor.trunk}
