@@ -62,10 +62,14 @@ class MiniResNet(nn.Module):
                                    nn.ReLU(inplace=True))
 
         # CNN ResNet-ish
-        self.ResNet = nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
-                                                    1 + (stride - 1) * (i > 0 and j > 0))
-                                      for i, depth in enumerate(depths)
-                                      for j in range(depth)])
+        # self.ResNet = nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
+        #                                             1 + (stride - 1) * (i > 0 and j > 0))
+        #                               for i, depth in enumerate(depths)
+        #                               for j in range(depth)])
+        self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
+                                                                    1 + (stride - 1) * (i > 0 and j > 0))
+                                                      for j in range(depth)])
+                                      for i, depth in enumerate(depths)])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
@@ -83,7 +87,7 @@ class MiniResNet(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                   % math.prod(self.input_shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
