@@ -66,7 +66,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, mlp_depth=2, talk_h=False, optim_lr=None, ema_tau=None):
+    def __init__(self, dim=32, heads=8, context_dim=None, talk_h=False, optim_lr=None, ema_tau=None):
         super().__init__()
 
         self.dim = dim
@@ -75,7 +75,7 @@ class CrossAttentionBlock(nn.Module):
         self.ln1 = nn.LayerNorm(dim)
         self.ln2 = nn.LayerNorm(dim)
         self.attn = CrossAttention(dim, heads, context_dim, talk_h)
-        self.mlp = MLP(dim, dim, dim, mlp_depth, nn.GELU())
+        self.mlp = MLP(dim, dim, dim, 2, nn.GELU())
 
         self.init(optim_lr, ema_tau)
 
@@ -112,14 +112,30 @@ class AttentionPool(nn.Module):
             channels_in = input_shape[-3] if len(input_shape) >= 3 else input_shape[-1]
 
         self.pool = nn.Sequential(Utils.ChannelSwap(),
-                                  SelfAttentionBlock(dim=channels_in, mlp_depth=0, heads=heads),
+                                  SelfAttentionBlock(dim=channels_in, heads=heads),
                                   Utils.ChannelSwap(),
-                                  MLP(channels_in, channels_in if output_dim is None else output_dim, 128, 1),
                                   nn.AdaptiveAvgPool2d((1, 1)),
-                                  nn.Flatten())
+                                  nn.Flatten(),
+                                  nn.Linear(channels_in, channels_in if output_dim is None else output_dim))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
 
     def forward(self, x):
-        return self.pool(x)
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
+        x = torch.cat(
+            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
+             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                  % math.prod(self.input_shape[1:]) == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             for context in x if context.nelement() > 0], dim=-3)
+        # Conserve leading dims
+        lead_shape = x.shape[:-3]
+        # Operate on last 3 dims
+        x = x.view(-1, *x.shape[-3:])
+
+        x = self.pool(x)
+
+        # Restore leading dims
+        out = x.view(*lead_shape, *x.shape[1:])
+        return out
