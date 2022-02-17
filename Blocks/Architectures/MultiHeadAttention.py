@@ -105,13 +105,13 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, output_dim=None, input_shape=None):
+    def __init__(self, channels_in=32, heads=4, output_dim=None, input_shape=None):
         super().__init__()
 
         channels_in = Utils.default(input_shape, [channels_in])[-1]
 
         self.pool = nn.Sequential(Utils.ChannelSwap(),
-                                  SelfAttentionBlock(dim=channels_in, heads=8),
+                                  SelfAttentionBlock(dim=channels_in, heads=heads),
                                   Utils.ChannelSwap(),
                                   nn.AdaptiveAvgPool2d((1, 1)),
                                   nn.Flatten(),

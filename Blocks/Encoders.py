@@ -47,7 +47,7 @@ class CNNEncoder(nn.Module):
     @property
     def _feature_shape(self):
         _, height, width = self.obs_shape
-        return Utils.cnn_feature_shape(height, width, self.Eyes)
+        return Utils.cnn_feature_shape(height, width, self.Eyes, self.pool)
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights

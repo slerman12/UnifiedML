@@ -98,19 +98,20 @@ def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, paddin
 
 
 # Compute the output shape of a whole CNN
-def cnn_feature_shape(height, width, block):
-    if isinstance(block, (nn.Conv2d, nn.AvgPool2d)):
-        height, width = cnn_layer_feature_shape(height, width,
-                                               kernel_size=block.kernel_size,
-                                               stride=block.stride,
-                                               padding=block.padding)
-    elif isinstance(block, nn.AdaptiveAvgPool2d):
-        return block.output_size
-    elif hasattr(block, 'feature_shape'):
-        height, width = block.feature_shape(height, width)
-    elif hasattr(block, 'modules'):
-        for module in block.children():
-            height, width = cnn_feature_shape(height, width, module)
+def cnn_feature_shape(height, width, *blocks):
+    for block in blocks:
+        if isinstance(block, (nn.Conv2d, nn.AvgPool2d)):
+            height, width = cnn_layer_feature_shape(height, width,
+                                                    kernel_size=block.kernel_size,
+                                                    stride=block.stride,
+                                                    padding=block.padding)
+        elif isinstance(block, nn.AdaptiveAvgPool2d):
+            return block.output_size
+        elif hasattr(block, 'feature_shape'):
+            height, width = block.feature_shape(height, width)
+        elif hasattr(block, 'modules'):
+            for module in block.children():
+                height, width = cnn_feature_shape(height, width, module)
 
     feature_shape = (height, width)  # TODO should probably do (width, height) universally
 
