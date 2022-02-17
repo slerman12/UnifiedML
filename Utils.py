@@ -253,8 +253,8 @@ from koila import lazy
 def to_torch(xs, device):
     # return tuple(torch.as_tensor(x, device=device).float() for x in xs)
     test = lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
-    print(test)
-    print(test.shape)
+    print(test[0])
+    print(test[0].shape)
     return lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
 
 
