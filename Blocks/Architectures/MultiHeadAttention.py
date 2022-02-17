@@ -58,7 +58,10 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        out = einsum('b h i j, b h j d -> b h i d', attn, v)
+        ee = EinsumPlanner(v.device, cuda_mem_limit=0.02)
+        out = ee.einsum('b h i j, b h j d -> b h i d', attn, v) * self.dim ** -0.5
+
+        # out = einsum('b h i j, b h j d -> b h i d', attn, v)
         out = rearrange(out, 'b h n d -> b n (h d)')
 
         # Restores original shape
