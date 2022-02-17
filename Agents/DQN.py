@@ -163,7 +163,7 @@ class DQNAgent(torch.nn.Module):
             if self.RL:
                 half = len(instruction) // 2
                 mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
-                                               label[instruction][:half], reduction='none')
+                                               label[instruction][:half].long(), reduction='none')
                 action[instruction] = y_predicted.detach()
                 reward[instruction] = -mistake[:, None].detach()  # reward = -error
                 next_obs[instruction] = float('nan')
