@@ -38,7 +38,7 @@ class CrossAttention(nn.Module):
     def forward(self, x, context):
         # Conserves shape
         shape = x.shape
-        assert shape[-1] == self.dim
+        assert shape[-1] == self.dim, f'{shape[-1]}, {self.dim}'
 
         x = x.flatten(1, -2)
         context = context.flatten(1, -2)
