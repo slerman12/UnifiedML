@@ -92,8 +92,8 @@ class CNNEncoder(nn.Module):
 
         if flatten:
             h = self.pool(h)
-            assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_dim does not match output shape' \
-                                                              f'{self.repr_dim}≠{h.shape[-1]}'
+            assert h.shape[-1] == self.repr_dim, f'pre-computed repr_dim does not match output dim ' \
+                                                 f'{self.repr_dim}≠{h.shape[-1]}'
         return h
 
 
