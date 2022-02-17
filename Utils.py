@@ -251,7 +251,8 @@ class act_mode:
 from koila import lazy
 # Converts data to Torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
-    return tuple([torch.as_tensor(x, device=device).float() for x in xs])
+    # return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+    return lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
