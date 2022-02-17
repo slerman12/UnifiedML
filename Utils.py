@@ -148,13 +148,19 @@ class MergeCritics(nn.Module):
 
 
 # Replaces tensor's batch items with Normal-sampled random latent
-class Rand(nn.Module):
+class Randn(nn.Module):
     def __init__(self, size=1):
         super().__init__()
         self.size = size
 
     def forward(self, x):
         return torch.randn((x.shape[0], self.size), device=x.device)
+
+
+# Replaces tensor's batch items with Uniform-sampled random latent
+class Rand(Randn):
+    def forward(self, x):
+        return torch.rand((x.shape[0], self.size), device=x.device)
 
 
 # (Multi-dim) one-hot encoding

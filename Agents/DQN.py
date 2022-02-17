@@ -50,7 +50,7 @@ class DQNAgent(torch.nn.Module):
         self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
             else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
-        self.encoder = Utils.Rand(trunk_dim) if generate \
+        self.encoder = Utils.Randn(trunk_dim) if generate \
             else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
 
         feature_shape = (trunk_dim,) if generate else self.encoder.feature_shape

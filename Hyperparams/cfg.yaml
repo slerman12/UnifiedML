@@ -140,19 +140,22 @@ recipes:
   actor:
     trunk:
       _target_: ${recipes.Actor.trunk}
-      input_shape: null
-      output_dim: ${trunk_dim}
+      _args_:
+        - null
+        - ${trunk_dim}
     pi_head:
       _target_: ${recipes.Actor.Pi_head}
-      input_shape: ${trunk_dim}
+      _args_:
+        - ${trunk_dim}
   critic:
     trunk:
       _target_: ${recipes.Critic.trunk}
-      input_shape: null
-      output_dim: ${trunk_dim}
+      _args_:
+        - null
+        - ${trunk_dim}
     q_head:
       _target_: ${recipes.Critic.Q_head}
-      input_shape: null
+      _args_: []
   aug:
     _target_: ${recipes.Aug}
 

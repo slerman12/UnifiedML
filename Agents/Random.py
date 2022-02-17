@@ -24,13 +24,15 @@ class RandomAgent(torch.nn.Module):
         self.birthday = time.time()
         self.step = self.episode = 0
 
-        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
+        action_dim = math.prod(obs_shape) if generate else action_shape[-1]
+
+        self.actor = Utils.Rand(action_dim)
 
         # Birth
 
-    def act(self, obs=None):
+    def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor):
-            action = torch.rand((1, self.action_dim)).to(self.device) * 2 - 1  # [-1, 1]
+            action = self.actor(obs) * 2 - 1  # [-1, 1]
 
             if self.discrete:
                 action = torch.argmax(action, -1)
