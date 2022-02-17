@@ -32,3 +32,4 @@ dependencies:
       - ale-py
       - gym
       - einops
+      - koila

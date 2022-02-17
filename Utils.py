@@ -8,6 +8,8 @@ import re
 import warnings
 from pathlib import Path
 
+from koila import lazy
+
 import numpy as np
 
 import torch
@@ -241,7 +243,9 @@ class act_mode:
 
 # Converts data to Torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
-    return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+    if not isinstance(xs, (list, tuple)):
+        xs = [xs]
+    return lazy(*[torch.as_tensor(x, device=device).float() for x in xs], batch=0)
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
