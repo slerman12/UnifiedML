@@ -24,11 +24,11 @@ class BioNet(nn.Module):
 
         dims = self.ventral_stream.dims[1:]
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=out_channels)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
                                          for dim in dims])
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
-                                  SelfAttentionBlock(dim=out_channels, heads=heads),
+                                  SelfAttentionBlock(dim=dims[-1], heads=heads),
                                   Utils.ChannelSwap())  # Todo just use einops rearange
 
         self.projection = nn.Identity() if output_dim is None \
