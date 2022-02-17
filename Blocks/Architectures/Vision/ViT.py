@@ -7,7 +7,7 @@ import math
 import torch
 from torch import nn
 
-from einops import repeat
+from einops import repeat, rearrange
 from einops.layers.torch import Rearrange
 
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
@@ -29,28 +29,29 @@ class ViT(nn.Module):
         patch_dim = in_channels * patch_size ** 2
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
-        self.to_patch_embedding = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
-            nn.Linear(patch_dim, out_channels),
-        )
+        self.to_patch_embedding = nn.DataParallel(
+            nn.Sequential(
+                Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
+                nn.Linear(patch_dim, out_channels),
+            ))
 
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
         self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
 
-        _, h, w = self.feature_shape(*input_shape)
+        _, self.h, self.w = self.feature_shape(*input_shape)
 
-        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)],
-                                  Rearrange('b (h w) c -> b c h w', h=h, w=w)  # Channels 1st
-                                  )
+        self.attn = nn.DataParallel(
+            nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)]))
 
         if output_dim is not None:
             self.pool = pool
 
-            self.repr = nn.Sequential(
-                nn.LayerNorm(out_channels),
-                nn.Linear(out_channels, 1024),
-                nn.ReLU(inplace=True),
-                nn.Linear(1024, output_dim)
+            self.repr = nn.DataParallel(
+                nn.Sequential(
+                    nn.LayerNorm(out_channels),
+                    nn.Linear(out_channels, 1024),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(1024, output_dim))
             )
 
     def feature_shape(self, c, h, w):
@@ -80,6 +81,7 @@ class ViT(nn.Module):
         x += self.pos_embedding[:, :(n + 1)]
 
         x = self.attn(x)
+        x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
 
         if self.output_dim is not None:
             x = x.transpose(-1, -3)  # Channels last

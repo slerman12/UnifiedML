@@ -15,19 +15,19 @@ class CNN(nn.Module):
 
         self.trunk = nn.Identity()
 
-        self.CNN = nn.Sequential(
+        self.CNN = nn.DataParallel(nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
                                       out_channels, 3, stride=2 if i == 0 else 1),
                             nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
                             nn.ReLU()) for i in range(depth + 1)],
-        )
+        ))
 
         self.projection = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((3, 3)),
-                               nn.Flatten(-3),
-                               nn.Linear(out_channels * 3 * 3, 1024),
-                               nn.ReLU(inplace=True),
-                               nn.Linear(1024, output_dim))
+            else nn.DataParallel(nn.Sequential(nn.AdaptiveAvgPool2d((3, 3)),
+                                               nn.Flatten(-3),
+                                               nn.Linear(out_channels * 3 * 3, 1024),
+                                               nn.ReLU(inplace=True),
+                                               nn.Linear(1024, output_dim)))
 
         self.apply(Utils.weight_init)
 

@@ -251,9 +251,15 @@ python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
-[comment]: <> (Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The Null architecture disables that component.)
+[comment]: <> (ResNet18 on CIFAR-10:)
 
-[comment]: <> (For trunk AttentionPool:)
+[comment]: <> (```)
+
+[comment]: <> (python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 )
+
+[comment]: <> (```)
+
+[comment]: <> (Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The Null architecture disables that flattening component.)
 
 [comment]: <> (```)
 
@@ -261,7 +267,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 [comment]: <> (```)
 
-[comment]: <> (Since otherwise repr_shape is flattened to channel dim)
+[comment]: <> (Since otherwise repr_shape is flattened to channel dim, with no features for the attention to pool.)
 
 ### Distributed
 

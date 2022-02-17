@@ -125,6 +125,34 @@ def cnn_feature_shape(channels, height, width, *blocks):
     return feature_shape
 
 
+# Broadcasts a CNN's inputs and channel-wise-context to a desired input shape, preserving leading dims
+class CNNInputBroadcast(nn.Module):
+    def __init__(self, module, desired_input_shape):
+        super().__init__()
+
+        self.module = module
+        self.shape = desired_input_shape
+
+    def forward(self, *x):
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
+        x = torch.cat(
+            [context.view(*context.shape[:-3], -1, *self.shape[1:]) if len(context.shape) > 3
+             else context.view(*context.shape[:-1], -1, *self.shape[1:]) if context.shape[-1]
+                                                                            % math.prod(self.shape[1:]) == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
+             for context in x if context.nelement() > 0], dim=-3)
+        # Conserve leading dims
+        lead_shape = x.shape[:-3]
+        # Operate on last 3 dims
+        x = x.view(-1, *x.shape[-3:])
+
+        x = self.module(x)
+
+        # Restore leading dims
+        out = x.view(*lead_shape, *x.shape[1:])
+        return out
+
+
 # "Ensembles" (stacks) multiple modules' outputs
 class Ensemble(nn.Module):
     def __init__(self, modules, dim=1):

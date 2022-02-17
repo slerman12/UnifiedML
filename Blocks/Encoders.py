@@ -30,9 +30,10 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
-                                  else instantiate(recipe.eyes),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+        self.Eyes = nn.DataParallel(nn.Sequential(
+            CNN(obs_shape, out_channels, depth, batch_norm)) if recipe.eyes._target_ is None
+                                    else instantiate(recipe.eyes),
+                                    Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
         self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
             else instantiate(recipe.pool, input_shape=self._feature_shape())
@@ -86,7 +87,7 @@ class CNNEncoder(nn.Module):
 
         # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match output CNN shape'\
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match output CNN shape' \
                                                           f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
         if flatten:
