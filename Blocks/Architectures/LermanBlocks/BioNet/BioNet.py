@@ -22,8 +22,10 @@ class BioNet(nn.Module):
         self.ventral_stream = ResNet18(input_shape)
         self.dorsal_stream = ResNet18(input_shape)
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=heads, context_dim=out_channels)
-                                         for _ in range(depth - 1)])
+        dims = self.ventral_stream.dims[1:]
+
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dims[i], heads=heads, context_dim=out_channels)
+                                         for i in range(depth)])
 
         self.repr = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=out_channels, heads=heads),
