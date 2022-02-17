@@ -248,14 +248,11 @@ class act_mode:
 
 
 # Koila automatically divides batches into chunks when there's not enough compute memory
-from koila import lazy
+# from koila import lazy
 # Converts data to Torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
-    # return tuple(torch.as_tensor(x, device=device).float() for x in xs)
-    test = lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
-    print(test[0])
-    print(test[0].shape)
-    return lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
+    return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+    # return lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
