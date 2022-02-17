@@ -25,5 +25,5 @@ class Null(nn.Module):
     def repr_shape(self, c, h, w):
         return c, h, w
 
-    def forward(self, *x):
+    def forward(self, x):
         return x

@@ -251,6 +251,16 @@ python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
+[comment]: <> (For trunk AttentionPool:)
+
+[comment]: <> (```)
+
+[comment]: <> (python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null)
+
+[comment]: <> (```)
+
+[comment]: <> (Since otherwise repr_shape is flattened to channel dim)
+
 ### Distributed
 
 You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. 
