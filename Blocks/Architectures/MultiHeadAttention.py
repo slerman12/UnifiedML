@@ -48,7 +48,10 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        EQUATION = torch_semiring_einsum.compile_equation('b h i d, b h j d -> b h i j')
+        dots = torch_semiring_einsum.log_einsum(EQUATION, q, k, block_size=5)
+
+        # dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
         attn = dots.softmax(dim=-1)
 
