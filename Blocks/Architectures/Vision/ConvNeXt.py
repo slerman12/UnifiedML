@@ -20,8 +20,8 @@ class ConvNeXtBlock(nn.Module):
                                  nn.Linear(4 * dim, dim))
         self.gamma = nn.Parameter(torch.full((dim,), 1e-6))
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.conv)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.conv)
 
     def forward(self, x):
         input = x
@@ -81,8 +81,8 @@ class ConvNeXt(nn.Module):
 
         self.apply(weight_init)
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.ConvNeXt)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.ConvNeXt)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

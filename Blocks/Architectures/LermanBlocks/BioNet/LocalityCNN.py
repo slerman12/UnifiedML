@@ -35,8 +35,8 @@ class Conv2DLocalized(nn.Module):
 
         self.ln = layer_norm()
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.conv)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.conv)
 
     def forward(self, input):
         x = self.conv(input)
@@ -56,9 +56,9 @@ class LocalityCNN(nn.Module):
             *[Residual(Conv2DLocalized(self.trunk.shape, out_channels, (4, 4), padding='same'))
               for _ in range(depth)])
 
-    def feature_shape(self, h, w):
-        h, w = Utils.cnn_feature_shape(h, w, self.trunk)
-        return Utils.cnn_feature_shape(h, w, self.CNN)
+    def feature_shape(self, c, h, w):
+        c, h, w = Utils.cnn_feature_shape(c, h, w, self.trunk)
+        return Utils.cnn_feature_shape(c, h, w, self.CNN)
 
     def forward(self, x):
         return self.CNN(self.trunk(x))

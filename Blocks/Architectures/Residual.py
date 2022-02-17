@@ -19,7 +19,7 @@ class Residual(nn.Module):
             x = self.down_sample(x)
         return y + x
 
-    def feature_shape(self, height, width):
-        return Utils.cnn_feature_shape(height, width, self.module)
+    def feature_shape(self, channels, height, width):
+        return Utils.cnn_feature_shape(channels, height, width, self.module)
 
 

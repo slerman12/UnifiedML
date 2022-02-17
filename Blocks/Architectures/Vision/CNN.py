@@ -31,8 +31,8 @@ class CNN(nn.Module):
 
         self.apply(Utils.weight_init)
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.CNN)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.CNN)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

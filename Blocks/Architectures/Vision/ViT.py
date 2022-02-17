@@ -37,7 +37,7 @@ class ViT(nn.Module):
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
         self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
 
-        h, w = self.feature_shape(*input_shape[1:])
+        _, h, w = self.feature_shape(*input_shape)
 
         self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads) for _ in range(depth)],
                                   Rearrange('b (h w) c -> b c h w', h=h, w=w)  # Channels 1st
@@ -53,8 +53,8 @@ class ViT(nn.Module):
                 nn.Linear(1024, output_dim)
             )
 
-    def feature_shape(self, h, w):
-        return 1, (h // self.patch_size) * (w // self.patch_size) + 1
+    def feature_shape(self, c, h, w):
+        return c, 1, (h // self.patch_size) * (w // self.patch_size) + 1
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

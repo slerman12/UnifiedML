@@ -32,8 +32,8 @@ class ResidualBlock(nn.Module):
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
                                             nn.ReLU(inplace=True))
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.Residual_block)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.Residual_block)
 
     def forward(self, x):
         return self.Residual_block(x)
@@ -72,8 +72,8 @@ class MiniResNet(nn.Module):
                                nn.ReLU(inplace=True),
                                nn.Linear(1024, output_dim))
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.ResNet)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.ResNet)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

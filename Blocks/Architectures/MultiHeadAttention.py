@@ -118,8 +118,8 @@ class AttentionPool(nn.Module):
                                   nn.Flatten(),
                                   nn.Linear(channels_in, channels_in if output_dim is None else output_dim))
 
-    def feature_shape(self, h, w):
-        return Utils.cnn_feature_shape(h, w, self.pool)
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.pool)
 
     def forward(self, x):
         return self.pool(x)
