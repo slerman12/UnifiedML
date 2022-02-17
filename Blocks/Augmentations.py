@@ -52,5 +52,5 @@ class IntensityAug(nn.Module):
 
     def forward(self, x):
         noise = 1.0 + (self.scale * torch.randn(
-            (x.size(0), 1, 1, 1), device=x.device).clamp_(-2.0, 2.0))
+            (x.shape[0], 1, 1, 1), device=x.device).clamp_(-2.0, 2.0))
         return x * noise
