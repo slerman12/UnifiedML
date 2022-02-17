@@ -58,7 +58,9 @@ class CNNEncoder(nn.Module):
 
         # Dimensions
         height, width = self._feature_shape()
+        print(height, width)
         height, width = Utils.cnn_feature_shape(height, width, self.pool)
+        print(height, width)
 
         self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
