@@ -252,6 +252,9 @@ from koila import lazy
 # Converts data to Torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
     # return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+    test = lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
+    print(test)
+    print(test.shape)
     return lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
 
 
