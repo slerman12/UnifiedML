@@ -41,6 +41,7 @@ class EnsembleQCritic(nn.Module):
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         out_dim = action_dim if discrete else 1
         recipe.q_head._args_ = [dim, out_dim]
+        print(recipe.q_head)
 
         self.Q_head = Utils.Ensemble([MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid) if recipe.q_head._target_ is None
                                       else instantiate(recipe.q_head)
