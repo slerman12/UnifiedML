@@ -11,16 +11,18 @@ import Utils
 
 
 class MLP(nn.Module):
-    def __init__(self, input_shape, output_dim, hidden_dim=512, depth=0, non_linearity=nn.ReLU(inplace=True),
-                 binary=False, l2_norm=False):
+    def __init__(self, input_dim=128, output_dim=1024, hidden_dim=512, depth=0, non_linearity=nn.ReLU(inplace=True),
+                 binary=False, l2_norm=False, input_shape=None):
         super().__init__()
+
+        input_dim = Utils.default(input_shape, [input_dim])[-1]
 
         self.MLP = nn.Sequential(*[nn.Sequential(
             # Optional L2 norm of penultimate
             # (See: https://openreview.net/pdf?id=9xhgmsNVHu)
             # Similarly, Efficient-Zero initializes 2nd-to-last layer as all 0s  TODO
             Utils.L2Norm() if l2_norm and i == depth else nn.Identity(),
-            nn.Linear(input_shape if i == 0 else hidden_dim,
+            nn.Linear(input_dim if i == 0 else hidden_dim,
                       hidden_dim if i < depth else output_dim),
             non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity())
             for i in range(depth + 1)]

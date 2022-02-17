@@ -105,8 +105,10 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim=32, output_dim=1024, input_shape=None):
         super().__init__()
+
+        input_dim = Utils.default(input_shape, [input_dim])[-1]
 
         self.pool = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=input_dim, heads=8),
