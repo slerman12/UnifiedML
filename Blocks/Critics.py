@@ -39,7 +39,7 @@ class EnsembleQCritic(nn.Module):
             else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, in_dim))
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
-        shape = Utils.default(recipe.q_head.input_shape, dim)
+        shape = dim if not recipe.q_head._args_ else recipe.q_head._args_[0]
         out_dim = action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid) if recipe.q_head._target_ is None
