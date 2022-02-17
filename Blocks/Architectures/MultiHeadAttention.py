@@ -110,6 +110,9 @@ class AttentionPool(nn.Module):
     def __init__(self, channels_in=32, heads=4, output_dim=None, input_shape=None):
         super().__init__()
 
+        self.channels_in = channels_in
+        self.input_shape = input_shape
+
         if input_shape is not None:
             channels_in = input_shape[-3] if len(input_shape) >= 3 else input_shape[-1]
 
@@ -123,7 +126,9 @@ class AttentionPool(nn.Module):
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
 
-    def forward(self, x):
+    def forward(self, *x):
+        if self.input_shape is None:
+            self.input_shape = (self.channels_in, *([x[0].shape[-1] ** 0.5] * 2))
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
