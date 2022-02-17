@@ -127,11 +127,12 @@ class AttentionPool(nn.Module):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
 
     def forward(self, *x):
-        # Inferring an image shape in case inputs are flat
+        # Inferring/broadcasting an image shape in case inputs are flat
         if self.input_shape is None:
             rep = max(x, key=lambda context: len(context.shape))
             self.input_shape = rep.shape[-3:] if len(rep.shape) > 3 \
                 else (self.channels_in, *([(rep.shape[-1] // self.channels_in) ** 0.5] * 2))
+        print(self.input_shape)
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
