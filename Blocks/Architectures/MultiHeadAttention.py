@@ -108,7 +108,8 @@ class AttentionPool(nn.Module):
     def __init__(self, channels_in=32, heads=4, output_dim=None, input_shape=None):
         super().__init__()
 
-        channels_in = Utils.default(input_shape, [channels_in, 1, 1])[-3]
+        if input_shape is not None:
+            channels_in = input_shape[-3] if len(input_shape) >= 3 else input_shape[-1]
 
         self.pool = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=channels_in, heads=heads),
@@ -116,6 +117,9 @@ class AttentionPool(nn.Module):
                                   nn.AdaptiveAvgPool2d((1, 1)),
                                   nn.Flatten(),
                                   nn.Linear(channels_in, channels_in if output_dim is None else output_dim))
+
+    def feature_shape(self, h, w):
+        return Utils.cnn_feature_shape(h, w, self.pool)
 
     def forward(self, x):
         return self.pool(x)
