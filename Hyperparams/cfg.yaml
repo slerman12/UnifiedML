@@ -141,7 +141,7 @@ recipes:
     pool:
       _target_: ${recipes.Encoder.pool}
       input_shape: null
-      output_dim: null
+      output_dim: 1024
   actor:
     trunk:
       _target_: ${recipes.Actor.trunk}
