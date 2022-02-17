@@ -23,6 +23,7 @@ class BioNet(nn.Module):
         self.dorsal_stream = ResNet(input_shape, 2, [64, 64, 128], [2, 2])
 
         dims = self.ventral_stream.dims[1:]
+        print(dims)
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
                                          for dim in dims])
