@@ -46,7 +46,7 @@ class CNNEncoder(nn.Module):
 
     def _feature_shape(self):
         _, height, width = self.obs_shape
-        return Utils.cnn_feature_shape(height, width, self.Eyes, self.pool)
+        return Utils.cnn_feature_shape(height, width, self.Eyes)
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
@@ -58,6 +58,7 @@ class CNNEncoder(nn.Module):
 
         # Dimensions
         height, width = self._feature_shape()
+        height, width = Utils.cnn_feature_shape(height, width, self.pool)
 
         self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
