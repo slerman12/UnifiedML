@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import copy
-import math
 
 import torch
 from torch import nn
@@ -17,7 +16,7 @@ class MLP(nn.Module):
         super().__init__()
 
         if input_shape is not None:
-            input_dim = math.prod(input_shape)
+            input_dim = input_shape[-1]
         self.output_dim = output_dim
 
         self.MLP = nn.Sequential(*[nn.Sequential(
