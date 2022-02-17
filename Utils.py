@@ -116,7 +116,8 @@ def cnn_feature_shape(channels, height, width, *blocks):
         elif hasattr(block, 'feature_shape'):
             channels, height, width = block.feature_shape(channels, height, width)
         elif hasattr(block, 'modules'):
-            for module in block.children():
+            for module in block:
+                print(module)
                 channels, height, width = cnn_feature_shape(channels, height, width, module)
 
     feature_shape = (channels, height, width)  # TODO should probably do (channels, width, height) universally
