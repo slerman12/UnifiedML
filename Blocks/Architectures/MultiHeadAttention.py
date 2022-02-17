@@ -108,7 +108,7 @@ class AttentionPool(nn.Module):
     def __init__(self, channels_in=32, heads=4, output_dim=None, input_shape=None):
         super().__init__()
 
-        channels_in = Utils.default(input_shape, [channels_in])[-1]
+        channels_in = Utils.default(input_shape, [channels_in, 1, 1])[-3]
 
         self.pool = nn.Sequential(Utils.ChannelSwap(),
                                   SelfAttentionBlock(dim=channels_in, heads=heads),
