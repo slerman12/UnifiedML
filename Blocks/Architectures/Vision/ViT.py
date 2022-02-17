@@ -19,6 +19,7 @@ class ViT(nn.Module):
 
         self.input_shape = input_shape
         in_channels = input_shape[0]
+        self.out_channels = out_channels
         image_size = input_shape[1]
         self.patch_size = patch_size
         self.output_dim = output_dim
@@ -52,7 +53,7 @@ class ViT(nn.Module):
             )
 
     def feature_shape(self, c, h, w):
-        return c, 1, (h // self.patch_size) * (w // self.patch_size) + 1
+        return self.out_channels, (h // self.patch_size) * (w // self.patch_size) + 1
 
     def repr_shape(self, c, h, w):
         return self.feature_shape(c, h, w) if self.output_dim is None else (self.output_dim, 1, 1)
