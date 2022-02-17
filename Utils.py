@@ -241,9 +241,9 @@ class act_mode:
 
 # Converts data to Torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
-    if not isinstance(xs, (list, tuple)):
-        xs = [xs]
-    return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+    if isinstance(xs, (list, tuple)):
+        return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+    return torch.as_tensor(xs, device=device).float()
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
