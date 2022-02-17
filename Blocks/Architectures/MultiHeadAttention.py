@@ -48,7 +48,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        ee = EinsumPlanner(torch.device('cuda:0'), cuda_mem_limit=0.9)
+        ee = EinsumPlanner(torch.device('cuda:0'), cuda_mem_limit=0.5)
         dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
         # dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
