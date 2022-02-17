@@ -35,7 +35,7 @@ class CNN(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
-        # Concatenate context along channels assuming dimensions allow, broadcast across many possibilities
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]

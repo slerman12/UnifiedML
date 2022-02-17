@@ -50,17 +50,19 @@ class ConvNeXt(nn.Module):
             # depths = [3, 3, 9, 3]  # TinyConvNeXt
             depths = [1, 1, 3]
 
-        self.CNN = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
-                                                           dims[i + 1],
-                                                           kernel_size=4 if i == 0 else 2,
-                                                           stride=4 if i == 0 else 2),  # Conv
-                                                 nn.Sequential(Utils.ChannelSwap(),
-                                                               nn.LayerNorm(dims[i + 1]),
-                                                               Utils.ChannelSwap()) if i < 3
-                                                 else nn.Identity(),  # LayerNorm
-                                                 *[ConvNeXtBlock(dims[i + 1])
-                                                   for _ in range(depth)])  # Conv, MLP, Residuals
-                                   for i, depth in enumerate(depths)])
+        self.trunk = nn.Identity()
+
+        self.ConvNeXt = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
+                                                                dims[i + 1],
+                                                                kernel_size=4 if i == 0 else 2,
+                                                                stride=4 if i == 0 else 2),  # Conv
+                                                      nn.Sequential(Utils.ChannelSwap(),
+                                                                    nn.LayerNorm(dims[i + 1]),
+                                                                    Utils.ChannelSwap()) if i < 3
+                                                      else nn.Identity(),  # LayerNorm
+                                                      *[ConvNeXtBlock(dims[i + 1])
+                                                        for _ in range(depth)])  # Conv, MLP, Residuals
+                                        for i, depth in enumerate(depths)])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
@@ -83,26 +85,22 @@ class ConvNeXt(nn.Module):
         return Utils.cnn_feature_shape(h, w, self.CNN)
 
     def forward(self, *x):
-        # Optionally append context to channels assuming dimensions allow
-        if len(x) > 1:
-            # Warning: merely reshapes context where permitted, rather than expanding it to height and width
-            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                 % math.prod(self.input_shape) == 0
-                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
-                 for context in x if len(context.shape) < 4 and context.shape[-1]]
-        x = torch.cat(x, -3)
-
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
+        x = torch.cat(
+            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
+             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
+                                                                                  % math.prod(self.input_shape[1:]) == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             for context in x], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
-
         # Operate on last 3 dims
-        x = x.view(-1, *self.input_shape)
+        x = x.view(-1, *x.shape[-3:])
 
-        out = self.CNN(x)
-
-        out = self.projection(out)
+        x = self.trunk(x)
+        x = self.ConvNeXt(x)
+        x = self.projection(x)
 
         # Restore leading dims
-        out = out.view(*lead_shape, *out.shape[1:])
-
+        out = x.view(*lead_shape, *x.shape[1:])
         return out
