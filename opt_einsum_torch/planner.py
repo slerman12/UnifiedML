@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Union, List, Tuple, Iterable, Optional, Any
 
-import humanize
+# import humanize
 import numpy as np
 import opt_einsum as oe
 import torch
@@ -57,26 +57,26 @@ class EinsumPlanner:
         # Align 1K bytes
         self.cuda_mem_limit = (self.cuda_mem_limit >> 10) << 10
 
-    def _print_memory_info(self):
-        total = torch.cuda.get_device_properties(self.cuda_device).total_memory
-        memory = torch.cuda.memory_stats(device=self.cuda_device)
-        allocated = memory.get("allocated_bytes.all.current")
-        reserved = memory.get("reserved_bytes.all.current")
-        logger.debug(
-            "Print CUDA memory info for %r: total %d (%s), "
-            "reserved %d (%s), allocated %d (%s)",
-            self.cuda_device,
-            total, humanize.naturalsize(total, binary=True),
-            reserved, humanize.naturalsize(reserved, binary=True),
-            allocated, humanize.naturalsize(allocated, binary=True),
-        )
-        if total - allocated < self.cuda_mem_limit:
-            logger.warning(
-                "CUDA device %r has less free memory (%s) than expected (%s), "
-                "did you have other tensors in your application?",
-                self.cuda_device,
-                humanize.naturalsize(total - allocated, binary=True),
-                humanize.naturalsize(self.cuda_mem_limit, binary=True))
+    # def _print_memory_info(self):
+    #     total = torch.cuda.get_device_properties(self.cuda_device).total_memory
+    #     memory = torch.cuda.memory_stats(device=self.cuda_device)
+    #     allocated = memory.get("allocated_bytes.all.current")
+    #     reserved = memory.get("reserved_bytes.all.current")
+    #     logger.debug(
+    #         "Print CUDA memory info for %r: total %d (%s), "
+    #         "reserved %d (%s), allocated %d (%s)",
+    #         self.cuda_device,
+    #         total, humanize.naturalsize(total, binary=True),
+    #         reserved, humanize.naturalsize(reserved, binary=True),
+    #         allocated, humanize.naturalsize(allocated, binary=True),
+    #     )
+    #     if total - allocated < self.cuda_mem_limit:
+    #         logger.warning(
+    #             "CUDA device %r has less free memory (%s) than expected (%s), "
+    #             "did you have other tensors in your application?",
+    #             self.cuda_device,
+    #             humanize.naturalsize(total - allocated, binary=True),
+    #             humanize.naturalsize(self.cuda_mem_limit, binary=True))
 
     def find_optimal_divide(
             self,
@@ -133,12 +133,12 @@ class EinsumPlanner:
             split_size = total_tensor_size - slice_size * n_slice_reduction
             split_plans.append((n_splits, i, block_size, split_size))
 
-        if not split_plans:
-            raise ValueError(
-                "Could not find a valid split that "
-                "satisfies the memory requirements (< %s)." % (
-                    humanize.naturalsize(self.cuda_mem_limit, binary=True)
-                ))
+        # if not split_plans:
+        #     raise ValueError(
+        #         "Could not find a valid split that "
+        #         "satisfies the memory requirements (< %s)." % (
+        #             humanize.naturalsize(self.cuda_mem_limit, binary=True)
+        #         ))
 
         # First minimize number of splits, since each CPU/CUDA transfer is very
         # expensive.
@@ -210,9 +210,9 @@ class EinsumPlanner:
                         tuple(torch_array.shape), str(torch_array.dtype),
                         self.cuda_device)
 
-        if transfer_size:
-            logger.debug('Transferred %s from CPU to GPU.',
-                         humanize.naturalsize(transfer_size, binary=True))
+        # if transfer_size:
+        #     logger.debug('Transferred %s from CPU to GPU.',
+        #                  humanize.naturalsize(transfer_size, binary=True))
         gpu_tensors = [tensor_by_id[id(x)] for x in arrays]
         return gpu_tensors
 
@@ -235,11 +235,11 @@ class EinsumPlanner:
             formula, *tensor_shapes, optimize='optimal', shapes=True)
         logger.debug('Einsum summary: formula: %s, shapes: %r',
                      formula, [tuple(x) for x in tensor_shapes])
-        logger.debug(
-            'Using PyTorch to speed up einsum: '
-            'naive FLOPs %.3e, optimized FLOPs %.3e, largest intermediate: %s',
-            path_info.naive_cost, path_info.opt_cost,
-            humanize.naturalsize(path_info.largest_intermediate, binary=True))
+        # logger.debug(
+        #     'Using PyTorch to speed up einsum: '
+        #     'naive FLOPs %.3e, optimized FLOPs %.3e, largest intermediate: %s',
+        #     path_info.naive_cost, path_info.opt_cost,
+        #     humanize.naturalsize(path_info.largest_intermediate, binary=True))
 
         # Look for the contraction with the largest intermediates
         intermediate_subscripts, _ = find_largest_intermediates(
@@ -307,11 +307,11 @@ class EinsumPlanner:
 
         input_tensors_plan = [plan_by_id[x] for x in tensor_ids]
 
-        logger.debug(
-            'Plan for performing einsum: storage for input tensors: %r, '
-            'tensor split info: %r, maximal CUDA memory usage: %s',
-            input_tensors_plan, splits,
-            humanize.naturalsize(total_size, binary=True))
+        # logger.debug(
+        #     'Plan for performing einsum: storage for input tensors: %r, '
+        #     'tensor split info: %r, maximal CUDA memory usage: %s',
+        #     input_tensors_plan, splits,
+        #     humanize.naturalsize(total_size, binary=True))
         return EinsumPlan(
             path=path, path_info=path_info,
             tensor_storage=input_tensors_plan,
@@ -417,8 +417,8 @@ class EinsumPlanner:
                 arg_by_id[(id(tensor), index)] = arg
                 args.append(arg)
 
-            logger.debug("Transferred %s from CPU to GPU.",
-                         humanize.naturalsize(transfer_size, binary=True))
+            # logger.debug("Transferred %s from CPU to GPU.",
+            #              humanize.naturalsize(transfer_size, binary=True))
 
             partial_result = oe.contract(
                 formula, *args,

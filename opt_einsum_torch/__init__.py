@@ -1,2 +1,2 @@
-from .einsum import einsum
-from .planner import EinsumPlanner
+from opt_einsum_torch.einsum import einsum
+from opt_einsum_torch.planner import EinsumPlanner
