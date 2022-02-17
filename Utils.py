@@ -114,8 +114,6 @@ def cnn_feature_shape(channels, height, width, *blocks):
             height, width = block.output_size
         elif hasattr(block, 'repr_shape'):
             channels, height, width = block.repr_shape(channels, height, width)
-        elif hasattr(block, 'feature_shape'):
-            channels, height, width = block.feature_shape(channels, height, width)
         elif hasattr(block, 'modules'):
             for module in block.children():
                 channels, height, width = cnn_feature_shape(channels, height, width, module)
@@ -281,12 +279,9 @@ class act_mode:
         return False
 
 
-# Koila automatically divides batches into chunks when there's not enough compute memory
-# from koila import lazy
 # Converts data to Torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
-    # return lazy(*tuple(torch.as_tensor(x, device=device).float() for x in xs), batch=0)
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers

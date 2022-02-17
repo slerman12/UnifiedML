@@ -4,7 +4,7 @@ import Utils
 
 from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
 from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
-from Blocks.Architectures import CNN
+from Blocks.Architectures import CNN, ResNet18
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
 
 
@@ -17,8 +17,10 @@ class BioNet(nn.Module):
 
         # self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
         # self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
-        self.ventral_stream = CNN(input_shape, out_channels, depth)
-        self.dorsal_stream = CNN(input_shape, out_channels, depth)
+        # self.ventral_stream = CNN(input_shape, out_channels, depth)
+        # self.dorsal_stream = CNN(input_shape, out_channels, depth)
+        self.ventral_stream = ResNet18(input_shape)
+        self.dorsal_stream = ResNet18(input_shape)
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=out_channels, heads=heads, context_dim=out_channels)
                                          for _ in range(depth - 1)])
@@ -34,19 +36,17 @@ class BioNet(nn.Module):
                                nn.ReLU(inplace=True),
                                nn.Linear(1024, output_dim))
 
-    def feature_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream)
+    def repr_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
 
     def forward(self, input):
-        ventral = self.ventral_stream.CNN[0](input)
-        ventral = self.ventral_stream.CNN[1](ventral)
-        dorsal = self.dorsal_stream.CNN[0](input)
-        dorsal = self.dorsal_stream.CNN[1](dorsal)
+        ventral = self.ventral_stream.trunk(input)
+        dorsal = self.dorsal_stream.trunk(input)
 
         t = Utils.ChannelSwap()
 
-        for what, where, talk in zip(self.ventral_stream.CNN[2:],
-                                     self.dorsal_stream.CNN[2:],
+        for what, where, talk in zip(self.ventral_stream.ResNet,
+                                     self.dorsal_stream.ResNet,
                                      self.cross_talk):
             ventral = what(ventral)
             dorsal = t(talk(t(where(dorsal)),
