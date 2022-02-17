@@ -106,6 +106,10 @@ def cnn_feature_shape(channels, height, width, *blocks):
                                                     kernel_size=block.kernel_size,
                                                     stride=block.stride,
                                                     padding=block.padding)
+        elif isinstance(block, nn.Linear):
+            channels = block.out_features  # Assumes channels-last if linear
+        elif isinstance(block, nn.Flatten) and block.start_dim == -3:
+            channels, height, width = channels * height * width, 1, 1  # Placeholder height/width dims
         elif isinstance(block, nn.AdaptiveAvgPool2d):
             height, width = block.output_size
         elif hasattr(block, 'feature_shape'):
