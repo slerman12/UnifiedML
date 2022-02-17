@@ -57,20 +57,17 @@ class ViT(nn.Module):
         return 1, (h // self.patch_size) * (w // self.patch_size) + 1
 
     def forward(self, *x):
-        # Optionally append context to channels assuming dimensions allow
-        if len(x) > 1:
-            # Warning: merely reshapes context where permitted rather than expanding it to height and width
-            x = [context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                 % math.prod(self.input_shape) == 0
-                 else context.view(*context.shape[:-1], -1, 1, 1).expand(*context.shape[:-1], -1, *self.input_shape[1:])
-                 for context in x if len(context.shape) < 4 and context.shape[-1]]
-        x = torch.cat(x, -3)
-
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
+        x = torch.cat(
+            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
+             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if math.prod(self.input_shape[1:])
+                                                                                  % context.shape[-1] == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
-
         # Operate on last 3 dims
-        x = x.view(-1, *self.input_shape)
+        x = x.view(-1, *x.shape[-3:])
 
         x = self.to_patch_embedding(x)
         b, n, _ = x.shape
@@ -89,5 +86,4 @@ class ViT(nn.Module):
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
-
         return out
