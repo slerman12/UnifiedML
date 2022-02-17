@@ -8,8 +8,6 @@ import re
 import warnings
 from pathlib import Path
 
-from koila import lazy
-
 import numpy as np
 
 import torch
