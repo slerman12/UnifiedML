@@ -107,11 +107,14 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, heads=4, output_dim=None, input_shape=None):
+    def __init__(self, channels_in=32, heads=None, output_dim=None, input_shape=None):
         super().__init__()
 
         self.channels_in = channels_in
         self.input_shape = input_shape
+
+        if heads is None:
+            heads = (channels_in + 2) // 2
 
         if input_shape is not None:
             channels_in = input_shape[-3] if len(input_shape) >= 3 else input_shape[-1]

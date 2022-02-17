@@ -251,11 +251,13 @@ python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
+[comment]: <> (Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The Null architecture disables that component.)
+
 [comment]: <> (For trunk AttentionPool:)
 
 [comment]: <> (```)
 
-[comment]: <> (python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null)
+[comment]: <> (python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null)
 
 [comment]: <> (```)
 

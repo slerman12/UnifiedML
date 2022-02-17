@@ -149,7 +149,9 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
     # Whether to allow the environment to mark itself "depleted" after an epoch completed
     enable_depletion = train
 
-    env = ClassifyEnv(experiences, batch_size if train else len(experiences),  # TODO huge eval batch size, koala?
+    env = ClassifyEnv(experiences,
+                      # batch_size if train else len(experiences),
+                      batch_size if train else batch_size,  # TODO For now, only using small sample! Eval size
                       num_workers, offline or generate, train, enable_depletion, verbose=train)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
