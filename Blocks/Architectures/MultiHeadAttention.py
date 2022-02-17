@@ -115,9 +115,8 @@ class AttentionPool(nn.Module):
                                   SelfAttentionBlock(dim=channels_in, heads=heads),
                                   Utils.ChannelSwap(),
                                   nn.AdaptiveAvgPool2d((1, 1)),
-                                  Utils.ChannelSwap(),
-                                  nn.Linear(channels_in, channels_in if output_dim is None else output_dim),
-                                  Utils.ChannelSwap())
+                                  nn.Flatten(),
+                                  nn.Linear(channels_in, channels_in if output_dim is None else output_dim))
 
     def feature_shape(self, h, w):
         return Utils.cnn_feature_shape(h, w, self.pool)
