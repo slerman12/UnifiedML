@@ -58,9 +58,7 @@ class CNNEncoder(nn.Module):
 
         # Dimensions
         height, width = self._feature_shape()
-        print(height, width)
         height, width = Utils.cnn_feature_shape(height, width, self.pool)
-        print(height, width)
 
         self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
         self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
@@ -92,12 +90,13 @@ class CNNEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
+        # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_shape does not match output CNN shape ' \
-                                                          f'{tuple(h.shape[-3:])}≠{self.feature_shape}'
 
         if flatten:
-            return self.pool(h)
+            h = self.pool(h)
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_shape does not match output CNN shape ' \
+                                                          f'{self.repr_shape}≠{tuple(h.shape[-3:])}'
         return h
 
 
