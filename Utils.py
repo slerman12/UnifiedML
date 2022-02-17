@@ -246,7 +246,7 @@ def to_torch(xs, device):
     if not isinstance(xs, (list, tuple)):
         xs = [xs]
     # koila.lazy divides batches into compute-affordable sizes if too big
-    return lazy(*[torch.as_tensor(x, device=device).float() for x in xs])
+    return lazy(*[torch.as_tensor(x, device=device).float() for x in xs], batch=0)
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
