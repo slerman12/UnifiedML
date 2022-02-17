@@ -118,8 +118,7 @@ class DQNAgent(torch.nn.Module):
         # "Envision" / "Perceive"
 
         # Augment
-        from koila import lazy
-        obs = self.aug(lazy(obs, batch=0))
+        obs = self.aug(obs)
         next_obs = self.aug(next_obs)
 
         # Encode
