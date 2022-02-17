@@ -7,7 +7,7 @@ import math
 import torch
 from torch import nn
 from torch import einsum
-import torch_semiring_einsum
+from opt_einsum_torch import EinsumPlanner
 import copy
 from einops import rearrange
 
@@ -48,8 +48,8 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        EQUATION = torch_semiring_einsum.compile_equation('bhid,bhjd->bhij')
-        dots = torch_semiring_einsum.log_einsum(EQUATION, q, k, block_size=5)
+        ee = EinsumPlanner(torch.device('cuda:0'), cuda_mem_limit=0.9)
+        dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
         # dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
@@ -58,10 +58,7 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        EQUATION = torch_semiring_einsum.compile_equation('bhij,bhjd->bhid')
-        out = torch_semiring_einsum.log_einsum(EQUATION, attn, v, block_size=5)
-
-        # out = einsum('b h i j, b h j d -> b h i d', attn, v)
+        out = einsum('b h i j, b h j d -> b h i d', attn, v)
         out = rearrange(out, 'b h n d -> b n (h d)')
 
         # Restores original shape
