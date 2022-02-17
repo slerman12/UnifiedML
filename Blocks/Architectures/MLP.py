@@ -16,7 +16,8 @@ class MLP(nn.Module):
                  binary=False, l2_norm=False, input_shape=None):
         super().__init__()
 
-        input_dim = math.prod(Utils.default(input_shape, [input_dim]))
+        if input_shape is not None:
+            input_dim = math.prod(input_shape)
         self.output_dim = output_dim
 
         self.MLP = nn.Sequential(*[nn.Sequential(
