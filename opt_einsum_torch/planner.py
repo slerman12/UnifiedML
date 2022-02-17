@@ -57,19 +57,15 @@ class EinsumPlanner:
         # Align 1K bytes
         self.cuda_mem_limit = (self.cuda_mem_limit >> 10) << 10
 
-    # def _print_memory_info(self):
-    #     total = torch.cuda.get_device_properties(self.cuda_device).total_memory
-    #     memory = torch.cuda.memory_stats(device=self.cuda_device)
-    #     allocated = memory.get("allocated_bytes.all.current")
-    #     reserved = memory.get("reserved_bytes.all.current")
-    #     logger.debug(
-    #         "Print CUDA memory info for %r: total %d (%s), "
-    #         "reserved %d (%s), allocated %d (%s)",
-    #         self.cuda_device,
-    #         total, humanize.naturalsize(total, binary=True),
-    #         reserved, humanize.naturalsize(reserved, binary=True),
-    #         allocated, humanize.naturalsize(allocated, binary=True),
-    #     )
+    def _print_memory_info(self):
+        total = torch.cuda.get_device_properties(self.cuda_device).total_memory
+        memory = torch.cuda.memory_stats(device=self.cuda_device)
+        allocated = memory.get("allocated_bytes.all.current")
+        reserved = memory.get("reserved_bytes.all.current")
+        logger.debug(
+            "Print CUDA memory info for %r: total %d (%s)",
+            self.cuda_device,
+        )
     #     if total - allocated < self.cuda_mem_limit:
     #         logger.warning(
     #             "CUDA device %r has less free memory (%s) than expected (%s), "
