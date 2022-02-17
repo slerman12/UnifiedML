@@ -32,8 +32,8 @@ class EnsembleGaussianActor(nn.Module):
         in_dim = math.prod(repr_shape)  # TODO maybe instead of assuming flattened, should just flatten
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.trunk = nn.DataParallel(nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                                   nn.LayerNorm(trunk_dim), nn.Tanh())) if recipe.trunk._target_ is None \
+        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
+                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk._target_ is None \
             else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, repr_shape))
 
         self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2) if recipe.pi_head._target_ is None

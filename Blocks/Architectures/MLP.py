@@ -20,7 +20,7 @@ class MLP(nn.Module):
             input_dim = math.prod(input_shape)  # TODO maybe instead of assuming flattened, should just flatten
         self.output_dim = output_dim
 
-        self.MLP = nn.DataParallel(nn.Sequential(*[nn.Sequential(
+        self.MLP = nn.Sequential(*[nn.Sequential(
             # Optional L2 norm of penultimate
             # (See: https://openreview.net/pdf?id=9xhgmsNVHu)
             # Similarly, Efficient-Zero initializes 2nd-to-last layer as all 0s  TODO
@@ -29,7 +29,7 @@ class MLP(nn.Module):
                       hidden_dim if i < depth else output_dim),
             non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity())
             for i in range(depth + 1)]
-        ))
+        )
 
         self.apply(Utils.weight_init)
 

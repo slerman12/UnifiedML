@@ -271,6 +271,8 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 ### Distributed
 
+[comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
+
 You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. 
 
 For example, a data-collector agent and an update agent,

@@ -33,9 +33,9 @@ class EnsembleQCritic(nn.Module):
 
         in_dim = math.prod(repr_shape)  # TODO maybe instead of assuming flattened, should just flatten
 
-        self.trunk = nn.DataParallel(nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                                   nn.LayerNorm(trunk_dim),
-                                                   nn.Tanh())) if recipe.trunk._target_ is None \
+        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
+                                   nn.LayerNorm(trunk_dim),
+                                   nn.Tanh()) if recipe.trunk._target_ is None \
             else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, repr_shape))
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim

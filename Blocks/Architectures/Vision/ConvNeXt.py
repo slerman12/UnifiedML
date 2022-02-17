@@ -52,28 +52,27 @@ class ConvNeXt(nn.Module):
 
         self.trunk = nn.Identity()
 
-        self.ConvNeXt = nn.DataParallel(
-            nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
-                                                    dims[i + 1],
-                                                    kernel_size=4 if i == 0 else 2,
-                                                    stride=4 if i == 0 else 2),  # Conv
-                                          nn.Sequential(Utils.ChannelSwap(),
-                                                        nn.LayerNorm(dims[i + 1]),
-                                                        Utils.ChannelSwap()) if i < 3
-                                          else nn.Identity(),  # LayerNorm
-                                          *[ConvNeXtBlock(dims[i + 1])
-                                            for _ in range(depth)])  # Conv, MLP, Residuals
-                            for i, depth in enumerate(depths)]))
+        self.ConvNeXt = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
+                                                                dims[i + 1],
+                                                                kernel_size=4 if i == 0 else 2,
+                                                                stride=4 if i == 0 else 2),  # Conv
+                                                      nn.Sequential(Utils.ChannelSwap(),
+                                                                    nn.LayerNorm(dims[i + 1]),
+                                                                    Utils.ChannelSwap()) if i < 3
+                                                      else nn.Identity(),  # LayerNorm
+                                                      *[ConvNeXtBlock(dims[i + 1])
+                                                        for _ in range(depth)])  # Conv, MLP, Residuals
+                                        for i, depth in enumerate(depths)])
 
         self.projection = nn.Identity() if output_dim is None \
-            else nn.DataParallel(nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                                               nn.Sequential(Utils.ChannelSwap(),
-                                                             nn.LayerNorm(dims[-1]),
-                                                             Utils.ChannelSwap()),
-                                               nn.Flatten(),
-                                               nn.Linear(dims[-1], 1024),
-                                               nn.ReLU(inplace=True),
-                                               nn.Linear(1024, output_dim)))
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Sequential(Utils.ChannelSwap(),
+                                             nn.LayerNorm(dims[-1]),
+                                             Utils.ChannelSwap()),
+                               nn.Flatten(),
+                               nn.Linear(dims[-1], 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):

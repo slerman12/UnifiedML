@@ -119,13 +119,12 @@ class AttentionPool(nn.Module):
         if heads is None:
             heads = (channels_in + 4) // 4
 
-        self.pool = nn.DataParallel(nn.Sequential(Utils.ChannelSwap(),
-                                                  SelfAttentionBlock(dim=channels_in, heads=heads),
-                                                  Utils.ChannelSwap(),
-                                                  nn.AdaptiveAvgPool2d((1, 1)),
-                                                  nn.Flatten(),
-                                                  nn.Linear(channels_in,
-                                                            channels_in if output_dim is None else output_dim)))
+        self.pool = nn.Sequential(Utils.ChannelSwap(),
+                                  SelfAttentionBlock(dim=channels_in, heads=heads),
+                                  Utils.ChannelSwap(),
+                                  nn.AdaptiveAvgPool2d((1, 1)),
+                                  nn.Flatten(),
+                                  nn.Linear(channels_in, channels_in if output_dim is None else output_dim))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.pool)

@@ -19,13 +19,11 @@ class ConvMixer(nn.Module):
         self.input_shape = input_shape
         in_channels = input_shape[0]
 
-        self.trunk = nn.DataParallel(
-            nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=patch_size, stride=patch_size),
-                          nn.GELU(),
-                          nn.BatchNorm2d(out_channels)))
+        self.trunk = nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=patch_size, stride=patch_size),
+                                   nn.GELU(),
+                                   nn.BatchNorm2d(out_channels))
 
-        self.ConvMixer = nn.DataParallel(
-            nn.Sequential(*[nn.Sequential(
+        self.ConvMixer = nn.Sequential(*[nn.Sequential(
                 Residual(nn.Sequential(
                     nn.Conv2d(out_channels, out_channels, kernel_size, groups=out_channels, padding="same"),
                     nn.GELU(),
@@ -34,15 +32,15 @@ class ConvMixer(nn.Module):
                 nn.Conv2d(out_channels, out_channels, kernel_size=1),
                 nn.GELU(),
                 nn.BatchNorm2d(out_channels)
-            ) for _ in range(depth)])
+            ) for _ in range(depth)]
         )
 
         self.projection = nn.Identity() if output_dim is None \
-            else nn.DataParallel(nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                                               nn.Flatten(),
-                                               nn.Linear(out_channels, 1024),
-                                               nn.ReLU(inplace=True),
-                                               nn.Linear(1024, output_dim)))
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               nn.Linear(out_channels, 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
     def feature_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer)

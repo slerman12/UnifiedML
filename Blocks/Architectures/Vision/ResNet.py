@@ -55,23 +55,22 @@ class MiniResNet(nn.Module):
             # depths = [3, 4, 6, 3]  # ResNet-50
             depths = [3]  # MiniResNet
 
-        self.trunk = nn.DataParallel(nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                                             kernel_size=3, padding=1, bias=False),
-                                                   nn.BatchNorm2d(dims[0]),
-                                                   nn.ReLU(inplace=True)))
+        self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
+                                   nn.BatchNorm2d(dims[0]),
+                                   nn.ReLU(inplace=True))
 
         # CNN ResNet-ish
-        self.ResNet = nn.DataParallel(nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
-                                                                    1 + (stride - 1) * (i > 0 and j > 0))
-                                                      for i, depth in enumerate(depths)
-                                                      for j in range(depth)]))
+        self.ResNet = nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
+                                                    1 + (stride - 1) * (i > 0 and j > 0))
+                                      for i, depth in enumerate(depths)
+                                      for j in range(depth)])
 
         self.projection = nn.Identity() if output_dim is None \
-            else nn.DataParallel(nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                                               nn.Flatten(),
-                                               nn.Linear(dims[-1], 1024),
-                                               nn.ReLU(inplace=True),
-                                               nn.Linear(1024, output_dim)))
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               nn.Linear(dims[-1], 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
 
     def feature_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet)
