@@ -48,7 +48,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        ee = EinsumPlanner(q.device, cuda_mem_limit=0.02)
+        ee = EinsumPlanner('cuda:0', cuda_mem_limit=0.02)
         dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
         # dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
@@ -58,7 +58,6 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        ee = EinsumPlanner(v.device, cuda_mem_limit=0.02)
         out = ee.einsum('b h i j, b h j d -> b h i d', attn, v) * self.dim ** -0.5
 
         # out = einsum('b h i j, b h j d -> b h i d', attn, v)
