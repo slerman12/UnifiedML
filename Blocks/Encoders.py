@@ -26,9 +26,6 @@ class CNNEncoder(nn.Module):
 
         assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
 
-        self.in_channels = obs_shape[0]
-        self.out_channels = out_channels
-
         self.obs_shape = obs_shape
         self.pixels = pixels
 
@@ -112,17 +109,17 @@ class ResidualBlockEncoder(CNNEncoder):
         super().__init__(obs_shape, hidden_channels, 0, pixels)
 
         # Dimensions
-        self.in_channels = obs_shape[0] + context_dim
-        self.out_channels = obs_shape[0] if isotropic else out_channels
+        in_channels = obs_shape[0] + context_dim
+        out_channels = obs_shape[0] if isotropic else out_channels
 
         # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet((self.in_channels, *obs_shape[1:]), 2 - isotropic,
-                                             [hidden_channels, self.out_channels], [num_blocks]),
+        self.Eyes = nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 2 - isotropic,
+                                             [hidden_channels, out_channels], [num_blocks]),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
         self.init(optim_lr, ema_tau)
 
         # Isotropic
         if isotropic:
-            assert obs_shape[-2] == self.feature_shape[1]
-            assert obs_shape[-1] == self.feature_shape[2]
+            assert tuple(obs_shape) == self.feature_shape, \
+                f'isotropic, but {tuple(obs_shape)}≠{self.feature_shape}'

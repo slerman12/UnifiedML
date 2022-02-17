@@ -109,7 +109,7 @@ def cnn_feature_shape(channels, height, width, *blocks):
         elif isinstance(block, nn.AdaptiveAvgPool2d):
             height, width = block.output_size
         elif hasattr(block, 'feature_shape'):
-            channels, height, width = block.feature_shape(height, width)
+            channels, height, width = block.feature_shape(channels, height, width)
         elif hasattr(block, 'modules'):
             for module in block.children():
                 channels, height, width = cnn_feature_shape(channels, height, width, module)
