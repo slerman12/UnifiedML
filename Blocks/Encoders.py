@@ -39,14 +39,13 @@ class CNNEncoder(nn.Module):
 
         self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
             else instantiate(recipe.pool, input_shape=Utils.default(recipe.pool.input_shape,
-                                                                    (self.out_channels, *self._feature_shape())))
+                                                                    *self._feature_shape()))
 
         # Initialize model
         self.init(optim_lr, ema_tau)
 
     def _feature_shape(self):
-        _, height, width = self.obs_shape
-        return Utils.cnn_feature_shape(height, width, self.Eyes)
+        return Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
@@ -57,11 +56,10 @@ class CNNEncoder(nn.Module):
             self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
 
         # Dimensions
-        height, width = self._feature_shape()
-        height, width = Utils.cnn_feature_shape(height, width, self.pool)
+        self.feature_shape = self._feature_shape()  # Feature map shape
 
-        self.repr_shape = self.feature_shape = (self.out_channels, height, width)  # Feature map shape
-        self.repr_dim = self.feature_dim = math.prod(self.feature_shape)  # Flattened features dim
+        self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
+        self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
 
         # EMA
         if ema_tau is not None:
@@ -92,11 +90,13 @@ class CNNEncoder(nn.Module):
 
         # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_shape does not match output CNN shape ' \
-                                                          f'{self.repr_shape}≠{tuple(h.shape[-3:])}'
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match output CNN shape'\
+                                                          f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
         if flatten:
             h = self.pool(h)
+            assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed repr_dim does not match output shape' \
+                                                              f'{self.repr_dim}≠{h.shape[-1]}'
         return h
 
 

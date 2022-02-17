@@ -53,16 +53,16 @@ class DQNAgent(torch.nn.Module):
         self.encoder = Utils.Randn(trunk_dim) if generate \
             else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
 
-        feature_shape = (trunk_dim,) if generate else self.encoder.feature_shape
+        repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(feature_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
+            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
                                        ensemble_size=1,
                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        optim_lr=lr, ema_tau=ema_tau if ema else None)
 
-        self.critic = EnsembleQCritic(feature_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       optim_lr=lr, ema_tau=ema_tau)
 
