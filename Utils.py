@@ -107,21 +107,18 @@ def cnn_feature_shape(channels, height, width, *blocks):
                                                     stride=block.stride,
                                                     padding=block.padding)
         elif isinstance(block, nn.Linear):
-            print("yea")
             channels = block.out_features  # Assumes channels-last if linear
         elif isinstance(block, nn.Flatten) and block.start_dim == -3:
             channels, height, width = channels * height * width, 1, 1  # Placeholder height/width dims
         elif isinstance(block, nn.AdaptiveAvgPool2d):
             height, width = block.output_size
-        elif isinstance(block, (nn.Sequential, nn.ModuleList)):
-            for module in block.children():
-                print(module)
-                channels, height, width = cnn_feature_shape(channels, height, width, module)
+        elif hasattr(block, 'repr_shape'):
+            channels, height, width = block.repr_shape(channels, height, width)
         elif hasattr(block, 'feature_shape'):
             channels, height, width = block.feature_shape(channels, height, width)
-        # elif hasattr(block, 'modules'):
-        #     for module in block.children():
-        #         channels, height, width = cnn_feature_shape(channels, height, width, module)
+        elif hasattr(block, 'modules'):
+            for module in block.children():
+                channels, height, width = cnn_feature_shape(channels, height, width, module)
 
     feature_shape = (channels, height, width)  # TODO should probably do (channels, width, height) universally
 

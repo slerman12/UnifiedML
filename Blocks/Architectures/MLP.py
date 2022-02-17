@@ -16,6 +16,7 @@ class MLP(nn.Module):
         super().__init__()
 
         input_dim = Utils.default(input_shape, [input_dim])[-1]
+        self.output_dim = output_dim
 
         self.MLP = nn.Sequential(*[nn.Sequential(
             # Optional L2 norm of penultimate
@@ -29,6 +30,9 @@ class MLP(nn.Module):
         )
 
         self.apply(Utils.weight_init)
+
+    def repr_shape(self, *shape):
+        return tuple([self.output_dim, *([1] * (len(shape) - 1))])
 
     def forward(self, *x):
         return self.MLP(torch.cat(x, -1))

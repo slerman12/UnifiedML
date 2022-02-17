@@ -56,6 +56,9 @@ class ViT(nn.Module):
     def feature_shape(self, c, h, w):
         return c, 1, (h // self.patch_size) * (w // self.patch_size) + 1
 
+    def repr_shape(self, c, h, w):
+        return self.feature_shape(c, h, w) if self.output_dim is None else (self.output_dim, 1, 1)
+
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
