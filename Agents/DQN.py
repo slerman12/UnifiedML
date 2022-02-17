@@ -72,7 +72,7 @@ class DQNAgent(torch.nn.Module):
 
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
-            obs = Utils.to_torch(obs, self.device)
+            obs = torch.as_tensor(obs, device=self.device)
 
             # EMA targets
             encoder = self.encoder.ema if self.ema else self.encoder
@@ -155,9 +155,10 @@ class DQNAgent(torch.nn.Module):
                                self.actor, retain_graph=True)
 
                 if self.log:
-                    logs.update({'supervised_loss': supervised_loss.item()})
-                    logs.update({'accuracy': (torch.argmax(y_predicted, -1)
-                                              == label[instruction]).float().mean().item()})
+                    correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+
+                    logs.update({'supervised_loss': supervised_loss.item(),
+                                 'accuracy': correct.mean().item()})
 
             # (Auxiliary) reinforcement
             if self.RL:
