@@ -38,10 +38,11 @@ class CNN(nn.Module):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context) > 3
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
+             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if math.prod(self.input_shape[1:])
+                                                                                  % context.shape[-1] == 0
              else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x], dim=-3)
+        print(x.shape)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
         # Operate on last 3 dims
