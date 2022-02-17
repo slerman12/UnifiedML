@@ -4,7 +4,7 @@ import Utils
 
 from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
 from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
-from Blocks.Architectures import CNN, ResNet18
+from Blocks.Architectures import CNN, ResNet18, ResNet
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
 
 
@@ -19,8 +19,8 @@ class BioNet(nn.Module):
         # self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
         # self.ventral_stream = CNN(input_shape, out_channels, depth)
         # self.dorsal_stream = CNN(input_shape, out_channels, depth)
-        self.ventral_stream = ResNet18(input_shape)
-        self.dorsal_stream = ResNet18(input_shape)
+        self.ventral_stream = ResNet(input_shape, 2, [64, 64, 128], [2, 2])
+        self.dorsal_stream = ResNet(input_shape, 2, [64, 64, 128], [2, 2])
 
         dims = self.ventral_stream.dims[1:]
 
