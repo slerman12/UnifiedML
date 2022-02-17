@@ -36,7 +36,7 @@ class CNNEncoder(nn.Module):
 
         self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
             else instantiate(recipe.pool, input_shape=Utils.default(recipe.pool.input_shape,
-                                                                    *self._feature_shape()))
+                                                                    self._feature_shape()))
 
         # Initialize model
         self.init(optim_lr, ema_tau)
