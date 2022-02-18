@@ -13,12 +13,12 @@ from Blocks.Architectures.Residual import Residual
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), down_sample=None):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, down_sample=None):
         super().__init__()
 
         if down_sample is None and (in_channels != out_channels or stride != 1):
             down_sample = nn.Sequential(nn.Conv2d(in_channels, out_channels,
-                                                  kernel_size=(1, 1), stride=stride, bias=False),
+                                                  kernel_size=1, stride=stride, bias=False),
                                         nn.BatchNorm2d(out_channels))
 
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
@@ -27,7 +27,8 @@ class ResidualBlock(nn.Module):
                                      nn.BatchNorm2d(out_channels),
                                      nn.ReLU(inplace=True),
                                      nn.Conv2d(out_channels, out_channels,
-                                               kernel_size=kernel_size, padding=kernel_size // 2, bias=False),
+                                               kernel_size=kernel_size, padding=kernel_size // 2,
+                                               bias=False),
                                      nn.BatchNorm2d(out_channels))
 
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
@@ -58,12 +59,11 @@ class MiniResNet(nn.Module):
             depths = [3]  # MiniResNet
         self.depths = depths
 
-        if isinstance(kernel_size, int):
-            kernel_size = (kernel_size, kernel_size)
-        kernel_size = tuple(ks + 1 if ks % 2 == 0 else ks for ks in kernel_size)
+        if kernel_size % 2 == 0:
+            kernel_size += 1
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=kernel_size, padding=1, bias=False),
+                                             kernel_size=kernel_size, padding=kernel_size // 2, bias=False),
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True))
 
