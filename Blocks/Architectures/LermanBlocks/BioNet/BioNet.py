@@ -39,7 +39,7 @@ class BioNet(nn.Module):
                                nn.Linear(1024, output_dim))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.repr, self.projection)
+        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
 
     def forward(self, input):
         ventral = self.ventral_stream.trunk(input)

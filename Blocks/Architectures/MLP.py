@@ -33,8 +33,8 @@ class MLP(nn.Module):
 
         self.apply(Utils.weight_init)
 
-    def repr_shape(self, *shape):
-        return tuple([self.output_dim, *([1] * (len(shape) - 1))])
+    def repr_shape(self, *_):
+        return self.output_dim, *_[1:]
 
     def forward(self, *x):
         return self.MLP(torch.cat(x, -1))

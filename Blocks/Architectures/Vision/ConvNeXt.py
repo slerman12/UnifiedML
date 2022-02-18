@@ -20,7 +20,7 @@ class ConvNeXtBlock(nn.Module):
                                  nn.Linear(4 * dim, dim))
         self.gamma = nn.Parameter(torch.full((dim,), 1e-6))
 
-    def feature_shape(self, c, h, w):
+    def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.conv)
 
     def forward(self, x):

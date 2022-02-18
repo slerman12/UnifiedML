@@ -32,7 +32,7 @@ class ResidualBlock(nn.Module):
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
                                             nn.ReLU(inplace=True))
 
-    def feature_shape(self, c, h, w):
+    def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.Residual_block)
 
     def forward(self, x):
