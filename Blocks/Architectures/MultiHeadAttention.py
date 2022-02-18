@@ -66,7 +66,7 @@ class CrossAttention(nn.Module):
 
         # out = rearrange(out, 'b h n d -> b n (h d)')
 
-        attn = self.attn(x, context, context, need_weights=False)
+        attn, _ = self.attn(x, context, context)
 
         # Restores original shape
         out = attn.view(shape)
