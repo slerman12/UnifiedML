@@ -19,7 +19,7 @@ class ResidualBlock(nn.Module):
         if down_sample is None and (in_channels != out_channels or stride != 1):
             down_sample = nn.Sequential(nn.Conv2d(in_channels, out_channels,
                                                   kernel_size=1, stride=stride, bias=False),
-                                        nn.BatchNorm2d(out_channels))
+                                        nn.BatchNorm2d(out_channels))  # TODO down-sampling math for varied kernel sizes
 
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
                                                kernel_size=kernel_size, padding=1,
