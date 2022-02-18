@@ -38,7 +38,7 @@ class CNNEncoder(nn.Module):
         self.Eyes = nn.parallel.DistributedDataParallel(  # ! Automatically parallel across visible GPUs
             nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
                           else instantiate(recipe.eyes),
-                          Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()),
+                          Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()).to(device),
             device_ids=[device.index])
 
         self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
