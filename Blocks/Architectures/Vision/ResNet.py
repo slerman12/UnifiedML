@@ -22,12 +22,12 @@ class ResidualBlock(nn.Module):
                                         nn.BatchNorm2d(out_channels))
 
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
-                                               kernel_size=kernel_size, padding=kernel_size // 2,
+                                               kernel_size=kernel_size, padding=1,
                                                stride=stride, bias=False),
                                      nn.BatchNorm2d(out_channels),
                                      nn.ReLU(inplace=True),
                                      nn.Conv2d(out_channels, out_channels,
-                                               kernel_size=kernel_size, padding=kernel_size // 2,
+                                               kernel_size=kernel_size, padding=1,
                                                bias=False),
                                      nn.BatchNorm2d(out_channels))
 
@@ -63,7 +63,7 @@ class MiniResNet(nn.Module):
             kernel_size += 1
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=kernel_size, padding=kernel_size // 2, bias=False),
+                                             kernel_size=kernel_size, padding=1, bias=False),
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True))
 
