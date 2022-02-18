@@ -273,6 +273,8 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
+[comment]: <> (Automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion. Advanced experimental distributed features are described below.)
+
 You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. 
 
 For example, a data-collector agent and an update agent,

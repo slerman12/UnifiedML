@@ -36,7 +36,7 @@ class BioNetV1(nn.Module):
         ventral = self.ventral_stream.trunk(input)
         dorsal = self.dorsal_stream.trunk(input)
 
-        t = Utils.ChannelSwap()  # Swaps between channels-first, channels-last format
+        t = Utils.ChannelSwap()  # Swaps between channels-first channels-last format
 
         for what, where, talk in zip(self.ventral_stream.ResNet,
                                      self.dorsal_stream.ResNet,
