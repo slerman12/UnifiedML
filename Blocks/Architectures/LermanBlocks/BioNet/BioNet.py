@@ -16,7 +16,7 @@ class BioNetV1(nn.Module):
 
     def __init__(self, input_shape, out_channels=32, heads=8, output_dim=None):
         super().__init__()
-        resnet_dims, resnet_depths = [64, 64, 128], [2, 2]
+        resnet_dims, resnet_depths = [64, 64, 128, 256, 512], [2, 2, 2, 2]
 
         self.ventral_stream = ResNet(input_shape, 3, 2, dims=resnet_dims, depths=resnet_depths)
         self.dorsal_stream = ResNet(input_shape, 9, 9, dims=resnet_dims, depths=resnet_depths)
