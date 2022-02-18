@@ -30,7 +30,7 @@ class DQNAgent(torch.nn.Module):
                  discrete, RL, supervise, generate, device, log,  # On-boarding
                  num_actions=2, num_critics=2):  # DQN
         super().__init__()
-        import random
+
         self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
         self.RL = RL
@@ -50,15 +50,8 @@ class DQNAgent(torch.nn.Module):
         self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
             else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
-        torch.distributed.init_process_group('gloo',
-                                rank=self.device.index,  # optional?
-                                # world_size=2  # optional?
-                                )
-
         self.encoder = Utils.Randn(trunk_dim) if generate \
-            else torch.nn.parallel.DistributedDataParallel(
-            CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None).to(self.device),
-            device_ids=[self.device.index])
+            else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None, device=self.device)
 
         repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
 
