@@ -20,7 +20,7 @@ class CNNEncoder(nn.Module):
     """
 
     def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
-                 recipe=None, optim_lr=None, ema_tau=None, device=None):
+                 recipe=None, optim_lr=None, ema_tau=None, parallel=False):
 
         super().__init__()
 
@@ -29,14 +29,12 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.pixels = pixels
 
-        torch.distributed.init_process_group('gloo', rank=device.index, world_size=2)
-
         # CNN
-        self.Eyes = nn.parallel.DistributedDataParallel(  # ! Automatically parallel across visible GPUs
-            nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
-                          else instantiate(recipe.eyes),
-                          Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()).to(device),
-            device_ids=[device.index])
+        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
+                                  else instantiate(recipe.eyes),
+                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+        if parallel:
+            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
             else instantiate(recipe.pool, input_shape=self._feature_shape())

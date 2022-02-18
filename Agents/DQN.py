@@ -27,15 +27,15 @@ class DQNAgent(torch.nn.Module):
                  obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
                  lr, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, RL, supervise, generate, device, log,  # On-boarding
-                 num_actions=2, num_critics=2, id=0):  # DQN
+                 discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
+                 num_actions=2, num_critics=2):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
         self.RL = RL
         self.generate = generate  # And generative modeling, too
-        self.device = torch.device(device, id)
+        self.device = device
         self.log = log
         self.birthday = time.time()
         self.step = self.episode = 0
@@ -51,7 +51,8 @@ class DQNAgent(torch.nn.Module):
             else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
         self.encoder = Utils.Randn(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None, device=self.device)
+            else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None,
+                            parallel=parallel)
 
         repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
 
@@ -179,7 +180,7 @@ class DQNAgent(torch.nn.Module):
                 generated_image = self.actor(obs[:half], self.step).mean[:, 0]
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
-                next_obs[:] = float('nan')  # Delete for Cuda > 11
+                next_obs[:] = float('nan')  # Can delete for Cuda > 11
 
             # "Discern"
 

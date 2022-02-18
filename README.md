@@ -273,9 +273,15 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
-Automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion; advanced experimental distributed features are described below.
+The simplest way to do distributed training is to use the ```parallel=true``` flag,
 
-To share an agent or agents(...!) across multiple parallel instances, we provide the ```load_per_steps=``` flag.
+```
+python Run.py parallel=true 
+```
+
+which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion; more, advanced experimental distributed features are described below:
+
+To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag.
 
 [comment]: <> (You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. )
 
