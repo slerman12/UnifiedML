@@ -20,7 +20,7 @@ class BioNet(nn.Module):
         # self.ventral_stream = CNN(input_shape, out_channels, depth)
         # self.dorsal_stream = CNN(input_shape, out_channels, depth)
         self.ventral_stream = ResNet(input_shape, 3, 2, [64, 64, 128], [2, 2])
-        self.dorsal_stream = ResNet(input_shape, 3, 3, [64, 64, 128], [1, 1])
+        self.dorsal_stream = ResNet(input_shape, 3, 3, [64, 64, 128], [2, 2])
 
         dims = self.ventral_stream.dims[1:]
 
