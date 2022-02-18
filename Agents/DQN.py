@@ -35,7 +35,7 @@ class DQNAgent(torch.nn.Module):
         self.supervise = supervise  # And classification...
         self.RL = RL
         self.generate = generate  # And generative modeling, too
-        self.device = torch.device(device, random.getrandbits(64))
+        self.device = torch.device(device, random.randint(0, 64))
         self.log = log
         self.birthday = time.time()
         self.step = self.episode = 0
