@@ -14,7 +14,7 @@ import traceback
 import numpy as np
 
 import torch
-from torch.utils.data import IterableDataset
+from torch.utils.data import IterableDataset, DistributedSampler
 
 
 class ExperienceReplay:
@@ -64,7 +64,8 @@ class ExperienceReplay:
 
         # Batch loading
 
-        self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
+        dataset = DistributedSampler(self.experiences)
+        self.batches = torch.utils.data.DataLoader(dataset=dataset,
                                                    batch_size=batch_size,
                                                    num_workers=num_workers,
                                                    pin_memory=True,

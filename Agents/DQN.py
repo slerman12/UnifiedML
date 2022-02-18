@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import os
 import time
 import math
 
@@ -35,7 +36,7 @@ class DQNAgent(torch.nn.Module):
         self.supervise = supervise  # And classification...
         self.RL = RL
         self.generate = generate  # And generative modeling, too
-        self.device = device
+        self.device = torch.device(device, int(os.environ["LOCAL_RANK"]))
         self.log = log
         self.birthday = time.time()
         self.step = self.episode = 0
@@ -51,7 +52,9 @@ class DQNAgent(torch.nn.Module):
             else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
         self.encoder = Utils.Randn(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None)
+            else torch.nn.parallel.DistributedDataParallel(
+            CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None),
+            device_ids=[self.device.index], output_device=self.device.index)
 
         repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
 
