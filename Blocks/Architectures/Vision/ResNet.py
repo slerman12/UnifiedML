@@ -19,15 +19,15 @@ class ResidualBlock(nn.Module):
         if down_sample is None and (in_channels != out_channels or stride != 1):
             down_sample = nn.Sequential(nn.Conv2d(in_channels, out_channels,
                                                   kernel_size=1, stride=stride, bias=False),
-                                        nn.BatchNorm2d(out_channels))  # TODO down-sampling math for varied kernel sizes
+                                        nn.BatchNorm2d(out_channels))
 
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
-                                               kernel_size=kernel_size, padding=1,
+                                               kernel_size=kernel_size, padding=kernel_size // 2,
                                                stride=stride, bias=False),
                                      nn.BatchNorm2d(out_channels),
                                      nn.ReLU(inplace=True),
                                      nn.Conv2d(out_channels, out_channels,
-                                               kernel_size=kernel_size, padding=1,
+                                               kernel_size=kernel_size, padding=kernel_size // 2,
                                                bias=False),
                                      nn.BatchNorm2d(out_channels))
 
@@ -59,8 +59,11 @@ class MiniResNet(nn.Module):
             depths = [3]  # MiniResNet
         self.depths = depths
 
+        if kernel_size % 2 == 0:
+            kernel_size += 1
+
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=kernel_size, padding=1, bias=False),
+                                             kernel_size=kernel_size, padding=kernel_size // 2, bias=False),
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True))
 
@@ -90,7 +93,7 @@ class MiniResNet(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                   % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]

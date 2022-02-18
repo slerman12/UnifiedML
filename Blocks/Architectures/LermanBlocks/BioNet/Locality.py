@@ -1,10 +1,20 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
 import torch
 from torch import nn, einsum
 from torch.nn import functional as F
 
+from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 from Blocks.Architectures.Residual import Residual
 
 import Utils
+
+
+"""
+The "where" pathway: Locality stream architectures for BioNet
+"""
 
 
 class Conv2DLocalized(nn.Module):
@@ -62,3 +72,21 @@ class LocalityCNN(nn.Module):
 
     def forward(self, x):
         return self.CNN(self.trunk(x))
+
+
+class LocalityViT(nn.Module):
+    def __init__(self, input_shape, out_channels=32, depth=3):
+        super().__init__()
+
+        self.trunk = Conv2DLocalized(input_shape, out_channels, (16, 16), (16, 16))
+
+        self.ViT = nn.Sequential(
+            *[nn.Sequential(Utils.ChannelSwap(), SelfAttentionBlock(out_channels), Utils.ChannelSwap(),
+                            Residual(Conv2DLocalized(self.trunk.shape, out_channels, (2, 2), padding='same')))
+              for _ in range(depth)])
+
+    def feature_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.trunk)
+
+    def forward(self, x):
+        return self.ViT(self.trunk(x))

@@ -1,9 +1,13 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
 from torch import nn
 
 import Utils
 
-from Blocks.Architectures.LermanBlocks.BioNet.NonLocalityCNN import NonLocalityCNN
-from Blocks.Architectures.LermanBlocks.BioNet.LocalityViT import LocalityViT
+from Blocks.Architectures.LermanBlocks.BioNet.NonLocality import NonLocalityCNN
+from Blocks.Architectures.LermanBlocks.BioNet.Locality import LocalityViT
 from Blocks.Architectures import CNN, ResNet18, ResNet
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
 
@@ -20,7 +24,7 @@ class BioNet(nn.Module):
         # self.ventral_stream = CNN(input_shape, out_channels, depth)
         # self.dorsal_stream = CNN(input_shape, out_channels, depth)
         self.ventral_stream = ResNet(input_shape, 3, 2, [64, 64, 128], [2, 2])
-        self.dorsal_stream = ResNet(input_shape, 3, 3, [64, 64, 128], [2, 2])
+        self.dorsal_stream = ResNet(input_shape, 9, 9, [64, 64, 128], [2, 2])
 
         dims = self.ventral_stream.dims[1:]
 
@@ -60,6 +64,7 @@ class BioNet(nn.Module):
             #     loss = t(byol(talk2(t(ventral).view(*t(ventral).shape[:-1], 2, -1)), t(dorsal)), t(dorsal).mean(-1))
             #     Utils.optimize(loss,
             #                    self)
+            print(ventral.shape, dorsal.shape)
 
         out = self.projection(self.repr(dorsal))
         return out
