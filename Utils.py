@@ -326,3 +326,4 @@ def schedule(schedule, step):
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * start + mix * stop
 
+
