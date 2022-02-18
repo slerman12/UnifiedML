@@ -50,7 +50,7 @@ class DQNAgent(torch.nn.Module):
         self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
             else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
-        torch.distributed.init_process_group('Parallel',
+        torch.distributed.init_process_group('gloo',
                                 rank=self.device.index,  # optional?
                                 # world_size=2  # optional?
                                 )
