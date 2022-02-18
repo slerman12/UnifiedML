@@ -29,7 +29,7 @@ def main(args):
         setattr(args, arg, getattr(env, arg))
 
     # Agent
-    agent = torch.nn.DataParallel(instantiate(args.agent))
+    agent = instantiate(args.agent).to(args.device)
 
     if args.load:
         Utils.load(args.save_path, agent)
