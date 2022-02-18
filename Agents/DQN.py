@@ -57,7 +57,7 @@ class DQNAgent(torch.nn.Module):
 
         self.encoder = Utils.Randn(trunk_dim) if generate \
             else torch.nn.parallel.DistributedDataParallel(
-            CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None),
+            CNNEncoder(obs_shape, recipe=recipes.encoder, optim_lr=lr, ema_tau=ema_tau if ema else None).to(self.device),
             device_ids=[self.device.index])
 
         repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
