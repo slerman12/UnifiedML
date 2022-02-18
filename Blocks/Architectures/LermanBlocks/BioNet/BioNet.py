@@ -8,8 +8,45 @@ import Utils
 
 from Blocks.Architectures.LermanBlocks.BioNet.NonLocality import NonLocalityCNN
 from Blocks.Architectures.LermanBlocks.BioNet.Locality import LocalityViT
-from Blocks.Architectures import CNN, ResNet18, ResNet
+from Blocks.Architectures import CNN, ResNet18, ResNet, MLP
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
+
+
+class BioNetV1(nn.Module):
+    """Disentangling "What" And "Where" Pathways In CNNs
+        - V1: Uses two ResNets"""
+
+    def __init__(self, input_shape, out_channels=32, heads=8, output_dim=None):
+        super().__init__()
+        self.ventral_stream = ResNet(input_shape, 3, 2, dims=[64, 64, 128], depths=[2, 2])
+        self.dorsal_stream = ResNet(input_shape, 9, 9, dims=[64, 64, 128], depths=[2, 2])
+
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
+                                         for dim in self.ventral_stream.dims[1:]])
+
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               MLP(out_channels, output_dim, 1024))
+
+    def repr_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
+
+    def forward(self, input):
+        ventral = self.ventral_stream.trunk(input)
+        dorsal = self.dorsal_stream.trunk(input)
+
+        t = Utils.ChannelSwap()
+
+        for what, where, talk in zip(self.ventral_stream.ResNet,
+                                     self.dorsal_stream.ResNet,
+                                     self.cross_talk):
+            ventral = what(ventral)
+            dorsal = t(talk(t(where(dorsal)),
+                            t(ventral)))
+
+        out = self.projection(dorsal)
+        return out
 
 
 class BioNet(nn.Module):

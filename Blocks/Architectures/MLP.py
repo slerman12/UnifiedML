@@ -12,7 +12,7 @@ import Utils
 
 
 class MLP(nn.Module):
-    def __init__(self, input_dim=128, output_dim=1024, hidden_dim=512, depth=0, non_linearity=nn.ReLU(inplace=True),
+    def __init__(self, input_dim=128, output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
                  binary=False, l2_norm=False, input_shape=None):
         super().__init__()
 
