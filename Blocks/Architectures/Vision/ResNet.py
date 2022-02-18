@@ -13,7 +13,7 @@ from Blocks.Architectures.Residual import Residual
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1, down_sample=None):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, down_sample=None):
         super().__init__()
 
         if down_sample is None and (in_channels != out_channels or stride != 1):
@@ -22,11 +22,12 @@ class ResidualBlock(nn.Module):
                                         nn.BatchNorm2d(out_channels))
 
         pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
-                                               kernel_size=3, padding=1, stride=stride, bias=False),
+                                               kernel_size=kernel_size, padding=kernel_size // 2,
+                                               stride=stride, bias=False),
                                      nn.BatchNorm2d(out_channels),
                                      nn.ReLU(inplace=True),
                                      nn.Conv2d(out_channels, out_channels,
-                                               kernel_size=3, padding=1, bias=False),
+                                               kernel_size=kernel_size, padding='same', bias=False),
                                      nn.BatchNorm2d(out_channels))
 
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
@@ -40,7 +41,7 @@ class ResidualBlock(nn.Module):
 
 
 class MiniResNet(nn.Module):
-    def __init__(self, input_shape, stride=2, dims=None, depths=None, output_dim=None):
+    def __init__(self, input_shape, kernel_size=3, stride=2, dims=None, depths=None, output_dim=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -57,7 +58,8 @@ class MiniResNet(nn.Module):
             depths = [3]  # MiniResNet
         self.depths = depths
 
-        self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0], kernel_size=3, padding=1, bias=False),
+        self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
+                                             kernel_size=kernel_size, padding=1, bias=False),
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True))
 
@@ -66,7 +68,7 @@ class MiniResNet(nn.Module):
         #                                             1 + (stride - 1) * (i > 0 and j > 0))
         #                               for i, depth in enumerate(depths)
         #                               for j in range(depth)])
-        self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1],
+        self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1], kernel_size,
                                                                     1 + (stride - 1) * (i > 0 and j > 0))
                                                       for j in range(depth)])
                                       for i, depth in enumerate(depths)])
@@ -105,9 +107,9 @@ class MiniResNet(nn.Module):
 
 class ResNet18(MiniResNet):
     def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, 2, [64, 64, 128, 256, 512], [2, 2, 2, 2], output_dim)
+        super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [2, 2, 2, 2], output_dim)
 
 
 class ResNet50(MiniResNet):
     def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, 2, [64, 64, 128, 256, 512], [3, 4, 6, 3], output_dim)
+        super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [3, 4, 6, 3], output_dim)
