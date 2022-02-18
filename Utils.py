@@ -257,6 +257,7 @@ class ChannelSwap(nn.Module):
     def __init__(self, *modules):
         super().__init__()
         self.modules = nn.Sequential(*modules)
+        print(self.modules)
 
     def forward(self, x):
         if len(self.modules):
