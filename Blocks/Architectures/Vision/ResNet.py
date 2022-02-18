@@ -59,9 +59,6 @@ class MiniResNet(nn.Module):
             depths = [3]  # MiniResNet
         self.depths = depths
 
-        if kernel_size % 2 == 0:
-            kernel_size += 1
-
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
                                              kernel_size=kernel_size, padding=1, bias=False),
                                    nn.BatchNorm2d(dims[0]),

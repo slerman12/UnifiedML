@@ -60,6 +60,7 @@ class BioNet(nn.Module):
             #     loss = t(byol(talk2(t(ventral).view(*t(ventral).shape[:-1], 2, -1)), t(dorsal)), t(dorsal).mean(-1))
             #     Utils.optimize(loss,
             #                    self)
+            print(ventral.shape, dorsal.shape)
 
         out = self.projection(self.repr(dorsal))
         return out
