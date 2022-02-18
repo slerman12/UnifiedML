@@ -27,13 +27,12 @@ class CrossAttention(nn.Module):
         context_dim = dim if context_dim is None \
             else context_dim
 
-        self.to_q = nn.Linear(dim, dim, bias=False)
-        self.to_kv = nn.Linear(context_dim, dim * 2, bias=False)
+        self.attn = nn.MultiheadAttention(dim, heads, kdim=context_dim, vdim=dim, batch_first=True)
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
-        self.talk_h = nn.Sequential(Utils.ChannelSwap(),
-                                    nn.Linear(heads, heads, bias=False),
-                                    nn.LayerNorm(heads), Utils.ChannelSwap()) if talk_h else nn.Identity()
+        # self.talk_h = nn.Sequential(Utils.ChannelSwap(),
+        #                             nn.Linear(heads, heads, bias=False),
+        #                             nn.LayerNorm(heads), Utils.ChannelSwap()) if talk_h else nn.Identity()
 
     def forward(self, x, context):
         # Conserves shape
@@ -43,28 +42,36 @@ class CrossAttention(nn.Module):
         x = x.flatten(1, -2)
         context = context.flatten(1, -2)
 
-        q = self.to_q(x)
-        k, v = self.to_kv(context).chunk(2, dim=-1)
-
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
-
-        # device = torch.device(q.device)
-
-        # ee = EinsumPlanner(device, cuda_mem_limit=0.2)
-        # dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
-
-        dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
-
-        attn = dots.softmax(dim=-1)
+        # q = self.to_q(x)
+        # k, v = self.to_kv(context).chunk(2, dim=-1)
+        #
+        # q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
+        #
+        # # device = torch.device(q.device)
+        #
+        # # ee = EinsumPlanner(device, cuda_mem_limit=0.2)
+        # # dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        #
+        # dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        #
+        # attn = dots.softmax(dim=-1)
 
         # "Talking heads"
-        attn = self.talk_h(attn)
+        # attn = self.talk_h(attn)
 
         # ee = EinsumPlanner(device, cuda_mem_limit=0.2)
         # out = ee.einsum('b h i j, b h j d -> b h i d', attn, v) * self.dim ** -0.5
 
-        out = einsum('b h i j, b h j d -> b h i d', attn, v)
-        out = rearrange(out, 'b h n d -> b n (h d)')
+        # out = einsum('b h i j, b h j d -> b h i d', attn, v)  # todo maybe nn.MultiHeadAttention?
+
+        # out = rearrange(out, 'b h n d -> b n (h d)')
+
+        attn = self.attn(x, context, context, need_weights=False)
+
+        # Restores original shape
+        out = attn.view(shape)
+
+        return out
 
         # Restores original shape
         # return out.view(shape).to(device)
