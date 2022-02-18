@@ -30,7 +30,7 @@ class CNNEncoder(nn.Module):
         self.pixels = pixels
 
         # CNN
-        self.Eyes = (  # ! Automatically parallel across visible GPUs
+        self.Eyes = nn.DataParallel(  # ! Automatically parallel across visible GPUs
             nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
                           else instantiate(recipe.eyes),
                           Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()))
@@ -114,13 +114,14 @@ class ResidualBlockEncoder(CNNEncoder):
         out_channels = obs_shape[0] if isotropic else out_channels
 
         # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 2 - isotropic,
-                                             [hidden_channels, out_channels], [num_blocks]),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+        self.Eyes = nn.DataParallel(  # ! Automatically parallel across visible GPUs
+            nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 2 - isotropic,
+                                     [hidden_channels, out_channels], [num_blocks]),
+                          Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()))
 
         self.init(optim_lr, ema_tau)
 
         # Isotropic
         if isotropic:
             assert tuple(obs_shape) == self.feature_shape, \
-                f'isotropic, but {tuple(obs_shape)}≠{self.feature_shape}'
+                f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
