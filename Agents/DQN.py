@@ -28,14 +28,14 @@ class DQNAgent(torch.nn.Module):
                  lr, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, log,  # On-boarding
-                 num_actions=2, num_critics=2):  # DQN
+                 num_actions=2, num_critics=2, id=0):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
         self.RL = RL
         self.generate = generate  # And generative modeling, too
-        self.device = torch.device(device, 0)
+        self.device = torch.device(device, id)
         self.log = log
         self.birthday = time.time()
         self.step = self.episode = 0
