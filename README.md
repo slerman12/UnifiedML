@@ -279,13 +279,11 @@ The simplest way to do distributed training is to use the ```parallel=true``` fl
 python Run.py parallel=true 
 ```
 
-which automatically parallelizes the Encoder's "Eyes" across all visible GPUs, usually the most compute-intensive architectural portion; more, advanced experimental distributed features are described below:
+which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion; more, advanced experimental distributed features are described below:
 
-To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag.
+To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag. For example, a data-collector agent and an update agent,
 
 [comment]: <> (You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. )
-
-For example, a data-collector agent and an update agent,
 
 ```
 python Run.py update_per_steps=0 replay.save=true load_per_steps=1 
