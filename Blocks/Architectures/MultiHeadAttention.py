@@ -48,7 +48,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        device = torch.device(q.device)
+        # device = torch.device(q.device)
 
         # ee = EinsumPlanner(device, cuda_mem_limit=0.2)
         # dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
@@ -67,7 +67,8 @@ class CrossAttention(nn.Module):
         out = rearrange(out, 'b h n d -> b n (h d)')
 
         # Restores original shape
-        return out.view(shape).to(device)
+        # return out.view(shape).to(device)
+        return out.view(shape)
 
 
 class SelfAttention(CrossAttention):
