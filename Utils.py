@@ -256,12 +256,11 @@ class ShiftMaxNorm(nn.Module):
 class ChannelSwap(nn.Module):
     def __init__(self, *modules):
         super().__init__()
-        self.modules = nn.Sequential(*modules)
-        print(self.modules)
+        self.Ms = nn.Sequential(*modules)
 
     def forward(self, x):
-        if len(self.modules):
-            x = self.modules(x.transpose(-1, -3))
+        if len(self.Ms):
+            x = self.Ms(x.transpose(-1, -3))
         return x.transpose(-1, -3)
 
 
