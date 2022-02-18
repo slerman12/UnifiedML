@@ -29,7 +29,7 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.pixels = pixels
 
-        torch.distributed.init_process_group('gloo')
+        torch.distributed.init_process_group('gloo', rank=device.index, world_size=2)
 
         # CNN
         self.Eyes = nn.parallel.DistributedDataParallel(  # ! Automatically parallel across visible GPUs
