@@ -72,20 +72,19 @@ class ClassifyEnv:
         x, y = [np.array(b, dtype='float32') for b in self.batch]
         y = np.expand_dims(y, 1)
 
-        if self.time_step is None:
-            batch_size = x.shape[0]
+        batch_size = x.shape[0]
 
-            dummy_action = np.full([batch_size + 1, self.num_classes], np.NaN, 'float32')
-            dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
-            dummy_discount = np.full([batch_size + 1, 1], 1, 'float32')
+        dummy_action = np.full([batch_size + 1, self.num_classes], np.NaN, 'float32')
+        dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
+        dummy_discount = np.full([batch_size + 1, 1], 1, 'float32')
 
-            self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
-                                              discount=dummy_discount, step=dummy_step)
+        self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
+                                          discount=dummy_discount, step=dummy_step,
+                                          step_type=StepType.FIRST, observation=x, label=y)
 
-        self.time_step = self.time_step._replace(step_type=StepType.FIRST, observation=x, label=y)
         return self.time_step
 
-    # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' with 'next obs'
+    # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' paired with (<->) 'next obs'
     def step(self, action):
         assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
 
