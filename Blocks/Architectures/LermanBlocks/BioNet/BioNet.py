@@ -6,10 +6,8 @@ from torch import nn
 
 import Utils
 
-from Blocks.Architectures.LermanBlocks.BioNet.NonLocality import NonLocalityCNN
-from Blocks.Architectures.LermanBlocks.BioNet.Locality import LocalityViT
-from Blocks.Architectures import CNN, ResNet18, ResNet, MLP
-from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock, SelfAttentionBlock
+from Blocks.Architectures import ResNet, MLP
+from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock
 
 
 class BioNetV1(nn.Module):
@@ -18,11 +16,13 @@ class BioNetV1(nn.Module):
 
     def __init__(self, input_shape, out_channels=32, heads=8, output_dim=None):
         super().__init__()
-        self.ventral_stream = ResNet(input_shape, 3, 2, dims=[64, 64, 128], depths=[2, 2])
-        self.dorsal_stream = ResNet(input_shape, 9, 9, dims=[64, 64, 128], depths=[2, 2])
+        resnet_dims, resnet_depths = [64, 64, 128], [2, 2]
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
-                                         for dim in self.ventral_stream.dims[1:]])
+        self.ventral_stream = ResNet(input_shape, 3, 2, dims=resnet_dims, depths=resnet_depths)
+        self.dorsal_stream = ResNet(input_shape, 9, 9, dims=resnet_dims, depths=resnet_depths)
+
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads)
+                                         for dim in resnet_dims[1:]])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
@@ -36,7 +36,7 @@ class BioNetV1(nn.Module):
         ventral = self.ventral_stream.trunk(input)
         dorsal = self.dorsal_stream.trunk(input)
 
-        t = Utils.ChannelSwap()
+        t = Utils.ChannelSwap()  # Swaps between channels-first, channels-last format
 
         for what, where, talk in zip(self.ventral_stream.ResNet,
                                      self.dorsal_stream.ResNet,
@@ -46,63 +46,6 @@ class BioNetV1(nn.Module):
                             t(ventral)))
 
         out = self.projection(dorsal)
-        return out
-
-
-class BioNet(nn.Module):
-    """Disentangling "What" And "Where" Pathways In CNNs"""
-
-    def __init__(self, input_shape, out_channels=32, heads=8, depth=3, output_dim=None):
-        super().__init__()
-        in_channels = input_shape[0]
-
-        # self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
-        # self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
-        # self.ventral_stream = CNN(input_shape, out_channels, depth)
-        # self.dorsal_stream = CNN(input_shape, out_channels, depth)
-        self.ventral_stream = ResNet(input_shape, 3, 2, [64, 64, 128], [2, 2])
-        self.dorsal_stream = ResNet(input_shape, 9, 9, [64, 64, 128], [2, 2])
-
-        dims = self.ventral_stream.dims[1:]
-
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
-                                         for dim in dims])
-
-        # self.repr = nn.Sequential(Utils.ChannelSwap(),
-        #                           SelfAttentionBlock(dim=dims[-1], heads=heads),
-        #                           Utils.ChannelSwap())  # Todo just use einops rearange
-        self.repr = nn.Identity()
-
-        self.projection = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                               nn.Flatten(),
-                               nn.Linear(out_channels, 1024),
-                               nn.ReLU(inplace=True),
-                               nn.Linear(1024, output_dim))
-
-    def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
-
-    def forward(self, input):
-        ventral = self.ventral_stream.trunk(input)
-        dorsal = self.dorsal_stream.trunk(input)
-
-        t = Utils.ChannelSwap()
-
-        for what, where, talk in zip(self.ventral_stream.ResNet,
-                                     self.dorsal_stream.ResNet,
-                                     self.cross_talk):
-            ventral = what(ventral)
-            dorsal = t(talk(t(where(dorsal)),
-                            # t(ventral).view(*t(ventral).shape[:-1], 2, -1)))  # Feature redundancy(? till convolved)
-                            t(ventral)))
-
-            # if self_supervise:
-            #     loss = t(byol(talk2(t(ventral).view(*t(ventral).shape[:-1], 2, -1)), t(dorsal)), t(dorsal).mean(-1))
-            #     Utils.optimize(loss,
-            #                    self)
-
-        out = self.projection(self.repr(dorsal))
         return out
 
     """Aside from the way the modules are put together (via two disentangled streams), 
@@ -180,3 +123,64 @@ class BioNet(nn.Module):
 # https://medium.com/syncedreview/
 # a-leap-forward-in-computer-vision-facebook-ai-says-masked-autoencoders-are-scalable-vision-32c08fadd41f
 
+
+from Blocks.Architectures.LermanBlocks.BioNet.NonLocality import NonLocalityCNN
+from Blocks.Architectures.LermanBlocks.BioNet.Locality import LocalityViT
+from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
+
+
+class BioNet(nn.Module):
+    """Disentangling "What" And "Where" Pathways In CNNs"""
+
+    def __init__(self, input_shape, out_channels=32, heads=8, depth=3, output_dim=None):
+        super().__init__()
+        in_channels = input_shape[0]
+
+        # self.ventral_stream = NonLocalityCNN(in_channels, out_channels, depth=depth)
+        # self.dorsal_stream = LocalityViT(input_shape, out_channels, depth)
+        # self.ventral_stream = CNN(input_shape, out_channels, depth)
+        # self.dorsal_stream = CNN(input_shape, out_channels, depth)
+        self.ventral_stream = ResNet(input_shape, 3, 2, [64, 64, 128], [2, 2])
+        self.dorsal_stream = ResNet(input_shape, 9, 9, [64, 64, 128], [2, 2])
+
+        dims = self.ventral_stream.dims[1:]
+
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
+                                         for dim in dims])
+
+        # self.repr = nn.Sequential(Utils.ChannelSwap(),
+        #                           SelfAttentionBlock(dim=dims[-1], heads=heads),
+        #                           Utils.ChannelSwap())  # Todo just use einops rearange
+        self.repr = nn.Identity()
+
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               nn.Linear(out_channels, 1024),
+                               nn.ReLU(inplace=True),
+                               nn.Linear(1024, output_dim))
+
+    def repr_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
+
+    def forward(self, input):
+        ventral = self.ventral_stream.trunk(input)
+        dorsal = self.dorsal_stream.trunk(input)
+
+        t = Utils.ChannelSwap()
+
+        for what, where, talk in zip(self.ventral_stream.ResNet,
+                                     self.dorsal_stream.ResNet,
+                                     self.cross_talk):
+            ventral = what(ventral)
+            dorsal = t(talk(t(where(dorsal)),
+                            # t(ventral).view(*t(ventral).shape[:-1], 2, -1)))  # Feature redundancy(? till convolved)
+                            t(ventral)))
+
+            # if self_supervise:
+            #     loss = t(byol(talk2(t(ventral).view(*t(ventral).shape[:-1], 2, -1)), t(dorsal)), t(dorsal).mean(-1))
+            #     Utils.optimize(loss,
+            #                    self)
+
+        out = self.projection(self.repr(dorsal))
+        return out

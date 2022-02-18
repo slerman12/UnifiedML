@@ -11,7 +11,7 @@ import Utils
 
 
 """
-The "what" pathway: Non-locality stream architectures for BioNet
+A custom "what" pathway: Non-locality stream architectures for BioNet
 """
 
 

@@ -13,7 +13,7 @@ import Utils
 
 
 """
-The "where" pathway: Locality stream architectures for BioNet
+A custom "where" pathway: Locality stream architectures for BioNet
 """
 
 
