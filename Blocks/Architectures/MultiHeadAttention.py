@@ -74,6 +74,7 @@ class CrossAttention(nn.Module):
         return out
 
 
+# A minimalist implementation using only Pytorch natives
 # class CrossAttention(nn.Module):
 #     def __init__(self, dim=32, heads=8, context_dim=None):
 #         super().__init__()

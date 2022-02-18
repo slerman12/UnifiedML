@@ -20,16 +20,17 @@ class BioNet(nn.Module):
         # self.ventral_stream = CNN(input_shape, out_channels, depth)
         # self.dorsal_stream = CNN(input_shape, out_channels, depth)
         self.ventral_stream = ResNet(input_shape, 3, 2, [64, 64, 128], [2, 2])
-        self.dorsal_stream = ResNet(input_shape, 16, 8, [64, 64, 128], [1, 1])
+        self.dorsal_stream = ResNet(input_shape, 32, 32, [64, 64, 128], [1, 1])
 
         dims = self.ventral_stream.dims[1:]
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
                                          for dim in dims])
 
-        self.repr = nn.Sequential(Utils.ChannelSwap(),
-                                  SelfAttentionBlock(dim=dims[-1], heads=heads),
-                                  Utils.ChannelSwap())  # Todo just use einops rearange
+        # self.repr = nn.Sequential(Utils.ChannelSwap(),
+        #                           SelfAttentionBlock(dim=dims[-1], heads=heads),
+        #                           Utils.ChannelSwap())  # Todo just use einops rearange
+        self.repr = nn.Identity()
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
