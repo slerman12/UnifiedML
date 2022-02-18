@@ -37,16 +37,11 @@ class ClassifyEnv:
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
 
+        self.time_step = None
+
         self.count = 0
         self.length = len(self.batches)
         self._batches = iter(self.batches)
-
-        dummy_action = np.full([batch_size + 1, self.num_classes], np.NaN, 'float32')
-        dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
-        dummy_discount = np.full([batch_size + 1, 1], 1, 'float32')
-
-        self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
-                                          discount=dummy_discount, step=dummy_step)
 
     @property
     def batch(self):
@@ -76,6 +71,17 @@ class ClassifyEnv:
     def reset(self):
         x, y = [np.array(b, dtype='float32') for b in self.batch]
         y = np.expand_dims(y, 1)
+
+        if self.time_step is None:
+            batch_size = x.shape[0]
+
+            dummy_action = np.full([batch_size + 1, self.num_classes], np.NaN, 'float32')
+            dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
+            dummy_discount = np.full([batch_size + 1, 1], 1, 'float32')
+
+            self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
+                                              discount=dummy_discount, step=dummy_step)
+
         self.time_step = self.time_step._replace(step_type=StepType.FIRST, observation=x, label=y)
         return self.time_step
 
@@ -89,9 +95,9 @@ class ClassifyEnv:
 
         reward = (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
-        self.time_step.reward[1:] = reward
+        self.time_step.reward[1:len(reward)] = reward
         self.time_step.reward[0] = reward.mean()
-        self.time_step.action[1:] = action
+        self.time_step.action[1:len(action)] = action
         self.time_step = self.time_step._replace(step_type=StepType.LAST, observation=x, label=y)
 
         return self.time_step

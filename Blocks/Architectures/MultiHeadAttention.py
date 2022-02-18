@@ -76,7 +76,7 @@ class CrossAttention(nn.Module):
 
 # A minimalist implementation using only Pytorch natives
 # class CrossAttention(nn.Module):
-#     def __init__(self, dim=32, heads=8, context_dim=None):
+#     def __init__(self, dim=32, heads=8, context_dim=None, talk_h=False):
 #         super().__init__()
 #
 #         assert dim % heads == 0, f'dim={dim} does not divide heads={heads}'
