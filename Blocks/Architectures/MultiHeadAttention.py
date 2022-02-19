@@ -30,6 +30,7 @@ class CrossAttention(nn.Module):
         heads = math.gcd(8, value_dim) if heads is None \
             else heads
 
+        self.value_dim = value_dim
         self.heads = heads
 
         assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
@@ -127,6 +128,8 @@ class CrossAttentionBlock(nn.Module):
         self.heads = math.gcd(8, value_dim) if heads is None \
             else heads
 
+        self.value_dim = value_dim
+
         self.attn = CrossAttention(dim, self.heads, context_dim, value_dim,
                                    ln_v,  # My variant, norms value heads by default
                                    talk_h)
@@ -138,6 +141,9 @@ class CrossAttentionBlock(nn.Module):
         self.ln = nn.LayerNorm(value_dim)
 
         self.init(optim_lr, ema_tau)
+
+    def repr_shape(self, c, h, w):
+        return self.value_dim, h, w  # Assumes channels last
 
     def init(self, optim_lr=None, ema_tau=None):
         # Initialize weights
