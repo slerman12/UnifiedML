@@ -302,7 +302,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
-To train, for example Atari, with ViT as the Encoder:
+Atari with ViT:
 
 ```
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
