@@ -178,7 +178,7 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, depth=1, heads=None, output_dim=None, input_shape=None):
+    def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, recursions=0, input_shape=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -196,8 +196,8 @@ class AttentionPool(nn.Module):
                                   # Transformer
                                   *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
                                                        value_dim=output_dim) for i in range(depth)],
-                                  # Alternatively could also recurse
-                                  # *([SelfAttentionBlock(output_dim, heads)] * depth),
+                                  # Alternatively/additionally could also recurse
+                                  *([SelfAttentionBlock(output_dim, heads)] * recursions),
                                   Utils.ChSwap, nn.AdaptiveAvgPool2d((1, 1)),
                                   nn.Flatten(-3))
 
