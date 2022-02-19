@@ -19,53 +19,38 @@ A custom "where" pathway: Locality stream architectures for BioNet
 
 class Conv2DLocal(nn.Module):
     def __init__(self, input_shape, out_channels, kernel_size, stride=(1, 1), padding=(0, 0), dilation=(1, 1),
-                 groups=1, patch_size=16):
+                 groups=1, patches=16):
         super().__init__()
 
-        LN = lambda: nn.Sequential(Utils.ChSwap, nn.LayerNorm(out_channels), Utils.ChSwap)
+        self.patches = patches
+        self.in_channels, self.height, self.width = input_shape
+        self.out_channels = out_channels
 
-        in_channels, height, width = input_shape
-
-        self.conv_in = nn.Sequential(LN(),
-                                     nn.Conv2d(in_channels, out_channels * 2, kernel_size, stride, padding, dilation,
-                                               groups=groups),
-                                     nn.GELU())
-
-        height, width = Utils.cnn_layer_feature_shape(height, width, kernel_size,
-                                                      stride, padding, dilation)
-
-        assert height % patch_size == 0 and width % patch_size == 0, 'spatial dims must be divisible by patch size'
-
-        self.ln = LN()
-
-        # Note: Possible to change strides, out_channels to down-sample
+        assert self.height % patches == 0 and self.width % patches == 0, 'spatial dims must be divisible by patch size'
 
         # Twice as time-intensive as fully-disjoint MLP convolution, but orders more memory efficient
-        self.localize_h = nn.Conv2d(height, out_channels * height,  # Kernel transforms the height
-                                    (1, out_channels), groups=patch_size)  # Over disjoint patches
-        self.localize_w = nn.Conv2d(width, out_channels * width,
-                                    (1, out_channels), groups=patch_size)
+        self.localize_h = nn.Conv2d(self.height, out_channels * self.height,  # Kernel transforms the height
+                                    (1, self.in_channels), groups=patches)  # Over disjoint patches
+        self.localize_w = nn.Conv2d(self.width, out_channels * self.width, (1, self.in_channels), groups=patches)
 
-        self.conv_out = nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding, dilation, groups=groups)
+        self.conv = nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding, dilation, groups=groups)
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.conv)
+        return Utils.cnn_feature_shape(self.out_channels, self.patches, self.patches, self.conv)
 
     def forward(self, x):
-        x = self.ln(self.conv_in(x))
-
-        locality_h = self.localize_h(Utils.ChSwap(x))  # [out_channels * height, width, 1]
-        locality_w = self.localize_w(x.transpose(-3, -2).transpose(-2, -1))  # [out_channels * width, height, 1]
-
         lead_shape = x.shape[:-3]
-        patch_size = locality_h.shape[-2]
+
+        # [in_channels * height, width]
+        locality_h = self.localize_h(Utils.ChSwap(x)).squeeze(-1)
+        locality_w = self.localize_w(x.transpose(-3, -2).transpose(-2, -1))
+        locality_w = locality_w.view(*lead_shape, self.width, -1).transpose(-2, -1).view(locality_h.shape)
 
         # Assuming groups prioritized over channels in Conv2D... does it matter? Yes, want spatial inductive bias
-        locality = (locality_h * locality_w).view(*lead_shape, patch_size, -1, patch_size).transpose(-3, -2)
+        locality = (locality_h + locality_w).view(*lead_shape, self.patches, -1, self.patches).transpose(-3, -2)
 
-        out = self.conv_out(locality)
-
-        return out + x
+        out = self.conv(locality)
+        return out
 
 
 class Conv2DLocalized(nn.Module):
