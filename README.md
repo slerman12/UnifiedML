@@ -91,7 +91,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 Comes preinstalled.
 
 </details>
@@ -100,7 +100,7 @@ Comes preinstalled.
 
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 You can use ```AutoROM``` if you accept the license.
 
 ```
@@ -120,7 +120,7 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 Download MuJoCo from here: https://mujoco.org/download.
 
 Make a ```.mujoco``` folder in your home directory:
@@ -159,7 +159,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 ### RL
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 Humanoid example: 
 ```
 python Run.py task=dmc/humanoid_run
@@ -179,7 +179,7 @@ python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 ### Classification
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 DQN Agent on MNIST:
 
 ```
@@ -201,7 +201,7 @@ Evaluation with exponential moving average (EMA) of params can be toggled with t
 ### Generative Modeling
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 Via the ```generate=true``` flag:
 ```
 python Run.py task=classify/mnist generate=true
@@ -225,7 +225,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 ### Offline RL
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 From a saved experience replay, sans additional rollouts:
 
 ```
@@ -241,7 +241,7 @@ Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only do
 ### Saving
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
 ```
@@ -265,7 +265,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 ### Custom Architectures
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
 To train, for example MNIST, using a Vision Transformer as the Encoder:
@@ -308,7 +308,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 ### Distributed
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
@@ -341,7 +341,7 @@ Since both use the same experiment name, they will save and load from the same a
 ### Experiment naming, plotting
 <details>
 <summary><i>Click to open:open_book: </i></summary>
-
+<br>
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
 ```
