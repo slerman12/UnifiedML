@@ -271,7 +271,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 ### Distributed
 <details>
-<summary>Details</summary>
+<summary>##The simplest way...</summary>
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
