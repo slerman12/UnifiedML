@@ -281,7 +281,9 @@ python Run.py parallel=true
 
 which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
 
-To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag. For example, a data-collector agent and an update agent,
+To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag. 
+
+For example, a data-collector agent and an update agent,
 
 [comment]: <> (You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. )
 
@@ -302,7 +304,7 @@ Since both use the same experiment name, they will save and load from the same a
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
 ```
-python Run.py experiment=ExpName1 "plotting.plot_experiments=['ExpName1']"
+python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1']"
 ```
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
