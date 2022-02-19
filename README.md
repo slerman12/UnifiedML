@@ -185,9 +185,12 @@ python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 [comment]: <> (</details>)
 
 ### Classification
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 DQN Agent on MNIST:
 
@@ -205,12 +208,15 @@ Evaluation with exponential moving average (EMA) of params can be toggled with t
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
-</details>
+[comment]: <> (</details>)
 
 ### Generative Modeling
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 Via the ```generate=true``` flag:
 ```
@@ -230,7 +236,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
-</details>
+[comment]: <> (</details>)
 
 ### Offline RL
 <details>
