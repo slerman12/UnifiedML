@@ -303,8 +303,6 @@ Or Atari with ResNet:
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
 ```
 
-Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
-
 ResNet18 on CIFAR-10:
 
 ```
@@ -319,6 +317,8 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 ```
 
 Since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
+
+Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
 </details>
 
