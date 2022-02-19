@@ -142,10 +142,10 @@ Members:
   label_data: Label data
 """
 class TinyImageNetDataset(Dataset):
-    def __init__(self, root_dir, mode='train', preload=True, load_transform=None,
+    def __init__(self, root, train=True, preload=True, load_transform=None,
                  transform=None, download=False, max_samples=None):
-        tinp = TinyImageNetPaths(root_dir, download)
-        self.mode = mode
+        tinp = TinyImageNetPaths(root, download)
+        self.mode = mode = 'train' if train else 'test'
         self.label_idx = 1  # from [image, id, nid, box]
         self.preload = preload
         self.transform = transform

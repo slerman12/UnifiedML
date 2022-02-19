@@ -130,10 +130,8 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
 
     assert task in torchvision.datasets.__all__
 
-    if task == 'TinyImageNet':
-        dataset = TinyImageNetDataset
-    else:
-        dataset = getattr(torchvision.datasets, task)
+    dataset = TinyImageNetDataset if task == 'TinyImageNet' \
+        else getattr(torchvision.datasets, task)
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
 
