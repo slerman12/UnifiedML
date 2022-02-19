@@ -6,7 +6,6 @@ import math
 
 import torch
 from torch import nn
-from torch import einsum
 from opt_einsum_torch import EinsumPlanner
 import copy
 from einops import rearrange
@@ -48,10 +47,14 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        # device = torch.device(q.device)
+        memory_efficient, device, mem_limit = \
+            True, q.device, 0.2
 
-        # ee = EinsumPlanner(device, cuda_mem_limit=0.2)
-        # dots = ee.einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        einsum = torch.einsum
+
+        if memory_efficient:
+            ee = EinsumPlanner(device, cuda_mem_limit=mem_limit)
+            einsum = ee.einsum
 
         dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
@@ -60,8 +63,9 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        # ee = EinsumPlanner(device, cuda_mem_limit=0.2)
-        # out = ee.einsum('b h i j, b h j d -> b h i d', attn, v) * self.dim ** -0.5
+        if memory_efficient:
+            ee = EinsumPlanner(device, cuda_mem_limit=mem_limit)
+            einsum = ee.einsum
 
         attn = einsum('b h i j, b h j d -> b h i d', attn, v)  # todo maybe nn.MultiHeadAttention?
 
@@ -69,7 +73,9 @@ class CrossAttention(nn.Module):
 
         # Restores original shape
         out = out.view(shape)
-        # return out.view(shape).to(device)
+
+        if memory_efficient:
+            out = out.to(device)
 
         return out
 
