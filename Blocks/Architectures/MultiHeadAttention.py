@@ -49,7 +49,7 @@ class CrossAttention(nn.Module):
 
         # Memory efficient toggle, e.g., =0.5
         mem_limit = 0.4
-        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if mem_limit \
+        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
         dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
