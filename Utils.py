@@ -251,17 +251,13 @@ class ShiftMaxNorm(nn.Module):
         return y.view(*x.shape)
 
 
-# Swaps image dims between channel-last and channel-first format,
-# or does this conservatively before/after running sequence of modules
+# Swaps image dims between channel-last and channel-first format
 class ChannelSwap(nn.Module):
-    def __init__(self, *modules):
-        super().__init__()
-        self.Ms = nn.Sequential(*modules)
-
     def forward(self, x):
-        if len(self.Ms):
-            x = self.Ms(x.transpose(-1, -3))
         return x.transpose(-1, -3)
+
+
+ChSwap = ChannelSwap()
 
 
 # Context manager that temporarily switches on eval() mode for specified models; then resets them

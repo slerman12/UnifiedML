@@ -10,6 +10,7 @@ from torch import nn
 from einops import repeat, rearrange
 from einops.layers.torch import Rearrange
 
+from Blocks.Architectures import MLP
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
@@ -47,9 +48,7 @@ class ViT(nn.Module):
 
             self.repr = nn.Sequential(
                 nn.LayerNorm(out_channels),
-                nn.Linear(out_channels, 1024),
-                nn.ReLU(inplace=True),
-                nn.Linear(1024, output_dim)
+                MLP(out_channels, output_dim, 1024)
             )
 
     def repr_shape(self, c, h, w):

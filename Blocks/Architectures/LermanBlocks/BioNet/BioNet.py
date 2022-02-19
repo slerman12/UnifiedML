@@ -36,7 +36,7 @@ class BioNetV1(nn.Module):
         ventral = self.ventral_stream.trunk(input)
         dorsal = self.dorsal_stream.trunk(input)
 
-        t = Utils.ChannelSwap()  # Swaps between channels-first channels-last format
+        t = Utils.ChSwap  # Swaps between channels-first channels-last format
 
         for what, where, talk in zip(self.ventral_stream.ResNet,
                                      self.dorsal_stream.ResNet,
@@ -45,13 +45,13 @@ class BioNetV1(nn.Module):
             dorsal = t(talk(t(where(dorsal)),
                             t(ventral)))
 
-        out = self.projection(dorsal)
+        out = self.projection(t(dorsal))
         return out
 
     """Aside from the way the modules are put together (via two disentangled streams), 
     there is not much that we have not seen before in some form
     
-    We have a CNN [resnet, convmixer], ViT [worth 1000 words], CrossAttention [perceiver], 
+    We have a CNN [resnet, convnext], ViT [worth 1000 words], CrossAttention [perceiver], 
     SelfAttention [all you need], and average pooling [pool].
     
     Here is a schematic visualization for those unfamiliar with Pytorch:
