@@ -24,13 +24,12 @@ class Conv2DLocal(nn.Module):
 
         self.patches = patches
         self.in_channels, self.height, self.width = input_shape
-        self.out_channels = out_channels
 
         assert self.height % patches == 0 and self.width % patches == 0, 'spatial dims must be divisible by patch size'
 
         # Twice as time-intensive as fully-disjoint MLP convolution, but orders more memory efficient
         self.localize_h = nn.Conv2d(self.height, out_channels * self.height,  # Kernel transforms the height
-                                    (1, self.in_channels), groups=patches)  # Over disjoint patches
+                                    (self.in_channels, 1), groups=patches)  # Over disjoint patches
         self.localize_w = nn.Conv2d(self.width, out_channels * self.width, (1, self.in_channels), groups=patches)
 
         self.conv = nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding, dilation, groups=groups)
@@ -41,9 +40,8 @@ class Conv2DLocal(nn.Module):
     def forward(self, x):
         lead_shape = x.shape[:-3]
 
-        locality_h = self.localize_h(Utils.ChSwap(x)).view(*lead_shape, -1, self.height, self.width)
-        locality_w = self.localize_w(x.transpose(-3, -2).transpose(-2, -1))  # [out_channels * width, height, 1]
-        locality_w = locality_w.view(*lead_shape, -1, self.width, self.height).transpose(-2, -1)
+        locality_h = self.localize_h(x.transpose(-3, -2)).view(*lead_shape, -1, self.height, self.width)
+        locality_w = self.localize_w(Utils.ChSwap(x)).view(*lead_shape, -1, self.width, self.height).transpose(-2, -1)
 
         locality = locality_h + locality_w
 
