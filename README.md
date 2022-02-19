@@ -89,19 +89,23 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 ## 1. Classify
 
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 Comes preinstalled.
 
-</details>
+[comment]: <> (</details>)
 
 ## 2. Atari Arcade
 
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 You can use ```AutoROM``` if you accept the license.
 
@@ -116,13 +120,15 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-</details>
+[comment]: <> (</details>)
 
 ## 3. DeepMind Control
 
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 Download MuJoCo from here: https://mujoco.org/download.
 
@@ -147,7 +153,7 @@ pip install --user dm_control
 
 to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
-</details>
+[comment]: <> (</details>)
 
 # :file_cabinet: Key files
 
