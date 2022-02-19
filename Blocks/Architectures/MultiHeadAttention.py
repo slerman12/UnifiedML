@@ -193,31 +193,32 @@ class AttentionPool(nn.Module):
             heads = math.gcd(output_dim, 8)  # Approx 8
 
         self.pool = nn.Sequential(Utils.ChSwap,
-                                  # Transformer
-                                  *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
-                                                       value_dim=output_dim) for i in range(depth)],
-                                  # Alternatively/additionally could also recurse
-                                  *([SelfAttentionBlock(output_dim, heads)] * recursions),
+                                  # Perceiver
+                                  *[nn.Sequential(
+                                      CrossAttentionBlock(dim=channels_in if i == 0 else output_dim,
+                                                         heads=heads, value_dim=output_dim),
+                                      # Alternatively/additionally could also recurse
+                                      *([SelfAttentionBlock(output_dim, heads)] * recursions)) for i in range(depth)],
                                   Utils.ChSwap, nn.AdaptiveAvgPool2d((1, 1)),
                                   nn.Flatten(-3))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
 
-    def forward(self, *x):
+    def forward(self, *x, context=None):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                   % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
         # Operate on last 3 dims
         x = x.view(-1, *x.shape[-3:])
 
-        x = self.pool(x)
+        x = self.pool(x, context)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
