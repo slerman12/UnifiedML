@@ -238,3 +238,28 @@ class BioNet(nn.Module):
 
         out = self.projection(self.repr(dorsal))
         return out
+
+
+"""Relates to CrossViT, but BioNet is different from ANY other model in the following ways:
+1. "What" and "Where" pathways - while past works have divided vision architectures into dual streams, 
+    dating all the way back to even the original AlexNet(!), BioNet takes inspiration from neuroscience
+    to separate concerns according to a non-locality and locality stream respectively.
+2. BioNet is a cognitive architecture. It seeks to hypothesize a model for an observed neocortical phenomenon,
+    and offer a more-technical justification for this structure than what a top-down neuroscience approach can offer,
+    in terms of invariance vs. equivariance and locality.
+3. BioNet consists of a novel and simple locality block that we refer to simply as Conv2dLocal which is efficient,
+    consistent with biological observation in ways that we will elaborate, and does not rely on locality inputs.
+4. The non-locality (dorsal - "What") stream consists of stacked dilations and rotations whose full 
+    non-locality of processing provides a truly /invariant/ CNN stream, not just equivariant. 
+    This non-locality is preserved through the full course of the neural architecture.
+5. We evaluate in RL rather than (just) computer vision, which importantly tests the most-modern of the two-stream
+    vision hypotheses: perceptual-motor. While object-locational theory has data dating into the mid 20th
+    century supporting it, more modern theories have challenged it. Our architecture reconciles both, the older
+    what-where two-stream hypothesis and the more modern visuo-motor two-stream hypothesis, neither of which have been
+    abjectly discredited nor concretely reconciled yet. 
+Also, the cross-attention of BioNet is capacitively the same as self-attention, while reducing the relational reasoning
+time complexity down to linear w.r.t. number features, making it a promising alternative to ViT if future works can
+justify its use in the computer vision setting beyond what we aim to do here.
+The new Conv2dLocal layer also has considerable potential, as an efficient parametric localizer, beyond just RL.
+Diagram: blocks in disjoint patches swiping horizontally, blocks vertically, different colors, two separate image copies 
+"""
