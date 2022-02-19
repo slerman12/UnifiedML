@@ -377,6 +377,20 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 All files are designed to be useful for educational and innovational purposes in their simplicity and structure.
 
+# :handshake: Contributing
+
+Contributers needed, much more in store!
+
+Please, donate here to help with affording compute and getting benchmarks ready:
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
+
+We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.
+
+Open an issue or email [**agi.\_\_init\_\_@gmail.com**](&#40;mailto:agi.init@gmail.com&#41;) to discuss anything relating to funding or adding new features collaboratively. Appreciated!
+
+A list of features in progress is available [here]().
+
 # Note
 
 ### If you are only interested in the RL portion,
