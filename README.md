@@ -302,20 +302,20 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
-Atari with ResNet:
+Atari with ViT:
 
 ```
-python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
+python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
 <details>
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
-To train, for example MNIST, using a Vision Transformer as the Encoder:
+ResNet18 on CIFAR-10:
 
 ```
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT 
+python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
 ```
 
 A GAN with a CNN Discriminator:
@@ -332,12 +332,6 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 ```
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
-
-ResNet18 on CIFAR-10:
-
-```
-python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
-```
 
 </details>
 
