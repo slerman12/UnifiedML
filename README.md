@@ -269,9 +269,9 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 [comment]: <> (Since otherwise repr_shape is flattened to channel dim, with no features for the attention to pool.)
 
-<details>
-<summary>Distributed</summary>
 ### Distributed
+<details>
+<summary>Details</summary>
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
@@ -301,6 +301,7 @@ in concurrent processes.
 
 Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
 </details>
+
 ### Experiment naming, plotting
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
