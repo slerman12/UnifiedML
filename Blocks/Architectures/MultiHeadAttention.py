@@ -6,7 +6,7 @@ import math
 
 import torch
 from torch import nn
-from opt_einsum_torch import EinsumPlanner
+import opt_einsum_torch
 import copy
 from einops import rearrange
 
@@ -51,7 +51,7 @@ class CrossAttention(nn.Module):
         device = q.device
         mem_limit = 0.2
 
-        einsum = EinsumPlanner(device, cuda_mem_limit=mem_limit).einsum if memory_efficient \
+        einsum = opt_einsum_torch.einsum if memory_efficient \
             else torch.einsum
 
         dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
@@ -60,9 +60,6 @@ class CrossAttention(nn.Module):
 
         # "Talking heads"
         attn = self.talk_h(attn)
-
-        einsum = EinsumPlanner(device, cuda_mem_limit=mem_limit).einsum if memory_efficient \
-            else torch.einsum
 
         attn = einsum('b h i j, b h j d -> b h i d', attn, v)  # todo maybe nn.MultiHeadAttention?
 
