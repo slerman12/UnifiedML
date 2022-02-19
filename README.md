@@ -308,26 +308,26 @@ To train, for example MNIST, using a Vision Transformer as the Encoder:
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
-<details>
-<summary><i>Click for more examples :open_book: </i></summary>
-<br>
-
 A GAN with a CNN Discriminator:
 
 ```
 python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
-Or Atari with ResNet:
-
-```
-python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
-```
-
 ResNet18 on CIFAR-10:
 
 ```
 python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
+```
+
+<details>
+<summary><i>Click for more examples :open_book: </i></summary>
+<br>
+
+Atari with ResNet:
+
+```
+python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
