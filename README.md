@@ -246,6 +246,39 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 </details>
 
+### Distributed
+<details>
+<summary></summary>
+
+[comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
+
+The simplest way to do distributed training is to use the ```parallel=true``` flag,
+
+```
+python Run.py parallel=true 
+```
+
+which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
+
+To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag.
+
+For example, a data-collector agent and an update agent,
+
+[comment]: <> (You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. )
+
+```
+python Run.py update_per_steps=0 replay.save=true load_per_steps=1 
+```
+
+```
+python Run.py offline=true save_per_steps=2
+```
+
+in concurrent processes.
+
+Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
+</details>
+
 ### Custom Architectures
 <details>
 <summary></summary>
@@ -272,57 +305,21 @@ python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
-[comment]: <> (ResNet18 on CIFAR-10:)
-
-[comment]: <> (```)
-
-[comment]: <> (python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 )
-
-[comment]: <> (```)
-
-[comment]: <> (Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The Null architecture disables that flattening component.)
-
-[comment]: <> (```)
-
-[comment]: <> (python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null)
-
-[comment]: <> (```)
-
-[comment]: <> (Since otherwise repr_shape is flattened to channel dim, with no features for the attention to pool.)
-
-</details>
-
-### Distributed
-<details>
-<summary></summary>
-
-[comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
-
-The simplest way to do distributed training is to use the ```parallel=true``` flag,
+ResNet18 on CIFAR-10:
 
 ```
-python Run.py parallel=true 
+python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
 ```
 
-which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
-
-To share whole agents across multiple parallel instances, you can use the ```load_per_steps=``` flag. 
-
-For example, a data-collector agent and an update agent,
-
-[comment]: <> (You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. )
+Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The Null architecture disables that flattening component.
 
 ```
-python Run.py update_per_steps=0 replay.save=true load_per_steps=1 
-```
+python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null
 
 ```
-python Run.py offline=true save_per_steps=2
-```
 
-in concurrent processes.
+Since otherwise repr_shape is flattened to channel dim, with no features for the attention to pool.
 
-Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
 </details>
 
 ### Experiment naming, plotting
