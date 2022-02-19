@@ -392,7 +392,7 @@ Open an issue or email [**agi.\_\_init\_\_@gmail.com**](&#40;mailto:agi.init@gma
 <details>
 <summary><i>A list of features in progress is available here :open_book: </i></summary>
 <br>
-todo
+in progress
 <\details>
 
 # Note
