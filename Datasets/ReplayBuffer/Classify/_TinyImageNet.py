@@ -42,9 +42,11 @@ TinyImageNetPath
 └── words.txt
 """
 
+
 def download_and_unzip(URL, root_dir):
     error_message = "Download is not yet implemented. Please, go to {URL} urself."
     raise NotImplementedError(error_message.format(URL))
+
 
 def _add_channels(img, total_channels=3):
     while len(img.shape) < 3:  # third axis is the channels
@@ -52,6 +54,7 @@ def _add_channels(img, total_channels=3):
     while(img.shape[-1]) < 3:
         img = np.concatenate([img, img[:, :, -1:]], axis=-1)
     return img
+
 
 """Creates a paths datastructure for the tiny imagenet.
 
@@ -66,6 +69,8 @@ Members:
   data_dict:
 
 """
+
+
 class TinyImageNetPaths:
     def __init__(self, root_dir, download=False):
         if download:
@@ -95,15 +100,10 @@ class TinyImageNetPaths:
                 labels = list(map(lambda x: x.strip(), labels.split(',')))
                 self.nid_to_words[nid].extend(labels)
 
-        self.paths = {
-            'train': [],  # [img_path, id, nid, box]
-            'val': [],  # [img_path, id, nid, box]
-            'test': []  # img_path
-        }
+        self.paths = {'train': [], 'val': [], 'test': list(map(lambda x: os.path.join(test_path, x),
+                                                               os.listdir(test_path)))}
 
         # Get the test paths
-        self.paths['test'] = list(map(lambda x: os.path.join(test_path, x),
-                                      os.listdir(test_path)))
         # Get the validation paths and labels
         with open(os.path.join(val_path, 'val_annotations.txt')) as valf:
             for line in valf:
@@ -126,6 +126,7 @@ class TinyImageNetPaths:
                     bbox = int(x0), int(y0), int(x1), int(y1)
                     self.paths['train'].append((fname, label_id, nid, bbox))
 
+
 """Datastructure for the tiny image dataset.
 
 Args:
@@ -141,6 +142,8 @@ Members:
   img_data: Image data
   label_data: Label data
 """
+
+
 class TinyImageNetDataset(Dataset):
     def __init__(self, root, train=True, preload=True, load_transform=None,
                  transform=None, download=False, max_samples=None):
