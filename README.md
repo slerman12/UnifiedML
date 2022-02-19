@@ -389,7 +389,10 @@ We are a nonprofit, single-PhD student team whose bank account is quickly hemmor
 
 Open an issue or email [**agi.\_\_init\_\_@gmail.com**](&#40;mailto:agi.init@gmail.com&#41;) to discuss anything relating to funding or adding new features collaboratively. Appreciated!
 
-A list of features in progress is available [here]().
+<details>
+<summary><i>A list of features in progress is available here :open_book: </i></summary>
+<br>
+<\details>
 
 # Note
 
