@@ -48,7 +48,7 @@ class CrossAttention(nn.Module):
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
         # Memory efficient toggle, e.g., =0.5
-        mem_limit = 0.4
+        mem_limit = False
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
@@ -66,7 +66,7 @@ class CrossAttention(nn.Module):
         # Restores original shape
         out = out.view(shape)
 
-        if mem_limit:
+        if 0 < mem_limit < 1:
             out = out.to(q.device)
 
         return out
