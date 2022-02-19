@@ -8,6 +8,8 @@ import Utils
 
 from Blocks.Architectures import ResNet, MLP
 from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock
+from Blocks.Architectures.Vision.CNN import CNN
+from Blocks.Architectures.LermanBlocks.BioNet.Locality import LocalityCNN
 
 
 class BioNetV1(nn.Module):
@@ -121,9 +123,6 @@ class BioNetV1(nn.Module):
         smaller computational footprint compared to ViT. We call this bi-occular network, BioNet."""
 
 
-
-
-
 # We can also efficiently substitute the patched MLPs with patched ViTs.
 
 # The operation is linear w.r.t. the number of patches. The ViTs are confined to their respective patches
@@ -143,8 +142,44 @@ class BioNetV1(nn.Module):
 # a-leap-forward-in-computer-vision-facebook-ai-says-masked-autoencoders-are-scalable-vision-32c08fadd41f
 
 
+class BioNetV2(nn.Module):
+    """Disentangling "What" And "Where" Pathways In CNNs
+        - V2: Uses two CNNs, one local with more channels"""
+
+    def __init__(self, input_shape, out_channels=32, heads=8, output_dim=None):
+        super().__init__()
+        self.ventral_stream = CNN(input_shape, out_channels, depth=8)
+        self.dorsal_stream = LocalityCNN(input_shape, out_channels=128, depth=8)
+
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(out_channels, heads, 128)
+                                         for _ in range(8)])
+
+        self.projection = nn.Identity() if output_dim is None \
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                               nn.Flatten(),
+                               MLP(out_channels, output_dim, 1024))
+
+    def repr_shape(self, c, h, w):
+        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
+
+    def forward(self, input):
+        ventral = self.ventral_stream.trunk(input)
+        dorsal = self.dorsal_stream.trunk(input)
+
+        t = Utils.ChSwap  # Swaps between channels-first channels-last format
+
+        for what, where, talk in zip(self.ventral_stream.CNN,
+                                     self.dorsal_stream.CNN,
+                                     self.cross_talk):
+            ventral = what(ventral)
+            dorsal = t(talk(t(where(dorsal)),
+                            t(ventral)))
+
+        out = self.projection(t(dorsal))
+        return out
+
+
 from Blocks.Architectures.LermanBlocks.BioNet.NonLocality import NonLocalityCNN
-from Blocks.Architectures.LermanBlocks.BioNet.Locality import LocalityViT
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
