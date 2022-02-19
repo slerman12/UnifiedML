@@ -354,11 +354,9 @@ Since both use the same experiment name, they will save and load from the same a
 
 ### Experiment naming, plotting
 
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
+<details>
+<summary><i>Click to open :open_book: </i></summary>
+<br>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
@@ -368,7 +366,7 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1']"
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
 
-[comment]: <> (</details>)
+</details>
 
 # :bar_chart: Agents & Performances
 
