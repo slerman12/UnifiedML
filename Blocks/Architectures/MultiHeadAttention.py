@@ -60,7 +60,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        v = self.ln_v(v)
+        v = self.ln_v(v)  # Makes sure the values get an equal "vote"
 
         # Memory efficient toggle, e.g., =0.5
         mem_limit = False
@@ -117,7 +117,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, ln_input=True, ln_v=True, talk_h=False,
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, ln_input=False, ln_v=True, talk_h=False,
                  optim_lr=None, ema_tau=None):
         super().__init__()
 
@@ -132,7 +132,7 @@ class CrossAttentionBlock(nn.Module):
                                    talk_h)
         self.mlp = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
 
-        self.ln_input = nn.LayerNorm(dim) if ln_input else nn.Identity()  # My variant, norms input by default
+        self.ln_input = nn.LayerNorm(dim) if ln_input else nn.Identity()  # My variant, but default False
 
         self.ln_attn = nn.LayerNorm(context_dim)
         self.ln = nn.LayerNorm(value_dim)
@@ -178,7 +178,7 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, heads=None, output_dim=None, input_shape=None):
+    def __init__(self, channels_in=32, depth=1, heads=None, output_dim=None, input_shape=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -193,9 +193,12 @@ class AttentionPool(nn.Module):
             heads = math.gcd(output_dim, 8)  # Approx 8
 
         self.pool = nn.Sequential(Utils.ChSwap,
-                                  SelfAttentionBlock(dim=channels_in, heads=heads,
-                                                     value_dim=output_dim), Utils.ChSwap,
-                                  nn.AdaptiveAvgPool2d((1, 1)),
+                                  # Transformer
+                                  *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
+                                                       value_dim=output_dim) for i in range(depth)],
+                                  # Alternatively could also recurse
+                                  # *([SelfAttentionBlock(output_dim, heads)] * depth),
+                                  Utils.ChSwap, nn.AdaptiveAvgPool2d((1, 1)),
                                   nn.Flatten(-3))
 
     def repr_shape(self, c, h, w):
