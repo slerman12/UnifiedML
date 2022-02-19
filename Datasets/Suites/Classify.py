@@ -128,7 +128,7 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
      'Places365', 'TinyImageNet')
     """
 
-    assert task in torchvision.datasets.__all__
+    assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'
 
     dataset = TinyImageNetDataset if task == 'TinyImageNet' \
         else getattr(torchvision.datasets, task)
