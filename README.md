@@ -387,7 +387,7 @@ Please, donate to help with affording compute and getting Benchmarks ready:
 
 We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.
 
-[Please contact **agi.\_\_init\_\_@gmail.com**](mailto:agi.init@gmail.com) to discuss anything relating to funding or adding new features collaboratively. Appreciated!
+To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_@gmail.com**](mailto:agi.init@gmail.com). Appreciated!
 
 <details>
 <summary><i>List of features in progress :open_book: </i></summary>
