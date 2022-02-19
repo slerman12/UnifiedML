@@ -13,7 +13,7 @@ from torchvision.transforms import functional as F
 from dm_env import specs, StepType
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
-from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNetDataset
+from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ClassifyEnv:
@@ -130,7 +130,7 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
 
     assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'
 
-    dataset = TinyImageNetDataset if task == 'TinyImageNet' \
+    dataset = TinyImageNet if task == 'TinyImageNet' \
         else getattr(torchvision.datasets, task)
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
