@@ -245,9 +245,12 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 [comment]: <> (</details>)
 
 ### Offline RL
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 From a saved experience replay, sans additional rollouts:
 
@@ -259,12 +262,15 @@ Assumes a replay [is saved](#saving).
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
-</details>
+[comment]: <> (</details>)
 
 ### Saving
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -284,7 +290,7 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
-</details>
+[comment]: <> (</details>)
 
 ### Custom Architectures
 
