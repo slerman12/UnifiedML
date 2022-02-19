@@ -41,13 +41,11 @@ class Conv2DLocal(nn.Module):
     def forward(self, x):
         lead_shape = x.shape[:-3]
 
-        # [in_channels * height, width]
-        locality_h = self.localize_h(Utils.ChSwap(x)).squeeze(-1)
-        locality_w = self.localize_w(x.transpose(-3, -2).transpose(-2, -1))
-        locality_w = locality_w.view(*lead_shape, self.width, -1).transpose(-2, -1).view(locality_h.shape)
+        locality_h = self.localize_h(Utils.ChSwap(x)).view(*lead_shape, -1, self.height, self.width)
+        locality_w = self.localize_w(x.transpose(-3, -2).transpose(-2, -1))  # [out_channels * width, height, 1]
+        locality_w = locality_w.view(*lead_shape, -1, self.width, self.height).transpose(-2, -1)
 
-        # Assuming groups prioritized over channels in Conv2D... does it matter? Yes, want spatial inductive bias
-        locality = (locality_h + locality_w).view(*lead_shape, self.patches, -1, self.patches).transpose(-3, -2)
+        locality = locality_h + locality_w
 
         out = self.conv(locality)
         return out
