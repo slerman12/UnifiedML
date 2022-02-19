@@ -184,7 +184,7 @@ Evaluation with exponential moving average (EMA) of params can be toggled with t
 
 ### Generative Modeling
 <details>
-<summary>Via the...</summary>
+<summary></summary>
 
 Via the ```generate=true``` flag:
 ```
@@ -224,7 +224,7 @@ Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only do
 
 ### Saving
 <details>
-<summary>Agents can be...</summary>
+<summary></summary>
 
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -248,7 +248,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 ### Custom Architectures
 <details>
-<summary>One can also...</summary>
+<summary></summary>
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
@@ -294,7 +294,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 ### Distributed
 <details>
-<summary>The simplest way...</summary>
+<summary></summary>
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
