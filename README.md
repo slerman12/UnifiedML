@@ -142,7 +142,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 ### RL
 <details>
-<summary>Humanoid example:</summary>
+<summary></summary>
 
 Humanoid example: 
 ```
@@ -162,7 +162,7 @@ python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 
 ### Classification
 <details>
-<summary>DQN Agent on MNIST:</summary>
+<summary></summary>
 
 DQN Agent on MNIST:
 
@@ -208,7 +208,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 ### Offline RL
 <details>
-<summary>From a saved experience replay...</summary>
+<summary></summary>
 
 From a saved experience replay, sans additional rollouts:
 
@@ -327,7 +327,7 @@ Since both use the same experiment name, they will save and load from the same a
 
 ### Experiment naming, plotting
 <details>
-<summary>The...</summary>
+<summary></summary>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
