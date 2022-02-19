@@ -324,12 +324,6 @@ A GAN with a CNN Discriminator:
 python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
-ResNet18 on CIFAR-10:
-
-```
-python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
-```
-
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
 ```
@@ -338,6 +332,12 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 ```
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
+
+ResNet18 on CIFAR-10:
+
+```
+python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
+```
 
 </details>
 
