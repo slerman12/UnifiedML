@@ -271,7 +271,6 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 <details>
 <summary>Distributed</summary>
-<pre>
 ### Distributed
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
@@ -301,8 +300,7 @@ python Run.py offline=true save_per_steps=2
 in concurrent processes.
 
 Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
-</pre>
-
+</details>
 ### Experiment naming, plotting
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
