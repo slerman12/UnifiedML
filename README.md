@@ -309,7 +309,7 @@ python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architect
 ```
 
 <details>
-<summary><i>Click to see more examples :open_book: </i></summary>
+<summary><i>Click for more examples :open_book: </i></summary>
 <br>
 
 A GAN with a CNN Discriminator:
@@ -339,9 +339,11 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
+</details>
+
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
-</details>
+[comment]: <> (</details>)
 
 ### Distributed
 
