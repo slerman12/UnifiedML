@@ -294,9 +294,11 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 ### Custom Architectures
 
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
@@ -305,6 +307,10 @@ To train, for example MNIST, using a Vision Transformer as the Encoder:
 ```
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
+
+<details>
+<summary><i>Click to see more examples :open_book: </i></summary>
+<br>
 
 A GAN with a CNN Discriminator:
 
