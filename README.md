@@ -141,6 +141,8 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 # :mag: Sample scripts
 
 ### RL
+<details>
+<summary>Humanoid example:</summary>
 
 Humanoid example: 
 ```
@@ -156,8 +158,11 @@ SPR Agent in DeepMind Control:
 ```
 python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 ```
+</details>
 
 ### Classification
+<details>
+<summary>DQN Agent on MNIST:</summary>
 
 DQN Agent on MNIST:
 
@@ -176,6 +181,8 @@ Evaluation with exponential moving average (EMA) of params can be toggled with t
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
 ### Generative Modeling
+<details>
+<summary>Via the...</summary>
 
 Via the ```generate=true``` flag:
 ```
@@ -195,7 +202,11 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
+</details>
+
 ### Offline RL
+<details>
+<summary>From a saved experience replay...</summary>
 
 From a saved experience replay, sans additional rollouts:
 
@@ -207,7 +218,11 @@ Assumes a replay [is saved](#saving).
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
+</details>
+
 ### Saving
+<details>
+<summary>Agents can be...</summary>
 
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -227,7 +242,11 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
+</details>
+
 ### Custom Architectures
+<details>
+<summary>One can also...</summary>
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
@@ -269,9 +288,11 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 [comment]: <> (Since otherwise repr_shape is flattened to channel dim, with no features for the attention to pool.)
 
+</details>
+
 ### Distributed
 <details>
-<summary>##The simplest way...</summary>
+<summary>The simplest way...</summary>
 
 [comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
@@ -303,6 +324,8 @@ Since both use the same experiment name, they will save and load from the same a
 </details>
 
 ### Experiment naming, plotting
+<details>
+<summary>The...</summary>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
@@ -311,6 +334,8 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1']"
 ```
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
+
+</details>
 
 # :bar_chart: Agents & Performances
 
