@@ -44,10 +44,13 @@ class CrossAttention(nn.Module):
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
                                     nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
 
-    def forward(self, x, context):
+    def forward(self, x, context=None):
         # Conserves shape
         shape = x.shape
         assert shape[-1] == self.dim, f'{shape[-1]}, {self.dim}'
+
+        if context is None:
+            context = x
 
         x = x.flatten(1, -2)
         context = context.flatten(1, -2)
@@ -109,8 +112,8 @@ class CrossAttention(nn.Module):
 
 
 class SelfAttention(CrossAttention):
-    def forward(self, x, *args):
-        return super().forward(x, x)
+    def forward(self, x, *_):
+        return super().forward(x)
 
 
 class CrossAttentionBlock(nn.Module):
