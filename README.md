@@ -321,7 +321,7 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 ```
 
 <details>
-<summary><i>Click for more examples :open_book: </i></summary>
+<summary><i>More examples :open_book: </i></summary>
 <br>
 
 Atari with ResNet:
