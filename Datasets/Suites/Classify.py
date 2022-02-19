@@ -13,7 +13,7 @@ from torchvision.transforms import functional as F
 from dm_env import specs, StepType
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
-from Datasets.ReplayBuffer.Classify.TinyImageNet import TinyImageNetDataset
+from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNetDataset
 
 
 class ClassifyEnv:
