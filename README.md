@@ -357,7 +357,7 @@ python Run.py parallel=true
 
 which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
 
-To share whole agents across multiple parallel instances,
+To share whole agents across multiple parallel instances, ...
 
 <details>
 <summary><i>Click to open :open_book: </i></summary>
