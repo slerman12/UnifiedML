@@ -287,6 +287,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 </details>
 
 ### Custom Architectures
+
 <details>
 <summary><i>Click to open :open_book: </i></summary>
 <br>
@@ -331,6 +332,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 </details>
 
 ### Distributed
+
 <details>
 <summary><i>Click to open :open_book: </i></summary>
 <br>
@@ -366,9 +368,11 @@ Since both use the same experiment name, they will save and load from the same a
 
 ### Experiment naming, plotting
 
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+
+[comment]: <> (<br>)
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
@@ -378,7 +382,7 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1']"
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
 
-</details>
+[comment]: <> (</details>)
 
 # :bar_chart: Agents & Performances
 
