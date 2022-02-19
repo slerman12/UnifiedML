@@ -49,7 +49,7 @@ class CrossAttention(nn.Module):
 
         memory_efficient = True
         device = q.device
-        mem_limit = 0.2
+        mem_limit = 0.5
 
         einsum = EinsumPlanner(device, cuda_mem_limit=mem_limit).einsum if memory_efficient \
             else torch.einsum
@@ -60,9 +60,6 @@ class CrossAttention(nn.Module):
 
         # "Talking heads"
         attn = self.talk_h(attn)
-
-        # einsum = EinsumPlanner(device, cuda_mem_limit=mem_limit).einsum if memory_efficient \
-        #     else torch.einsum
 
         attn = einsum('b h i j, b h j d -> b h i d', attn, v)
 
