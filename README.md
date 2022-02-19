@@ -318,6 +318,12 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
+To train, for example MNIST, using a Vision Transformer as the Encoder:
+
+```
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT
+```
+
 A GAN with a CNN Discriminator:
 
 ```
