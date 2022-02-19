@@ -379,7 +379,7 @@ All files are designed to be useful for educational and innovational purposes in
 
 # :handshake: Contributing
 
-Contributers needed, much more in store!
+Contributers needed.
 
 Please, donate here to help with affording compute and getting benchmarks ready:
 
