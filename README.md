@@ -89,7 +89,12 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 ## 1. Classify
 
+<details>
+<summary></summary>
+
 Comes preinstalled.
+
+</details>
 
 ## 2. Atari Arcade
 
