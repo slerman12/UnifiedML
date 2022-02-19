@@ -93,6 +93,9 @@ Comes preinstalled.
 
 ## 2. Atari Arcade
 
+<details>
+<summary></summary>
+
 You can use ```AutoROM``` if you accept the license.
 
 ```
@@ -105,7 +108,13 @@ mkdir ./Datasets/Suites/Atari_ROMS
 AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
+
+</details>
+
 ## 3. DeepMind Control
+
+<details>
+<summary></summary>
 
 Download MuJoCo from here: https://mujoco.org/download.
 
@@ -129,6 +138,8 @@ pip install --user dm_control
 ```
 
 to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
+
+</details>
 
 # :file_cabinet: Key files
 
