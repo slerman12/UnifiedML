@@ -302,6 +302,16 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
+Atari with ResNet:
+
+```
+python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
+```
+
+<details>
+<summary><i>See more examples :open_book: </i></summary>
+<br>
+
 To train, for example MNIST, using a Vision Transformer as the Encoder:
 
 ```
@@ -318,16 +328,6 @@ ResNet18 on CIFAR-10:
 
 ```
 python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
-```
-
-<details>
-<summary><i>See more examples :open_book: </i></summary>
-<br>
-
-Atari with ResNet:
-
-```
-python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ResNet 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
