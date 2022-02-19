@@ -47,9 +47,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        memory_efficient = False
-        device = q.device
-        mem_limit = 0.2
+        memory_efficient = True  # Can pass in cuda_mem_limit arg, e.g., =0.2
 
         einsum = opt_einsum_torch.einsum if memory_efficient \
             else torch.einsum
@@ -61,7 +59,7 @@ class CrossAttention(nn.Module):
         # "Talking heads"
         attn = self.talk_h(attn)
 
-        attn = einsum('b h i j, b h j d -> b h i d', attn, v)  # todo maybe nn.MultiHeadAttention?
+        attn = einsum('b h i j, b h j d -> b h i d', attn, v)
 
         out = rearrange(attn, 'b h n d -> b n (h d)')
 
@@ -69,7 +67,7 @@ class CrossAttention(nn.Module):
         out = out.view(shape)
 
         if memory_efficient:
-            out = out.to(device)
+            out = out.to(x.device)
 
         return out
 
