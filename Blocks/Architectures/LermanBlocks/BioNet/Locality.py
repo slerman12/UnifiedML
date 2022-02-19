@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import torch
 from torch import nn
 
 import Utils
@@ -18,14 +19,14 @@ class Conv2dLocal(nn.Conv2d):
                  groups=1, bias=True, padding_mode='zeros', patches=16):
         in_channels, self.height, self.width = input_shape
 
-        super().__init__(in_channels, out_channels, kernel_size, stride,
+        super().__init__(out_channels - 2 * (out_channels % 2), out_channels, kernel_size, stride,
                          padding, dilation, groups, bias, padding_mode)
 
         assert self.height % patches == 0 and self.width % patches == 0, 'spatial dims must be divisible by num patches'
 
         # Twice as time-intensive as fully-disjoint MLP convolution, but orders more memory efficient
-        self.localize_h = nn.Conv2d(self.height, out_channels * self.height, (in_channels, 1), groups=patches)
-        self.localize_w = nn.Conv2d(self.width, out_channels * self.width,  # Kernel transforms the width
+        self.localize_h = nn.Conv2d(self.height, out_channels // 2 * self.height, (in_channels, 1), groups=patches)
+        self.localize_w = nn.Conv2d(self.width, out_channels // 2 * self.width,  # Kernel transforms the width
                                     (1, in_channels), groups=patches)  # over width-disjoint patches
 
     def repr_shape(self, c, h, w):
@@ -37,7 +38,7 @@ class Conv2dLocal(nn.Conv2d):
         locality_h = self.localize_h(x.transpose(-3, -2)).view(*lead_shape, -1, self.height, self.width)
         locality_w = self.localize_w(Utils.ChSwap(x)).view(*lead_shape, -1, self.width, self.height).transpose(-2, -1)
 
-        locality = locality_h + locality_w
+        locality = torch.cat([locality_h, locality_w], -3)
 
         conv = self._conv_forward(locality, self.weight, self.bias)
         return conv

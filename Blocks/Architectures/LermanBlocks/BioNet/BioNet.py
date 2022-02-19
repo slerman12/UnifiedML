@@ -104,6 +104,25 @@ class BioNetV1(nn.Module):
     as opposed to other configurations, and disentanglement of perceptual signals, visuo-attention, 
     and motor function in the dorsal region."""
 
+    """We present a non-Transformer grid-processor for structured, 
+        arbitrary-size grids of vector inputs (e.g. image patches, audio waveform, etc.). 
+        The human brain processes sensory inputs with two interacting but distinct pathways, 
+        often referred to as “what” and “where” pathways. These are formally called 
+        the ventral and dorsal streams, beginning in the V1 Occipital region and diverging 
+        into the temporal lobe and lower parietal lobe respectively. We show that separating 
+        a CNN into analogous non-locality and locality streams, preserving the non-locality 
+        of the former throughout, with careful cross-attentions and skip connections mediating 
+        between the two, boosts classification accuracy in audio-visual and perceptual-motor tasks, 
+        while requiring linear-time-only operations w.r.t. grid size. 
+        With this separation of concerns, we get relational reasoning across feature vectors, 
+        one of the key advantages of transformers, localization without the need for locality 
+        embeddings (though we still partially employ them), configured simply in 
+        a biologically-inspired architecture that is faster to train and leaves a 
+        smaller computational footprint compared to ViT. We call this bi-occular network, BioNet."""
+
+
+
+
 
 # We can also efficiently substitute the patched MLPs with patched ViTs.
 
