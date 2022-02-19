@@ -381,7 +381,7 @@ All files are designed to be useful for educational and innovational purposes in
 
 Contributers needed.
 
-Please, donate here to help with affording compute and getting benchmarks ready:
+Please, donate to help with affording compute and getting Benchmarks ready:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
 
