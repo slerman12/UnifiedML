@@ -349,7 +349,7 @@ python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> 
 
 You can imagine training a GAN CNN and then seamlessly using it for RL.
 
-[comment]: <> (<br>)
+<br>
 </details>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
