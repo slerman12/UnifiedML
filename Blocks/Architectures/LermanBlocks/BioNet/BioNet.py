@@ -151,7 +151,7 @@ class BioNetV2(nn.Module):
         self.ventral_stream = CNN(input_shape, out_channels, depth=8)
         self.dorsal_stream = CNN(input_shape, out_channels=128, depth=8)
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(out_channels, heads, 128)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(128, heads, out_channels)
                                          for _ in range(8)])
 
         self.projection = nn.Identity() if output_dim is None \
