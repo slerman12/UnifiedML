@@ -300,7 +300,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 [comment]: <> (<br>)
 
-One can also optionally pass in pre-configured or custom architectures such as those defined in ```./Blocks/Architectures```.
+One can also optionally pass in pre-configured architectures such as those defined in ```./Blocks/Architectures```.
 
 Atari with ViT:
 
