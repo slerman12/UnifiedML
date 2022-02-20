@@ -25,31 +25,33 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Saves agent
-def save(path, agent):
+# Saves module
+def save(path, module):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    torch.save(agent, path)
+    torch.save(module, path)
 
 
-# Loads agent
-def load(path, attr=None):
+# Loads module
+def load(path, device, attr=None):
     fetch = True
     while fetch:
         try:
             path = path.replace('Agents.', '')
             if Path(path).exists():
-                agent = torch.load(path)
+                module = torch.load(path)
             else:
                 raise Exception(f'Load path {path} does not exist.')
             fetch = False
         except:
             warnings.warn(f'Load conflict')  # For distributed training
             pass
+
     if attr is not None:
         for attr in attr.split('.'):
-            agent = getattr(agent, attr)
-    return agent
+            module = getattr(module, attr)
+
+    return module.to(device)
 
 
 # Assigns a default value to x if x is None
