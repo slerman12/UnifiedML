@@ -324,7 +324,7 @@ To train, for example MNIST, using ConvNeXt as the Encoder:
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
 ```
 
-A GAN with a CNN Discriminator:
+Here's a GAN with a CNN Discriminator:
 
 ```
 python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
@@ -345,7 +345,7 @@ Here's how you can load another saved agent's encoder from an agent checkpoint `
 python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
 ```
 
-You can imagine training a CNN for generative modeling or classification and then seamlessly using it for RL.
+You can imagine training a CNN discriminator or classifier and then seamlessly bringing it to RL.
 
 </details>
 <br>
