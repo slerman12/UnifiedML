@@ -308,6 +308,12 @@ Atari with ViT:
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
+Digit classifier, using ConvNeXt as the Encoder:
+
+```
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
+```
+
 ResNet18 on CIFAR-10:
 
 ```
@@ -317,12 +323,6 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <details>
 <summary><i>See more examples :open_book: </i></summary>
 <br>
-
-Digit classifier, using ConvNeXt as the Encoder:
-
-```
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
-```
 
 A GAN on MNIST with a CNN Discriminator:
 
@@ -348,7 +348,6 @@ python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkp
 You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
 
 </details>
-<br>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
