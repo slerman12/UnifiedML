@@ -334,7 +334,7 @@ A GAN on MNIST with a CNN Discriminator:
 python Run.py task=classify/mnist generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
-Classifying MNIST, using ConvNeXt as the Encoder:
+Digit classifier, using ConvNeXt as the Encoder:
 
 ```
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
