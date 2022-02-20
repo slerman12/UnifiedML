@@ -308,6 +308,14 @@ Atari with ViT:
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
+[comment]: <> (Digit classifier, using ConvNeXt as the Encoder:)
+
+[comment]: <> (```)
+
+[comment]: <> (python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt)
+
+[comment]: <> (```)
+
 ResNet18 on CIFAR-10:
 
 ```
@@ -336,18 +344,9 @@ Here is a more complex example, disabling the Encoder's flattening of the featur
 
 ```
 python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null
-
 ```
 
 since otherwise ```repr_shape``` is flattened to a single axis, with no features for the attention to pool.
-
-Digit classifier, using ConvNeXt as the Encoder:
-
-```
-
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
-
-```
 
 <br>
 </details>
