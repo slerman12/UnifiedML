@@ -318,6 +318,7 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
+
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
 ```
@@ -331,6 +332,12 @@ A GAN on MNIST with a CNN Discriminator:
 
 ```
 python Run.py task=classify/mnist generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
+```
+
+Classifying MNIST, using ConvNeXt as the Encoder:
+
+```
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
 ```
 
 Here's how you can load another saved agent's encoder from an agent checkpoint ```<path>```:
