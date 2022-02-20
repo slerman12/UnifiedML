@@ -126,6 +126,8 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
      'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
      'VisionDataset', 'USPS', 'Kinetics400', 'HMDB51', 'UCF101',
      'Places365', 'TinyImageNet')
+
+     TODO: iNaturalist!
     """
 
     assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'

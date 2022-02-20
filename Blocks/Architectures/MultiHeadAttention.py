@@ -61,7 +61,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        v = self.ln_v(v)  # Makes sure the values get an equal "vote"
+        v = self.ln_v(v)  # My variant, makes sure the values get an equal "vote"
 
         # Memory efficient toggle, e.g., =0.5
         mem_limit = False
@@ -122,6 +122,9 @@ class CrossAttentionBlock(nn.Module):
                  optim_lr=None, ema_tau=None):
         super().__init__()
 
+        context_dim = dim if context_dim is None \
+            else context_dim
+
         value_dim = dim if value_dim is None \
             else value_dim
 
@@ -167,15 +170,15 @@ class CrossAttentionBlock(nn.Module):
         #
         # return out
         """My variant"""
-        x = self.ln_input(x)
+        x = self.ln_input(x)  # Does leveling the scales help?
 
         if context is None:
             context = x
 
-        attn = self.attn(x, context)
-        fc = self.mlp(attn)
+        attn = self.attn(x, context)  # actually residual good here, "candidate update" then final +attn is "correction"
+        fc = self.mlp(attn)  # but maybe mlp should reason rather than just non-locally course-correct
         ln = self.ln(fc)
-        return ln + x
+        return ln + x  # this variant can do relational reasoning, more capacity, THEN does a residual-based update
 
 
 class SelfAttentionBlock(CrossAttentionBlock):
@@ -201,7 +204,7 @@ class AttentionPool(nn.Module):
         self.pool = nn.Sequential(Utils.ChSwap,
                                   # Alternatively could also recurse
                                   *([SelfAttentionBlock(channels_in, heads)] * recursions),
-                                  # Transformer
+                                  # "Transformer"
                                   *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
                                                        value_dim=output_dim) for i in range(depth)],
                                   Utils.ChSwap,
