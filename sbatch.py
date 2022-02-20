@@ -11,23 +11,23 @@ from Hyperparams.task.atari.generate_atari import atari_tasks
 from Hyperparams.task.dmc.generate_dmc import easy, medium, hard
 agents = [
     # 'SPR',
-    'DQN',
+    # 'DQN',
     # 'DrQV2',
     # 'DQNDPG',
     # 'DynoSOAR',
     # 'Ascend', 'AC2'
-    # 'Random'
+    'Random'
           ]
 seeds = [1]
-experiment = '5 Sampled Actions'
+experiment = 'Random 100 Episodes'
 
-common_params = f'experiment={experiment}'
+common_params = f'train_steps=0 evaluate_episodes=100 experiment={experiment}'
 classify_RL = 'false'
 classify_supervise = 'true'
 
 common_sweeps = {'atari': [f'task=atari/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in atari_tasks for agent in agents for seed in seeds],
                  'dmc': [f'task=dmc/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in easy + medium + hard for agent in agents for seed in seeds],
-                 'classify': [f'task=classify/{task.lower()} Agent=Agents.{agent}Agent RL={classify_RL} supervise={classify_supervise} seed={seed}' for task in ['mnist', 'cifar10'] for agent in agents for seed in seeds]}
+                 'classify': [f'task=classify/{task.lower()} Agent=Agents.{agent}Agent RL={classify_RL} supervise={classify_supervise} seed={seed}' for task in ['mnist', 'cifar10', 'tinyimagenet'] for agent in agents for seed in seeds]}
 common_sweeps.update({'all': sum(common_sweeps.values(), [])})
 common_sweeps.update({'rl': common_sweeps['dmc'] + common_sweeps['atari']})
 common_sweeps.update({'continuous': common_sweeps['dmc'] + common_sweeps['classify']})
