@@ -334,7 +334,6 @@ Here is a more complex example, disabling the Encoder's flattening of the featur
 
 ```
 python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null
-
 ```
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
