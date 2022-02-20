@@ -292,7 +292,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 [comment]: <> (</details>)
 
-### Loading Architectures
+### Architectures
 
 [comment]: <> (<details>)
 
