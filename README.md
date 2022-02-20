@@ -345,7 +345,7 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 ```
 
-since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
+since otherwise ```repr_shape``` is flattened to a single axis, with no features for the attention to pool.
 
 <br>
 </details>
