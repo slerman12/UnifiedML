@@ -25,44 +25,32 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Saves agent
-def save(path, agent, **attributes):
+# Saves module + attributes
+def save(path, module, **attributes):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    if len(attributes) > 0:
-        # Can pass in attributes like step=, episode=
-        attributes.update({'state_dict': agent.state_dict()})
-        torch.save(attributes, path)
-    else:
-        torch.save(agent, path)
+    attributes.update({'state_dict': module.state_dict()})
+    torch.save(attributes, path)
 
 
-# Loads agent
-def load(path, agent=None, attr=None):
+# Loads module
+def load(path, module):
     fetch = True
     while fetch:
         try:
             path = path.replace('Agents.', '')
             if Path(path).exists():
-                if agent is None:
-                    agent = torch.load(path)
-                else:
-                    # From state_dict
-                    to_load = torch.load(path, map_location=agent.device)
-                    agent.load_state_dict(to_load['state_dict'], strict=False)
-                    del to_load['state_dict']
-                    for key in to_load:
-                        setattr(agent, key, to_load[key])
+                to_load = torch.load(path, map_location=module.device)
+                module.load_state_dict(to_load['state_dict'], strict=False)
+                del to_load['state_dict']
+                for key in to_load:
+                    setattr(module, key, to_load[key])
             else:
                 warnings.warn(f'Load path {path} does not exist.')
             fetch = False
         except:
             warnings.warn(f'Load conflict')  # For distributed training
             pass
-    if attr is not None:
-        for attr in attr.split('.'):
-            agent = getattr(agent, attr)
-    return agent
 
 
 # Assigns a default value to x if x is None
