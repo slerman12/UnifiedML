@@ -61,7 +61,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        # v = self.ln_v(v)  # My variant, makes sure the values get an equal "vote"
+        v = self.ln_v(v)  # My variant, makes sure the values get an equal "vote"
 
         # Memory efficient toggle, e.g., =0.5
         mem_limit = False
@@ -161,24 +161,24 @@ class CrossAttentionBlock(nn.Module):
             self.ema_tau = ema_tau
 
     def forward(self, x, context=None):
-        if context is None:
-            context = x
-
-        attn = self.ln_attn(self.attn(x, context)) + x
-        out = self.ln(self.mlp(attn)) + attn
-
-        return out
-        """My variant"""
-        # x = self.ln_input(x)  # TODO This might help too
-        #
         # if context is None:
         #     context = x
         #
-        # # A key idea here is the layer-norm IN the attention, ln(values) rather than ln(attn)
-        # attn = self.attn(x, context)  # If residual here, then attn="candidate update" with fc="correction" to x
-        # fc = self.mlp(attn)  # This way MLP can help relationally-reason rather than just non-locally course-correct
-        # ln = self.ln(fc)
-        # return ln + x  # This variant can do relational reasoning, more capacity; THEN does a residual-based update
+        # attn = self.ln_attn(self.attn(x, context)) + x
+        # out = self.ln(self.mlp(attn)) + attn
+        #
+        # return out
+        """My variant"""
+        x = self.ln_input(x)  # TODO This might help too
+
+        if context is None:
+            context = x
+
+        # A key idea here is the layer-norm IN the attention, ln(values) rather than ln(attn)
+        attn = self.attn(x, context)  # If residual here, then attn="candidate update" with fc="correction" to x
+        fc = self.mlp(attn)  # This way MLP can help relationally-reason rather than just non-locally course-correct
+        ln = self.ln(fc)
+        return ln + x  # This variant can do relational reasoning, more capacity; THEN does a residual-based update
 
 
 class SelfAttentionBlock(CrossAttentionBlock):
