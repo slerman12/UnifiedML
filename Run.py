@@ -29,11 +29,10 @@ def main(args):
         setattr(args, arg, getattr(env, arg))
 
     # Agent
-    agent = instantiate(args.agent).to(args.device)
+    agent = (Utils.load(args.save_path) if args.load
+             else instantiate(args.agent)).to(args.device)
 
-    if args.load:
-        Utils.load(args.save_path, agent)
-        args.train_steps += agent.step
+    args.train_steps += agent.step
 
     # Experience replay
     replay = instantiate(args.replay)
@@ -90,10 +89,10 @@ def main(args):
                     logger.log(logs, 'Train')
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):
-            Utils.save(args.save_path, agent, step=agent.step, episode=agent.episode)
+            Utils.save(args.save_path, agent)
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            Utils.load(args.save_path, agent)
+            agent = Utils.load(args.save_path).to(args.device)
 
 
 if __name__ == '__main__':

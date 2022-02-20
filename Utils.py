@@ -25,32 +25,31 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Saves module + attributes
-def save(path, module, **attributes):
+# Saves agent
+def save(path, agent):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    attributes.update({'state_dict': module.state_dict()})
-    torch.save(attributes, path)
+    torch.save(agent, path)
 
 
-# Loads module
-def load(path, module):
+# Loads agent
+def load(path, attr=None):
     fetch = True
     while fetch:
         try:
             path = path.replace('Agents.', '')
             if Path(path).exists():
-                to_load = torch.load(path, map_location=module.device)
-                module.load_state_dict(to_load['state_dict'], strict=False)
-                del to_load['state_dict']
-                for key in to_load:
-                    setattr(module, key, to_load[key])
+                agent = torch.load(path)
             else:
-                warnings.warn(f'Load path {path} does not exist.')
+                raise Exception(f'Load path {path} does not exist.')
             fetch = False
         except:
             warnings.warn(f'Load conflict')  # For distributed training
             pass
+    if attr is not None:
+        for attr in attr.split('.'):
+            agent = getattr(agent, attr)
+    return agent
 
 
 # Assigns a default value to x if x is None
@@ -139,7 +138,7 @@ class CNNInputBroadcast(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.shape[1:]) if context.shape[-1]
                                                                             % math.prod(self.shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
+            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
@@ -323,5 +322,4 @@ def schedule(schedule, step):
             start, stop, duration = [float(g) for g in match.groups()]
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * start + mix * stop
-
 
