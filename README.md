@@ -333,13 +333,13 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
-A GAN on MNIST with CNN Discriminator:
+A GAN on MNIST with a CNN Discriminator:
 
 ```
 python Run.py task=classify/mnist generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
-Here is how you can load another saved agent's encoder from an agent ```<checkpoint>```:
+Here's how you can load another saved agent's encoder from a saved ```<checkpoint>``` path:
 
 ```
 python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
