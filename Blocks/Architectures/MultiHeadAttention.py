@@ -61,7 +61,7 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        v = self.ln_v(v)  # My variant, makes sure the values get an equal "vote"
+        v = self.ln_v(v)  # My variant, makes sure the values get an equal "vote"; maybe don't need; allow "confidence"?
 
         # Memory efficient toggle, e.g., =0.5
         mem_limit = False
@@ -164,7 +164,7 @@ class CrossAttentionBlock(nn.Module):
         # if context is None:
         #     context = x
         #
-        # attn = self.ln_attn(self.attn(x, context)) + x
+        # attn = self.ln_attn(self.attn(x, context)) + x  # ln(attn) -> ln(value), and residual muddles relational info
         # out = self.ln(self.mlp(attn)) + attn
         #
         # return out
@@ -179,6 +179,12 @@ class CrossAttentionBlock(nn.Module):
         fc = self.mlp(attn)  # This way MLP can help relationally-reason rather than just non-locally course-correct
         ln = self.ln(fc)
         return ln + x  # This variant can do relational reasoning, more capacity; THEN does a residual-based update
+        # Another possibility is that it's not about relational reasoning, but a vote. It's a vote, on which direction
+        # to go and the MLP just protects the individual from the masses, in which that mid-residual would be better
+        # can however add this by just using a second mlp and following it with ln + residual; then has capacity for
+        # both (1) relational reasoning (1st MLP, no residual) and (2) course-correction (2nd MLP, following residual)
+        # A vote is about ensembling (weighted avgs are good for this); relational reasoning is about comparing
+        # two or more instances of something, might benefit better from concat
 
 
 class SelfAttentionBlock(CrossAttentionBlock):
