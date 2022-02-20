@@ -324,7 +324,7 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>More examples, including loading architectures from checkpoints :open_book: </i></summary>
 <br>
 
-Here's how you can load another saved agent's encoder from a saved ```<checkpoint>``` path:
+Here's how you can load another agent's encoder from a saved ```<checkpoint>``` path:
 
 ```
 python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
