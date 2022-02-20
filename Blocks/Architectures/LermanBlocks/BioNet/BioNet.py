@@ -175,7 +175,7 @@ class BioNetV2(nn.Module):
             dorsal = t(talk(t(where(dorsal)),
                             t(ventral)))
 
-        out = self.projection(t(dorsal))
+        out = t(self.projection(t(dorsal)))
         return out
 
 
