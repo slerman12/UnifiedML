@@ -347,6 +347,7 @@ python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkp
 
 You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
 
+<br>
 </details>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
