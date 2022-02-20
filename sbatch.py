@@ -19,7 +19,7 @@ agents = [
     'Random'
           ]
 seeds = [1]
-experiment = 'Random 100 Episodes'
+experiment = 'Random 100 Episodes (original Settings)'
 
 common_params = f'train_steps=0 evaluate_episodes=100 experiment={experiment}'
 classify_RL = 'false'
