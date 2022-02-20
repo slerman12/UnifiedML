@@ -324,6 +324,14 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>See more examples, including loading from file :open_book: </i></summary>
 <br>
 
+Here's how you can load another saved agent's encoder from a saved ```<checkpoint>``` path:
+
+```
+python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
+```
+
+You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
+
 A GAN on MNIST with a CNN Discriminator:
 
 ```
@@ -338,14 +346,6 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 ```
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
-
-Here's how you can load another saved agent's encoder from a saved ```<checkpoint>``` path:
-
-```
-python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
-```
-
-You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
 
 <br>
 </details>
