@@ -333,7 +333,7 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
-A GAN on MNIST with a CNN Discriminator:
+A GAN on MNIST with CNN Discriminator:
 
 ```
 python Run.py task=classify/mnist generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
