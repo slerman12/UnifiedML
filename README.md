@@ -442,6 +442,16 @@ in progress
 
 </details>
 
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>List of papers that can come out of this :open_book: </i></summary>)
+
+[comment]: <> (<br>)
+
+[comment]: <> (- When Is RL Enough In Computer Vision? )
+
+[comment]: <> (</details>)
+
 # Note
 
 ### If you are only interested in the RL portion,
