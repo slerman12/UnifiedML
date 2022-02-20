@@ -292,7 +292,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 [comment]: <> (</details>)
 
-### Custom Architectures
+### Loading Architectures
 
 [comment]: <> (<details>)
 
@@ -321,7 +321,7 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 ```
 
 <details>
-<summary><i>See more examples :open_book: </i></summary>
+<summary><i>See more examples, including loading from file :open_book: </i></summary>
 <br>
 
 A GAN on MNIST with a CNN Discriminator:
