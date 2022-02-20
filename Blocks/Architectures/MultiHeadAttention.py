@@ -118,7 +118,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, ln_input=False, ln_v=True, talk_h=False,
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, ln_input=False, ln_v=False, talk_h=False,
                  optim_lr=None, ema_tau=None):
         super().__init__()
 
@@ -138,9 +138,12 @@ class CrossAttentionBlock(nn.Module):
                                    talk_h)
         self.mlp = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
 
+        self.mlp2 = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
+
         self.ln_input = nn.LayerNorm(dim) if ln_input else nn.Identity()  # My variant, but default False
         self.ln_attn = nn.LayerNorm(value_dim)
         self.ln = nn.LayerNorm(value_dim)
+        self.ln2 = nn.LayerNorm(value_dim)
 
         self.init(optim_lr, ema_tau)
 
@@ -169,15 +172,17 @@ class CrossAttentionBlock(nn.Module):
         #
         # return out
         """My variant"""
-        x = self.ln_input(x)  # TODO This might help too
-
+        # x = self.ln_input(x)  # TODO This might help too
+        #
         if context is None:
             context = x
 
         # A key idea here is the layer-norm IN the attention, ln(values) rather than ln(attn)
         attn = self.attn(x, context)  # If residual here, then attn="candidate update" with fc="correction" to x
         fc = self.mlp(attn)  # This way MLP can help relationally-reason rather than just non-locally course-correct
-        ln = self.ln(fc)
+        ln = self.ln(fc) + x
+        fc = self.mlp2(ln)
+        ln = self.ln2(fc)
         return ln + x  # This variant can do relational reasoning, more capacity; THEN does a residual-based update
         # Another possibility is that it's not about relational reasoning, but a vote. It's a vote, on which direction
         # to go and the MLP just protects the individual from the masses, in which that mid-residual would be better
