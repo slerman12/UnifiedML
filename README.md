@@ -340,10 +340,10 @@ Digit classifier, using ConvNeXt as the Encoder:
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
 ```
 
-Here is how you can load another saved agent's encoder from an agent checkpoint saved at ```<path>```:
+Here is how you can load another saved agent's encoder from an agent '''<checkpoint>''':
 
 ```
-python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
+python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
 ```
 
 You can imagine training a CNN discriminator or classifier and then seamlessly bringing it to RL.
