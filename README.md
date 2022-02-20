@@ -338,13 +338,15 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
-Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:
+[comment]: <> (Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:)
 
-```
-python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes
-```
+[comment]: <> (```)
 
-You can imagine training a GAN CNN and then seamlessly using it for RL.
+[comment]: <> (python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
+
+[comment]: <> (```)
+
+[comment]: <> (You can imagine training a GAN CNN and then seamlessly using it for RL.)
 
 <br>
 </details>
@@ -421,25 +423,27 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 All files are designed to be useful for educational and innovational purposes in their simplicity and structure.
 
-# :handshake: Contributing
+[comment]: <> (# :handshake: Contributing)
 
-Contributers needed.
+[comment]: <> (Contributers needed.)
 
-Please, donate to help with compute and getting Benchmarks ready:
+[comment]: <> (Please, donate to help with compute and getting Benchmarks ready:)
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
+[comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat&#41;]&#40;https://www.paypal.com/cgi-bin/&#41;)
 
-We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.
+[comment]: <> (We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.)
 
-To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com). Appreciated!
+[comment]: <> (To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Appreciated!)
 
-<details>
-<summary><i>List of features in progress :open_book: </i></summary>
-<br>
+[comment]: <> (<details>)
 
-in progress
+[comment]: <> (<summary><i>List of features in progress :open_book: </i></summary>)
 
-</details>
+[comment]: <> (<br>)
+
+[comment]: <> (in progress)
+
+[comment]: <> (</details>)
 
 # Note
 
