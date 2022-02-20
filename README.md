@@ -308,11 +308,13 @@ Atari with ViT:
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
-Digit classifier, using ConvNeXt as the Encoder:
+[comment]: <> (Digit classifier, using ConvNeXt as the Encoder:)
 
-```
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
-```
+[comment]: <> (```)
+
+[comment]: <> (python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt)
+
+[comment]: <> (```)
 
 ResNet18 on CIFAR-10:
 
