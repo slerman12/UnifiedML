@@ -340,7 +340,7 @@ Digit classifier, using ConvNeXt as the Encoder:
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
 ```
 
-Here's how you can load another saved agent's encoder from an agent checkpoint ```<path>```:
+Here is how you can load another saved agent's encoder from an agent checkpoint in ```<path>```:
 
 ```
 python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
