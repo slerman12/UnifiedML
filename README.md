@@ -345,7 +345,7 @@ Here's how you can load another saved agent's encoder from a saved ```<checkpoin
 python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
 ```
 
-You can imagine training a CNN discriminator or classifier and then seamlessly bringing it to RL.
+You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
 
 </details>
 <br>
