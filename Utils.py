@@ -47,6 +47,7 @@ def load(path, agent=None, attr=None):
                 if agent is None:
                     agent = torch.load(path)
                 else:
+                    # From state_dict
                     to_load = torch.load(path, map_location=agent.device)
                     agent.load_state_dict(to_load['state_dict'], strict=False)
                     del to_load['state_dict']
