@@ -322,10 +322,6 @@ ResNet18 on CIFAR-10:
 python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
 ```
 
-<details>
-<summary><i>More examples, including loading architectures from checkpoints :open_book: </i></summary>
-<br>
-
 Here's how you can load another agent's encoder from a saved ```<checkpoint>``` path:
 
 ```
@@ -333,6 +329,11 @@ python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkp
 ```
 
 You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
+
+<details>
+<summary><i>See more examples :open_book: </i></summary>
+<br>
+
 
 A GAN on MNIST with a CNN Discriminator:
 
