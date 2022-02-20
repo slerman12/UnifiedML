@@ -342,9 +342,7 @@ since otherwise ```repr_shape``` is flattened to channel dim, with no features f
 Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:
 
 ```
-
 python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes
-
 ```
 
 You can imagine training a GAN CNN and then seamlessly using it for RL.
