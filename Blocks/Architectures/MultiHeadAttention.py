@@ -139,7 +139,6 @@ class CrossAttentionBlock(nn.Module):
         self.mlp = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
 
         self.ln_input = nn.LayerNorm(dim) if ln_input else nn.Identity()  # My variant, but default False
-
         self.ln_attn = nn.LayerNorm(context_dim)
         self.ln = nn.LayerNorm(value_dim)
 

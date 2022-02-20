@@ -47,7 +47,7 @@ class BioNetV1(nn.Module):
             dorsal = t(talk(t(where(dorsal)),
                             t(ventral)))
 
-        out = self.projection(t(dorsal))
+        out = t(self.projection(t(dorsal)))
         return out
 
     """Aside from the way the modules are put together (via two disentangled streams), 
