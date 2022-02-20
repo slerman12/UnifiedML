@@ -348,7 +348,7 @@ since otherwise ```repr_shape``` is flattened to channel dim, with no features f
 
 [comment]: <> (You can imagine training a GAN CNN and then seamlessly using it for RL.)
 
-<br>
+[comment]: <> (<br>)
 </details>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
