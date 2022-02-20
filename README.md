@@ -347,7 +347,7 @@ python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> 
 
 ```
 
-You can imagine training a GAN or classifier CNN and then seamlessly using it for RL.
+You can imagine training a CNN for generative modeling or classification and then seamlessly using it for RL.
 
 <br>
 </details>
