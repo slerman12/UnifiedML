@@ -60,7 +60,7 @@ All agents support discrete and continuous control, classification, and generati
 
 See example scripts of various configurations [below](#mag-sample-scripts).
 
-# :wrench: Setting Up 
+# :wrench: Setting Up
 
 Let's get to business.
 
@@ -173,7 +173,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 [comment]: <> (<br>)
 
-Humanoid example: 
+Humanoid example:
 ```
 python Run.py task=dmc/humanoid_run
 ```
@@ -292,7 +292,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 [comment]: <> (</details>)
 
-### Mix \& Matching Architectures
+### Custom Architectures
 
 [comment]: <> (<details>)
 
@@ -300,7 +300,7 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 [comment]: <> (<br>)
 
-One can also optionally pass in pre-configured and customizable architectures such as those defined in ```./Blocks/Architectures```.
+One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
 Atari with ViT:
 
@@ -308,48 +308,48 @@ Atari with ViT:
 python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
 ```
 
-[comment]: <> (Digit classifier, using ConvNeXt as the Encoder:)
-
-[comment]: <> (```)
-
-[comment]: <> (python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt)
-
-[comment]: <> (```)
-
 ResNet18 on CIFAR-10:
 
 ```
 python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
 ```
 
-Here's how you can load another agent's encoder from a saved ```<checkpoint>``` path:
-
-```
-python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.device='${device}' +recipes.encoder.eyes.attr=encoder.Eyes 
-```
-
-You can imagine training a CNN GAN or classifier and then seamlessly bringing it to RL.
-
 <details>
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
-
-A GAN on MNIST with a CNN Discriminator:
+To train, for example MNIST, using ConvNeXt as the Encoder:
 
 ```
-python Run.py task=classify/mnist generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
+```
+
+A GAN with a CNN Discriminator:
+
+```
+python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
 ```
 python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null
+
 ```
 
-since otherwise ```repr_shape``` is flattened to a single axis, with no features for the attention to pool.
+since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
-<br>
+Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:
+
+```
+
+python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes
+
+```
+
+You can imagine training a GAN CNN and then seamlessly using it for RL.
+
+[comment]: <> (<br>)
 </details>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
@@ -428,7 +428,7 @@ All files are designed to be useful for educational and innovational purposes in
 
 Contributers needed.
 
-Please, donate to help with affording compute and getting Benchmarks ready:
+Please, donate to help with compute and getting Benchmarks ready:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
 
@@ -443,16 +443,6 @@ To discuss anything relating to funding or adding new features collaboratively, 
 in progress
 
 </details>
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>List of papers that can come out of this :open_book: </i></summary>)
-
-[comment]: <> (<br>)
-
-[comment]: <> (- When Is RL Enough In Computer Vision? )
-
-[comment]: <> (</details>)
 
 # Note
 
