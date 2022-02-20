@@ -149,7 +149,7 @@ class BioNetV2(nn.Module):
     def __init__(self, input_shape, out_channels=32, heads=8, output_dim=None):
         super().__init__()
         self.ventral_stream = CNN(input_shape, out_channels, depth=8)
-        self.dorsal_stream = LocalityCNN(input_shape, out_channels=128, depth=8)
+        self.dorsal_stream = CNN(input_shape, out_channels=128, depth=8)
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(out_channels, heads, 128)
                                          for _ in range(8)])
