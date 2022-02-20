@@ -348,6 +348,7 @@ python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> 
 You can imagine training a CNN for generative modeling or classification and then seamlessly using it for RL.
 
 </details>
+<br>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
