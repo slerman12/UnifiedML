@@ -17,7 +17,7 @@ A custom "where" pathway: Locality stream architectures for BioNet
 class Conv2dLocal(nn.Conv2d):
     def __init__(self, input_shape, out_channels, kernel_size, stride=1, padding=0, dilation=1,
                  groups=1, bias=True, padding_mode='zeros', patches=16):
-        in_channels, self.height, self.width = input_shape
+        in_channels, self.height, self.width = tuple(input_shape)
 
         super().__init__(out_channels - 2 * (out_channels % 2), out_channels, kernel_size, stride,
                          padding, dilation, groups, bias, padding_mode)

@@ -169,15 +169,16 @@ class CrossAttentionBlock(nn.Module):
         #
         # return out
         """My variant"""
-        x = self.ln_input(x)  # Does leveling the scales help?
+        x = self.ln_input(x)  # TODO This might help too
 
         if context is None:
             context = x
 
-        attn = self.attn(x, context)  # actually residual good here, "candidate update" then final +attn is "correction"
-        fc = self.mlp(attn)  # but maybe mlp should reason rather than just non-locally course-correct
+        # A key idea here is the layer-norm IN the attention, ln(values) rather than ln(attn)
+        attn = self.attn(x, context)  # If residual here, then attn="candidate update" with fc="correction" to x
+        fc = self.mlp(attn)  # This way MLP can help relationally-reason rather than just non-locally course-correct
         ln = self.ln(fc)
-        return ln + x  # this variant can do relational reasoning, more capacity, THEN does a residual-based update
+        return ln + x  # This variant can do relational reasoning, more capacity; THEN does a residual-based update
 
 
 class SelfAttentionBlock(CrossAttentionBlock):

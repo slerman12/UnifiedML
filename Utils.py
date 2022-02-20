@@ -98,7 +98,7 @@ def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, paddin
 
 
 # Compute the output shape of a whole CNN
-def cnn_feature_shape(channels, height, width, *blocks):
+def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
     for block in blocks:
         if isinstance(block, (nn.Conv2d, nn.AvgPool2d)):
             channels = block.out_channels
@@ -116,7 +116,9 @@ def cnn_feature_shape(channels, height, width, *blocks):
             channels, height, width = block.repr_shape(channels, height, width)
         elif hasattr(block, 'modules'):
             for module in block.children():
-                channels, height, width = cnn_feature_shape(channels, height, width, module)
+                channels, height, width = cnn_feature_shape(channels, height, width, module, verbose=verbose)
+        if verbose:
+            print(block, (channels, height, width))
 
     feature_shape = (channels, height, width)  # TODO should probably do (channels, width, height) universally
 
