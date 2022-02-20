@@ -318,10 +318,10 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
-To train, for example MNIST, using a Vision Transformer as the Encoder:
+To train, for example MNIST, using ConvNeXt as the Encoder:
 
 ```
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ViT
+python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
 ```
 
 A GAN with a CNN Discriminator:
@@ -417,7 +417,7 @@ All files are designed to be useful for educational and innovational purposes in
 
 Contributers needed.
 
-Please, donate to help with affording compute and getting Benchmarks ready:
+Please, donate to help with compute and getting Benchmarks ready:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
 
