@@ -92,7 +92,7 @@ def main(args):
             Utils.save(args.save_path, agent)
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            agent = Utils.load(args.save_path).to(args.device)
+            agent = Utils.load(args.save_path, args.device)
 
 
 if __name__ == '__main__':

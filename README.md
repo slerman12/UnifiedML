@@ -339,17 +339,17 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
-Here's how you can load another saved agent's encoder from an agent checkpoint ```<path>```:
+[comment]: <> (Here's how you can load another saved agent's encoder from an agent checkpoint ```<path>```:)
 
-```
+[comment]: <> (```)
 
-python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes
+[comment]: <> (python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
 
-```
+[comment]: <> (```)
 
-You can imagine training a GAN or classifier CNN and then seamlessly using it for RL.
+[comment]: <> (You can imagine training a GAN or classifier CNN and then seamlessly using it for RL.)
 
-<br>
+[comment]: <> (<br>)
 </details>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
