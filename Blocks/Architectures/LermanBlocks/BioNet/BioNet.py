@@ -148,11 +148,15 @@ class BioNetV2(nn.Module):
 
     def __init__(self, input_shape, out_channels=32, heads=8, output_dim=None):
         super().__init__()
-        self.ventral_stream = CNN(input_shape, out_channels, depth=8)
-        self.dorsal_stream = CNN(input_shape, out_channels=128, depth=8)
+        
+        depth = 8
+        dorsal_fov = 128
+
+        self.ventral_stream = CNN(input_shape, out_channels, depth=depth)
+        self.dorsal_stream = CNN(input_shape, out_channels=dorsal_fov, depth=depth)
 
         self.cross_talk = nn.ModuleList([CrossAttentionBlock(128, heads, out_channels)
-                                         for _ in range(8)])
+                                         for _ in range(depth)])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
