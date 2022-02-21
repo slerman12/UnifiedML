@@ -55,13 +55,13 @@ environment:
   task_name: ${task_name}
   frame_stack: ${frame_stack}
   action_repeat: ${action_repeat}
-  max_episode_frames: null
-  truncate_episode_frames: 1000
+  episode_max_frames: false
+  episode_truncate_resume_frames: 1000
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}
   generate: ${generate}
-  batch_size: 1000
+  batch_size: ${batch_size}
   num_workers: ${num_workers}
 
 agent:

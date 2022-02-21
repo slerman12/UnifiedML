@@ -183,14 +183,14 @@ class FrameStackWrapper(dm_env.Environment):
 
 # Note: Could technically do in Run.py just by setting rollout steps to truncate_episode_steps and always add to replay
 class TruncateWrapper(dm_env.Environment):
-    def __init__(self, env, max_episode_steps=np.inf, truncate_episode_steps=np.inf, train=True):
+    def __init__(self, env, episode_max_steps=np.inf, episode_truncate_resume_steps=np.inf, train=True):
         self.env = env
 
         self.train = train
 
         # Truncating/limiting episodes
-        self.max_episode_steps = max_episode_steps
-        self.truncate_episode_steps = truncate_episode_steps
+        self.max_episode_steps = episode_max_steps
+        self.truncate_episode_steps = episode_truncate_resume_steps
         self.elapsed_steps = 0
         self.was_not_truncated = True
 

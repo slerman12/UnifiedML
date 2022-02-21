@@ -4,7 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 
 
-def make(task, frame_stack=3, action_repeat=2, max_episode_frames=None, truncate_episode_frames=None,
+def make(task, frame_stack=3, action_repeat=2, episode_max_frames=None, episode_truncate_resume_frames=None,
          offline=False, generate=False, train=True, seed=1, batch_size=1, num_workers=1):
     # Imports in make() to avoid glfw warning when using other envs
     from dm_control import manipulation, suite
@@ -52,11 +52,13 @@ def make(task, frame_stack=3, action_repeat=2, max_episode_frames=None, truncate
     env = FrameStackWrapper(env, frame_stack, pixels_key)
 
     # Truncate-resume or cut episodes short
-    max_episode_steps = max_episode_frames // action_repeat if max_episode_frames else np.inf
-    truncate_episode_steps = truncate_episode_frames // action_repeat if truncate_episode_frames else np.inf
+    episode_truncate_resume_steps = episode_truncate_resume_frames // action_repeat if episode_truncate_resume_frames \
+        else np.inf
+    episode_max_steps = episode_max_frames // action_repeat if episode_max_frames \
+        else np.inf
     env = TruncateWrapper(env,
-                          max_episode_steps=max_episode_steps,
-                          truncate_episode_steps=truncate_episode_steps,
+                          episode_max_steps=episode_max_steps,
+                          episode_truncate_resume_steps=episode_truncate_resume_steps,
                           train=train)
 
     # Augment attributes to env and time step, prepare specs for loading by Hydra

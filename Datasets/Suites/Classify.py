@@ -128,7 +128,7 @@ class ClassifyEnv:
         return specs.BoundedArray((self.num_classes,), 'float32', 0, self.num_classes - 1, 'action')
 
 
-def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate_episode_frames=None,
+def make(task, frame_stack=4, action_repeat=4, episode_max_frames=None, episode_truncate_resume_frames=None,
          offline=False, generate=False, train=True, seed=1, batch_size=1, num_workers=1):
     """
     'task' options:
