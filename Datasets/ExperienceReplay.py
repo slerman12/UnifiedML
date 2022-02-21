@@ -34,7 +34,7 @@ class ExperienceReplay:
                     warnings.warn(f'Loading a saved replay of a classify environment from a previous online session, '
                                   f'which means your data will depend on your last session. If this is undesired, '
                                   f'you may use the default universal dataset by deleting the saved buffer located '
-                                  f'in {path}, or setting the "replay.path=" flag to a custom destination.')
+                                  f'in {path}, or setting the "replay.path=" flag.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
