@@ -65,7 +65,7 @@ class ClassifyEnv:
 
         for x, y in tqdm(self.batches, 'Loading batches into experience replay.'):
             # Concat a dummy batch item
-            x, y = [np.concatenate([b, np.full_like([b[:1]], np.NaN), 0]) for b in (x, y)]
+            x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (x, y)]
 
             nans = np.full_like(y, np.NaN)
             episode = {'obs': x, 'reward': nans, 'discount': nans, 'label': y, 'step': nans}
