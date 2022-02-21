@@ -63,7 +63,7 @@ class ClassifyEnv:
     def make_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        for x, y in tqdm(self.batches, 'Loading batches into experience replay.'):
+        for ind, (x, y) in enumerate(tqdm(self.batches, 'Loading batches into experience replay.')):
             # Concat a dummy batch item
             x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (x, y)]
 
@@ -71,7 +71,7 @@ class ClassifyEnv:
             episode = {'obs': x, 'reward': nans, 'discount': nans, 'label': y, 'step': nans}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            episode_name = f'{timestamp}_{self.length}_{len(x)}.npz'
+            episode_name = f'{timestamp}_{ind}_{len(x)}.npz'
 
             with io.BytesIO() as buffer:
                 np.savez_compressed(buffer, episode)
