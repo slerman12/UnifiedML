@@ -7,7 +7,7 @@ import Utils
 
 
 class CNN(nn.Module):
-    def __init__(self, input_shape, out_channels=32, depth=3, stride=2, padding=0, batch_norm=False, output_dim=None):
+    def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, stride=2, padding=0, output_dim=None):
         super().__init__()
 
         self.input_shape = torch.Size(input_shape)
