@@ -67,7 +67,7 @@ class ClassifyEnv:
             x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (x, y)]
 
             nans = np.full_like(y, np.NaN)
-            episode = {'observation': x, 'action': nans, 'reward': nans, 'discount': nans, 'label': y, 'step': nans}
+            episode = {'observation': nans, 'action': nans, 'reward': nans, 'discount': nans, 'label': nans, 'step': nans}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
             episode_name = f'{timestamp}_{episode_ind}_{len(x)}.npz'
