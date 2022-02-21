@@ -31,8 +31,8 @@ class ExperienceReplay:
                     exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
                     print('All data loaded; training of classifier underway.')
                 else:
-                    warnings.warn(f'Loading a saved replay of a classify environment from a previous online session. '
-                                  f'This means your data will depend on your last session. If this is undesired, '
+                    warnings.warn(f'Loading a saved replay of a classify environment from a previous online session, '
+                                  f'which means your data will depend on your last session. If this is undesired, '
                                   f'you may use the default universal dataset by deleting the saved buffer located '
                                   f'in {path}, or setting the "replay.path=" flag to a custom destination.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
