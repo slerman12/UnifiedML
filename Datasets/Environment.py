@@ -12,7 +12,7 @@ class Environment:
     def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
                  seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
-        self.offline = (offline or generate) and train
+        self.offline = offline and train
         self.generate = generate
 
         self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
@@ -46,12 +46,6 @@ class Environment:
 
         self.episode_done = False
 
-        if self.offline:
-            agent.step += 1
-            agent.episode += 1
-            self.episode_done = True
-            return None, None, None
-
         step = 0
         while not self.episode_done and step < steps:
             # Act
@@ -62,7 +56,8 @@ class Environment:
 
             exp.step = agent.step
 
-            experiences.append(exp)
+            if not self.offline:
+                experiences.append(exp)
 
             if vlog or self.generate:
                 frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
@@ -70,12 +65,9 @@ class Environment:
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
 
-                import torch  # TODO delete
-                video_image.append(torch.tensor(exp.observation[:24]).to(action.device) / 127.5 - 1)
-
             # Tally reward, done, step
             self.episode_reward += exp.reward.mean()
-            self.episode_done = exp.last() or self.generate
+            self.episode_done = exp.last() or self.generate or self.offline
             step += 1
 
         self.episode_step += step
@@ -98,7 +90,8 @@ class Environment:
                 'frame': agent.step * self.action_repeat,
                 'episode': agent.episode,
                 'accuracy' if self.suite.lower() == 'classify' else 'reward': self.last_episode_reward,
-                'fps': frames / (sundown - self.daybreak)}
+                'fps': frames / (sundown - self.daybreak)} if not self.offline \
+            else None
 
         if self.episode_done:
             self.episode_step = self.episode_reward = 0
