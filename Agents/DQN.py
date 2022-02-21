@@ -75,16 +75,6 @@ class DQNAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
-            if self.training:
-                steps = len(obs)
-
-                self.step += steps
-
-                # Explore phase
-                if self.step < self.explore_steps and not self.generate:
-                    action = torch.randn((steps, self.action_dim))
-                    return action
-
             # EMA targets
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
@@ -101,6 +91,14 @@ class DQNAgent(torch.nn.Module):
 
             action = Pi.sample() if self.training \
                 else Pi.best
+
+            if self.training:
+                self.step += 1
+
+                # Explore phase
+                if self.step < self.explore_steps and not self.generate:
+                    action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
+                        else action.uniform_(-1, 1)
 
             return action
 
