@@ -96,7 +96,7 @@ replay:
   nstep: ${nstep}
   discount: ${discount}
   suite: ${suite}
-  task: ${task}
+  task: ${task_name}
   offline: ${offline}
   generate: ${generate}
   save: false
