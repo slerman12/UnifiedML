@@ -93,7 +93,7 @@ class DQNAgent(torch.nn.Module):
                 else Pi.best
 
             if self.training:
-                self.step += 1
+                self.step += obs.Size(0)
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:

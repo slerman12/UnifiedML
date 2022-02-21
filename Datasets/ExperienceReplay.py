@@ -156,7 +156,8 @@ class ExperienceReplay:
         self.episode_len = 0
 
     def __len__(self):
-        return len(list(self.path.glob('*.npz')))
+        stored = len(list(self.path.glob('*.npz')))
+        return stored if self.experiences.save else stored + len(self.experiences.episode_names)
 
 
 # How to initialize each worker
