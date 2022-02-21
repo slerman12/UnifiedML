@@ -62,7 +62,7 @@ class ClassifyEnv:
     def make_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating experience replay for this dataset. '
+        for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a global experience replay for this dataset. '
                                                                 'This only has to be done once. '
                                                                 'Loading in batches')):
             x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
