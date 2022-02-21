@@ -81,7 +81,7 @@ class ClassifyEnv:
                     f.write(buffer.read())
 
     def reset_format(self, x, y):
-        x, y = [np.array(b, dtype='float32') for b in self.(x, y)]
+        x, y = [np.array(b, dtype='float32') for b in (x, y)]
         y = np.expand_dims(y, 1)
 
         batch_size = x.shape[0]
