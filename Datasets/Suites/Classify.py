@@ -45,8 +45,10 @@ class ClassifyEnv:
         self.length = len(self.batches)
         self._batches = iter(self.batches)
 
-        if self.train and not buffer_path.exists():
-            self.make_replay(buffer_path)
+        if self.train:
+            if not buffer_path.exists():
+                self.make_replay(buffer_path)
+            print('All data loaded; training of classifier underway.')
 
     @property
     def batch(self):
@@ -70,8 +72,6 @@ class ClassifyEnv:
             buffer.seek(0)
             with path.open('wb') as f:
                 f.write(buffer.read())
-
-        print('All data loaded; training of classifier underway.')
 
     def reset(self):
         x, y = [np.array(b, dtype='float32') for b in self.batch]
