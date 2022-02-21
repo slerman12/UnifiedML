@@ -12,7 +12,7 @@ class Environment:
     def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
                  seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
-        self.offline = offline or generate
+        self.offline = (offline or generate) and train
         self.generate = generate
 
         self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
@@ -46,7 +46,7 @@ class Environment:
 
         self.episode_done = False
 
-        if self.offline and agent.training:
+        if self.offline:
             agent.step += 1
             agent.episode += 1
             self.episode_done = True
@@ -70,7 +70,7 @@ class Environment:
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
 
-                import torch
+                import torch  # TODO delete
                 video_image.append(torch.tensor(exp.observation[:24]).to(action.device) / 127.5 - 1)
 
             # Tally reward, done, step
