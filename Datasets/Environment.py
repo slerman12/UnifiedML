@@ -89,8 +89,8 @@ class Environment:
                 'step': agent.step,
                 'frame': agent.step * self.action_repeat,
                 'episode': agent.episode,
-                'accuracy': self.episode_reward / self.episode_step if self.suite.lower() == 'classify'
-                else self.episode_reward,
+                'accuracy'if self.suite == 'classify' else 'reward':
+                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
                 'fps': frames / (sundown - self.daybreak)} if not self.offline else None
 
         if self.episode_done:
