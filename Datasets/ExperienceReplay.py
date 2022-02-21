@@ -157,7 +157,10 @@ class ExperienceReplay:
 
     def __len__(self):
         stored = len(list(self.path.glob('*.npz')))
-        loaded = len(self.experiences.episode_names)
+        loaded = len(self.experiences.episode_names)  # Unstable since parallel,
+        # if not save need to keep track of stored here, min of that and capacity, as well as initial length
+        # initial len(list(self.path.glob('*.npz'))) + stored, the memory count one is good for distributed + saver
+        # return len(list(self.path.glob('*.npz'))) if self.experiences.save else (self.initial_stored + self.stored)U
         return stored if self.experiences.save else stored + loaded
 
 
