@@ -49,7 +49,6 @@ class ClassifyEnv:
         if self.train:
             if not buffer_path.exists():
                 self.make_replay(buffer_path)
-            print('All data loaded; training of classifier underway.')
 
     @property
     def batch(self):
