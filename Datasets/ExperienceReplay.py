@@ -190,6 +190,7 @@ class Experiences(IterableDataset):
         self.discount = discount
 
     def load_episode(self, episode_name):
+        print("huh")
         try:
             with episode_name.open('rb') as episode_file:
                 episode = np.load(episode_file)
@@ -233,7 +234,6 @@ class Experiences(IterableDataset):
         # Find one new episode
         for episode_name in episode_names:
             episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
-            print(episode_idx)
             if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
                 continue
             if episode_name in self.episodes.keys():  # Don't store redundantly
