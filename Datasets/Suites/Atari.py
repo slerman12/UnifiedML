@@ -3,13 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import gym
+import cv2
+import numpy as np
 
 import dm_env
 from dm_env import specs
-
-import cv2
-
-import numpy as np
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, TruncateWrapper, AugmentAttributesWrapper, \
     FrameStackWrapper

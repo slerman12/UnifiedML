@@ -9,15 +9,16 @@ import warnings
 from pathlib import Path
 
 from tqdm import tqdm
-
 import numpy as np
+
+from dm_env import specs, StepType
 
 import torch
 import torchvision
 from torchvision.transforms import functional as F
-from dm_env import specs, StepType
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
+
 from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
@@ -31,8 +32,6 @@ class ClassifyEnv:
 
         self.num_classes = len(experiences.classes)
         self.action_repeat = 1
-        self.offline = offline
-        self.train = train
 
         self.batches = torch.utils.data.DataLoader(dataset=experiences,
                                                    batch_size=batch_size,
@@ -43,8 +42,8 @@ class ClassifyEnv:
 
         self._batches = iter(self.batches)
 
-        if self.train:
-            if not buffer_path.exists():
+        if train:
+            if offline and not buffer_path.exists():
                 self.create_replay(buffer_path)
         else:
             self.evaluate_episodes = len(self)
@@ -61,7 +60,7 @@ class ClassifyEnv:
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a global experience replay for this dataset. '
+        for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
                                                                 'This only has to be done once. '
                                                                 'Loading in batches, this may take a moment')):
             x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
