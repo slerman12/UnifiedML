@@ -6,6 +6,7 @@ import random
 import glob
 import shutil
 import atexit
+import warnings
 from pathlib import Path
 import datetime
 import io
@@ -30,7 +31,7 @@ class ExperienceReplay:
                     exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
                     print('All data loaded; training of classifier underway.')
                 else:
-                    raise Warning('Loading saved replay of a classify environment from a previous online session.')
+                    warnings.warn('Loading saved replay of a classify environment from a previous online session.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
