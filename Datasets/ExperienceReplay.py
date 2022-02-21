@@ -25,8 +25,11 @@ class ExperienceReplay:
         exists = glob.glob(path + '*/')
 
         if load or offline or generate:
-            if len(exists) == 0 and suite == 'classify':
-                exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
+            if suite == 'classify':
+                if len(exists) == 0:
+                    exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
+                else:
+                    Warning('Loading saved replay of a classify environment from a previous online session.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
