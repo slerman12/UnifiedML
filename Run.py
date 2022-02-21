@@ -78,6 +78,7 @@ def main(args):
                 replay.add(store=True)  # Only store full episodes
 
         converged = agent.step >= args.train_steps
+        print(training, agent.step > args.seed_steps, env.offline, len(replay), args.num_workers)
         training = (training or agent.step > args.seed_steps or env.offline) and len(replay) >= args.num_workers
 
         # Train agent
