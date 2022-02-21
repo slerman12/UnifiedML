@@ -29,6 +29,7 @@ nstep: 1
 evaluate_per_steps: 1000
 evaluate_episodes: 1
 learn_per_steps: 1
+seed_steps: 100
 explore_steps: 0
 log_per_episodes: 10
 offline: true
