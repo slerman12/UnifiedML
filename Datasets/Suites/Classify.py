@@ -65,7 +65,7 @@ class ClassifyEnv:
 
         for x, y in tqdm(self.batches, 'Loading batches into experience replay.'):
             # Concat a dummy batch item
-            x, y = [np.concatenate([b, np.full_like(b[-1:], np.NaN), 0]) for b in (x, y)]
+            x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN), 0]) for b in (x, y)]
 
             nans = np.full_like(y, np.NaN)
             episode = {'obs': x, 'reward': nans, 'discount': nans, 'label': y, 'step': nans}
@@ -100,7 +100,7 @@ class ClassifyEnv:
         assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
 
         # Concat a dummy batch item
-        x, y = [np.concatenate([b, b[-1:]], 0) for b in (self.time_step.observation, self.time_step.label)]
+        x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
 
         reward = (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
