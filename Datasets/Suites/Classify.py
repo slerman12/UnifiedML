@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import datetime
 import io
 import random
 import warnings
@@ -62,16 +63,18 @@ class ClassifyEnv:
     def make_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        xs, ys = zip(*[(x, y) for x, y in tqdm(self.batches, 'Loading batches into experience replay.')])
+        for x, y in tqdm(self.batches, 'Loading batches into experience replay.'):
+            nans = np.full_like(y, np.NaN)
+            episode = {'obs': x, 'reward': nans, 'discount': nans, 'label': y, 'step': nans}
 
-        nans = [np.nan] * self.length
-        episode = {'obs': xs, 'reward': nans, 'discount': nans, 'label': ys, 'step': nans}
+            timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+            episode_name = f'{timestamp}_{self.length}_{len(x)}.npz'
 
-        with io.BytesIO() as buffer:
-            np.savez_compressed(buffer, episode)
-            buffer.seek(0)
-            with path.open('wb') as f:
-                f.write(buffer.read())
+            with io.BytesIO() as buffer:
+                np.savez_compressed(buffer, episode)
+                buffer.seek(0)
+                with (path / episode_name).open('wb') as f:
+                    f.write(buffer.read())
 
     def reset(self):
         x, y = [np.array(b, dtype='float32') for b in self.batch]

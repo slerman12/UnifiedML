@@ -31,5 +31,6 @@ dependencies:
       - PyOpenGL-accelerate
       - ale-py
       - gym
+      - tqdm
       - einops
       - opt_einsum_torch
