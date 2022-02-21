@@ -73,7 +73,7 @@ class ClassifyEnv:
             episode_name = f'{timestamp}_{episode}_{len(x)}.npz'
 
             with io.BytesIO() as buffer:
-                np.savez_compressed(buffer, episode)
+                np.savez_compressed(buffer, **episode)
                 buffer.seek(0)
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
