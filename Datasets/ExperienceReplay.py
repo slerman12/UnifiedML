@@ -25,6 +25,8 @@ class ExperienceReplay:
         exists = glob.glob(path + '*/')
 
         if load or offline or generate:
+            print(suite)
+            print("HSHSHHHHHHHHHHHH")
             if suite == 'classify':
                 if len(exists) == 0:
                     exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
