@@ -63,11 +63,13 @@ class ClassifyEnv:
         path.mkdir(exist_ok=True, parents=True)
 
         for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Loading batches into experience replay.')):
+            x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
+
             # Concat a dummy batch item
             x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (x, y)]
 
-            nans = np.full_like(y, np.NaN)
-            episode = {'observation': nans, 'action': nans, 'reward': nans, 'discount': nans, 'label': nans, 'step': nans}
+            episode = {'observation': x, 'action': dummy_action, 'reward': dummy_reward, 'discount': dummy_discount,
+                       'label': y, 'step': dummy_step}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
             episode_name = f'{timestamp}_{episode_ind}_{len(x)}.npz'
@@ -78,8 +80,8 @@ class ClassifyEnv:
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
 
-    def reset(self):
-        x, y = [np.array(b, dtype='float32') for b in self.batch]
+    def reset_format(self, x, y):
+        x, y = [np.array(b, dtype='float32') for b in self.(x, y)]
         y = np.expand_dims(y, 1)
 
         batch_size = x.shape[0]
@@ -87,6 +89,11 @@ class ClassifyEnv:
         dummy_action = np.full([batch_size + 1, self.num_classes], np.NaN, 'float32')
         dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
         dummy_discount = np.full([batch_size + 1, 1], 1, 'float32')
+
+        return x, y, dummy_action, dummy_reward, dummy_discount, dummy_step
+
+    def reset(self):
+        x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(*self.batch)
 
         self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
                                           discount=dummy_discount, step=dummy_step,
