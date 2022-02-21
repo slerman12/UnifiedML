@@ -70,7 +70,7 @@ class ClassifyEnv:
             episode = {'obs': x, 'reward': nans, 'discount': nans, 'label': y, 'step': nans}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            episode_name = f'{timestamp}_{episode}_{len(x)}.npz'
+            episode_name = f'{timestamp}_{episode}_{x.shape[0]}.npz'
 
             with io.BytesIO() as buffer:
                 np.savez_compressed(buffer, **episode)
