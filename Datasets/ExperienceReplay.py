@@ -61,7 +61,7 @@ class ExperienceReplay:
         # Parallelized experience loading
 
         self.experiences = Experiences(path=self.path,
-                                       capacity=capacity // max(1, num_workers),
+                                       capacity=np.inf if save else capacity // max(1, num_workers),
                                        num_workers=num_workers,
                                        fetch_per=1000,
                                        save=save,
