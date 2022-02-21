@@ -18,13 +18,15 @@ from torch.utils.data import IterableDataset
 
 
 class ExperienceReplay:
-    def __init__(self, batch_size, num_workers, capacity, action_spec, offline, generate, save, load, path='.',
+    def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
                  obs_spec=None, nstep=0, discount=1):
         # Path and loading
 
         exists = glob.glob(path + '*/')
 
         if load or offline or generate:
+            if len(exists) == 0 and suite == 'classify':
+                exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save

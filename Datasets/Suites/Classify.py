@@ -2,8 +2,12 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import io
 import random
 import warnings
+from pathlib import Path
+
+from tqdm import tqdm
 
 import numpy as np
 
@@ -17,7 +21,7 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, num_workers, offline, train, enable_depletion=True, verbose=False):
+    def __init__(self, experiences, batch_size, num_workers, offline, train, buffer_path=None, verbose=False):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -28,8 +32,6 @@ class ClassifyEnv:
         self.action_repeat = 1
         self.offline = offline
         self.train = train
-        self.enable_depletion = enable_depletion
-        self.verbose = verbose
 
         self.batches = torch.utils.data.DataLoader(dataset=experiences,
                                                    batch_size=batch_size,
@@ -40,13 +42,14 @@ class ClassifyEnv:
 
         self.time_step = None
 
-        self.count = 0
         self.length = len(self.batches)
         self._batches = iter(self.batches)
 
+        if self.train and not buffer_path.exists():
+            self.make_replay(buffer_path)
+
     @property
     def batch(self):
-        self.count += 1
         try:
             batch = next(self._batches)
         except StopIteration:
@@ -54,20 +57,21 @@ class ClassifyEnv:
             batch = next(self._batches)
         return batch
 
-    @property
-    def depleted(self):
-        # '+1 due to the call to self.batch in observation_spec
-        is_depleted = self.count > self.length + 1 and self.enable_depletion or self.offline
+    def make_replay(self, path):
+        path.mkdir(exist_ok=True, parents=True)
 
-        if self.verbose:
-            if is_depleted:
-                print('All data loaded; env depleted; replay seeded; training of classifier underway.')
-                self.verbose = False
-            elif self.count == 0:
-                print(f'Seeding replay... training of classifier has not begun yet. '
-                      f'\n{self.length} segments need to be loaded into the experience replay.')
+        xs, ys = zip(*[(x, y) for x, y in tqdm(self.batches, 'Loading batches into experience replay.')])
 
-        return is_depleted
+        nans = [np.nan] * self.length
+        episode = {'obs': xs, 'reward': nans, 'discount': nans, 'label': ys, 'step': nans}
+
+        with io.BytesIO() as buffer:
+            np.savez_compressed(buffer, episode)
+            buffer.seek(0)
+            with path.open('wb') as f:
+                f.write(buffer.read())
+
+        print('All data loaded; training of classifier underway.')
 
     def reset(self):
         x, y = [np.array(b, dtype='float32') for b in self.batch]
@@ -135,7 +139,7 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
     dataset = TinyImageNet if task == 'TinyImageNet' \
         else getattr(torchvision.datasets, task)
 
-    path = f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
+    path = f'./Datasets/ReplayBuffer/Classify/{task}'
 
     class Transform(object):
         def __call__(self, sample):
@@ -150,18 +154,17 @@ def make(task, frame_stack=4, action_repeat=4, max_episode_frames=None, truncate
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
-        experiences = dataset(root=path,
+        experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
                               download=True,
                               transform=transform)
 
-    # Whether to allow the environment to mark itself "depleted" after an epoch completed
-    enable_depletion = train
+    make_buffer_path = Path(path + '_Buffer')
 
     env = ClassifyEnv(experiences,
                       # batch_size if train else len(experiences),
                       batch_size if train else batch_size,  # TODO For now, only using small sample! Eval size
-                      num_workers, offline or generate, train, enable_depletion, verbose=train)
+                      num_workers, offline or generate, train, make_buffer_path, verbose=train)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,

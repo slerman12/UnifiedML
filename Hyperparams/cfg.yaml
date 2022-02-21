@@ -12,7 +12,7 @@ explore_steps: 2000
 lr: 1e-4
 # Domains
 discrete: ??? # To be specified later
-offline: false
+offline: false  # Defaults to true for classify tasks
 RL: true
 supervise: true
 generate: false
@@ -95,6 +95,8 @@ replay:
   num_workers: ${num_workers}
   nstep: ${nstep}
   discount: ${discount}
+  suite: ${suite}
+  task: ${task}
   offline: ${offline}
   generate: ${generate}
   save: false

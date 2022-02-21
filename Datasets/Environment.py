@@ -44,7 +44,7 @@ class Environment:
 
         exp = self.exp
 
-        self.offline = self.offline or self.env.depleted or self.generate
+        self.offline = self.offline or self.generate
         self.episode_done = False
 
         if self.offline and agent.training:
