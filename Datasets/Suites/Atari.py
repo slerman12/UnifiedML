@@ -10,7 +10,7 @@ import dm_env
 from dm_env import specs
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, TruncateWrapper, AugmentAttributesWrapper, \
-    FrameStackWrapper
+    FrameStackWrapper, DiscreteEnvWrapper
 
 
 # https://github.com/google/dopamine/blob/df97ba1b0d4edf90824534efcdda20d6549c37a9/dopamine/discrete_domains/atari_lib.py#L329-L515
@@ -237,6 +237,9 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
                           episode_max_steps=episode_max_steps,
                           episode_truncate_resume_steps=episode_truncate_resume_steps,
                           train=train)
+
+    # Take argmax if necessary of vector actions on action dim
+    env = DiscreteEnvWrapper(env)
 
     # Augment attributes to env and time step, prepare specs for loading by Hydra
     env = AugmentAttributesWrapper(env)

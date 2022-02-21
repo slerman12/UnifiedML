@@ -327,3 +327,29 @@ class AugmentAttributesWrapper(dm_env.Environment):
 
     def __getattr__(self, name):
         return getattr(self.env, name)
+
+
+class DiscreteEnvWrapper(dm_env.Environment):
+    def __init__(self, env):
+        self.env = env
+
+    def step(self, action):
+        if len(action.shape) > 1 and action.shape[1] > 1:
+            # Discretize
+            action = np.argmax(action, -1).expand_dims(-1)
+        return self.env.step(action)
+
+    def reset(self):
+        return self.env.reset()
+
+    def close(self):
+        self.gym_env.close()
+
+    def observation_spec(self):
+        return self.env.observation_spec()
+
+    def action_spec(self):
+        return self.env.action_spec()
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
