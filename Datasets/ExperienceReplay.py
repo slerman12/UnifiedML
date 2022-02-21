@@ -63,7 +63,7 @@ class ExperienceReplay:
         self.experiences = Experiences(path=self.path,
                                        capacity=capacity // max(1, num_workers),
                                        num_workers=num_workers,
-                                       fetch_every=1000,
+                                       fetch_per=1000,
                                        save=save,
                                        nstep=nstep,
                                        discount=discount)
@@ -167,7 +167,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_every, save=False, nstep=0, discount=1):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1):
 
         # Dataset construction via parallel workers
 
@@ -181,8 +181,8 @@ class Experiences(IterableDataset):
 
         self.num_workers = max(1, num_workers)
 
-        self.fetch_every = fetch_every
-        self.samples_since_last_fetch = fetch_every
+        self.fetch_per = fetch_per
+        self.samples_since_last_fetch = fetch_per
 
         self.save = save
 
@@ -218,7 +218,7 @@ class Experiences(IterableDataset):
 
     # Populates workers with up-to-date data
     def worker_fetch_episodes(self):
-        if self.samples_since_last_fetch < self.fetch_every:
+        if self.samples_since_last_fetch < self.fetch_per:
             return
 
         self.samples_since_last_fetch = 0
@@ -230,6 +230,7 @@ class Experiences(IterableDataset):
 
         episode_names = sorted(self.path.glob('*.npz'), reverse=True)  # Episodes
         num_fetched = 0
+        print(len(episode_names))
         # Find one new episode
         for episode_name in episode_names:
             episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
