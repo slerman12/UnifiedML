@@ -9,14 +9,14 @@ from Datasets.Suites import DMC, Atari, Classify
 
 
 class Environment:
-    def __init__(self, task_name, frame_stack, action_repeat, max_episode_frames, truncate_episode_frames,
+    def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
                  seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
-        self.offline = offline
+        self.offline = offline or generate
         self.generate = generate
 
-        self.env = self.raw_env.make(task_name, frame_stack, action_repeat, max_episode_frames,
-                                     truncate_episode_frames, offline, generate, train, seed, batch_size, num_workers)
+        self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
+                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
 
         self.env.reset()
 
@@ -44,7 +44,6 @@ class Environment:
 
         exp = self.exp
 
-        self.offline = self.offline or self.generate
         self.episode_done = False
 
         if self.offline and agent.training:
@@ -87,7 +86,8 @@ class Environment:
             self.env.reset()
 
             self.last_episode_len = self.episode_step
-            self.last_episode_reward = self.episode_reward
+            self.last_episode_reward = self.episode_reward / self.last_episode_len if self.suite.lower() == 'classify' \
+                else self.episode_reward
 
         # Log stats
         sundown = time.time()
@@ -97,7 +97,7 @@ class Environment:
                 'step': agent.step,
                 'frame': agent.step * self.action_repeat,
                 'episode': agent.episode,
-                'accuracy' if self.suite.lower() == 'classify' else 'reward': self.episode_reward,
+                'accuracy' if self.suite.lower() == 'classify' else 'reward': self.last_episode_reward,
                 'fps': frames / (sundown - self.daybreak)}
 
         if self.episode_done:

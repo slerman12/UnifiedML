@@ -22,7 +22,7 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, num_workers, offline, train, buffer_path=None, verbose=False):
+    def __init__(self, experiences, batch_size, num_workers, offline, train, buffer_path=None):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -41,14 +41,13 @@ class ClassifyEnv:
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
 
-        self.time_step = None
-
-        self.length = len(self.batches)
         self._batches = iter(self.batches)
 
         if self.train:
             if not buffer_path.exists():
-                self.make_replay(buffer_path)
+                self.create_replay(buffer_path)
+        else:
+            self.evaluate_episodes = len(self)
 
     @property
     def batch(self):
@@ -59,12 +58,12 @@ class ClassifyEnv:
             batch = next(self._batches)
         return batch
 
-    def make_replay(self, path):
+    def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
         for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a global experience replay for this dataset. '
                                                                 'This only has to be done once. '
-                                                                'Loading in batches')):
+                                                                'Loading in batches, this may take a moment')):
             x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
 
             # Concat a dummy batch item
@@ -107,14 +106,16 @@ class ClassifyEnv:
     def step(self, action):
         assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
 
-        # Concat a dummy batch item
+        # Concat a dummy batch item ('next obs')
         x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
 
-        reward = (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
+        correct = (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
-        self.time_step.reward[1:] = reward
-        self.time_step.reward[0] = reward.mean()
+        # 'reward' and 'action' paired with 'next obs'
+        self.time_step.reward[1:] = correct
+        self.time_step.reward[0] = correct.mean()
         self.time_step.action[1:] = action
+
         self.time_step = self.time_step._replace(step_type=StepType.LAST, observation=x, label=y)
 
         return self.time_step
@@ -127,9 +128,12 @@ class ClassifyEnv:
     def action_spec(self):
         return specs.BoundedArray((self.num_classes,), 'float32', 0, self.num_classes - 1, 'action')
 
+    def __len__(self):
+        return len(self.batches)
 
-def make(task, frame_stack=4, action_repeat=4, episode_max_frames=None, episode_truncate_resume_frames=None,
-         offline=False, generate=False, train=True, seed=1, batch_size=1, num_workers=1):
+
+def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
+         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     """
     'task' options:
 
@@ -142,22 +146,19 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=None, episode_
      'VOCSegmentation', 'VOCDetection', 'Cityscapes', 'ImageNet',
      'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
      'VisionDataset', 'USPS', 'Kinetics400', 'HMDB51', 'UCF101',
-     'Places365', 'TinyImageNet')
-
-     TODO: iNaturalist!
+     'Places365', 'TinyImageNet')  TODO: iNaturalist!
     """
 
     assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'
 
-    dataset = TinyImageNet if task == 'TinyImageNet' \
-        else getattr(torchvision.datasets, task)
+    dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}'
 
-    class Transform(object):
+    class Transform:
         def __call__(self, sample):
             sample = F.to_tensor(sample)
-            sample *= 255  # Encoder expects pixels  # TODO maybe reconfigure that
+            sample *= 255  # Encoder expects pixels
             # mean = stddev = [0.5] * sample.shape[0]  # Depending on num channels
             # sample = F.normalize(sample, mean, stddev)  # Generic normalization
             return sample
@@ -172,12 +173,9 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=None, episode_
                               download=True,
                               transform=transform)
 
-    make_buffer_path = Path(path + '_Buffer')
+    create_replay_path = Path(path + '_Buffer')
 
-    env = ClassifyEnv(experiences,
-                      # batch_size if train else len(experiences),
-                      batch_size if train else batch_size,  # TODO For now, only using small sample! Eval size
-                      num_workers, offline or generate, train, make_buffer_path, verbose=train)
+    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, create_replay_path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
