@@ -230,10 +230,10 @@ class Experiences(IterableDataset):
 
         episode_names = sorted(self.path.glob('*.npz'), reverse=True)  # Episodes
         num_fetched = 0
-        print(len(episode_names))
         # Find one new episode
         for episode_name in episode_names:
             episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
+            print(episode_idx)
             if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
                 continue
             if episode_name in self.episodes.keys():  # Don't store redundantly
