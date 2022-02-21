@@ -214,6 +214,8 @@ Evaluation with exponential moving average (EMA) of params can be toggled with t
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
+[comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
+
 [comment]: <> (</details>)
 
 ### Generative Modeling
