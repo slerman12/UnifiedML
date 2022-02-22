@@ -31,7 +31,7 @@ class ExperienceReplay:
                     exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
                     print('All data loaded. Training of classifier underway.')
                 else:
-                    warnings.warn(f'Loading a saved replay of a classify environment from a previous online session. '
+                    warnings.warn(f'Loading a saved replay of a classify task from a previous online session. '
                                   f'For the standard offline dataset, '
                                   f'set replay.path="./Datasets/ReplayBuffer/Classify/{task}_Buffer" '
                                   f'or delete the saved buffer in {path.replace("Agents.", "")}.')
