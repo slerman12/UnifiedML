@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import _pickle
 import math
 import random
 import re
@@ -40,7 +41,7 @@ def load(path, device, attr=None):
             module = torch.load(path)
         else:
             raise Exception(f'Load path {path} does not exist.')
-    except (RuntimeError, EOFError, OSError):
+    except (RuntimeError, EOFError, OSError, _pickle.UnpicklingError):
         warnings.warn(f'Load conflict')  # For distributed training
         return load(path, device, attr)
 
