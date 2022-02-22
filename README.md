@@ -89,23 +89,9 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 ## 1. Classify
 
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
-
 Comes preinstalled.
 
-[comment]: <> (</details>)
-
 ## 2. Atari Arcade
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 You can use ```AutoROM``` if you accept the license.
 
@@ -120,15 +106,7 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-[comment]: <> (</details>)
-
 ## 3. DeepMind Control
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 Download MuJoCo from here: https://mujoco.org/download.
 
@@ -153,8 +131,6 @@ pip install --user dm_control
 
 to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
-[comment]: <> (</details>)
-
 # :file_cabinet: Key files
 
 ```Run.py``` handles training and evaluation loops, saving, distributed training, logging, plotting.
@@ -166,12 +142,6 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 # :mag: Sample scripts
 
 ### RL
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 Humanoid example:
 ```
@@ -188,15 +158,7 @@ SPR Agent in DeepMind Control:
 python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 ```
 
-[comment]: <> (</details>)
-
 ### Classification
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 DQN Agent on MNIST:
 
@@ -216,15 +178,7 @@ Evaluation with exponential moving average (EMA) of params can be toggled with t
 
 [comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
 
-[comment]: <> (</details>)
-
 ### Generative Modeling
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 Via the ```generate=true``` flag:
 ```
@@ -244,15 +198,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
-[comment]: <> (</details>)
-
 ### Offline RL
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 From a saved experience replay, sans additional rollouts:
 
@@ -266,15 +212,7 @@ Is true by default for classification; replays are automatically downloaded.
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
-[comment]: <> (</details>)
-
 ### Saving
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -294,15 +232,7 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
-[comment]: <> (</details>)
-
 ### Custom Architectures
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
@@ -322,7 +252,7 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
-To train, for example MNIST, using ConvNeXt as the Encoder:
+To train MNIST, using ConvNeXt as the Encoder:
 
 ```
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
@@ -342,6 +272,12 @@ python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Ac
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
 
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>See even more examples :open_book: </i></summary>)
+
+[comment]: <> (<br>)
+
 [comment]: <> (Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:)
 
 [comment]: <> (```)
@@ -353,6 +289,8 @@ since otherwise ```repr_shape``` is flattened to channel dim, with no features f
 [comment]: <> (You can imagine training a GAN CNN and then seamlessly using it for RL.)
 
 [comment]: <> (<br>)
+
+[comment]: <> (</details>)
 </details>
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
@@ -360,8 +298,6 @@ Of course, it's always possible to just modify the code itself, which may be eas
 [comment]: <> (</details>)
 
 ### Distributed
-
-[comment]: <> (Automatically parallelizes batches across all visible GPUs. Advanced experimental features described below.)
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
 
@@ -380,8 +316,6 @@ you can use the ```load_per_steps=``` flag.
 
 For example, a data-collector agent and an update agent,
 
-[comment]: <> (You can share an agent across multiple parallel instances with the ```load_per_steps=``` flag. )
-
 ```
 python Run.py update_per_steps=0 replay.save=true load_per_steps=1 
 ```
@@ -397,12 +331,6 @@ Since both use the same experiment name, they will save and load from the same a
 
 ### Experiment naming, plotting
 
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
-
-[comment]: <> (<br>)
-
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
 ```
@@ -410,8 +338,6 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1']"
 ```
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
-
-[comment]: <> (</details>)
 
 # :bar_chart: Agents & Performances
 
@@ -427,17 +353,17 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 All files are designed to be useful for educational and innovational purposes in their simplicity and structure.
 
-[comment]: <> (# :handshake: Contributing)
+# :handshake: Contributing
 
-[comment]: <> (Contributers needed.)
+Contributers needed.
 
-[comment]: <> (Please, donate to help with compute and getting Benchmarks ready:)
+Please, donate to help with compute and getting Benchmarks ready:
 
-[comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat&#41;]&#40;https://www.paypal.com/cgi-bin/&#41;)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
 
-[comment]: <> (We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.)
+We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.
 
-[comment]: <> (To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Appreciated!)
+To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com). Appreciated!
 
 [comment]: <> (<details>)
 
@@ -460,6 +386,3 @@ It does with RL to this library what PyCharm does with Python to IntelliJ, i.e.,
 <hr class="solid">
 
 [MIT license Included.](MIT_LICENSE)
-
-[comment]: <> (changes from unified rl)
-[comment]: <> (changed target to ema)
