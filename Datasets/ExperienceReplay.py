@@ -29,12 +29,13 @@ class ExperienceReplay:
             if suite == 'classify':
                 if len(exists) == 0:
                     exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
-                    print('All data loaded; training of classifier underway.')
+                    print('All data loaded. Training of classifier underway.')
                 else:
                     warnings.warn(f'Loading a saved replay of a classify environment from a previous online session, '
                                   f'which means your data will depend on your last session. If this is undesired, '
-                                  f'you may use the default universal dataset by deleting the saved buffer located '
-                                  f'in {path}, or setting the "replay.path=" flag.')
+                                  f'you may use the default buffer by deleting the saved buffer located '
+                                  f'in {path}, or setting the '
+                                  f'replay.path="./Datasets/ReplayBufferClassify/{task}" flag.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
