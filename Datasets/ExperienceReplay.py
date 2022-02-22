@@ -33,7 +33,7 @@ class ExperienceReplay:
                 else:
                     warnings.warn(f'Loading a saved replay of a classify environment from a previous online session. '
                                   f'For the standard offline dataset, '
-                                  f'you can set the replay.path="./Datasets/ReplayBuffer/Classify/{task}_Buffer" flag '
+                                  f'set replay.path="./Datasets/ReplayBuffer/Classify/{task}_Buffer" '
                                   f'or delete the saved buffer in {path.replace("Agents.", "")}.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path.replace("Agents.", "")}'
             self.path = Path(sorted(exists)[-1])
