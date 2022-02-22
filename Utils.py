@@ -37,10 +37,10 @@ def load(path, device, attr=None):
     try:
         path = path.replace('Agents.', '')
         if Path(path).exists():
-                module = torch.load(path)
+            module = torch.load(path)
         else:
-                raise Exception(f'Load path {path} does not exist.')
-    except (RuntimeError, EOFError):
+            raise Exception(f'Load path {path} does not exist.')
+    except (RuntimeError, EOFError, OSError):
         warnings.warn(f'Load conflict')  # For distributed training
         return load(path, device, attr)
 
@@ -71,7 +71,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Copies parameters from one model to another, with optionally EMA weighing
+# Copies parameters from one model to another, with optional EMA weighing
 def param_copy(net, target_net, ema_tau=1):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(ema_tau * param.data +
@@ -125,10 +125,10 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
 
 # Broadcasts a CNN's inputs and channel-wise-context to a desired input shape, preserving leading dims
 class CNNInputBroadcast(nn.Module):
-    def __init__(self, module, desired_input_shape):
+    def __init__(self, cnn, desired_input_shape):
         super().__init__()
 
-        self.module = module
+        self.CNN = cnn
         self.shape = desired_input_shape
 
     def forward(self, *x):
@@ -137,14 +137,14 @@ class CNNInputBroadcast(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.shape[1:]) if context.shape[-1]
                                                                             % math.prod(self.shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
         # Operate on last 3 dims
         x = x.view(-1, *x.shape[-3:])
 
-        x = self.module(x)
+        x = self.CNN(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
