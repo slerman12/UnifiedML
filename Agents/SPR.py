@@ -39,25 +39,25 @@ class SPRAgent(torch.nn.Module):
 
         self.depth = depth
 
-        self.encoder = CNNEncoder(obs_shape, shift_max_norm=True, optim_lr=lr, target_tau=target_tau)
+        self.encoder = CNNEncoder(obs_shape, shift_max_norm=True, lr=lr, target_tau=target_tau)
 
         # Continuous actions creator
         self.creator = None if self.discrete \
             else EnsembleGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
                                        stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       optim_lr=lr)
+                                       lr=lr)
 
         self.dynamics = ResidualBlockEncoder(self.encoder.feature_shape, self.action_dim,
                                              shift_max_norm=True, pixels=False, isotropic=True,
-                                             optim_lr=lr)
+                                             lr=lr)
 
         self.projector = MLPBlock(self.encoder.feature_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,
-                                  target_tau=target_tau, optim_lr=lr)
+                                  target_tau=target_tau, lr=lr)
 
-        self.predictor = MLPBlock(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2, optim_lr=lr)
+        self.predictor = MLPBlock(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2, lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
-                                      discrete=discrete, optim_lr=lr, target_tau=target_tau)
+                                      discrete=discrete, lr=lr, target_tau=target_tau)
 
         self.actor = CategoricalCriticActor(stddev_schedule)
 

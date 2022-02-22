@@ -49,7 +49,7 @@ class MLPBlock(nn.Module):
 
     def __init__(self, input_dim, output_dim, trunk_dim=512, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
                  layer_norm=False, binary=False, l2_norm=False,
-                 optim_lr=None, optim_wd=0, ema_tau=None):
+                 lr=None, weight_decay=0, ema_tau=None):
         super().__init__()
 
         self.trunk = nn.Sequential(nn.Linear(input_dim, trunk_dim),
@@ -61,15 +61,15 @@ class MLPBlock(nn.Module):
 
         self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, binary, l2_norm)
 
-        self.init(optim_lr, optim_wd, ema_tau)
+        self.init(lr, weight_decay, ema_tau)
 
-    def init(self, optim_lr=None, optim_wd=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
         # Optimizer
-        if optim_lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=optim_lr, weight_decay=optim_wd)
+        if lr is not None:
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
         if ema_tau is not None:

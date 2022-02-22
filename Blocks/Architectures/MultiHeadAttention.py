@@ -85,10 +85,10 @@ class CrossAttention(nn.Module):
 
 # A minimalist implementation using only Pytorch natives
 class CrossAttend(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, *_):
+    def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None, *_):
         super().__init__()
 
-        self.attn = nn.MultiheadAttention(dim, heads, kdim=context_dim, vdim=context_dim, batch_first=True)
+        self.attn = nn.MultiheadAttention(dim, heads, kdim=context_dim, vdim=value_dim, batch_first=True)
 
     def forward(self, x, context):
         # Conserves shape
@@ -110,7 +110,7 @@ class SelfAttention(CrossAttention):
 
 class CrossAttentionBlock(nn.Module):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, talk_h=False,
-                 optim_lr=None, optim_wd=0, ema_tau=None):
+                 lr=None, weight_decay=0, ema_tau=None):
         super().__init__()
 
         context_dim = dim if context_dim is None \
@@ -130,18 +130,18 @@ class CrossAttentionBlock(nn.Module):
         self.ln_attn = nn.LayerNorm(value_dim)
         self.ln = nn.LayerNorm(value_dim)
 
-        self.init(optim_lr, optim_wd, ema_tau)
+        self.init(lr, weight_decay, ema_tau)
 
     def repr_shape(self, c, h, w):
         return self.value_dim, h, w  # Assumes channels last
 
-    def init(self, optim_lr=None, optim_wd=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
         # Optimizer
-        if optim_lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=optim_lr, weight_decay=optim_wd)
+        if lr is not None:
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
         if ema_tau is not None:

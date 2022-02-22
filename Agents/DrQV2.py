@@ -34,14 +34,14 @@ class DrQV2Agent(torch.nn.Module):
         self.step = self.episode = 0
         self.explore_steps = explore_steps
 
-        self.encoder = CNNEncoder(obs_shape, optim_lr=lr)
+        self.encoder = CNNEncoder(obs_shape, lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
-                                      optim_lr=lr, target_tau=target_tau)
+                                      lr=lr, target_tau=target_tau)
 
         self.actor = EnsembleGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, action_shape[-1],
                                            discrete=discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                           optim_lr=lr)
+                                           lr=lr)
 
         # Data augmentation
         self.aug = IntensityAug(0.05) if self.discrete else RandomShiftsAug(pad=4)
