@@ -262,6 +262,8 @@ python Run.py task=atari/breakout offline=true
 
 Assumes a replay [is saved](#saving).
 
+Is true by default for classification; replays are automatically downloaded.
+
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
 [comment]: <> (</details>)
