@@ -71,10 +71,10 @@ class Environment:
 
         self.episode_step += step
 
-        if self.offline:
+        if agent.training and self.offline:
             agent.step += 1
 
-        if self.episode_done or self.offline:
+        if self.episode_done:
             if agent.training:
                 agent.episode += 1
             self.env.reset()
