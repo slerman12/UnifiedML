@@ -31,7 +31,7 @@ evaluate_episodes: 1
 learn_per_steps: 1
 seed_steps: 50
 explore_steps: 0
-log_per_episodes: 100
+log_per_episodes: 10
 offline: true
 task_name: {}""".format(task))
         f.close()
