@@ -34,15 +34,15 @@ def save(path, module):
 
 # Loads module
 def load(path, device, attr=None):
-    # try:
-    path = path.replace('Agents.', '')
-    if Path(path).exists():
-            module = torch.load(path)
-    else:
-            raise Exception(f'Load path {path} does not exist.')
-    # except:
-    #     warnings.warn(f'Load conflict')  # For distributed training
-    #     return load(path, device, attr)
+    try:
+        path = path.replace('Agents.', '')
+        if Path(path).exists():
+                module = torch.load(path)
+        else:
+                raise Exception(f'Load path {path} does not exist.')
+    except RuntimeError:
+        warnings.warn(f'Load conflict')  # For distributed training
+        return load(path, device, attr)
 
     if attr is not None:
         for attr in attr.split('.'):

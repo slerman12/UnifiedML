@@ -16,7 +16,7 @@ import Utils
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False):
+    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False):
         super().__init__()
 
         self.dim = dim
@@ -37,6 +37,8 @@ class CrossAttention(nn.Module):
 
         self.to_q = nn.Linear(dim, dim, bias=False)
         self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
+
+        self.relu = nn.ReLU(inplace=True) if relu else None
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
@@ -65,7 +67,7 @@ class CrossAttention(nn.Module):
 
         self.dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
-        attn = self.dots.softmax(dim=-1)
+        attn = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
 
         # "Talking heads"
         attn = self.talk_h(attn)

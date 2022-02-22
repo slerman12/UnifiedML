@@ -6,12 +6,13 @@ import torch
 from torch import nn
 
 from Blocks.Architectures import MLP
-from Blocks.Architectures.MultiHeadAttention import CrossAttend
+from Blocks.Architectures.MultiHeadAttention import CrossAttention
 
 
 class Relate(nn.Module):
-    """Relation Is All You Need"""
-    def __init__(self, dim=32, guides=4, guide_dim=None, heads=1, input_shape=None):
+    """Relation Is All You Need
+        - MHDPR: Multi-Head Dot-Product Relation"""
+    def __init__(self, dim=32, guides=32, guide_dim=None, heads=1, input_shape=None):
         super().__init__()
 
         if input_shape is not None:
@@ -21,8 +22,10 @@ class Relate(nn.Module):
             else guide_dim
 
         self.guides = nn.Parameter(torch.randn((guides, dim)))
-        self.attn = CrossAttend(guide_dim, heads, dim, dim * heads)
-        self.rltn = RelationPool(dim)
+        # ReLA: Rectified linear attention, https://arxiv.org/pdf/2104.07012.pdf
+        self.ReLA = CrossAttention(guide_dim, heads, dim, dim * heads, relu=True)
+        self.LN = nn.LayerNorm(dim)
+        self.relate = RN(dim)
 
         nn.init.kaiming_normal_(self.guides)
 
@@ -31,15 +34,17 @@ class Relate(nn.Module):
 
     def forward(self, x):
         guides = self.guides.expand(x.shape[0], -1, -1)
-        attn = self.attn(guides, x)
-        head_wise = attn.view(*attn.shape[:-2], -1, x.shape[-1])
+        attn = self.ReLA(guides, x)
+        head_wise = attn.view(*attn.shape[:-2], -1, x.shape[-1])  # Maybe add the top-1 of x as a residual
+        norm = self.LN(head_wise)
 
-        out = self.rltn(head_wise)
+        out = self.relate(norm)
 
         return out
 
 
-class RelationPool(nn.Module):
+class RN(nn.Module):
+    """Relation Network https://arxiv.org/abs/1706.01427"""
     def __init__(self, dim, inner_depth=3, outer_depth=2, hidden_dim=None, output_dim=None, input_shape=None):
         super().__init__()
 
