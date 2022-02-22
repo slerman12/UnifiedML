@@ -40,7 +40,7 @@ def load(path, device, attr=None):
                 module = torch.load(path)
         else:
                 raise Exception(f'Load path {path} does not exist.')
-    except RuntimeError:
+    except (RuntimeError, EOFError):
         warnings.warn(f'Load conflict')  # For distributed training
         return load(path, device, attr)
 

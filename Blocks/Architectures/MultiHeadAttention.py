@@ -85,6 +85,12 @@ class CrossAttention(nn.Module):
         return out
 
 
+class ReLA(CrossAttention):
+    """ReLA: Rectified linear attention"""
+    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None):
+        super().__init__(dim, heads, context_dim, value_dim, False, True)
+
+
 # A minimalist implementation using only Pytorch natives
 class CrossAttend(nn.Module):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None, *_):
