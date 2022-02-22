@@ -16,7 +16,7 @@ import Utils
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, ln_v=False, talk_h=False):
+    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False):
         super().__init__()
 
         self.dim = dim
@@ -38,9 +38,6 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(dim, dim, bias=False)
         self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
 
-        self.ln_v = nn.LayerNorm(value_dim // heads) if ln_v \
-            else nn.Identity()
-
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
                                     nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
@@ -61,16 +58,14 @@ class CrossAttention(nn.Module):
 
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
-        v = self.ln_v(v)  # My variant, makes sure the values get an equal "vote"; maybe don't need; allow "confidence"?
-
         # Memory efficient toggle, e.g., =0.5
         mem_limit = False
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
-        dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        self.dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
 
-        attn = dots.softmax(dim=-1)
+        attn = self.dots.softmax(dim=-1)
 
         # "Talking heads"
         attn = self.talk_h(attn)
@@ -89,27 +84,23 @@ class CrossAttention(nn.Module):
 
 
 # A minimalist implementation using only Pytorch natives
-# class CrossAttention(nn.Module):
-#     def __init__(self, dim=32, heads=8, context_dim=None, *_):
-#         super().__init__()
-#
-#         assert dim % heads == 0, f'dim={dim} does not divide heads={heads}'
-#         self.dim = dim
-#
-#         self.attn = nn.MultiheadAttention(dim, heads, kdim=context_dim, vdim=context_dim, batch_first=True)
-#
-#     def forward(self, x, context):
-#         # Conserves shape
-#         shape = x.shape
-#         assert shape[-1] == self.dim, f'{shape[-1]}, {self.dim}'
-#
-#         x = x.flatten(1, -2)
-#         context = context.flatten(1, -2)
-#
-#         attn, _ = self.attn(x, context, context)
-#
-#         # Restores original shape
-#         return attn.view(shape)
+class CrossAttend(nn.Module):
+    def __init__(self, dim=32, heads=8, context_dim=None, *_):
+        super().__init__()
+
+        self.attn = nn.MultiheadAttention(dim, heads, kdim=context_dim, vdim=context_dim, batch_first=True)
+
+    def forward(self, x, context):
+        # Conserves shape
+        mid_shape = x.shape[1:-1]
+
+        x = x.flatten(1, -2)
+        context = context.flatten(1, -2)
+
+        attn, self.dots = self.attn(x, context, context)
+
+        # Restores original shape
+        return attn.view(-1, *mid_shape, attn.shape[-1])
 
 
 class SelfAttention(CrossAttention):
@@ -118,8 +109,8 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, ln_input=False, ln_v=False, talk_h=False,
-                 optim_lr=None, ema_tau=None):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, talk_h=False,
+                 optim_lr=None, optim_wd=0, ema_tau=None):
         super().__init__()
 
         context_dim = dim if context_dim is None \
@@ -133,30 +124,24 @@ class CrossAttentionBlock(nn.Module):
 
         self.value_dim = value_dim
 
-        self.attn = CrossAttention(dim, self.heads, context_dim, value_dim,
-                                   ln_v,  # My variant, norms value heads by default
-                                   talk_h)
+        self.attn = CrossAttention(dim, self.heads, context_dim, value_dim, talk_h)
         self.mlp = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
 
-        self.mlp2 = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
-
-        self.ln_input = nn.LayerNorm(dim) if ln_input else nn.Identity()  # My variant, but default False
         self.ln_attn = nn.LayerNorm(value_dim)
         self.ln = nn.LayerNorm(value_dim)
-        self.ln2 = nn.LayerNorm(value_dim)
 
-        self.init(optim_lr, ema_tau)
+        self.init(optim_lr, optim_wd, ema_tau)
 
     def repr_shape(self, c, h, w):
         return self.value_dim, h, w  # Assumes channels last
 
-    def init(self, optim_lr=None, ema_tau=None):
+    def init(self, optim_lr=None, optim_wd=0, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
         # Optimizer
         if optim_lr is not None:
-            self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
+            self.optim = torch.optim.AdamW(self.parameters(), lr=optim_lr, weight_decay=optim_wd)
 
         # EMA
         if ema_tau is not None:
@@ -164,33 +149,13 @@ class CrossAttentionBlock(nn.Module):
             self.ema_tau = ema_tau
 
     def forward(self, x, context=None):
-        # if context is None:
-        #     context = x
-        #
-        # attn = self.ln_attn(self.attn(x, context)) + x  # ln(attn) -> ln(value), and residual muddles relational info
-        # out = self.ln(self.mlp(attn)) + attn
-        #
-        # return out
-        """My variant"""
-        # x = self.ln_input(x)  # TODO This might help too
-        #
         if context is None:
             context = x
 
-        # A key idea here is the layer-norm IN the attention, ln(values) rather than ln(attn)
-        attn = self.attn(x, context)  # If residual here, then attn="candidate update" with fc="correction" to x
-        fc = self.mlp(attn)  # This way MLP can help relationally-reason rather than just non-locally course-correct
-        ln = self.ln(fc) + x
-        fc = self.mlp2(ln)
-        ln = self.ln2(fc)
-        return ln + x  # This variant can do relational reasoning, more capacity; THEN does a residual-based update
-        # Another possibility is that it's not about relational reasoning, but a vote. It's a vote, on which direction
-        # to go and the MLP just protects the individual from the masses, in which that mid-residual would be better
-        # can however add this by just using a second mlp and following it with ln + residual; then has capacity for
-        # both (1) relational reasoning (1st MLP, no residual) and (2) course-correction (2nd MLP, following residual)
-        # A vote is about ensembling (weighted avgs are good for this); relational reasoning is about comparing
-        # two or more instances of something, might benefit better from concat
+        attn = self.ln_attn(self.attn(x, context)) + x
+        out = self.ln(self.mlp(attn)) + attn
 
+        return out
 
 class SelfAttentionBlock(CrossAttentionBlock):
     def forward(self, x, *_):

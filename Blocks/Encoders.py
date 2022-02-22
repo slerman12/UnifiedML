@@ -20,7 +20,7 @@ class CNNEncoder(nn.Module):
     """
 
     def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
-                 recipe=None, optim_lr=None, ema_tau=None, parallel=False):
+                 recipe=None, optim_lr=None, optim_wd=0, ema_tau=None, parallel=False):
 
         super().__init__()
 
@@ -40,18 +40,18 @@ class CNNEncoder(nn.Module):
             else instantiate(recipe.pool, input_shape=self._feature_shape())
 
         # Initialize model
-        self.init(optim_lr, ema_tau)
+        self.init(optim_lr, optim_wd, ema_tau)
 
     def _feature_shape(self):
         return Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)
 
-    def init(self, optim_lr=None, ema_tau=None):
+    def init(self, optim_lr=None, optim_wd=0, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
         # Optimizer
         if optim_lr is not None:
-            self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
+            self.optim = torch.optim.AdamW(self.parameters(), lr=optim_lr, optim_wd=optim_wd)
 
         # Dimensions
         self.feature_shape = self._feature_shape()  # Feature map shape
@@ -106,7 +106,7 @@ class ResidualBlockEncoder(CNNEncoder):
     """
 
     def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_max_norm=True,
-                 pixels=True, isotropic=False, recipe=None, optim_lr=None, ema_tau=None):
+                 pixels=True, isotropic=False, recipe=None, optim_lr=None, optim_wd=0, ema_tau=None):
 
         super().__init__(obs_shape, hidden_channels, 0, pixels)
 
@@ -120,7 +120,7 @@ class ResidualBlockEncoder(CNNEncoder):
                                      [hidden_channels, out_channels], [num_blocks]),
                           Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()))
 
-        self.init(optim_lr, ema_tau)
+        self.init(optim_lr, optim_wd, ema_tau)
 
         # Isotropic
         if isotropic:

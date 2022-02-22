@@ -21,7 +21,7 @@ from Blocks.Architectures.MLP import MLP
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe, ensemble_size=2,
                  discrete=False, stddev_schedule=None, stddev_clip=None,
-                 ema_tau=None, optim_lr=None):
+                 optim_lr=None, optim_wd=0, ema_tau=None):
         super().__init__()
 
         self.discrete = discrete
@@ -40,15 +40,15 @@ class EnsembleGaussianActor(nn.Module):
                                        else instantiate(recipe.pi_head, output_dim=out_dim)
                                        for _ in range(ensemble_size)])
 
-        self.init(optim_lr, ema_tau)
+        self.init(optim_lr, optim_wd, ema_tau)
 
-    def init(self, optim_lr=None, ema_tau=None):
+    def init(self, optim_lr=None, optim_wd=0, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
         # Optimizer
         if optim_lr is not None:
-            self.optim = torch.optim.Adam(self.parameters(), lr=optim_lr)
+            self.optim = torch.optim.AdamW(self.parameters(), lr=optim_lr, weight_decay=optim_wd)
 
         # EMA
         if ema_tau is not None:

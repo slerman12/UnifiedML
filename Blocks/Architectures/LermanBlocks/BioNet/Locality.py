@@ -25,6 +25,7 @@ class Conv2dLocal(nn.Conv2d):
         assert self.height % patches == 0 and self.width % patches == 0, 'spatial dims must be divisible by num patches'
 
         # Twice as time-intensive as fully-disjoint MLP convolution, but orders more memory efficient
+        # https://pytorch.org/docs/stable/generated/torch.nn.Unfold.html
         self.localize_h = nn.Conv2d(self.height, out_channels // 2 * self.height, (in_channels, 1), groups=patches)
         self.localize_w = nn.Conv2d(self.width, out_channels // 2 * self.width,  # Kernel transforms the width
                                     (1, in_channels), groups=patches)  # over width-disjoint patches
