@@ -25,7 +25,7 @@ def main(args):
     env = instantiate(args.environment)
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
-    for arg in ('obs_shape', 'action_shape', 'discrete', 'obs_spec', 'action_spec', 'evaluate_episodes'):
+    for arg in ('obs_shape', 'action_shape', 'discrete', 'obs_spec', 'action_spec', 'final_evaluate_episodes'):
         if hasattr(generalize, arg):
             setattr(args, arg, getattr(generalize, arg))
 
@@ -49,7 +49,7 @@ def main(args):
         # Evaluate
         if args.evaluate_per_steps and agent.step % args.evaluate_per_steps == 0:
 
-            for ep in range(args.evaluate_episodes):
+            for ep in range(args.final_evaluate_episodes if converged else args.evaluate_episodes):
                 _, logs, vlogs = generalize.rollout(agent.eval(),  # agent.eval() just sets agent.training to False
                                                     vlog=args.log_video)
 
