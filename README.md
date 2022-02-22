@@ -317,7 +317,7 @@ you can use the ```load_per_steps=``` flag.
 For example, a data-collector agent and an update agent,
 
 ```
-python Run.py update_per_steps=0 replay.save=true load_per_steps=1 
+python Run.py learn_per_steps=0 replay.save=true load_per_steps=1 
 ```
 
 ```

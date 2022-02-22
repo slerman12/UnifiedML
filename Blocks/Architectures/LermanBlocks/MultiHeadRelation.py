@@ -10,26 +10,28 @@ from Blocks.Architectures.MultiHeadAttention import CrossAttend
 
 
 class Relate(nn.Module):
-    def __init__(self, dim=32, heads=1, axes=0, context_dim=None, input_shape=None):
+    """Relation Is All You Need"""
+    def __init__(self, dim=32, guides=4, guide_dim=None, heads=1, input_shape=None):
         super().__init__()
 
         if input_shape is not None:
             dim = input_shape[-3]
 
-        context_dim = dim if context_dim is None \
-            else context_dim
+        guide_dim = dim if guide_dim is None \
+            else guide_dim
 
-        self.attn = CrossAttend(dim, heads, context_dim, dim * heads)
-        self.rltn = RelationPool(dim, axes)
+        self.guides = nn.Parameter(torch.randn((guides, dim)))
+        self.attn = CrossAttend(guide_dim, heads, dim, dim * heads)
+        self.rltn = RelationPool(dim)
+
+        nn.init.kaiming_normal_(self.guides)
 
     def repr_shape(self, c, h, w):
         return c, 1, 1
 
-    def forward(self, x, context=None):
-        if context is None:
-            context = x
-
-        attn = self.attn(x, context)
+    def forward(self, x):
+        guides = self.guides.expand(x.shape[0], -1, -1)
+        attn = self.attn(guides, x)
         head_wise = attn.view(*attn.shape[:-2], -1, x.shape[-1])
 
         out = self.rltn(head_wise)
@@ -38,13 +40,11 @@ class Relate(nn.Module):
 
 
 class RelationPool(nn.Module):
-    def __init__(self, dim, axes=0, inner_depth=3, outer_depth=2, hidden_dim=None, output_dim=None, input_shape=None):
+    def __init__(self, dim, inner_depth=3, outer_depth=2, hidden_dim=None, output_dim=None, input_shape=None):
         super().__init__()
 
         if input_shape is not None:
             dim = input_shape[-3]
-
-        self.axes = axes
 
         if hidden_dim is None:
             hidden_dim = 2 * dim
@@ -52,7 +52,7 @@ class RelationPool(nn.Module):
         self.output_dim = dim if output_dim is None \
             else output_dim
 
-        self.inner = MLP(dim + axes, hidden_dim, hidden_dim, inner_depth)
+        self.inner = MLP(dim, hidden_dim, hidden_dim, inner_depth)
         self.outer = MLP(hidden_dim, self.output_dim, hidden_dim, outer_depth)
 
     def repr_shape(self, c, h, w):
