@@ -46,7 +46,7 @@ class ClassifyEnv:
             if offline and not buffer_path.exists():
                 self.create_replay(buffer_path)
         else:
-            self.final_evaluate_episodes = len(self)
+            self.evaluate_episodes = len(self)
 
     @property
     def batch(self):

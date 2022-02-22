@@ -30,7 +30,6 @@ learn_steps_after: 1000
 # Evaluating
 evaluate_per_steps: 5000
 evaluate_episodes: 10
-final_evaluate_episodes: ${evaluate_episodes}
 ema: false
 # Saving
 save: true
