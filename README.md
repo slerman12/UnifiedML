@@ -353,17 +353,17 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 All files are designed to be useful for educational and innovational purposes in their simplicity and structure.
 
-# :handshake: Contributing
+[comment]: <> (# :handshake: Contributing)
 
-Contributers needed.
+[comment]: <> (Contributers needed.)
 
-Please, donate to help with compute and getting Benchmarks ready:
+[comment]: <> (Please, donate to help with compute and getting Benchmarks ready:)
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/)
+[comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat&#41;]&#40;https://www.paypal.com/cgi-bin/&#41;)
 
-We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.
+[comment]: <> (We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.)
 
-To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com). Appreciated!
+[comment]: <> (To discuss anything relating to funding or adding new features collaboratively, [please contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Appreciated!)
 
 [comment]: <> (<details>)
 
