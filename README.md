@@ -228,7 +228,7 @@ python Run.py replay.save=true replay.load=true
 
 Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per a unique experiment.
 
-Careful, without ```replay.save=true``` a replay from a new or previous online session, such as from an RL environment, will be deleted upon terminate.
+Careful, without ```replay.save=true``` a replay, whether new or old, will be deleted upon terminate.
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
