@@ -32,9 +32,9 @@ class ExperienceReplay:
                     print('All data loaded. Training of classifier underway.')
                 else:
                     warnings.warn(f'Loading a saved replay of a classify environment from a previous online session, '
-                                  f'which means your data will depend on your last session. If undesired, '
+                                  f'which means your data will depend on your last session. Alternatively, '
                                   f'you can set the replay.path="./Datasets/ReplayBuffer/Classify/{task}_Buffer" flag '
-                                  f'or delete the saved buffer located in {path}.')
+                                  f'or delete the saved buffer in {path}.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
