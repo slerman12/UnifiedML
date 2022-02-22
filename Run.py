@@ -67,7 +67,7 @@ def main(args):
             break
 
         # Rollout
-        experiences, logs, _ = env.rollout(agent.train(args.suite != 'classify'), steps=1)
+        experiences, logs, _ = env.rollout(agent.train(), steps=1)  # agent.train() just sets agent.training to True
 
         replay.add(experiences)
 
