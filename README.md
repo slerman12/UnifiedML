@@ -252,7 +252,7 @@ python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Archite
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
-To train MNIST, using ConvNeXt as the Encoder:
+To train, for example MNIST, using ConvNeXt as the Encoder:
 
 ```
 python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
