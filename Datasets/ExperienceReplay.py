@@ -23,20 +23,21 @@ class ExperienceReplay:
                  obs_spec=None, nstep=0, discount=1):
         # Path and loading
 
+        path = path.replace("Agents.", "")
         exists = glob.glob(path + '*/')
 
         if load or offline or generate:
             if suite == 'classify':
+                standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/'
                 if len(exists) == 0:
-                    exists = [f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/']
+                    exists = [standard]
                     print('All data loaded. Training of classifier underway.')
                 else:
-                    if path != f'./Datasets/ReplayBuffer/Classify/{task}_Buffer':
+                    if path != standard:
                         warnings.warn(f'Loading a saved replay of a classify task from a previous online session. '
-                                      f'For the standard offline dataset, set '  # Assuming one exists
-                                      f'replay.path="./Datasets/ReplayBuffer/Classify/{task}_Buffer" ' 
-                                      f'or delete the saved buffer in {path.replace("Agents.", "")}.')
-                assert len(exists) > 0, f'No existing replay buffer found in path: {path.replace("Agents.", "")}'
+                                      f'For the standard offline dataset, set replay.path="{standard}" '  # If exists
+                                      f'or delete the saved buffer in {path}.')
+                assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
         else:
