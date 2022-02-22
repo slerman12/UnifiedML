@@ -44,7 +44,7 @@ class Environment:
 
         exp = self.exp
 
-        self.episode_done = False
+        self.episode_done = agent.training and self.offline
 
         step = 0
         while not self.episode_done and step < steps:

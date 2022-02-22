@@ -77,7 +77,7 @@ def main(args):
 
             if env.last_episode_len >= args.nstep:
                 replay.add(store=True)  # Only store full episodes
-        print(agent.episode)
+
         converged = agent.step >= args.train_steps
         training = (training or agent.step > args.seed_steps or env.offline) and len(replay) >= args.num_workers
 
