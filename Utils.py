@@ -32,6 +32,7 @@ def set_seeds(seed):
 def save(path, module):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
+    # Atomic transaction for distributed
     torch.save(module, path + '_temp')
     shutil.copy(path + '_temp', path)
     os.remove(path + '_temp')
@@ -42,7 +43,9 @@ def load(path, device, attr=None):
     # try:
     path = path.replace('Agents.', '')
     if Path(path).exists():
-            module = torch.load(path)
+            shutil.copy(path, path + '_copy')
+            module = torch.load(path + '_copy')
+            os.remove(path + '_copy')
     else:
             raise Exception(f'Load path {path} does not exist.')
     # except (RuntimeError, EOFError, OSError, _pickle.UnpicklingError):
