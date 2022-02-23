@@ -38,7 +38,7 @@ class ExperienceReplay:
                                       f'which may not be intentional. '
                                       f'For the standard offline dataset, set replay.path="{standard}" '  # If exists
                                       f'or delete the saved buffer in {path}.')
-                assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
+            assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
             save = offline or generate or save
         else:
