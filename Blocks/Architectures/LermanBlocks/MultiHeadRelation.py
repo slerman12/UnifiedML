@@ -34,17 +34,18 @@ class Relate(nn.Module):
         nn.init.kaiming_normal_(self.guides)
 
     def repr_shape(self, c, h, w):
-        return c, 1, 1
+        return c, h, w
 
     def forward(self, x):
         guides = self.guides.expand(x.shape[0], -1, -1)
         attn = self.ReLA(guides, x)
         head_wise = attn.view(*attn.shape[:-2], -1, x.shape[-1])
-        norm = self.LN(head_wise)  # Maybe add the top-1 of x as a residual
+        norm = self.LN(head_wise)
 
-        out = self.relate(norm)
+        residual = norm + x.unsqueeze(-1).expand_as(head_wise)
 
-        return out
+        out = self.relate(residual.flatten(0, -2)) + residual
+        return out.view(x.shape)
 
 
 class RelationPool(AttentionPool):
@@ -60,7 +61,9 @@ class RelationPool(AttentionPool):
 
         self.pool = nn.Sequential(Utils.ChSwap,
                                   Relate(channels_in, guides, output_dim, heads),
-                                  Utils.ChSwap)
+                                  Utils.ChSwap,
+                                  nn.AdaptiveAvgPool2d((1, 1)),
+                                  nn.Flatten(-3))
 
 
 class RN(nn.Module):

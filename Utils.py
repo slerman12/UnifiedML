@@ -39,7 +39,6 @@ def load(path, device, attr=None):
     path = path.replace('Agents.', '')
 
     assert Path(path).exists(), f'Load path {path} does not exist.'
-
     try:
         module = torch.load(path)
     except:
