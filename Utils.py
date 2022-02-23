@@ -36,13 +36,13 @@ def save(path, module):
 
 # Loads module
 def load(path, device, attr=None):
+    path = path.replace('Agents.', '')
+
+    assert Path(path).exists(), f'Load path {path} does not exist.'
+
     try:
-        path = path.replace('Agents.', '')
-        if Path(path).exists():
-            module = torch.load(path)
-        else:
-            raise Exception(f'Load path {path} does not exist.')
-    except (RuntimeError, EOFError, OSError, _pickle.UnpicklingError):
+        module = torch.load(path)
+    except:
         warnings.warn(f'Load conflict')  # For distributed training
         return load(path, device, attr)
 
@@ -139,7 +139,7 @@ class CNNInputBroadcast(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.shape[1:]) if context.shape[-1]
                                                                             % math.prod(self.shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
+            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
