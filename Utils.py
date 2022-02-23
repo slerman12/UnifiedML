@@ -4,7 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import _pickle
 import math
-import os
 import random
 import re
 import shutil
@@ -32,25 +31,20 @@ def set_seeds(seed):
 def save(path, module):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    # Atomic transaction for distributed
-    torch.save(module, path + '_temp')
-    shutil.copy(path + '_temp', path)
-    os.remove(path + '_temp')
+    torch.save(module, path)
 
 
 # Loads module
 def load(path, device, attr=None):
-    # try:
-    path = path.replace('Agents.', '')
-    if Path(path).exists():
-            shutil.copy(path, path + '_copy')
-            module = torch.load(path + '_copy')
-            os.remove(path + '_copy')
-    else:
+    try:
+        path = path.replace('Agents.', '')
+        if Path(path).exists():
+            module = torch.load(path)
+        else:
             raise Exception(f'Load path {path} does not exist.')
-    # except (RuntimeError, EOFError, OSError, _pickle.UnpicklingError):
-    #     warnings.warn(f'Load conflict')  # For distributed training
-    #     return load(path, device, attr)
+    except (RuntimeError, EOFError, OSError, _pickle.UnpicklingError):
+        warnings.warn(f'Load conflict')  # For distributed training
+        return load(path, device, attr)
 
     if attr is not None:
         for attr in attr.split('.'):
