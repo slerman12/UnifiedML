@@ -58,6 +58,7 @@ class CrossAttention(nn.Module):
         q = self.to_q(x)
         k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
 
+        # Note: I think it would be enough for the key to have just a single head
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
 
         # Memory efficient toggle, e.g., =0.5

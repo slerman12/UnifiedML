@@ -42,7 +42,7 @@ def load(path, device, attr=None):
     try:
         module = torch.load(path)
     except:
-        warnings.warn(f'Load conflict')  # For distributed training
+        warnings.warn(f'Load conflict, resolving...')  # For distributed training
         return load(path, device, attr)
 
     if attr is not None:
