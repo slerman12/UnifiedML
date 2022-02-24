@@ -118,7 +118,7 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, talk_h=False,
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, talk_h=False, relu=False,
                  lr=None, weight_decay=0, ema_tau=None):
         super().__init__()
 
@@ -133,7 +133,7 @@ class CrossAttentionBlock(nn.Module):
 
         self.value_dim = value_dim
 
-        self.attn = CrossAttention(dim, self.heads, context_dim, value_dim, talk_h)
+        self.attn = CrossAttention(dim, self.heads, context_dim, value_dim, talk_h, relu)
         self.mlp = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
 
         self.ln_attn = nn.LayerNorm(value_dim)

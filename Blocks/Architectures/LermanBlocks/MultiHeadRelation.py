@@ -48,7 +48,7 @@ class RelationSimplest(nn.Module):
 
 class ViRPSimplest(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
         self.attn = nn.Sequential(*[RelationSimplest(out_channels, heads) for _ in range(depth)])
 
