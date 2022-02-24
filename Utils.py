@@ -2,11 +2,9 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import _pickle
 import math
 import random
 import re
-import shutil
 import warnings
 from pathlib import Path
 
@@ -41,7 +39,7 @@ def load(path, device, attr=None):
     assert Path(path).exists(), f'Load path {path} does not exist.'
     try:
         module = torch.load(path)
-    except:
+    except:  # Pytorch's load and save are not atomic transactions
         warnings.warn(f'Load conflict, resolving...')  # For distributed training
         return load(path, device, attr)
 

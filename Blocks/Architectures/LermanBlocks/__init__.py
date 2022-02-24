@@ -5,4 +5,4 @@
 from Blocks.Architectures.LermanBlocks.BioNet.BioNet import BioNetV1
 from Blocks.Architectures.LermanBlocks.BioNet.BioNet import BioNetV1 as BioNet
 from Blocks.Architectures.LermanBlocks.BioNet.BioNet import BioNetV2
-from Blocks.Architectures.LermanBlocks.MultiHeadRelation import RelationPool
+from Blocks.Architectures.LermanBlocks.MultiHeadRelation import ViRPSimplest
