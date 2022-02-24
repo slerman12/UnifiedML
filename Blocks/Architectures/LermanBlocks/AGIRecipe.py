@@ -24,7 +24,7 @@ from Blocks.Architectures.MLP import MLP
 class AGIGradient(nn.Module):
     def __init__(self, in_dim, out_dim, feature_dim=512, memory_dim=512, depth=0,
                  steps=0, meta_learn_steps=0, num_dists=0, num_samples=0, forget_proba=0., teleport_proba=0.,
-                 target_tau=None, lr=0.001, device='cpu'):
+                 target_tau=None, lr=0.001, weight_decay=0.01, device='cpu'):
 
         super().__init__()
 
@@ -50,9 +50,9 @@ class AGIGradient(nn.Module):
             classify = True
             label_dim = 1 if classify else out_dim
 
-            self.nerves = MLP(in_dim + label_dim, feature_dim, feature_dim, depth // 3).to(device)
+            self.nerves = MLP(in_dim + label_dim, feature_dim, feature_dim, depth // 3, non_linearity=nn.GELU()).to(device)
             self.hippocampus = nn.LSTM(feature_dim, memory_dim, depth // 3, batch_first=True).to(device)
-            self.crown = MLP(in_dim + memory_dim, out_dim, memory_dim // 2, depth // 3).to(device)
+            self.crown = MLP(in_dim + memory_dim, out_dim, memory_dim // 2, depth // 3, non_linearity=nn.GELU()).to(device)
 
             self.num_dists = num_dists
 
@@ -63,7 +63,7 @@ class AGIGradient(nn.Module):
             # Initial body weights
             self.apply(Utils.weight_init)
 
-            self.optim = torch.optim.Adam(self.parameters(), lr=lr)
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
             # scheduler = ExponentialLR(self.optim, gamma=0.999)
 

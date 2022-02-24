@@ -8,6 +8,7 @@ from torch import nn
 
 from Blocks.Architectures import MLP
 from Blocks.Architectures.MultiHeadAttention import ReLA
+from Blocks.Architectures.RelationNetwork import RN
 from Blocks.Architectures.Vision.ViT import ViT
 
 
@@ -50,6 +51,47 @@ class ViRPSimplest(ViT):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
 
         self.attn = nn.Sequential(*[RelationSimplest(out_channels, heads) for _ in range(depth)])
+
+
+class RelationSimplestV2(RelationSimplest):
+    def forward(self, x, context=None):
+        if context is None:
+            context = x
+
+        attn = self.ln_mid(self.attn(x, context))
+        out = self.ln_out(self.mlp(attn, x)) + x
+
+        return out
+
+
+class ViRPSimplestV2(ViT):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
+
+        self.attn = nn.Sequential(*[RelationSimplestV2(out_channels, heads) for _ in range(depth)])
+
+
+class RelationSimpler(RelationSimplestV2):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+        super().__init__(dim, heads, context_dim, value_dim)
+
+        self.RN = RN(value_dim + dim, value_dim, value_dim, 1, nn.GELU())
+
+    def forward(self, x, context=None):
+        if context is None:
+            context = x
+
+        attn = self.ln_mid(self.attn(x, context))
+        out = self.ln_out(self.RN(attn, x)) + attn  # Concat attn to x as well, residual from x
+
+        return out
+
+
+class ViRPSimpler(ViT):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
+
+        self.attn = nn.Sequential(*[RelationSimpler(out_channels, heads) for _ in range(depth)])
 
 
 # class RelativeAttention(nn.Module):
