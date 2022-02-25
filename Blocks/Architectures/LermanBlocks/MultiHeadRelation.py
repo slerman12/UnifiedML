@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import math
 
+import torch
 from torch import nn
 
 from Blocks.Architectures import MLP
@@ -82,12 +83,35 @@ class RelationSimpler(RelationSimplestV2):
             context = x
 
         attn = self.ln_mid(self.attn(x, context))
-        out = self.ln_out(self.RN(attn, x)) + attn  # Concat attn to x as well, residual from x
+        out = self.ln_out(self.RN(attn, x)) + x
 
         return out
 
 
 class ViRPSimpler(ViT):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
+
+        self.attn = nn.Sequential(*[RelationSimpler(out_channels, heads) for _ in range(depth)])
+
+
+class RelationSimplerV2(RelationSimplestV2):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+        super().__init__(dim, heads, context_dim, value_dim)
+
+        self.RN = RN(value_dim + dim + value_dim, value_dim, value_dim, 1, nn.GELU())
+
+    def forward(self, x, context=None):
+        if context is None:
+            context = x
+
+        attn = self.ln_mid(self.attn(x, context))
+        out = self.ln_out(self.RN(attn, torch.cat([x, attn], -1))) + x
+
+        return out
+
+
+class ViRPSimplerV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
 
