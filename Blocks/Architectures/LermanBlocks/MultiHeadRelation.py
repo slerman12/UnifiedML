@@ -73,7 +73,7 @@ class ViRPSimplestV2(ViT):
 
 
 class RelationSimpler(RelationSimplestV2):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):  # TODO heads!
         super().__init__(dim, heads, context_dim, value_dim)
 
         self.RN = RN(value_dim + dim, value_dim, value_dim, 1, nn.GELU())
@@ -82,9 +82,10 @@ class RelationSimpler(RelationSimplestV2):
         if context is None:
             context = x
 
-        attn = self.ln_mid(self.attn(x, context))
-        out = self.ln_out(self.RN(attn, x)) + x
-
+        attn = self.ln_mid(self.attn(x, context))  # I think currently identical to above
+        out = self.ln_out(self.RN(attn, x)) + x  # TODO, need to divide attn into heads! And produce bigger heads?
+        #                                               More memory efficient RN than MLP, when smaller heads
+        #                                               Compare clock times
         return out
 
 
