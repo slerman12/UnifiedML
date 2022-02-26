@@ -13,8 +13,9 @@ from Blocks.Architectures.RelationNetwork import RN
 from Blocks.Architectures.Vision.ViT import ViT
 
 
+# Concatenate, add middle to last
 class RelationSimplest(nn.Module):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+    def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
         super().__init__()
 
         context_dim = dim if context_dim is None \
@@ -31,8 +32,8 @@ class RelationSimplest(nn.Module):
         self.attn = ReLA(dim, self.heads, context_dim, value_dim)
         self.mlp = MLP(value_dim + dim, value_dim, value_dim, 1, nn.GELU())
 
-        self.ln_mid = nn.LayerNorm(value_dim)
-        self.ln_out = nn.LayerNorm(value_dim)
+        self.LN_mid = nn.LayerNorm(value_dim)
+        self.LN_out = nn.LayerNorm(value_dim)
 
     def repr_shape(self, c, h, w):
         return self.value_dim, h, w  # Assumes channels last
@@ -41,12 +42,14 @@ class RelationSimplest(nn.Module):
         if context is None:
             context = x
 
-        attn = self.ln_mid(self.attn(x, context))
-        out = self.ln_out(self.mlp(attn, x)) + attn
+        attn = self.LN_mid(self.attn(x, context))
+        # attn = self.LN_mid(self.attn(x, context)) + x  # TODO Test
+        out = self.LN_out(self.mlp(attn, x)) + attn
 
         return out
 
 
+# Concat, then residual from attention
 class ViRPSimplest(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
@@ -54,17 +57,36 @@ class ViRPSimplest(ViT):
         self.attn = nn.Sequential(*[RelationSimplest(out_channels, heads) for _ in range(depth)])
 
 
+# Concat, then residual from input
 class RelationSimplestV2(RelationSimplest):
     def forward(self, x, context=None):
         if context is None:
             context = x
 
-        attn = self.ln_mid(self.attn(x, context))
-        out = self.ln_out(self.mlp(attn, x)) + x
+        attn = self.LN_mid(self.attn(x, context))
+        out = self.LN_out(self.mlp(attn, x)) + x  # Result: this residual is better as x
+        # Therefore, the model prefers to reason about velocity from x via the MLP, NOT via the attention
+        # We conclude that the attention is rather used for facilitating the MLP's reasoning, which updates x
+        # Therefore disentangling x from the attention is necessary
+        # And furthermore, making the attention as easy to reason about as possible is important
+        # To do the former, we concatenate instead of add -- since adding forces the attention to be a velocity, not
+        # a representation that can be reasoned about independently
+        # To do the latter, we apply the layer-norm head-wise, so as not to entangle the different heads,
+        # And then relate the different heads invariably via a relation network consisting of an inner and outer
+        # MLP, not just a single MLP. The former MLP is non-local. This way, more signal from the original
+        # context is preserved and its original non-locality.
+
+        # The residual is just x, the input.
+        # We introduce a new term, velocity, to describe the counterpart to the residual.
+        # How to change x -- the velocity on x -- is what we refer to by reasoning.
+
+        # Conclusion: the MLP is better for reasoning <about the input!> than attention, but attention
+        # serves to give the MLP what to reason about
 
         return out
 
 
+# Concat, then residual from input
 class ViRPSimplestV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
@@ -72,23 +94,84 @@ class ViRPSimplestV2(ViT):
         self.attn = nn.Sequential(*[RelationSimplestV2(out_channels, heads) for _ in range(depth)])
 
 
-class RelationSimpler(RelationSimplestV2):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):  # TODO heads!
-        super().__init__(dim, heads, context_dim, value_dim)
-
-        self.RN = RN(value_dim + dim, value_dim, value_dim, 1, nn.GELU())
-
+# Input to middle residual, concat, then middle to out residual
+class RelationSimplestV3(RelationSimplest):
     def forward(self, x, context=None):
         if context is None:
             context = x
 
-        attn = self.ln_mid(self.attn(x, context))  # I think currently identical to above
-        out = self.ln_out(self.RN(attn, x)) + x  # TODO, need to divide attn into heads! And produce bigger heads?
-        #                                               More memory efficient RN than MLP, when smaller heads
-        #                                               Compare clock times
+        attn = self.LN_mid(self.attn(x, context)) + x  # TODO Test
+        out = self.LN_out(self.mlp(attn, x)) + attn
+
         return out
 
 
+# Concat after residual, then residual from attention
+class ViRPAttidual(ViT):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
+
+        self.attn = nn.Sequential(*[RelationSimplestV3(out_channels, heads) for _ in range(depth)])
+
+# Two results:
+# 1. Concat outperforms add, AND concat outperforms no residual
+#     Conclusion: it helps to reason about x and the attention in relation to one another or independently, unaggregated
+#         Also: the MLP is better for reasoning than attention, but attention serves to give the MLP
+# #         # what to reason about
+# 2. Residual from x outperforms residual from attention -haven't tested
+#     Conclusion: the MLP is better for reasoning than attention, but attention serves to give the MLP
+#         # what to reason about - not to do reasoning itself
+
+
+# Heads layer norm'd
+class RelationDisentangled(RelationSimplestV2):
+    def forward(self, x, context=None):
+        if context is None:
+            context = x
+
+        attn = self.attn(x, context)
+        head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
+        norm = self.LN_mid(head_wise)
+        disentangled = norm.view(attn.shape)
+
+        out = self.LN_out(self.mlp(disentangled, x)) + x
+
+        return out
+
+
+# Heads layer norm'd separately
+class ViRPDisentangled(ViT):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
+
+        self.attn = nn.Sequential(*[RelationDisentangled(out_channels, heads) for _ in range(depth)])
+
+
+class RelationSimpler(RelationSimplestV2):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+        super().__init__(dim, heads, context_dim, dim * heads)
+
+        self.RN = RN(dim, dim)
+
+    def forward(self, x, context=None):
+        if context is None:
+            context = x  # [b, n, d]
+
+        attn = self.attn(x, context)  # [b, n, h * d]
+        head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
+
+        norm = self.LN_mid(head_wise)  # [b, n, h, d]
+        residual = x.unsqueeze(-2)  # [b, n, 1, d]
+
+        relation = norm.flatten(0, -2)  # [b * n, h, d]
+        residual = residual.flatten(0, -2)  # [b * n, 1, d]
+
+        out = self.LN_out(self.RN(relation, residual))  # [b * n, d]
+
+        return out.view(x.shape) + x  # [b, n, d]
+
+
+# Relation network on heads and input
 class ViRPSimpler(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
@@ -98,25 +181,46 @@ class ViRPSimpler(ViT):
 
 class RelationSimplerV2(RelationSimplestV2):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
-        super().__init__(dim, heads, context_dim, value_dim)
+        super().__init__(dim, heads, context_dim, dim * heads)
 
-        self.RN = RN(value_dim + dim + value_dim, value_dim, value_dim, 1, nn.GELU())
+        self.RN = RN(dim, dim * 2)
 
     def forward(self, x, context=None):
         if context is None:
-            context = x
+            context = x  # [b, n, d]
 
-        attn = self.ln_mid(self.attn(x, context))
-        out = self.ln_out(self.RN(attn, torch.cat([x, attn], -1))) + x
+        attn = self.attn(x, context)  # [b, n, h * d]
+        head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        return out
+        norm = self.LN_mid(head_wise)  # [b, n, h, d]
+        residual = x.unsqueeze(-2)  # [b, n, 1, d]
+
+        relation = norm.flatten(0, -2)  # [b * n, h, d]
+        residual = residual.flatten(0, -2)  # [b * n, 1, d]
+        context = torch.cat([residual.expand_as(relation), residual], -1)  # [b * n, h, d * 2]
+
+        out = self.LN_out(self.RN(relation, context))  # [b * n, d]
+
+        return out.view(x.shape) + x  # [b, n, d]
 
 
+# Relation network on heads and heads:input
 class ViRPSimplerV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
 
-        self.attn = nn.Sequential(*[RelationSimpler(out_channels, heads) for _ in range(depth)])
+        self.attn = nn.Sequential(*[RelationSimplerV2(out_channels, heads) for _ in range(depth)])
+
+
+# Can also test no ViRP, just ViT without mid-residual, to exclude that as the cause
+# No, the issue isn't the presence of x, but rather the ability of the model to reason about both x and the attention
+# Counterfactual: the presence of x disturbs performance
+# False
+# Conclusion: the capacity of the model to reason about x and the attention in relation is the causal factor
+
+
+# TODO: Perceiver-style: from token/s linear attention: ViRP-relational
+#  Last: if time permits, reparameterization for both ViRP and ViRP-relative
 
 
 # class RelativeAttention(nn.Module):

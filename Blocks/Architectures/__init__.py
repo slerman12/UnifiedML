@@ -16,7 +16,7 @@ from torch import nn
 
 
 class Null(nn.Module):
-    def __init__(self, input_shape=None, output_dim=None):
+    def __init__(self, input_shape=None, **_):
         super().__init__()
 
         self.input_shape = input_shape
