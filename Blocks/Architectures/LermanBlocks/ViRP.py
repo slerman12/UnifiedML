@@ -136,7 +136,7 @@ class RelationRelative(RelationDisentangled):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
-        self.attn = ReLA(dim, self.heads, context_dim, value_dim)
+        self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
         self.RN = RN(dim, dim * 2)
 
     def forward(self, x, context=None):
