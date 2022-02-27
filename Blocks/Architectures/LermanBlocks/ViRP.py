@@ -89,6 +89,7 @@ class RelationConcatV2(RelationConcat):
 class RelationDisentangled(RelationConcat):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
+        print(self.value_dim, self.heads)
 
         self.LN_mid = nn.LayerNorm(self.value_dim / self.heads)
 
@@ -106,6 +107,7 @@ class RelationDisentangled(RelationConcat):
         return out
 
 
+# Head-in
 class RelationSimpler(RelationDisentangled):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
@@ -130,6 +132,7 @@ class RelationSimpler(RelationDisentangled):
         return out.view(x.shape) + x  # [b, n, d]
 
 
+# Head-head:in
 class RelationRelative(RelationDisentangled):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
