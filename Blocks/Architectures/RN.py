@@ -11,7 +11,7 @@ from Blocks.Architectures import MLP
 class RN(nn.Module):
     """Relation Network https://arxiv.org/abs/1706.01427"""
     def __init__(self, dim, context_dim=None, inner_depth=3, outer_depth=2, hidden_dim=None,
-                 output_dim=None, input_shape=None):
+                 output_dim=None, input_shape=None, mid_nonlinearity=nn.Identity()):
         super().__init__()
 
         if input_shape is not None:
@@ -27,6 +27,7 @@ class RN(nn.Module):
             else output_dim
 
         self.inner = MLP(dim + context_dim, hidden_dim, hidden_dim, inner_depth)
+        self.mid_nonlinearity = mid_nonlinearity
         self.outer = MLP(hidden_dim, self.output_dim, hidden_dim, outer_depth) \
             if outer_depth else None
 
@@ -47,7 +48,9 @@ class RN(nn.Module):
 
         relations = self.inner(pair)
 
-        out = relations if self.outer is None \
-            else self.outer(relations.sum(1).sum(1))
+        mid = self.mid_nonlinearity(relations.sum(1).sum(1))
+
+        out = mid if self.outer is None \
+            else self.outer(mid)
 
         return out

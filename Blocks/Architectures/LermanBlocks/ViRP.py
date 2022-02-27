@@ -18,20 +18,22 @@ class ViRP(ViT):
                  experiment='head_head_in_RN'):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
-        if experiment == 'concat_plus_in':  # Velocity reasoning from mlp only
+        if experiment == 'concat_plus_in':  # ! Velocity reasoning from mlp only
             core = RelationConcat
         elif experiment == 'plus_in_concat_plus_mid':  # See if attention is useful as "Reason-er"
             core = RelationConcatV2
-        elif experiment == 'head_wise_ln':  # Disentangled relational reasoning - are the heads independent?
+        elif experiment == 'head_wise_ln':  # Disentangled relational reasoning - are the heads independent, equal vote?
             core = RelationDisentangled
-        elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they?
-            core = RelationSimpler
-        elif experiment == 'head_head_in_RN':  # Relational reasoning between heads
+        # elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they, period?
+        #     core = RelationSimpler
+        elif experiment == 'head_head_in_RN':  # ! Relational reasoning between heads
             core = RelationRelative
-        elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
-            core = RelationSimplerV3
+        elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
+            core = RelationRelativeV2
+        # elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
+        #     core = RelationSimplerV3
         else:
-            # layernorm values, confidence
+            # ! layernorm values, confidence
             # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
             core = RelationRelative
 
@@ -157,5 +159,29 @@ class RelationRelative(RelationConcat):
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
-        return out.view(x.shape) + x  # [b, n, d]
+        return out.view(x.shape) + x  # [b, n, d]# Head-head:in
+
+
+# Smaller RN
+class RelationRelativeV2(RelationRelative):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+        super().__init__(dim, heads, context_dim, value_dim)
+
+        self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
+
+
+# Head-head:in from tokens
+class RelationTokens(RelationRelative):
+    def __init__(self, dim=32, heads=1, tokens=8, token_dim=None, value_dim=None):
+        if token_dim is None:
+            token_dim = dim
+
+        super().__init__(token_dim, heads, dim, value_dim)
+
+        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        self.attn = ReLA(token_dim, self.heads, self.context_dim, self.value_dim * self.heads)
+        self.RN = RN(dim, dim * 2)
+
+    def forward(self, x, *_):
+        return super().forward(self.tokens, x)
 

@@ -177,6 +177,21 @@ class SelfAttentionBlock(CrossAttentionBlock):
         return super().forward(x)
 
 
+class TokenAttentionBlock(CrossAttentionBlock):
+    def __init__(self, dim=32, heads=1, tokens=8, token_dim=None, value_dim=None,
+                 talk_h=False, relu=False, lr=None, weight_decay=0, ema_tau=None):
+        if token_dim is None:
+            token_dim = dim
+
+        super().__init__(token_dim, heads, dim, value_dim, talk_h, relu, lr, weight_decay, ema_tau)
+
+        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        self.init(lr, weight_decay, ema_tau)
+
+    def forward(self, x, *_):
+        return super().forward(self.tokens, x)
+
+
 class AttentionPool(nn.Module):
     def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, recursions=0, input_shape=None):
         super().__init__()
