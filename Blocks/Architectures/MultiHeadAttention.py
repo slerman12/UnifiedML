@@ -60,7 +60,7 @@ class CrossAttention(nn.Module):
         k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
 
         # Note: I think it would be enough for the key to have just a single head
-        q = rearrange(q, 'b n (h d) -> b h n d')
+        q = rearrange(q, 'b n (h d) -> b h n d', h=self.heads)
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
