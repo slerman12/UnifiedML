@@ -9,7 +9,6 @@ from torch import nn
 from opt_einsum_torch import EinsumPlanner
 import copy
 from einops import rearrange
-from torch.nn import init
 
 from Blocks.Architectures.MLP import MLP
 

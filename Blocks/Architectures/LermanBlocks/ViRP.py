@@ -7,15 +7,17 @@ import math
 import torch
 from torch import nn
 
+import Utils
 from Blocks.Architectures import MLP
-from Blocks.Architectures.MultiHeadAttention import ReLA
+from Blocks.Architectures.MultiHeadAttention import ReLA, TokenAttentionBlock, AttentionPool
+from Blocks.Architectures.Perceiver import TokenAttention
 from Blocks.Architectures.RN import RN
 from Blocks.Architectures.Vision.ViT import ViT
 
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
-                 experiment='head_head_in_RN'):
+                 experiment='head_head_in_RN_small', ViRP=True):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
         if experiment == 'concat_plus_in':  # ! Velocity reasoning from mlp only
@@ -24,20 +26,33 @@ class ViRP(ViT):
             core = RelationConcatV2
         elif experiment == 'head_wise_ln':  # Disentangled relational reasoning - are the heads independent, equal vote?
             core = RelationDisentangled
-        # elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they, period?
-        #     core = RelationSimpler
+        elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they, period?
+            core = RelationSimpler
+        elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
+            core = RelationSimplerV2
         elif experiment == 'head_head_in_RN':  # ! Relational reasoning between heads
             core = RelationRelative
         elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
             core = RelationRelativeV2
-        # elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
-        #     core = RelationSimplerV3
-        else:
-            # ! layernorm values, confidence
-            # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
-            core = RelationRelative
+        # else:
+        #     # ! layernorm values, confidence
+        #     # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
+        #     core = RelationRelative
 
         self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
+
+        if ViRP:
+            self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
+                                      *[core(out_channels, heads) for _ in range(depth)])
+
+
+# Vision Perceiver
+class ViPer(ViT):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
+
+        self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
+                                  *[RelationRelativeV2(out_channels, heads) for _ in range(depth)])
 
 
 # Concat, then residual from input
@@ -171,7 +186,7 @@ class RelationRelativeV2(RelationRelative):
 
 
 # Head-head:in from tokens
-class RelationTokens(RelationRelative):
+class RelationBlock(RelationRelative):
     def __init__(self, dim=32, heads=1, tokens=8, token_dim=None, value_dim=None):
         if token_dim is None:
             token_dim = dim
@@ -184,4 +199,24 @@ class RelationTokens(RelationRelative):
 
     def forward(self, x, *_):
         return super().forward(self.tokens, x)
+
+
+# Pools features relationally, in linear time
+class RelationPool(AttentionPool):
+    def __init__(self, channels_in=32, output_dim=None, input_shape=None):
+        super().__init__()
+
+        self.input_shape = input_shape
+
+        if input_shape is not None:
+            channels_in = input_shape[-3]
+
+        if output_dim is None:
+            output_dim = channels_in
+
+        self.pool = nn.Sequential(Utils.ChSwap,
+                                  TokenAttention(channels_in, 1, tokens=32, value_dim=output_dim, relu=True),
+                                  nn.LayerNorm(channels_in),
+                                  RN(channels_in))
+
 

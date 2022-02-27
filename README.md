@@ -245,7 +245,7 @@ python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT
 ResNet18 on CIFAR-10:
 
 ```
-python Run.py task=classify/cifar10 RL=false recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
+python Run.py task=classify/cifar10 recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
 ```
 
 <details>
