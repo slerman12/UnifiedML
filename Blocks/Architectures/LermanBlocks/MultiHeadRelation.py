@@ -9,7 +9,7 @@ from torch import nn
 
 from Blocks.Architectures import MLP
 from Blocks.Architectures.MultiHeadAttention import ReLA
-from Blocks.Architectures.RelationNetwork import RN
+from Blocks.Architectures.RN import RN
 from Blocks.Architectures.Vision.ViT import ViT
 
 
@@ -49,14 +49,6 @@ class RelationSimplest(nn.Module):
         return out
 
 
-# Concat, then residual from attention
-class ViRPSimplest(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
-
-        self.attn = nn.Sequential(*[RelationSimplest(out_channels, heads) for _ in range(depth)])
-
-
 # Concat, then residual from input
 class RelationSimplestV2(RelationSimplest):
     def forward(self, x, context=None):
@@ -86,14 +78,6 @@ class RelationSimplestV2(RelationSimplest):
         return out
 
 
-# Concat, then residual from input
-class ViRPSimplestV2(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
-
-        self.attn = nn.Sequential(*[RelationSimplestV2(out_channels, heads) for _ in range(depth)])
-
-
 # Input to middle residual, concat, then middle to out residual
 class RelationSimplestV3(RelationSimplest):
     def forward(self, x, context=None):
@@ -104,14 +88,6 @@ class RelationSimplestV3(RelationSimplest):
         out = self.LN_out(self.mlp(attn, x)) + attn
 
         return out
-
-
-# Concat after residual, then residual from attention
-class ViRPAttidual(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
-
-        self.attn = nn.Sequential(*[RelationSimplestV3(out_channels, heads) for _ in range(depth)])
 
 # Two results:
 # 1. Concat outperforms add, AND concat outperforms no residual
@@ -125,6 +101,26 @@ class ViRPAttidual(ViT):
 
 # Heads layer norm'd
 class RelationDisentangled(RelationSimplestV2):
+    def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
+        super().__init__()
+
+        context_dim = dim if context_dim is None \
+            else context_dim
+
+        value_dim = dim if value_dim is None \
+            else value_dim
+
+        self.heads = math.gcd(8, value_dim) if heads is None \
+            else heads
+
+        self.value_dim = value_dim
+
+        self.attn = ReLA(dim, self.heads, context_dim, value_dim)
+        self.mlp = MLP(value_dim + dim, value_dim, value_dim, 1, nn.GELU())
+
+        self.LN_mid = nn.LayerNorm(value_dim / heads)
+        self.LN_out = nn.LayerNorm(value_dim)
+
     def forward(self, x, context=None):
         if context is None:
             context = x
@@ -139,15 +135,7 @@ class RelationDisentangled(RelationSimplestV2):
         return out
 
 
-# Heads layer norm'd separately
-class ViRPDisentangled(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
-
-        self.attn = nn.Sequential(*[RelationDisentangled(out_channels, heads) for _ in range(depth)])
-
-
-class RelationSimpler(RelationSimplestV2):
+class RelationSimpler(RelationDisentangled):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, dim * heads)
 
@@ -171,15 +159,7 @@ class RelationSimpler(RelationSimplestV2):
         return out.view(x.shape) + x  # [b, n, d]
 
 
-# Relation network on heads and input
-class ViRPSimpler(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
-
-        self.attn = nn.Sequential(*[RelationSimpler(out_channels, heads) for _ in range(depth)])
-
-
-class RelationSimplerV2(RelationSimplestV2):
+class RelationSimplerV2(RelationDisentangled):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, dim * heads)
 
@@ -202,14 +182,6 @@ class RelationSimplerV2(RelationSimplestV2):
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
         return out.view(x.shape) + x  # [b, n, d]
-
-
-# Relation network on heads and heads:input
-class ViRPSimplerV2(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, output_dim)
-
-        self.attn = nn.Sequential(*[RelationSimplerV2(out_channels, heads) for _ in range(depth)])
 
 
 # Can also test no ViRP, just ViT without mid-residual, to exclude that as the cause

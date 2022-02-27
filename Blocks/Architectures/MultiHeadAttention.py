@@ -9,6 +9,7 @@ from torch import nn
 from opt_einsum_torch import EinsumPlanner
 import copy
 from einops import rearrange
+from torch.nn import init
 
 from Blocks.Architectures.MLP import MLP
 
@@ -59,14 +60,18 @@ class CrossAttention(nn.Module):
         k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
 
         # Note: I think it would be enough for the key to have just a single head
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (q, k, v))
+        q = rearrange(q, 'b n (h d) -> b h n d')
+
+        k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
         # Memory efficient toggle, e.g., =0.5
         mem_limit = False
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
-        self.dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.dim ** -0.5
+        tokens = len(x.shape) == 2
+        pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
+        self.dots = einsum(pattern, q, k) * self.dim ** -0.5
 
         attn = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
 
@@ -165,6 +170,7 @@ class CrossAttentionBlock(nn.Module):
         out = self.ln(self.mlp(attn)) + attn
 
         return out
+
 
 class SelfAttentionBlock(CrossAttentionBlock):
     def forward(self, x, *_):
