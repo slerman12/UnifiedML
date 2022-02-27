@@ -52,6 +52,7 @@ class RelationConcat(nn.Module):
         self.heads = math.gcd(8, value_dim) if heads is None \
             else heads
 
+        self.context_dim = context_dim
         self.value_dim = value_dim
 
         self.attn = ReLA(dim, self.heads, context_dim, value_dim)
