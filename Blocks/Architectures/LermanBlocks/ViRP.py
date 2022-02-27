@@ -91,7 +91,7 @@ class RelationDisentangled(RelationConcat):
         super().__init__(dim, heads, context_dim, value_dim)
         print(self.value_dim, self.heads)
 
-        self.LN_mid = nn.LayerNorm(self.value_dim / self.heads)
+        self.LN_mid = nn.LayerNorm(self.value_dim // self.heads)
 
     def forward(self, x, context=None):
         if context is None:
