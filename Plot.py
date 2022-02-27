@@ -143,8 +143,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             task_data = task_data[task_data['Step'] <= steps]
 
         # No need to show Agent in legend if all same
-        # if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-        #     task_data['Agent'] = task_data.Agent.str.split('(').str[1].str.split(')').str[0]
+        if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+            task_data['Agent'] = task_data.Agent.str.split('(').str[1].str.split(')').str[0]
 
         row = i // num_cols
         col = i % num_cols

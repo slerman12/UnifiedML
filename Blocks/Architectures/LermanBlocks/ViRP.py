@@ -18,17 +18,17 @@ class ViRP(ViT):
                  experiment='head_head_in_RN'):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
-        if experiment == 'concat_plus_in':  # velocity reasoning from mlp only
+        if experiment == 'concat_plus_in':  # Velocity reasoning from mlp only
             core = RelationConcat
-        elif experiment == 'plus_in_concat_plus_mid':  # see if attention is useful as "reason-er"
+        elif experiment == 'plus_in_concat_plus_mid':  # See if attention is useful as "Reason-er"
             core = RelationConcatV2
-        elif experiment == 'head_wise_ln':  # disentangled relational reasoning - are the heads independent?
+        elif experiment == 'head_wise_ln':  # Disentangled relational reasoning - are the heads independent?
             core = RelationDisentangled
-        elif experiment == 'head_in_RN':  # invariant relational reasoning between input-head - are they?
+        elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they?
             core = RelationSimpler
-        elif experiment == 'head_head_in_RN':  # relational reasoning between heads
+        elif experiment == 'head_head_in_RN':  # Relational reasoning between heads
             core = RelationRelative
-        elif experiment == 'head_head_RN_plus_in':  # does reason-er only need heads independent of input/tokens?
+        elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
             core = RelationSimplerV3
         else:
             # layernorm values, confidence
@@ -108,7 +108,7 @@ class RelationDisentangled(RelationConcat):
 
 
 # Head-in
-class RelationSimpler(RelationDisentangled):
+class RelationSimpler(RelationConcat):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
