@@ -8,7 +8,7 @@ from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
-                 experiment='concat_plus_mid'):
+                 experiment='head_head_in_RN'):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
         if experiment == 'concat_plus_mid':
@@ -22,13 +22,13 @@ class ViRP(ViT):
         elif experiment == 'head_in_RN':  # invariant relational reasoning between input-head - are they?
             core = RelationSimpler
         elif experiment == 'head_head_in_RN':  # relational reasoning between heads
-            core = RelationSimplerV2
+            core = RelationRelative
         elif experiment == 'head_head_RN_plus_in':  # does reason-er only need heads independent of input/tokens?
-            core = RelationSimplerV2
+            core = RelationSimplerV3
         else:
             # layernorm values, confidence
             # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
-            core = RelationSimplerV2
+            core = RelationRelative
 
         self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
 

@@ -159,7 +159,7 @@ class RelationSimpler(RelationDisentangled):
         return out.view(x.shape) + x  # [b, n, d]
 
 
-class RelationSimplerV2(RelationDisentangled):
+class RelationRelative(RelationDisentangled):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, dim * heads)
 
