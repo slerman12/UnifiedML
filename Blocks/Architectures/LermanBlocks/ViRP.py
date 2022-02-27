@@ -134,7 +134,7 @@ class RelationSimpler(RelationDisentangled):
 
 
 # Head-head:in
-class RelationRelative(RelationDisentangled):
+class RelationRelative(RelationConcat):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -147,7 +147,6 @@ class RelationRelative(RelationDisentangled):
 
         attn = self.attn(x, context)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
-        print(head_wise.shape)
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         residual = x.unsqueeze(-2)  # [b, n, 1, d]
