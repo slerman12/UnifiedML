@@ -142,6 +142,8 @@ class RelationRelative(RelationDisentangled):
         if context is None:
             context = x  # [b, n, d]
 
+        print(x.shape)
+
         attn = self.attn(x, context)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
