@@ -123,8 +123,8 @@ class RelationSimpler(RelationDisentangled):
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         residual = x.unsqueeze(-2)  # [b, n, 1, d]
 
-        relation = norm.flatten(0, -2)  # [b * n, h, d]
-        residual = residual.flatten(0, -2)  # [b * n, 1, d]
+        relation = norm.flatten(0, -3)  # [b * n, h, d]
+        residual = residual.flatten(0, -3)  # [b * n, 1, d]
 
         out = self.LN_out(self.RN(relation, residual))  # [b * n, d]
 
@@ -148,9 +148,9 @@ class RelationRelative(RelationDisentangled):
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         residual = x.unsqueeze(-2)  # [b, n, 1, d]
 
-        relation = norm.flatten(0, -2)  # [b * n, h, d]
-        residual = residual.flatten(0, -2)  # [b * n, 1, d]
-        context = torch.cat([residual.expand_as(relation), residual], -1)  # [b * n, h, d * 2]
+        relation = norm.flatten(0, -3)  # [b * n, h, d]
+        residual = residual.flatten(0, -3)  # [b * n, 1, d]
+        context = torch.cat([residual.expand_as(relation), relation], -1)  # [b * n, h, d * 2]
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
