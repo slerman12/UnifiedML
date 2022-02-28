@@ -79,8 +79,6 @@ class ViT(nn.Module):
         x = self.attn(x)
 
         if self.output_dim is None:
-            if x.shape[1] != self.h * self.w:
-                self.h = self.w = x.shape[1] ** 0.5
             x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
         else:
             x = x.flatten(1, -2)
