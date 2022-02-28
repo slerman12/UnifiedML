@@ -227,8 +227,8 @@ class RelationPool(nn.Module):
 
         self.pool = nn.Sequential(Utils.ChSwap,
                                   TokenAttention(channels_in, 1, tokens=32, value_dim=output_dim, relu=True),
-                                  nn.LayerNorm(channels_in),
-                                  RN(channels_in))
+                                  nn.LayerNorm(output_dim),
+                                  RN(output_dim))
 
     def forward(self, x):
         return self.pool(x)
