@@ -18,6 +18,9 @@ from Blocks.Architectures.Vision.ViT import ViT
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
                  experiment='head_head_in_RN_small', ViRP=True):
+
+        self.ViRP = ViRP
+
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
         if experiment == 'concat_plus_in':  # ! Velocity reasoning from mlp only
@@ -38,8 +41,6 @@ class ViRP(ViT):
         #     # ! layernorm values, confidence
         #     # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
         #     core = RelationRelative
-
-        self.ViRP = ViRP
 
         self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
 
