@@ -225,8 +225,7 @@ class RelationPool(nn.Module):
         if output_dim is None:
             output_dim = channels_in
 
-        self.pool = nn.Sequential(Utils.ChSwap,
-                                  TokenAttention(channels_in, 1, tokens=32, value_dim=output_dim, relu=True),
+        self.pool = nn.Sequential(TokenAttention(channels_in, 1, tokens=32, value_dim=output_dim, relu=True),
                                   nn.LayerNorm(output_dim),
                                   RN(output_dim))
 
