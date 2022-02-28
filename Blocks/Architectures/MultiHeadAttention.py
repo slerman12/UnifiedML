@@ -84,7 +84,8 @@ class CrossAttention(nn.Module):
         out = rearrange(attn, 'b h n d -> b n (h d)')
 
         # Restores original shape
-        out = out.view(*shape[:-1], -1)
+        if not tokens:
+            out = out.view(*shape[:-1], -1)
 
         if 0 < mem_limit < 1:
             out = out.to(q.device)
