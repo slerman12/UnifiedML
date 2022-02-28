@@ -21,6 +21,7 @@ class TokenAttention(CrossAttention):
         super().__init__(token_dim, 1, dim, value_dim, False, relu)
 
         self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        print(self.tokens.shape)
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
     def forward(self, x, *_):

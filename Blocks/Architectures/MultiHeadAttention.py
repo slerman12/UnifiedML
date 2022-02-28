@@ -34,7 +34,6 @@ class CrossAttention(nn.Module):
         self.heads = heads
 
         assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
-        print(context_dim)
 
         self.to_q = nn.Linear(dim, dim, bias=False)
         self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
@@ -59,7 +58,6 @@ class CrossAttention(nn.Module):
         context = context.flatten(1, -2)
 
         q = self.to_q(x)
-        print(context.shape)
         k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
 
         # Note: I think it would be enough for the key to have just a single head
