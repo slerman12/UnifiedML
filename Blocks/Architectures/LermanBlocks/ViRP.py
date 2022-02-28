@@ -20,6 +20,8 @@ class ViRP(ViT):
                  experiment='head_head_in_RN_small', ViRP=True):
 
         self.ViRP = ViRP
+        if ViRP:
+            self.tokens_per_axis = 25
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
@@ -45,7 +47,6 @@ class ViRP(ViT):
         self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
 
         if ViRP:
-            self.tokens_per_axis = 25
             tokens = self.tokens_per_axis ** 2
             self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, tokens, relu=True),
                                       *[core(out_channels, heads) for _ in range(depth)])
