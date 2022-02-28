@@ -24,7 +24,6 @@ class TokenAttention(CrossAttention):
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
     def forward(self, x, *_):
-        print(x.shape, self.tokens.shape)
         return super().forward(self.tokens, x)
 
 

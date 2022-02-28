@@ -52,6 +52,8 @@ class CrossAttention(nn.Module):
         if context is None:
             context = x
 
+        print(x.shape, context.shape)
+
         tokens = len(x.shape) == 2
         if not tokens:
             x = x.flatten(1, -2)
