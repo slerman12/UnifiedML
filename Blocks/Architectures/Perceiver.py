@@ -14,11 +14,11 @@ from Blocks.Architectures.MultiHeadAttention import CrossAttention
 
 
 class TokenAttention(CrossAttention):
-    def __init__(self, dim=32, heads=None, tokens=8, token_dim=None, value_dim=None, talk_h=False, relu=False):
+    def __init__(self, dim=32, tokens=8, token_dim=None, value_dim=None, relu=False):
         if token_dim is None:
             token_dim = dim
 
-        super().__init__(token_dim, heads, dim, value_dim, talk_h, relu)
+        super().__init__(token_dim, 1, dim, value_dim, False, relu)
 
         self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
