@@ -77,7 +77,7 @@ class ViT(nn.Module):
         x += self.pos_embedding[:, :(n + 1)]
 
         x = self.attn(x)
-        x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
+        x = rearrange(x, 'b i c -> b c i')  # Channels 1st
 
         if self.output_dim is not None:
             x = x.transpose(-1, -3)  # Channels last
