@@ -45,12 +45,12 @@ class ViRP(ViT):
         self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
 
         if ViRP:
-            self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
+            self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 1600, relu=True),  #todo test
                                       *[core(out_channels, heads) for _ in range(depth)])
 
     def repr_shape(self, c, h, w):
         if self.ViRP:
-            return self.out_channels, 10, 10
+            return self.out_channels, 40, 40
         return super().repr_shape(c, h, w)
 
 
