@@ -52,14 +52,17 @@ class CrossAttention(nn.Module):
         if context is None:
             context = x
 
-        x = x.flatten(1, -2)
+        tokens = len(x.shape) == 2
+        if not tokens:
+            x = x.flatten(1, -2)
         context = context.flatten(1, -2)
 
         q = self.to_q(x)
         k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
 
         # Note: I think it would be enough for the key to have just a single head
-        q = rearrange(q, 'b n (h d) -> b h n d', h=self.heads)
+        pattern = 'n (h d) -> h n d' if tokens else 'b n (h d) -> b h n d'
+        q = rearrange(q, pattern, h=self.heads)
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
@@ -68,7 +71,6 @@ class CrossAttention(nn.Module):
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
-        tokens = len(x.shape) == 2
         pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
         self.dots = einsum(pattern, q, k) * self.dim ** -0.5
 
