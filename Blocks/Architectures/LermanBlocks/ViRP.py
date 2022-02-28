@@ -18,7 +18,7 @@ from Blocks.Architectures.Vision.ViT import ViT
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
                  experiment='head_head_in_RN_small', ViRP=True):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim=True)
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
         if experiment == 'concat_plus_in':  # ! Velocity reasoning from mlp only
             core = RelationConcat
@@ -46,8 +46,6 @@ class ViRP(ViT):
         if ViRP:
             self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
                                       *[core(out_channels, heads) for _ in range(depth)])
-
-            self.repr = nn.Identity()
 
     def repr_shape(self, c, h, w):
         if self.ViRP:
