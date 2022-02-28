@@ -213,7 +213,7 @@ class RelationBlock(RelationRelativeV2):
 
 
 # Pools features relationally, in linear time
-class RelationPool(AttentionPool):
+class RelationPool(nn.Module):
     def __init__(self, channels_in=32, output_dim=None, input_shape=None):
         super().__init__()
 
@@ -229,5 +229,8 @@ class RelationPool(AttentionPool):
                                   TokenAttention(channels_in, 1, tokens=32, value_dim=output_dim, relu=True),
                                   nn.LayerNorm(channels_in),
                                   RN(channels_in))
+
+    def forward(self, x):
+        return self.pool(x)
 
 
