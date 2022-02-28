@@ -39,9 +39,9 @@ class ViRP(ViT):
         #     # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
         #     core = RelationRelative
 
-        self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
-
         self.ViRP = ViRP
+
+        self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
 
         if ViRP:
             self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
