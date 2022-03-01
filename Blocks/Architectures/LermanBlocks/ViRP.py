@@ -43,7 +43,7 @@ class ViRP(ViT):
             core = RelationRelative
         elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
             core = RelationRelativeV2
-        elif experiment == 'relation_block':
+        elif experiment == 'relation_block':  # sparsity
             core = RelationBlock
         # else:
         #     # ! layernorm values, confidence

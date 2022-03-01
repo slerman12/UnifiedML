@@ -32,9 +32,10 @@ common_sweeps.update({'all': sum(common_sweeps.values(), [])})
 common_sweeps.update({'rl': common_sweeps['dmc'] + common_sweeps['atari']})
 common_sweeps.update({'continuous': common_sweeps['dmc'] + common_sweeps['classify']})
 
-sweep = {'ViRP': [f'recipes.Encoder.Eyes=Blocks.Architectures.LermanBlocks.ViRP '
-                  f'experiment="ViRP-3" ema=true weight_decay=0.01 task=classify/{task.lower()} RL=False'
-                  for task in ['cifar10']] +
+sweep = {'ViRP':
+             # [f'recipes.Encoder.Eyes=Blocks.Architectures.LermanBlocks.ViRP '
+             #      f'experiment="ViRP-3" ema=true weight_decay=0.01 task=classify/{task.lower()} RL=False'
+             #      for task in ['cifar10']] +
                  [f'recipes.Encoder.Eyes=Blocks.Architectures.ViT '
                   f'experiment="ViT-3" ema=true weight_decay=0.01 task=classify/{task.lower()} RL=False'
                   for task in ['cifar10']]}
