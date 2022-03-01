@@ -20,7 +20,7 @@ from Blocks.Architectures.Vision.ViT import ViT
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
                  experiment='relation_block',
-                 ViRP=False  # perceiver cross-attend, currently hurts
+                 ViRP=True  # perceiver cross-attend, currently hurts
                  ):
 
         self.ViRP = ViRP
