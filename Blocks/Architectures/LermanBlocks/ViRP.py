@@ -17,11 +17,13 @@ from Blocks.Architectures.Vision.ViT import ViT
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
-                 experiment='head_head_in_RN_small', ViRP=True):
+                 experiment='head_head_in_RN_small',
+                 ViRP=True  # perceiver cross-attend, currently hurts
+                 ):
 
         self.ViRP = ViRP
         if ViRP:
-            self.tokens_per_axis = 10
+            self.tokens_per_axis = 50
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
