@@ -219,7 +219,7 @@ def rclamp(x, min, max):
 # (Multi-dim) indexing
 def gather_indices(item, ind, dim=-1):
     ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
-    if -1 < dim < len(item.shape) - 1:
+    if -1 < dim < len(item.shape) - 1 or dim < -1:
         trail_shape = item.shape[dim + 1:]
         ind = ind.reshape(ind.shape + (1,)*len(trail_shape))
         ind = ind.expand(*ind.shape[:dim + 1], *trail_shape)
