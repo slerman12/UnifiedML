@@ -22,8 +22,8 @@ if len(sys.argv) > 1:
 
 host = "slerman@bluehive.circ.rochester.edu"
 commands = []
-# commands.append(f"""cd /scratch/slerman/UnifiedML
-# git pull origin master""")
+commands.append(f"""cd /scratch/slerman/UnifiedML
+git pull origin master""")
 
 # commands.append(f"""cd /scratch/slerman/
 # git clone git@github.com:slerman12/UnifiedML.git""")

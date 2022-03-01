@@ -5,6 +5,8 @@
 import math
 
 import torch
+from einops import rearrange
+from opt_einsum_torch import EinsumPlanner
 from torch import nn
 
 import Utils
@@ -17,7 +19,7 @@ from Blocks.Architectures.Vision.ViT import ViT
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
-                 experiment='head_head_in_RN_small',
+                 experiment='relation_block',
                  ViRP=True  # perceiver cross-attend, currently hurts
                  ):
 
@@ -41,6 +43,8 @@ class ViRP(ViT):
             core = RelationRelative
         elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
             core = RelationRelativeV2
+        elif experiment == 'relation_block':
+            core = RelationBlock
         # else:
         #     # ! layernorm values, confidence
         #     # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
@@ -200,18 +204,10 @@ class RelationRelativeV2(RelationRelative):
 
 # Head-head:in from tokens
 class RelationBlock(RelationRelativeV2):
-    def __init__(self, dim=32, heads=1, tokens=8, token_dim=None, value_dim=None):
-        if token_dim is None:
-            token_dim = dim
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+        super().__init__(dim, heads, context_dim, value_dim)
 
-        super().__init__(token_dim, heads, dim, value_dim)
-
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
-        self.attn = ReLA(token_dim, self.heads, self.context_dim, self.value_dim * self.heads)
-        self.RN = RN(dim, dim * 2)
-
-    def forward(self, x, *_):
-        return super().forward(self.tokens, x)
+        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
 
 
 # Pools features relationally, in linear time
@@ -235,4 +231,84 @@ class RelationPool(nn.Module):
     def forward(self, x):
         return self.pool(x)
 
+
+class Relation(nn.Module):
+    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False):
+        super().__init__()
+
+        self.dim = dim
+
+        context_dim = dim if context_dim is None \
+            else context_dim
+
+        value_dim = dim if value_dim is None \
+            else value_dim
+
+        heads = math.gcd(8, value_dim) if heads is None \
+            else heads
+
+        self.value_dim = value_dim
+        self.heads = heads
+
+        assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
+
+        self.to_q = nn.Linear(dim, dim, bias=False)
+        self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
+
+        self.relu = nn.ReLU(inplace=True) if relu else None
+
+        # "Talking heads" (https://arxiv.org/abs/2003.02436)
+        self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
+                                    nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
+
+    def forward(self, x, context=None):
+        # Conserves shape
+        shape = x.shape
+        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
+
+        if context is None:
+            context = x
+
+        tokens = len(x.shape) == 2
+        if not tokens:
+            x = x.flatten(1, -2)
+        context = context.flatten(1, -2)
+
+        q = self.to_q(x)
+        k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
+
+        # Note: I think it would be enough for the key to have just a single head
+        pattern = 'n (h d) -> h n d' if tokens else 'b n (h d) -> b h n d'
+        q = rearrange(q, pattern, h=self.heads)
+
+        k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
+
+        # Memory efficient toggle, e.g., =0.5
+        mem_limit = False
+        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
+            else torch.einsum
+
+        pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
+        self.dots = einsum(pattern, q, k) * self.dim ** -0.5
+
+        weights = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
+
+        # "Talking heads"
+        weights = self.talk_h(weights)
+
+        attn = einsum('b h i j, b h j d -> b h i d', weights, v)
+        rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
+        rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
+        rtn = attn - (attn - rtn).detach()
+
+        out = rearrange(rtn, 'b h n d -> b n (h d)')
+
+        # Restores original shape
+        if not tokens:
+            out = out.view(*shape[:-1], -1)
+
+        if 0 < mem_limit < 1:
+            out = out.to(q.device)
+
+        return out
 
