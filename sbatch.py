@@ -38,6 +38,7 @@ sweep = {'ViRP': [f'recipes.Encoder.Eyes=Blocks.Architectures.LermanBlocks.ViRP 
                  [f'recipes.Encoder.Eyes=Blocks.Architectures.ViT '
                   f'experiment="ViT-3" ema=true weight_decay=0.01 task=classify/{task.lower()} RL=False'
                   for task in ['cifar10']]}
+common_sweeps.update(sweep)
 # +recipes.encoder.eyes.experiment='plus_in_concat_plus_mid'
 
 # Arguments
