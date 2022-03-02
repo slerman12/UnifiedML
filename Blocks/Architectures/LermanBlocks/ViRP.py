@@ -15,7 +15,6 @@ import Utils
 
 from Blocks.Architectures import MLP
 from Blocks.Architectures.MultiHeadAttention import ReLA, TokenAttentionBlock
-from Blocks.Architectures.Perceiver import TokenAttention
 from Blocks.Architectures.RN import RN
 from Blocks.Architectures.Vision.ViT import ViT
 
@@ -28,7 +27,7 @@ class ViRP(ViT):
 
         self.ViRP = ViRP
         if ViRP:
-            self.tokens_per_axis = 15
+            self.tokens_per_axis = 50
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
@@ -213,6 +212,7 @@ class RelationBlock(RelativeBlock):
         self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
 
 
+# Perceiver
 class TokenRelationBlock(RelationBlock):
     def __init__(self, dim=32, heads=1, tokens=32, token_dim=None, value_dim=None):
         if token_dim is None:
@@ -227,28 +227,7 @@ class TokenRelationBlock(RelationBlock):
         return super().forward(self.tokens, x)
 
 
-# Pools features relationally, in linear time
-class RelationPool(nn.Module):
-    def __init__(self, channels_in=32, output_dim=None, input_shape=None):
-        super().__init__()
-
-        self.input_shape = input_shape
-
-        if input_shape is not None:
-            channels_in = input_shape[-3]
-
-        if output_dim is None:
-            output_dim = channels_in
-
-        self.pool = nn.Sequential(Utils.ChSwap,
-                                  TokenAttention(channels_in, tokens=16, value_dim=output_dim, relu=True),
-                                  nn.LayerNorm(output_dim),
-                                  RN(output_dim))
-
-    def forward(self, x):
-        return self.pool(x)
-
-
+# MHDPR
 class Relation(nn.Module):
     def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False):
         super().__init__()

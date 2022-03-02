@@ -10,22 +10,6 @@ from torch.nn import init
 
 from einops import rearrange, repeat
 
-from Blocks.Architectures.MultiHeadAttention import CrossAttention
-
-
-class TokenAttention(CrossAttention):
-    def __init__(self, dim=32, tokens=8, token_dim=None, value_dim=None, relu=False):
-        if token_dim is None:
-            token_dim = dim
-
-        super().__init__(token_dim, 1, dim, value_dim, False, relu)
-
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
-        init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
-
-    def forward(self, x, *_):
-        return super().forward(self.tokens, x)
-
 
 class Perceiver(nn.Module):
     def __init__(
