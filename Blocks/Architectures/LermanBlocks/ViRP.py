@@ -27,7 +27,7 @@ class ViRP(ViT):
 
         self.ViRP = ViRP
         if ViRP:
-            self.tokens_per_axis = 50
+            self.tokens_per_axis = 30
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
@@ -286,7 +286,7 @@ class Relation(nn.Module):
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
         # Memory efficient toggle, e.g., =0.5
-        mem_limit = 0.1
+        mem_limit = 0.5
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
@@ -295,13 +295,15 @@ class Relation(nn.Module):
 
         weights = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
 
+        if 0 < mem_limit < 1:
+            weights = weights.to(q.device)
+
         # "Talking heads"
         weights = self.talk_h(weights)
 
         attn = einsum('b h i j, b h j d -> b h i d', weights, v)
 
         if 0 < mem_limit < 1:
-            weights = weights.to(q.device)
             attn = attn.to(q.device)
 
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
