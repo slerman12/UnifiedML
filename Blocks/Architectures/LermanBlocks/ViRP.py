@@ -262,7 +262,7 @@ class Relation(nn.Module):
     def forward(self, x, context=None):
         # Conserves shape
         shape = x.shape
-        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
+        # assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
 
         if context is None:
             context = x
