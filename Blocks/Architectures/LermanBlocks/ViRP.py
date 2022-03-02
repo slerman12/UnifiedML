@@ -194,7 +194,7 @@ class RelationRelativeV1(RelationConcat):
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
-        return out.view(-1, *x.shape[-2:]) + x  # [b, n, d]# Head-head:in
+        return out.view(*x.shape[:-2] or -1, *x.shape[-2:]) + x  # [b, n, d]# Head-head:in
 
 
 # Smaller RN
