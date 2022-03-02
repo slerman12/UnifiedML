@@ -189,7 +189,7 @@ class RelationRelativeV1(RelationConcat):
         residual = x.unsqueeze(-2)  # [b, n, 1, d]
 
         relation = norm.flatten(0, -3)  # [b * n, h, d]
-        residual = residual.flatten(0, -3)  # [b * n, 1, d]
+        residual = residual.expand_as(norm).flatten(0, -3)  # [b * n, 1, d]
         context = torch.cat([residual.expand(*relation.shape[:-1], -1), relation], -1)  # [b * n, h, d * 2]
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
@@ -213,6 +213,20 @@ class RelationBlock(RelativeBlock):
         self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
 
 
+class TokenRelationBlock(RelationBlock):
+    def __init__(self, dim=32, heads=1, tokens=32, token_dim=None, value_dim=None):
+        if token_dim is None:
+            token_dim = dim
+
+        super().__init__(token_dim, heads, dim, value_dim)
+
+        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
+
+    def forward(self, x, *_):
+        return super().forward(self.tokens, x)
+
+
 # Pools features relationally, in linear time
 class RelationPool(nn.Module):
     def __init__(self, channels_in=32, output_dim=None, input_shape=None):
@@ -233,20 +247,6 @@ class RelationPool(nn.Module):
 
     def forward(self, x):
         return self.pool(x)
-
-
-class TokenRelationBlock(RelationBlock):
-    def __init__(self, dim=32, heads=1, tokens=32, token_dim=None, value_dim=None):
-        if token_dim is None:
-            token_dim = dim
-
-        super().__init__(token_dim, heads, dim, value_dim)
-
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
-        init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
-
-    def forward(self, x, *_):
-        return super().forward(self.tokens, x)
 
 
 class Relation(nn.Module):
