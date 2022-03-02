@@ -180,7 +180,7 @@ class RelationRelativeV1(RelationConcat):
 
     def forward(self, x, context=None):
         if context is None:
-            context = x  # [b, n, d]
+            context = x  # [b, n, d] or [n, d] if tokens
 
         attn = self.attn(x, context)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
@@ -194,7 +194,7 @@ class RelationRelativeV1(RelationConcat):
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
-        return out.view(-1, *x.shape) + x  # [b, n, d]# Head-head:in
+        return out.view(-1, *x.shape[-2:]) + x  # [b, n, d]# Head-head:in
 
 
 # Smaller RN
