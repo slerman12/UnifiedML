@@ -9,6 +9,7 @@ from opt_einsum_torch import EinsumPlanner
 
 import torch
 from torch import nn
+from torch.nn import init
 
 import Utils
 
@@ -27,7 +28,7 @@ class ViRP(ViT):
 
         self.ViRP = ViRP
         if ViRP:
-            self.tokens_per_axis = 22
+            self.tokens_per_axis = 15
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
@@ -56,8 +57,8 @@ class ViRP(ViT):
 
         if ViRP:
             tokens = self.tokens_per_axis ** 2
-            self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, tokens, relu=True),
-                                      *[core(out_channels, heads) for _ in range(depth)])
+            self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens, relu=True),
+                                      *[core(out_channels, heads) for _ in range(depth - 1)])
 
     def repr_shape(self, c, h, w):
         if self.ViRP:
@@ -234,6 +235,20 @@ class RelationPool(nn.Module):
         return self.pool(x)
 
 
+class TokenRelationBlock(RelationBlock):
+    def __init__(self, dim=32, heads=1, tokens=32, token_dim=None, value_dim=None):
+        if token_dim is None:
+            token_dim = dim
+
+        super().__init__(token_dim, heads, dim, value_dim)
+
+        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
+
+    def forward(self, x, *_):
+        return super().forward(self.tokens, x)
+
+
 class Relation(nn.Module):
     def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False):
         super().__init__()
@@ -286,7 +301,7 @@ class Relation(nn.Module):
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
         # Memory efficient toggle, e.g., =0.5
-        mem_limit = 0.5
+        mem_limit = False
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
