@@ -57,7 +57,7 @@ class ViRP(ViT):
 
         if ViRP:
             tokens = self.tokens_per_axis ** 2
-            self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens, relu=True),
+            self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens),
                                       *[core(out_channels, heads) for _ in range(depth - 1)])
 
     def repr_shape(self, c, h, w):
