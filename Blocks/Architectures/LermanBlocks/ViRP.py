@@ -295,6 +295,9 @@ class Relation(nn.Module):
 
         weights = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
 
+        if 0 < mem_limit < 1:
+            weights = weights.to(q.device)
+
         # "Talking heads"
         weights = self.talk_h(weights)
 
