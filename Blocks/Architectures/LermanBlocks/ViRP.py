@@ -4,12 +4,14 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import math
 
-import torch
 from einops import rearrange
 from opt_einsum_torch import EinsumPlanner
+
+import torch
 from torch import nn
 
 import Utils
+
 from Blocks.Architectures import MLP
 from Blocks.Architectures.MultiHeadAttention import ReLA, TokenAttentionBlock
 from Blocks.Architectures.Perceiver import TokenAttention
