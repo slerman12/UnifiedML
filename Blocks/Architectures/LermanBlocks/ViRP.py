@@ -56,7 +56,7 @@ class ViRP(ViT):
 
         if ViRP:
             tokens = self.tokens_per_axis ** 2
-            self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens, 512, out_channels),
+            self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens),
                                       *[core(out_channels, heads) for _ in range(depth - 1)])
 
     def repr_shape(self, c, h, w):
@@ -206,10 +206,10 @@ class RelativeBlock(RelationRelativeV1):
 
 # Reparam
 class RelationBlock(RelativeBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, no_query=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
-        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
+        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads, no_query=no_query)
 
 
 # Perceiver
@@ -218,7 +218,7 @@ class TokenRelationBlock(RelationBlock):
         if token_dim is None:
             token_dim = dim
 
-        super().__init__(token_dim, heads, dim, value_dim)
+        super().__init__(token_dim, heads, dim, value_dim, True)
 
         self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
@@ -229,7 +229,7 @@ class TokenRelationBlock(RelationBlock):
 
 # MHDPR
 class Relation(nn.Module):
-    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False):
+    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False, no_query=False):
         super().__init__()
 
         self.dim = dim
@@ -248,7 +248,7 @@ class Relation(nn.Module):
 
         assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
 
-        self.to_q = nn.Linear(dim, dim, bias=False)
+        self.to_q = nn.Identity() if no_query else nn.Linear(dim, dim, bias=False)
         self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
 
         self.relu = nn.ReLU(inplace=True) if relu else None
