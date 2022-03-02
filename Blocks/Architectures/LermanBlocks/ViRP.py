@@ -27,7 +27,7 @@ class ViRP(ViT):
 
         self.ViRP = ViRP
         if ViRP:
-            self.tokens_per_axis = 15
+            self.tokens_per_axis = 20
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
