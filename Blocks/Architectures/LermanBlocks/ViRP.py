@@ -286,7 +286,7 @@ class Relation(nn.Module):
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
         # Memory efficient toggle, e.g., =0.5
-        mem_limit = False
+        mem_limit = 0.5
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
