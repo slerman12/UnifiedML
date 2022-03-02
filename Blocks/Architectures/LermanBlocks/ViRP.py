@@ -220,7 +220,7 @@ class TokenRelationBlock(RelationBlock):
 
         super().__init__(token_dim, heads, dim, value_dim, True)
 
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        self.tokens = nn.Parameter(torch.randn(tokens, token_dim // heads))
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
     def forward(self, x, *_):
