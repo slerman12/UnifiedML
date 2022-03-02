@@ -300,6 +300,10 @@ class Relation(nn.Module):
 
         attn = einsum('b h i j, b h j d -> b h i d', weights, v)
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
+
+        if 0 < mem_limit < 1:
+            attn = attn.to(q.device)
+
         rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
         rtn = attn - (attn - rtn).detach()
 
@@ -308,9 +312,6 @@ class Relation(nn.Module):
         # Restores original shape
         if not tokens:
             out = out.view(*shape[:-1], -1)
-
-        if 0 < mem_limit < 1:
-            out = out.to(q.device)
 
         return out
 
