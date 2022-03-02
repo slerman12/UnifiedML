@@ -286,7 +286,7 @@ class Relation(nn.Module):
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
         # Memory efficient toggle, e.g., =0.5
-        mem_limit = 0.2
+        mem_limit = 0.1
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
@@ -302,11 +302,11 @@ class Relation(nn.Module):
         weights = self.talk_h(weights)
 
         attn = einsum('b h i j, b h j d -> b h i d', weights, v)
-        rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
 
         if 0 < mem_limit < 1:
             attn = attn.to(q.device)
 
+        rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
         rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
         rtn = attn - (attn - rtn).detach()
 
