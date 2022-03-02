@@ -11,7 +11,7 @@ from torch import nn
 
 import Utils
 from Blocks.Architectures import MLP
-from Blocks.Architectures.MultiHeadAttention import ReLA, TokenAttentionBlock, AttentionPool
+from Blocks.Architectures.MultiHeadAttention import ReLA, TokenAttentionBlock
 from Blocks.Architectures.Perceiver import TokenAttention
 from Blocks.Architectures.RN import RN
 from Blocks.Architectures.Vision.ViT import ViT
@@ -40,9 +40,9 @@ class ViRP(ViT):
         elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
             core = RelationSimplerV2
         elif experiment == 'head_head_in_RN':  # ! Relational reasoning between heads
-            core = RelationRelative
+            core = RelationRelativeV1
         elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
-            core = RelationRelativeV2
+            core = RelativeBlock
         elif experiment == 'relation_block':  # sparsity
             core = RelationBlock
         # else:
@@ -69,7 +69,7 @@ class ViPer(ViT):
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
         self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
-                                  *[RelationRelativeV2(out_channels, heads) for _ in range(depth)])
+                                  *[RelativeBlock(out_channels, heads) for _ in range(depth)])
 
 
 # Concat, then residual from input
@@ -168,7 +168,7 @@ class RelationSimpler(RelationConcat):
 
 
 # Head-head:in
-class RelationRelative(RelationConcat):
+class RelationRelativeV1(RelationConcat):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -195,15 +195,15 @@ class RelationRelative(RelationConcat):
 
 
 # Smaller RN
-class RelationRelativeV2(RelationRelative):
+class RelativeBlock(RelationRelativeV1):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
         self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
 
 
-# Head-head:in from tokens
-class RelationBlock(RelationRelativeV2):
+# Reparam
+class RelationBlock(RelativeBlock):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
