@@ -74,7 +74,8 @@ class ViT(nn.Module):
 
         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
+        n += 1
+        x += self.pos_embedding[:, :n]
 
         x = self.attn(x)
 

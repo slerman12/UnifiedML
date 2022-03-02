@@ -19,10 +19,10 @@ if __name__ == '__main__':
     for task in IMAGE_DATASETS:
         f = open(f"./{task.lower()}.yaml", "w")
         f.write(r"""defaults:
-      - 500K
       - _self_
     
 suite: classify
+train_steps: 200000
 frame_stack: null
 action_repeat: null
 nstep: 1
