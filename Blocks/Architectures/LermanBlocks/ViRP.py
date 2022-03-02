@@ -27,7 +27,7 @@ class ViRP(ViT):
 
         self.ViRP = ViRP
         if ViRP:
-            self.tokens_per_axis = 15
+            self.tokens_per_axis = 20
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
@@ -57,7 +57,7 @@ class ViRP(ViT):
         if ViRP:
             tokens = self.tokens_per_axis ** 2
             self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens),
-                                      *[core(out_channels, heads) for _ in range(depth)])
+                                      *[core(out_channels, heads) for _ in range(depth - 1)])
 
     def repr_shape(self, c, h, w):
         if self.ViRP:
@@ -245,10 +245,12 @@ class Relation(nn.Module):
 
         self.value_dim = value_dim
         self.heads = heads
+        self.no_query = no_query
 
         assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
 
         self.to_q = nn.Identity() if no_query else nn.Linear(dim, dim, bias=False)
+        # self.to_kv = nn.Linear(context_dim, dim / heads + value_dim, bias=False)  # TODO get rid of key head
         self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
 
         self.relu = nn.ReLU(inplace=True) if relu else None
@@ -274,8 +276,10 @@ class Relation(nn.Module):
         k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
 
         # Note: I think it would be enough for the key to have just a single head
-        pattern = 'n (h d) -> h n d' if tokens else 'b n (h d) -> b h n d'
-        q = rearrange(q, pattern, h=self.heads)
+        # Or query: e.g., tokens
+        if not self.no_query:
+            pattern = 'n (h d) -> h n d' if tokens else 'b n (h d) -> b h n d'
+            q = rearrange(q, pattern, h=self.heads)
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
@@ -284,7 +288,9 @@ class Relation(nn.Module):
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
 
-        pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
+        # TODO just combine tokens and no_query
+        pattern = 'i d, b h j d -> b h i j' if tokens and self.no_query else 'h i d, b h j d -> b h i j' if tokens \
+            else 'b h i d, b h j d -> b h i j'
         self.dots = einsum(pattern, q, k) * self.dim ** -0.5
 
         weights = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
