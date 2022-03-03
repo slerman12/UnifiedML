@@ -19,7 +19,7 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=200,
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=100,
                  token_dim=32, depth=3, output_dim=None):
         self.tokens = tokens
 
