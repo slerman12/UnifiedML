@@ -28,8 +28,8 @@ class ViRP(ViT):
         self.P = Perceiver(out_channels, heads, tokens, token_dim, depth=depth, relu=True)
 
         self.P.attn_token = Relation(token_dim, 1, out_channels, out_channels)  # t d, b n o -> b t o
-        self.P.reattn_token = RelationBlock(self.value_dim, heads)  # b t o, b n o -> b t o
-        self.P.attn = nn.Sequential(*[RelationBlock(self.value_dim, heads)
+        self.P.reattn_token = RelationBlock(out_channels, heads)  # b t o, b n o -> b t o
+        self.P.attn = nn.Sequential(*[RelationBlock(out_channels, heads)
                                       for _ in range(depth - 1)])  # b t o, b t o -> b t o
 
         self.attn = self.P
