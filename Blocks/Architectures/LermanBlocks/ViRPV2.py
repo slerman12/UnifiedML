@@ -20,10 +20,10 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=400,
-                 token_dim=32, depth=3, pool='cls', output_dim=None):
+                 token_dim=32, depth=3, output_dim=None):
         self.tokens = tokens
 
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, 'mean', True, output_dim)
 
         self.P = Perceiver(out_channels, heads, tokens, token_dim, depth=depth, relu=True)
 
