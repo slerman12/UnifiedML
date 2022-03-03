@@ -21,6 +21,7 @@ from Blocks.Architectures.Perceiver import Perceiver
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=32,
                  token_dim=32, depth=3, pool='cls', output_dim=None):
+        self.tokens = tokens
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
@@ -34,7 +35,7 @@ class ViRP(ViT):
         self.attn = self.P
 
     def repr_shape(self, c, h, w):
-        return self.out_channels, len(self.P.tokens), 1
+        return self.out_channels, self.tokens, 1
 
 
 # MHDPR
