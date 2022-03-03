@@ -197,7 +197,7 @@ class Disentangled(Concat):
 
 
 # Head, in
-class IndependentHeads(Disentangled):
+class IndependentHeads(Concat):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -223,7 +223,7 @@ class IndependentHeads(Disentangled):
 
 
 # Head, head:in
-class RelativeBlock(Disentangled):
+class RelativeBlock(Concat):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, tokens=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
