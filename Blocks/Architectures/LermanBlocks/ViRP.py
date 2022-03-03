@@ -22,11 +22,11 @@ from Blocks.Architectures.Vision.ViT import ViT
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
                  experiment='relation_block',
-                 ViRP=True  # perceiver cross-attend, currently hurts
+                 perceive=True  # perceiver cross-attend, currently hurts
                  ):
 
-        self.ViRP = ViRP
-        if ViRP:
+        self.perceive = perceive
+        if perceive:
             self.tokens_per_axis = 20
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
@@ -38,11 +38,11 @@ class ViRP(ViT):
         elif experiment == 'head_wise_ln':  # Disentangled relational reasoning - are the heads independent, equal vote?
             core = RelationDisentangled
         elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they, period?
-            core = RelationSimpler
+            core = IndependentHeads
         elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
-            core = RelationSimplerV2
+            core = RelationSimpler
         elif experiment == 'head_head_in_RN':  # ! Relational reasoning between heads
-            core = RelationRelativeV1
+            core = RelativeBlockBig
         elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
             core = RelativeBlock
         elif experiment == 'relation_block':  # sparsity
@@ -54,13 +54,13 @@ class ViRP(ViT):
 
         self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
 
-        if ViRP:
+        if perceive:
             tokens = self.tokens_per_axis ** 2
             self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens),
                                       *[core(out_channels, heads) for _ in range(depth - 1)])
 
     def repr_shape(self, c, h, w):
-        if self.ViRP:
+        if self.perceive:
             return self.out_channels, self.tokens_per_axis, self.tokens_per_axis
         return super().repr_shape(c, h, w)
 
@@ -144,7 +144,7 @@ class RelationDisentangled(RelationConcat):
 
 
 # Head-in
-class RelationSimpler(RelationConcat):
+class IndependentHeads(RelationConcat):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -170,10 +170,11 @@ class RelationSimpler(RelationConcat):
 
 
 # Head-head:in
-class RelationRelativeV1(RelationConcat):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
+class RelativeBlockBig(RelationConcat):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, tokens=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
+        self.tokens = tokens
         self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
         self.RN = RN(dim, dim * 2)
 
@@ -181,23 +182,31 @@ class RelationRelativeV1(RelationConcat):
         if context is None:
             context = x  # [b, n, d] or [n, d] if tokens
 
+        shape = x.shape
+
         attn = self.attn(x, context)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
+
+        if self.tokens:
+            x = x.expand(context.shape[0], *x.shape)  # [b, n, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         residual = x.unsqueeze(-2)  # [b, n, 1, d]
 
         relation = norm.flatten(0, -3)  # [b * n, h, d]
-        residual = residual.expand(*norm.shape[:-1], -1).flatten(0, -3)  # [b * n, 1, d]
-        context = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
+        residual = residual.flatten(0, -3)  # [b * n, 1, d]
+        context = torch.cat([residual.expand(*relation.shape[:-1], -1), relation], -1)  # [b * n, h, d * 2]
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
-        return out.view(*(x.shape[:-2] or [-1]), *x.shape[-2:]) + x  # [b, n, d]
+        if self.tokens:
+            x = 0
+
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
 
 
 # Smaller RN
-class RelativeBlock(RelationRelativeV1):
+class RelativeBlock(RelativeBlockBig):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -213,14 +222,21 @@ class RelationBlock(RelativeBlock):
 
 
 # Perceiver
-class TokenRelationBlock(RelationBlock):
+class TokenRelationBlock(RelativeBlockBig):
     def __init__(self, dim=32, heads=1, tokens=32, token_dim=None, value_dim=None):
         if token_dim is None:
             token_dim = dim
 
-        super().__init__(token_dim, heads, dim, value_dim, True)
+        super().__init__(token_dim, heads, dim, value_dim,
+                         True)  # No heads, no residual
 
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim // heads))
+        # Small
+        self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
+
+        # Relation
+        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads, no_query=True)
+
+        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
     def forward(self, x, *_):
@@ -262,7 +278,7 @@ class Relation(nn.Module):
     def forward(self, x, context=None):
         # Conserves shape
         shape = x.shape
-        # assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
+        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
 
         if context is None:
             context = x
