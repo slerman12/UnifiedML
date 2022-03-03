@@ -14,7 +14,7 @@ from torch.nn import init
 import Utils
 
 from Blocks.Architectures import MLP
-from Blocks.Architectures.MultiHeadAttention import ReLA, TokenAttentionBlock
+from Blocks.Architectures.MultiHeadAttention import ReLA
 from Blocks.Architectures.RN import RN
 from Blocks.Architectures.Vision.ViT import ViT
 

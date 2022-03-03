@@ -10,7 +10,6 @@ from Blocks.Architectures.Vision.ResNet import MiniResNet, ResNet18, ResNet50
 from Blocks.Architectures.Vision.ResNet import MiniResNet as ResNet
 from Blocks.Architectures.Vision.ConvMixer import ConvMixer
 from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt
-from Blocks.Architectures.LermanBlocks.ViRP import ViRP
 
 
 from torch import nn
