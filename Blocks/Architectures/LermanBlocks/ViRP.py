@@ -65,15 +65,6 @@ class ViRP(ViT):
         return super().repr_shape(c, h, w)
 
 
-# Vision Perceiver
-class ViPer(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None):
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
-
-        self.attn = nn.Sequential(TokenAttentionBlock(out_channels, heads, 100, relu=True),
-                                  *[RelativeBlock(out_channels, heads) for _ in range(depth)])
-
-
 # Concat, then residual from input
 class RelationConcat(nn.Module):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
