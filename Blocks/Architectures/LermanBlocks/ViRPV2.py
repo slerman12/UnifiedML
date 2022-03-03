@@ -20,19 +20,37 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=100,
-                 token_dim=32, depth=3, output_dim=None):
+                 token_dim=32, depth=3, pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
 
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, 'mean', True, output_dim)
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
+
+        if experiment == 'relation':
+            block = RelationBlock
+        elif experiment == 'relative':
+            block = RelativeBlock
+        elif experiment == 'independent':
+            block = IndependentHeadsBlock
+        elif experiment == 'disentangled':
+            block = Disentangled
+        elif experiment == 'course_corrector':
+            block = CourseCorrectorBlock
+        elif experiment == 'concat':
+            block = ConcatBlock
+        else:
+            raise NotImplementedError('No such experiment')
 
         self.P = Perceiver(out_channels, heads, tokens, token_dim, depth=depth, relu=True)
 
         self.P.attn_token = Relation(token_dim, 1, out_channels, out_channels)  # t d, b n o -> b t o
-        self.P.reattn_token = RelationBlock(out_channels, heads)  # b t o, b n o -> b t o
-        self.P.attn = nn.Sequential(*[RelationBlock(out_channels, heads)
+        self.P.reattn_token = block(out_channels, heads)  # b t o, b n o -> b t o
+        self.P.attn = nn.Sequential(*[block(out_channels, heads)
                                       for _ in range(depth - 1)])  # b t o, b t o -> b t o
 
         self.attn = self.P
+
+        if ViRS:
+            self.attn = nn.Sequential(self.P.reattn_token, self.P.attn)
 
     def repr_shape(self, c, h, w):
         return self.out_channels, self.tokens, 1
