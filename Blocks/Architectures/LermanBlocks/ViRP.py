@@ -234,7 +234,7 @@ class TokenRelationBlock(RelativeBlockBig):
         self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
 
         # Relation
-        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads, no_query=True)
+        self.attn = Relation(token_dim, self.heads, dim, self.value_dim * self.heads, no_query=True)
 
         self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
