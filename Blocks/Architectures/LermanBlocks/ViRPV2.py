@@ -19,7 +19,7 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=32,
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=1000,
                  token_dim=32, depth=3, pool='cls', output_dim=None):
         self.tokens = tokens
 
@@ -128,7 +128,7 @@ class Relation(nn.Module):
 
 
 # Concat, +residual from input
-class Concat(nn.Module):
+class ConcatBlock(nn.Module):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
         super().__init__()
 
@@ -164,7 +164,7 @@ class Concat(nn.Module):
 
 
 # In-to-mid residual, concat, mid-to-out residual
-class CourseCorrector(Concat):
+class CourseCorrectorBlock(ConcatBlock):
     def forward(self, x, context=None):
         if context is None:
             context = x
@@ -176,7 +176,7 @@ class CourseCorrector(Concat):
 
 
 # Heads layer norm'd
-class Disentangled(Concat):
+class Disentangled(ConcatBlock):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -197,7 +197,7 @@ class Disentangled(Concat):
 
 
 # Head, in
-class IndependentHeads(Concat):
+class IndependentHeadsBlock(ConcatBlock):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -223,7 +223,7 @@ class IndependentHeads(Concat):
 
 
 # Head, head:in
-class RelativeBlock(Concat):
+class RelativeBlock(ConcatBlock):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, tokens=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
