@@ -9,64 +9,148 @@ from opt_einsum_torch import EinsumPlanner
 
 import torch
 from torch import nn
-from torch.nn import init
 
 import Utils
 
-from Blocks.Architectures import MLP
+from Blocks.Architectures import MLP, ViT
 from Blocks.Architectures.MultiHeadAttention import ReLA
 from Blocks.Architectures.RN import RN
-from Blocks.Architectures.Vision.ViT import ViT
+from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', output_dim=None,
-                 experiment='relation_block',
-                 perceive=True  # perceiver cross-attend, currently hurts
-                 ):
-
-        self.perceive = perceive
-        if perceive:
-            self.tokens_per_axis = 20
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=100,
+                 token_dim=32, depth=3, pool='cls', output_dim=None, experiment='relation', ViRS=False):
+        self.tokens = tokens
+        self.ViRS = ViRS
 
         super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
 
-        if experiment == 'concat_plus_in':  # ! Velocity reasoning from mlp only
-            core = RelationConcat
-        elif experiment == 'plus_in_concat_plus_mid':  # See if attention is useful as "Reason-er"
-            core = RelationConcatV2
-        elif experiment == 'head_wise_ln':  # Disentangled relational reasoning - are the heads independent, equal vote?
-            core = RelationDisentangled
-        elif experiment == 'head_in_RN':  # Invariant relational reasoning between input-head - are they, period?
-            core = IndependentHeads
-        elif experiment == 'head_head_RN_plus_in':  # Does reason-er only need heads independent of input/tokens?
-            core = RelationSimpler
-        elif experiment == 'head_head_in_RN':  # ! Relational reasoning between heads
-            core = RelativeBlockBig
-        elif experiment == 'head_head_in_RN_small':  # ! Relational reasoning between heads, smaller RN
-            core = RelativeBlock
-        elif experiment == 'relation_block':  # sparsity
-            core = RelationBlock
-        # else:
-        #     # ! layernorm values, confidence
-        #     # see if more mhdpa layers picks up the load - is the model capacity equalized when layers are compounded?
-        #     core = RelationRelative
+        if experiment == 'relation':
+            block = RelationBlock
+        elif experiment == 'relative':
+            block = RelativeBlock
+        elif experiment == 'independent':
+            block = IndependentHeadsBlock
+        elif experiment == 'disentangled':
+            block = Disentangled
+        elif experiment == 'course_corrector':
+            block = CourseCorrectorBlock
+        elif experiment == 'concat':
+            block = ConcatBlock
+        else:
+            raise NotImplementedError('No such experiment')
 
-        self.attn = nn.Sequential(*[core(out_channels, heads) for _ in range(depth)])
+        self.P = Perceiver(out_channels, heads, tokens, token_dim, depth=depth, relu=True)
 
-        if perceive:
-            tokens = self.tokens_per_axis ** 2
-            self.attn = nn.Sequential(TokenRelationBlock(out_channels, heads, tokens),
-                                      *[core(out_channels, heads) for _ in range(depth - 1)])
+        # self.P.attn_token = Relation(token_dim, 1, out_channels, out_channels)  # t d, b n o -> b t o
+        self.P.attn_token = block(token_dim, heads, out_channels, out_channels)  # t d, b n o -> b t o
+        self.P.reattn_token = block(out_channels, heads)  # b t o, b n o -> b t o
+        self.P.attn = nn.Sequential(*[block(out_channels, heads)
+                                      for _ in range(depth - 1)])  # b t o, b t o -> b t o
+
+        self.attn = self.P
+
+        if ViRS:
+            self.attn = nn.Sequential(self.P.reattn_token, self.P.attn)
 
     def repr_shape(self, c, h, w):
-        if self.perceive:
-            return self.out_channels, self.tokens_per_axis, self.tokens_per_axis
-        return super().repr_shape(c, h, w)
+        if self.ViRS:
+            return super().repr_shape(c, h, w)
+        return self.out_channels, self.tokens, 1
 
 
-# Concat, then residual from input
-class RelationConcat(nn.Module):
+# MHDPR
+class Relation(nn.Module):
+    def __init__(self, x_dim=32, heads=None, s_dim=None, v_dim=None, talk_h=False, single_h_tokens=False):
+        super().__init__()
+
+        s_dim = x_dim if s_dim is None \
+            else s_dim
+
+        v_dim = x_dim if v_dim is None \
+            else v_dim
+
+        heads = math.gcd(8, v_dim) if heads is None \
+            else heads
+
+        self.x_dim = x_dim
+        self.v_dim = v_dim
+        self.heads = heads
+
+        assert v_dim % heads == 0, f'value dim={x_dim} is not divisible by heads={heads}'
+
+        self.to_q = nn.Linear(x_dim, x_dim, bias=False)
+        k_dim = x_dim * self.heads + v_dim if single_h_tokens else x_dim + v_dim
+        self.to_kv = nn.Linear(s_dim, k_dim, bias=False)
+
+        # "Talking heads" (https://arxiv.org/abs/2003.02436)
+        self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
+                                    nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
+
+    def forward(self, x, s=None):
+        # Conserves shape
+        shape = x.shape
+        assert shape[-1] == self.x_dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.x_dim}'
+
+        if s is None:
+            s = x
+
+        tokens = len(x.shape) == 2  # Tokens distinguished by having axes=2
+        if not tokens:
+            x = x.flatten(1, -2)
+        s = s.flatten(1, -2)
+
+        q = x if tokens else self.to_q(x)
+        k, v = self.to_kv(s).tensor_split([self.x_dim], dim=-1)
+
+        multi_head_tokens = q.shape[-1] == k.shape[-1] and tokens
+
+        if multi_head_tokens or not tokens:
+            pattern = 'n (h d) -> h n d' if tokens \
+                else 'b n (h d) -> b h n d'
+            q = rearrange(q, pattern, h=self.heads)
+
+        k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
+
+        # Memory efficient toggle, e.g., =0.5
+        mem_limit = False
+        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
+            else torch.einsum
+
+        pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
+            else 'i d, b h j d -> b h i j' if tokens \
+            else 'b h i d, b h j d -> b h i j'
+        self.dots = einsum(pattern, q, k) * self.x_dim ** -0.5
+
+        weights = self.dots.softmax(dim=-1)
+
+        if 0 < mem_limit < 1:
+            weights = weights.to(q.device)
+
+        # "Talking heads"
+        weights = self.talk_h(weights)
+
+        attn = einsum('b h i j, b h j d -> b h i d', weights, v)
+
+        if 0 < mem_limit < 1:
+            attn = attn.to(q.device)
+
+        rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
+        rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
+        rtn = attn - (attn - rtn).detach()
+
+        out = rearrange(rtn, 'b h n d -> b n (h d)')
+
+        # Restores original shape
+        if not tokens:
+            out = out.view(*shape[:-1], -1)
+
+        return out
+
+
+# Concat, +residual from input
+class ConcatBlock(nn.Module):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
         super().__init__()
 
@@ -101,20 +185,20 @@ class RelationConcat(nn.Module):
         return out
 
 
-# Input to middle residual, concat, then middle to out residual
-class RelationConcatV2(RelationConcat):
+# In-to-mid residual, concat, mid-to-out residual
+class CourseCorrectorBlock(ConcatBlock):
     def forward(self, x, context=None):
         if context is None:
             context = x
 
-        attn = self.LN_mid(self.attn(x, context)) + x  # Attention = Reason-er
+        attn = self.LN_mid(self.attn(x, context)) + x  # In this block, Attention = Reason-er,
         out = self.LN_out(self.mlp(attn, x)) + attn  # MLP = Course Corrector
 
         return out
 
 
 # Heads layer norm'd
-class RelationDisentangled(RelationConcat):
+class Disentangled(ConcatBlock):
     def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -134,8 +218,8 @@ class RelationDisentangled(RelationConcat):
         return out
 
 
-# Head-in
-class IndependentHeads(RelationConcat):
+# Head, in
+class IndependentHeadsBlock(ConcatBlock):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
         super().__init__(dim, heads, context_dim, value_dim)
 
@@ -160,14 +244,16 @@ class IndependentHeads(RelationConcat):
         return out.view(x.shape) + x  # [b, n, d]
 
 
-# Head-head:in
-class RelativeBlockBig(RelationConcat):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, tokens=False):
+# Head, head:in
+class RelativeBlock(ConcatBlock):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
-        self.tokens = tokens
         self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
-        self.RN = RN(dim, dim * 2)
+        self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
+
+        self.downsample = nn.Linear(dim, self.value_dim) if downsample or dim != self.value_dim \
+            else nn.Identity()
 
     def forward(self, x, context=None):
         if context is None:
@@ -178,150 +264,24 @@ class RelativeBlockBig(RelationConcat):
         attn = self.attn(x, context)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        if self.tokens:
-            x = x.expand(context.shape[0], *x.shape)  # [b, n, d]
+        residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
+        residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
+        residual = residual.flatten(0, -3)  # [b * n, h, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        residual = x.unsqueeze(-2)  # [b, n, 1, d]
-
         relation = norm.flatten(0, -3)  # [b * n, h, d]
-        residual = residual.flatten(0, -3)  # [b * n, 1, d]
-        context = torch.cat([residual.expand(*relation.shape[:-1], -1), relation], -1)  # [b * n, h, d * 2]
+
+        context = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
-        if self.tokens:
-            x = 0
-
-        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
 
 
-# Smaller RN
-class RelativeBlock(RelativeBlockBig):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
-        super().__init__(dim, heads, context_dim, value_dim)
-
-        self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
-
-
-# Reparam
+# Re-param
 class RelationBlock(RelativeBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, no_query=False):
-        super().__init__(dim, heads, context_dim, value_dim)
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
+        super().__init__(dim, heads, context_dim, value_dim, downsample)
 
-        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads, no_query=no_query)
-
-
-# Perceiver
-class TokenRelationBlock(RelativeBlockBig):
-    def __init__(self, dim=32, heads=1, tokens=32, token_dim=None, value_dim=None):
-        if token_dim is None:
-            token_dim = dim
-
-        super().__init__(token_dim, heads, dim, value_dim,
-                         True)  # No heads, no residual
-
-        # Small
-        self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
-
-        # Relation
-        self.attn = Relation(token_dim, self.heads, dim, self.value_dim * self.heads, no_query=True)
-
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
-        init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
-
-    def forward(self, x, *_):
-        return super().forward(self.tokens, x)
-
-
-# MHDPR
-class Relation(nn.Module):
-    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False, no_query=False):
-        super().__init__()
-
-        self.dim = dim
-
-        context_dim = dim if context_dim is None \
-            else context_dim
-
-        value_dim = dim if value_dim is None \
-            else value_dim
-
-        heads = math.gcd(8, value_dim) if heads is None \
-            else heads
-
-        self.value_dim = value_dim
-        self.heads = heads
-        self.no_query = no_query
-
-        assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
-
-        self.to_q = nn.Identity() if no_query else nn.Linear(dim, dim, bias=False)
-        # self.to_kv = nn.Linear(context_dim, dim / heads + value_dim, bias=False)  # TODO get rid of key head
-        self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
-
-        self.relu = nn.ReLU(inplace=True) if relu else None
-
-        # "Talking heads" (https://arxiv.org/abs/2003.02436)
-        self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
-                                    nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
-
-    def forward(self, x, context=None):
-        # Conserves shape
-        shape = x.shape
-        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
-
-        if context is None:
-            context = x
-
-        tokens = len(x.shape) == 2
-        if not tokens:
-            x = x.flatten(1, -2)
-        context = context.flatten(1, -2)
-
-        q = self.to_q(x)
-        k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
-
-        # Note: I think it would be enough for the key to have just a single head
-        # Or query: e.g., tokens
-        if not self.no_query:
-            pattern = 'n (h d) -> h n d' if tokens else 'b n (h d) -> b h n d'
-            q = rearrange(q, pattern, h=self.heads)
-
-        k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
-
-        # Memory efficient toggle, e.g., =0.5
-        mem_limit = False
-        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
-            else torch.einsum
-
-        # TODO just combine tokens and no_query
-        pattern = 'i d, b h j d -> b h i j' if tokens and self.no_query else 'h i d, b h j d -> b h i j' if tokens \
-            else 'b h i d, b h j d -> b h i j'
-        self.dots = einsum(pattern, q, k) * self.dim ** -0.5
-
-        weights = self.dots.softmax(dim=-1) if self.relu is None else self.relu(self.dots)
-
-        if 0 < mem_limit < 1:
-            weights = weights.to(q.device)
-
-        # "Talking heads"
-        weights = self.talk_h(weights)
-
-        attn = einsum('b h i j, b h j d -> b h i d', weights, v)
-
-        if 0 < mem_limit < 1:
-            attn = attn.to(q.device)
-
-        rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
-        rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
-        rtn = attn - (attn - rtn).detach()
-
-        out = rearrange(rtn, 'b h n d -> b n (h d)')
-
-        # Restores original shape
-        if not tokens:
-            out = out.view(*shape[:-1], -1)
-
-        return out
+        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
 
