@@ -261,15 +261,16 @@ class RelativeBlock(ConcatBlock):
         shape = x.shape
 
         attn = self.attn(x, context)  # [b, n, h * d]
-        print(attn.shape)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        residual = x.unsqueeze(-2)  # [b, n, 1, d]
+        residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
+        residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
+        residual = residual.flatten(0, -3)  # [b * n, h, d]
 
+        norm = self.LN_mid(head_wise)  # [b, n, h, d]
         relation = norm.flatten(0, -3)  # [b * n, h, d]
-        residual = residual.flatten(0, -3)  # [b * n, 1, d]
-        context = torch.cat([residual.expand(*relation.shape[:-1], -1), relation], -1)  # [b * n, h, d * 2]
+
+        context = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
