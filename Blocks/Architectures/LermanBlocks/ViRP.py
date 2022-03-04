@@ -115,14 +115,15 @@ class Relation(nn.Module):
         scale = q.shape[-1] ** -0.5
         q = q * scale
 
+        pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
+            else 'i d, b h j d -> b h i j' if tokens \
+            else 'b h i d, b h j d -> b h i j'
+
         # Memory efficient toggle
         mem_efficient = True
         if mem_efficient:
-            attn, weights = mem_efficient_attend(q, k, v)
+            attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
         else:
-            pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
-                else 'i d, b h j d -> b h i j' if tokens \
-                else 'b h i d, b h j d -> b h i j'
             self.dots = torch.einsum(pattern, q, k)
             # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 

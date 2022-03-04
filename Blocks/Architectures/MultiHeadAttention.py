@@ -71,12 +71,13 @@ class CrossAttention(nn.Module):
         scale = q.shape[-1] ** -0.5
         q = q * scale
 
+        pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
+
         # Memory efficient toggle
         mem_efficient = False
         if mem_efficient:
-            attn, weights = mem_efficient_attend(q, k, v)
+            attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
         else:
-            pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
             self.dots = torch.einsum(pattern, q, k)
 
             if self.relu is None:
@@ -107,9 +108,10 @@ class ReLA(CrossAttention):
 
 # Memory-efficient attention https://arxiv.org/abs/2112.05682
 # https://github.com/lucidrains/memory-efficient-attention-pytorch
-def mem_efficient_attend(q, k, v, q_bucket_size=512, k_bucket_size=1024, eps=1e-8):
+def mem_efficient_attend(q, k, v, q_bucket_size=512, k_bucket_size=1024, eps=1e-8,
+                         pattern='b h i d, b h j d -> b h i j'):
     def chunk(q, k, v):
-        weight = torch.einsum('b h i d, b h j d -> b h i j', q, k)
+        weight = torch.einsum(pattern, q, k)
 
         weight_max = weight.amax(dim=-1, keepdim=True).detach()
         weight = weight - weight_max
