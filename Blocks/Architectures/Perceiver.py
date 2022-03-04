@@ -23,7 +23,7 @@ class Perceiver(nn.Module):
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
         self.mlp = nn.Identity() if mlp_depth is None \
-            else nn.Sequential(MLP(dim, dim, dim, mlp_depth), nn.ReLU(inplace=True))
+            else nn.Sequential(nn.GELU(), MLP(dim, dim, dim, mlp_depth, non_linearity=nn.GELU()), nn.GELU())
         self.attn_token = CrossAttentionBlock(token_dim, heads, dim, value_dim, relu=relu)
         self.reattn_token = CrossAttentionBlock(value_dim, heads, dim, value_dim, relu=relu)
         self.attn = nn.Sequential(*[CrossAttentionBlock(value_dim, heads, relu=relu) for _ in range(depth - 1)])
