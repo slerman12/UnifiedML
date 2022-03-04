@@ -165,10 +165,8 @@ def mem_efficient_attend(q, k, v, q_bucket_size=512, k_bucket_size=1024, eps=1e-
         out.append(normalized_values)
         weights.append(exp_weights)
 
-    print(out[0].shape, weights[0].shape)
     out = torch.cat(out, dim=-2)
     weights = torch.cat(weights, dim=-3)
-    print(out.shape, weights.shape)
 
     return out, weights
 
