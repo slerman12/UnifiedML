@@ -19,7 +19,7 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=100,
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=32,
                  token_dim=32, depth=3, pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
 
@@ -242,12 +242,14 @@ class IndependentHeadsBlock(ConcatBlock):
 
 # Head, head:in
 class RelativeBlock(ConcatBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, tokens=False):
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
-        self.tokens = tokens
+        self.downsample = downsample
         self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
         self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
+
+        self.downsample = nn.Linear(dim, self.value_dim) if downsample else nn.Identity
 
     def forward(self, x, context=None):
         if context is None:
@@ -258,9 +260,6 @@ class RelativeBlock(ConcatBlock):
         attn = self.attn(x, context)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        if self.tokens:
-            x = x.expand(context.shape[0], *x.shape)  # [b, n, d]
-
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         residual = x.unsqueeze(-2)  # [b, n, 1, d]
 
@@ -270,16 +269,13 @@ class RelativeBlock(ConcatBlock):
 
         out = self.LN_out(self.RN(relation, context))  # [b * n, d]
 
-        if self.tokens:
-            x = 0
-
-        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
 
 
 # Re-param
 class RelationBlock(RelativeBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
-        super().__init__(dim, heads, context_dim, value_dim)
+    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
+        super().__init__(dim, heads, context_dim, value_dim, downsample)
 
         self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
 
