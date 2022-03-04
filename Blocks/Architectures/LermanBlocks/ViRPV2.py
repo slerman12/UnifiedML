@@ -245,11 +245,10 @@ class RelativeBlock(ConcatBlock):
     def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
         super().__init__(dim, heads, context_dim, value_dim)
 
-        self.downsample = downsample
         self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
         self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
 
-        self.downsample = nn.Linear(dim, self.value_dim) if downsample else nn.Identity
+        self.downsample = nn.Linear(dim, self.value_dim) if downsample else nn.Identity()
 
     def forward(self, x, context=None):
         if context is None:
