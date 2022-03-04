@@ -261,6 +261,7 @@ class RelativeBlock(ConcatBlock):
         shape = x.shape
 
         attn = self.attn(x, context)  # [b, n, h * d]
+        print(attn.shape)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
