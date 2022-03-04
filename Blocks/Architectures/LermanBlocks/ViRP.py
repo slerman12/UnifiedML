@@ -5,7 +5,6 @@
 import math
 
 from einops import rearrange
-from opt_einsum_torch import EinsumPlanner
 
 import torch
 from torch import nn
@@ -13,7 +12,7 @@ from torch import nn
 import Utils
 
 from Blocks.Architectures import MLP, ViT
-from Blocks.Architectures.MultiHeadAttention import ReLA
+from Blocks.Architectures.MultiHeadAttention import ReLA, mem_efficient_attend
 from Blocks.Architectures.RN import RN
 from Blocks.Architectures.Perceiver import Perceiver
 
@@ -43,8 +42,8 @@ class ViRP(ViT):
 
         self.P = Perceiver(out_channels, heads, tokens, token_dim, depth=depth, relu=True)
 
-        # self.P.attn_token = Relation(token_dim, 1, out_channels, out_channels)  # t d, b n o -> b t o
-        self.P.attn_token = block(token_dim, heads, out_channels, out_channels)  # t d, b n o -> b t o
+        self.P.attn_token = Relation(token_dim, 4, out_channels, out_channels)  # t d, b n o -> b t o
+        # self.P.attn_token = block(token_dim, heads, out_channels, out_channels)  # t d, b n o -> b t o
         self.P.reattn_token = block(out_channels, heads)  # b t o, b n o -> b t o
         self.P.attn = nn.Sequential(*[block(out_channels, heads)
                                       for _ in range(depth - 1)])  # b t o, b t o -> b t o
@@ -113,28 +112,26 @@ class Relation(nn.Module):
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
-        # Memory efficient toggle, e.g., =0.5
-        mem_limit = False
-        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
-            else torch.einsum
+        scale = q.shape[-1] ** -0.5
+        q = q * scale
 
-        pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
-            else 'i d, b h j d -> b h i j' if tokens \
-            else 'b h i d, b h j d -> b h i j'
-        self.dots = einsum(pattern, q, k) * self.x_dim ** -0.5
+        # Memory efficient toggle
+        mem_efficient = False
+        if mem_efficient:
+            attn, weights = mem_efficient_attend(q, k, v)
+        else:
+            pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
+                else 'i d, b h j d -> b h i j' if tokens \
+                else 'b h i d, b h j d -> b h i j'
+            self.dots = torch.einsum(pattern, q, k)
+            # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
-        weights = self.dots.softmax(dim=-1)
+            weights = self.dots.softmax(dim=-1)
 
-        if 0 < mem_limit < 1:
-            weights = weights.to(q.device)
+            # "Talking heads"
+            weights = self.talk_h(weights)
 
-        # "Talking heads"
-        weights = self.talk_h(weights)
-
-        attn = einsum('b h i j, b h j d -> b h i d', weights, v)
-
-        if 0 < mem_limit < 1:
-            attn = attn.to(q.device)
+            attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
 
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
         rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
