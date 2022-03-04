@@ -18,7 +18,7 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=100,
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=500,
                  token_dim=32, depth=3, pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
@@ -116,7 +116,7 @@ class Relation(nn.Module):
         q = q * scale
 
         # Memory efficient toggle
-        mem_efficient = False
+        mem_efficient = True
         if mem_efficient:
             attn, weights = mem_efficient_attend(q, k, v)
         else:
