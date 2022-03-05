@@ -56,7 +56,7 @@ class ViRPV2(ViT):
         self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)] * pre_blocks) +
                                       sum([[block(token_dim if i == 0 else out_channels, heads,
                                                   qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)] * recurs
-                                           for i, recurs in enumerate(self.P.recursions)], []))
+                                           for i, recurs in enumerate(recursions)], []))
         self.P.attn = nn.ModuleList(([nn.Identity()] * pre_blocks) +
                                     sum([[nn.Sequential(*[block(out_channels, heads,
                                                                 qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)
