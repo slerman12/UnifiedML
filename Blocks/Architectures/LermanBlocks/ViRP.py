@@ -113,7 +113,7 @@ class Relation(nn.Module):
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
-        # Memory efficient toggle, e.g., =0.5
+        # Memory limit toggle, e.g., =0.5
         mem_limit = False
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
@@ -126,7 +126,7 @@ class Relation(nn.Module):
             else 'b h i d, b h j d -> b h i j'
 
         # Memory efficient toggle
-        mem_efficient = True
+        mem_efficient = False
         if mem_efficient:
             attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
         else:
