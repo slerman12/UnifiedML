@@ -20,7 +20,7 @@ class Perceiver(nn.Module):
         value_dim = dim if value_dim is None else value_dim
 
         # self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
-        self.tokens = torch.randn(tokens, token_dim).to('cuda')
+        self.tokens = torch.randn(tokens, token_dim)
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
         self.attn_token = CrossAttentionBlock(token_dim, heads, dim, value_dim, relu=relu)
@@ -28,7 +28,8 @@ class Perceiver(nn.Module):
         self.attn = nn.Sequential(*[CrossAttentionBlock(value_dim, heads, relu=relu) for _ in range(depth - 1)])
 
     def forward(self, x):
-        tokens = self.attn_token(self.tokens, x)
+        tokens = self.attn_token(self.tokens.to(x.device), x)
+        self.tokens = self.tokens.to('cpu')
         x = self.reattn_token(tokens, x)
         return self.attn(x)
 
