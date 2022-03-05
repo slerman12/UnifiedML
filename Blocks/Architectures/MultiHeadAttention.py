@@ -7,6 +7,7 @@ from functools import partial
 import copy
 
 from einops import rearrange
+from opt_einsum_torch import EinsumPlanner
 
 import torch
 from torch import nn
@@ -68,6 +69,11 @@ class CrossAttention(nn.Module):
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
+        # Memory efficient toggle, e.g., =0.5
+        mem_limit = False
+        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
+            else torch.einsum
+
         scale = q.shape[-1] ** -0.5
         q = q * scale
 
@@ -86,16 +92,22 @@ class CrossAttention(nn.Module):
             else:
                 weights = self.relu(self.dots)
 
+            if 0 < mem_limit < 1:
+                weights = weights.to(q.device)
+
             # "Talking heads"
             weights = self.talk_h(weights)
 
-            attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
+            attn = einsum('b h i j, b h j d -> b h i d', weights, v)
 
         out = rearrange(attn, 'b h n d -> b n (h d)')
 
         # Restores original shape
         if not tokens:
             out = out.view(*shape[:-1], -1)
+
+        if 0 < mem_limit < 1:
+            out = out.to(q.device)
 
         return out
 
