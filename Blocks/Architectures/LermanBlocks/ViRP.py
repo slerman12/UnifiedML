@@ -49,8 +49,6 @@ class ViRP(ViT):
         self.P.attn = nn.Sequential(*[block(out_channels, heads)
                                       for _ in range(depth - 1)])  # b t o, b t o -> b t o
 
-        self.P.tokens = torch.randn(tokens, token_dim)
-
         self.attn = self.P
 
         if ViRS:

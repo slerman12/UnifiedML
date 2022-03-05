@@ -19,7 +19,8 @@ class Perceiver(nn.Module):
         token_dim = dim if token_dim is None else token_dim
         value_dim = dim if value_dim is None else value_dim
 
-        self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        # self.tokens = nn.Parameter(torch.randn(tokens, token_dim))
+        self.tokens = torch.randn(tokens, token_dim)
         init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
         self.attn_token = CrossAttentionBlock(token_dim, heads, dim, value_dim, relu=relu)
