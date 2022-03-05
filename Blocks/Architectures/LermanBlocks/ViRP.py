@@ -122,6 +122,8 @@ class Relation(nn.Module):
     def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False):
         super().__init__()
 
+        self.dim = dim
+
         s_dim = dim if s_dim is None else s_dim
         qk_dim = dim if qk_dim is None else qk_dim
         v_dim = dim if v_dim is None else v_dim
@@ -145,7 +147,7 @@ class Relation(nn.Module):
     def forward(self, x, s=None):
         # Conserves shape
         shape = x.shape
-        assert shape[-1] == self.x_dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.x_dim}'
+        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
 
         if s is None:
             s = x
