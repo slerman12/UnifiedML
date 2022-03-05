@@ -76,7 +76,7 @@ class ViT(nn.Module):
         x = torch.cat((cls_tokens, x), dim=1)
         n += 1
         x += self.pos_embedding[:, :n]
-
+        print(x.shape)
         x = self.attn(x)
 
         if self.output_dim is None:
