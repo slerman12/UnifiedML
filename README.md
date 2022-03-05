@@ -208,9 +208,9 @@ python Run.py task=atari/breakout offline=true
 
 Assumes a replay [is saved](#saving).
 
-Is true by default for classification; replays are automatically downloaded.
-
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+
+Is true by default for classification; replays are automatically downloaded.
 
 ### Saving
 
@@ -228,7 +228,7 @@ python Run.py replay.save=true replay.load=true
 
 Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per a unique experiment.
 
-Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
+Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 

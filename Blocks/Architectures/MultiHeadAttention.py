@@ -19,27 +19,26 @@ import Utils
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None, talk_h=False, relu=False):
+    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False, relu=False):
         super().__init__()
 
         self.dim = dim
 
-        context_dim = dim if context_dim is None \
-            else context_dim
+        s_dim = dim if s_dim is None else s_dim
+        qk_dim = dim if qk_dim is None else qk_dim
+        v_dim = dim if v_dim is None else v_dim
 
-        value_dim = dim if value_dim is None \
-            else value_dim
-
-        heads = math.gcd(8, value_dim) if heads is None \
+        heads = math.gcd(8, v_dim) if heads is None \
             else heads
 
-        self.value_dim = value_dim
+        self.qk_dim = qk_dim
+        self.v_dim = v_dim
         self.heads = heads
 
-        assert value_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
+        assert v_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
 
-        self.to_q = nn.Linear(dim, dim, bias=False)
-        self.to_kv = nn.Linear(context_dim, dim + value_dim, bias=False)
+        self.to_q = nn.Linear(dim, qk_dim, bias=False)
+        self.to_kv = nn.Linear(s_dim, qk_dim + v_dim, bias=False)
 
         self.relu = nn.ReLU(inplace=True) if relu else None
 
@@ -47,29 +46,35 @@ class CrossAttention(nn.Module):
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
                                     nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
 
-    def forward(self, x, context=None):
+    def forward(self, x, s=None):
         # Conserves shape
         shape = x.shape
-        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
+        assert shape[-1] == self.x_dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.x_dim}'
 
-        if context is None:
-            context = x
+        if s is None:
+            s = x
 
-        tokens = len(x.shape) == 2
+        tokens = len(x.shape) == 2  # Tokens distinguished by having axes=2
         if not tokens:
             x = x.flatten(1, -2)
-        context = context.flatten(1, -2)
+        s = s.flatten(1, -2)
 
-        q = self.to_q(x)
-        k, v = self.to_kv(context).tensor_split([self.dim], dim=-1)
+        q = x if tokens else self.to_q(x)
+        k, v = self.to_kv(s).tensor_split([self.qk_dim], dim=-1)
 
-        # Note: I think it would be enough for the key to have just a single head
-        pattern = 'n (h d) -> h n d' if tokens else 'b n (h d) -> b h n d'
-        q = rearrange(q, pattern, h=self.heads)
+        multi_head_tokens = q.shape[-1] == k.shape[-1] and tokens
+
+        assert q.shape[-1] == k.shape[-1] / self.heads or not tokens, \
+            f'Tokens, keys cannot be broadcast {q.shape[-1]}, {k.shape[-1]}'
+
+        if multi_head_tokens or not tokens:
+            pattern = 'n (h d) -> h n d' if tokens \
+                else 'b n (h d) -> b h n d'
+            q = rearrange(q, pattern, h=self.heads)
 
         k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
 
-        # Memory efficient toggle, e.g., =0.5
+        # Memory limit toggle, e.g., =0.5
         mem_limit = False
         einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
             else torch.einsum
@@ -77,20 +82,19 @@ class CrossAttention(nn.Module):
         scale = q.shape[-1] ** -0.5
         q = q * scale
 
-        pattern = 'h i d, b h j d -> b h i j' if tokens else 'b h i d, b h j d -> b h i j'
+        pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
+            else 'i d, b h j d -> b h i j' if tokens \
+            else 'b h i d, b h j d -> b h i j'
 
         # Memory efficient toggle
         mem_efficient = False
         if mem_efficient:
             attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
         else:
-            self.dots = torch.einsum(pattern, q, k)
+            self.weights = einsum(pattern, q, k)
+            # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
-            if self.relu is None:
-                # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
-                weights = self.dots.softmax(dim=-1)
-            else:
-                weights = self.relu(self.dots)
+            weights = self.weights.softmax(dim=-1)
 
             if 0 < mem_limit < 1:
                 weights = weights.to(q.device)
@@ -98,11 +102,12 @@ class CrossAttention(nn.Module):
             # "Talking heads"
             weights = self.talk_h(weights)
 
-            attn = einsum('b h i j, b h j d -> b h i d', weights, v)
+            # attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
+            attn = torch.matmul(weights, v)
 
         out = rearrange(attn, 'b h n d -> b n (h d)')
 
-        # Restores original shape
+        # Restores original leading dims
         if not tokens:
             out = out.view(*shape[:-1], -1)
 
@@ -114,8 +119,8 @@ class CrossAttention(nn.Module):
 
 class ReLA(CrossAttention):
     """ReLA: Rectified linear attention"""
-    def __init__(self, dim=32, heads=None, context_dim=None, value_dim=None):
-        super().__init__(dim, heads, context_dim, value_dim, False, True)
+    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, False, True)
 
 
 # Memory-efficient attention https://arxiv.org/abs/2112.05682
@@ -185,19 +190,19 @@ def mem_efficient_attend(q, k, v, q_bucket_size=512, k_bucket_size=1024, eps=1e-
 
 # A minimalist implementation using only Pytorch natives
 class CrossAttend(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None, *_):
+    def __init__(self, dim=32, heads=8, s_dim=None, v_dim=None, *_):
         super().__init__()
 
-        self.attn = nn.MultiheadAttention(dim, heads, kdim=context_dim, vdim=value_dim, batch_first=True)
+        self.attn = nn.MultiheadAttention(dim, heads, kdim=s_dim, vdim=v_dim, batch_first=True)
 
-    def forward(self, x, context):
+    def forward(self, x, s):
         # Conserves shape
         mid_shape = x.shape[1:-1]
 
         x = x.flatten(1, -2)
-        context = context.flatten(1, -2)
+        s = s.flatten(1, -2)
 
-        attn, self.dots = self.attn(x, context, context)
+        attn, self.weights = self.attn(x, s, s)
 
         # Restores original shape
         return attn.view(-1, *mid_shape, attn.shape[-1])
@@ -209,31 +214,27 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, talk_h=False, relu=False,
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, talk_h=False, relu=False,
                  lr=None, weight_decay=0, ema_tau=None):
         super().__init__()
 
-        context_dim = dim if context_dim is None \
-            else context_dim
+        v_dim = dim if v_dim is None else v_dim
+        hidden_dim = v_dim if hidden_dim is None else hidden_dim
 
-        value_dim = dim if value_dim is None \
-            else value_dim
+        self.heads = math.gcd(8, v_dim) if heads is None else heads
 
-        self.heads = math.gcd(8, value_dim) if heads is None \
-            else heads
+        self.v_dim = v_dim
 
-        self.value_dim = value_dim
+        self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, relu)
+        self.mlp = MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU())  # TODO dropout
 
-        self.attn = CrossAttention(dim, self.heads, context_dim, value_dim, talk_h, relu)
-        self.mlp = MLP(value_dim, value_dim, value_dim, 1, nn.GELU())
-
-        self.ln_attn = nn.LayerNorm(value_dim)
-        self.ln = nn.LayerNorm(value_dim)
+        self.ln_attn = nn.LayerNorm(v_dim)
+        self.ln = nn.LayerNorm(v_dim)
 
         self.init(lr, weight_decay, ema_tau)
 
     def repr_shape(self, c, h, w):
-        return self.value_dim, h, w  # Assumes channels last
+        return self.v_dim, h, w  # Assumes channels last
 
     def init(self, lr=None, weight_decay=0, ema_tau=None):
         # Initialize weights
@@ -283,7 +284,7 @@ class AttentionPool(nn.Module):
                                   *([SelfAttentionBlock(channels_in, heads)] * recursions),
                                   # "Transformer"
                                   *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
-                                                       value_dim=output_dim) for i in range(depth)],
+                                                       v_dim=output_dim) for i in range(depth)],
                                   Utils.ChSwap,
                                   nn.AdaptiveAvgPool2d((1, 1)),
                                   nn.Flatten(-3))

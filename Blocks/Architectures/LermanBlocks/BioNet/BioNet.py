@@ -203,7 +203,7 @@ class BioNet(nn.Module):
 
         dims = self.ventral_stream.dims[1:]
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, s_dim=dim)
                                          for dim in dims])
 
         # self.repr = nn.Sequential(Utils.ChannelSwap(),

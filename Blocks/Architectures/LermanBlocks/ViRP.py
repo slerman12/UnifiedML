@@ -19,12 +19,13 @@ from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 
 
 class ViRPV2(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=128, heads=8, tokens=64, token_dim=128, pre_blocks=1,
-                 depths=None, recursions=None, pool='cls', output_dim=None, experiment='relation', ViRS=True):
+    def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=1000, token_dim=128,
+                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, pre_blocks=1, depths=[8], recursions=None,
+                 pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
 
-        super().__init__(input_shape, patch_size, out_channels, heads, 0, pool, True, output_dim)
+        super().__init__(input_shape, patch_size, out_channels, emb_dropout, pool=pool, output_dim=output_dim)
 
         if experiment == 'relation':
             block = RelationBlock
@@ -43,11 +44,13 @@ class ViRPV2(ViT):
 
         self.P = PerceiverV2(out_channels, heads, tokens, token_dim)
 
-        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, out_channels)] * pre_blocks) +
-                                      sum([[block(token_dim if i == 0 else out_channels, heads)] * recurs
+        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)] * pre_blocks) +
+                                      sum([[block(token_dim if i == 0 else out_channels, heads,
+                                                  qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)] * recurs
                                            for i, recurs in enumerate(recursions)], []))
         self.P.attn = nn.ModuleList(([nn.Identity()] * pre_blocks) +
-                                    sum([[nn.Sequential(*[block(out_channels, heads)
+                                    sum([[nn.Sequential(*[block(out_channels, heads,
+                                                                qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)
                                                           for _ in range(inner_depth - 1)])] * recurs
                                          for recurs, inner_depth in zip(recursions, depths)], []))
 
@@ -107,27 +110,24 @@ class ViRP(ViT):
 
 # MHDPR
 class Relation(nn.Module):
-    def __init__(self, x_dim=32, heads=None, s_dim=None, v_dim=None, talk_h=False, single_h_tokens=False):
+    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False):
         super().__init__()
 
-        s_dim = x_dim if s_dim is None \
-            else s_dim
-
-        v_dim = x_dim if v_dim is None \
-            else v_dim
+        s_dim = dim if s_dim is None else s_dim
+        qk_dim = dim if qk_dim is None else qk_dim
+        v_dim = dim if v_dim is None else v_dim
 
         heads = math.gcd(8, v_dim) if heads is None \
             else heads
 
-        self.x_dim = x_dim
+        self.qk_dim = qk_dim
         self.v_dim = v_dim
         self.heads = heads
 
-        assert v_dim % heads == 0, f'value dim={x_dim} is not divisible by heads={heads}'
+        assert v_dim % heads == 0, f'value dim={v_dim} is not divisible by heads={heads}'
 
-        self.to_q = nn.Linear(x_dim, x_dim, bias=False)
-        k_dim = x_dim * self.heads + v_dim if single_h_tokens else x_dim + v_dim
-        self.to_kv = nn.Linear(s_dim, k_dim, bias=False)
+        self.to_q = nn.Linear(dim, qk_dim, bias=False)
+        self.to_kv = nn.Linear(s_dim, qk_dim + v_dim, bias=False)
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
@@ -147,9 +147,12 @@ class Relation(nn.Module):
         s = s.flatten(1, -2)
 
         q = x if tokens else self.to_q(x)
-        k, v = self.to_kv(s).tensor_split([self.x_dim], dim=-1)
+        k, v = self.to_kv(s).tensor_split([self.qk_dim], dim=-1)
 
         multi_head_tokens = q.shape[-1] == k.shape[-1] and tokens
+
+        assert q.shape[-1] == k.shape[-1] / self.heads or not tokens, \
+            f'Tokens, keys cannot be broadcast {q.shape[-1]}, {k.shape[-1]}'
 
         if multi_head_tokens or not tokens:
             pattern = 'n (h d) -> h n d' if tokens \
@@ -175,10 +178,10 @@ class Relation(nn.Module):
         if mem_efficient:
             attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
         else:
-            self.dots = einsum(pattern, q, k)
+            self.weights = einsum(pattern, q, k)
             # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
-            weights = self.dots.softmax(dim=-1)
+            weights = self.weights.softmax(dim=-1)
 
             if 0 < mem_limit < 1:
                 weights = weights.to(q.device)
@@ -195,7 +198,7 @@ class Relation(nn.Module):
 
         out = rearrange(rtn, 'b h n d -> b n (h d)')
 
-        # Restores original shape
+        # Restores original leading dims
         if not tokens:
             out = out.view(*shape[:-1], -1)
 
@@ -207,29 +210,26 @@ class Relation(nn.Module):
 
 # Concat, +residual from input
 class ConcatBlock(nn.Module):
-    def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
+    def __init__(self, dim=32, heads=8, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None):
         super().__init__()
 
-        context_dim = dim if context_dim is None \
-            else context_dim
+        v_dim = dim if v_dim is None else v_dim
 
-        value_dim = dim if value_dim is None \
-            else value_dim
+        self.heads = math.gcd(8, v_dim) if heads is None else heads
 
-        self.heads = math.gcd(8, value_dim) if heads is None \
-            else heads
+        self.s_dim = s_dim
+        self.qk_dim = qk_dim
+        self.v_dim = v_dim
+        hidden_dim = v_dim if hidden_dim is None else hidden_dim
 
-        self.context_dim = context_dim
-        self.value_dim = value_dim
+        self.attn = ReLA(dim, self.heads, s_dim, qk_dim, v_dim)
+        self.mlp = MLP(v_dim + dim, v_dim, hidden_dim, 1, nn.GELU())
 
-        self.attn = ReLA(dim, self.heads, context_dim, value_dim)
-        self.mlp = MLP(value_dim + dim, value_dim, value_dim, 1, nn.GELU())
-
-        self.LN_mid = nn.LayerNorm(value_dim)
-        self.LN_out = nn.LayerNorm(value_dim)
+        self.LN_mid = nn.LayerNorm(v_dim)
+        self.LN_out = nn.LayerNorm(v_dim)
 
     def repr_shape(self, c, h, w):
-        return self.value_dim, h, w  # Assumes channels last
+        return self.v_dim, h, w  # Assumes channels last
 
     def forward(self, x, context=None):
         if context is None:
@@ -243,11 +243,11 @@ class ConcatBlock(nn.Module):
 
 # In-to-mid residual, concat, mid-to-out residual
 class CourseCorrectorBlock(ConcatBlock):
-    def forward(self, x, context=None):
-        if context is None:
-            context = x
+    def forward(self, x, s=None):
+        if s is None:
+            s = x
 
-        attn = self.LN_mid(self.attn(x, context)) + x  # In this block, Attention = Reason-er,
+        attn = self.LN_mid(self.attn(x, s)) + x  # In this block, Attention = Reason-er,
         out = self.LN_out(self.mlp(attn, x)) + attn  # MLP = Course Corrector
 
         return out
@@ -255,16 +255,16 @@ class CourseCorrectorBlock(ConcatBlock):
 
 # Heads layer norm'd
 class Disentangled(ConcatBlock):
-    def __init__(self, dim=32, heads=8, context_dim=None, value_dim=None):
-        super().__init__(dim, heads, context_dim, value_dim)
+    def __init__(self, dim=32, heads=8, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim)
 
-        self.LN_mid = nn.LayerNorm(self.value_dim // self.heads)
+        self.LN_mid = nn.LayerNorm(self.v_dim // self.heads)
 
-    def forward(self, x, context=None):
-        if context is None:
-            context = x
+    def forward(self, x, s=None):
+        if s is None:
+            s = x
 
-        attn = self.attn(x, context)
+        attn = self.attn(x, s)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
         norm = self.LN_mid(head_wise)
         disentangled = norm.view(attn.shape)
@@ -276,17 +276,17 @@ class Disentangled(ConcatBlock):
 
 # Head, in
 class IndependentHeadsBlock(ConcatBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None):
-        super().__init__(dim, heads, context_dim, value_dim)
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim)
 
-        self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
-        self.RN = RN(dim, dim)
+        self.attn = ReLA(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
+        self.RN = RN(dim, dim, 0, 0, hidden_dim)
 
-    def forward(self, x, context=None):
-        if context is None:
-            context = x  # [b, n, d]
+    def forward(self, x, s=None):
+        if s is None:
+            s = x  # [b, n, d]
 
-        attn = self.attn(x, context)  # [b, n, h * d]
+        attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
@@ -302,22 +302,22 @@ class IndependentHeadsBlock(ConcatBlock):
 
 # Head, head:in
 class RelativeBlock(ConcatBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
-        super().__init__(dim, heads, context_dim, value_dim)
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, downsample=False):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim)
 
-        self.attn = ReLA(dim, self.heads, self.context_dim, self.value_dim * self.heads)
-        self.RN = RN(dim, dim * 2, inner_depth=0, outer_depth=0, mid_nonlinearity=nn.ReLU(inplace=True))
+        self.attn = ReLA(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
+        self.RN = RN(dim, dim * 2, 0, 0, hidden_dim, mid_nonlinearity=nn.ReLU(inplace=True))
 
-        self.downsample = nn.Linear(dim, self.value_dim) if downsample or dim != self.value_dim \
+        self.downsample = nn.Linear(dim, self.v_dim) if downsample or dim != self.v_dim \
             else nn.Identity()
 
-    def forward(self, x, context=None):
-        if context is None:
-            context = x  # [b, n, d] or [n, d] if tokens
+    def forward(self, x, s=None):
+        if s is None:
+            s = x  # [b, n, d] or [n, d] if tokens
 
         shape = x.shape
 
-        attn = self.attn(x, context)  # [b, n, h * d]
+        attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
@@ -327,17 +327,17 @@ class RelativeBlock(ConcatBlock):
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         relation = norm.flatten(0, -3)  # [b * n, h, d]
 
-        context = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
+        s = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
-        out = self.LN_out(self.RN(relation, context))  # [b * n, d]
+        out = self.LN_out(self.RN(relation, s))  # [b * n, d]
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
 
 
 # Re-param
 class RelationBlock(RelativeBlock):
-    def __init__(self, dim=32, heads=1, context_dim=None, value_dim=None, downsample=False):
-        super().__init__(dim, heads, context_dim, value_dim, downsample)
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, downsample=False):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, downsample)
 
-        self.attn = Relation(dim, self.heads, self.context_dim, self.value_dim * self.heads)
+        self.attn = Relation(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
 

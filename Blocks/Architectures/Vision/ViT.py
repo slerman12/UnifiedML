@@ -15,8 +15,9 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
 class ViT(nn.Module):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, depth=3, pool='cls', relu=False,
-                 output_dim=None):
+    def __init__(self, input_shape, patch_size=4, out_channels=32,
+                 emb_dropout=0, qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depth=3,
+                 pool='cls', relu=False, output_dim=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -39,10 +40,12 @@ class ViT(nn.Module):
 
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
         self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
+        self.emb_dropout = nn.Dropout(emb_dropout)
 
         _, self.h, self.w = self.repr_shape(*input_shape)
 
-        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, relu=relu) for _ in range(depth)])
+        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, out_channels, qk_dim, v_dim, hidden_dim,
+                                                       relu=relu) for _ in range(depth)])
 
         if output_dim is not None:
             self.pool = pool
@@ -51,6 +54,7 @@ class ViT(nn.Module):
                 nn.LayerNorm(out_channels),
                 MLP(out_channels, output_dim, 1024)
             )
+        # TODO dropout after each mlp linear, extra out projection after attention
 
     def repr_shape(self, c, h, w):
         return (self.out_channels, 1, (h // self.patch_size) * (w // self.patch_size) + 1) if self.output_dim is None \
@@ -76,6 +80,7 @@ class ViT(nn.Module):
         x = torch.cat((cls_tokens, x), dim=1)
         n += 1
         x += self.pos_embedding[:, :n]
+        x = self.emb_dropout(x)
 
         x = self.attn(x)
 
