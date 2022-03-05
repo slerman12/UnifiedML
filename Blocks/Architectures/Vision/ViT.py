@@ -57,7 +57,7 @@ class ViT(nn.Module):
             else (self.output_dim, 1, 1)
 
     def forward(self, *x):
-        print(x.shape)
+        print(x[0].shape)
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
