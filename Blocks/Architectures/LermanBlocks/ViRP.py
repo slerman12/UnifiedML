@@ -141,7 +141,8 @@ class Relation(nn.Module):
             # "Talking heads"
             weights = self.talk_h(weights)
 
-            attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
+            # attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
+            attn = torch.matmul(weights, v.transpose(-1, -2))
 
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
         rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
