@@ -262,9 +262,6 @@ class SelfAttentionBlock(CrossAttentionBlock):
     def forward(self, x, *_):
         return super().forward(x)
 
-    def forward(self, x, *_):
-        return super().forward(self.tokens, x)
-
 
 class AttentionPool(nn.Module):
     def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, recursions=0, input_shape=None):
