@@ -19,8 +19,8 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=1000,
-                 token_dim=32, depth=3, pool='cls', output_dim=None, experiment='relation', ViRS=True):
+    def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=64,
+                 token_dim=32, depth=3, pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
 

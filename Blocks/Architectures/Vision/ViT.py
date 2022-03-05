@@ -30,7 +30,7 @@ class ViT(nn.Module):
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
         num_patches = (image_size // patch_size) ** 2
         patch_dim = in_channels * patch_size ** 2
-        assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
+        assert pool in {'cls', 'mean'}, 'Pool type must be either cls (cls token) or mean (mean pooling)'
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
@@ -57,7 +57,6 @@ class ViT(nn.Module):
             else (self.output_dim, 1, 1)
 
     def forward(self, *x):
-        print(x[0].shape)
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
