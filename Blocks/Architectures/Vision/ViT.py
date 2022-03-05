@@ -57,6 +57,7 @@ class ViT(nn.Module):
             else (self.output_dim, 1, 1)
 
     def forward(self, *x):
+        print(x.shape)
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
@@ -76,7 +77,7 @@ class ViT(nn.Module):
         x = torch.cat((cls_tokens, x), dim=1)
         n += 1
         x += self.pos_embedding[:, :n]
-        print(x.shape)
+
         x = self.attn(x)
 
         if self.output_dim is None:
