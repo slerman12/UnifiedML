@@ -25,6 +25,15 @@ class ViRPV2(ViT):
         self.tokens = tokens
         self.ViRS = ViRS
 
+        token_dim = out_channels if token_dim is None else token_dim
+        v_dim = out_channels if v_dim is None else v_dim
+
+        depths = [3] if depths is None else depths
+        recursions = [1 for _ in depths] if recursions is None else recursions
+
+        assert len(depths) == len(recursions), 'Recursion must be specified for each depth'
+        assert token_dim == v_dim or recursions[0] == 1, 'First depth cannot be recursive if token_dim ≠ value_dim'
+
         super().__init__(input_shape, patch_size, out_channels, emb_dropout, pool=pool, output_dim=output_dim)
 
         if experiment == 'relation':
@@ -47,7 +56,7 @@ class ViRPV2(ViT):
         self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)] * pre_blocks) +
                                       sum([[block(token_dim if i == 0 else out_channels, heads,
                                                   qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)] * recurs
-                                           for i, recurs in enumerate(recursions)], []))
+                                           for i, recurs in enumerate(self.P.recursions)], []))
         self.P.attn = nn.ModuleList(([nn.Identity()] * pre_blocks) +
                                     sum([[nn.Sequential(*[block(out_channels, heads,
                                                                 qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)
