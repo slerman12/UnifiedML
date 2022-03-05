@@ -28,8 +28,7 @@ class Perceiver(nn.Module):
         self.attn = nn.Sequential(*[CrossAttentionBlock(value_dim, heads, relu=relu) for _ in range(depth - 1)])
 
     def forward(self, x):
-        tokens = self.attn_token(self.tokens.to(x.device), x)
-        self.tokens = self.tokens.to('cpu')
+        tokens = self.attn_token(self.tokens, x)
         x = self.reattn_token(tokens, x)
         return self.attn(x)
 
