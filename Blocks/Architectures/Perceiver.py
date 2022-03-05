@@ -22,7 +22,7 @@ class Perceiver(nn.Module):
         # self.tokens = torch.randn(tokens, token_dim).to('cuda')
         self.token_dim = token_dim
         self.tokens = tokens
-        init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
+        # init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
 
         self.attn_token = CrossAttentionBlock(token_dim, heads, dim, value_dim, relu=relu)
         self.reattn_token = CrossAttentionBlock(value_dim, heads, dim, value_dim, relu=relu)
