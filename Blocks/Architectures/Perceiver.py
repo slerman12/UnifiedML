@@ -62,7 +62,7 @@ class PerceiverV2(nn.Module):
                                        for recurs, inner_depth in zip(recursions, depths)], []))
 
     def forward(self, x):
-        out = self.tokens
+        out = self.tokens.to(x.device)
         for reattn, attn in zip(self.reattn, self.attn):
             out = attn(reattn(out, x))
         return out
