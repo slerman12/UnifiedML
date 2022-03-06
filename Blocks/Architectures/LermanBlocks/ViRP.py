@@ -20,7 +20,7 @@ from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 
 class ViRPV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
-                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, pre_blocks=2, depths=[8], recursions=None,
+                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, pre_blocks=3, depths=[8], recursions=None,
                  pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
@@ -53,7 +53,9 @@ class ViRPV2(ViT):
 
         self.P = PerceiverV2(out_channels, heads, tokens, token_dim)
 
-        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)] * pre_blocks) +
+        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)
+                                        for _ in range(pre_blocks)]) +
+                                        # ] * pre_blocks) +
                                       sum([[block(token_dim if i == 0 else out_channels, heads,
                                                   qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)] * recurs
                                            for i, recurs in enumerate(recursions)], []))
@@ -231,7 +233,7 @@ class ConcatBlock(nn.Module):
         self.s_dim = s_dim
         self.qk_dim = qk_dim
         self.v_dim = v_dim
-        hidden_dim = v_dim if hidden_dim is None else hidden_dim
+        hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
 
         self.attn = ReLA(dim, self.heads, s_dim, qk_dim, v_dim)
         self.mlp = MLP(v_dim + dim, v_dim, hidden_dim, 1, nn.GELU())

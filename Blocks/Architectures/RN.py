@@ -21,7 +21,7 @@ class RN(nn.Module):
             context_dim = dim
 
         if hidden_dim is None:
-            hidden_dim = dim
+            hidden_dim = dim * 4
 
         self.output_dim = dim if output_dim is None \
             else output_dim

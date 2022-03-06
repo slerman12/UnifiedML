@@ -219,7 +219,7 @@ class CrossAttentionBlock(nn.Module):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
-        hidden_dim = v_dim if hidden_dim is None else hidden_dim
+        hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
 
         self.heads = math.gcd(8, v_dim) if heads is None else heads
 
