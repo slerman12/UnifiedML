@@ -20,7 +20,7 @@ from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 
 class ViRPV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
-                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, pre_blocks=3, depths=[8], recursions=None,
+                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, pre_blocks=1, depths=[8], recursions=None,
                  pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
@@ -51,7 +51,7 @@ class ViRPV2(ViT):
         else:
             raise NotImplementedError('No such experiment')
 
-        self.P = PerceiverV2(out_channels, heads, tokens, token_dim)
+        self.P = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=False)
 
         self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)
                                         for _ in range(pre_blocks)]) +
