@@ -89,7 +89,6 @@ def _apply_op(
             shear=[math.degrees(math.atan(magnitude)), 0.0],
             interpolation=interpolation,
             fill=fill,
-            center=[0, 0],
         )
     elif op_name == "ShearY":
         # magnitude should be arctan(magnitude)
@@ -102,7 +101,6 @@ def _apply_op(
             shear=[0.0, math.degrees(math.atan(magnitude))],
             interpolation=interpolation,
             fill=fill,
-            center=[0, 0],
         )
     elif op_name == "TranslateX":
         img = vF.affine(
