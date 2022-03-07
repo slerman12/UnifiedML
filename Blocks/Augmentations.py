@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torchvision.transforms import transforms, InterpolationMode
+from torchvision.transforms import transforms, InterpolationMode, functional as vF
 
 
 class RandomShiftsAug(nn.Module):
@@ -81,7 +81,7 @@ def _apply_op(
         # compared to
         # torchvision:      (1, tan(level), 0, 0, 1, 0)
         # https://github.com/pytorch/vision/blob/0c2373d0bba3499e95776e7936e207d8a1676e65/torchvision/transforms/functional.py#L976
-        img = F.affine(
+        img = vF.affine(
             img,
             angle=0.0,
             translate=[0, 0],
@@ -94,7 +94,7 @@ def _apply_op(
     elif op_name == "ShearY":
         # magnitude should be arctan(magnitude)
         # See above
-        img = F.affine(
+        img = vF.affine(
             img,
             angle=0.0,
             translate=[0, 0],
@@ -105,7 +105,7 @@ def _apply_op(
             center=[0, 0],
         )
     elif op_name == "TranslateX":
-        img = F.affine(
+        img = vF.affine(
             img,
             angle=0.0,
             translate=[int(magnitude), 0],
@@ -115,7 +115,7 @@ def _apply_op(
             fill=fill,
         )
     elif op_name == "TranslateY":
-        img = F.affine(
+        img = vF.affine(
             img,
             angle=0.0,
             translate=[0, int(magnitude)],
@@ -125,25 +125,25 @@ def _apply_op(
             fill=fill,
         )
     elif op_name == "Rotate":
-        img = F.rotate(img, magnitude, interpolation=interpolation, fill=fill)
+        img = vF.rotate(img, magnitude, interpolation=interpolation, fill=fill)
     elif op_name == "Brightness":
-        img = F.adjust_brightness(img, 1.0 + magnitude)
+        img = vF.adjust_brightness(img, 1.0 + magnitude)
     elif op_name == "Color":
-        img = F.adjust_saturation(img, 1.0 + magnitude)
+        img = vF.adjust_saturation(img, 1.0 + magnitude)
     elif op_name == "Contrast":
-        img = F.adjust_contrast(img, 1.0 + magnitude)
+        img = vF.adjust_contrast(img, 1.0 + magnitude)
     elif op_name == "Sharpness":
-        img = F.adjust_sharpness(img, 1.0 + magnitude)
+        img = vF.adjust_sharpness(img, 1.0 + magnitude)
     elif op_name == "Posterize":
-        img = F.posterize(img, int(magnitude))
+        img = vF.posterize(img, int(magnitude))
     elif op_name == "Solarize":
-        img = F.solarize(img, magnitude)
+        img = vF.solarize(img, magnitude)
     elif op_name == "AutoContrast":
-        img = F.autocontrast(img)
+        img = vF.autocontrast(img)
     elif op_name == "Equalize":
-        img = F.equalize(img)
+        img = vF.equalize(img)
     elif op_name == "Invert":
-        img = F.invert(img)
+        img = vF.invert(img)
     elif op_name == "Identity":
         pass
     else:
@@ -212,7 +212,7 @@ class RandAugment(torch.nn.Module):
             PIL Image or Tensor: Transformed image.
         """
         fill = self.fill
-        channels, height, width = F.get_dimensions(img)
+        channels, height, width = vF.get_dimensions(img)
         if isinstance(img, torch.Tensor):
             if isinstance(fill, (int, float)):
                 fill = [float(fill)] * channels
