@@ -321,7 +321,7 @@ class RelativeBlock(ConcatBlock):
         hidden_dim = self.hidden_dim
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
-        self.RN = RN(v_dim, v_dim + dim, 0, 0, hidden_dim, v_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
+        self.RN = RN(v_dim, v_dim + dim, 0, 0, hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
 
         self.downsample = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
             else nn.Identity()

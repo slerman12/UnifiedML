@@ -25,6 +25,7 @@ class RN(nn.Module):
 
         self.output_dim = dim if output_dim is None \
             else output_dim
+        print(self.output_dim)
 
         self.inner = nn.Sequential(MLP(dim + context_dim, hidden_dim, hidden_dim, inner_depth), nn.Dropout(dropout))
         self.mid_nonlinearity = mid_nonlinearity
