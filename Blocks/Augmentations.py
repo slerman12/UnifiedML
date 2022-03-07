@@ -212,7 +212,7 @@ class RandAugment(torch.nn.Module):
             PIL Image or Tensor: Transformed image.
         """
         fill = self.fill
-        channels, height, width = vF.get_dimensions(img)
+        channels, height, width = img.shape[-3:]
         if isinstance(img, torch.Tensor):
             if isinstance(fill, (int, float)):
                 fill = [float(fill)] * channels
