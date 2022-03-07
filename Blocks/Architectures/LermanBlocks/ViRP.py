@@ -59,18 +59,16 @@ class ViRPV2(ViT):
                                   for recurs, inner_depth in zip(recursions, depths)], []))
 
         if ViRS:
-            self.P = attn
+            self.attn = nn.Sequential(attn[1])
         else:
-            self.P = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=True)
+            self.attn = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=True)
 
-            self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)]) +
+            self.attn.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)]) +
                                           sum([[block(token_dim if i == 0 else out_channels, heads,
                                                       qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
                                                       dropout=dropout)] * recurs
                                                for i, recurs in enumerate(recursions)], []))
-            self.P.attn = attn
-
-        self.attn = self.P
+            self.attn.attn = attn
 
     def repr_shape(self, c, h, w):
         if self.ViRS:
