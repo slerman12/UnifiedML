@@ -74,6 +74,7 @@ class ComposeAugs(nn.Module):
 def _apply_op(
         img: torch.Tensor, op_name: str, magnitude: float, interpolation: InterpolationMode, fill: Optional[List[float]]
 ):
+    img = img.to(torch.uint8)
     if op_name == "ShearX":
         # magnitude should be arctan(magnitude)
         # official autoaug: (1, level, 0, 0, 1, 0)
@@ -139,7 +140,7 @@ def _apply_op(
     elif op_name == "AutoContrast":
         img = vF.autocontrast(img)
     elif op_name == "Equalize":
-        img = vF.equalize(img.to(torch.uint8))
+        img = vF.equalize(img)
     elif op_name == "Invert":
         img = vF.invert(img)
     elif op_name == "Identity":
