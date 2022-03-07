@@ -51,19 +51,24 @@ class ViRPV2(ViT):
         else:
             raise NotImplementedError('No such experiment')
 
-        self.P = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=True)
+        attn = nn.ModuleList([nn.Identity()] +
+                             sum([[nn.Sequential(*[block(out_channels, heads,
+                                                         qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
+                                                         dropout=dropout)
+                                                   for _ in range(inner_depth - 1)])] * recurs
+                                  for recurs, inner_depth in zip(recursions, depths)], []))
 
-        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)]) +
-                                      sum([[block(token_dim if i == 0 else out_channels, heads,
-                                                  qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
-                                                  dropout=dropout)] * recurs
-                                           for i, recurs in enumerate(recursions)], []))
-        self.P.attn = nn.ModuleList([nn.Identity()] +
-                                    sum([[nn.Sequential(*[block(out_channels, heads,
-                                                                qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
-                                                                dropout=dropout)
-                                                          for _ in range(inner_depth - 1)])] * recurs
-                                         for recurs, inner_depth in zip(recursions, depths)], []))
+        if ViRS:
+            self.P = attn
+        else:
+            self.P = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=True)
+
+            self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)]) +
+                                          sum([[block(token_dim if i == 0 else out_channels, heads,
+                                                      qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
+                                                      dropout=dropout)] * recurs
+                                               for i, recurs in enumerate(recursions)], []))
+            self.P.attn = attn
 
         self.attn = self.P
 
