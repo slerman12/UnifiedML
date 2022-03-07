@@ -232,10 +232,10 @@ class ConcatBlock(nn.Module):
         self.s_dim = s_dim
         self.qk_dim = qk_dim
         self.v_dim = v_dim
-        hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
+        self.hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
 
         self.attn = ReLA(dim, self.heads, s_dim, qk_dim, v_dim)
-        self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+        self.mlp = nn.Sequential(MLP(v_dim, v_dim, self.hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_mid = nn.LayerNorm(v_dim)
         self.LN_out = nn.LayerNorm(v_dim)
@@ -316,6 +316,8 @@ class IndependentHeadsBlock(ConcatBlock):
 class RelativeBlock(ConcatBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, dropout)
+        v_dim = self.v_dim
+        hidden_dim = self.hidden_dim
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
         self.RN = RN(v_dim, v_dim + dim, 0, 0, hidden_dim, v_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
