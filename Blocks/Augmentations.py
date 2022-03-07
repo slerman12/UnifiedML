@@ -139,7 +139,7 @@ def _apply_op(
     elif op_name == "AutoContrast":
         img = vF.autocontrast(img)
     elif op_name == "Equalize":
-        img = vF.equalize(img)
+        img = vF.equalize(img.to(torch.uint8))
     elif op_name == "Invert":
         img = vF.invert(img)
     elif op_name == "Identity":
