@@ -254,7 +254,7 @@ def augment_list():  # 16 oeprations and their ranges
     l = [
         (AutoContrast, 0, 1),
         (Equalize, 0, 1),
-        (Invert, 0, 1),
+        # (Invert, 0, 1),
         (Rotate, 0, 30),
         (Posterize, 0, 4),
         (Solarize, 0, 256),
