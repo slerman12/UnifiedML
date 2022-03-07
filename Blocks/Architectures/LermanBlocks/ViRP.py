@@ -72,10 +72,6 @@ class ViRPV2(ViT):
 
         self.attn = self.P
 
-        if ViRS:
-            # Assumes only 1 depth
-            self.attn = nn.Sequential(self.P.attn[1])
-
     def repr_shape(self, c, h, w):
         if self.ViRS:
             return super().repr_shape(c, h, w)
