@@ -70,6 +70,34 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
+# def data_mean_std(dataset):
+#     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
+#     mean = torch.zeros(3)
+#     std = torch.zeros(3)
+#     print('==> Computing mean and std..')
+#     for inputs, targets in dataloader:
+#         for i in range(3):
+#             mean[i] += inputs[:,i,:,:].mean()
+#             std[i] += inputs[:,i,:,:].std()
+#     mean.div_(len(dataset))
+#     std.div_(len(dataset))
+#     return mean, std
+#
+#
+# def weight_init(net):
+#         if isinstance(m, nn.Conv2d):
+#             nn.init.kaiming_normal(m.weight, mode='fan_out')
+#             if m.bias:
+#                 nn.init.constant(m.bias, 0)
+#         elif isinstance(m, nn.BatchNorm2d):
+#             nn.init.constant(m.weight, 1)
+#             nn.init.constant(m.bias, 0)
+#         elif isinstance(m, nn.Linear):
+#             nn.init.normal(m.weight, std=1e-3)
+#             if m.bias:
+#                 nn.init.constant(m.bias, 0)
+
+
 # Copies parameters from one model to another, with optional EMA weighing
 def param_copy(net, target_net, ema_tau=1):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
