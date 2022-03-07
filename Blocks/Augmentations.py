@@ -133,8 +133,8 @@ def AutoContrast(img, _):
     return PIL.ImageOps.autocontrast(img)
 
 
-def Invert(img, _):
-    return PIL.ImageOps.invert(img)
+# def Invert(img, _):
+#     return PIL.ImageOps.invert(img)
 
 
 def Equalize(img, _):
@@ -330,5 +330,4 @@ class RandAugment:
         for op, minval, maxval in ops:
             val = (float(self.m) / 30) * float(maxval - minval) + minval
             img = op(img, val)
-
         return img
