@@ -49,7 +49,7 @@ class CrossAttention(nn.Module):
     def forward(self, x, s=None):
         # Conserves shape
         shape = x.shape
-        assert shape[-1] == self.x_dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.x_dim}'
+        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
 
         if s is None:
             s = x
