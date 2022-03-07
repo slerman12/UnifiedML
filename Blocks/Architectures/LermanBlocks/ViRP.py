@@ -226,16 +226,17 @@ class ConcatBlock(nn.Module):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
+        hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
 
         self.heads = math.gcd(8, v_dim) if heads is None else heads
 
         self.s_dim = s_dim
         self.qk_dim = qk_dim
         self.v_dim = v_dim
-        self.hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
+        self.hidden_dim = hidden_dim
 
         self.attn = ReLA(dim, self.heads, s_dim, qk_dim, v_dim)
-        self.mlp = nn.Sequential(MLP(v_dim, v_dim, self.hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+        self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_mid = nn.LayerNorm(v_dim)
         self.LN_out = nn.LayerNorm(v_dim)
