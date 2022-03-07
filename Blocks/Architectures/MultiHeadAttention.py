@@ -215,7 +215,7 @@ class SelfAttention(CrossAttention):
 
 class CrossAttentionBlock(nn.Module):
     def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, talk_h=False, relu=False,
-                 lr=None, weight_decay=0, ema_tau=None):
+                 dropout=0, lr=None, weight_decay=0, ema_tau=None):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
@@ -226,7 +226,7 @@ class CrossAttentionBlock(nn.Module):
         self.v_dim = v_dim
 
         self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, relu)
-        self.mlp = MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU())  # TODO dropout
+        self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.ln_attn = nn.LayerNorm(v_dim)
         self.ln = nn.LayerNorm(v_dim)

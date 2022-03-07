@@ -13,7 +13,7 @@ import Utils
 
 class MLP(nn.Module):
     def __init__(self, input_dim=128, output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
-                 binary=False, l2_norm=False, input_shape=None):
+                 dropout=0, binary=False, l2_norm=False, input_shape=None):
         super().__init__()
 
         if input_shape is not None:
@@ -27,7 +27,9 @@ class MLP(nn.Module):
             Utils.L2Norm() if l2_norm and i == depth else nn.Identity(),
             nn.Linear(input_dim if i == 0 else hidden_dim,
                       hidden_dim if i < depth else output_dim),
-            non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity())
+            non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),
+            nn.Dropout(dropout) if i < depth else nn.Identity()
+        )
             for i in range(depth + 1)]
         )
 
@@ -48,7 +50,7 @@ class MLPBlock(nn.Module):
     Can also l2-normalize penultimate layer (https://openreview.net/pdf?id=9xhgmsNVHu)"""
 
     def __init__(self, input_dim, output_dim, trunk_dim=512, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
-                 layer_norm=False, binary=False, l2_norm=False,
+                 layer_norm=False, dropout=0, binary=False, l2_norm=False,
                  lr=None, weight_decay=0, ema_tau=None):
         super().__init__()
 
@@ -59,7 +61,7 @@ class MLPBlock(nn.Module):
 
         in_features = trunk_dim if layer_norm else input_dim
 
-        self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, binary, l2_norm)
+        self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, dropout, binary, l2_norm)
 
         self.init(lr, weight_decay, ema_tau)
 

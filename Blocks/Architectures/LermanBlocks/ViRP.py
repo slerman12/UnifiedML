@@ -20,7 +20,7 @@ from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 
 class ViRPV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
-                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None,
+                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None, dropout=0,
                  pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
@@ -55,11 +55,13 @@ class ViRPV2(ViT):
 
         self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)]) +
                                       sum([[block(token_dim if i == 0 else out_channels, heads,
-                                                  qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)] * recurs
+                                                  qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
+                                                  dropout=dropout)] * recurs
                                            for i, recurs in enumerate(recursions)], []))
         self.P.attn = nn.ModuleList([nn.Identity()] +
                                     sum([[nn.Sequential(*[block(out_channels, heads,
-                                                                qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)
+                                                                qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim,
+                                                                dropout=dropout)
                                                           for _ in range(inner_depth - 1)])] * recurs
                                          for recurs, inner_depth in zip(recursions, depths)], []))
 
@@ -221,7 +223,7 @@ class Relation(nn.Module):
 
 # Concat, +residual from input
 class ConcatBlock(nn.Module):
-    def __init__(self, dim=32, heads=8, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None):
+    def __init__(self, dim=32, heads=8, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
@@ -234,7 +236,7 @@ class ConcatBlock(nn.Module):
         hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
 
         self.attn = ReLA(dim, self.heads, s_dim, qk_dim, v_dim)
-        self.mlp = MLP(v_dim + dim, v_dim, hidden_dim, 1, nn.GELU())
+        self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_mid = nn.LayerNorm(v_dim)
         self.LN_out = nn.LayerNorm(v_dim)
@@ -266,8 +268,8 @@ class CourseCorrectorBlock(ConcatBlock):
 
 # Heads layer norm'd
 class Disentangled(ConcatBlock):
-    def __init__(self, dim=32, heads=8, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None):
-        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim)
+    def __init__(self, dim=32, heads=8, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, dropout)
 
         self.LN_mid = nn.LayerNorm(self.v_dim // self.heads)
 
@@ -287,8 +289,8 @@ class Disentangled(ConcatBlock):
 
 # Head, in
 class IndependentHeadsBlock(ConcatBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None):
-        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim)
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, dropout)
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
         self.RN = RN(dim, dim, 0, 0, hidden_dim)
@@ -313,13 +315,13 @@ class IndependentHeadsBlock(ConcatBlock):
 
 # Head, head:in
 class RelativeBlock(ConcatBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, downsample=False):
-        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim)
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, dropout)
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
-        self.RN = RN(dim, dim * 2, 0, 0, hidden_dim, mid_nonlinearity=nn.ReLU(inplace=True))
+        self.RN = RN(dim, dim * 2, 0, 0, hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
 
-        self.downsample = nn.Linear(dim, self.v_dim) if downsample or dim != self.v_dim \
+        self.downsample = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
             else nn.Identity()
 
     def forward(self, x, s=None):
@@ -347,8 +349,8 @@ class RelativeBlock(ConcatBlock):
 
 # Re-param
 class RelationBlock(RelativeBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, downsample=False):
-        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, downsample)
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, dropout)
 
         self.attn = Relation(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
 
