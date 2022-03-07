@@ -25,12 +25,10 @@ class RN(nn.Module):
 
         self.output_dim = dim if output_dim is None \
             else output_dim
-        print(self.output_dim)
 
         self.inner = nn.Sequential(MLP(dim + context_dim, hidden_dim, hidden_dim, inner_depth), nn.Dropout(dropout))
         self.mid_nonlinearity = mid_nonlinearity
-        self.outer = MLP(hidden_dim, self.output_dim, hidden_dim, outer_depth) \
-            if outer_depth else None
+        self.outer = MLP(hidden_dim, self.output_dim, hidden_dim, outer_depth)
 
     def repr_shape(self, c, h, w):
         return self.output_dim, 1, 1
@@ -51,7 +49,6 @@ class RN(nn.Module):
 
         mid = self.mid_nonlinearity(relations.sum(1).sum(1))
 
-        out = mid if self.outer is None \
-            else self.outer(mid)
+        out = self.outer(mid)
 
         return out
