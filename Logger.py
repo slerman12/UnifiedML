@@ -145,6 +145,7 @@ class Logger:
     # def log_wandb(self, logs, name):
     #     if self.wandb is None:
     #         self.wandb = ...
-    #         wandb.init(project=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
+    #         wandb.init(project=str(datetime.datetime.now()),
+    #                    name=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
     #     logs.update({'name': name})
     #     wandb.log(logs)

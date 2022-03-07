@@ -5,6 +5,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.transforms import transforms
 
 
 class RandomShiftsAug(nn.Module):
@@ -54,3 +55,12 @@ class IntensityAug(nn.Module):
         noise = 1.0 + (self.scale * torch.randn(
             (x.shape[0], 1, 1, 1), device=x.device).clamp_(-2.0, 2.0))
         return x * noise
+
+
+class ComposeAugs(nn.Module):
+    def __init__(self, augs):
+        super().__init__()
+        self.transform = transforms.Compose([getattr(transforms, aug)(**augs[aug]) for aug in augs])
+
+    def forward(self, x):
+        return self.transform(x)

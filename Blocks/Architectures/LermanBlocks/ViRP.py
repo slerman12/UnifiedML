@@ -20,7 +20,7 @@ from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 
 class ViRPV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
-                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, pre_blocks=1, depths=[8], recursions=None,
+                 qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None,
                  pool='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
@@ -51,15 +51,13 @@ class ViRPV2(ViT):
         else:
             raise NotImplementedError('No such experiment')
 
-        self.P = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=False)
+        self.P = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=True)
 
-        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)
-                                        for _ in range(pre_blocks)]) +
-                                        # ] * pre_blocks) +
+        self.P.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, qk_dim, out_channels)]) +
                                       sum([[block(token_dim if i == 0 else out_channels, heads,
                                                   qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)] * recurs
                                            for i, recurs in enumerate(recursions)], []))
-        self.P.attn = nn.ModuleList(([nn.Identity()] * pre_blocks) +
+        self.P.attn = nn.ModuleList([nn.Identity()] +
                                     sum([[nn.Sequential(*[block(out_channels, heads,
                                                                 qk_dim=qk_dim, v_dim=v_dim, hidden_dim=hidden_dim)
                                                           for _ in range(inner_depth - 1)])] * recurs
@@ -69,7 +67,7 @@ class ViRPV2(ViT):
 
         if ViRS:
             # Assumes only 1 depth
-            self.attn = nn.Sequential(self.P.attn[pre_blocks])
+            self.attn = nn.Sequential(self.P.attn[1])
 
     def repr_shape(self, c, h, w):
         if self.ViRS:
