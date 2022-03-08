@@ -370,7 +370,7 @@ def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
     # assert 0 <= v <= 20
     if v < 0:
         return img
-    w, h = img.size
+    w, h = img.shape[:-2]
     x0 = np.random.uniform(w)
     y0 = np.random.uniform(h)
 
