@@ -306,7 +306,7 @@ def AutoContrast(img, _):
 
 
 def Invert(img, _):
-    return PIL.ImageOps.invert(img)
+    return vF.invert(img)
 
 
 def Equalize(img, _):
