@@ -357,13 +357,13 @@ def Sharpness(img, v):  # [0.1,1.9]
     return PIL.ImageEnhance.Sharpness(img).enhance(v)
 
 
-def Cutout(img, v):  # [0, 60] => percentage: [0, 0.2]
-    assert 0.0 <= v <= 0.2
-    if v <= 0.:
-        return img
-
-    v = v * img.size[0]
-    return CutoutAbs(img, v)
+# def Cutout(img, v):  # [0, 60] => percentage: [0, 0.2]
+#     assert 0.0 <= v <= 0.2
+#     if v <= 0.:
+#         return img
+#
+#     v = v * img.size[0]
+#     return CutoutAbs(img, v)
 
 
 # def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
@@ -437,7 +437,7 @@ def augment_list():  # 16 oeprations and their ranges
         (Sharpness, 0.1, 1.9),
         (ShearX, 0., 0.3),
         (ShearY, 0., 0.3),
-        (CutoutAbs, 0, 40),
+        # (CutoutAbs, 0, 40),
         (TranslateXabs, 0., 100),
         (TranslateYabs, 0., 100),
     ]
