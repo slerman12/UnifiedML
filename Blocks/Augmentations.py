@@ -382,7 +382,7 @@ def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
     xy = (x0, y0, x1, y1)
     color = (125, 123, 114)
     # color = (0, 0, 0)
-    img = img.copy()
+    img = img.clone()
     PIL.ImageDraw.Draw(img).rectangle(xy, color)
     return img
 
