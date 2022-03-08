@@ -366,25 +366,25 @@ def Cutout(img, v):  # [0, 60] => percentage: [0, 0.2]
     return CutoutAbs(img, v)
 
 
-def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
-    # assert 0 <= v <= 20
-    if v < 0:
-        return img
-    w, h = img.shape[:-2]
-    x0 = np.random.uniform(w)
-    y0 = np.random.uniform(h)
-
-    x0 = int(max(0, x0 - v / 2.))
-    y0 = int(max(0, y0 - v / 2.))
-    x1 = min(w, x0 + v)
-    y1 = min(h, y0 + v)
-
-    xy = (x0, y0, x1, y1)
-    color = (125, 123, 114)
-    # color = (0, 0, 0)
-    img = img.clone()
-    PIL.ImageDraw.Draw(img).rectangle(xy, color)
-    return img
+# def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
+#     # assert 0 <= v <= 20
+#     if v < 0:
+#         return img
+#     w, h = img.shape[:-2]
+#     x0 = np.random.uniform(w)
+#     y0 = np.random.uniform(h)
+#
+#     x0 = int(max(0, x0 - v / 2.))
+#     y0 = int(max(0, y0 - v / 2.))
+#     x1 = min(w, x0 + v)
+#     y1 = min(h, y0 + v)
+#
+#     xy = (x0, y0, x1, y1)
+#     color = (125, 123, 114)
+#     # color = (0, 0, 0)
+#     img = img.clone()
+#     PIL.ImageDraw.Draw(img).rectangle(xy, color)
+#     return img
 
 
 def SamplePairing(imgs):  # [0, 0.4]
