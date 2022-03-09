@@ -81,7 +81,7 @@ class ComposeAugs(nn.Module):
 
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                experiences = dataset(root=path + "_Train")
+                experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
 
             mean, stddev = Utils.data_mean_std(experiences, scale=255)
             del augs['Normalize']['dataset']
