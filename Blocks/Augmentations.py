@@ -79,17 +79,11 @@ class ComposeAugs(nn.Module):
             path = f'./Datasets/ReplayBuffer/Classify/{dataset}'
             dataset = TinyImageNet if dataset == 'TinyImageNet' else getattr(torchvision.datasets, dataset)
 
-            class Transform:
-                def __call__(self, sample):
-                    sample *= 255
-                    return sample
-            transform = Transform()
-
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                experiences = dataset(root=path + "_Train", transform=transform)
+                experiences = dataset(root=path + "_Train")
 
-            mean, stddev = Utils.data_mean_std(experiences)
+            mean, stddev = Utils.data_mean_std(experiences, scale=255)
             del augs['Normalize']['dataset']
             augs['Normalize']['mean'] = mean
             augs['Normalize']['std'] = stddev / 255  # Since Encoder divides pixels by 255
