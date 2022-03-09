@@ -69,6 +69,7 @@ class IntensityAug(nn.Module):
 class ComposeAugs(nn.Module):
     def __init__(self, augs):
         super().__init__()
+        # Encoder currently expects values in [0, 255], so this is a bit of a workaround for normalization in classify
         if 'Normalize' in augs and 'dataset' in augs['Normalize']:
             for dataset in list(torchvision.datasets.__all__) + ['TinyImageNet']:
                 if dataset.lower() == augs['Normalize']['dataset'].lower():
@@ -78,14 +79,20 @@ class ComposeAugs(nn.Module):
             path = f'./Datasets/ReplayBuffer/Classify/{dataset}'
             dataset = TinyImageNet if dataset == 'TinyImageNet' else getattr(torchvision.datasets, dataset)
 
+            class Transform:
+                def __call__(self, sample):
+                    sample *= 255
+                    return sample
+            transform = Transform()
+
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                experiences = dataset(root=path + "_Train", download=True)
+                experiences = dataset(root=path + "_Train", transform=transform)
 
             mean, stddev = Utils.data_mean_std(experiences)
             del augs['Normalize']['dataset']
             augs['Normalize']['mean'] = mean
-            augs['Normalize']['std'] = stddev
+            augs['Normalize']['std'] = stddev / 255  # Since Encoder divides pixels by 255
 
         self.transform = transforms.Compose([getattr(transforms, aug)(**augs[aug]) if hasattr(transforms, aug) else
                                              globals()[aug](**augs[aug]) for aug in augs])
