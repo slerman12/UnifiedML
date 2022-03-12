@@ -17,10 +17,12 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
+from Blocks.Augmentations import ComposeAugs
+
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
-                 obs_spec=None, nstep=0, discount=1):
+                 obs_spec=None, nstep=0, discount=1, augs=None):
         # Path and loading
 
         path = path.replace("Agents.", "")
@@ -75,7 +77,8 @@ class ExperienceReplay:
                                        fetch_per=1000,
                                        save=save,
                                        nstep=nstep,
-                                       discount=discount)
+                                       discount=discount,
+                                       augs=ComposeAugs(augs, task))
 
         # Batch loading
 
@@ -179,7 +182,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None):
 
         # Dataset construction via parallel workers
 
@@ -200,6 +203,8 @@ class Experiences(IterableDataset):
 
         self.nstep = nstep
         self.discount = discount
+
+        self.augs = augs
 
     def load_episode(self, episode_name):
         try:
@@ -288,7 +293,7 @@ class Experiences(IterableDataset):
                 reward += discount * step_reward
                 discount *= episode['discount'][idx + i] * self.discount
 
-        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
+        return self.augs(obs), action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
     def fetch_sample_process(self):
         try:

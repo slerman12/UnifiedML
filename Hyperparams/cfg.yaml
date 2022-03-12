@@ -18,6 +18,7 @@ RL: true
 supervise: true
 generate: false
 # Replay
+augs: {RandomCrop: {size: ${obs_shape}, padding: 4}}
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
 nstep: 10
@@ -90,6 +91,7 @@ agent:
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay
+  augs: ${augs}
   obs_spec: ${obs_spec}
   action_spec: ${action_spec}
   capacity: 1000000
@@ -138,7 +140,6 @@ recipes:
   Critic:
     trunk: null
     Q_head: null
-  Aug: null
   encoder:
     eyes:
       _target_: ${recipes.Encoder.Eyes}
@@ -165,8 +166,6 @@ recipes:
     q_head:
       _target_: ${recipes.Critic.Q_head}
       input_shape: null
-  aug:
-    _target_: ${recipes.Aug}
 
 hydra:
   run:

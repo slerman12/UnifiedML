@@ -17,6 +17,20 @@ import Utils
 from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
+class ComposeAugs(nn.Module):
+    def __init__(self, augs, task=None):
+        super().__init__()
+
+        if 'Normalize' in augs:
+            augs['Normalize']['task'] = task
+
+        self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
+                                             getattr(transforms, aug)(**augs[aug]) for aug in augs])
+
+    def forward(self, x):
+        return self.transform(x)
+
+
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
         super().__init__()
@@ -66,34 +80,36 @@ class IntensityAug(nn.Module):
         return x * noise
 
 
-class ComposeAugs(nn.Module):
-    def __init__(self, augs):
-        super().__init__()
-        # # Encoder currently expects values in [0, 255], so this is a bit of a workaround for normalization in classify
-        # if 'Normalize' in augs and 'dataset' in augs['Normalize']:
-        #     for dataset in list(torchvision.datasets.__all__) + ['TinyImageNet']:
-        #         if dataset.lower() == augs['Normalize']['dataset'].lower():
-        #             break
-        #     assert dataset in torchvision.datasets.__all__ or dataset == 'TinyImageNet'
-        #
-        #     path = f'./Datasets/ReplayBuffer/Classify/{dataset}'
-        #     dataset = TinyImageNet if dataset == 'TinyImageNet' else getattr(torchvision.datasets, dataset)
-        #
-        #     with warnings.catch_warnings():
-        #         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-        #         experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
-        #
-        #     print('Computing mean and stddev for normalization')
-        #     mean, stddev = Utils.data_mean_std(experiences, scale=255)
-        #     del augs['Normalize']['dataset']
-        #     augs['Normalize']['mean'] = mean
-        #     augs['Normalize']['std'] = stddev / 255  # Since Encoder divides pixels by 255
+# Obs shape includes channel dimension, but torchvision RandomCrop expects only height-width
+class RandomCrop(transforms.RandomCrop):
+    def __init__(self, size, *vargs, **kwargs):
+        super().__init__(size[:-2], *vargs, **kwargs)
 
-        self.transform = transforms.Compose([getattr(transforms, aug)(**augs[aug]) if hasattr(transforms, aug) else
-                                             globals()[aug](**augs[aug]) for aug in augs])
 
-    def forward(self, x):
-        return self.transform(x)
+class Normalize(transforms.Normalize):
+    def __init__(self, task=None, mean=None, std=None):
+
+        if task is not None:
+            for dataset in list(torchvision.datasets.__all__) + ['TinyImageNet']:
+                if dataset.lower() == task.lower():
+                    break
+
+            path = f'./Datasets/ReplayBuffer/Classify/{dataset}'
+            dataset = TinyImageNet if dataset == 'TinyImageNet' else getattr(torchvision.datasets, dataset)
+
+            class Pixels:
+                def __call__(self, sample):
+                    return vF.to_tensor(sample) * 255  # Encoder expects pixels
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', '.*The given NumPy array.*')
+                experiences = dataset(root=path + "_Train", transform=Pixels())
+
+            print('Computing mean and stddev for normalization.')
+            mean, stddev = Utils.data_mean_std(experiences, scale=255)
+            print('Done.')
+
+        super().__init__(mean, std / 255)
 
 
 class RandAugment(torch.nn.Module):
