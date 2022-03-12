@@ -64,10 +64,6 @@ class DQNAgent(torch.nn.Module):
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
-        # Image augmentation
-        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
-            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
-
         # Birth
 
     def act(self, obs):
@@ -115,11 +111,7 @@ class DQNAgent(torch.nn.Module):
             reward[:] = 1
             next_obs[:] = label[:] = float('nan')
 
-        # "Envision" / "Perceive"
-
-        # Augment
-        obs = self.aug(obs)
-        next_obs = self.aug(next_obs)
+        # "Perceive"
 
         # Encode
         obs = self.encoder(obs)
