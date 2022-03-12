@@ -100,19 +100,15 @@ class Normalize(transforms.Normalize):
             path = f'./Datasets/ReplayBuffer/Classify/{dataset}'
             dataset = TinyImageNet if dataset == 'TinyImageNet' else getattr(torchvision.datasets, dataset)
 
-            class Pixels:
-                def __call__(self, sample):
-                    return vF.to_tensor(sample) * 255  # Encoder expects pixels
-
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                experiences = dataset(root=path + "_Train", transform=Pixels())
+                experiences = dataset(root=path + "_Train")
 
             print('Computing mean and stddev for normalization.')
             mean, std = Utils.data_mean_std(experiences)
             print('Done.')
 
-        super().__init__(mean + std, std / 127.5)  # Encoder divides by 127.5 and subtracts 1
+        super().__init__(mean, std)  # Encoder divides by 127.5 and subtracts 1
 
 
 class RandAugment(torch.nn.Module):

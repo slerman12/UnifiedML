@@ -15,7 +15,6 @@ from dm_env import specs, StepType
 
 import torch
 import torchvision
-from torchvision.transforms import functional as F
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
 
@@ -154,21 +153,12 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}'
 
-    class Transform:
-        def __call__(self, sample):
-            sample = F.to_tensor(sample)
-            sample *= 255  # Encoder expects pixels
-            return sample
-
-    transform = Transform()
-
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
         experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
-                              download=True,
-                              transform=transform)
+                              download=True)
 
     create_replay_path = Path(path + '_Buffer')
 
