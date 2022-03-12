@@ -5,14 +5,11 @@
 import time
 import math
 
-from hydra.utils import instantiate
-
 import torch
 from torch.nn.functional import cross_entropy
 
 import Utils
 
-from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
@@ -105,13 +102,13 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
 
+        # "Envision" / "Perceive"
+
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action = obs.flatten(-3) / 127.5 - 1
             reward[:] = 1
             next_obs[:] = label[:] = float('nan')
-
-        # "Perceive"
 
         # Encode
         obs = self.encoder(obs)

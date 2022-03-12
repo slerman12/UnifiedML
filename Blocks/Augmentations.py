@@ -112,7 +112,7 @@ class Normalize(transforms.Normalize):
             mean, std = Utils.data_mean_std(experiences, scale=255)
             print('Done.')
 
-        super().__init__(mean, std / 255)
+        super().__init__(mean + std, std / 127.5)  # Encoder divides by 127.5 and subtracts 1
 
 
 class RandAugment(torch.nn.Module):
