@@ -29,7 +29,8 @@ class ComposeAugs(nn.Module):
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
 
     def forward(self, x):
-        print(x.shape)
+        if len(x.shape) == 3:
+            x = x.unsqueeze(0)
         return self.transform(x)
 
 
