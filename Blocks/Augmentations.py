@@ -110,7 +110,7 @@ class Normalize(transforms.Normalize):
 
             print('Computing mean and stddev for normalization.')
             mean, std = Utils.data_mean_std(experiences, scale=255)
-            print('Done.')
+            print(f'Done. Mean: {mean} Stddev: {std}')
 
         super().__init__(mean + std, std / 127.5)  # Encoder divides by 127.5 and subtracts 1
 
