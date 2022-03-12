@@ -29,9 +29,10 @@ class ComposeAugs(nn.Module):
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
 
     def forward(self, x):
+        shape = x.shape
         if len(x.shape) == 3:
             x = x.unsqueeze(0) if torch.is_tensor(x) else x.expand_dims(0)
-        return self.transform(x).view(x.shape)
+        return self.transform(x).view(shape)
 
 
 class RandomShiftsAug(nn.Module):
