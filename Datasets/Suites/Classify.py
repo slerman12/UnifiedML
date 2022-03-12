@@ -15,7 +15,6 @@ from dm_env import specs, StepType
 
 import torch
 import torchvision
-from torchvision.transforms import transforms
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
 
@@ -159,8 +158,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
         experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
-                              download=True,
-                              transform=transforms.ToTensor())
+                              download=True)
 
     create_replay_path = Path(path + '_Buffer')
 
