@@ -293,6 +293,8 @@ class Experiences(IterableDataset):
                 reward += discount * step_reward
                 discount *= episode['discount'][idx + i] * self.discount
 
+        print(obs.shape)
+
         return self.augs(obs), action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
     def fetch_sample_process(self):
