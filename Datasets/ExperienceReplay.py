@@ -69,6 +69,12 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
+        # Data normalization
+
+        # TODO compute norm in classify, store in file system, retrieve here, add as aug and include a revert option
+        #   if not available, then do nothing, invert is identity, rl auto normalizes in suites
+        #   classify also normalizes in suite
+
         # Parallelized experience loading
 
         self.experiences = Experiences(path=self.path,
@@ -78,7 +84,7 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=ComposeAugs(augs, task))
+                                       augs=ComposeAugs(augs))
 
         # Batch loading
 
@@ -292,8 +298,6 @@ class Experiences(IterableDataset):
                     reward = np.zeros(1)
                 reward += discount * step_reward
                 discount *= episode['discount'][idx + i] * self.discount
-
-        # augs todo if no normalize, scale to -1, 1 assuming already 0, 1; default rl to 0, 1
 
         return self.augs(obs), action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
