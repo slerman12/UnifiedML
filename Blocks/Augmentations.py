@@ -30,8 +30,8 @@ class ComposeAugs(nn.Module):
 
     def forward(self, x):
         if len(x.shape) == 3:
-            x = x.unsqueeze(0)
-        return self.transform(x)
+            x = x.unsqueeze(0) if torch.is_tensor(x) else x.expand_dims(0)
+        return self.transform(x).view(x.shape)
 
 
 class RandomShiftsAug(nn.Module):
