@@ -18,7 +18,7 @@ RL: true
 supervise: true
 generate: false
 # Replay
-augs: {RandomCrop:{size:${obs_shape},padding:4},ToTensor:{},Normalize:{}}
+augs: '{RandomCrop:{size:${obs_shape},padding:4},ToTensor:{},Normalize:{}}'
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
 nstep: 10
