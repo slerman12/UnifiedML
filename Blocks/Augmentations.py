@@ -6,6 +6,8 @@ import math
 import warnings
 from typing import List, Tuple, Optional, Dict
 
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -31,7 +33,7 @@ class ComposeAugs(nn.Module):
     def forward(self, x):
         shape = x.shape
         if len(x.shape) == 3:
-            x = x.unsqueeze(0) if torch.is_tensor(x) else x.expand_dim(0)
+            x = x.unsqueeze(0) if torch.is_tensor(x) else np.expand_dims(x, axis=0)
         return self.transform(x).view(shape)
 
 
