@@ -83,7 +83,7 @@ class IntensityAug(nn.Module):
 # Obs shape includes channel dimension, but torchvision RandomCrop expects only height-width
 class RandomCrop(transforms.RandomCrop):
     def __init__(self, size, *vargs, **kwargs):
-        super().__init__(size[:-2], *vargs, **kwargs)
+        super().__init__(size if isinstance(size, int) else size[:-2], *vargs, **kwargs)
 
 
 class Normalize(transforms.Normalize):
