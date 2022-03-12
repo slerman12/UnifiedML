@@ -92,7 +92,7 @@ class RandomCrop(transforms.RandomCrop):
 class Normalize(transforms.Normalize):
     def __init__(self, task=None, mean=None, std=None):
 
-        if task is not None:
+        if mean is None and std is None and task is not None:
             for dataset in list(torchvision.datasets.__all__) + ['TinyImageNet']:
                 if dataset.lower() == task.lower():
                     break
@@ -109,7 +109,7 @@ class Normalize(transforms.Normalize):
                 experiences = dataset(root=path + "_Train", transform=Pixels())
 
             print('Computing mean and stddev for normalization.')
-            mean, stddev = Utils.data_mean_std(experiences, scale=255)
+            mean, std = Utils.data_mean_std(experiences, scale=255)
             print('Done.')
 
         super().__init__(mean, std / 255)
