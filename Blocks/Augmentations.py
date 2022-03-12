@@ -26,15 +26,12 @@ class ComposeAugs(nn.Module):
         if 'Normalize' in augs:
             augs['Normalize']['task'] = task
 
-        self.transform = transforms.Compose(
-                                            [globals()[aug](**augs[aug]) if aug in globals() else
+        self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
 
     def forward(self, x):
-        shape = x.shape
-        if len(x.shape) == 3:
-            x = x.unsqueeze(0) if torch.is_tensor(x) else np.expand_dims(x, axis=0)
-        return self.transform(x).view(shape)
+        x = torch.as_tensor(x)
+        return self.transform(x)
 
 
 class RandomShiftsAug(nn.Module):
