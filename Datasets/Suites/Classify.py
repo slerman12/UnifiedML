@@ -145,7 +145,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
      'VOCSegmentation', 'VOCDetection', 'Cityscapes', 'ImageNet',
      'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
      'VisionDataset', 'USPS', 'Kinetics400', 'HMDB51', 'UCF101',
-     'Places365', 'TinyImageNet')  TODO: iNaturalist!
+     'Places365', 'TinyImageNet')
     """
 
     assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'

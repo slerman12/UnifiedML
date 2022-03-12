@@ -81,23 +81,10 @@ def data_mean_std(dataset, scale=1):
     mean.div_(len(dataset))
     std.div_(len(dataset))
     return mean, std
-#
-#
-# def weight_init(net):
-#         if isinstance(m, nn.Conv2d):
-#             nn.init.kaiming_normal(m.weight, mode='fan_out')
-#             if m.bias:
-#                 nn.init.constant(m.bias, 0)
-#         elif isinstance(m, nn.BatchNorm2d):
-#             nn.init.constant(m.weight, 1)
-#             nn.init.constant(m.bias, 0)
-#         elif isinstance(m, nn.Linear):
-#             nn.init.normal(m.weight, std=1e-3)
-#             if m.bias:
-#                 nn.init.constant(m.bias, 0)
 
 
-# Copies parameters from one model to another, with optional EMA weighing
+# Copies parameters from one model to another, with optional EMA weighing (
+# Alternatively: https://pytorch.org/docs/stable/optim.html#stochastic-weight-averaging
 def param_copy(net, target_net, ema_tau=1):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(ema_tau * param.data +
