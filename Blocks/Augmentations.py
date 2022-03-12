@@ -26,7 +26,7 @@ class ComposeAugs(nn.Module):
         if 'Normalize' in augs:
             augs['Normalize']['task'] = task
 
-        self.transform = transforms.Compose([transforms.ToTensor()] +
+        self.transform = transforms.Compose(
                                             [globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
 
