@@ -19,13 +19,13 @@ from torchvision.transforms import transforms
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
 
-from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
+from Datasets.Suites._TinyImageNet import TinyImageNet
 
 from Utils import Normalize
 
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, num_workers, offline, train, buffer_path=None):
+    def __init__(self, experiences, batch_size, num_workers, offline, train, norm, buffer_path=None):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -49,6 +49,8 @@ class ClassifyEnv:
                 self.create_replay(buffer_path)
         else:
             self.evaluate_episodes = len(self)
+
+        self.norm = norm
 
     @property
     def batch(self):
@@ -99,7 +101,7 @@ class ClassifyEnv:
 
         self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
                                           discount=dummy_discount, step=dummy_step,
-                                          step_type=StepType.FIRST, observation=x, label=y)
+                                          step_type=StepType.FIRST, observation=self.norm(x), label=y)
 
         return self.time_step
 
@@ -162,12 +164,11 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
         experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
                               download=True,
-                              transform=transforms.Compose([transforms.ToTensor(),
-                                                            Normalize(task=task)]))  # Automatically normalize data
+                              transform=transforms.ToTensor())
 
     create_replay_path = Path(path + '_Buffer')
 
-    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, create_replay_path)
+    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, Normalize(task=task), create_replay_path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,

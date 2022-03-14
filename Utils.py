@@ -20,7 +20,7 @@ from torch.distributions import Normal
 import torchvision
 from torchvision.transforms import transforms
 
-from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
+from Datasets.Suites._TinyImageNet import TinyImageNet
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -94,7 +94,7 @@ def data_mean_std(dataset):
     return mean, std
 
 
-# Normalizes data to mean, stddev; automatically computes mean, stddev for task and saves them
+# Normalizes classify data to mean, stddev; automatically computes mean, stddev for task and saves them
 class Normalize(nn.Module):
     def __init__(self, mean=None, std=None, task=None):
         super().__init__()
