@@ -12,18 +12,6 @@ import torch.nn.functional as F
 from torchvision.transforms import transforms, InterpolationMode, functional as vF
 
 
-class ComposeAugs(nn.Module):
-    def __init__(self, augs):
-        super().__init__()
-
-        self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
-                                             getattr(transforms, aug)(**augs[aug]) for aug in augs])
-
-    def forward(self, x):
-        x = torch.as_tensor(x)
-        return self.transform(x)
-
-
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
         super().__init__()
@@ -249,3 +237,15 @@ def _apply_op(
     else:
         raise ValueError(f"The provided operator {op_name} is not recognized.")
     return img
+
+
+class ComposeAugs(nn.Module):
+    def __init__(self, augs):
+        super().__init__()
+
+        self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
+                                             getattr(transforms, aug)(**augs[aug]) for aug in augs])
+
+    def forward(self, x):
+        x = torch.as_tensor(x)
+        return self.transform(x)
