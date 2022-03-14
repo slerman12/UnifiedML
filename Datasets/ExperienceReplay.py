@@ -77,7 +77,7 @@ class ExperienceReplay:
         if not generate:
             # Use saved normalization values for the task if they exist
             norm_mean_std = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')
-            if len(exists):
+            if len(norm_mean_std):
                 mean, std = norm_mean_std[0].split('_')[-2:]
                 norm = Normalize(mean, std)
 

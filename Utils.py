@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import glob
 import math
 import random
 import re
@@ -96,16 +97,20 @@ class Normalize(transforms.Normalize):
             path = f'./Datasets/ReplayBuffer/Classify/{task}'
             dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
+            norm_mean_std = glob.glob(path + '_Normalization_*')
+            if len(norm_mean_std):
+                mean, std = norm_mean_std[0].split('_')[-2:]
+            else:
+                with warnings.catch_warnings():
+                    warnings.filterwarnings('ignore', '.*The given NumPy array.*')
+                    experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
 
-            print('Computing mean and stddev for normalization.')
-            mean, std = data_mean_std(experiences)
-            print('Done.')
+                print('Computing mean and stddev for normalization.')
+                mean, std = data_mean_std(experiences)
+                print('Done.')
 
-            # Save norm values for future reuse
-            open(path + f'_Normalization_{mean}_{std}', 'w')
+                # Save norm values for future reuse
+                open(path + f'_Normalization_{mean}_{std}', 'w')
 
         super().__init__(mean, std)
 
