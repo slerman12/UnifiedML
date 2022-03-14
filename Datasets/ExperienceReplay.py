@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import os
 import random
 import glob
 import shutil
@@ -90,7 +91,7 @@ class ExperienceReplay:
 
         self.experiences = Experiences(path=self.path,
                                        capacity=np.inf if save else capacity // max(1, num_workers),
-                                       num_workers=num_workers,
+                                       num_workers=min(num_workers, os.cpu_count()),
                                        fetch_per=1000,
                                        save=save,
                                        nstep=nstep,
