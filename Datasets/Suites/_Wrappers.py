@@ -282,7 +282,7 @@ class AugmentAttributesWrapper(dm_env.Environment):
             specs['observation'] = np.expand_dims(specs['observation'], axis=0)
         if self.divide_pixels_by_255:
             # Environments like DMC/Atari return observations in range [0, 255]
-            specs['observation'] = specs['observation'] / 255
+            specs['observation'] = (specs['observation'] / 255).astype('float32')
         # Extend time step
         return ExtendedTimeStep(step_type=time_step.step_type, **specs)
 

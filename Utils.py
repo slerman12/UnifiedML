@@ -20,7 +20,7 @@ from torch.distributions import Normal
 import torchvision
 from torchvision.transforms import transforms
 
-from Datasets.Suites.Classify import TinyImageNet
+from Datasets.Suites._TinyImageNet import TinyImageNet
 
 
 # Sets all Pytorch and Numpy random seeds
