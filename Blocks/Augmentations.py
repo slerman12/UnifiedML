@@ -15,10 +15,6 @@ from torchvision.transforms import transforms, InterpolationMode, functional as 
 class ComposeAugs(nn.Module):
     def __init__(self, augs):
         super().__init__()
-        print(augs)
-        for aug in augs:
-            print(aug)
-            print(dict(**augs[aug]))
 
         self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
@@ -80,6 +76,7 @@ class IntensityAug(nn.Module):
 # Obs shape includes channel dimension, but torchvision RandomCrop expects only height-width
 class RandomCrop(transforms.RandomCrop):
     def __init__(self, size, *vargs, **kwargs):
+        print(size[:-2])
         super().__init__(size if isinstance(size, int) else size[:-2], *vargs, **kwargs)
 
 
