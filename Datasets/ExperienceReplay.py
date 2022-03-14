@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import json
 import random
 import glob
 import shutil
@@ -19,6 +18,8 @@ import torch
 from torch.utils.data import IterableDataset
 
 from Blocks.Augmentations import ComposeAugs
+
+from Utils import Normalize
 
 
 class ExperienceReplay:
@@ -70,13 +71,20 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
-        # Data normalization attributes
+        # Data Augmentation
 
-        self.mean, self.std = 0, 1
-        norm_mean_std = glob.glob(path + '_Normalization_*')
-        if len(norm_mean_std):
-            mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
-            self.mean, self.std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
+        if augs is not None:
+            augs = ComposeAugs(augs)
+
+        # Data normalization
+
+        norm = None
+
+        # Generate currently doesn't support normalization, it requires data to be in Actor's output range [-1, 1]
+        if not generate:
+            # Use saved normalization values for the task if they exist
+            if len(glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')):
+                norm = Normalize(task=task)
 
         # Parallelized experience loading
 
@@ -87,7 +95,8 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=None if augs is None else ComposeAugs(augs))
+                                       augs=augs,
+                                       norm=norm)
 
         # Batch loading
 
@@ -116,9 +125,6 @@ class ExperienceReplay:
         if self._replay is None:
             self._replay = iter(self.batches)
         return self._replay
-
-    def un_normalize(self, x):
-        return x * self.std.to(x.device) + self.mean.to(x.device)
 
     # Tracks single episode in memory buffer
     def add(self, experiences=None, store=False):
@@ -194,7 +200,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None, norm=None):
 
         # Dataset construction via parallel workers
 
@@ -217,6 +223,7 @@ class Experiences(IterableDataset):
         self.discount = discount
 
         self.augs = augs
+        self.norm = norm
 
     def load_episode(self, episode_name):
         try:
@@ -308,6 +315,10 @@ class Experiences(IterableDataset):
         # Augment
         if self.augs is not None:
             obs = self.augs(obs)
+
+        # Normalize
+        if self.norm is not None:
+            obs, next_obs, traj_o = self.norm(obs), self.norm(next_obs), self.norm(traj_o)
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
