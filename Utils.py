@@ -79,10 +79,14 @@ def weight_init(m):
 
 def data_mean_std(dataset):
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
-    mean = torch.zeros(3)
-    std = torch.zeros(3)
+    start = True
     for inputs, targets in dataloader:
-        for i in range(3):
+        if start:
+            channels = inputs.shape[-3]
+            mean = torch.zeros(channels)
+            std = torch.zeros(channels)
+            start = False
+        for i in range(channels):
             mean[i] += inputs[:, i, :, :].mean()
             std[i] += inputs[:, i, :, :].std()
     mean.div_(len(dataset))
