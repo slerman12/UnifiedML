@@ -90,8 +90,8 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       norm=norm,
-                                       augs=None if augs is None else ComposeAugs(augs))
+                                       augs=None if augs is None else ComposeAugs(augs),
+                                       norm=norm)
 
         # Batch loading
 
@@ -195,7 +195,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, norm=None, augs=None):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None, norm=None):
 
         # Dataset construction via parallel workers
 
@@ -217,8 +217,8 @@ class Experiences(IterableDataset):
         self.nstep = nstep
         self.discount = discount
 
-        self.norm = norm
         self.augs = augs
+        self.norm = norm
 
     def load_episode(self, episode_name):
         try:
@@ -283,11 +283,6 @@ class Experiences(IterableDataset):
         episode_len = len(episode['observation'])
         idx = np.random.randint(episode_len - self.nstep)
 
-        # Normalize data
-        if self.norm is not None:
-            episode['observation'][idx:idx + self.nstep + 1] \
-                = self.norm(episode['observation'][idx:idx + self.nstep + 1])
-
         # Transition
         obs = episode['observation'][idx]
         action = episode['action'][idx + 1]
@@ -315,6 +310,10 @@ class Experiences(IterableDataset):
         # Augment
         if self.augs is not None:
             obs = self.augs(obs)
+
+        # Normalize
+        if self.norm is not None:
+            obs, next_obs, traj_o = self.norm(obs), self.norm(next_obs), self.norm(traj_o)
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
