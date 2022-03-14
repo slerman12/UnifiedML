@@ -2,13 +2,13 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import json
 import math
 from typing import List, Tuple, Optional, Dict
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from omegaconf import OmegaConf
 
 from torchvision.transforms import transforms, InterpolationMode, functional as vF
 
@@ -18,7 +18,7 @@ class ComposeAugs(nn.Module):
         super().__init__()
 
         if isinstance(augs, str):
-            augs = json.loads(augs)
+            augs = OmegaConf.create(augs)
 
         self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
