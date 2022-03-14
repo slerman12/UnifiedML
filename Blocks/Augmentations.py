@@ -3,18 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
-import warnings
 from typing import List, Tuple, Optional, Dict
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision
 
 from torchvision.transforms import transforms, InterpolationMode, functional as vF
-
-import Utils
-from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ComposeAugs(nn.Module):

@@ -91,8 +91,10 @@ def data_mean_std(dataset):
 
 
 # Normalizes data to mean, stddev; automatically computes mean, stddev for task and saves them
-class Normalize(transforms.Normalize):
+class Normalize(nn.Module):
     def __init__(self, mean=None, std=None, task=None):
+        super().__init__()
+
         if mean is None and std is None and task is not None:
             path = f'./Datasets/ReplayBuffer/Classify/{task}'
             dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
@@ -112,7 +114,10 @@ class Normalize(transforms.Normalize):
                 # Save norm values for future reuse
                 open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')
 
-        super().__init__(mean, std)
+        self.mean, self.std = mean, std
+
+    def forward(self, x):
+        return (x - self.mean) / self.std
 
 
 # Copies parameters from one model to another, with optional EMA weighing (
