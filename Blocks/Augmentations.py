@@ -20,8 +20,8 @@ class ComposeAugs(nn.Module):
         print(type(augs))
         for aug in augs:
             print(aug)
-            print(aug[augs])
-            print(dict(**aug[augs]))
+            print(augs[aug])
+            print(dict(**augs[aug]))
 
         self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
