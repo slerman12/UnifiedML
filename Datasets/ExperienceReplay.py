@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
-from Blocks.Augmentations import ComposeAugs
+from Blocks.Augmentations import ComposeAugs, Normalize
 
 
 class ExperienceReplay:
@@ -71,9 +71,15 @@ class ExperienceReplay:
 
         # Data normalization
 
-        # TODO compute norm in classify, store in file system, retrieve here, add as aug and include a revert option
-        #   if not available, then do nothing, invert is identity, rl auto normalizes in suites
-        #   classify also normalizes in suite
+        norm = None
+
+        # Generate currently doesn't support normalization, it requires data to be in Actor's output range [-1, 1]
+        if not generate:
+            # Use saved normalization values for the task if they exist
+            norm_mean_std = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')
+            if len(exists):
+                mean, std = norm_mean_std[0].split('_')[-2:]
+                norm = Normalize(mean, std)
 
         # Parallelized experience loading
 
@@ -84,7 +90,8 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=ComposeAugs(augs))
+                                       norm=norm,
+                                       augs=None if augs is None else ComposeAugs(augs))
 
         # Batch loading
 
@@ -188,7 +195,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, norm=None, augs=None):
 
         # Dataset construction via parallel workers
 
@@ -210,6 +217,7 @@ class Experiences(IterableDataset):
         self.nstep = nstep
         self.discount = discount
 
+        self.norm = norm
         self.augs = augs
 
     def load_episode(self, episode_name):
@@ -275,6 +283,11 @@ class Experiences(IterableDataset):
         episode_len = len(episode['observation'])
         idx = np.random.randint(episode_len - self.nstep)
 
+        # Normalize data
+        if self.norm is not None:
+            episode['observation'][idx:idx + self.nstep + 1] \
+                = self.norm(episode['observation'][idx:idx + self.nstep + 1])
+
         # Transition
         obs = episode['observation'][idx]
         action = episode['action'][idx + 1]
@@ -299,7 +312,11 @@ class Experiences(IterableDataset):
                 reward += discount * step_reward
                 discount *= episode['discount'][idx + i] * self.discount
 
-        return self.augs(obs), action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
+        # Augment
+        if self.augs is not None:
+            obs = self.augs(obs)
+
+        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
     def fetch_sample_process(self):
         try:

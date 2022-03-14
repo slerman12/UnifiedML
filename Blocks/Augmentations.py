@@ -6,8 +6,6 @@ import math
 import warnings
 from typing import List, Tuple, Optional, Dict
 
-import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,11 +18,8 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ComposeAugs(nn.Module):
-    def __init__(self, augs, task=None):
+    def __init__(self, augs):
         super().__init__()
-
-        if 'Normalize' in augs:
-            augs['Normalize']['task'] = task
 
         self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
@@ -87,28 +82,6 @@ class IntensityAug(nn.Module):
 class RandomCrop(transforms.RandomCrop):
     def __init__(self, size, *vargs, **kwargs):
         super().__init__(size if isinstance(size, int) else size[:-2], *vargs, **kwargs)
-
-
-class Normalize(transforms.Normalize):
-    def __init__(self, task=None, mean=None, std=None):
-
-        if mean is None and std is None and task is not None:
-            for dataset in list(torchvision.datasets.__all__) + ['TinyImageNet']:
-                if dataset.lower() == task.lower():
-                    break
-
-            path = f'./Datasets/ReplayBuffer/Classify/{dataset}'
-            dataset = TinyImageNet if dataset == 'TinyImageNet' else getattr(torchvision.datasets, dataset)
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
-
-            print('Computing mean and stddev for normalization.')
-            mean, std = Utils.data_mean_std(experiences)
-            print('Done.')
-
-        super().__init__(mean, std)  # Encoder divides by 127.5 and subtracts 1
 
 
 class RandAugment(torch.nn.Module):

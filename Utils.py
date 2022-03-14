@@ -15,6 +15,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 
+import torchvision
+from torchvision.transforms import transforms
+
+from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
+
 
 # Sets all Pytorch and Numpy random seeds
 def set_seeds(seed):
@@ -81,6 +86,28 @@ def data_mean_std(dataset):
     mean.div_(len(dataset))
     std.div_(len(dataset))
     return mean, std
+
+
+# Normalizes data to mean, stddev; automatically computes mean, stddev for task and saves
+class Normalize(transforms.Normalize):
+    def __init__(self, mean=None, std=None, task=None):
+
+        if mean is None and std is None and task is not None:
+            path = f'./Datasets/ReplayBuffer/Classify/{task}'
+            dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', '.*The given NumPy array.*')
+                experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
+
+            print('Computing mean and stddev for normalization.')
+            mean, std = data_mean_std(experiences)
+            print('Done.')
+
+            # Save norm values for future reuse
+            open(path + f'_Normalization_{mean}_{std}', 'w')
+
+        super().__init__(mean, std)
 
 
 # Copies parameters from one model to another, with optional EMA weighing (

@@ -236,12 +236,13 @@ class AttrDict(dict):
 
 # Unifies experience/env representations
 class AugmentAttributesWrapper(dm_env.Environment):
-    def __init__(self, env, add_remove_batch_dim=True):
+    def __init__(self, env, add_remove_batch_dim=True, divide_pixels_by_255=True):
         self.env = env
 
         self.time_step = None
 
         self.add_remove_batch_dim = add_remove_batch_dim
+        self.divide_pixels_by_255 = divide_pixels_by_255
 
         if not hasattr(self, 'depleted'):
             self.depleted = False
@@ -279,6 +280,9 @@ class AugmentAttributesWrapper(dm_env.Environment):
         if self.add_remove_batch_dim:
             # Some environments like DMC/Atari return observations without batch dims
             specs['observation'] = np.expand_dims(specs['observation'], axis=0)
+        if self.divide_pixels_by_255:
+            # Environments like DMC/Atari return observations in range [0, 255]
+            specs['observation'] = specs['observation'] / 255
         # Extend time step
         return ExtendedTimeStep(step_type=time_step.step_type, **specs)
 

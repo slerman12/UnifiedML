@@ -21,6 +21,8 @@ from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrappe
 
 from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
+from Utils import Normalize
+
 
 class ClassifyEnv:
     def __init__(self, experiences, batch_size, num_workers, offline, train, buffer_path=None):
@@ -160,7 +162,8 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
         experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
                               download=True,
-                              transform=transforms.ToTensor())
+                              transform=transforms.Compose([transforms.ToTensor(),
+                                                            Normalize(task=task)]))  # Automatically normalize data
 
     create_replay_path = Path(path + '_Buffer')
 
@@ -168,6 +171,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
-                                   add_remove_batch_dim=False)  # Disables the modification of batch dims
+                                   add_remove_batch_dim=False,  # Disables the modification of batch dims
+                                   divide_pixels_by_255=False)  # Disables naive normalization of pixels
 
     return env

@@ -41,7 +41,7 @@ class DQNAgent(torch.nn.Module):
 
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
-        self.num_actions = num_actions  # Num actions sampled per actor
+        self.num_actions = num_actions  # Num actions sampled by actor
 
         self.encoder = Utils.Randn(trunk_dim) if generate \
             else CNNEncoder(obs_shape, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
@@ -102,13 +102,13 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
 
-        # "Envision" / "Perceive"
-
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action = obs.flatten(-3) / 127.5 - 1
+            action = obs.flatten(-3) * 2 - 1
             reward[:] = 1
             next_obs[:] = label[:] = float('nan')
+
+        # "Perceive"
 
         # Encode
         obs = self.encoder(obs)
