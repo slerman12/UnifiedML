@@ -139,6 +139,7 @@ class RandAugment(torch.nn.Module):
         Returns:
             PIL Image or Tensor: Transformed image.
         """
+        img = img * 255
         fill = self.fill
         channels, height, width = img.shape[-3:]
         if isinstance(img, torch.Tensor):
@@ -157,7 +158,7 @@ class RandAugment(torch.nn.Module):
                 magnitude *= -1.0
             img = _apply_op(img, op_name, magnitude, interpolation=self.interpolation, fill=fill)
 
-        return img
+        return img / 255
 
     def __repr__(self) -> str:
         s = (
