@@ -100,7 +100,7 @@ class ClassifyEnv:
 
         self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
                                           discount=dummy_discount, step=dummy_step,
-                                          step_type=StepType.FIRST, observation=x, label=y)
+                                          step_type=StepType.FIRST, observation=self.norm(x), label=y)
 
         return self.time_step
 

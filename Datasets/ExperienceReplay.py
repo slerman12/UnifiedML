@@ -317,8 +317,8 @@ class Experiences(IterableDataset):
             obs = self.augs(obs)
 
         # Normalize
-        # if self.norm is not None:
-        #     obs, next_obs, traj_o = self.norm(obs), self.norm(next_obs), self.norm(traj_o)
+        if self.norm is not None:
+            obs, next_obs, traj_o = self.norm(obs), self.norm(next_obs), self.norm(traj_o)
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
