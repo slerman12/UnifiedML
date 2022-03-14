@@ -23,7 +23,6 @@ action_spec: ??? # To be specified later
 nstep: 10
 batch_size: 256
 discount: 0.99
-augs: "{RandomCrop: {size: ${obs_shape}, padding: 4}}"
 # Training
 seed_steps: 2000
 learn_per_steps: 2
@@ -98,7 +97,7 @@ replay:
   num_workers: ${num_workers}
   nstep: ${nstep}
   discount: ${discount}
-  augs: ${augs}
+  transform: null
   suite: ${suite}
   task: ${task_name}
   offline: ${offline}
@@ -140,6 +139,7 @@ recipes:
   Critic:
     trunk: null
     Q_head: null
+  Aug: null
   encoder:
     eyes:
       _target_: ${recipes.Encoder.Eyes}
@@ -166,6 +166,8 @@ recipes:
     q_head:
       _target_: ${recipes.Critic.Q_head}
       input_shape: null
+  aug:
+    _target_: ${recipes.Aug}
 
 hydra:
   run:

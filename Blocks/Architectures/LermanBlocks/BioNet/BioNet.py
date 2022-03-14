@@ -120,7 +120,12 @@ class BioNetV1(nn.Module):
         one of the key advantages of transformers, localization without the need for locality 
         embeddings (though we still partially employ them), configured simply in 
         a biologically-inspired architecture that is faster to train and leaves a 
-        smaller computational footprint compared to ViT. We call this bi-occular network, BioNet."""
+        smaller computational footprint compared to ViT. We call this bi-occular network, BioNet.
+        
+        "The model also posits that visual perception encodes spatial properties of objects, such as size and location,
+         relative to other objects in the visual field; in other words, it utilizes relative metrics and scene-based 
+         frames of reference." - wiki, maybe supports relation block rather than attention block
+        """
 
 
 # We can also efficiently substitute the patched MLPs with patched ViTs.

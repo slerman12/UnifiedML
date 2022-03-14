@@ -5,11 +5,14 @@
 import time
 import math
 
+from hydra.utils import instantiate
+
 import torch
 from torch.nn.functional import cross_entropy
 
 import Utils
 
+from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
@@ -61,11 +64,15 @@ class DQNAgent(torch.nn.Module):
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
+        # Image augmentation
+        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
+            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+
         # Birth
 
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
-            obs = torch.as_tensor(obs, device=self.device, dtype=torch.float)
+            obs = torch.as_tensor(obs, device=self.device, dtype=torch.float)  # TODO why did i have to change dtypes
 
             # EMA targets
             encoder = self.encoder.ema if self.ema else self.encoder
@@ -108,7 +115,11 @@ class DQNAgent(torch.nn.Module):
             reward[:] = 1
             next_obs[:] = label[:] = float('nan')
 
-        # "Perceive"
+        # "Envision" / "Perceive"
+
+        # Augment
+        obs = self.aug(obs)
+        next_obs = self.aug(next_obs)
 
         # Encode
         obs = self.encoder(obs)

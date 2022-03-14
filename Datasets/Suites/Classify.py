@@ -19,7 +19,7 @@ from torchvision.transforms import transforms
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
 
-from Datasets.Suites._TinyImageNet import TinyImageNet
+from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 from Utils import Normalize
 

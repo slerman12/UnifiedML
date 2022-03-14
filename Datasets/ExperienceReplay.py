@@ -18,14 +18,14 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
-from Blocks.Augmentations import ComposeAugs
+from torchvision.transforms import transforms
 
 from Utils import Normalize
 
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
-                 obs_spec=None, nstep=0, discount=1, augs=None):
+                 obs_spec=None, nstep=0, discount=1, transform=None):
         # Path and loading
 
         path = path.replace("Agents.", "")
@@ -72,10 +72,11 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
-        # Data Augmentation
+        # Data transform
 
-        if augs is not None:
-            augs = ComposeAugs(augs)
+        if transform is not None:
+            # Accepts a dict of torchvision transforms and args
+            transform = transforms.Compose([getattr(transforms, transform)(**transform[t]) for t in transform])
 
         # Data normalization
 
@@ -96,7 +97,7 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=augs,
+                                       augs=transform,
                                        norm=norm)
 
         # Batch loading
