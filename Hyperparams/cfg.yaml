@@ -18,11 +18,7 @@ RL: true
 supervise: true
 generate: false
 # Replay
-augs:
-  _convert_: "partial"
-  RandomCrop:
-    size: ${obs_shape}
-    padding: 4
+augs: {RandomCrop: {size: '${obs_shape}', padding: 4}}
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
 nstep: 10
