@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import json
 import math
 from typing import List, Tuple, Optional, Dict
 
@@ -15,6 +16,9 @@ from torchvision.transforms import transforms, InterpolationMode, functional as 
 class ComposeAugs(nn.Module):
     def __init__(self, augs):
         super().__init__()
+
+        if isinstance(augs, str):
+            augs = json.loads(augs)
 
         self.transform = transforms.Compose([globals()[aug](**augs[aug]) if aug in globals() else
                                              getattr(transforms, aug)(**augs[aug]) for aug in augs])
