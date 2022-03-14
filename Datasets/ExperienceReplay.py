@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import json
 import random
 import glob
 import shutil
@@ -18,8 +19,6 @@ import torch
 from torch.utils.data import IterableDataset
 
 from Blocks.Augmentations import ComposeAugs
-
-from Utils import Normalize
 
 
 class ExperienceReplay:
@@ -70,6 +69,14 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
+
+        # Data normalization
+
+        self.mean, self.std = 0, 1
+        norm_mean_std = glob.glob(path + '_Normalization_*')
+        if len(norm_mean_std):
+            mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
+            self.mean, self.std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
 
         # Parallelized experience loading
 

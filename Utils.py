@@ -105,7 +105,7 @@ class Normalize(nn.Module):
 
             norm_mean_std = glob.glob(path + '_Normalization_*')
             if len(norm_mean_std):
-                mean, std = map(json.loads, norm_mean_std[0].split('_')[-2:])
+                mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
             else:
                 with warnings.catch_warnings():
                     warnings.filterwarnings('ignore', '.*The given NumPy array.*')
@@ -118,7 +118,7 @@ class Normalize(nn.Module):
                 # Save norm values for future reuse
                 open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')
 
-        self.mean, self.std = torch.tensor(mean).view(-1, 1, 1), torch.tensor(std).view(-1, 1, 1)
+        self.mean, self.std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
 
     def forward(self, x):
         if isinstance(x, np.ndarray):
