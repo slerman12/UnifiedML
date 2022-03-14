@@ -71,6 +71,10 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
+        # Data Augmentation
+
+        augs = None if augs is None else ComposeAugs(augs)
+
         # Data normalization
 
         norm = None
@@ -90,7 +94,7 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=None if augs is None else ComposeAugs(augs),
+                                       augs=augs,
                                        norm=norm)
 
         # Batch loading
