@@ -73,7 +73,8 @@ class ExperienceReplay:
 
         # Data Augmentation
 
-        augs = None if augs is None else ComposeAugs(augs)
+        if augs is not None:
+            augs = ComposeAugs(augs)
 
         # Data normalization
 
