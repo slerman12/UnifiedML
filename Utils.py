@@ -99,7 +99,7 @@ class Normalize(transforms.Normalize):
 
             norm_mean_std = glob.glob(path + '_Normalization_*')
             if len(norm_mean_std):
-                mean, std = norm_mean_std[0].split('_')[-2:]
+                mean, std = map(list, norm_mean_std[0].split('_')[-2:])
             else:
                 with warnings.catch_warnings():
                     warnings.filterwarnings('ignore', '.*The given NumPy array.*')
@@ -110,7 +110,7 @@ class Normalize(transforms.Normalize):
                 print('Done.')
 
                 # Save norm values for future reuse
-                open(path + f'_Normalization_{mean}_{std}', 'w')
+                open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')
         print(mean, std)
 
         super().__init__(mean, std)
