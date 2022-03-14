@@ -111,6 +111,7 @@ class Normalize(transforms.Normalize):
 
                 # Save norm values for future reuse
                 open(path + f'_Normalization_{mean}_{std}', 'w')
+        print(mean, std)
 
         super().__init__(mean, std)
 
