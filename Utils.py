@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import glob
+import json
 import math
 import random
 import re
@@ -89,17 +90,16 @@ def data_mean_std(dataset):
     return mean, std
 
 
-# Normalizes data to mean, stddev; automatically computes mean, stddev for task and saves
+# Normalizes data to mean, stddev; automatically computes mean, stddev for task and saves them
 class Normalize(transforms.Normalize):
     def __init__(self, mean=None, std=None, task=None):
-
         if mean is None and std is None and task is not None:
             path = f'./Datasets/ReplayBuffer/Classify/{task}'
             dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
 
             norm_mean_std = glob.glob(path + '_Normalization_*')
             if len(norm_mean_std):
-                mean, std = map(list, norm_mean_std[0].split('_')[-2:])
+                mean, std = map(json.loads, norm_mean_std[0].split('_')[-2:])
             else:
                 with warnings.catch_warnings():
                     warnings.filterwarnings('ignore', '.*The given NumPy array.*')
