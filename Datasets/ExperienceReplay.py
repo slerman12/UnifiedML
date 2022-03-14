@@ -70,7 +70,7 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
-        # Data normalization
+        # Data normalization attributes
 
         self.mean, self.std = 0, 1
         norm_mean_std = glob.glob(path + '_Normalization_*')
@@ -116,6 +116,9 @@ class ExperienceReplay:
         if self._replay is None:
             self._replay = iter(self.batches)
         return self._replay
+
+    def un_normalize(self, x):
+        return x * self.std.to(x.device) + self.mean.to(x.device)
 
     # Tracks single episode in memory buffer
     def add(self, experiences=None, store=False):
