@@ -121,7 +121,7 @@ class Normalize(nn.Module):
         self.mean, self.std = torch.tensor(mean).view(-1, 1, 1), torch.tensor(std).view(-1, 1, 1)
 
     def forward(self, x):
-        return (x - self.mean) / self.std
+        return (torch.tensor(x) - self.mean) / self.std
 
 
 # Copies parameters from one model to another, with optional EMA weighing (
