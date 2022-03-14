@@ -71,21 +71,6 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
-        # Data Augmentation
-
-        if augs is not None:
-            augs = ComposeAugs(augs)
-
-        # Data normalization
-
-        norm = None
-
-        # Generate currently doesn't support normalization, it requires data to be in Actor's output range [-1, 1]
-        if not generate:
-            # Use saved normalization values for the task if they exist
-            if len(glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')):
-                norm = Normalize(task=task)
-
         # Parallelized experience loading
 
         self.experiences = Experiences(path=self.path,
@@ -95,8 +80,7 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=augs,
-                                       norm=norm)
+                                       augs=None if augs is None else ComposeAugs(augs))
 
         # Batch loading
 
@@ -200,7 +184,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None, norm=None):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None):
 
         # Dataset construction via parallel workers
 
@@ -223,7 +207,6 @@ class Experiences(IterableDataset):
         self.discount = discount
 
         self.augs = augs
-        self.norm = norm
 
     def load_episode(self, episode_name):
         try:
@@ -315,10 +298,6 @@ class Experiences(IterableDataset):
         # Augment
         if self.augs is not None:
             obs = self.augs(obs)
-
-        # Normalize
-        if self.norm is not None:
-            obs, next_obs, traj_o = self.norm(obs), self.norm(next_obs), self.norm(traj_o)
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
