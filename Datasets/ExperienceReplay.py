@@ -17,7 +17,9 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
-from Blocks.Augmentations import ComposeAugs, Normalize
+from Blocks.Augmentations import ComposeAugs
+
+from Utils import Normalize
 
 
 class ExperienceReplay:
