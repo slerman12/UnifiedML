@@ -18,12 +18,12 @@ RL: true
 supervise: true
 generate: false
 # Replay
-augs: {'RandomCrop': {size: '${obs_shape}', padding: 4}}
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
 nstep: 10
 batch_size: 256
 discount: 0.99
+augs: "{RandomCrop: {size: '${obs_shape}', padding: 4}}"
 # Training
 seed_steps: 2000
 learn_per_steps: 2
@@ -91,7 +91,6 @@ agent:
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay
-  augs: ${augs}
   obs_spec: ${obs_spec}
   action_spec: ${action_spec}
   capacity: 1000000
@@ -99,6 +98,7 @@ replay:
   num_workers: ${num_workers}
   nstep: ${nstep}
   discount: ${discount}
+  augs: ${augs}
   suite: ${suite}
   task: ${task_name}
   offline: ${offline}
