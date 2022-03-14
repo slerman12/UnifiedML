@@ -65,8 +65,7 @@ class ClassifyEnv:
         path.mkdir(exist_ok=True, parents=True)
 
         for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
-                                                                'This only has to be done once. '
-                                                                'Loading in batches, this may take a moment')):
+                                                                'This only has to be done once.')):
             x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
 
             # Concat a dummy batch item
