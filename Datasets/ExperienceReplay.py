@@ -79,7 +79,7 @@ class ExperienceReplay:
         if not generate:
             # Use saved normalization values for the task if they exist
             if len(glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')):
-                norm = Normalize(task)
+                norm = Normalize(task=task)
 
         # Parallelized experience loading
 

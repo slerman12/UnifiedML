@@ -118,8 +118,6 @@ class Normalize(nn.Module):
                 # Save norm values for future reuse
                 open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')
 
-        print(mean, std)
-        print(torch.tensor(mean), torch.tensor(std))
         self.mean, self.std = torch.tensor(mean).view(-1, 1, 1), torch.tensor(std).view(-1, 1, 1)
 
     def forward(self, x):
