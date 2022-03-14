@@ -105,7 +105,7 @@ class Normalize(transforms.Normalize):
                     warnings.filterwarnings('ignore', '.*The given NumPy array.*')
                     experiences = dataset(root=path + "_Train", transform=transforms.ToTensor())
 
-                print('Computing mean and stddev for normalization.')
+                print('Computing mean and stddev for normalization. This only has to be done once for a task.')
                 mean, std = data_mean_std(experiences)
                 print('Done.')
 
