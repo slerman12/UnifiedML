@@ -66,6 +66,7 @@ def default(x, value):
 
 # Initializes model weights according to common distributions
 def weight_init(m):
+    print(m)
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
         if hasattr(m.bias, 'data'):

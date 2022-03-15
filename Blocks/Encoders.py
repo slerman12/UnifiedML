@@ -49,10 +49,6 @@ class CNNEncoder(nn.Module):
         # Initialize weights
         self.apply(Utils.weight_init)
 
-        def p(m):
-            print(m)
-        self.apply(p)
-
         # Optimizer
         if lr is not None:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
