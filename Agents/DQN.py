@@ -121,7 +121,7 @@ class DQNAgent(torch.nn.Module):
         obs = self.aug(obs)
         obs = self.encoder(obs)
 
-        if self.RL:
+        if replay.nstep > 0:
             with torch.no_grad():
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
