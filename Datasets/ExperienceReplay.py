@@ -75,8 +75,9 @@ class ExperienceReplay:
         # Data transform
 
         if transform is not None:
-            # Accepts a dict of torchvision transforms and args
-            transform = transforms.Compose([getattr(transforms, transform)(**transform[t]) for t in transform])
+            # Can accept a dict of torchvision transforms and args
+            transform = transforms.Compose([transforms.ToTensor()] +
+                                           [getattr(transforms, transform)(**transform[t]) for t in transform])
 
         # Parallelized experience loading
 
@@ -304,7 +305,7 @@ class Experiences(IterableDataset):
 
         # Transform
         if self.transform is not None:
-            obs = self.transform(obs)
+            obs = self.transform(obs / 255) * 255
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
