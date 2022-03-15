@@ -288,12 +288,13 @@ class Experiences(IterableDataset):
         step = episode['step'][idx]
 
         # Trajectory
-        traj_o = traj_a = traj_r = traj_l = np.NaN
         if self.nstep > 0:
             traj_o = episode['observation'][idx:idx + self.nstep + 1]
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
             traj_l = episode['label'][idx:idx + self.nstep + 1]
+        else:
+            traj_o = traj_a = traj_r = traj_l = np.NaN
 
         # Compute cumulative discounted reward
         for i in range(1, self.nstep + 1):
