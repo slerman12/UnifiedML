@@ -70,9 +70,6 @@ class CNNEncoder(nn.Module):
 
     # Encodes
     def forward(self, obs, *context, flatten=True):
-        if torch.isnan(obs).any():
-            print('huh what')
-
         obs_shape = obs.shape  # Preserve leading dims
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
