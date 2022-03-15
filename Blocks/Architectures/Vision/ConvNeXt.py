@@ -45,8 +45,10 @@ class ConvNeXt(nn.Module):
         channels_in = input_shape[0]
 
         if dims is None:
-            # dims = [channels_in, 96, 192, 384, 768]  # TinyConvNeXt
-            dims = [channels_in, 96, 192, 32]
+            # dims = [96, 192, 384, 768]  # TinyConvNeXt
+            dims = [96, 192, 32]
+
+        dims = [channels_in] + dims
 
         if depths is None:
             # depths = [3, 3, 9, 3]  # TinyConvNeXt
@@ -104,3 +106,8 @@ class ConvNeXt(nn.Module):
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
+
+
+class ConvNeXtTiny(ConvNeXt):
+    def __init__(self, input_shape, output_dim=None):
+        super().__init__(input_shape, [channels_in, 96, 192, 384, 768], [3, 3, 9, 3], output_dim)
