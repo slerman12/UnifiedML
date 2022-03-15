@@ -64,20 +64,21 @@ class MiniResNet(nn.Module):
             kernel_size += 1
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=kernel_size, padding=1, bias=False),
+                                             kernel_size=7, stride=2, padding=3, bias=False),
                                    nn.BatchNorm2d(dims[0]),
-                                   nn.ReLU(inplace=True))
+                                   nn.ReLU(inplace=True),
+                                   nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
         # CNN ResNet-ish
         self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1], kernel_size,
-                                                                    1 + (stride - 1) * (i > 0 and j > 0))
+                                                                    1 + (stride - 1) * (i > 0 and j == 0))
                                                       for j in range(depth)])
                                       for i, depth in enumerate(depths)])
 
         self.projection = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
-                               MLP(dims[-1], output_dim, 1024))
+                               nn.Linear(dims[-1], output_dim))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.projection)
