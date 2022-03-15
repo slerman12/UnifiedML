@@ -78,6 +78,9 @@ class DQNAgent(torch.nn.Module):
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
 
+            if torch.isnan(obs).any():
+                print('jjjj')
+
             # "See"
             obs = encoder(obs)
 
@@ -126,8 +129,8 @@ class DQNAgent(torch.nn.Module):
 
         # Encode
         obs = self.encoder(obs)
-        with torch.no_grad():
-            next_obs = self.encoder(next_obs)
+        # with torch.no_grad():
+        #     next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
