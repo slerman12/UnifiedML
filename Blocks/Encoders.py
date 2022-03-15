@@ -85,16 +85,16 @@ class CNNEncoder(nn.Module):
         # Save computation by only running Eyes on non-nan inputs
         exist = ~torch.isnan(obs[:, 0, 0, 0])
         sight = torch.full([obs.shape[0], *self.feature_shape], float('nan'), device=obs.device)
-        print(obs[exist].shape)
-        print(exist[:10])
+        obs = obs[exist]
 
         # CNN encode
-        h = self.Eyes(obs[exist])
+        if len(obs) > 0:
+            h = self.Eyes(obs)
 
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
-                                                          f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
+            assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
+                                                              f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
-        sight[exist] = h
+            sight[exist] = h
 
         # Restore leading dims
         sight = sight.view(*obs_shape[:-3], *sight.shape[-3:])
