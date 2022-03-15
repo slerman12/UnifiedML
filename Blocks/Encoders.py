@@ -27,7 +27,7 @@ class CNNEncoder(nn.Module):
         assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
 
         self.obs_shape = obs_shape
-        self.mean_std = torch.tensor([0, 255], device=device).view(2, 1, -1, 1, 1)
+        self.mean_std = torch.tensor(mean_std or [0, 255], device=device).view(2, 1, -1, 1, 1)
 
         # CNN
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
