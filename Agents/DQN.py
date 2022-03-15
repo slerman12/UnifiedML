@@ -78,6 +78,9 @@ class DQNAgent(torch.nn.Module):
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
 
+            if torch.isnan(obs).any():
+                print('True')
+
             # "See"
             obs = encoder(obs)
 
