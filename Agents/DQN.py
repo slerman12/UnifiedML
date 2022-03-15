@@ -82,7 +82,7 @@ class DQNAgent(torch.nn.Module):
             obs = encoder(obs)
 
             actions = None if self.discrete \
-                else actor(obs, self.step).sample(self.num_actions) if self.training \
+                else actor(obs, self.step).sample() if self.training \
                 else actor(obs, self.step).mean
 
             # DQN action selector is based on critic
