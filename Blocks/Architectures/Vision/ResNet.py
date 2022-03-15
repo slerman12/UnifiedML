@@ -93,9 +93,6 @@ class MiniResNet(nn.Module):
         # Operate on last 3 dims
         x = x.view(-1, *x.shape[-3:])
 
-        if torch.isnan(x).any():
-            print('True')
-
         x = self.trunk(x)
         x = self.ResNet(x)
         x = self.projection(x)

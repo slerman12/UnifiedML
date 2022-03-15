@@ -82,6 +82,9 @@ class CNNEncoder(nn.Module):
                    for c in context]
         obs = torch.cat([obs, *context], 1)
 
+        if torch.isnan(obs).any():
+            print('True')
+
         # CNN encode
         h = self.Eyes(obs)
 
