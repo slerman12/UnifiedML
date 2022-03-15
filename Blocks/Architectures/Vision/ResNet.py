@@ -97,9 +97,6 @@ class MiniResNet(nn.Module):
         x = self.ResNet(x)
         x = self.projection(x)
 
-        if torch.isnan(x).any():
-            print('True')
-
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
