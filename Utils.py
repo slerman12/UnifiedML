@@ -104,7 +104,7 @@ def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, paddin
 # Compute the output shape of a whole CNN
 def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
     for block in blocks:
-        if isinstance(block, (nn.Conv2d, nn.AvgPool2d)):
+        if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d)):
             channels = block.out_channels
             height, width = cnn_layer_feature_shape(height, width,
                                                     kernel_size=block.kernel_size,
