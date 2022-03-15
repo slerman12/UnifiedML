@@ -25,7 +25,7 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, mean_std, num_workers, offline, train, buffer_path=None):
+    def __init__(self, experiences, batch_size, num_workers, offline, train, path=None):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -33,23 +33,32 @@ class ClassifyEnv:
             random.seed(seed)
 
         self.num_classes = len(experiences.classes)
-        self.mean_std = mean_std
         self.action_repeat = 1
 
         self.batches = torch.utils.data.DataLoader(dataset=experiences,
                                                    batch_size=batch_size,
-                                                   shuffle=False,
+                                                   shuffle=train,
                                                    num_workers=num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
 
         self._batches = iter(self.batches)
 
+        buffer_path = Path(path + '_Buffer')
+
         if train:
             if offline and not buffer_path.exists():
                 self.create_replay(buffer_path)
         else:
             self.evaluate_episodes = len(self)
+
+        norm_path = glob.glob(path + '_Normalization_*')
+
+        if len(norm_path):
+            mean, std = map(json.loads, norm_path[0].split('_')[-2:])
+            self.mean_std = [mean, std]
+        else:
+            self.compute_norm(path)
 
     @property
     def batch(self):
@@ -81,6 +90,25 @@ class ClassifyEnv:
                 buffer.seek(0)
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
+
+    def compute_norm(self, path):
+        cnt = 0
+        fst_moment, snd_moment = None, None
+
+        for x, _ in tqdm(self.batches, 'Computing mean and stddev for normalization. '
+                                       'This only has to be done once'):
+            b, c, h, w = x.shape
+            fst_moment = torch.empty(c) if fst_moment is None else fst_moment
+            snd_moment = torch.empty(c) if snd_moment is None else snd_moment
+            nb_pixels = b * h * w
+            sum_ = torch.sum(x, dim=[0, 2, 3])
+            sum_of_square = torch.sum(x ** 2, dim=[0, 2, 3])
+            fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
+            snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
+            cnt += nb_pixels
+
+        self.mean_std = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
+        open(path + f'_Normalization_{self.mean_std[0]}_{self.mean_std[1]}', 'w')  # Save norm values for future reuse
 
     def reset_format(self, x, y):
         x, y = [np.array(b, dtype='float32') for b in (x, y)]
@@ -170,44 +198,10 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
                               download=True,
                               transform=transform)
 
-    create_replay_path = Path(path + '_Buffer')
-
-    # Compute noormalization constants
-    norm_mean_std = glob.glob(path + '_Normalization_*')
-    if len(norm_mean_std):
-        mean, std = map(json.loads, norm_mean_std[0].split('_')[-2:])
-    else:
-        dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
-        mean, std = mean_std(loader)
-        open(path + f'_Normalization_{mean}_{std}', 'w')  # Save norm values for future reuse
-
-    env = ClassifyEnv(experiences, batch_size, [mean, std], num_workers, offline, train, create_replay_path)
+    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
                                    add_remove_batch_dim=False)  # Disables the modification of batch dims
 
     return env
-
-
-# Compute normalization constants  TODO move to / merge with replay creation
-def mean_std(loader):
-    cnt = 0
-    fst_moment, snd_moment = None, None
-
-    for images, _ in tqdm(loader, 'Computing mean and stddev for normalization. '
-                                  'This only has to be done once'):
-        b, c, h, w = images.shape
-        fst_moment = torch.empty(c) if fst_moment is None else fst_moment
-        snd_moment = torch.empty(c) if snd_moment is None else snd_moment
-        nb_pixels = b * h * w
-        sum_ = torch.sum(images, dim=[0, 2, 3])
-        sum_of_square = torch.sum(images ** 2,
-                                  dim=[0, 2, 3])
-        fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
-        snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
-        cnt += nb_pixels
-
-    mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
-    return mean.tolist(), std.tolist()
