@@ -66,7 +66,6 @@ def default(x, value):
 
 # Initializes model weights according to common distributions
 def weight_init(m):
-    print(m)
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
         if hasattr(m.bias, 'data'):
@@ -79,6 +78,7 @@ def weight_init(m):
     elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
         nn.init.constant_(m.weight, 1)
         nn.init.constant_(m.bias, 0)
+        print('True')
 
 
 # Copies parameters from one model to another, with optional EMA weighing (
