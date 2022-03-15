@@ -285,9 +285,6 @@ class Experiences(IterableDataset):
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
 
-        # No next_obs for classification
-        next_obs[~np.isnan(label)] = np.NaN
-
         # Trajectory
         traj_o = episode['observation'][idx:idx + self.nstep + 1]
         traj_a = episode['action'][idx + 1:idx + self.nstep + 1]

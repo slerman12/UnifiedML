@@ -82,29 +82,21 @@ class CNNEncoder(nn.Module):
                    for c in context]
         obs = torch.cat([obs, *context], 1)
 
-        # Save computation by only running Eyes on non-nan inputs
-        exist = ~torch.isnan(obs[:, 0, 0, 0])
-        sight = torch.zeros([obs.shape[0], *self.feature_shape], device=obs.device)
-        obs = obs[exist]
-
         # CNN encode
-        if len(obs) > 0:
-            h = self.Eyes(obs)
+        h = self.Eyes(obs)
 
-            assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
-                                                              f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
-
-            sight[exist] = h
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
+                                                          f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
         # Restore leading dims
-        sight = sight.view(*obs_shape[:-3], *sight.shape[-3:])
+        h = h.view(*obs_shape[:-3], *h.shape[-3:])
 
         if flatten:
-            sight = self.pool(sight)
-            assert sight.shape[-1] == self.repr_dim or tuple(sight.shape[-3:]) == self.repr_shape, \
+            h = self.pool(h)
+            assert h.shape[-1] == self.repr_dim or tuple(h.shape[-3:]) == self.repr_shape, \
                 f'pre-computed repr_dim/repr_shape does not match output dim ' \
-                f'{self.repr_dim}≠{sight.shape[-1]}, {self.repr_shape}≠{tuple(sight.shape[-3:])}'
-        return sight
+                f'{self.repr_dim}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
+        return h
 
 
 class ResidualBlockEncoder(CNNEncoder):
