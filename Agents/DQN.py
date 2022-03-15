@@ -117,14 +117,14 @@ class DQNAgent(torch.nn.Module):
 
         # "Envision" / "Perceive"
 
-        # Augment
+        # Augment and encode
         obs = self.aug(obs)
-        next_obs = self.aug(next_obs) if replay.nstep > 0 else next_obs
-
-        # Encode
         obs = self.encoder(obs)
-        with torch.no_grad():
-            next_obs = self.encoder(next_obs) if replay.nstep > 0 else next_obs
+
+        if self.RL:
+            with torch.no_grad():
+                next_obs = self.aug(next_obs)
+                next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
