@@ -6,7 +6,7 @@ defaults:
 # Agent
 obs_shape: ???  # To be specified later
 action_shape: ??? # To be specified later
-mean_std: null
+mean_stddev: null
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
