@@ -180,8 +180,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
         dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
         loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
         mean, std = mean_std(loader)
-        open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')  # Save norm values for future reuse
-    mean, std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
+        open(path + f'_Normalization_{mean}_{std}', 'w')  # Save norm values for future reuse
 
     env = ClassifyEnv(experiences, batch_size, (mean, std), num_workers, offline, train, create_replay_path)
 
@@ -192,13 +191,13 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     return env
 
 
-# Compute normalization constants
+# Compute normalization constants  TODO move to / merge with replay creation
 def mean_std(loader):
     cnt = 0
     fst_moment, snd_moment = None, None
 
     for images, _ in tqdm(loader, 'Computing mean and stddev for normalization. '
-                                  'This only has to be done once for a dataset.'):
+                                  'This only has to be done once'):
         b, c, h, w = images.shape
         fst_moment = torch.empty(c) if fst_moment is None else fst_moment
         snd_moment = torch.empty(c) if snd_moment is None else snd_moment
@@ -211,4 +210,4 @@ def mean_std(loader):
         cnt += nb_pixels
 
     mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
-    return mean, std
+    return mean.tolist(), std.tolist()
