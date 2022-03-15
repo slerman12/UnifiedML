@@ -170,16 +170,18 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
                               download=True,
                               transform=transform)
 
-    # Normalization constants
+    create_replay_path = Path(path + '_Buffer')
+
+    # Compute noormalization constants
     norm_mean_std = glob.glob(path + '_Normalization_*')
     if len(norm_mean_std):
         mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
     else:
-        mean, std = data_mean_std(dataset, path, transform, num_workers)
+        dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
+        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
+        mean, std = mean_std(loader)
         open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')  # Save norm values for future reuse
     mean, std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
-
-    create_replay_path = Path(path + '_Buffer')
 
     env = ClassifyEnv(experiences, batch_size, (mean, std), num_workers, offline, train, create_replay_path)
 
@@ -190,21 +192,23 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     return env
 
 
-# Compute normalization values
-def data_mean_std(dataset, path, transform, num_workers):
-    dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, num_workers=num_workers)
-    start = True
-    for inputs, targets in tqdm(dataloader, 'Computing mean and stddev for normalization. '
-                                            'This only has to be done once for a dataset.'):
-        if start:
-            channels = inputs.shape[-3]
-            mean = torch.zeros(channels)
-            std = torch.zeros(channels)
-            start = False
-        for i in range(channels):
-            mean[i] += inputs[:, i, :, :].mean()
-            std[i] += inputs[:, i, :, :].std()
-    mean.div_(len(dataset))
-    std.div_(len(dataset))
+# Compute normalization constants
+def mean_std(loader):
+    cnt = 0
+    fst_moment, snd_moment = None, None
+
+    for images, _ in tqdm(loader, 'Computing mean and stddev for normalization. '
+                                  'This only has to be done once for a dataset.'):
+        b, c, h, w = images.shape
+        fst_moment = torch.empty(c) if fst_moment is None else fst_moment
+        snd_moment = torch.empty(c) if snd_moment is None else snd_moment
+        nb_pixels = b * h * w
+        sum_ = torch.sum(images, dim=[0, 2, 3])
+        sum_of_square = torch.sum(images ** 2,
+                                  dim=[0, 2, 3])
+        fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
+        snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
+        cnt += nb_pixels
+
+    mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
     return mean, std

@@ -87,7 +87,7 @@ class CNNEncoder(nn.Module):
 
         # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match output CNN shape' \
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
                                                           f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
         if flatten:
