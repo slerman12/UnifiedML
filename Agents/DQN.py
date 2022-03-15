@@ -121,9 +121,6 @@ class DQNAgent(torch.nn.Module):
         obs = self.aug(obs)
         next_obs = self.aug(next_obs)
 
-        if torch.isnan(obs).any():
-            print('True')
-
         # Encode
         obs = self.encoder(obs)
         with torch.no_grad():
