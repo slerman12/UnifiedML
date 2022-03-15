@@ -48,6 +48,8 @@ class CNNEncoder(nn.Module):
     def init(self, lr=None, weight_decay=0, ema_tau=None):
         # Initialize weights
         self.apply(Utils.weight_init)
+        for m in self:
+            print(m)
 
         # Optimizer
         if lr is not None:
