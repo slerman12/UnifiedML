@@ -72,7 +72,7 @@ class DQNAgent(torch.nn.Module):
 
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
-            obs = torch.as_tensor(obs, device=self.device, dtype=torch.float)  # TODO why did i have to change dtypes
+            obs = torch.as_tensor(obs, device=self.device)  # TODO why did i have to change dtypes
 
             # EMA targets
             encoder = self.encoder.ema if self.ema else self.encoder

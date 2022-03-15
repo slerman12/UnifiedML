@@ -80,13 +80,11 @@ class ExperienceReplay:
 
         # Data normalization
 
-        norm = None
-
         # Generate currently doesn't support normalization, it requires data to be in Actor's output range [-1, 1]
-        if not generate:
-            # Use saved normalization values for the task if they exist
-            if len(glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')):
-                norm = Normalize(task=task)
+        # Norm values are loaded from saved classification data; only applies to classification
+        norm = Normalize(task=task) \
+            if not generate and len(glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')) \
+            else None
 
         # Parallelized experience loading
 
@@ -97,7 +95,7 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       augs=transform,
+                                       transform=transform,
                                        norm=norm)
 
         # Batch loading
@@ -202,7 +200,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, augs=None, norm=None):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None, norm=None):
 
         # Dataset construction via parallel workers
 
@@ -224,7 +222,7 @@ class Experiences(IterableDataset):
         self.nstep = nstep
         self.discount = discount
 
-        self.augs = augs
+        self.transform = transform
         self.norm = norm
 
     def load_episode(self, episode_name):
@@ -315,8 +313,8 @@ class Experiences(IterableDataset):
                 discount *= episode['discount'][idx + i] * self.discount
 
         # Augment
-        if self.augs is not None:
-            obs = self.augs(obs)
+        if self.transform is not None:
+            obs = self.transform(obs)
 
         # Normalize
         if self.norm is not None:
