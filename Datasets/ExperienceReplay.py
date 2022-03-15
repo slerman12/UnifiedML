@@ -78,14 +78,6 @@ class ExperienceReplay:
             # Accepts a dict of torchvision transforms and args
             transform = transforms.Compose([getattr(transforms, transform)(**transform[t]) for t in transform])
 
-        # Data normalization
-
-        # Generate currently doesn't support normalization, it requires data to be in Actor's output range [-1, 1]
-        # Norm values are loaded from saved classification data; only applies to classification
-        norm = Normalize(task=task) \
-            if not generate and len(glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Normalization_*')) \
-            else None
-
         # Parallelized experience loading
 
         self.experiences = Experiences(path=self.path,
@@ -95,8 +87,7 @@ class ExperienceReplay:
                                        save=save,
                                        nstep=nstep,
                                        discount=discount,
-                                       transform=transform,
-                                       norm=norm)
+                                       transform=transform)
 
         # Batch loading
 
@@ -200,7 +191,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None, norm=None):
+    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None):
 
         # Dataset construction via parallel workers
 
@@ -223,7 +214,6 @@ class Experiences(IterableDataset):
         self.discount = discount
 
         self.transform = transform
-        self.norm = norm
 
     def load_episode(self, episode_name):
         try:
@@ -312,13 +302,9 @@ class Experiences(IterableDataset):
                 reward += discount * step_reward
                 discount *= episode['discount'][idx + i] * self.discount
 
-        # Augment
+        # Transform
         if self.transform is not None:
             obs = self.transform(obs)
-
-        # Normalize
-        if self.norm is not None:
-            obs, next_obs, traj_o = self.norm(obs), self.norm(next_obs), self.norm(traj_o)
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 

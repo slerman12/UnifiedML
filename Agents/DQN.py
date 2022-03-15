@@ -25,7 +25,7 @@ class DQNAgent(torch.nn.Module):
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
-                 lr, weight_decay, ema_tau, ema,  # Optimization
+                 lr, weight_decay, mean_std, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  num_actions=2, num_critics=2):  # DQN
@@ -47,7 +47,7 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled by actor
 
         self.encoder = Utils.Randn(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
+            else CNNEncoder(obs_shape, mean_std=mean_std, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
                             ema_tau=ema_tau if ema else None, parallel=parallel)
 
         repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
@@ -111,7 +111,7 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action = obs.flatten(-3) * 2 - 1
+            action = obs.flatten(-3) * (1 / 127.5 if (obs > 1).any() else 2) - 1
             reward[:] = 1
             next_obs[:] = label[:] = float('nan')
 
