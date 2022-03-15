@@ -50,13 +50,10 @@ class MiniResNet(nn.Module):
         in_channels = input_shape[0]
 
         if dims is None:
-            # dims = [64, 64, 128, 256, 512]  # ResNet
             dims = [32, 32]  # MiniResNet
         self.dims = dims
 
         if depths is None:
-            # depths = [2, 2, 2, 2]  # ResNet-18
-            # depths = [3, 4, 6, 3]  # ResNet-50
             depths = [3]  # MiniResNet
         self.depths = depths
 
@@ -69,7 +66,7 @@ class MiniResNet(nn.Module):
                                    nn.ReLU(inplace=True),
                                    nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
-        # CNN ResNet-ish
+        # CNN ResNet
         self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1], kernel_size,
                                                                     1 + (stride - 1) * (i > 0 and j == 0))
                                                       for j in range(depth)])
