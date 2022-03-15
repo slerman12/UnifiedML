@@ -175,14 +175,14 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     # Compute noormalization constants
     norm_mean_std = glob.glob(path + '_Normalization_*')
     if len(norm_mean_std):
-        mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
+        mean, std = map(json.loads, norm_mean_std[0].split('_')[-2:])
     else:
         dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
         loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
         mean, std = mean_std(loader)
         open(path + f'_Normalization_{mean}_{std}', 'w')  # Save norm values for future reuse
 
-    env = ClassifyEnv(experiences, batch_size, (mean, std), num_workers, offline, train, create_replay_path)
+    env = ClassifyEnv(experiences, batch_size, [mean, std], num_workers, offline, train, create_replay_path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
