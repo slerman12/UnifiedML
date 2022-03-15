@@ -61,7 +61,8 @@ class MiniResNet(nn.Module):
             kernel_size += 1
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=7, stride=2, padding=3, bias=False),
+                                             kernel_size=3, padding=1, bias=False),
+                                             # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True),
                                    nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
@@ -86,7 +87,7 @@ class MiniResNet(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                   % math.prod(self.input_shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
