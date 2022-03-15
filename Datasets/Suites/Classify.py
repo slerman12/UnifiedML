@@ -25,7 +25,7 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, mean_std, num_workers, offline, train, buffer_path=None):
+    def __init__(self, experiences, batch_size, mean_stddev, num_workers, offline, train, buffer_path=None):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -33,7 +33,7 @@ class ClassifyEnv:
             random.seed(seed)
 
         self.num_classes = len(experiences.classes)
-        self.mean_std = mean_std
+        self.mean_stddev = mean_stddev
         self.action_repeat = 1
 
         self.batches = torch.utils.data.DataLoader(dataset=experiences,
@@ -175,14 +175,14 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     # Compute noormalization constants
     norm_mean_std = glob.glob(path + '_Normalization_*')
     if len(norm_mean_std):
-        mean, std = map(json.loads, norm_mean_std[0].split('_')[-2:])
+        mean, stddev = map(json.loads, norm_mean_std[0].split('_')[-2:])
     else:
         dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
         loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
-        mean, std = mean_std(loader)
-        open(path + f'_Normalization_{mean}_{std}', 'w')  # Save norm values for future reuse
+        mean, stddev = mean_stddev(loader)
+        open(path + f'_Normalization_{mean}_{stddev}', 'w')  # Save norm values for future reuse
 
-    env = ClassifyEnv(experiences, batch_size, [mean, std], num_workers, offline, train, create_replay_path)
+    env = ClassifyEnv(experiences, batch_size, [mean, stddev], num_workers, offline, train, create_replay_path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
@@ -192,7 +192,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
 
 # Compute normalization constants  TODO move to / merge with replay creation
-def mean_std(loader):
+def mean_stddev(loader):
     cnt = 0
     fst_moment, snd_moment = None, None
 
@@ -209,5 +209,5 @@ def mean_std(loader):
         snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
         cnt += nb_pixels
 
-    mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
-    return mean.tolist(), std.tolist()
+    mean, stddev = fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
+    return mean.tolist(), stddev.tolist()

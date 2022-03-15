@@ -19,7 +19,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, mean_std=None,
+    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, mean_stddev=None,
                  recipe=None, lr=None, weight_decay=0, ema_tau=None, parallel=False, device='cuda'):
 
         super().__init__()
@@ -27,8 +27,8 @@ class CNNEncoder(nn.Module):
         assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
 
         self.obs_shape = obs_shape
-        self.mean_std = (torch.full([2, 1, 1, 1], 127.5) if mean_std is None
-                         else torch.tensor(mean_std).view(2, -1, 1, 1)).to(device)
+        self.mean_stddev = (torch.full([2, 1, 1, 1], 127.5) if mean_stddev is None
+                            else torch.tensor(mean_stddev).view(2, -1, 1, 1)).to(device)
 
         # CNN
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
@@ -76,7 +76,7 @@ class CNNEncoder(nn.Module):
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
         # Normalizes pixels
-        obs = (obs - self.mean_std[0]) / self.mean_std[1]
+        obs = (obs - self.mean_stddev[0]) / self.mean_stddev[1]
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
