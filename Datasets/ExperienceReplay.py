@@ -207,8 +207,7 @@ class Experiences(IterableDataset):
 
         # Data transform based on a dict of torchvision transforms and args
         if transform is not None:
-            self.transform = transforms.Compose([transforms.ToTensor()] +
-                                                [getattr(transforms, t)(**transform[t]) for t in transform])
+            self.transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
     def load_episode(self, episode_name):
         try:
@@ -299,7 +298,7 @@ class Experiences(IterableDataset):
 
         # Transform
         if hasattr(self, 'transform'):
-            obs = self.transform(obs / 255) * 255
+            obs = self.transform(torch.as_tensor(obs) / 255) * 255
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
