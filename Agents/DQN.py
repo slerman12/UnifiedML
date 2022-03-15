@@ -28,7 +28,7 @@ class DQNAgent(torch.nn.Module):
                  lr, weight_decay, mean_std, ema_tau, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actions=10, num_critics=2):  # DQN
+                 num_actions=5, num_critics=2):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
@@ -82,7 +82,7 @@ class DQNAgent(torch.nn.Module):
             obs = encoder(obs)
 
             actions = None if self.discrete \
-                else actor(obs, self.step).sample() if self.training \
+                else actor(obs, self.step).sample(self.num_actions) if self.training \
                 else actor(obs, self.step).mean
 
             # DQN action selector is based on critic
