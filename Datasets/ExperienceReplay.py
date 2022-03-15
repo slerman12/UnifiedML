@@ -70,6 +70,12 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
 
+        # Data transform
+
+        if transform is not None:
+            # Can pass in a dict of torchvision transform names and args
+            transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
+
         # Parallelized experience loading
 
         self.experiences = Experiences(path=self.path,
@@ -205,9 +211,7 @@ class Experiences(IterableDataset):
         self.nstep = nstep
         self.discount = discount
 
-        # Data transform based on a dict of torchvision transforms and args
-        if transform is not None:
-            self.transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
+        self.transform = transform
 
     def load_episode(self, episode_name):
         try:
@@ -297,7 +301,7 @@ class Experiences(IterableDataset):
                 discount *= episode['discount'][idx + i] * self.discount
 
         # Transform
-        if hasattr(self, 'transform'):
+        if self.transform is not None:
             obs = self.transform(torch.as_tensor(obs) / 255) * 255
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
