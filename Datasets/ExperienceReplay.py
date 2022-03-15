@@ -20,8 +20,6 @@ from torch.utils.data import IterableDataset
 
 from torchvision.transforms import transforms
 
-from Utils import Normalize
-
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,

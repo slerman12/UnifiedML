@@ -77,57 +77,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-def data_mean_std(dataset):
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
-    start = True
-    for inputs, targets in dataloader:
-        if start:
-            channels = inputs.shape[-3]
-            mean = torch.zeros(channels)
-            std = torch.zeros(channels)
-            start = False
-        for i in range(channels):
-            mean[i] += inputs[:, i, :, :].mean()
-            std[i] += inputs[:, i, :, :].std()
-    mean.div_(len(dataset))
-    std.div_(len(dataset))
-    return mean, std
-
-
-# Normalizes classify data to mean, stddev; automatically computes mean, stddev for task and saves them
-class Normalize(nn.Module):
-    def __init__(self, mean=None, std=None, task=None):
-        super().__init__()
-
-        if mean is None and std is None and task is not None:
-            path = f'./Datasets/ReplayBuffer/Classify/{task}'
-            dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
-
-            norm_mean_std = glob.glob(path + '_Normalization_*')
-            if len(norm_mean_std):
-                mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
-            else:
-                with warnings.catch_warnings():
-                    warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-                    experiences = dataset(root=path + "_Train", download=True, transform=transforms.ToTensor())
-
-                print('Computing mean and stddev for normalization. This only has to be done once for a dataset.')
-                mean, std = data_mean_std(experiences)
-                print('Done.')
-
-                # Save norm values for future reuse
-                open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')
-
-        self.mean, self.std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
-
-    def forward(self, x):
-        if isinstance(x, np.ndarray):
-            x = torch.from_numpy(x)
-        return (x - self.mean) / self.std
-
-
 # Copies parameters from one model to another, with optional EMA weighing (
-# Alternatively: https://pytorch.org/docs/stable/optim.html#stochastic-weight-averaging
 def param_copy(net, target_net, ema_tau=1):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(ema_tau * param.data +

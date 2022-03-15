@@ -3,7 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import datetime
+import glob
 import io
+import json
 import random
 import warnings
 from pathlib import Path
@@ -21,11 +23,9 @@ from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrappe
 
 from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
-from Utils import Normalize
-
 
 class ClassifyEnv:
-    def __init__(self, experiences, batch_size, num_workers, offline, train, buffer_path=None):
+    def __init__(self, experiences, batch_size, mean_std, num_workers, offline, train, buffer_path=None):
 
         def worker_init_fn(worker_id):
             seed = np.random.get_state()[1][0] + worker_id
@@ -33,6 +33,7 @@ class ClassifyEnv:
             random.seed(seed)
 
         self.num_classes = len(experiences.classes)
+        self.mean_std = mean_std
         self.action_repeat = 1
 
         self.batches = torch.utils.data.DataLoader(dataset=experiences,
@@ -159,23 +160,51 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
         def __call__(self, sample):
             return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]
 
+    transform = Transform()
+
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
         experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
                               download=True,
-                              transform=Transform())
+                              transform=transform)
 
-    norm = Normalize(task=task)  # Automatically saves normalization values for dataset, doesn't apply them
+    # Normalization constants
+    norm_mean_std = glob.glob(path + '_Normalization_*')
+    if len(norm_mean_std):
+        mean, std = map(torch.tensor, map(json.loads, norm_mean_std[0].split('_')[-2:]))
+    else:
+        mean, std = data_mean_std(dataset, path, transform, num_workers)
+        open(path + f'_Normalization_{mean.tolist()}_{std.tolist()}', 'w')  # Save norm values for future reuse
+    mean, std = mean.view(-1, 1, 1), std.view(-1, 1, 1)
 
     create_replay_path = Path(path + '_Buffer')
 
-    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, create_replay_path)
+    env = ClassifyEnv(experiences, batch_size, (mean, std), num_workers, offline, train, create_replay_path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
-                                   add_remove_batch_dim=False,  # Disables the modification of batch dims
-                                   mean_std=(norm.mean, norm.std))
+                                   add_remove_batch_dim=False)  # Disables the modification of batch dims
 
     return env
+
+
+# Compute normalization values
+def data_mean_std(dataset, path, transform, num_workers):
+    dataset = dataset(root=path + "_Train", train=True, download=True, transform=transform)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, num_workers=num_workers)
+    start = True
+    for inputs, targets in tqdm(dataloader, 'Computing mean and stddev for normalization. '
+                                            'This only has to be done once for a dataset.'):
+        if start:
+            channels = inputs.shape[-3]
+            mean = torch.zeros(channels)
+            std = torch.zeros(channels)
+            start = False
+        for i in range(channels):
+            mean[i] += inputs[:, i, :, :].mean()
+            std[i] += inputs[:, i, :, :].std()
+    mean.div_(len(dataset))
+    std.div_(len(dataset))
+    return mean, std

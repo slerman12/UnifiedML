@@ -236,14 +236,12 @@ class AttrDict(dict):
 
 # Unifies experience/env representations
 class AugmentAttributesWrapper(dm_env.Environment):
-    def __init__(self, env, add_remove_batch_dim=True, mean_std=None):
+    def __init__(self, env, add_remove_batch_dim=True):
         self.env = env
 
         self.time_step = None
 
         self.add_remove_batch_dim = add_remove_batch_dim
-
-        self.mean_std = mean_std
 
         if not hasattr(self, 'depleted'):
             self.depleted = False
