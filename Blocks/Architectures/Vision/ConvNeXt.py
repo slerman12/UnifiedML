@@ -45,13 +45,11 @@ class ConvNeXt(nn.Module):
         channels_in = input_shape[0]
 
         if dims is None:
-            # dims = [96, 192, 384, 768]  # TinyConvNeXt
             dims = [96, 192, 32]
 
         dims = [channels_in] + dims
 
         if depths is None:
-            # depths = [3, 3, 9, 3]  # TinyConvNeXt
             depths = [1, 1, 3]
 
         self.trunk = nn.Identity()
