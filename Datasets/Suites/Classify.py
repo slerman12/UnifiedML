@@ -57,7 +57,7 @@ class ClassifyEnv:
         if len(norm_path):
             mean, std = map(json.loads, norm_path[0].split('_')[-2:])
             self.mean_std = [mean, std]
-        else:
+        elif train:
             self.compute_norm(path)
 
     @property
@@ -189,15 +189,13 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
         def __call__(self, sample):
             return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]
 
-    transform = Transform()
-
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
         experiences = dataset(root=path + "_Train" if train else "_Eval",
                               train=train,
                               download=True,
-                              transform=transform)
+                              transform=Transform())
 
     env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path)
 
