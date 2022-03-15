@@ -78,6 +78,8 @@ class ExperienceReplay:
 
         # Parallelized experience loading
 
+        self.nstep = nstep
+
         self.experiences = Experiences(path=self.path,
                                        capacity=np.inf if save else capacity // max(1, num_workers),
                                        num_workers=min(num_workers, os.cpu_count()),
@@ -274,7 +276,7 @@ class Experiences(IterableDataset):
     # N-step cumulative discounted rewards
     def process(self, episode):
         episode_len = len(episode['observation'])
-        idx = np.random.randint(episode_len - self.nstep)
+        idx = np.random.randint(episode_len - max(1, self.nstep))
 
         # Transition
         obs = episode['observation'][idx]
@@ -286,10 +288,12 @@ class Experiences(IterableDataset):
         step = episode['step'][idx]
 
         # Trajectory
-        traj_o = episode['observation'][idx:idx + self.nstep + 1]
-        traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
-        traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
-        traj_l = episode['label'][idx:idx + self.nstep + 1]
+        traj_o = traj_a = traj_r = traj_l = np.NaN
+        if self.nstep:
+            traj_o = episode['observation'][idx:idx + self.nstep + 1]
+            traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
+            traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
+            traj_l = episode['label'][idx:idx + self.nstep + 1]
 
         # Compute cumulative discounted reward
         for i in range(1, self.nstep + 1):
