@@ -84,7 +84,7 @@ class CNNEncoder(nn.Module):
 
         # Save computation by only running Eyes on non-nans
         exist = ~torch.isnan(obs[:, 0, 0, 0])
-        sight = torch.full([obs.shape[0]] + self.feature_shape, float('nan'), device=obs.device)
+        sight = torch.full([obs.shape[0], *self.feature_shape], float('nan'), device=obs.device)
 
         # CNN encode
         h = self.Eyes(obs[exist])
