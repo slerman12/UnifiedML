@@ -117,6 +117,9 @@ class DQNAgent(torch.nn.Module):
 
         # "Envision" / "Perceive"
 
+        if torch.isnan(obs).any():
+            print('True')
+
         # Augment
         obs = self.aug(obs)
         next_obs = self.aug(next_obs)
