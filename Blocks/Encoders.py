@@ -19,7 +19,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False,
+    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, pixels=True,
                  recipe=None, lr=None, weight_decay=0, ema_tau=None, parallel=False):
 
         super().__init__()
@@ -27,6 +27,7 @@ class CNNEncoder(nn.Module):
         assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
 
         self.obs_shape = obs_shape
+        self.pixels = pixels
 
         # CNN
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
@@ -72,6 +73,10 @@ class CNNEncoder(nn.Module):
         obs_shape = obs.shape  # Preserve leading dims
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
+
+        # Normalizes pixels
+        if self.pixels:
+            obs = obs / 127.5 - 1
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
