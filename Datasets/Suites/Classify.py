@@ -105,6 +105,7 @@ class ClassifyEnv:
             sum_of_square = torch.sum(x ** 2, dim=[0, 2, 3])
             fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
             snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
+
             cnt += nb_pixels
 
         self.mean_std = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
