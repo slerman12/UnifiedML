@@ -137,7 +137,7 @@ class FrameStackWrapper(dm_env.Environment):
             pixels_shape = pixels_shape[1:]
         self._obs_spec = specs.BoundedArray(shape=np.concatenate(
             [[pixels_shape[2] * num_frames], pixels_shape[:2]], axis=0),
-            dtype=np.float32,
+            dtype=np.uint8,
             minimum=0,
             maximum=255,
             name='observation')
@@ -280,9 +280,9 @@ class AugmentAttributesWrapper(dm_env.Environment):
         if self.add_remove_batch_dim:
             # Some environments like DMC/Atari return observations without batch dims
             specs['observation'] = np.expand_dims(specs['observation'], axis=0)
-        if self.divide_pixels_by_255:
-            # Environments like DMC/Atari return observations in range [0, 255]
-            specs['observation'] = (specs['observation'] / 255).astype('float32')
+        # if self.divide_pixels_by_255:
+        #     # Environments like DMC/Atari return observations in range [0, 255]
+        #     specs['observation'] = specs['observation'] / 255
         # Extend time step
         return ExtendedTimeStep(step_type=time_step.step_type, **specs)
 
