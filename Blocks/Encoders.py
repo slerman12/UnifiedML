@@ -28,7 +28,7 @@ class CNNEncoder(nn.Module):
 
         self.obs_shape = obs_shape
         self.mean_std = (torch.full([2, 1, 1, 1], 127.5) if mean_std is None
-                         else torch.tensor(mean_std).view(-1, -1, 1, 1)).to(device)
+                         else torch.tensor(mean_std).view(2, -1, 1, 1)).to(device)
 
         # CNN
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
