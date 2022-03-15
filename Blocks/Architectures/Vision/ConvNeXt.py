@@ -110,4 +110,4 @@ class ConvNeXt(nn.Module):
 
 class ConvNeXtTiny(ConvNeXt):
     def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, [channels_in, 96, 192, 384, 768], [3, 3, 9, 3], output_dim)
+        super().__init__(input_shape, [96, 192, 384, 768], [3, 3, 9, 3], output_dim)
