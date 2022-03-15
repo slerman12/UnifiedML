@@ -74,6 +74,9 @@ class CNNEncoder(nn.Module):
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
+        if torch.isnan(obs).any():
+            print('True')
+
         # Normalizes pixels
         obs = (obs - self.mean_std[0]) / self.mean_std[1]
 
@@ -81,9 +84,6 @@ class CNNEncoder(nn.Module):
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
                    for c in context]
         obs = torch.cat([obs, *context], 1)
-
-        if torch.isnan(obs).any():
-            print('True')
 
         # CNN encode
         h = self.Eyes(obs)
