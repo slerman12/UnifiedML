@@ -74,6 +74,8 @@ class ExperienceReplay:
 
         if transform is not None:
             # Can accept a dict of torchvision transforms and args
+            print(type(transform))
+            print(transform)
             transform = transforms.Compose([transforms.ToTensor()] +
                                            [getattr(transforms, transform)(**transform[t]) for t in transform])
 
