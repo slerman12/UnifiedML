@@ -132,44 +132,40 @@ plotting:
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 recipes:
-  Encoder:
-    Eyes: null
-    pool: null
-  Actor:
-    trunk: null
-    Pi_head: null
-  Critic:
-    trunk: null
-    Q_head: null
-  Aug: null
   encoder:
-    eyes:
-      _target_: ${recipes.Encoder.Eyes}
-      input_shape: ${obs_shape}
-      output_dim: null
+    eyes: ${eyes}
     pool:
-      _target_: ${recipes.Encoder.pool}
+      _target_: null
       input_shape: null
       output_dim: 1024
   actor:
     trunk:
-      _target_: ${recipes.Actor.trunk}
+      _target_: null
       input_shape: null
       output_dim: ${trunk_dim}
     pi_head:
-      _target_: ${recipes.Actor.Pi_head}
+      _target_: null
       input_shape:
         - ${trunk_dim}
   critic:
     trunk:
-      _target_: ${recipes.Critic.trunk}
+      _target_: null
       input_shape: null
       output_dim: ${trunk_dim}
     q_head:
-      _target_: ${recipes.Critic.Q_head}
+      _target_: null
       input_shape: null
   aug:
-    _target_: ${recipes.Aug}
+    _target_: ${Aug}
+
+# Recipe shorthands
+Aug: null  # Shorthand for recipes.aug._target_
+Eyes: null  # Shorthand for recipes.encoder.eyes._target_
+# Shorthand for recipes.encoder.eyes
+eyes:
+  _target_: ${Eyes}
+  input_shape: ${obs_shape}
+  output_dim: null
 
 hydra:
   run:
