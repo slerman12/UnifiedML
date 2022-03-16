@@ -72,13 +72,9 @@ def weight_init(m):
 
 # Copies parameters from one model to another, with optional EMA weighing
 def param_copy(net, target_net, ema_tau=1):
-    copied = set()
-    for m, target_m in zip(net.modules(), target_net.modules()):
-        if type(m) != nn.BatchNorm2d:  # Batch norm params seem to mess up EMA
-            for (name, param), target_param in zip(m.named_parameters(), target_m.parameters()):
-                if name not in copied:
-                    target_param.data.copy_(ema_tau * param.data + (1 - ema_tau) * target_param.data)
-                    copied.update(name)
+    for param, target_param in zip(net.parameters(), target_net.parameters()):
+        target_param.data.copy_(ema_tau * param.data +
+                                (1 - ema_tau) * target_param.data)
 
 
 # Compute the output shape of a CNN layer
