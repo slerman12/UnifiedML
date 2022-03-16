@@ -48,7 +48,7 @@ class EnsembleGaussianActor(nn.Module):
 
         # Optimizer
         if lr is not None:
-            self.optim = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
         if ema_tau is not None:

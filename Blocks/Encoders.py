@@ -51,7 +51,7 @@ class CNNEncoder(nn.Module):
 
         # Optimizer
         if lr is not None:
-            self.optim = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # Dimensions
         self.feature_shape = self._feature_shape()  # Feature map shape

@@ -124,6 +124,7 @@ class DQNAgent(torch.nn.Module):
 
         if replay.nstep > 0:
             with torch.no_grad():
+                # next_obs = self.encoder(next_obs)
                 next_obs = self.encoder(self.aug(next_obs))
 
         # "Journal teachings"
