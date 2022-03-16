@@ -2,8 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import glob
-import json
 import math
 import random
 import re
@@ -16,11 +14,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
-
-import torchvision
-from torchvision.transforms import transforms
-
-from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -79,6 +72,8 @@ def weight_init(m):
 
 # Copies parameters from one model to another, with optional EMA weighing (
 def param_copy(net, target_net, ema_tau=1):
+    for name, param in net.named_parameters():
+        print(name)
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(ema_tau * param.data +
                                 (1 - ema_tau) * target_param.data)
@@ -127,34 +122,6 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
     feature_shape = (channels, height, width)  # TODO should probably do (channels, width, height) universally
 
     return feature_shape
-
-
-# Broadcasts a CNN's inputs and channel-wise-context to a desired input shape, preserving leading dims
-class CNNInputBroadcast(nn.Module):
-    def __init__(self, cnn, desired_input_shape):
-        super().__init__()
-
-        self.CNN = cnn
-        self.shape = desired_input_shape
-
-    def forward(self, *x):
-        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        x = torch.cat(
-            [context.view(*context.shape[:-3], -1, *self.shape[1:]) if len(context.shape) > 3
-             else context.view(*context.shape[:-1], -1, *self.shape[1:]) if context.shape[-1]
-                                                                            % math.prod(self.shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.shape[1:])
-             for context in x if context.nelement() > 0], dim=-3)
-        # Conserve leading dims
-        lead_shape = x.shape[:-3]
-        # Operate on last 3 dims
-        x = x.view(-1, *x.shape[-3:])
-
-        x = self.CNN(x)
-
-        # Restore leading dims
-        out = x.view(*lead_shape, *x.shape[1:])
-        return out
 
 
 # "Ensembles" (stacks) multiple modules' outputs

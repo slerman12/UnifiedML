@@ -239,13 +239,13 @@ One can also optionally pass in custom architectures such as those defined in ``
 Atari with ViT:
 
 ```
-python Run.py recipes.Encoder.Eyes=Blocks.Architectures.ViT 
+python Run.py recipes.Eyes=Blocks.Architectures.ViT 
 ```
 
 ResNet18 on CIFAR-10:
 
 ```
-python Run.py task=classify/cifar10 recipes.Encoder.Eyes=Blocks.Architectures.ResNet18 
+python Run.py task=classify/cifar10 recipes.Eyes=Blocks.Architectures.ResNet18 
 ```
 
 <details>
@@ -255,19 +255,19 @@ python Run.py task=classify/cifar10 recipes.Encoder.Eyes=Blocks.Architectures.Re
 To train, for example MNIST, using ConvNeXt as the Encoder:
 
 ```
-python Run.py task=classify/mnist RL=false recipes.Encoder.Eyes=Blocks.Architectures.ConvNeXt
+python Run.py task=classify/mnist RL=false recipes.Eyes=Blocks.Architectures.ConvNeXt
 ```
 
 A GAN with a CNN Discriminator:
 
 ```
-python Run.py generate=True recipes.Critic.Q_head=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
+python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
 ```
-python Run.py recipes.Critic.trunk=Blocks.Architectures.AttentionPool recipes.Actor.trunk=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.Encoder.pool=Blocks.Architectures.Null
+python Run.py recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.encoder.pool._target_=Blocks.Architectures.Null
 ```
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
@@ -282,7 +282,7 @@ since otherwise ```repr_shape``` is flattened to channel dim, with no features f
 
 [comment]: <> (```)
 
-[comment]: <> (python Run.py recipes.Encoder.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
+[comment]: <> (python Run.py recipes.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
 
 [comment]: <> (```)
 
