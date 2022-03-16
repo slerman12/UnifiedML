@@ -61,7 +61,7 @@ class MiniResNet(nn.Module):
             kernel_size += 1
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=3, padding=1, bias=False),
+                                             kernel_size=kernel_size, padding=1, bias=False),
                                              # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True),
