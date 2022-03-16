@@ -75,7 +75,8 @@ class CNNEncoder(nn.Module):
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
         # Normalizes pixels
-        obs = (obs - self.mean_std.to(obs.device)[0]) / self.mean_std[1]
+        mean, std = self.mean_std = self.mean_std.to(obs.device)
+        obs = (obs - mean) / std
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
