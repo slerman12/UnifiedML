@@ -70,10 +70,11 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Copies parameters from one model to another, with optional EMA weighing (
+# Copies parameters from one model to another, with optional EMA weighing
 def param_copy(net, target_net, ema_tau=1):
     for name, param in net.named_parameters():
-        print(name)
+        if 'batch' in name.lower():
+            print(name)
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(ema_tau * param.data +
                                 (1 - ema_tau) * target_param.data)
