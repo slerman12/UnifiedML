@@ -29,7 +29,7 @@ class EnsembleGaussianActor(nn.Module):
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
 
-        in_dim = math.prod(repr_shape)  # TODO maybe instead of assuming flattened, should just flatten
+        in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
         self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
@@ -48,7 +48,7 @@ class EnsembleGaussianActor(nn.Module):
 
         # Optimizer
         if lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.optim = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
         if ema_tau is not None:

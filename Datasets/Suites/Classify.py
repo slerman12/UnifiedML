@@ -55,8 +55,8 @@ class ClassifyEnv:
         norm_path = glob.glob(path + '_Normalization_*')
 
         if len(norm_path):
-            mean, std = map(json.loads, norm_path[0].split('_')[-2:])
-            self.mean_std = [mean, std]
+            mean, stddev = map(json.loads, norm_path[0].split('_')[-2:])
+            self.data_norm = [mean, stddev]
         elif train:
             self.compute_norm(path)
 
@@ -108,8 +108,8 @@ class ClassifyEnv:
 
             cnt += nb_pixels
 
-        self.mean_std = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
-        open(path + f'_Normalization_{self.mean_std[0]}_{self.mean_std[1]}', 'w')  # Save norm values for future reuse
+        self.data_norm = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
+        open(path + f'_Normalization_{self.data_norm[0]}_{self.data_norm[1]}', 'w')  # Save norm values for future reuse
 
     def reset_format(self, x, y):
         x, y = [np.array(b, dtype='float32') for b in (x, y)]

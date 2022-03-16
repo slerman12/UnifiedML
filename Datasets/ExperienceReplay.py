@@ -31,9 +31,9 @@ class ExperienceReplay:
 
         if load or offline or generate:
             if suite == 'classify':
-                standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer/'
+                standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer'
                 if len(exists) == 0:
-                    exists = [standard]
+                    exists = [standard + '/']
                     print('All data loaded. Training of classifier underway.')
                 else:
                     if path != standard:

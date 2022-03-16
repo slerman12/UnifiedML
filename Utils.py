@@ -197,12 +197,6 @@ class Randn(nn.Module):
         return torch.randn((x.shape[0], self.size), device=x.device)
 
 
-# Replaces tensor's batch items with Uniform-sampled random latent
-class Rand(Randn):
-    def forward(self, x):
-        return torch.rand((x.shape[0], self.size), device=x.device)
-
-
 # (Multi-dim) one-hot encoding
 def one_hot(x, num_classes):
     # assert x.shape[-1] == 1

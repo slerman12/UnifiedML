@@ -19,7 +19,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, batch_norm=False, shift_max_norm=False, mean_std=None,
+    def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, batch_norm=False, shift_max_norm=False,
                  recipe=None, lr=None, weight_decay=0, ema_tau=None, parallel=False):
 
         super().__init__()
@@ -27,7 +27,7 @@ class CNNEncoder(nn.Module):
         assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
 
         self.obs_shape = obs_shape
-        self.mean_std = torch.tensor(mean_std or [127.5, 255]).view(2, 1, -1, 1, 1)
+        self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
         # CNN
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
@@ -51,7 +51,7 @@ class CNNEncoder(nn.Module):
 
         # Optimizer
         if lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.optim = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # Dimensions
         self.feature_shape = self._feature_shape()  # Feature map shape
@@ -75,8 +75,8 @@ class CNNEncoder(nn.Module):
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
         # Normalizes pixels
-        mean, std = self.mean_std = self.mean_std.to(obs.device)
-        obs = (obs - mean) / std
+        mean, stddev = self.data_norm = self.data_norm.to(obs.device)
+        obs = (obs - mean) / stddev
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])

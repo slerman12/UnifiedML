@@ -6,7 +6,7 @@ defaults:
 # Agent
 obs_shape: ???  # To be specified later
 action_shape: ??? # To be specified later
-mean_std: null
+data_norm: null
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
@@ -73,10 +73,10 @@ agent:
   action_shape: ${action_shape}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
+  data_norm: ${data_norm}
   recipes: ${recipes}
   lr: ${lr}
   weight_decay: ${weight_decay}
-  mean_std: ${mean_std}
   ema_tau: 0.01
   ema: ${ema}
   explore_steps: ${explore_steps}
