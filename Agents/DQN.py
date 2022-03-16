@@ -48,7 +48,7 @@ class DQNAgent(torch.nn.Module):
 
         self.encoder = Utils.Randn(trunk_dim) if generate \
             else CNNEncoder(obs_shape, mean_std=mean_std, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
-                            ema_tau=ema_tau if ema else None, parallel=parallel, device=device)
+                            ema_tau=ema_tau if ema else None, parallel=parallel)
 
         repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
 
