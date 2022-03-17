@@ -74,8 +74,7 @@ def weight_init(m):
 def param_copy(model, target, ema_decay=1):
     with torch.no_grad():
         for model_param, target_param in zip(model.state_dict().values(), target.state_dict().values()):
-            target_param.data.copy_(ema_decay * model_param.data +
-                                    (1 - ema_decay) * target_param.data)
+            target_param.copy_(ema_decay * model_param + (1 - ema_decay) * target_param)
 
 
 # Compute the output shape of a CNN layer

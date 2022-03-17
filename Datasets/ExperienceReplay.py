@@ -29,7 +29,9 @@ class ExperienceReplay:
         path = path.replace("Agents.", "")
         exists = glob.glob(path + '*/')
 
-        if load or offline or generate:
+        offline = offline or generate
+
+        if load or offline:
             if suite == 'classify':
                 standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer'
                 if len(exists) == 0:
@@ -43,7 +45,7 @@ class ExperienceReplay:
                                       f'or delete the saved buffer in {path}.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
             self.path = Path(sorted(exists)[-1])
-            save = offline or generate or save
+            save = offline or save
         else:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)
