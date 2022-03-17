@@ -46,6 +46,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             next_q_logits = next_q - next_q.max(dim=-1, keepdim=True)[0]
             next_probs = torch.softmax(next_q_logits + next_actions_log_probs, -1)
             next_v[has_future] = torch.sum(next_q * next_probs, -1, keepdim=True)
+            print(next_actions.shape, next_q.shape)
             print(next_probs.shape)
             print(next_probs)
 
