@@ -24,8 +24,8 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, data_norm, trunk_dim, hidden_dim, recipes,  # Architecture
-                 lr, weight_decay, ema_tau, ema,  # Optimization
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  num_actions=1, num_critics=2):  # DQN
@@ -48,7 +48,7 @@ class DQNAgent(torch.nn.Module):
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
-                            ema_tau=ema_tau if ema else None, parallel=parallel)
+                            ema_decay=ema_decay if ema else None, parallel=parallel)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
@@ -57,11 +57,11 @@ class DQNAgent(torch.nn.Module):
         self.actor = None if self.discrete \
             else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, weight_decay=weight_decay, ema_tau=ema_tau if ema else None)
+                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
-                                      lr=lr, weight_decay=weight_decay, ema_tau=ema_tau)
+                                      lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 

@@ -21,7 +21,7 @@ from Blocks.Architectures.MLP import MLP
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe, ensemble_size=2,
                  discrete=False, stddev_schedule=None, stddev_clip=None,
-                 lr=None, weight_decay=0, ema_tau=None):
+                 lr=None, weight_decay=0, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
@@ -40,9 +40,9 @@ class EnsembleGaussianActor(nn.Module):
                                        else instantiate(recipe.pi_head, output_dim=out_dim)
                                        for _ in range(ensemble_size)])
 
-        self.init(lr, weight_decay, ema_tau)
+        self.init(lr, weight_decay, ema_decay)
 
-    def init(self, lr=None, weight_decay=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_decay=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -51,13 +51,13 @@ class EnsembleGaussianActor(nn.Module):
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
-        if ema_tau is not None:
-            self.ema = copy.deepcopy(self)
-            self.ema_tau = ema_tau
+        if ema_decay is not None:
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
 
     def update_ema_params(self):
         assert hasattr(self, 'ema')
-        Utils.param_copy(self, self.ema, self.ema_tau)
+        Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, step=None):
         obs = self.trunk(obs)

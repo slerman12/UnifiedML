@@ -14,7 +14,7 @@ class RandomAgent(torch.nn.Module):
     """Random Agent"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
-                 lr, ema_tau, ema,  # Optimization
+                 lr, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, log  # On-boarding
                  ):

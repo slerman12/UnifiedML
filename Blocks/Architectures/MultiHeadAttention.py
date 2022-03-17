@@ -215,7 +215,7 @@ class SelfAttention(CrossAttention):
 
 class CrossAttentionBlock(nn.Module):
     def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, talk_h=False, relu=False,
-                 dropout=0, lr=None, weight_decay=0, ema_tau=None):
+                 dropout=0, lr=None, weight_decay=0, ema_decay=None):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
@@ -231,12 +231,12 @@ class CrossAttentionBlock(nn.Module):
         self.ln_attn = nn.LayerNorm(v_dim)
         self.ln = nn.LayerNorm(v_dim)
 
-        self.init(lr, weight_decay, ema_tau)
+        self.init(lr, weight_decay, ema_decay)
 
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
 
-    def init(self, lr=None, weight_decay=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_decay=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -245,9 +245,9 @@ class CrossAttentionBlock(nn.Module):
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
-        if ema_tau is not None:
-            self.ema = copy.deepcopy(self)
-            self.ema_tau = ema_tau
+        if ema_decay is not None:
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
 
     def forward(self, x, context=None):
         if context is None:

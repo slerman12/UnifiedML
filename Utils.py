@@ -71,10 +71,11 @@ def weight_init(m):
 
 
 # Copies parameters from one model to another, with optional EMA weighing
-def param_copy(net, target_net, ema_tau=1):
-    for param, target_param in zip(net.parameters(), target_net.parameters()):
-        target_param.data.copy_(ema_tau * param.data +
-                                (1 - ema_tau) * target_param.data)
+def param_copy(model, target, ema_decay=1):
+    with torch.no_grad():
+        for model_param, target_param in zip(model.state_dict().values(), target.state_dict().values()):
+            target_param.data.copy_(ema_decay * model_param.data +
+                                    (1 - ema_decay) * target_param.data)
 
 
 # Compute the output shape of a CNN layer

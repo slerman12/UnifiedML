@@ -22,7 +22,7 @@ class EnsembleQCritic(nn.Module):
     returns a Normal distribution over the ensemble.
     """
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe=None, sigmoid=False,
-                 ensemble_size=2, discrete=False, ignore_obs=False, lr=None, weight_decay=0, ema_tau=None):
+                 ensemble_size=2, discrete=False, ignore_obs=False, lr=None, weight_decay=0, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
@@ -46,9 +46,9 @@ class EnsembleQCritic(nn.Module):
                                       else instantiate(recipe.q_head, input_shape=shape, output_dim=out_dim)
                                       for _ in range(ensemble_size)], 0)
 
-        self.init(lr, weight_decay, ema_tau)
+        self.init(lr, weight_decay, ema_decay)
 
-    def init(self, lr=None, weight_decay=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_decay=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -57,13 +57,13 @@ class EnsembleQCritic(nn.Module):
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
-        if ema_tau is not None:
-            self.ema = copy.deepcopy(self)
-            self.ema_tau = ema_tau
+        if ema_decay is not None:
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
 
     def update_ema_params(self):
         assert hasattr(self, 'ema')
-        Utils.param_copy(self, self.ema, self.ema_tau)
+        Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, action=None, context=None):
         batch_size = obs.shape[0]

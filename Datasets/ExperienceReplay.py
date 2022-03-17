@@ -291,8 +291,8 @@ def Experiences(offline):
         # N-step cumulative discounted rewards
         def process(self, episode, idx=None):
             episode_len = len(episode['observation'])
-            if idx is None:
-                idx = np.random.randint(episode_len - (self.nstep or 1))
+            limit = episode_len - (self.nstep or 1)
+            idx = np.random.randint(limit) if idx is None else idx % limit
 
             # Transition
             obs = episode['observation'][idx]
@@ -329,7 +329,8 @@ def Experiences(offline):
 
         def fetch_sample_process(self, idx=None):
             try:
-                self.worker_fetch_episodes()  # Populate workers with up-to-date data
+                if not offline:
+                    self.worker_fetch_episodes()  # Populate workers with up-to-date data
             except:
                 traceback.print_exc()
 
@@ -351,11 +352,10 @@ def Experiences(offline):
                 yield self.fetch_sample_process()  # Yields a single experience
 
         def __getitem__(self, idx):
-            # Keep fetching, sampling, and building batches
+            # Get sample by index
             return self.fetch_sample_process(idx)  # Yields a single experience
 
         def __len__(self):
-            # return len(self.episode_names)
             return self.num_experiences_loaded - len(self.episode_names)  # Num transitions
 
     return _Experiences

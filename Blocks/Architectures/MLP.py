@@ -51,7 +51,7 @@ class MLPBlock(nn.Module):
 
     def __init__(self, input_dim, output_dim, trunk_dim=512, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
                  layer_norm=False, dropout=0, binary=False, l2_norm=False,
-                 lr=None, weight_decay=0, ema_tau=None):
+                 lr=None, weight_decay=0, ema_decay=None):
         super().__init__()
 
         self.trunk = nn.Sequential(nn.Linear(input_dim, trunk_dim),
@@ -63,9 +63,9 @@ class MLPBlock(nn.Module):
 
         self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, dropout, binary, l2_norm)
 
-        self.init(lr, weight_decay, ema_tau)
+        self.init(lr, weight_decay, ema_decay)
 
-    def init(self, lr=None, weight_decay=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_decay=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -74,13 +74,13 @@ class MLPBlock(nn.Module):
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # EMA
-        if ema_tau is not None:
-            self.target = copy.deepcopy(self)
-            self.ema_tau = ema_tau
+        if ema_decay is not None:
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema_tau')
-        Utils.param_copy(self, self.ema, self.ema_tau)
+        assert hasattr(self, 'ema_decay')
+        Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, *x):
         h = torch.cat(x, -1)

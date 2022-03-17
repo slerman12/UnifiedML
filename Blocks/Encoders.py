@@ -20,7 +20,7 @@ class CNNEncoder(nn.Module):
     """
 
     def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, batch_norm=False, shift_max_norm=False,
-                 recipe=None, lr=None, weight_decay=0, ema_tau=None, parallel=False):
+                 recipe=None, lr=None, weight_decay=0, ema_decay=None, parallel=False):
 
         super().__init__()
 
@@ -40,12 +40,12 @@ class CNNEncoder(nn.Module):
             else instantiate(recipe.pool, input_shape=self._feature_shape())
 
         # Initialize model
-        self.init(lr, weight_decay, ema_tau)
+        self.init(lr, weight_decay, ema_decay)
 
     def _feature_shape(self):
         return Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)
 
-    def init(self, lr=None, weight_decay=0, ema_tau=None):
+    def init(self, lr=None, weight_decay=0, ema_decay=None):
         # Initialize weights
         self.apply(Utils.weight_init)
 
@@ -60,13 +60,13 @@ class CNNEncoder(nn.Module):
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
 
         # EMA
-        if ema_tau is not None:
-            self.ema = copy.deepcopy(self)
-            self.ema_tau = ema_tau
+        if ema_decay is not None:
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
 
     def update_ema_params(self):
         assert hasattr(self, 'ema')
-        Utils.param_copy(self, self.ema, self.ema_tau)
+        Utils.param_copy(self, self.ema, self.ema_decay)
 
     # Encodes
     def forward(self, obs, *context, flatten=True):
@@ -107,7 +107,7 @@ class ResidualBlockEncoder(CNNEncoder):
     """
 
     def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_max_norm=True,
-                 pixels=True, isotropic=False, recipe=None, lr=None, weight_decay=0, ema_tau=None):
+                 pixels=True, isotropic=False, recipe=None, lr=None, weight_decay=0, ema_decay=None):
 
         super().__init__(obs_shape, hidden_channels, 0, pixels)
 
@@ -121,7 +121,7 @@ class ResidualBlockEncoder(CNNEncoder):
                                      [hidden_channels, out_channels], [num_blocks]),
                           Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()))
 
-        self.init(lr, weight_decay, ema_tau)
+        self.init(lr, weight_decay, ema_decay)
 
         # Isotropic
         if isotropic:
