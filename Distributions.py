@@ -19,11 +19,11 @@ class TruncatedNormal(pyd.Normal):
 
     def log_prob(self, value):
         shape = self.loc.shape
-        diff = len(value.shape) - len(shape)
 
         if value.shape[-len(shape):] == shape:
             return super().log_prob(value)
         else:
+            diff = len(value.shape) - len(shape)
             value = value.transpose(0, diff)
             assert value.shape[-len(shape):] == shape
             return super().log_prob(value).transpose(0, diff)  # To account for batch_first=True
