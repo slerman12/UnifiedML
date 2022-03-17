@@ -16,7 +16,7 @@ import traceback
 import numpy as np
 
 import torch
-from torch.utils.data import IterableDataset
+from torch.utils.data import IterableDataset, Dataset
 
 from torchvision.transforms import transforms
 
@@ -80,19 +80,20 @@ class ExperienceReplay:
 
         self.nstep = nstep
 
-        self.experiences = Experiences(path=self.path,
-                                       capacity=np.inf if save else capacity // max(1, num_workers),
-                                       num_workers=min(num_workers, os.cpu_count()),
-                                       fetch_per=1000,
-                                       save=save,
-                                       nstep=nstep,
-                                       discount=discount,
-                                       transform=transform)
+        self.experiences = Experiences(offline)(path=self.path,
+                                                capacity=np.inf if save else capacity // max(1, num_workers),
+                                                num_workers=min(num_workers, os.cpu_count()),
+                                                fetch_per=1000,
+                                                save=save,
+                                                nstep=nstep,
+                                                discount=discount,
+                                                transform=transform)
 
         # Batch loading
 
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
+                                                   shuffle=offline,
                                                    num_workers=num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
@@ -190,142 +191,154 @@ def worker_init_fn(worker_id):
 
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
-class Experiences(IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None):
+def Experiences(offline):
+    class _Experiences(Dataset if offline else IterableDataset):
+        def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None):
 
-        # Dataset construction via parallel workers
+            # Dataset construction via parallel workers
 
-        self.path = path
+            self.path = path
 
-        self.episode_names = []
-        self.episodes = dict()
+            self.episode_names = []
+            self.episodes = dict()
 
-        self.num_experiences_loaded = 0
-        self.capacity = capacity
+            self.num_experiences_loaded = 0
+            self.capacity = capacity
 
-        self.num_workers = max(1, num_workers)
+            self.num_workers = max(1, num_workers)
 
-        self.fetch_per = fetch_per
-        self.samples_since_last_fetch = fetch_per
+            self.fetch_per = fetch_per
+            self.samples_since_last_fetch = fetch_per
 
-        self.save = save
+            self.save = save
 
-        self.nstep = nstep
-        self.discount = discount
+            self.nstep = nstep
+            self.discount = discount
 
-        self.transform = transform
+            self.transform = transform
 
-    def load_episode(self, episode_name):
-        try:
-            with episode_name.open('rb') as episode_file:
-                episode = np.load(episode_file)
-                episode = {key: episode[key] for key in episode.keys()}
-        except:
-            return False
+        def load_episode(self, episode_name):
+            try:
+                with episode_name.open('rb') as episode_file:
+                    episode = np.load(episode_file)
+                    episode = {key: episode[key] for key in episode.keys()}
+            except:
+                return False
 
-        episode_len = next(iter(episode.values())).shape[0] - 1
+            episode_len = next(iter(episode.values())).shape[0] - 1
 
-        while episode_len + self.num_experiences_loaded > self.capacity:
-            early_episode_name = self.episode_names.pop(0)
-            early_episode = self.episodes.pop(early_episode_name)
-            early_episode_len = next(iter(early_episode.values())).shape[0] - 1
-            self.num_experiences_loaded -= early_episode_len
-            # Deletes early episode file
-            early_episode_name.unlink(missing_ok=True)
-        self.episode_names.append(episode_name)
-        self.episode_names.sort()
-        self.episodes[episode_name] = episode
-        self.num_experiences_loaded += episode_len
+            while episode_len + self.num_experiences_loaded > self.capacity:
+                early_episode_name = self.episode_names.pop(0)
+                early_episode = self.episodes.pop(early_episode_name)
+                early_episode_len = next(iter(early_episode.values())).shape[0] - 1
+                self.num_experiences_loaded -= early_episode_len
+                # Deletes early episode file
+                early_episode_name.unlink(missing_ok=True)
+            self.episode_names.append(episode_name)
+            self.episode_names.sort()
+            self.episodes[episode_name] = episode
+            self.num_experiences_loaded += episode_len
 
-        if not self.save:
-            episode_name.unlink(missing_ok=True)  # Deletes file
+            if not self.save:
+                episode_name.unlink(missing_ok=True)  # Deletes file
 
-        return True
+            return True
 
-    # Populates workers with up-to-date data
-    def worker_fetch_episodes(self):
-        if self.samples_since_last_fetch < self.fetch_per:
-            return
+        # Populates workers with up-to-date data
+        def worker_fetch_episodes(self):
+            if self.samples_since_last_fetch < self.fetch_per:
+                return
 
-        self.samples_since_last_fetch = 0
+            self.samples_since_last_fetch = 0
 
-        try:
-            worker = torch.utils.data.get_worker_info().id
-        except:
-            worker = 0
+            try:
+                worker = torch.utils.data.get_worker_info().id
+            except:
+                worker = 0
 
-        episode_names = sorted(self.path.glob('*.npz'), reverse=True)  # Episodes
-        num_fetched = 0
-        # Find one new episode
-        for episode_name in episode_names:
-            episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
-            if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
-                continue
-            if episode_name in self.episodes.keys():  # Don't store redundantly
-                break
-            if num_fetched + episode_len > self.capacity:  # Don't overfill
-                break
-            num_fetched += episode_len
-            if not self.load_episode(episode_name):
-                break  # Resolve conflicts
+            episode_names = sorted(self.path.glob('*.npz'), reverse=True)  # Episodes
+            num_fetched = 0
+            # Find one new episode
+            for episode_name in episode_names:
+                episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
+                if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
+                    continue
+                if episode_name in self.episodes.keys():  # Don't store redundantly
+                    break
+                if num_fetched + episode_len > self.capacity:  # Don't overfill
+                    break
+                num_fetched += episode_len
+                if not self.load_episode(episode_name):
+                    break  # Resolve conflicts
 
-    def sample(self, episode_names, metrics=None):
-        episode_name = random.choice(episode_names)  # Uniform sampling of experiences
-        return episode_name
+        def sample(self, episode_names, metrics=None):
+            episode_name = random.choice(episode_names)  # Uniform sampling of experiences
+            return episode_name
 
-    # N-step cumulative discounted rewards
-    def process(self, episode):
-        episode_len = len(episode['observation'])
-        idx = np.random.randint(episode_len - (self.nstep or 1))
+        # N-step cumulative discounted rewards
+        def process(self, episode):
+            episode_len = len(episode['observation'])
+            idx = np.random.randint(episode_len - (self.nstep or 1))
 
-        # Transition
-        obs = episode['observation'][idx]
-        action = episode['action'][idx + 1]
-        next_obs = episode['observation'][idx + self.nstep]
-        reward = np.full_like(episode['reward'][idx + 1], np.NaN)
-        discount = np.ones_like(episode['discount'][idx + 1])
-        label = episode['label'][idx].squeeze()
-        step = episode['step'][idx]
+            # Transition
+            obs = episode['observation'][idx]
+            action = episode['action'][idx + 1]
+            next_obs = episode['observation'][idx + self.nstep]
+            reward = np.full_like(episode['reward'][idx + 1], np.NaN)
+            discount = np.ones_like(episode['discount'][idx + 1])
+            label = episode['label'][idx].squeeze()
+            step = episode['step'][idx]
 
-        # Trajectory
-        if self.nstep > 0:
-            traj_o = episode['observation'][idx:idx + self.nstep + 1]
-            traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
-            traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
-            traj_l = episode['label'][idx:idx + self.nstep + 1]
-        else:
-            traj_o = traj_a = traj_r = traj_l = np.NaN
+            # Trajectory
+            if self.nstep > 0:
+                traj_o = episode['observation'][idx:idx + self.nstep + 1]
+                traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
+                traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
+                traj_l = episode['label'][idx:idx + self.nstep + 1]
+            else:
+                traj_o = traj_a = traj_r = traj_l = np.NaN
 
-        # Compute cumulative discounted reward
-        for i in range(1, self.nstep + 1):
-            if episode['reward'][idx + i] != np.NaN:
-                step_reward = episode['reward'][idx + i]
-                if np.isnan(reward):
-                    reward = np.zeros(1)
-                reward += discount * step_reward
-                discount *= episode['discount'][idx + i] * self.discount
+            # Compute cumulative discounted reward
+            for i in range(1, self.nstep + 1):
+                if episode['reward'][idx + i] != np.NaN:
+                    step_reward = episode['reward'][idx + i]
+                    if np.isnan(reward):
+                        reward = np.zeros(1)
+                    reward += discount * step_reward
+                    discount *= episode['discount'][idx + i] * self.discount
 
-        # Transform
-        if self.transform is not None:
-            obs = self.transform(torch.as_tensor(obs) / 255) * 255
+            # Transform
+            if self.transform is not None:
+                obs = self.transform(torch.as_tensor(obs) / 255) * 255
 
-        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
+            return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
-    def fetch_sample_process(self):
-        try:
-            self.worker_fetch_episodes()  # Populate workers with up-to-date data
-        except:
-            traceback.print_exc()
+        def fetch_sample_process(self, idx=None):
+            try:
+                self.worker_fetch_episodes()  # Populate workers with up-to-date data
+            except:
+                traceback.print_exc()
 
-        self.samples_since_last_fetch += 1
+            self.samples_since_last_fetch += 1
 
-        episode_name = self.sample(self.episode_names)  # Sample an episode
+            # Sample or index an episode
+            episode_name = self.sample(self.episode_names) if idx is None \
+                else self.episode_names[idx]
 
-        episode = self.episodes[episode_name]
+            episode = self.episodes[episode_name]
 
-        return self.process(episode)  # Process episode into a compact experience
+            return self.process(episode)  # Process episode into a compact experience
 
-    def __iter__(self):
-        # Keep fetching, sampling, and building batches
-        while True:
-            yield self.fetch_sample_process()  # Yields a single experience
+        def __iter__(self):
+            # Keep fetching, sampling, and building batches
+            while True:
+                yield self.fetch_sample_process()  # Yields a single experience
+
+        def __getitem__(self, idx):
+            # Keep fetching, sampling, and building batches
+            return self.fetch_sample_process(idx)  # Yields a single experience
+
+        def __len__(self):
+            return len(self.episode_names)
+
+    return _Experiences
