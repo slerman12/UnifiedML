@@ -106,7 +106,11 @@ class ExperienceReplay:
 
     # Allows iteration
     def __next__(self):
-        return self.replay.__next__()
+        try:
+            return self.replay.__next__()
+        except StopIteration:
+            self._replay = iter(self.batches)
+            return self.replay.__next__()
 
     # Allows iteration
     def __iter__(self):
@@ -332,13 +336,14 @@ def Experiences(offline):
 
             return self.process(episode)  # Process episode into a compact experience
 
-        # def __iter__(self):
-        #     # Keep fetching, sampling, and building batches
-        #     while True:
-        #         yield self.fetch_sample_process()  # Yields a single experience
+        def __iter__(self):
+            # Keep fetching, sampling, and building batches
+            while True:
+                yield self.fetch_sample_process()  # Yields a single experience
 
         def __getitem__(self, idx):
             # Keep fetching, sampling, and building batches
+            print("okay")
             return self.fetch_sample_process(idx)  # Yields a single experience
 
         def __len__(self):
