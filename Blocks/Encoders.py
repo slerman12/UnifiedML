@@ -58,6 +58,7 @@ class CNNEncoder(nn.Module):
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
+        print(self.feature_shape, self.repr_shape)
 
         # EMA
         if ema_decay is not None:
