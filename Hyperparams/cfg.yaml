@@ -46,7 +46,7 @@ plot_per_steps: 10000
 # Misc
 device: ??? # To be specified later
 parallel: false
-num_workers: 4
+num_workers: 8
 # Experiment
 Agent: Agents.DQNAgent
 seed: 1

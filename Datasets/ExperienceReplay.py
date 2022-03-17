@@ -93,7 +93,7 @@ class ExperienceReplay:
 
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
-                                                   shuffle=offline and False,
+                                                   shuffle=offline,
                                                    num_workers=num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
@@ -106,11 +106,11 @@ class ExperienceReplay:
 
     # Allows iteration
     def __next__(self):
-        # try:
+        try:
             return self.replay.__next__()
-        # except StopIteration:
-        #     self._replay = iter(self.batches)
-        #     return self.replay.__next__()
+        except StopIteration:
+            self._replay = iter(self.batches)
+            return self.replay.__next__()
 
     # Allows iteration
     def __iter__(self):
@@ -198,7 +198,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 def Experiences(offline):
-    class _Experiences(Dataset if offline and False else IterableDataset):
+    class _Experiences(Dataset if offline else IterableDataset):
         def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None):
 
             # Dataset construction via parallel workers
@@ -218,8 +218,8 @@ def Experiences(offline):
 
             self.save = save
 
-            # if offline:
-            #     list(map(self.load_episode, self.path.glob('*.npz')))
+            if offline:
+                list(map(self.load_episode, self.path.glob('*.npz')))
 
             self.nstep = nstep
             self.discount = discount
@@ -343,11 +343,11 @@ def Experiences(offline):
             while True:
                 yield self.fetch_sample_process()  # Yields a single experience
 
-        # def __getitem__(self, idx):
-        #     # Keep fetching, sampling, and building batches
-        #     return self.fetch_sample_process(idx)  # Yields a single experience
-        #
-        # def __len__(self):
-        #     return len(self.episode_names)
+        def __getitem__(self, idx):
+            # Keep fetching, sampling, and building batches
+            return self.fetch_sample_process(idx)  # Yields a single experience
+
+        def __len__(self):
+            return len(self.episode_names)
 
     return _Experiences
