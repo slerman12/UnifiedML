@@ -338,12 +338,12 @@ def Experiences(offline):
 
         def __iter__(self):
             # Keep fetching, sampling, and building batches
+            print("okay")
             while True:
                 yield self.fetch_sample_process()  # Yields a single experience
 
         def __getitem__(self, idx):
             # Keep fetching, sampling, and building batches
-            print("okay")
             return self.fetch_sample_process(idx)  # Yields a single experience
 
         def __len__(self):
