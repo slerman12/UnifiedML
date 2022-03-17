@@ -20,7 +20,7 @@ class CNNEncoder(nn.Module):
     """
 
     def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, batch_norm=False, shift_max_norm=False,
-                 recipe=None, lr=None, weight_decay=0, ema_decay=None, parallel=False):
+                 recipe=None, parallel=False, lr=None, weight_decay=0, ema_decay=None):
 
         super().__init__()
 

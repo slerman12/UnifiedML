@@ -47,8 +47,8 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled by actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
-                            ema_decay=ema_decay if ema else None, parallel=parallel)
+            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
+                            lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
