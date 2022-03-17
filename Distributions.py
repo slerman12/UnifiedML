@@ -34,9 +34,11 @@ class TruncatedNormal(pyd.Normal):
 
         # Draw multiple samples
         shape = self._extended_shape(sample_shape)
+        print(shape)
 
         rand = _standard_normal(shape, dtype=self.loc.dtype, device=self.loc.device)  # Explore
         dev = rand * self.scale.expand(shape)  # Deviate
+        print(rand.shape, "huh")
 
         if to_clip:
             dev = Utils.rclamp(dev, -self.stddev_clip, self.stddev_clip)  # Don't explore /too/ much
