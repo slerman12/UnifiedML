@@ -21,6 +21,7 @@ class TruncatedNormal(pyd.Normal):
         try:
             return super().log_prob(value)
         except ValueError:
+            print(value.transpose(0, 1).shape, super().log_prob(value.transpose(0, 1)).transpose(0, 1).shape)
             return super().log_prob(value.transpose(0, 1)).transpose(0, 1)  # To account for batch_first=True
 
     # No grad, defaults to no clip, batch dim first
@@ -41,8 +42,6 @@ class TruncatedNormal(pyd.Normal):
         if to_clip:
             dev = Utils.rclamp(dev, -self.stddev_clip, self.stddev_clip)  # Don't explore /too/ much
         x = self.loc.expand(shape) + dev
-        if self.loc.shape[0] > 1:
-            print(self.loc.shape, x.shape, rand.shape, shape)
 
         if batch_first:
             x = x.transpose(0, len(sample_shape))  # Batch dim first
