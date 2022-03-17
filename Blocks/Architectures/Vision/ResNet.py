@@ -65,11 +65,12 @@ class MiniResNet(nn.Module):
                                              # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True),
-                                   nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+                                   # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+                                   )
 
         # CNN ResNet
         self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1], kernel_size,
-                                                                    1 + (stride - 1) * (i > 0 and j == 0))
+                                                                    1 + (stride - 1) * (i > 0 and j > 0))
                                                       for j in range(depth)])
                                       for i, depth in enumerate(depths)])
 
