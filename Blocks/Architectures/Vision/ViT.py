@@ -47,10 +47,9 @@ class ViT(nn.Module):
         self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, out_channels, qk_dim, v_dim, hidden_dim,
                                                        dropout=dropout, relu=relu) for _ in range(depth)])
 
-        self.pool = nn.Identity() if output_dim is None \
-            else nn.Sequential(Pool(pool_type),
-                               nn.LayerNorm(out_channels),
-                               MLP(out_channels, output_dim, 1024))
+        self.pool = nn.Sequential(Pool(pool_type),
+                                  nn.LayerNorm(out_channels),
+                                  nn.Identity() if output_dim is None else nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
         return (self.out_channels, 1, (h // self.patch_size) * (w // self.patch_size) + 1) if self.output_dim is None \
@@ -81,7 +80,9 @@ class ViT(nn.Module):
         x = self.attn(x)
 
         x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
-        x = self.pool(x)
+
+        if self.output_dim is not None:
+            x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
