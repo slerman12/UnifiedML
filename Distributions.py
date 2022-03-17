@@ -22,9 +22,7 @@ class TruncatedNormal(pyd.Normal):
             return super().log_prob(value)
         else:
             diff = len(value.shape) - len(self.loc.shape)
-            value = value.transpose(0, diff)
-            assert value.shape[-len(self.loc.shape):] == self.loc.shape
-            return super().log_prob(value).transpose(0, diff)  # To account for batch_first=True
+            return super().log_prob(value.transpose(0, diff)).transpose(0, diff)  # To account for batch_first=True
 
     # No grad, defaults to no clip, batch dim first
     def sample(self, sample_shape=torch.Size(), to_clip=False, batch_first=True):
