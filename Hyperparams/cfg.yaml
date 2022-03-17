@@ -77,7 +77,7 @@ agent:
   recipes: ${recipes}
   lr: ${lr}
   weight_decay: ${weight_decay}
-  ema_decay: 0.01
+  ema_decay: 0.99
   ema: ${ema}
   explore_steps: ${explore_steps}
   stddev_schedule: ${stddev_schedule} # Specified in task/100K,500K,etc.
