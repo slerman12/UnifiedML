@@ -213,8 +213,8 @@ def Experiences(offline):
             self.save = save
 
             if offline:
-                map(self.load_episode, self.path.glob('*.npz'))
-                print(len(self))
+                for episode_name in self.path.glob('*.npz'):
+                    self.load_episode(episode_name)
 
             self.nstep = nstep
             self.discount = discount
