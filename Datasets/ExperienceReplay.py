@@ -93,7 +93,7 @@ class ExperienceReplay:
 
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
-                                                   shuffle=offline,
+                                                   shuffle=offline and False,
                                                    num_workers=num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
