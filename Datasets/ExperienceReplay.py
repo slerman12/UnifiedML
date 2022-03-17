@@ -106,11 +106,11 @@ class ExperienceReplay:
 
     # Allows iteration
     def __next__(self):
-        try:
+        # try:
             return self.replay.__next__()
-        except StopIteration:
-            self._replay = iter(self.batches)
-            return self.replay.__next__()
+        # except StopIteration:
+        #     self._replay = iter(self.batches)
+        #     return self.replay.__next__()
 
     # Allows iteration
     def __iter__(self):
@@ -139,8 +139,10 @@ class ExperienceReplay:
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
 
                 # Validate consistency
-                assert spec['shape'] == exp[spec['name']].shape[1:], f'Unexpected {spec["name"]} shape: {exp[spec["name"]].shape} vs {spec["shape"]}'
-                assert spec['dtype'] == exp[spec['name']].dtype.name, f'Unexpected {spec["name"]} dtype: {exp[spec["name"]].dtype.name} vs. {spec["dtype"]}'
+                assert spec['shape'] == exp[spec['name']].shape[1:], \
+                    f'Unexpected {spec["name"]} shape: {exp[spec["name"]].shape} vs {spec["shape"]}'
+                assert spec['dtype'] == exp[spec['name']].dtype.name, \
+                    f'Unexpected {spec["name"]} dtype: {exp[spec["name"]].dtype.name} vs. {spec["dtype"]}'
 
                 # Adds the experiences
                 self.episode[spec['name']].append(exp[spec['name']])
@@ -196,7 +198,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 def Experiences(offline):
-    class _Experiences(IterableDataset):
+    class _Experiences(Dataset if offline and False else IterableDataset):
         def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None):
 
             # Dataset construction via parallel workers
