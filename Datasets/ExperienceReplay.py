@@ -245,7 +245,7 @@ def Experiences(offline):
                 early_episode = self.episodes.pop(early_episode_name)
                 early_episode_len = next(iter(early_episode.values())).shape[0] - 1
                 self.num_experiences_loaded -= early_episode_len
-                self.index = self.index[early_episode_len - 1:]
+                self.index = self.index[early_episode_len:]
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
             self.episode_names.append(episode_name)
@@ -253,7 +253,7 @@ def Experiences(offline):
             self.episodes[episode_name] = episode
             self.num_experiences_loaded += episode_len
             if offline:
-                self.index += list(enumerate([episode_name] * (episode_len - 1)))
+                self.index += list(enumerate([episode_name] * episode_len))
 
             if not self.save:
                 episode_name.unlink(missing_ok=True)  # Deletes file
@@ -359,6 +359,6 @@ def Experiences(offline):
             return self.fetch_sample_process(idx)  # Yields a single experience
 
         def __len__(self):
-            return self.num_experiences_loaded - len(self.episode_names)  # Num transitions
+            return self.num_experiences_loaded
 
     return _Experiences
