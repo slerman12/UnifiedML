@@ -42,7 +42,7 @@ class TruncatedNormal(pyd.Normal):
             dev = Utils.rclamp(dev, -self.stddev_clip, self.stddev_clip)  # Don't explore /too/ much
         x = self.loc.expand(shape) + dev
         if self.loc.shape[0] > 1:
-            print(self.loc.shape, x.shape)
+            print(self.loc.shape, x.shape, rand.shape, shape)
 
         if batch_first:
             x = x.transpose(0, len(sample_shape))  # Batch dim first
