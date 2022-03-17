@@ -109,23 +109,22 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
 
-        # "Envision" / "Perceive"
-
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
             next_obs[:] = label[:] = float('nan')
 
-        # Augment
-        obs = self.aug(obs)
+        # "Envision" / "Perceive"
 
-        # Encode
+        # Augment and encode
+        obs = self.aug(obs)
         obs = self.encoder(obs)
 
-        if replay.nstep > 0:
+        if replay.nstep > 0 \
+                and not self.generate:
             with torch.no_grad():
-                # next_obs = self.encoder(next_obs)
-                next_obs = self.encoder(self.aug(next_obs))
+                next_obs = self.aug(next_obs)
+                next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
