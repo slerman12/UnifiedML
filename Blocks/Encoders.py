@@ -30,12 +30,14 @@ class CNNEncoder(nn.Module):
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
         # CNN
-        self.Eyes = nn.Sequential(instantiate(recipe.eyes) or CNN(obs_shape, out_channels, depth, batch_norm),
+        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
+                                  else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.pool = instantiate(recipe.pool) or self.Eyes.pool if hasattr(self.Eyes, 'pool') else nn.Identity()
+        self.pool = instantiate(recipe.pool) if recipe.pool._target_ is not None \
+            else getattr(self.Eyes, 'pool', None) or nn.Identity()
 
         # Initialize model
         self.init(lr, weight_decay, ema_decay)
