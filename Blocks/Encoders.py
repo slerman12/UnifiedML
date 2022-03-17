@@ -33,11 +33,12 @@ class CNNEncoder(nn.Module):
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if recipe.eyes._target_ is None
                                   else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
-        if parallel:
-            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.pool = getattr(self.Eyes[0], 'pool', None) or nn.Identity() if recipe.pool._target_ is None \
             else instantiate(recipe.pool, input_shape=self._feature_shape())
+
+        if parallel:
+            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         # Initialize model
         self.init(lr, weight_decay, ema_decay)
