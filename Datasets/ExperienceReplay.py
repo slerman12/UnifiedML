@@ -210,6 +210,7 @@ def Experiences(offline):
 
             self.num_experiences_loaded = 0
             self.capacity = capacity
+            self.index = []
 
             self.num_workers = max(1, num_workers)
 
@@ -241,12 +242,15 @@ def Experiences(offline):
                 early_episode = self.episodes.pop(early_episode_name)
                 early_episode_len = next(iter(early_episode.values())).shape[0] - 1
                 self.num_experiences_loaded -= early_episode_len
+                self.index = self.index[early_episode_len - 1:]
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
             self.episode_names.append(episode_name)
             self.episode_names.sort()
             self.episodes[episode_name] = episode
             self.num_experiences_loaded += episode_len
+            if offline:
+                self.index += list(enumerate([episode_name] * (episode_len - 1)))
 
             if not self.save:
                 episode_name.unlink(missing_ok=True)  # Deletes file
@@ -285,9 +289,10 @@ def Experiences(offline):
             return episode_name
 
         # N-step cumulative discounted rewards
-        def process(self, episode):
+        def process(self, episode, idx=None):
             episode_len = len(episode['observation'])
-            idx = np.random.randint(episode_len - (self.nstep or 1))
+            if idx is None:
+                idx = np.random.randint(episode_len - (self.nstep or 1))
 
             # Transition
             obs = episode['observation'][idx]
@@ -331,12 +336,14 @@ def Experiences(offline):
             self.samples_since_last_fetch += 1
 
             # Sample or index an episode
-            episode_name = self.sample(self.episode_names) if idx is None \
-                else self.episode_names[idx]
+            if idx is None:
+                episode_name = self.sample(self.episode_names)
+            else:
+                idx, episode_name = self.index[idx]
 
             episode = self.episodes[episode_name]
 
-            return self.process(episode)  # Process episode into a compact experience
+            return self.process(episode, idx)  # Process episode into a compact experience
 
         def __iter__(self):
             # Keep fetching, sampling, and building batches
@@ -348,6 +355,7 @@ def Experiences(offline):
             return self.fetch_sample_process(idx)  # Yields a single experience
 
         def __len__(self):
-            return len(self.episode_names)
+            # return len(self.episode_names)
+            return self.num_experiences_loaded - len(self.episode_names)  # Num transitions
 
     return _Experiences

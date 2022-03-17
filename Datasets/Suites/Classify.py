@@ -36,8 +36,6 @@ class ClassifyEnv:
         self.num_classes = len(experiences.classes)
         self.action_repeat = 1
 
-        self.experiences = experiences
-
         self.batches = DataLoader(dataset=experiences,
                                   batch_size=batch_size,
                                   shuffle=train,
@@ -74,10 +72,9 @@ class ClassifyEnv:
 
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
-        loader = DataLoader(self.experiences)  # Batch size of 1
 
-        for episode_ind, (x, y) in enumerate(tqdm(loader, 'Creating a universal replay for this dataset. '
-                                                          'This only has to be done once')):
+        for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
+                                                                'This only has to be done once')):
             x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
 
             # Concat a dummy batch item
