@@ -94,8 +94,8 @@ class Pool(nn.Module):
         super().__init__()
         self.pool_type = pool_type
 
-    def repr_shape(self, c, h, w):
-        return c, 1, 1
+    # def repr_shape(self, c, h, w):
+    #     return c, 1, 1
 
     def forward(self, x):
         x = x.flatten(-2)
