@@ -226,10 +226,12 @@ class CrossAttentionBlock(nn.Module):
         self.v_dim = v_dim
 
         self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, relu)
+        self.project_out = nn.Identity() if heads == 1 \
+            else nn.Sequential(nn.Linear(v_dim, v_dim), nn.Dropout(dropout))
         self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
-        self.ln_attn = nn.LayerNorm(v_dim)
-        self.ln = nn.LayerNorm(v_dim)
+        self.ln_mid = nn.LayerNorm(v_dim)
+        self.ln_out = nn.LayerNorm(v_dim)
 
         self.init(lr, weight_decay, ema_decay)
 
@@ -253,8 +255,8 @@ class CrossAttentionBlock(nn.Module):
         if context is None:
             context = x
 
-        attn = self.ln_attn(self.attn(x, context)) + x
-        out = self.ln(self.mlp(attn)) + attn
+        attn = self.ln_mid(self.project_out(self.attn(x, context))) + x
+        out = self.ln_out(self.mlp(attn)) + attn
 
         return out
 

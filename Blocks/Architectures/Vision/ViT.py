@@ -17,7 +17,7 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 class ViT(nn.Module):
     def __init__(self, input_shape, patch_size=4, out_channels=32,
                  emb_dropout=0.1, qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depth=3, dropout=0.1,
-                 pool='cls', relu=False, output_dim=None):
+                 pool_type='cls', relu=False, output_dim=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -31,7 +31,7 @@ class ViT(nn.Module):
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
         num_patches = (image_size // patch_size) ** 2
         patch_dim = in_channels * patch_size ** 2
-        assert pool in {'cls', 'mean'}, 'Pool type must be either cls (cls token) or mean (mean pooling)'
+        assert pool_type in {'cls', 'mean'}, 'Pool type must be either cls (cls token) or mean (mean pooling)'
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
@@ -47,14 +47,10 @@ class ViT(nn.Module):
         self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, out_channels, qk_dim, v_dim, hidden_dim,
                                                        dropout=dropout, relu=relu) for _ in range(depth)])
 
-        if output_dim is not None:
-            self.pool = pool
-
-            self.repr = nn.Sequential(
-                nn.LayerNorm(out_channels),
-                MLP(out_channels, output_dim, 1024)
-            )
-        # TODO dropout after each mlp linear, extra out projection after attention
+        self.pool = nn.Identity() if output_dim is None \
+            else nn.Sequential(Pool(pool_type),
+                               nn.LayerNorm(out_channels),
+                               MLP(out_channels, output_dim, 1024))
 
     def repr_shape(self, c, h, w):
         return (self.out_channels, 1, (h // self.patch_size) * (w // self.patch_size) + 1) if self.output_dim is None \
@@ -66,7 +62,7 @@ class ViT(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                   % math.prod(self.input_shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
@@ -84,13 +80,19 @@ class ViT(nn.Module):
 
         x = self.attn(x)
 
-        if self.output_dim is None:
-            x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
-        else:
-            x = x.flatten(1, -2)
-            x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] if self.pool == 'cls' else x
-            x = self.repr(x)
+        x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
+        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
+
+
+class Pool(nn.Module):
+    def __init__(self, pool_type='cls'):
+        super().__init__()
+        self.pool_type = pool_type
+
+    def forward(self, x):
+        x = x.flatten(-2)
+        return x[..., 0] if self.pool_type == 'cls' else x.mean(-1)

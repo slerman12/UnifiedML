@@ -74,7 +74,7 @@ class MiniResNet(nn.Module):
                                                       for j in range(depth)])
                                       for i, depth in enumerate(depths)])
 
-        self.projection = nn.Identity() if output_dim is None \
+        self.pool = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
                                nn.Linear(dims[-1], output_dim))
@@ -97,7 +97,7 @@ class MiniResNet(nn.Module):
 
         x = self.trunk(x)
         x = self.ResNet(x)
-        x = self.projection(x)
+        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

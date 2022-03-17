@@ -25,18 +25,18 @@ class ConvMixer(nn.Module):
                                    nn.BatchNorm2d(out_channels))
 
         self.ConvMixer = nn.Sequential(*[nn.Sequential(
-                Residual(nn.Sequential(
-                    nn.Conv2d(out_channels, out_channels, kernel_size, groups=out_channels, padding="same"),
-                    nn.GELU(),
-                    nn.BatchNorm2d(out_channels)
-                )),
-                nn.Conv2d(out_channels, out_channels, kernel_size=1),
+            Residual(nn.Sequential(
+                nn.Conv2d(out_channels, out_channels, kernel_size, groups=out_channels, padding="same"),
                 nn.GELU(),
                 nn.BatchNorm2d(out_channels)
-            ) for _ in range(depth)]
-        )
+            )),
+            nn.Conv2d(out_channels, out_channels, kernel_size=1),
+            nn.GELU(),
+            nn.BatchNorm2d(out_channels)
+        ) for _ in range(depth)]
+                                       )
 
-        self.projection = nn.Identity() if output_dim is None \
+        self.pool = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Flatten(),
                                MLP(out_channels, output_dim, 1024))
@@ -50,7 +50,7 @@ class ConvMixer(nn.Module):
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
                                                                                   % math.prod(self.input_shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]
@@ -59,7 +59,7 @@ class ConvMixer(nn.Module):
 
         x = self.trunk(x)
         x = self.ConvMixer(x)
-        x = self.projection(x)
+        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

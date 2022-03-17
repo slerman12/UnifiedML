@@ -21,7 +21,7 @@ from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 class ViRPV2(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
                  qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None, dropout=0,
-                 pool='cls', output_dim=None, experiment='relation', ViRS=False):
+                 pool_type='cls', output_dim=None, experiment='relation', ViRS=False):
         self.tokens = tokens
         self.ViRS = ViRS
 
@@ -34,7 +34,7 @@ class ViRPV2(ViT):
         assert len(depths) == len(recursions), 'Recursion must be specified for each depth'
         assert token_dim == v_dim or recursions[0] == 1, 'First depth cannot be recursive if token_dim ≠ value_dim'
 
-        super().__init__(input_shape, patch_size, out_channels, emb_dropout, pool=pool, output_dim=output_dim)
+        super().__init__(input_shape, patch_size, out_channels, emb_dropout, pool_type=pool_type, output_dim=output_dim)
 
         if experiment == 'relation':
             block = RelationBlock
@@ -78,11 +78,11 @@ class ViRPV2(ViT):
 
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, heads=8, tokens=64,
-                 token_dim=128, depth=8, pool='cls', output_dim=None, experiment='relation', ViRS=True):
+                 token_dim=128, depth=8, pool_type='cls', output_dim=None, experiment='relation', ViRS=True):
         self.tokens = tokens
         self.ViRS = ViRS  # ViRP? Visiorelational Perceptor
 
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool, True, output_dim)
+        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool_type, True, output_dim)
 
         if experiment == 'relation':
             block = RelationBlock
@@ -236,6 +236,8 @@ class ConcatBlock(nn.Module):
         self.hidden_dim = hidden_dim
 
         self.attn = ReLA(dim, self.heads, s_dim, qk_dim, v_dim)
+        self.project_out = nn.Identity() if heads == 1 \
+            else nn.Sequential(nn.Linear(v_dim, v_dim), nn.Dropout(dropout))
         self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_mid = nn.LayerNorm(v_dim)
@@ -248,7 +250,7 @@ class ConcatBlock(nn.Module):
         if context is None:
             context = x
 
-        attn = self.LN_mid(self.attn(x, context))  # Relation
+        attn = self.LN_mid(self.project_out(self.attn(x, context)))  # Relation
         out = self.LN_out(self.mlp(attn, x)) + x  # Reason-er
 
         return out

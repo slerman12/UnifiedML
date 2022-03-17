@@ -23,7 +23,7 @@ class CNN(nn.Module):
                             nn.ReLU()) for i in range(depth + 1)],
         )
 
-        self.projection = nn.Identity() if output_dim is None \
+        self.pool = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((3, 3)),
                                nn.Flatten(-3),
                                nn.Linear(out_channels * 3 * 3, 1024),
@@ -48,7 +48,7 @@ class CNN(nn.Module):
 
         x = self.trunk(x)
         x = self.CNN(x)
-        x = self.projection(x)
+        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

@@ -36,8 +36,8 @@ class CNNEncoder(nn.Module):
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.pool = nn.Flatten(-3) if recipe.pool._target_ is None \
-            else instantiate(recipe.pool, input_shape=self._feature_shape())
+        self.pool = self.Eyes.pool if hasattr(self.Eyes, 'pool') \
+            else nn.Identity()
 
         # Initialize model
         self.init(lr, weight_decay, ema_decay)
@@ -93,7 +93,7 @@ class CNNEncoder(nn.Module):
         h = h.view(*obs_shape[:-3], *h.shape[-3:])
 
         if flatten:
-            h = self.pool(h)
+            h = self.pool(h).flatten(-3)
             assert h.shape[-1] == self.repr_dim or tuple(h.shape[-3:]) == self.repr_shape, \
                 f'pre-computed repr_dim/repr_shape does not match output dim ' \
                 f'{self.repr_dim}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'

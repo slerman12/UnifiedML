@@ -121,8 +121,8 @@ class DQNAgent(torch.nn.Module):
         obs = self.aug(obs)
         obs = self.encoder(obs)
 
-        if replay.nstep > 0 \
-                and not self.generate:
+        # Augment and encode future
+        if replay.nstep > 0 and not self.generate:
             with torch.no_grad():
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)

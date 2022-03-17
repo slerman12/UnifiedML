@@ -66,7 +66,7 @@ class ConvNeXt(nn.Module):
                                                         for _ in range(depth)])  # Conv, MLP, Residuals
                                         for i, depth in enumerate(depths)])
 
-        self.projection = nn.Identity() if output_dim is None \
+        self.pool = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                nn.Sequential(Utils.ChannelSwap(),
                                              nn.LayerNorm(dims[-1]),
@@ -99,7 +99,7 @@ class ConvNeXt(nn.Module):
 
         x = self.trunk(x)
         x = self.ConvNeXt(x)
-        x = self.projection(x)
+        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
