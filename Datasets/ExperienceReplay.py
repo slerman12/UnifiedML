@@ -212,6 +212,9 @@ def Experiences(offline):
 
             self.save = save
 
+            if offline:
+                map(self.load_episode, sorted(self.path.glob('*.npz'), reverse=True))
+
             self.nstep = nstep
             self.discount = discount
 
