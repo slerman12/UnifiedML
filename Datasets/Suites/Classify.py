@@ -78,7 +78,7 @@ class ClassifyEnv:
             x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
 
             # Concat a dummy batch item
-            x, y = [np.concatenate([b, b[:1]], 0) for b in (x, y)]
+            x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (x, y)]
 
             episode = {'observation': x, 'action': dummy_action, 'reward': dummy_reward, 'discount': dummy_discount,
                        'label': y, 'step': dummy_step}
