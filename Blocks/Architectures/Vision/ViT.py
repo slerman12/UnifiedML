@@ -94,6 +94,9 @@ class Pool(nn.Module):
         super().__init__()
         self.pool_type = pool_type
 
+    def repr_shape(self, c, h, w):
+        return c, 1, 1
+
     def forward(self, x):
         x = x.flatten(-2)
         return x[..., 0] if self.pool_type == 'cls' else x.mean(-1)
