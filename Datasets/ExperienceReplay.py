@@ -218,6 +218,7 @@ def Experiences(offline):
 
             if offline:
                 list(map(self.load_episode, self.path.glob('*.npz')))
+                print(len(self))
 
             self.nstep = nstep
             self.discount = discount
@@ -338,7 +339,6 @@ def Experiences(offline):
 
         def __iter__(self):
             # Keep fetching, sampling, and building batches
-            print("okay")
             while True:
                 yield self.fetch_sample_process()  # Yields a single experience
 
