@@ -34,15 +34,14 @@ class TruncatedNormal(pyd.Normal):
 
         # Draw multiple samples
         shape = self._extended_shape(sample_shape)
-        print(shape)
 
         rand = _standard_normal(shape, dtype=self.loc.dtype, device=self.loc.device)  # Explore
         dev = rand * self.scale.expand(shape)  # Deviate
-        print(rand.shape, "huh")
 
         if to_clip:
             dev = Utils.rclamp(dev, -self.stddev_clip, self.stddev_clip)  # Don't explore /too/ much
         x = self.loc.expand(shape) + dev
+        print(self.loc.shape, x.shape)
 
         if batch_first:
             x = x.transpose(0, len(sample_shape))  # Batch dim first
