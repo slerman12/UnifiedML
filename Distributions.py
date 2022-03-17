@@ -24,7 +24,6 @@ class TruncatedNormal(pyd.Normal):
         if value.shape[-len(shape):] == shape:
             return super().log_prob(value)
         else:
-            print("True")
             value = value.transpose(0, diff)
             assert value.shape[-len(shape):] == shape
             return super().log_prob(value).transpose(0, diff)  # To account for batch_first=True
