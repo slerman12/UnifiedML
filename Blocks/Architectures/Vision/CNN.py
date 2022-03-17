@@ -4,6 +4,7 @@ import torch
 from torch import nn
 
 import Utils
+from Blocks.Architectures import MLP
 
 
 class CNN(nn.Module):
@@ -25,10 +26,8 @@ class CNN(nn.Module):
 
         self.pool = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.AdaptiveAvgPool2d((3, 3)),
-                               nn.Flatten(-3),
-                               nn.Linear(out_channels * 3 * 3, 1024),
-                               nn.ReLU(inplace=True),
-                               nn.Linear(1024, output_dim))
+                               nn.Flatten(),
+                               MLP(out_channels * 3 * 3, output_dim, 1024))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.pool)

@@ -145,7 +145,7 @@ recipes:
     pool:
       _target_: null
       input_shape: null
-      output_dim: 1024
+      output_dim: null
   actor:
     trunk:
       _target_: null
