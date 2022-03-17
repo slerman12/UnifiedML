@@ -59,7 +59,6 @@ class CNNEncoder(nn.Module):
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
-        print(self.feature_shape, self.repr_shape, self.pool)
 
         # EMA
         if ema_decay is not None:
@@ -98,7 +97,7 @@ class CNNEncoder(nn.Module):
                 f'{self.repr_dim}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
 
         # Restore leading dims
-        h = h.view(*obs_shape[:-3], *h.shape[-3:])
+        h = h.view(*obs_shape[:-3], *h.shape[1:])
         return h
 
 
