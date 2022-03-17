@@ -48,7 +48,6 @@ class ViT(nn.Module):
                                                        dropout=dropout, relu=relu) for _ in range(depth)])
 
         self.pool = nn.Sequential(Pool(pool_type),
-                                  nn.LayerNorm(out_channels),
                                   nn.Identity() if output_dim is None else nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
