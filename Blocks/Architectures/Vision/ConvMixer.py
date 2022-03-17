@@ -42,7 +42,7 @@ class ConvMixer(nn.Module):
                                MLP(out_channels, output_dim, 1024))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer, self.projection)
+        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer, self.pool)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

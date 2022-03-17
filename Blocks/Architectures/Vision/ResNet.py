@@ -80,7 +80,7 @@ class MiniResNet(nn.Module):
                                nn.Linear(dims[-1], output_dim))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.projection)
+        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.pool)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
