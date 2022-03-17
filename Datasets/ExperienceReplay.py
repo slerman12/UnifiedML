@@ -342,6 +342,7 @@ def Experiences(offline):
                 yield self.fetch_sample_process()  # Yields a single experience
 
         def __getitem__(self, idx):
+            print("no")
             # Keep fetching, sampling, and building batches
             return self.fetch_sample_process(idx)  # Yields a single experience
 
