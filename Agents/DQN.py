@@ -28,7 +28,7 @@ class DQNAgent(torch.nn.Module):
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actions=2, num_critics=2):  # DQN
+                 num_actions=1, num_critics=2):  # DQN
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!

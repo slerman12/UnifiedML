@@ -18,11 +18,13 @@ class TruncatedNormal(pyd.Normal):
         self.stddev_clip = stddev_clip
 
     def log_prob(self, value):
-        try:
+        shape = self.loc.shape
+        diff = len(value.shape) - len(shape)
+
+        if value.shape[-len(shape):] == shape:
             return super().log_prob(value)
-        except ValueError:
-            print(value.shape, super().log_prob(value.transpose(0, 1)).transpose(0, 1).shape)
-            return super().log_prob(value.transpose(0, 1)).transpose(0, 1)  # To account for batch_first=True
+        else:
+            return super().log_prob(value.transpose(0, diff)).transpose(0, diff)  # To account for batch_first=True
 
     # No grad, defaults to no clip, batch dim first
     def sample(self, sample_shape=torch.Size(), to_clip=False, batch_first=True):
