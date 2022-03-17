@@ -19,9 +19,9 @@ class TruncatedNormal(pyd.Normal):
 
     def log_prob(self, value):
         try:
-            print(value.shape, super().log_prob(value).shape)
             return super().log_prob(value)
         except ValueError:
+            print(value.shape, super().log_prob(value.transpose(0, 1)).transpose(0, 1).shape)
             return super().log_prob(value.transpose(0, 1)).transpose(0, 1)  # To account for batch_first=True
 
     # No grad, defaults to no clip, batch dim first
