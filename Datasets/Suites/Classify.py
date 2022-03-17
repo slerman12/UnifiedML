@@ -135,17 +135,18 @@ class ClassifyEnv:
 
     # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' paired with (<->) 'next obs'
     def step(self, action):
-        assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
+        if action is not None:
+            assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
+
+            correct = (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
+
+            # 'reward' and 'action' paired with 'next obs'
+            self.time_step.reward[1:] = correct
+            self.time_step.reward[0] = correct.mean()
+            self.time_step.action[1:] = action
 
         # Concat a dummy batch item ('next obs')
         x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
-
-        correct = (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
-
-        # 'reward' and 'action' paired with 'next obs'
-        self.time_step.reward[1:] = correct
-        self.time_step.reward[0] = correct.mean()
-        self.time_step.action[1:] = action
 
         self.time_step = self.time_step._replace(step_type=StepType.LAST, observation=x, label=y)
 
@@ -202,6 +203,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,
+                                   active=not train,
                                    add_remove_batch_dim=False)  # Disables the modification of batch dims
 
     return env

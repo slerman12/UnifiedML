@@ -15,22 +15,17 @@ class Environment:
         self.offline = (offline or generate) and train
         self.generate = generate
 
-        self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
-                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+        raw_env = DMC if suite.lower() == "dmc" \
+            else Atari if suite.lower() == "atari" \
+            else Classify if suite.lower() == 'classify' else None
+
+        self.env = raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
+                                episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
 
         self.env.reset()
 
         self.episode_done = self.episode_step = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
-
-    @property
-    def raw_env(self):
-        if self.suite.lower() == "dmc":
-            return DMC
-        elif self.suite.lower() == "atari":
-            return Atari
-        elif self.suite.lower() == 'classify':
-            return Classify
 
     def __getattr__(self, item):
         return getattr(self.env, item)
@@ -50,9 +45,10 @@ class Environment:
         while not self.episode_done and step < steps:
             # Act
             if not self.offline:
-                action = agent.act(exp.observation)
+                action = agent.act(exp.observation).cpu().numpy() if self.env.active \
+                    else None
 
-                exp = self.env.step(action.cpu().numpy())
+                exp = self.env.step(action)
 
                 exp.step = agent.step
                 experiences.append(exp)
