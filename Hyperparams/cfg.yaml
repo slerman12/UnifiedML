@@ -135,6 +135,8 @@ plotting:
 recipes:
   Aug: null  # Shorthand for recipes.aug._target_
   Eyes: null  # Shorthand for recipes.encoder.eyes._target_
+  aug:
+    _target_: ${recipes.Aug}
   encoder:
     eyes:
       _target_: ${recipes.Eyes}
@@ -161,8 +163,6 @@ recipes:
     q_head:
       _target_: null
       input_shape: null
-  aug:
-    _target_: ${recipes.Aug}
 
 hydra:
   run:

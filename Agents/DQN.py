@@ -46,11 +46,12 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions  # Num actions sampled by actor
 
-        self.encoder = Utils.Randn(trunk_dim) if generate \
+        self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, lr=lr, weight_decay=weight_decay,
                             ema_tau=ema_tau if ema else None, parallel=parallel)
 
-        repr_shape = (trunk_dim,) if generate else self.encoder.repr_shape
+        repr_shape = (trunk_dim,) if generate \
+            else self.encoder.repr_shape
 
         # Continuous actions
         self.actor = None if self.discrete \
@@ -71,7 +72,7 @@ class DQNAgent(torch.nn.Module):
         # Birth
 
     def act(self, obs):
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic, self.actor):
+        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device)
 
             # EMA targets
@@ -179,7 +180,6 @@ class DQNAgent(torch.nn.Module):
                 generated_image = self.actor(obs[:half], self.step).mean[:, 0]
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
-                next_obs[:] = float('nan')  # Can delete for Cuda > 11
 
             # "Discern"
 

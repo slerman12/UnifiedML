@@ -153,7 +153,7 @@ class MergeCritics(nn.Module):
 
 
 # Replaces tensor's batch items with Normal-sampled random latent
-class Randn(nn.Module):
+class Rand(nn.Module):
     def __init__(self, size=1):
         super().__init__()
         self.size = size
