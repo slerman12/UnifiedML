@@ -196,7 +196,7 @@ def worker_init_fn(worker_id):
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
 def Experiences(offline):
-    class _Experiences(Dataset if offline else IterableDataset):
+    class _Experiences(IterableDataset):
         def __init__(self, path, capacity, num_workers, fetch_per, save=False, nstep=0, discount=1, transform=None):
 
             # Dataset construction via parallel workers
@@ -218,7 +218,6 @@ def Experiences(offline):
 
             if offline:
                 list(map(self.load_episode, self.path.glob('*.npz')))
-                print(len(self))
 
             self.nstep = nstep
             self.discount = discount
