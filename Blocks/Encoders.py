@@ -36,8 +36,8 @@ class CNNEncoder(nn.Module):
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.pool = instantiate(recipe.pool) if recipe.pool._target_ is not None \
-            else getattr(self.Eyes, 'pool', None) or nn.Identity()
+        self.pool = getattr(self.Eyes, 'pool', None) or nn.Identity() if recipe.pool._target_ is None \
+            else instantiate(recipe.pool)
 
         # Initialize model
         self.init(lr, weight_decay, ema_decay)
