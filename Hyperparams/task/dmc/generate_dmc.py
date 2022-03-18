@@ -18,14 +18,14 @@ if __name__ == '__main__':
       - {}
       - _self_
     
-    suite: dmc
-    action_repeat: 2
-    frame_stack: 3
-    nstep: 3
-    task_name: {}
+suite: dmc
+action_repeat: 2
+frame_stack: 3
+nstep: 3
+task_name: {}
     
-    hydra:
-      job:
+hydra:
+    job:
         env_set:
           # Environment variables for MuJoCo
           MKL_SERVICE_FORCE_INTEL: '1'

@@ -2,14 +2,14 @@ defaults:
       - 500K
       - _self_
     
-    suite: dmc
-    action_repeat: 2
-    frame_stack: 3
-    nstep: 3
-    task_name: finger_turn_easy
+suite: dmc
+action_repeat: 2
+frame_stack: 3
+nstep: 3
+task_name: finger_turn_easy
     
-    hydra:
-      job:
+hydra:
+    job:
         env_set:
           # Environment variables for MuJoCo
           MKL_SERVICE_FORCE_INTEL: '1'
