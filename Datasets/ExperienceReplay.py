@@ -186,8 +186,6 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     def __len__(self):
-        if self.save:
-            return len(list(self.path.glob('*.npz')))
         return self.episodes_stored
 
 
@@ -239,12 +237,11 @@ def Experiences(offline):
 
             episode_len = next(iter(episode.values())).shape[0] - 1
 
-            while episode_len + self.num_experiences_loaded > self.capacity:
+            while episode_len + self.num_experiences_loaded > self.capacity and not offline:
                 early_episode_name = self.episode_names.pop(0)
                 early_episode = self.episodes.pop(early_episode_name)
                 early_episode_len = next(iter(early_episode.values())).shape[0] - 1
                 self.num_experiences_loaded -= early_episode_len
-                self.index = self.index[early_episode_len:]
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
             self.episode_names.append(episode_name)
@@ -294,6 +291,8 @@ def Experiences(offline):
         def process(self, episode, idx=None):
             episode_len = len(episode['observation'])
             limit = episode_len - (self.nstep or 1)
+            if idx is not None:
+                assert idx < limit
             idx = np.random.randint(limit) if idx is None else idx % limit
 
             # Transition

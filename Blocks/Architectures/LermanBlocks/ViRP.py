@@ -21,9 +21,9 @@ from Blocks.Architectures.RN import RN
 class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
                  k_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None, dropout=0,
-                 pool_type='cls', output_dim=None, experiment='relation', ViRS=False):
+                 pool_type='cls', output_dim=None, experiment='pairwise_relation', perceiver=False):
         self.tokens = tokens
-        self.ViRS = ViRS
+        self.perceiver = perceiver
 
         token_dim = out_channels if token_dim is None else token_dim
         v_dim = out_channels if v_dim is None else v_dim
@@ -37,13 +37,16 @@ class ViRP(ViT):
         super().__init__(input_shape, patch_size, out_channels, emb_dropout, pool_type=pool_type, output_dim=output_dim)
 
         kwargs = {}
-        if experiment == 'relation':
+        if experiment == 'pairwise_relation':
+            block = PairwiseRelationBlock
+            kwargs = dict(impartial_q_head=False)
+        elif experiment == 'relation':
             block = RelationBlock
             kwargs = dict(impartial_q_head=False)
-        elif experiment == 'relative':
-            block = RelativeBlock
+        elif experiment == 'pairwise':
+            block = PairwiseHeadsBlock  # =RelativeBlock
         elif experiment == 'independent':
-            block = IndependentHeadsBlock
+            block = IndependentHeadsBlock  # =RelativeBlock
         elif experiment == 'disentangled':
             block = Disentangled
         elif experiment == 'course_corrector':
@@ -60,9 +63,7 @@ class ViRP(ViT):
                                                    for _ in range(inner_depth - 1)])] * recurs
                                   for recurs, inner_depth in zip(recursions, depths)], []))
 
-        if ViRS:
-            self.attn = nn.Sequential(attn[1])
-        else:
+        if perceiver:
             self.attn = Perceiver(out_channels, heads, tokens, token_dim, fix_token=True)
 
             self.attn.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, k_dim, out_channels)]) +
@@ -71,11 +72,13 @@ class ViRP(ViT):
                                                          dropout=dropout, **kwargs)] * recurs
                                                   for i, recurs in enumerate(recursions)], []))
             self.attn.attn = attn
+        else:
+            self.attn = nn.Sequential(attn[1])
 
     def repr_shape(self, c, h, w):
-        if self.ViRS:
-            return super().repr_shape(c, h, w)
-        return self.out_channels, self.tokens, 1
+        if self.perceiver:
+            return self.out_channels, self.tokens, 1
+        return super().repr_shape(c, h, w)
 
 
 # MHDPR
@@ -256,43 +259,45 @@ class Disentangled(ConcatBlock):
 
 
 # Head, in
-class IndependentHeadsBlock(ConcatBlock):
+class IndependentHeadsBlock(Disentangled):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads)
-        self.RN = RN(dim, dim, 0, 0, hidden_dim)
+        self.RN = nn.Sequential(RN(self.v_dim, dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout),
+                                nn.Dropout(dropout))
+
+        self.downsample = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
+            else nn.Identity()
 
     def forward(self, x, s=None):
         if s is None:
-            s = x  # [b, n, d]
+            s = x  # [b, n, d] or [n, d] if tokens
+
+        shape = x.shape
 
         attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        residual = x.unsqueeze(-2)  # [b, n, 1, d]
+        residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
+        residual = residual.expand(*shape[0], -1, -1, -1)  # [b, n, 1, d]
+        residual = residual.flatten(0, -3)  # [b * n, h, d]
 
+        norm = self.LN_mid(head_wise)  # [b, n, h, d]
         relation = norm.flatten(0, -3)  # [b * n, h, d]
-        residual = residual.flatten(0, -3)  # [b * n, 1, d]
 
         out = self.LN_out(self.RN(relation, residual))  # [b * n, d]
 
-        return out.view(x.shape) + x  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
 
 
 # Head, head:in
-class RelativeBlock(ConcatBlock):
+class PairwiseHeadsBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
-        v_dim = self.v_dim
-        hidden_dim = self.hidden_dim
 
-        self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads)
-        self.RN = RN(v_dim, v_dim + dim, 0, 0, hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
-
-        self.downsample = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
-            else nn.Identity()
+        self.RN = nn.Sequential(RN(self.v_dim, self.v_dim + dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(),
+                                   dropout=dropout), nn.Dropout(dropout))
 
     def forward(self, x, s=None):
         if s is None:
@@ -318,7 +323,17 @@ class RelativeBlock(ConcatBlock):
 
 
 # Re-param
-class RelationBlock(RelativeBlock):
+class RelationBlock(IndependentHeadsBlock):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0,
+                 impartial_q_head=False):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads,
+                             impartial_q_head=impartial_q_head)
+
+
+# Re-param
+class PairwiseRelationBlock(PairwiseHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0,
                  impartial_q_head=False):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
