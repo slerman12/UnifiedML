@@ -17,7 +17,7 @@ from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.ViT import ViT
 
 import Utils
-
+from Blocks.Augmentations import RandomShiftsAug
 
 try:
     _, term_width = os.popen('stty size', 'r').read().split()
@@ -153,8 +153,8 @@ if args.net=="vit_timm":
 else:
     size = imsize
 transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.Resize(size),
+    # transforms.RandomCrop(32, padding=4),
+    # transforms.Resize(size),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
@@ -192,8 +192,9 @@ net = ViT(
         emb_dropout=0.1
     ).to(device)
 
+aug = RandomShiftsAug(4)
 c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
-net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
+net = nn.Sequential(aug, net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
 
 if device == 'cuda':
     net = torch.nn.DataParallel(net) # make parallel
