@@ -317,7 +317,8 @@ class RelativeBlock(ConcatBlock):
 
 # Re-param
 class RelationBlock(RelativeBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0,
+                 impartial_q_head=False):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
         self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads,
