@@ -21,6 +21,7 @@ if __name__ == '__main__':
     suite: dmc
     action_repeat: 2
     frame_stack: 3
+    nstep: 3
     task_name: {}
     
     hydra:
