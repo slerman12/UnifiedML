@@ -14,11 +14,11 @@ import Utils
 
 from Blocks.Architectures import MLP, ViT
 from Blocks.Architectures.MultiHeadAttention import ReLA, mem_efficient_attend
+from Blocks.Architectures.Perceiver import Perceiver
 from Blocks.Architectures.RN import RN
-from Blocks.Architectures.Perceiver import Perceiver, PerceiverV2
 
 
-class ViRPV2(ViT):
+class ViRP(ViT):
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
                  k_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None, dropout=0,
                  pool_type='cls', output_dim=None, experiment='relation', ViRS=False):
@@ -63,7 +63,7 @@ class ViRPV2(ViT):
         if ViRS:
             self.attn = nn.Sequential(attn[1])
         else:
-            self.attn = PerceiverV2(out_channels, heads, tokens, token_dim, fix_token=True)
+            self.attn = Perceiver(out_channels, heads, tokens, token_dim, fix_token=True)
 
             self.attn.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, k_dim, out_channels)]) +
                                              sum([[block(token_dim if i == 0 else out_channels, heads,
@@ -71,48 +71,6 @@ class ViRPV2(ViT):
                                                          dropout=dropout, **kwargs)] * recurs
                                                   for i, recurs in enumerate(recursions)], []))
             self.attn.attn = attn
-
-    def repr_shape(self, c, h, w):
-        if self.ViRS:
-            return super().repr_shape(c, h, w)
-        return self.out_channels, self.tokens, 1
-
-
-class ViRP(ViT):
-    def __init__(self, input_shape, patch_size=4, out_channels=128, heads=8, tokens=64,
-                 token_dim=128, depth=8, pool_type='cls', output_dim=None, experiment='relation', ViRS=True):
-        self.tokens = tokens
-        self.ViRS = ViRS  # ViRP? Visiorelational Perceptor
-
-        super().__init__(input_shape, patch_size, out_channels, heads, depth, pool_type, True, output_dim)
-
-        if experiment == 'relation':
-            block = RelationBlock
-        elif experiment == 'relative':
-            block = RelativeBlock
-        elif experiment == 'independent':
-            block = IndependentHeadsBlock
-        elif experiment == 'disentangled':
-            block = Disentangled
-        elif experiment == 'course_corrector':
-            block = CourseCorrectorBlock
-        elif experiment == 'concat':
-            block = ConcatBlock
-        else:
-            raise NotImplementedError('No such experiment')
-
-        self.P = Perceiver(out_channels, heads, tokens, token_dim, depth=depth, relu=True)
-
-        self.P.attn_token = Relation(token_dim, 1, out_channels, out_channels)  # t d, b n o -> b t o
-        # self.P.attn_token = block(token_dim, heads, out_channels, out_channels)  # t d, b n o -> b t o
-        self.P.reattn_token = block(out_channels, heads)  # b t o, b n o -> b t o
-        self.P.attn = nn.Sequential(*[block(out_channels, heads)
-                                      for _ in range(depth - 1)])  # b t o, b t o -> b t o
-
-        self.attn = self.P
-
-        if ViRS:
-            self.attn = nn.Sequential(self.P.reattn_token, self.P.attn)
 
     def repr_shape(self, c, h, w):
         if self.ViRS:

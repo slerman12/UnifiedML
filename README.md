@@ -56,7 +56,7 @@ An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excel
 
 Yes.
 
-All agents support discrete and continuous control, classification, and generative modeling.
+All agents support discrete and continuous control, classification, and generative modeling in a seamless, unified integration.
 
 See example scripts of various configurations [below](#mag-sample-scripts).
 

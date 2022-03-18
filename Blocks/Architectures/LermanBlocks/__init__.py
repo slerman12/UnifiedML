@@ -1,1 +1,1 @@
-from Blocks.Architectures.LermanBlocks.ViRP import ViRP, ViRPV2
+from Blocks.Architectures.LermanBlocks.ViRP import ViRP
