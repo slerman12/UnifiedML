@@ -177,7 +177,7 @@ Train accuracies can be printed with ```agent.log=true```.
 Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for passing in custom architectures. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
 
 ```
-python Run.py task=classify/cifar10 RL=false recipes.Eyes=Blocks.Architectures.ResNet18 ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}"
+python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}"  recipes.Eyes=Blocks.Architectures.ResNet18
 ```
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
