@@ -70,6 +70,7 @@ class ExperienceReplay:
         self.episode = {spec['name']: [] for spec in self.specs}
         self.episode_len = 0
         self.episodes_stored = len(list(self.path.glob('*.npz')))
+        self.epoch = 0
         self.save = save
 
         # Data transform
@@ -112,6 +113,8 @@ class ExperienceReplay:
             return self.replay.__next__()
         except StopIteration:
             self._replay = iter(self.batches)
+            self.epoch += 1
+            print(f'End epoch {self.epoch - 1}. Start epoch {self.epoch}.')
             return self.replay.__next__()
 
     # Allows iteration
