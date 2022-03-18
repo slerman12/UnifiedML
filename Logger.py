@@ -141,7 +141,7 @@ class Logger:
     #             self.tensorboard_writer.add_scalar(f'{key}', logs[key], logs['step'])
 
     def log_wandb(self, logs, name):
-        if self.wandb and self.wandb != 'initialized':
+        if self.wandb != 'initialized':
             import wandb
             wandb.init(project=str(datetime.datetime.now()),
                        name=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
