@@ -18,7 +18,7 @@ import Utils
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False, relu=False):
+    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False, rela=False):
         super().__init__()
 
         self.dim = dim
@@ -39,7 +39,7 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(dim, qk_dim, bias=False)
         self.to_kv = nn.Linear(s_dim, qk_dim + v_dim, bias=False)
 
-        self.relu = nn.ReLU(inplace=True) if relu else None
+        self.relu = nn.ReLU(inplace=True) if rela else None
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
@@ -213,8 +213,8 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, talk_h=False, relu=False,
-                 dropout=0, lr=None, weight_decay=0, ema_decay=None):
+    def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0,
+                 talk_h=False, rela=False):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
@@ -224,7 +224,7 @@ class CrossAttentionBlock(nn.Module):
 
         self.v_dim = v_dim
 
-        self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, relu)
+        self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, rela)
         self.project = nn.Identity() if heads == 1 \
             else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
         self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))

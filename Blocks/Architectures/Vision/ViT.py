@@ -17,7 +17,7 @@ from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 class ViT(nn.Module):
     def __init__(self, input_shape, patch_size=4, out_channels=32,
                  emb_dropout=0.1, qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depth=3, dropout=0.1,
-                 pool_type='cls', relu=False, output_dim=None):
+                 pool_type='cls', rela=False, output_dim=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -45,7 +45,7 @@ class ViT(nn.Module):
         _, self.h, self.w = self.repr_shape(*input_shape)
 
         self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, out_channels, qk_dim, v_dim, hidden_dim,
-                                                       dropout=dropout, relu=relu) for _ in range(depth)])
+                                                       dropout=dropout, rela=rela) for _ in range(depth)])
 
         self.pool = nn.Identity() if output_dim is None \
             else nn.Sequential(Pool(pool_type),
