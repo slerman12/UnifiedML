@@ -120,7 +120,7 @@ class ViRP(ViT):
 
 # MHDPR
 class Relation(nn.Module):
-    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False):
+    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False, impartial_q_head=False):
         super().__init__()
 
         self.dim = dim
@@ -138,7 +138,7 @@ class Relation(nn.Module):
 
         assert v_dim % heads == 0, f'value dim={v_dim} is not divisible by heads={heads}'
 
-        self.to_q = nn.Linear(dim, qk_dim, bias=False)
+        self.to_q = nn.Linear(dim, qk_dim / heads if impartial_q_head else qk_dim, bias=False)
         self.to_kv = nn.Linear(s_dim, qk_dim + v_dim, bias=False)
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
@@ -153,7 +153,7 @@ class Relation(nn.Module):
         if s is None:
             s = x
 
-        tokens = len(x.shape) == 2  # Tokens distinguished by having axes=2
+        tokens = len(x.shape) == 2  # Tokens distinguished by having axes=2 (no batch dim)
         if not tokens:
             x = x.flatten(1, -2)
         s = s.flatten(1, -2)
@@ -161,12 +161,12 @@ class Relation(nn.Module):
         q = x if tokens else self.to_q(x)
         k, v = self.to_kv(s).tensor_split([self.qk_dim], dim=-1)
 
-        multi_head_tokens = q.shape[-1] == k.shape[-1] and tokens
+        multi_head_q = q.shape[-1] == k.shape[-1]
 
-        assert q.shape[-1] == k.shape[-1] / self.heads or not tokens, \
-            f'Tokens, keys cannot be broadcast {q.shape[-1]}, {k.shape[-1]}'
+        assert q.shape[-1] == k.shape[-1] / self.heads or multi_head_q, \
+            f'Queries, keys cannot be broadcast {q.shape[-1]}, {k.shape[-1]}'
 
-        if multi_head_tokens or not tokens:
+        if multi_head_q:
             pattern = 'n (h d) -> h n d' if tokens \
                 else 'b n (h d) -> b h n d'
             q = rearrange(q, pattern, h=self.heads)
@@ -181,9 +181,10 @@ class Relation(nn.Module):
         scale = q.shape[-1] ** -0.5
         q = q * scale
 
-        pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
+        pattern = 'h i d, b h j d -> b h i j' if multi_head_q and tokens \
             else 'i d, b h j d -> b h i j' if tokens \
-            else 'b h i d, b h j d -> b h i j'
+            else 'b h i d, b h j d -> b h i j' if multi_head_q \
+            else 'b i d, b h j d -> b h i j'
 
         # Memory efficient toggle
         mem_efficient = False
@@ -356,5 +357,6 @@ class RelationBlock(RelativeBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, qk_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads)
+        self.attn = Relation(dim, self.heads, self.s_dim, self.qk_dim, self.v_dim * self.heads,
+                             impartial_q_head=False)
 
