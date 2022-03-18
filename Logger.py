@@ -8,9 +8,6 @@ import re
 from pathlib import Path
 from termcolor import colored
 
-# from torch.utils.tensorboard import SummaryWriter
-# import wandb
-
 
 def shorthand(log_name):
     return ''.join([s[0].upper() for s in re.split('_|[ ]', log_name)] if len(log_name) > 3 else log_name.upper())
@@ -30,7 +27,7 @@ def format(log, log_name):
 
 
 class Logger:
-    def __init__(self, task, seed, path='.'):
+    def __init__(self, task, seed, path='.', wandb=False):
 
         self.path = path.replace('Agents.', '')
         Path(self.path).mkdir(parents=True, exist_ok=True)
@@ -40,8 +37,7 @@ class Logger:
         self.logs = {}
         self.counts = {}
 
-        self.tensorboard_writer = None
-        self.wandb = None
+        self.wandb = wandb
 
     def log(self, log=None, name="Logs", dump=False):
         if log is not None:
@@ -85,6 +81,8 @@ class Logger:
     def _dump_logs(self, logs, name):
         self.dump_to_console(logs, name=name)
         self.dump_to_csv(logs, name=name)
+        if self.wandb:
+            self.log_wandb(logs, name=name)
 
     def dump_to_console(self, logs, name):
         name = colored(name, 'yellow' if name.lower() == 'train' else 'green' if name.lower() == 'eval' else None,
@@ -142,10 +140,11 @@ class Logger:
     #         if key != 'step' and key != 'episode':
     #             self.tensorboard_writer.add_scalar(f'{key}', logs[key], logs['step'])
 
-    # def log_wandb(self, logs, name):
-    #     if self.wandb is None:
-    #         self.wandb = ...
-    #         wandb.init(project=str(datetime.datetime.now()),
-    #                    name=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
-    #     logs.update({'name': name})
-    #     wandb.log(logs)
+    def log_wandb(self, logs, name):
+        if self.wandb and self.wandb != 'initialized':
+            import wandb
+            wandb.init(project=str(datetime.datetime.now()),
+                       name=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
+            self.wandb = 'initialized'
+        logs.update({'name': name})
+        wandb.log(logs)

@@ -113,6 +113,7 @@ logger:
   path: ./Benchmarking/${experiment}/${Agent}/${environment.suite}/
   task: ${task_name}
   seed: ${seed}
+  wandb: False
 
 vlogger:
   _target_: Vlogger.Vlogger
