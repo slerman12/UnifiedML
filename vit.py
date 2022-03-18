@@ -105,7 +105,7 @@ net = ViT(
 
 c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
 net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Linear(50, 1024), nn.ReLU(),
-                    nn.Linear(1024, 1024), nn.ReLU(), nn.Linear(1024, 10), nn.Tanh())
+                    nn.Linear(1024, 1024), nn.ReLU(), nn.Linear(1024, 10), nn.Tanh()).to(device)
 
 if device == 'cuda':
     net = torch.nn.DataParallel(net) # make parallel
