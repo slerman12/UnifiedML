@@ -101,7 +101,7 @@ net = ViT(
         hidden_dim=512,
         dropout=0.1,
         emb_dropout=0.1
-    )
+    ).to(device)
 
 c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
 net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Linear(50, 1024), nn.ReLU(),
