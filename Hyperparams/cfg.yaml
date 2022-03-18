@@ -92,16 +92,16 @@ agent:
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay
-  obs_spec: ${obs_spec}
-  action_spec: ${action_spec}
-  capacity: 1000000
   batch_size: ${batch_size}
   num_workers: ${num_workers}
+  capacity: 1000000
+  obs_spec: ${obs_spec}
+  action_spec: ${action_spec}
+  suite: ${suite}
+  task: ${task_name}
   nstep: ${nstep}
   discount: ${discount}
   transform: null
-  suite: ${suite}
-  task: ${task_name}
   offline: ${offline}
   generate: ${generate}
   save: false

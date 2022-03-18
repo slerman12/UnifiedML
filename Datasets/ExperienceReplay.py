@@ -220,7 +220,7 @@ def Experiences(offline):
             self.save = save
 
             if offline:
-                list(map(self.load_episode, self.path.glob('*.npz')))
+                list(map(self.load_episode, sorted(self.path.glob('*.npz'))))
 
             self.nstep = nstep
             self.discount = discount
@@ -237,11 +237,13 @@ def Experiences(offline):
 
             episode_len = next(iter(episode.values())).shape[0] - 1
 
-            while episode_len + self.num_experiences_loaded > self.capacity and not offline:
+            while episode_len + self.num_experiences_loaded > self.capacity:
                 early_episode_name = self.episode_names.pop(0)
                 early_episode = self.episodes.pop(early_episode_name)
                 early_episode_len = next(iter(early_episode.values())).shape[0] - 1
                 self.num_experiences_loaded -= early_episode_len
+                if offline:
+                    self.index = self.index[early_episode_len:]
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
             self.episode_names.append(episode_name)
@@ -291,8 +293,7 @@ def Experiences(offline):
         def process(self, episode, idx=None):
             episode_len = len(episode['observation'])
             limit = episode_len - (self.nstep or 1)
-            if idx is not None:
-                assert idx < limit
+            assert idx < limit
             idx = np.random.randint(limit) if idx is None else idx % limit
 
             # Transition
@@ -353,8 +354,7 @@ def Experiences(offline):
                 yield self.fetch_sample_process()  # Yields a single experience
 
         def __getitem__(self, idx):
-            # Get sample by index
-            return self.fetch_sample_process(idx)  # Yields a single experience
+            return self.fetch_sample_process(idx)  # Get single experience by index
 
         def __len__(self):
             return self.num_experiences_loaded
