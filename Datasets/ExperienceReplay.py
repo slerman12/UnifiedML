@@ -327,7 +327,8 @@ def Experiences(offline):
 
             # Transform
             if self.transform is not None:
-                obs = self.transform(torch.as_tensor(obs) / 255) * 255
+                obs = self.transform(torch.as_tensor(obs).permute((0, 2, 3, 1)) / 255).permute((0, 3, 1, 2)) * 255
+                # obs = self.transform(torch.as_tensor(obs) / 255) * 255
 
             return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
 
