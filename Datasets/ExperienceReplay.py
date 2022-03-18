@@ -293,7 +293,6 @@ def Experiences(offline):
         def process(self, episode, idx=None):
             episode_len = len(episode['observation'])
             limit = episode_len - (self.nstep or 1)
-            assert idx < limit
             idx = np.random.randint(limit) if idx is None else idx % limit
 
             # Transition

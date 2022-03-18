@@ -149,20 +149,17 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
 print('==> Preparing data..')
-if args.net=="vit_timm":
-    size = 384
-else:
-    size = imsize
+size = imsize
 transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
-    transforms.Resize(size),
+    # transforms.Resize(size),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
 transform_test = transforms.Compose([
-    transforms.Resize(size),
+    # transforms.Resize(size),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
@@ -224,10 +221,7 @@ if args.resume:
 # Loss is CE
 criterion = nn.CrossEntropyLoss()
 
-if args.opt == "adam":
-    optimizer = optim.Adam(net.parameters(), lr=args.lr)
-elif args.opt == "sgd":
-    optimizer = optim.SGD(net.parameters(), lr=args.lr)
+optimizer = optim.AdamW(net.parameters(), lr=args.lr)
 
 # use cosine or reduce LR on Plateau scheduling
 # if not args.cos:
