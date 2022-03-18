@@ -186,8 +186,6 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     def __len__(self):
-        if self.save:
-            return len(list(self.path.glob('*.npz')))
         return self.episodes_stored
 
 
