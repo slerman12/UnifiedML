@@ -388,7 +388,9 @@ def train(epoch):
     train_loss = 0
     correct = 0
     total = 0
+    print("okay")
     for batch_idx, (inputs, _, _, _, _, targets, _, _, _, _, _) in enumerate(trainloader):
+        print('and then this')
         inputs, targets = inputs.to(device), targets.to(device).long()
     # for batch_idx, (inputs, targets) in enumerate(trainloader):
     #     inputs, targets = inputs.to(device), targets.to(device)
