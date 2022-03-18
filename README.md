@@ -166,13 +166,19 @@ DQN Agent on MNIST:
 python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
 ```
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning phase s.t. ```reward = -error```. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**).
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning phase s.t. ```reward = -error```. 
+
+Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**). This pure RL training actually works.
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag.
+Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for passing in custom architectures. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
+
+```
+python Run.py task=classify/cifar10 RL=false recipes.Eyes=Blocks.Architectures.ResNet18 ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}"
+```
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -214,13 +220,13 @@ Is true by default for classification; replays are automatically downloaded.
 
 ### Saving
 
-Agents can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
+**Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
 ```
 python Run.py save_per_steps=100000 load=true
 ```
 
-An experience replay can be saved or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
+An **experience replay** can be saved or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
 
 ```
 python Run.py replay.save=true replay.load=true
@@ -230,7 +236,7 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
 
-Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+Replays also save uniquely w.r.t. a date-time to allow parallel training. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
 ### Custom Architectures
 
@@ -336,7 +342,7 @@ The order in which these are run matters, lest the replays be saved to and loade
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
 ```
-python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1']"
+python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
