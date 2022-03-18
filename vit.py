@@ -221,7 +221,7 @@ if args.resume:
 # Loss is CE
 criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.AdamW(net.parameters(), lr=args.lr)
+optimizer = optim.AdamW(net.parameters(), lr=args.lr, weight_decay=0)
 
 # use cosine or reduce LR on Plateau scheduling
 # if not args.cos:
