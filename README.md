@@ -163,7 +163,7 @@ python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 DQN Agent on MNIST:
 
 ```
-python Run.py Agent=Agents.DQNAgent task=classify/mnist RL=false
+python Run.py task=classify/mnist RL=false
 ```
 
 *Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning phase s.t. ```reward = -error```. 
