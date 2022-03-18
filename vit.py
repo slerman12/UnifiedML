@@ -302,7 +302,8 @@ def test(epoch):
         print('Saving..')
         state = {"model": net.state_dict(),
                  "optimizer": optimizer.state_dict(),
-                 "scaler": scaler.state_dict()}
+                 # "scaler": scaler.state_dict()
+                 }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
         torch.save(state, './checkpoint/'+args.net+'-{}-ckpt.t7'.format(args.patch))

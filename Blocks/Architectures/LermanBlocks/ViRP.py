@@ -202,7 +202,7 @@ class ConcatBlock(nn.Module):
         self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)
         # self.project = nn.Identity() if heads == 1 \
         #     else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
-        self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+        self.mlp = nn.Sequential(MLP(v_dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_mid = nn.LayerNorm(dim)
         self.LN_out = nn.LayerNorm(dim)
@@ -237,6 +237,8 @@ class Disentangled(ConcatBlock):
     def __init__(self, dim=32, heads=8, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
+        # self.project = nn.Identity() if heads == 1 \
+        #     else nn.Sequential(nn.Linear(self.v_dim // self.heads, self.v_dim // self.heads), nn.Dropout(dropout))
         self.LN_mid = nn.LayerNorm(self.v_dim // self.heads)
 
     def forward(self, x, s=None):
