@@ -304,11 +304,11 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=bs, shuffle=True,
 testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=8)
 
-# obs_spec = {'name': 'obs', 'shape': (3,32,32), 'dtype': 'float32'}
-# action_spec = {'name': 'action', 'shape': (10,), 'dtype': 'float32'}
-# trainloader = ExperienceReplay(bs, 8, 10000000, action_spec, 'classify', 'CIFAR10', True, False, True, True,
-#                                './Datasets/ReplayBuffer/Classify/CIFAR10_Buffer', obs_spec, 0, 1,
-#                                {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {}})
+obs_spec = {'name': 'obs', 'shape': (3,32,32), 'dtype': 'float32'}
+action_spec = {'name': 'action', 'shape': (10,), 'dtype': 'float32'}
+trainloader = ExperienceReplay(bs, 8, 10000000, action_spec, 'classify', 'CIFAR10', True, False, True, True,
+                               './Datasets/ReplayBuffer/Classify/CIFAR10_Buffer', obs_spec, 0, 1,
+                               {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {}})
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -388,10 +388,10 @@ def train(epoch):
     train_loss = 0
     correct = 0
     total = 0
-    # for batch_idx, (inputs, _, _, _, _, targets, _, _, _, _, _) in enumerate(trainloader):
-    #     inputs, targets = inputs.to(device), targets.to(device)
-    for batch_idx, (inputs, targets) in enumerate(trainloader):
+    for batch_idx, (inputs, _, _, _, _, targets, _, _, _, _, _) in enumerate(trainloader):
         inputs, targets = inputs.to(device), targets.to(device)
+    # for batch_idx, (inputs, targets) in enumerate(trainloader):
+    #     inputs, targets = inputs.to(device), targets.to(device)
         # Train with amp
         # with torch.cuda.amp.autocast(enabled=use_amp):
         outputs = net(inputs)
