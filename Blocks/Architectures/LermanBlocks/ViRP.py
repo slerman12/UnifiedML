@@ -193,23 +193,26 @@ class Relation(nn.Module):
         if mem_efficient:
             attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
         else:
-            self.weights = einsum(pattern, q, k)
+            self.weights = weights = einsum(pattern, q, k)
             # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
-            weights = self.weights.softmax(dim=-1)
+            if self.training:
+                weights = self.weights.softmax(dim=-1)
 
-            if 0 < mem_limit < 1:
-                weights = weights.to(q.device)
+                if 0 < mem_limit < 1:
+                    weights = weights.to(q.device)
 
-            # "Talking heads"
-            weights = self.talk_h(weights)
+                # "Talking heads"
+                weights = self.talk_h(weights)
 
-            # attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
-            attn = torch.matmul(weights, v)
+                # attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
+                attn = torch.matmul(weights, v)
 
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
         rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
-        rtn = attn - (attn - rtn).detach()
+
+        if self.training:
+            rtn = attn - (attn - rtn).detach()
 
         out = rearrange(rtn, 'b h n d -> b n (h d)')
 
