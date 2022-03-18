@@ -4,7 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import math
 from functools import partial
-import copy
 
 from einops import rearrange
 from opt_einsum_torch import EinsumPlanner
@@ -226,36 +225,21 @@ class CrossAttentionBlock(nn.Module):
         self.v_dim = v_dim
 
         self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, relu)
-        self.project_out = nn.Identity() if heads == 1 \
-            else nn.Sequential(nn.Linear(v_dim, v_dim), nn.Dropout(dropout))
-        self.mlp = nn.Sequential(MLP(v_dim, v_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+        self.project = nn.Identity() if heads == 1 \
+            else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
+        self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
-        self.ln_mid = nn.LayerNorm(v_dim)
-        self.ln_out = nn.LayerNorm(v_dim)
-
-        self.init(lr, weight_decay, ema_decay)
+        self.ln_mid = nn.LayerNorm(dim)
+        self.ln_out = nn.LayerNorm(dim)
 
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
-
-    def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Initialize weights
-        self.apply(Utils.weight_init)
-
-        # Optimizer
-        if lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # EMA
-        if ema_decay is not None:
-            self.ema = copy.deepcopy(self).eval()
-            self.ema_decay = ema_decay
 
     def forward(self, x, context=None):
         if context is None:
             context = x
 
-        attn = self.ln_mid(self.project_out(self.attn(x, context))) + x
+        attn = self.ln_mid(self.project(self.attn(x, context))) + x
         out = self.ln_out(self.mlp(attn)) + attn
 
         return out
