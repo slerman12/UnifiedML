@@ -200,8 +200,8 @@ class ConcatBlock(nn.Module):
         self.hidden_dim = hidden_dim
 
         self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)
-        self.project = nn.Identity() if heads == 1 \
-            else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
+        # self.project = nn.Identity() if heads == 1 \
+        #     else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
         self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_mid = nn.LayerNorm(dim)
@@ -214,7 +214,7 @@ class ConcatBlock(nn.Module):
         if context is None:
             context = x
 
-        attn = self.LN_mid(self.project(self.attn(x, context)))  # Relation
+        attn = self.LN_mid(self.attn(x, context))  # Relation
         out = self.LN_out(self.mlp(attn, x)) + x  # Reason-er
 
         return out
@@ -322,5 +322,5 @@ class RelationBlock(RelativeBlock):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
         self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads,
-                             impartial_q_head=False)
+                             impartial_q_head=impartial_q_head)
 

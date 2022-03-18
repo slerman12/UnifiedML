@@ -14,6 +14,7 @@ import torchvision
 import torchvision.transforms as transforms
 
 from Blocks.Architectures import MLP
+from Blocks.Architectures.LermanBlocks import ViRP
 from Blocks.Architectures.Vision.ViT import ViT
 
 import Utils
@@ -191,6 +192,17 @@ net = ViT(
         dropout=0.1,
         emb_dropout=0.1
     ).to(device)
+# net = ViRP(
+#     input_shape=[3, 32, 32],
+#     patch_size=args.patch,
+#     out_channels=int(args.dimhead) // 3,
+#     depths=[6],
+#     heads=8,
+#     hidden_dim=512,
+#     dropout=0.1,
+#     emb_dropout=0.1,
+#     ViRS=True
+# ).to(device)
 
 # aug = RandomShiftsAug(4)
 c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
@@ -230,7 +242,7 @@ else:
     wandb.config.scheduler = "ReduceLROnPlateau"
 
 ##### Training
-scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+# scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 def train(epoch):
     print('\nEpoch: %d' % epoch)
     net.train()
@@ -240,12 +252,14 @@ def train(epoch):
     for batch_idx, (inputs, targets) in enumerate(trainloader):
         inputs, targets = inputs.to(device), targets.to(device)
         # Train with amp
-        with torch.cuda.amp.autocast(enabled=use_amp):
-            outputs = net(inputs)
-            loss = criterion(outputs, targets)
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        # with torch.cuda.amp.autocast(enabled=use_amp):
+        outputs = net(inputs)
+        loss = criterion(outputs, targets)
+        # scaler.scale(loss).backward()
+        # scaler.step(optimizer)
+        # scaler.update()
+        loss.backward()
+        optimizer.step()
         optimizer.zero_grad()
 
         train_loss += loss.item()
@@ -325,7 +339,6 @@ for epoch in range(start_epoch, args.n_epochs):
         writer = csv.writer(f, lineterminator='\n')
         writer.writerow(list_loss)
         writer.writerow(list_acc)
-    print(list_loss)
 
 # writeout wandb
 wandb.save("wandb_{}.h5".format(args.net))
