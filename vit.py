@@ -345,7 +345,7 @@ net = ViTother(
     heads=8,
     mlp_dim=512,
     dropout=0.1,
-    emb_dropout=0.1)
+    emb_dropout=0.1).to(device)
 
 # aug = RandomShiftsAug(4)
 # c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
