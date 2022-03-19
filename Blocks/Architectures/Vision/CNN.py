@@ -11,6 +11,9 @@ class CNN(nn.Module):
     def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, stride=2, padding=0, output_dim=None):
         super().__init__()
 
+        if isinstance(input_shape, int):
+            input_shape = [input_shape]
+
         self.input_shape = torch.Size(input_shape)
         in_channels = input_shape[0]
 
@@ -21,7 +24,7 @@ class CNN(nn.Module):
                                       out_channels, 3, stride=stride if i == 0 else 1,
                                       padding=padding),
                             nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-                            nn.ReLU()) for i in range(depth + 1)],
+                            nn.ReLU(inplace=True)) for i in range(depth + 1)],
         )
 
         self.project = nn.Identity() if output_dim is None \
@@ -32,11 +35,11 @@ class CNN(nn.Module):
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
+        hw = self.input_shape[1:] if len(self.input_shape) == 3 else x[0].shape[-2:]
         x = torch.cat(
-            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
-             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
+            [context.view(*context.shape[:-3], -1, *hw[1:]) if len(context.shape) > 3
+             else context.view(*context.shape[:-1], -1, *hw[1:]) if context.shape[-1] % math.prod(hw[1:]) == 0
+             else context.view(*context.shape, 1, 1).expand(*context.shape, *hw[1:])
              for context in x if context.nelement() > 0], dim=-3)
         # Conserve leading dims
         lead_shape = x.shape[:-3]

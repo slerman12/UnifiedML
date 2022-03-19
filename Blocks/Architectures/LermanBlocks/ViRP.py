@@ -287,8 +287,8 @@ class IndependentHeadsBlock(Disentangled):
         attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
-        residual = self.downsample_mid(residual)  # [b * n, 1, d] or [n, 1, d] if tokens
+        residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
+        residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.flatten(0, -3)  # [b * n, 1, d]
 
@@ -317,8 +317,8 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
-        residual = self.downsample_mid(residual)  # [b * n, 1, d] or [n, 1, d] if tokens
+        residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
+        residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
         residual = residual.flatten(0, -3)  # [b * n, h, d]
 

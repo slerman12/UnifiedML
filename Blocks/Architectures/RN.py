@@ -5,7 +5,9 @@
 import torch
 from torch import nn
 
+import Utils
 from Blocks.Architectures import MLP
+from Blocks.Architectures.Vision.CNN import CNN
 
 
 class RN(nn.Module):
@@ -27,6 +29,8 @@ class RN(nn.Module):
             else output_dim
 
         self.inner = nn.Sequential(MLP(dim + context_dim, hidden_dim, hidden_dim, inner_depth), nn.Dropout(dropout))
+        # self.inner = nn.Sequential(Utils.ChSwap, CNN(dim + context_dim, hidden_dim, inner_depth), Utils.ChSwap,
+        #                            nn.Dropout(dropout))  # disable last relu...
         self.mid_nonlinearity = mid_nonlinearity
         self.outer = MLP(hidden_dim, self.output_dim, hidden_dim, outer_depth)
 
