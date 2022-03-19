@@ -325,6 +325,9 @@ net = ViT(
     dropout=0.1,
     emb_dropout=0.1
 ).to(device)
+# aug = RandomShiftsAug(4)
+c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
+net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
 # net = ViRP(
 #     input_shape=[3, 32, 32],
 #     patch_size=args.patch,
@@ -346,10 +349,6 @@ net = ViTother(
     mlp_dim=512,
     dropout=0.1,
     emb_dropout=0.1).to(device)
-
-# aug = RandomShiftsAug(4)
-# c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
-# net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
 
 # net.apply(Utils.weight_init)
 
