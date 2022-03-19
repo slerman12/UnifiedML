@@ -62,7 +62,7 @@ class ViRP(ViT):
                              sum([[nn.Sequential(*[block(out_channels, heads,
                                                          k_dim=k_dim, v_dim=v_dim, hidden_dim=hidden_dim,
                                                          dropout=dropout, **kwargs)
-                                                   for _ in range(inner_depth - 1)])] * recurs
+                                                   for _ in range(inner_depth - int(perceiver))])] * recurs
                                   for recurs, inner_depth in zip(recursions, depths)], []))
 
         if perceiver:
