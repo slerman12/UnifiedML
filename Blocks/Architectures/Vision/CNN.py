@@ -8,7 +8,8 @@ import Utils
 
 
 class CNN(nn.Module):
-    def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, stride=2, padding=0, output_dim=None):
+    def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, last_relu=True, stride=2, padding=0,
+                 output_dim=None):
         super().__init__()
 
         if isinstance(input_shape, int):
@@ -24,7 +25,7 @@ class CNN(nn.Module):
                                       out_channels, 3, stride=stride if i == 0 else 1,
                                       padding=padding),
                             nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-                            nn.ReLU()) for i in range(depth + 1)],
+                            nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
 
         self.project = nn.Identity() if output_dim is None \
