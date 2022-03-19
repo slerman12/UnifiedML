@@ -92,6 +92,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         Psi = Categorical(logits=u_logits / entropy_temp + actions_log_prob)
 
         best_eps, best_ind = torch.max(u, -1)
+        assert (best_ind == 0).all()
         best_action = Utils.gather_indices(Q.action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
