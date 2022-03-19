@@ -112,10 +112,10 @@ class ExperienceReplay:
         try:
             return next(self.replay)
         except StopIteration:
-            self._replay = iter(self.batches)
             self.epoch += 1
             # print(f'End epoch {self.epoch - 1}. Start epoch {self.epoch}.')
-            return next(self.replay)
+            self._replay = None
+            return next(self)
 
     # Allows iteration
     def __iter__(self):
