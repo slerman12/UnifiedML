@@ -331,7 +331,7 @@ def Experiences(offline):
                 # from PIL import Image  # TODO convert all inputs to uint8, standardize obs_spec
                 # from torchvision.transforms import functional as F
                 # obs = F.to_tensor(self.transform(Image.fromarray(obs.transpose((1, 2, 0)).astype(np.uint8)))) * 255
-                obs = self.transform(torch.as_tensor(obs.astype(np.float64)).div(255))
+                obs = self.transform(torch.as_tensor(obs.astype(np.double)).div(255))
                 # obs = self.transform(torch.as_tensor(obs).div(255)) * 255
 
             return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
