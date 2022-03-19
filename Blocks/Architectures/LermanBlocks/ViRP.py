@@ -266,8 +266,8 @@ class IndependentHeadsBlock(ConcatBlock):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads)
-        self.RN = nn.Sequential(RN(self.v_dim, dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout),
-                                nn.Dropout(dropout))
+        self.RN = RN(self.v_dim, dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
+        self.dropout = nn.Dropout(dropout)
 
         self.downsample = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
             else nn.Identity()
@@ -288,7 +288,7 @@ class IndependentHeadsBlock(ConcatBlock):
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         relation = norm.flatten(0, -3)  # [b * n, h, d]
 
-        out = self.LN_out(self.RN(relation, residual))  # [b * n, d]
+        out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
 
@@ -298,8 +298,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.RN = nn.Sequential(RN(self.v_dim, self.v_dim + dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(),
-                                   dropout=dropout), nn.Dropout(dropout))
+        self.RN = RN(self.v_dim, self.v_dim + dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
 
     def forward(self, x, s=None):
         if s is None:
@@ -319,7 +318,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
 
         s = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
-        out = self.LN_out(self.RN(relation, s))  # [b * n, d]
+        out = self.LN_out(self.dropout(self.RN(relation, s)))  # [b * n, d]
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
 
