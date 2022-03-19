@@ -55,6 +55,8 @@ class ViRP(ViT):
             block = DisentangledBlock
         elif experiment == 'course_corrector':
             block = CourseCorrectorBlock
+        elif experiment == 'pure_pre_norm_once':
+            block = ConcatPurePreNormOnceBlock
         elif experiment == 'pure_pre_norm':
             block = ConcatPurePreNormBlock
         elif experiment == 'pre_norm':
@@ -271,6 +273,19 @@ class ConcatPurePreNormBlock(ConcatBlock):
 
         attn = self.attn(pre_norm, context)  # Relation
         out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er
+
+        return out
+
+
+class ConcatPurePreNormOnceBlock(ConcatBlock):
+    def forward(self, x, context=None):
+        pre_norm = self.LN_out(x)
+
+        if context is None:
+            context = pre_norm
+
+        attn = self.attn(pre_norm, context)  # Relation
+        out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
 

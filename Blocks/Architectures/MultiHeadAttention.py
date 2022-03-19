@@ -93,7 +93,8 @@ class CrossAttention(nn.Module):
             self.weights = einsum(pattern, q, k)
             # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
-            weights = self.weights.softmax(dim=-1)
+            weights = self.weights.softmax(dim=-1) if self.relu is None \
+                else self.relu(self.weights)  # TODO See what else is involved in ReLA, e.g., a LayerNorm
 
             if 0 < mem_limit < 1:
                 weights = weights.to(q.device)
