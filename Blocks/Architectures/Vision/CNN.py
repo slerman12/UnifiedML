@@ -24,7 +24,7 @@ class CNN(nn.Module):
                                       out_channels, 3, stride=stride if i == 0 else 1,
                                       padding=padding),
                             nn.BatchNorm2d(self.out_channels) if batch_norm else nn.Identity(),
-                            nn.ReLU(inplace=True)) for i in range(depth + 1)],
+                            nn.ReLU()) for i in range(depth + 1)],
         )
 
         self.project = nn.Identity() if output_dim is None \
