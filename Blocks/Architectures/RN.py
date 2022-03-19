@@ -28,7 +28,7 @@ class RN(nn.Module):
         self.output_dim = dim if output_dim is None \
             else output_dim
 
-        self.inner = nn.Sequential(MLP((dim + context_dim) * 8, hidden_dim, hidden_dim, inner_depth), nn.Dropout(dropout))
+        self.inner = nn.Sequential(MLP(dim + context_dim, hidden_dim, hidden_dim, inner_depth), nn.Dropout(dropout))
         # self.inner = nn.Sequential(Utils.ChSwap, CNN(dim + context_dim, hidden_dim, inner_depth,
         #                                              kernel_size=1, stride=1, last_relu=False), Utils.ChSwap,
         #                            nn.Dropout(dropout))
@@ -48,11 +48,11 @@ class RN(nn.Module):
 
         x = x.unsqueeze(1).expand(-1, context.shape[1], -1, -1)
         context = context.unsqueeze(2).expand(-1, -1, x.shape[2], -1)
-        pair = torch.cat([x, context], -1).flatten(1)
+        pair = torch.cat([x, context], -1)
 
         relations = self.inner(pair)
 
-        mid = self.mid_nonlinearity(relations)
+        mid = self.mid_nonlinearity(relations.sum(1).sum(1))
 
         out = self.outer(mid)
 
