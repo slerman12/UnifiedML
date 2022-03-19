@@ -290,7 +290,9 @@ class IndependentHeadsBlock(Disentangled):
         residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = self.downsample_mid(residual)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
+        print(residual.shape)
         residual = residual.flatten(0, -3)  # [b * n, 1, d]
+        print(residual.shape, 'k')
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         relation = norm.flatten(0, -3)  # [b * n, h, d]
