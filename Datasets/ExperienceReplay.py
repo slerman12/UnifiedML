@@ -329,7 +329,7 @@ def Experiences(offline):
             if self.transform is not None:
                 from PIL import Image
                 from torchvision.transforms import functional as vF
-                obs = vF.to_tensor(self.transform(Image.fromarray(obs.transpose((1, 2, 0)) / 255))) * 255
+                obs = vF.to_tensor(self.transform(Image.fromarray(obs.transpose((1, 2, 0)).astype(np.uint8)))) * 255
                 # obs = self.transform(torch.as_tensor(obs).div(255))
                 # obs = self.transform(torch.as_tensor(obs).div(255)) * 255
 
