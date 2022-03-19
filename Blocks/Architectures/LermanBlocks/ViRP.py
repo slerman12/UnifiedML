@@ -294,7 +294,7 @@ class IndependentHeadsBlock(DisentangledBlock):
         residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        relation = norm.view(-1, norm.shape[-2:])  # [b * n, h, d]
+        relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
         out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
 
@@ -321,10 +321,10 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
-        residual = residual.view(-1, residual.shape[-2:])  # [b * n, h, d]
+        residual = residual.view(-1, *residual.shape[-2:])  # [b * n, h, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        relation = norm.view(-1, norm.shape[-2:])  # [b * n, h, d]
+        relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
         s = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
