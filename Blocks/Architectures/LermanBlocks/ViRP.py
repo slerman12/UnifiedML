@@ -253,7 +253,7 @@ class Disentangled(ConcatBlock):
 
         attn = self.attn(x, s)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
-        norm = self.LN_mid(head_wise)
+        norm = self.LN_mid(head_wise)  # Can apply self.project before every LN_mid
         disentangled = norm.view(attn.shape)
 
         out = self.LN_out(self.mlp(disentangled, x)) + x
@@ -262,15 +262,20 @@ class Disentangled(ConcatBlock):
 
 
 # Head, in
-class IndependentHeadsBlock(ConcatBlock):
+class IndependentHeadsBlock(Disentangled):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads)
-        self.RN = RN(self.v_dim, dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
+        self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim)
+
+        self.downsample_mid = nn.Linear(dim, self.v_dim // self.heads) if dim != self.v_dim // self.heads \
+            else nn.Identity()
+
+        self.RN = RN(self.v_dim // self.heads, self.v_dim // self.heads, 0, 0, self.hidden_dim,
+                     mid_nonlinearity=nn.GELU(), dropout=dropout)
         self.dropout = nn.Dropout(dropout)
 
-        self.downsample = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
+        self.downsample_out = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
             else nn.Identity()
 
     def forward(self, x, s=None):
@@ -283,6 +288,7 @@ class IndependentHeadsBlock(ConcatBlock):
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
+        residual = self.downsample_mid(residual)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.flatten(0, -3)  # [b * n, 1, d]
 
@@ -291,7 +297,7 @@ class IndependentHeadsBlock(ConcatBlock):
 
         out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
 
-        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
 
 # Head, head:in
@@ -299,7 +305,8 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.RN = RN(self.v_dim, self.v_dim + dim, 0, 0, self.hidden_dim, mid_nonlinearity=nn.GELU(), dropout=dropout)
+        self.RN = RN(self.v_dim // self.heads, 2 * self.v_dim // self.heads, 0, 0, self.hidden_dim,
+                     mid_nonlinearity=nn.GELU(), dropout=dropout)
 
     def forward(self, x, s=None):
         if s is None:
@@ -311,6 +318,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
+        residual = self.downsample_mid(residual)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
         residual = residual.flatten(0, -3)  # [b * n, h, d]
 
@@ -321,7 +329,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
 
         out = self.LN_out(self.dropout(self.RN(relation, s)))  # [b * n, d]
 
-        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample(x)  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
 
 # Re-param
@@ -329,7 +337,7 @@ class RelationBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads)# Re-param
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim)
 
 
 # Re-param
@@ -337,7 +345,7 @@ class ImpartialBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads, impartial_q_head=True)
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim, impartial_q_head=True)
 
 
 # Re-param
@@ -346,6 +354,5 @@ class PairwiseRelationBlock(PairwiseHeadsBlock):
                  impartial_q_head=False):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads,
-                             impartial_q_head=impartial_q_head)
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim, impartial_q_head=impartial_q_head)
 
