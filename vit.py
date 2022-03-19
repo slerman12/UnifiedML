@@ -354,7 +354,7 @@ net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50
 net.apply(Utils.weight_init)
 
 if device == 'cuda':
-    net = torch.nn.DataParallel(net) # make parallel
+    net = torch.nn.DataParallel(net)  # make parallel
     cudnn.benchmark = True
 
 if args.resume:
