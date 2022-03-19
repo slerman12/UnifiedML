@@ -13,7 +13,7 @@ from torch import nn
 import Utils
 
 from Blocks.Architectures import MLP, ViT
-from Blocks.Architectures.MultiHeadAttention import ReLA, mem_efficient_attend
+from Blocks.Architectures.MultiHeadAttention import ReLA, mem_efficient_attend, SelfAttentionBlock, SelfAttention
 from Blocks.Architectures.Perceiver import Perceiver
 from Blocks.Architectures.RN import RN
 
@@ -41,10 +41,12 @@ class ViRP(ViT):
         if experiment == 'pairwise_relation':
             block = PairwiseRelationBlock
             kwargs = dict(impartial_q_head=False)
-        elif experiment == 'impartial':
-            block = ImpartialBlock
+        elif experiment == 'impartial_relation':
+            block = ImpartialRelationBlock
         elif experiment == 'relation':
             block = RelationBlock
+        elif experiment == 'relative':
+            block = RelativeBlock
         elif experiment == 'pairwise':
             block = PairwiseHeadsBlock  # =RelativeBlock
         elif experiment == 'independent':
@@ -211,7 +213,8 @@ class ConcatBlock(nn.Module):
         self.v_dim = v_dim
         self.hidden_dim = hidden_dim
 
-        self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)
+        self.attn = SelfAttention(dim, self.heads, s_dim, k_dim, v_dim)
+        # self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)  # TODO SelfAttention here, make separate Relative
         # self.project = nn.Identity() if heads == 1 \
         #     else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
         self.mlp = MLP(v_dim + dim, dim, hidden_dim, 1, nn.GELU(), dropout)
@@ -315,8 +318,6 @@ class IndependentHeadsBlock(DisentangledBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim)
-
         self.downsample_mid = nn.Linear(dim, self.v_dim // self.heads) if dim != self.v_dim // self.heads \
             else nn.Identity()
 
@@ -381,6 +382,14 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
 
+# Rectified-linear attention
+class RelativeBlock(IndependentHeadsBlock):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+
+        self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim)
+
+
 # Re-param
 class RelationBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
@@ -390,7 +399,7 @@ class RelationBlock(IndependentHeadsBlock):
 
 
 # Re-param
-class ImpartialBlock(IndependentHeadsBlock):
+class ImpartialRelationBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
