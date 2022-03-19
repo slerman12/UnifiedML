@@ -81,6 +81,7 @@ class DQNAgent(torch.nn.Module):
 
             # "See"
             obs = encoder(obs)
+            assert not self.training
 
             actions = None if self.discrete \
                 else actor(obs, self.step).sample(self.num_actions) if self.training \
