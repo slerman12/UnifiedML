@@ -89,6 +89,9 @@ class ViT(nn.Module):
 
 
 class CLSPool(nn.Module):
+    def __init__(self, **_):
+        super().__init__()
+
     def repr_shape(self, c, h, w):
         return c, 1, 1
 
