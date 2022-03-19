@@ -119,7 +119,7 @@ class ExperienceReplay:
 
     # Allows iteration
     def __iter__(self):
-        return self.replay
+        return iter(self.batches)
 
     @property
     def replay(self):
