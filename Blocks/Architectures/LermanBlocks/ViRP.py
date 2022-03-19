@@ -50,7 +50,7 @@ class ViRP(ViT):
         elif experiment == 'independent':
             block = IndependentHeadsBlock  # =RelativeBlock
         elif experiment == 'disentangled':
-            block = Disentangled
+            block = DisentangledBlock
         elif experiment == 'course_corrector':
             block = CourseCorrectorBlock
         elif experiment == 'concat':
@@ -208,7 +208,8 @@ class ConcatBlock(nn.Module):
         self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)
         # self.project = nn.Identity() if heads == 1 \
         #     else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
-        self.mlp = nn.Sequential(MLP(v_dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+        self.mlp = MLP(v_dim, dim, hidden_dim, 1, nn.GELU(), dropout)
+        self.dropout = nn.Dropout(dropout)
 
         self.LN_mid = nn.LayerNorm(dim)
         self.LN_out = nn.LayerNorm(dim)
@@ -221,7 +222,7 @@ class ConcatBlock(nn.Module):
             context = x
 
         attn = self.LN_mid(self.attn(x, context))  # Relation
-        out = self.LN_out(self.mlp(attn, x)) + x  # Reason-er
+        out = self.LN_out(self.dropout(self.mlp(attn, x))) + x  # Reason-er
 
         return out
 
@@ -239,7 +240,7 @@ class CourseCorrectorBlock(ConcatBlock):
 
 
 # Heads layer norm'd
-class Disentangled(ConcatBlock):
+class DisentangledBlock(ConcatBlock):
     def __init__(self, dim=32, heads=8, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
@@ -256,13 +257,13 @@ class Disentangled(ConcatBlock):
         norm = self.LN_mid(head_wise)  # Can apply self.project before every LN_mid
         disentangled = norm.view(attn.shape)
 
-        out = self.LN_out(self.mlp(disentangled, x)) + x
+        out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
 
         return out
 
 
 # Head, in
-class IndependentHeadsBlock(Disentangled):
+class IndependentHeadsBlock(DisentangledBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
@@ -290,10 +291,10 @@ class IndependentHeadsBlock(Disentangled):
         residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
-        residual = residual.flatten(0, -3)  # [b * n, 1, d]
+        residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        relation = norm.flatten(0, -3)  # [b * n, h, d]
+        relation = norm.view(-1, norm.shape[-2:])  # [b * n, h, d]
 
         out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
 
@@ -320,10 +321,10 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
-        residual = residual.flatten(0, -3)  # [b * n, h, d]
+        residual = residual.view(-1, residual.shape[-2:])  # [b * n, h, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
-        relation = norm.flatten(0, -3)  # [b * n, h, d]
+        relation = norm.view(-1, norm.shape[-2:])  # [b * n, h, d]
 
         s = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
