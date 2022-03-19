@@ -208,7 +208,7 @@ class ConcatBlock(nn.Module):
         self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)
         # self.project = nn.Identity() if heads == 1 \
         #     else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
-        self.mlp = MLP(v_dim, dim, hidden_dim, 1, nn.GELU(), dropout)
+        self.mlp = MLP(v_dim + dim, dim, hidden_dim, 1, nn.GELU(), dropout)
         self.dropout = nn.Dropout(dropout)
 
         self.LN_mid = nn.LayerNorm(dim)
