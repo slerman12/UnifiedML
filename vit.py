@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 
 from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Architectures.LermanBlocks import ViRP
-from Blocks.Architectures.Vision.ViT import ViT
+from Blocks.Architectures.Vision.ViT import ViT, CLSPool
 from Blocks.Architectures import MLP
 
 import Utils
@@ -327,7 +327,8 @@ net = ViT(
 ).to(device)
 # aug = RandomShiftsAug(4)
 c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
-net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
+# net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
+net = nn.Sequential(net, CLSPool(), nn.LayerNorm(c), nn.Linear(c, 10)).to(device)
 # net = ViRP(
 #     input_shape=[3, 32, 32],
 #     patch_size=args.patch,
@@ -339,16 +340,16 @@ net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50
 #     emb_dropout=0.1,
 #     ViRS=True
 # ).to(device)
-net = ViTother(
-    image_size=size,
-    patch_size=args.patch,
-    num_classes=10,
-    dim=int(args.dimhead),
-    depth=6,
-    heads=8,
-    mlp_dim=512,
-    dropout=0.1,
-    emb_dropout=0.1).to(device)
+# net = ViTother(
+#     image_size=size,
+#     patch_size=args.patch,
+#     num_classes=10,
+#     dim=int(args.dimhead),
+#     depth=6,
+#     heads=8,
+#     mlp_dim=512,
+#     dropout=0.1,
+#     emb_dropout=0.1).to(device)
 
 # net.apply(Utils.weight_init)
 
