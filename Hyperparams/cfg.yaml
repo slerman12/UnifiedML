@@ -133,21 +133,19 @@ plotting:
 
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
-
-encoder:
-  eyes:
-    _target_: ${recipes.Eyes}
-    input_shape: ${obs_shape}
-    output_dim: null
 recipes:
   Aug: null  # Shorthand for recipes.aug._target_
   Eyes: null  # Shorthand for recipes.encoder.eyes._target_
   Pool: null
   aug:
     _target_: ${recipes.Aug}
+  encoder:
+    eyes:
+      _target_: ${recipes.Eyes}
+      input_shape: ${obs_shape}
+      output_dim: null
     pool:
       _target_: ${recipes.Pool}
-  encoder: ${encoder}
   actor:
     trunk:
       _target_: null
