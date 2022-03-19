@@ -283,7 +283,7 @@ class IndependentHeadsBlock(ConcatBlock):
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
-        residual = residual.expand(*shape[0], -1, -1, -1)  # [b, n, 1, d]
+        residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.flatten(0, -3)  # [b * n, h, d]
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
