@@ -19,6 +19,7 @@ from Blocks.Architectures.RN import RN
 
 
 class ViRP(ViT):
+    """Visiorelational Perceptor"""
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
                  k_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None, dropout=0,
                  pool_type='cls', output_dim=None, experiment='pairwise_relation', perceiver=False):
@@ -83,6 +84,7 @@ class ViRP(ViT):
 
 # MHDPR
 class Relation(nn.Module):
+    """Multi-Head Dot-Product Relation"""
     def __init__(self, dim=32, heads=None, s_dim=None, k_dim=None, v_dim=None, talk_h=False, impartial_q_head=False):
         super().__init__()
 
