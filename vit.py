@@ -308,8 +308,8 @@ obs_spec = {'name': 'obs', 'shape': (3,32,32), 'dtype': 'float32'}
 action_spec = {'name': 'action', 'shape': (10,), 'dtype': 'float32'}
 trainloader = ExperienceReplay(bs, 8, 10000000, action_spec, 'classify', 'CIFAR10', True, False, True, True,
                                './Datasets/ReplayBuffer/Classify/CIFAR10_Buffer', obs_spec, 0, 1,
-                               {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {},
-                                'Normalize': {'mean': (0.4914, 0.4822, 0.4465), 'std': (0.2023, 0.1994, 0.2010)}})
+                               {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {}})
+data_norm = torch.tensor([[0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]]).view(2, 1, -1, 1, 1).to(device)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -390,7 +390,8 @@ def train(epoch):
     correct = 0
     total = 0
     for batch_idx, (inputs, _, _, _, _, targets, _, _, _, _, _) in enumerate(trainloader):
-        inputs, targets = inputs.to(device) / 255, targets.to(device).long()
+        mean, stddev = data_norm
+        inputs, targets = (inputs.to(device) / 255 - mean) / stddev, targets.to(device).long()
     # for batch_idx, (inputs, targets) in enumerate(trainloader):
     #     inputs, targets = inputs.to(device), targets.to(device)
         # Train with amp

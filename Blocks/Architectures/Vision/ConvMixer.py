@@ -9,7 +9,6 @@ import torch.nn as nn
 
 import Utils
 
-from Blocks.Architectures import MLP
 from Blocks.Architectures.Residual import Residual
 
 
@@ -33,13 +32,7 @@ class ConvMixer(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=1),
             nn.GELU(),
             nn.BatchNorm2d(out_channels)
-        ) for _ in range(depth)]
-                                       )
-
-        self.pool = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                               nn.Flatten(),
-                               MLP(out_channels, output_dim, 1024))
+        ) for _ in range(depth)])
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer, self.pool)
@@ -59,7 +52,6 @@ class ConvMixer(nn.Module):
 
         x = self.trunk(x)
         x = self.ConvMixer(x)
-        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

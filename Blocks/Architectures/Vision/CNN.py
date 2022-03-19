@@ -4,7 +4,6 @@ import torch
 from torch import nn
 
 import Utils
-from Blocks.Architectures import MLP
 
 
 class CNN(nn.Module):
@@ -24,11 +23,6 @@ class CNN(nn.Module):
                             nn.ReLU()) for i in range(depth + 1)],
         )
 
-        self.pool = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((3, 3)),
-                               nn.Flatten(),
-                               MLP(out_channels * 3 * 3, output_dim, 1024))
-
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.pool)
 
@@ -47,24 +41,7 @@ class CNN(nn.Module):
 
         x = self.trunk(x)
         x = self.CNN(x)
-        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
-
-
-# class SimpleDecoder(nn.Module):
-#     def __init__(self, out_shape, depth=3):
-#         super().__init__()
-#
-#         channels_in = 3
-#         channels_out = out_shape[0]
-#
-#         self.CNN = nn.Sequential(*[nn.Sequential(
-#             nn.Upsample(scale_factor=2),
-#             nn.Conv2d(channels_in // 2 ** (i - 1), channels_out if i == depth else channels_in // 2 ** i, 3, 1, 1),
-#             nn.GLU(1)) for i in range(depth + 1)])
-#
-#     def forward(self, x):
-#         return self.CNN(x)

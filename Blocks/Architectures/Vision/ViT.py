@@ -10,7 +10,6 @@ from torch import nn
 from einops import repeat, rearrange
 from einops.layers.torch import Rearrange
 
-from Blocks.Architectures import MLP
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
 
 
@@ -47,11 +46,6 @@ class ViT(nn.Module):
         self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, out_channels, qk_dim, v_dim, hidden_dim,
                                                        dropout=dropout, rela=rela) for _ in range(depth)])
 
-        self.pool = nn.Identity() if output_dim is None \
-            else nn.Sequential(Pool(pool_type),
-                               nn.LayerNorm(out_channels),
-                               MLP(out_channels, output_dim, 1024))
-
     def repr_shape(self, c, h, w):
         return (self.out_channels, 1, (h // self.patch_size) * (w // self.patch_size) + 1) if self.output_dim is None \
             else (self.output_dim, 1, 1)
@@ -81,21 +75,10 @@ class ViT(nn.Module):
         x = self.attn(x)
 
         x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
-        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
 
 
-class Pool(nn.Module):
-    def __init__(self, pool_type='cls'):
-        super().__init__()
-        self.pool_type = pool_type
 
-    def repr_shape(self, c, h, w):
-        return c, 1, 1
-
-    def forward(self, x):
-        x = x.flatten(-2)
-        return x[..., 0] if self.pool_type == 'cls' else x.mean(-1)

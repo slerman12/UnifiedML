@@ -136,6 +136,7 @@ plotting:
 recipes:
   Aug: null  # Shorthand for recipes.aug._target_
   Eyes: null  # Shorthand for recipes.encoder.eyes._target_
+  Pool: null
   aug:
     _target_: ${recipes.Aug}
   encoder:
@@ -144,9 +145,7 @@ recipes:
       input_shape: ${obs_shape}
       output_dim: null
     pool:
-      _target_: null
-      input_shape: null
-      output_dim: null
+      _target_: ${recipes.Pool}
   actor:
     trunk:
       _target_: null

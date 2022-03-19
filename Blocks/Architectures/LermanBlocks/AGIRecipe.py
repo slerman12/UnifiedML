@@ -76,9 +76,9 @@ class AGIGradient(nn.Module):
                     self.stddev = stddev
 
                 def reset(self):
-                    for module in self.MLP.children():
-                        if isinstance(module, nn.Linear):
-                            module.reset_parameters()
+                    for layer in self.MLP.children():
+                        if isinstance(layer, nn.Linear):
+                            layer.reset_parameters()
 
                 def __call__(self, num_samples):
                     with torch.no_grad():

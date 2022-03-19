@@ -25,29 +25,29 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Saves module
-def save(path, module):
+# Saves model
+def save(path, model):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    torch.save(module, path)
+    torch.save(model, path)
 
 
-# Loads module
+# Loads model
 def load(path, device, attr=None):
     path = path.replace('Agents.', '')
 
     assert Path(path).exists(), f'Load path {path} does not exist.'
     try:
-        module = torch.load(path)
+        model = torch.load(path)
     except:  # Pytorch's load and save are not atomic transactions
         warnings.warn(f'Load conflict, resolving...')  # For distributed training
         return load(path, device, attr)
 
     if attr is not None:
         for attr in attr.split('.'):
-            module = getattr(module, attr)
+            model = getattr(model, attr)
 
-    return module.to(device)
+    return model.to(device)
 
 
 # Assigns a default value to x if x is None
@@ -112,8 +112,8 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
         elif hasattr(block, 'repr_shape'):
             channels, height, width = block.repr_shape(channels, height, width)
         elif hasattr(block, 'modules'):
-            for module in block.children():
-                channels, height, width = cnn_feature_shape(channels, height, width, module, verbose=verbose)
+            for layer in block.children():
+                channels, height, width = cnn_feature_shape(channels, height, width, layer, verbose=verbose)
         if verbose:
             print(block, (channels, height, width))
 
@@ -131,7 +131,7 @@ class Ensemble(nn.Module):
         self.dim = dim
 
     def forward(self, *x):
-        return torch.stack([module(*x) for module in self.ensemble],
+        return torch.stack([m(*x) for m in self.ensemble],
                            self.dim)
 
 

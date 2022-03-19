@@ -8,18 +8,18 @@ import Utils
 
 
 class Residual(nn.Module):
-    def __init__(self, module, down_sample=None):
+    def __init__(self, model, down_sample=None):
         super().__init__()
-        self.module = module
+        self.model = model
         self.down_sample = down_sample
 
     def forward(self, x):
-        y = self.module(x)
+        y = self.model(x)
         if self.down_sample is not None:
             x = self.down_sample(x)
         return y + x
 
     def repr_shape(self, channels, height, width):
-        return Utils.cnn_feature_shape(channels, height, width, self.module)
+        return Utils.cnn_feature_shape(channels, height, width, self.model)
 
 

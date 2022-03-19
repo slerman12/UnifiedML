@@ -14,6 +14,7 @@ from Blocks.Architectures.Vision.ViPer import ViPer
 
 
 from torch import nn
+from torch.nn import functional as F
 
 
 class Null(nn.Module):
@@ -28,3 +29,16 @@ class Null(nn.Module):
 
     def forward(self, x):
         return x
+
+
+class AvgPool(nn.Module):
+    def repr_shape(self, c, h, w):
+        return c, 1, 1
+
+    def forward(self, x):
+        return F.adaptive_avg_pool2d(x, (1, 1)).flatten(-3)
+
+
+class CLSPool(AvgPool):
+    def forward(self, x):
+        return x.flatten(-2)[..., 0]

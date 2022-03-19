@@ -9,8 +9,6 @@ import torch.nn as nn
 
 import Utils
 
-from Blocks.Architectures import MLP
-
 
 class ConvNeXtBlock(nn.Module):
     def __init__(self, dim):
@@ -66,14 +64,6 @@ class ConvNeXt(nn.Module):
                                                         for _ in range(depth)])  # Conv, MLP, Residuals
                                         for i, depth in enumerate(depths)])
 
-        self.pool = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
-                               nn.Sequential(Utils.ChannelSwap(),
-                                             nn.LayerNorm(dims[-1]),
-                                             Utils.ChannelSwap()),
-                               nn.Flatten(),
-                               MLP(dims[-1], output_dim, 1024))
-
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.trunc_normal_(m.weight, std=.02)
@@ -99,7 +89,6 @@ class ConvNeXt(nn.Module):
 
         x = self.trunk(x)
         x = self.ConvNeXt(x)
-        x = self.pool(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

@@ -17,7 +17,7 @@ class MLP(nn.Module):
         super().__init__()
 
         if input_shape is not None:
-            input_dim = math.prod(input_shape)  # TODO maybe instead of assuming flattened, should just flatten
+            input_dim = math.prod(input_shape)
         self.output_dim = output_dim
 
         self.MLP = nn.Sequential(*[nn.Sequential(
@@ -43,7 +43,7 @@ class MLP(nn.Module):
 
 
 class MLPBlock(nn.Module):
-    """MLP block:
+    """MLP block:  TODO move to Encoder.py
 
     With LayerNorm
 
