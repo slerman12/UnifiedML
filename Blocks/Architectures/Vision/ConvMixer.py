@@ -7,9 +7,11 @@ import math
 import torch
 import torch.nn as nn
 
+from Blocks.Architectures.Residual import Residual
+from Blocks.Architectures import AvgPool
+
 import Utils
 
-from Blocks.Architectures.Residual import Residual
 
 
 class ConvMixer(nn.Module):
@@ -34,6 +36,9 @@ class ConvMixer(nn.Module):
             nn.BatchNorm2d(out_channels)
         ) for _ in range(depth)])
 
+        self.project = nn.Identity() if output_dim is None \
+            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
+
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer, self.pool)
 
@@ -52,6 +57,7 @@ class ConvMixer(nn.Module):
 
         x = self.trunk(x)
         x = self.ConvMixer(x)
+        x = self.project(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

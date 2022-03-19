@@ -7,9 +7,10 @@ import math
 import torch
 from torch import nn
 
-import Utils
-
 from Blocks.Architectures.Residual import Residual
+from Blocks.Architectures import AvgPool
+
+import Utils
 
 
 class ResidualBlock(nn.Module):
@@ -73,6 +74,9 @@ class MiniResNet(nn.Module):
                                                       for j in range(depth)])
                                       for i, depth in enumerate(depths)])
 
+        self.project = nn.Identity() if output_dim is None \
+            else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
+
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.pool)
 
@@ -91,6 +95,7 @@ class MiniResNet(nn.Module):
 
         x = self.trunk(x)
         x = self.ResNet(x)
+        x = self.project(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

@@ -3,6 +3,8 @@ import math
 import torch
 from torch import nn
 
+from Blocks.Architectures import AvgPool
+
 import Utils
 
 
@@ -23,6 +25,9 @@ class CNN(nn.Module):
                             nn.ReLU()) for i in range(depth + 1)],
         )
 
+        self.project = nn.Identity() if output_dim is None \
+            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
+
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.pool)
 
@@ -41,6 +46,7 @@ class CNN(nn.Module):
 
         x = self.trunk(x)
         x = self.CNN(x)
+        x = self.project(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

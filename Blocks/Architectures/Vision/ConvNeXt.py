@@ -7,6 +7,8 @@ import math
 import torch
 import torch.nn as nn
 
+from Blocks.Architectures import AvgPool
+
 import Utils
 
 
@@ -64,6 +66,9 @@ class ConvNeXt(nn.Module):
                                                         for _ in range(depth)])  # Conv, MLP, Residuals
                                         for i, depth in enumerate(depths)])
 
+        self.project = nn.Identity() if output_dim is None \
+            else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
+
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.trunc_normal_(m.weight, std=.02)
@@ -89,6 +94,7 @@ class ConvNeXt(nn.Module):
 
         x = self.trunk(x)
         x = self.ConvNeXt(x)
+        x = self.project(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
