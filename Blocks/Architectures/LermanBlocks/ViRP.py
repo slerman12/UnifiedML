@@ -21,7 +21,7 @@ from Blocks.Architectures.RN import RN
 class ViRP(ViT):
     """Visiorelational Perceptor"""
     def __init__(self, input_shape, patch_size=4, out_channels=128, emb_dropout=0, tokens=20, token_dim=128,
-                 k_dim=None, v_dim=None, hidden_dim=None, heads=8, depths=[8], recursions=None, dropout=0,
+                 k_dim=None, v_dim=None, hidden_dim=None, heads=8, depth=6, depths=None, recursions=None, dropout=0,
                  pool_type='cls', output_dim=None, experiment='pairwise_relation', perceiver=False):
         self.tokens = tokens
         self.perceiver = perceiver
@@ -29,7 +29,7 @@ class ViRP(ViT):
         token_dim = out_channels if token_dim is None else token_dim
         v_dim = out_channels if v_dim is None else v_dim
 
-        depths = [3] if depths is None else depths
+        depths = [depth] if depths is None else depths
         recursions = [1 for _ in depths] if recursions is None else recursions
 
         assert len(depths) == len(recursions), 'Recursion must be specified for each depth'
@@ -261,7 +261,7 @@ class Disentangled(ConcatBlock):
 
 
 # Head, in
-class IndependentHeadsBlock(Disentangled):
+class IndependentHeadsBlock(ConcatBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
