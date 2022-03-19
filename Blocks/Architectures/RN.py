@@ -43,6 +43,7 @@ class RN(nn.Module):
 
         x = x.unsqueeze(1).expand(-1, context.shape[1], -1, -1)
         context = context.unsqueeze(2).expand(-1, -1, x.shape[1], -1)
+        print(x.shape, context.shape)
         pair = torch.cat([x, context], -1)
 
         relations = self.inner(pair)
