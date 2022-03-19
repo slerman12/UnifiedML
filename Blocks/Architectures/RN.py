@@ -5,9 +5,10 @@
 import torch
 from torch import nn
 
-import Utils
 from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.CNN import CNN
+
+import Utils
 
 
 class RN(nn.Module):
