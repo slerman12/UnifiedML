@@ -135,7 +135,7 @@ plotting:
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 pool: null  # Shorthand for recipes.encoder.pool._target_
 recipes:
-  Aug: ${Aug}  # Shorthand for recipes.aug._target_
+  Aug: null  # Shorthand for recipes.aug._target_
   aug:
     _target_: ${recipes.Aug}
   encoder:

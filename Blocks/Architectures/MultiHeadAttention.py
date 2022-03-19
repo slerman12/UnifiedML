@@ -231,7 +231,6 @@ class CrossAttentionBlock(nn.Module):
 
         self.LN_pre = nn.LayerNorm(dim)
         self.LN_mid = nn.LayerNorm(dim)
-        # self.LN_out = nn.LayerNorm(dim)
 
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
@@ -241,12 +240,7 @@ class CrossAttentionBlock(nn.Module):
 
         if context is None:
             context = pre_norm
-            # context = x
 
-        # attn = self.LN_mid(self.project(self.attn(x, context))) + x
-        # out = self.LN_out(self.mlp(attn)) + attn
-
-        # Pre-norm! TODO
         attn = self.project(self.attn(pre_norm, context)) + x
         out = self.mlp(self.LN_mid(attn)) + attn
 
