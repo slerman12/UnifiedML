@@ -30,7 +30,8 @@ class RN(nn.Module):
 
         # self.inner = nn.Sequential(MLP(dim + context_dim, hidden_dim, hidden_dim, inner_depth), nn.Dropout(dropout))
         self.inner = nn.Sequential(Utils.ChSwap, CNN(dim + context_dim, hidden_dim, inner_depth,
-                                                     stride=1, last_relu=False), Utils.ChSwap, nn.Dropout(dropout))
+                                                     kernel_size=1, stride=1, last_relu=False), Utils.ChSwap,
+                                   nn.Dropout(dropout))
         self.mid_nonlinearity = mid_nonlinearity
         self.outer = MLP(hidden_dim, self.output_dim, hidden_dim, outer_depth)
 
