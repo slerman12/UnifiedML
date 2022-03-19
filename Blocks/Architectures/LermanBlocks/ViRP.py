@@ -271,7 +271,7 @@ class IndependentHeadsBlock(Disentangled):
         self.downsample_mid = nn.Linear(dim, self.v_dim // self.heads) if dim != self.v_dim // self.heads \
             else nn.Identity()
 
-        self.RN = RN(self.v_dim // self.heads, self.v_dim // self.heads, 0, 0, self.hidden_dim, dim,
+        self.RN = RN(self.v_dim // self.heads, self.v_dim // self.heads, 0, 0, self.hidden_dim, self.v_dim,
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
         self.dropout = nn.Dropout(dropout)
 
@@ -305,7 +305,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.RN = RN(self.v_dim // self.heads, 2 * self.v_dim // self.heads, 0, 0, self.hidden_dim, dim,
+        self.RN = RN(self.v_dim // self.heads, 2 * self.v_dim // self.heads, 0, 0, self.hidden_dim, self.v_dim,
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
 
     def forward(self, x, s=None):
