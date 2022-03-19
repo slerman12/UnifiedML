@@ -54,7 +54,7 @@ class ViRP(ViT):
         elif experiment == 'course_corrector':
             block = CourseCorrectorBlock
         elif experiment == 'pure_pre_norm':
-            block = ConcatPreNormBlock
+            block = ConcatPurePreNormBlock
         elif experiment == 'pre_norm':
             block = ConcatPreNormBlock
         elif experiment == 'pre_norm_once':
