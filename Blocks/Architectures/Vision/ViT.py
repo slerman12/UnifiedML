@@ -87,7 +87,10 @@ class ViT(nn.Module):
         return out
 
 
-class CLSPool(AvgPool):
+class CLSPool(nn.Module):
+    def repr_shape(self, c, h, w):
+        return c, 1, 1
+    
     def forward(self, x):
         return x.flatten(-2)[..., 0]
 
