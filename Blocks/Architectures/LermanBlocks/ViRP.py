@@ -41,9 +41,10 @@ class ViRP(ViT):
         if experiment == 'pairwise_relation':
             block = PairwiseRelationBlock
             kwargs = dict(impartial_q_head=False)
+        elif experiment == 'impartial':
+            block = ImpartialBlock
         elif experiment == 'relation':
             block = RelationBlock
-            kwargs = dict(impartial_q_head=False)
         elif experiment == 'pairwise':
             block = PairwiseHeadsBlock  # =RelativeBlock
         elif experiment == 'independent':
@@ -325,12 +326,18 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
 
 # Re-param
 class RelationBlock(IndependentHeadsBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0,
-                 impartial_q_head=False):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads,
-                             impartial_q_head=impartial_q_head)
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads)# Re-param
+
+
+# Re-param
+class ImpartialBlock(IndependentHeadsBlock):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim * self.heads, impartial_q_head=True)
 
 
 # Re-param
