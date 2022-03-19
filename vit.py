@@ -308,7 +308,7 @@ obs_spec = {'name': 'obs', 'shape': (3,32,32), 'dtype': 'float32'}
 action_spec = {'name': 'action', 'shape': (10,), 'dtype': 'float32'}
 trainloader = ExperienceReplay(bs, 8, 10000000, action_spec, 'classify', 'CIFAR10', True, False, True, True,
                                './Datasets/ReplayBuffer/Classify/CIFAR10_Buffer', obs_spec, 0, 1,
-                               {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {}, 'ToTensor': {},
+                               {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {},
                                 'Normalize': {'mean': (0.4914, 0.4822, 0.4465), 'std': (0.2023, 0.1994, 0.2010)}})
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
