@@ -229,26 +229,26 @@ class CrossAttentionBlock(nn.Module):
             else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
         self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
-        self.ln_pre = nn.LayerNorm(dim)
-        self.ln_mid = nn.LayerNorm(dim)
-        # self.ln_out = nn.LayerNorm(dim)
+        self.LN_pre = nn.LayerNorm(dim)
+        self.LN_mid = nn.LayerNorm(dim)
+        # self.LN_out = nn.LayerNorm(dim)
 
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
 
     def forward(self, x, context=None):
-        pre_norm = self.ln_pre(x)
+        pre_norm = self.LN_pre(x)
 
         if context is None:
             context = pre_norm
             # context = x
 
-        # attn = self.ln_mid(self.project(self.attn(x, context))) + x
-        # out = self.ln_out(self.mlp(attn)) + attn
+        # attn = self.LN_mid(self.project(self.attn(x, context))) + x
+        # out = self.LN_out(self.mlp(attn)) + attn
 
         # Pre-norm! TODO
         attn = self.project(self.attn(pre_norm, context)) + x
-        out = self.mlp(self.ln_mid(attn)) + attn
+        out = self.mlp(self.LN_mid(attn)) + attn
 
         return out
 

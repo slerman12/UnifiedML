@@ -53,6 +53,10 @@ class ViRP(ViT):
             block = DisentangledBlock
         elif experiment == 'course_corrector':
             block = CourseCorrectorBlock
+        elif experiment == 'pre_norm':
+            block = ConcatPreNormBlock
+        elif experiment == 'pre_norm_once':
+            block = ConcatPreNormOnceBlock
         elif experiment == 'concat':
             block = ConcatBlock
         else:
@@ -211,7 +215,7 @@ class ConcatBlock(nn.Module):
         self.mlp = MLP(v_dim + dim, dim, hidden_dim, 1, nn.GELU(), dropout)
         self.dropout = nn.Dropout(dropout)
 
-        self.LN_mid = nn.LayerNorm(dim)
+        self.LN_mid = nn.LayerNorm(v_dim)  # dim if project
         self.LN_out = nn.LayerNorm(dim)
 
     def repr_shape(self, c, h, w):
@@ -225,6 +229,35 @@ class ConcatBlock(nn.Module):
         out = self.LN_out(self.dropout(self.mlp(attn, x))) + x  # Reason-er
 
         return out
+
+
+class ConcatPreNormOnceBlock(ConcatBlock):
+    def forward(self, x, context=None):
+        pre_norm = self.LN_out(x)
+
+        if context is None:
+            context = pre_norm
+
+        attn = self.LN_mid(self.attn(x, context))  # Relation
+        out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er
+
+        return out
+
+
+class ConcatPreNormBlock(ConcatBlock):
+    def forward(self, x, context=None):
+        pre_norm = self.LN_out(x)
+
+        if context is None:
+            context = pre_norm
+
+        attn = self.LN_mid(self.attn(pre_norm, context))  # Relation
+        out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er  TODO Alternatively, a new LN instead of pre_norm
+
+        return out
+
+
+# TODO Unify pre_norm method
 
 
 # In-to-mid residual, concat, mid-to-out residual
