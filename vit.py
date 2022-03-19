@@ -390,8 +390,9 @@ def train(epoch):
     correct = 0
     total = 0
     for batch_idx, (inputs, _, _, _, _, targets, _, _, _, _, _) in enumerate(trainloader):
+        inputs, targets = inputs.to(device) / 255, targets.to(device).long()
     # for batch_idx, (inputs, targets) in enumerate(trainloader):
-        inputs, targets = inputs.to(device), targets.to(device).long()
+    #     inputs, targets = inputs.to(device), targets.to(device)
         # Train with amp
         # with torch.cuda.amp.autocast(enabled=use_amp):
         outputs = net(inputs)
