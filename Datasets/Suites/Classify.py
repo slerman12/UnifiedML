@@ -36,6 +36,10 @@ class ClassifyEnv:
         self.num_classes = len(experiences.classes)
         self.action_repeat = 1
 
+        if not train:
+            # Give eval equal-sized batches for easy accuracy computation
+            batch_size = [i for i in range(1, batch_size + 1) if len(experiences) % i == 0][-1]
+
         self.batches = DataLoader(dataset=experiences,
                                   batch_size=batch_size,
                                   shuffle=train,
