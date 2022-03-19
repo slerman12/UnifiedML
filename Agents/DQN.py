@@ -144,7 +144,7 @@ class DQNAgent(torch.nn.Module):
             # Inference
             y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
-            mistake = cross_entropy(y_predicted, label[instruction].long())
+            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
             # Supervised learning
             if self.supervise:
