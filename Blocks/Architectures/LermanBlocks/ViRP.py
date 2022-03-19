@@ -283,7 +283,6 @@ class IndependentHeadsBlock(Disentangled):
             s = x  # [b, n, d] or [n, d] if tokens
 
         shape = x.shape
-        print(shape)
 
         attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
