@@ -132,16 +132,15 @@ plotting:
   plot_tabular: false
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
-eyes: null  # Shorthand for recipes.encoder.eyes._target_
+Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 pool: null  # Shorthand for recipes.encoder.pool._target_
-aug: null    # Shorthand for recipes.Aug
 recipes:
-  Aug: ${aug}  # Shorthand for recipes.aug._target_
+  Aug: ${Aug}  # Shorthand for recipes.aug._target_
   aug:
     _target_: ${recipes.Aug}
   encoder:
     eyes:
-      _target_: ${eyes}
+      _target_: ${Eyes}
       input_shape: ${obs_shape}
       output_dim: null
     pool:
