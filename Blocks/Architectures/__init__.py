@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 from Blocks.Architectures.MLP import MLP
 from Blocks.Architectures.MultiHeadAttention import AttentionPool
+from Blocks.Architectures.Vision.CNN import AvgPool
 from Blocks.Architectures.Vision.ViT import CLSPool
 from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ViT import ViT
@@ -30,11 +31,3 @@ class Null(nn.Module):
 
     def forward(self, x):
         return x
-
-
-class AvgPool(nn.Module):
-    def repr_shape(self, c, h, w):
-        return c, 1, 1
-
-    def forward(self, x):
-        return F.adaptive_avg_pool2d(x, (1, 1)).flatten(-3)

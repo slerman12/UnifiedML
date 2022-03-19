@@ -11,6 +11,7 @@ from einops import repeat, rearrange
 from einops.layers.torch import Rearrange
 
 from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
+from Blocks.Architectures.Vision.CNN import AvgPool
 
 
 class ViT(nn.Module):
@@ -47,7 +48,7 @@ class ViT(nn.Module):
                                                        dropout=dropout, rela=rela) for _ in range(depth)])
 
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(CLSPool() if pool_type == 'cls' else nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(),
+            else nn.Sequential(CLSPool() if pool_type == 'cls' else AvgPool(),
                                nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
@@ -90,7 +91,7 @@ class ViT(nn.Module):
 class CLSPool(nn.Module):
     def repr_shape(self, c, h, w):
         return c, 1, 1
-    
+
     def forward(self, x):
         return x.flatten(-2)[..., 0]
 

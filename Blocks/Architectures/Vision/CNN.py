@@ -2,6 +2,7 @@ import math
 
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 import Utils
 
@@ -24,7 +25,7 @@ class CNN(nn.Module):
         )
 
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(), nn.Linear(out_channels, output_dim))
+            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.pool)
@@ -49,3 +50,11 @@ class CNN(nn.Module):
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
+
+
+class AvgPool(nn.Module):
+    def repr_shape(self, c, h, w):
+        return c, 1, 1
+
+    def forward(self, x):
+        return F.adaptive_avg_pool2d(x, (1, 1)).flatten(-3)
