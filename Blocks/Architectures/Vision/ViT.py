@@ -66,6 +66,9 @@ class ViT(nn.Module):
         x = self.to_patch_embedding(x)
         b, n, _ = x.shape
 
+        if not self.training:
+            print("ya")
+
         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
         x = torch.cat((cls_tokens, x), dim=1)
         n += 1
