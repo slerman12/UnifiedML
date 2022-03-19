@@ -3,8 +3,6 @@ import math
 import torch
 from torch import nn
 
-from Blocks.Architectures import AvgPool
-
 import Utils
 
 
@@ -26,7 +24,7 @@ class CNN(nn.Module):
         )
 
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(), nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.pool)

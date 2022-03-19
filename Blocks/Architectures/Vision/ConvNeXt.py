@@ -7,8 +7,6 @@ import math
 import torch
 import torch.nn as nn
 
-from Blocks.Architectures import AvgPool
-
 import Utils
 
 
@@ -67,7 +65,7 @@ class ConvNeXt(nn.Module):
                                         for i, depth in enumerate(depths)])
 
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(), nn.Linear(dims[-1], output_dim))
 
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):

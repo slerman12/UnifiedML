@@ -8,7 +8,6 @@ import torch
 import torch.nn as nn
 
 from Blocks.Architectures.Residual import Residual
-from Blocks.Architectures import AvgPool
 
 import Utils
 
@@ -37,7 +36,7 @@ class ConvMixer(nn.Module):
         ) for _ in range(depth)])
 
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
+            else nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(), nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer, self.pool)
