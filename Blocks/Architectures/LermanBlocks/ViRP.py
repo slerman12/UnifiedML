@@ -283,6 +283,7 @@ class IndependentHeadsBlock(Disentangled):
             s = x  # [b, n, d] or [n, d] if tokens
 
         shape = x.shape
+        print(shape)
 
         attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
@@ -290,9 +291,7 @@ class IndependentHeadsBlock(Disentangled):
         residual = x.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = self.downsample_mid(residual)  # [b * n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
-        print(residual.shape)
         residual = residual.flatten(0, -3)  # [b * n, 1, d]
-        print(residual.shape, 'k')
 
         norm = self.LN_mid(head_wise)  # [b, n, h, d]
         relation = norm.flatten(0, -3)  # [b * n, h, d]
