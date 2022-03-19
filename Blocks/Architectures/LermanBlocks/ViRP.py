@@ -104,7 +104,7 @@ class Relation(nn.Module):
 
         assert v_dim % heads == 0, f'value dim={v_dim} is not divisible by heads={heads}'
 
-        self.to_q = nn.Linear(dim, k_dim / heads if impartial_q_head else k_dim, bias=False)
+        self.to_q = nn.Linear(dim, k_dim // heads if impartial_q_head else k_dim, bias=False)
         self.to_kv = nn.Linear(s_dim, k_dim + v_dim, bias=False)
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
