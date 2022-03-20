@@ -48,11 +48,13 @@ class ViRP(ViT):
         elif experiment == 'relative':
             block = RelativeBlock
         elif experiment == 'pairwise':
-            block = PairwiseHeadsBlock  # =RelativeBlock
+            block = PairwiseHeadsBlock
         elif experiment == 'independent':
-            block = IndependentHeadsBlock  # =RelativeBlock
+            block = IndependentHeadsBlock
         elif experiment == 'disentangled':
             block = DisentangledBlock
+        elif experiment == 'course_corrector_norm':
+            block = CourseCorrectorNormBlock
         elif experiment == 'course_corrector':
             block = CourseCorrectorBlock
         elif experiment == 'no_norm':
@@ -230,74 +232,74 @@ class ConcatBlock(nn.Module):
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
 
-    def forward(self, x, context=None):
-        if context is None:
-            context = x
+    def forward(self, x, s=None):
+        if s is None:
+            s = x
 
-        attn = self.LN_mid(self.attn(x, context))  # Relation
+        attn = self.LN_mid(self.attn(x, s))  # Relation
         out = self.LN_out(self.dropout(self.mlp(attn, x))) + x  # Reason-er
 
         return out
 
 
 class ConcatPreNormOnceBlock(ConcatBlock):
-    def forward(self, x, context=None):
+    def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
-        if context is None:
-            context = pre_norm
+        if s is None:
+            s = pre_norm
 
-        attn = self.LN_mid(self.attn(pre_norm, context))  # Relation
+        attn = self.LN_mid(self.attn(pre_norm, s))  # Relation
         out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
 
 
 class ConcatPreNormBlock(ConcatBlock):
-    def forward(self, x, context=None):
+    def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
-        if context is None:
-            context = pre_norm
+        if s is None:
+            s = pre_norm
 
-        attn = self.LN_mid(self.attn(pre_norm, context))  # Relation  TODO Disentangled head-wise LN
+        attn = self.LN_mid(self.attn(pre_norm, s))  # Relation  TODO Disentangled head-wise LN
         out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er  TODO Alternatively, a new LN instead of pre_norm
 
         return out
 
 
 class ConcatPurePreNormBlock(ConcatBlock):
-    def forward(self, x, context=None):
+    def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
-        if context is None:
-            context = pre_norm
+        if s is None:
+            s = pre_norm
 
-        attn = self.attn(pre_norm, context)  # Relation
+        attn = self.attn(pre_norm, s)  # Relation
         out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er
 
         return out
 
 
-class ConcatPurePreNormOnceBlock(ConcatBlock):
-    def forward(self, x, context=None):
+class ConcatPurePreNormOnceBlock(ConcatBlock):  # Seems to be the best
+    def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
-        if context is None:
-            context = pre_norm
+        if s is None:
+            s = pre_norm
 
-        attn = self.attn(pre_norm, context)  # Relation
+        attn = self.attn(pre_norm, s)  # Relation
         out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
 
 
 class ConcatNoNormBlock(ConcatBlock):
-    def forward(self, x, context=None):
-        if context is None:
-            context = x
+    def forward(self, x, s=None):
+        if s is None:
+            s = x
 
-        attn = self.attn(x, context)  # Relation
+        attn = self.attn(x, s)  # Relation
         out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
@@ -309,11 +311,27 @@ class ConcatNoNormBlock(ConcatBlock):
 # In-to-mid residual, concat, mid-to-out residual
 class CourseCorrectorBlock(ConcatBlock):
     def forward(self, x, s=None):
+        pre_norm = self.LN_out(x)
+        
         if s is None:
-            s = x
+            s = pre_norm
 
-        attn = self.LN_mid(self.attn(x, s)) + x  # In this block, Attention = Reason-er,
-        out = self.LN_out(self.mlp(attn, x)) + attn  # MLP = Course Corrector
+        attn = self.attn(pre_norm, s) + x  # In this block, Attention = Reason-er,
+        out = self.mlp(attn, x) + attn  # MLP = Course Corrector
+
+        return out
+
+
+# In-to-mid residual, concat, mid-to-out residual
+class CourseCorrectorNormBlock(ConcatBlock):
+    def forward(self, x, s=None):
+        pre_norm = self.LN_out(x)
+
+        if s is None:
+            s = pre_norm
+
+        attn = self.attn(pre_norm, s) + x  # In this block, Attention = Reason-er,
+        out = self.mlp(self.LN_mid(attn), x) + attn  # MLP = Course Corrector
 
         return out
 
