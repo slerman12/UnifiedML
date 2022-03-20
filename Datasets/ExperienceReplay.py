@@ -13,6 +13,8 @@ import datetime
 import io
 import traceback
 
+from omegaconf import OmegaConf
+
 import numpy as np
 
 import torch
@@ -76,6 +78,8 @@ class ExperienceReplay:
         # Data transform
 
         if transform is not None:
+            if isinstance(transform, str):
+                transform = OmegaConf.create(transform)
             if 'RandomCrop' in transform and 'size' not in transform['RandomCrop']:
                 transform['RandomCrop']['size'] = obs_spec['shape'][-2:]
             # Can pass in a dict of torchvision transform names and args

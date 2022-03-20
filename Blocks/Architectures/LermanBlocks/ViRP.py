@@ -243,6 +243,7 @@ class ConcatBlock(nn.Module):
 
 
 class ConcatPreNormOnceBlock(ConcatBlock):
+    """This one is the most analogous, since second x is like residual, and should not be norm'd"""
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
@@ -379,8 +380,11 @@ class IndependentHeadsBlock(DisentangledBlock):
             else nn.Identity()
 
     def forward(self, x, s=None):
+        pre_norm = self.LN_out(x)
+
         if s is None:
-            s = x  # [b, n, d] or [n, d] if tokens
+            s = pre_norm  # [b, n, d] or [n, d] if tokens
+            # s = x  # [b, n, d] or [n, d] if tokens
 
         shape = x.shape
 
@@ -396,8 +400,8 @@ class IndependentHeadsBlock(DisentangledBlock):
         # norm = head_wise
         relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
-        out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
-        # out = self.dropout(self.RN(relation, residual))
+        # out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
+        out = self.dropout(self.RN(relation, residual))
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
