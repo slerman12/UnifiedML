@@ -388,10 +388,12 @@ class IndependentHeadsBlock(DisentangledBlock):
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
 
-        norm = self.LN_mid(head_wise)  # [b, n, h, d]
+        # norm = self.LN_mid(head_wise)  # [b, n, h, d]
+        norm = head_wise
         relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
-        out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
+        # out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
+        out = self.dropout(self.RN(relation, residual))
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
