@@ -76,6 +76,7 @@ class ExperienceReplay:
         # Data transform
 
         if transform is not None:
+            print(transform)
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
