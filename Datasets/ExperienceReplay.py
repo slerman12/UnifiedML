@@ -76,7 +76,8 @@ class ExperienceReplay:
         # Data transform
 
         if transform is not None:
-            print(transform)
+            if 'RandomCrop' in transform and 'size' not in transform['RandomCrop']:
+                transform['RandomCrop']['size'] = obs_spec['shape'][-2:]
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
