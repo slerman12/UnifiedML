@@ -237,13 +237,13 @@ class CrossAttentionBlock(nn.Module):
         return self.v_dim, h, w  # Assumes channels last
 
     def forward(self, x, context=None):
-        pre_norm = x
+        pre_norm = self.LN_pre(x)
 
         if context is None:
             context = pre_norm
 
         attn = self.project(self.attn(pre_norm, context)) + x
-        out = self.mlp(attn) + attn
+        out = self.mlp(self.LN_mid(attn)) + attn
 
         return out
 
