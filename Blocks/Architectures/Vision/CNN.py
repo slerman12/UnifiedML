@@ -32,7 +32,7 @@ class CNN(nn.Module):
             else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.pool)
+        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
