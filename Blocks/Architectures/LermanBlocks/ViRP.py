@@ -281,7 +281,7 @@ class ConcatPurePreNormBlock(ConcatBlock):
         return out
 
 
-class ConcatPurePreNormOnceBlock(ConcatBlock):  # Seems to be the best
+class ConcatPurePreNormOnceBlock(ConcatBlock):
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
@@ -309,7 +309,7 @@ class ConcatNoNormBlock(ConcatBlock):
 
 
 # In-to-mid residual, concat, mid-to-out residual
-class CourseCorrectorBlock(ConcatBlock):
+class CourseCorrectorBlock(ConcatBlock):  # "PurePreNormOnce"
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
         
@@ -323,7 +323,7 @@ class CourseCorrectorBlock(ConcatBlock):
 
 
 # In-to-mid residual, concat, mid-to-out residual
-class CourseCorrectorNormBlock(ConcatBlock):
+class CourseCorrectorNormBlock(ConcatBlock):  # "PreNormOnce"
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 

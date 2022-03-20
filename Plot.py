@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import json
+import re
 import sys
 import warnings
 from typing import MutableSequence
@@ -77,7 +78,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         datums = [experiment, suite.lower(), suite_task, agent]
         for i, spec in enumerate(specs):
-            if spec is not None and datums[i] not in spec:
+            if spec is not None and not re.match('(?:% s)' % '|'.join(spec), datums[i]):
                 include = False
 
         if not include:
