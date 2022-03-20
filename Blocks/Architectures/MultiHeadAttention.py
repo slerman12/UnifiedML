@@ -39,11 +39,11 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(dim, qk_dim, bias=False)
         self.to_kv = nn.Linear(s_dim, qk_dim + v_dim, bias=False)
 
-        self.relu = nn.ReLU(inplace=True) if rela else None
-
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
                                     nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
+
+        self.relu = nn.ReLU(inplace=True) if rela else None
 
     def forward(self, x, s=None):
         # Conserves shape
@@ -94,7 +94,7 @@ class CrossAttention(nn.Module):
             # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
             weights = self.weights.softmax(dim=-1) if self.relu is None \
-                else self.relu(self.weights)  # TODO See what else is involved in ReLA, e.g., a LayerNorm
+                else self.relu(self.weights)
 
             if 0 < mem_limit < 1:
                 weights = weights.to(q.device)

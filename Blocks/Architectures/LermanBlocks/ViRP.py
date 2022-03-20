@@ -45,6 +45,10 @@ class ViRP(ViT):
             block = ImpartialRelationBlock
         elif experiment == 'relation':
             block = RelationBlock
+        elif experiment == 'relation_rela':
+            block = RelationReLABlock
+        elif experiment == 'relation_attention':
+            block = RelationAttentionBlock
         elif experiment == 'relative':
             block = RelativeBlock
         elif experiment == 'pairwise':
@@ -100,7 +104,8 @@ class ViRP(ViT):
 # MHDPR
 class Relation(nn.Module):
     """Multi-Head Dot-Product Relation"""
-    def __init__(self, dim=32, heads=None, s_dim=None, k_dim=None, v_dim=None, talk_h=False, impartial_q_head=False):
+    def __init__(self, dim=32, heads=None, s_dim=None, k_dim=None, v_dim=None, talk_h=False, rela=False,
+                 impartial_q_head=False):
         super().__init__()
 
         self.dim = dim
@@ -124,6 +129,8 @@ class Relation(nn.Module):
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
         self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
                                     nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
+
+        self.relu = nn.ReLU(inplace=True) if rela else None
 
     def forward(self, x, s=None):
         # Conserves shape
@@ -175,7 +182,8 @@ class Relation(nn.Module):
             # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
 
             if self.training:
-                weights = self.weights.softmax(dim=-1)
+                weights = self.weights.softmax(dim=-1) if self.relu is None \
+                    else self.relu(self.weights)
 
                 if 0 < mem_limit < 1:
                     weights = weights.to(q.device)
@@ -351,15 +359,20 @@ class DisentangledBlock(ConcatBlock):
         self.LN_mid = nn.LayerNorm(self.v_dim // self.heads)
 
     def forward(self, x, s=None):
-        if s is None:
-            s = x
+        pre_norm = self.LN_out(x)
 
-        attn = self.attn(x, s)
+        if s is None:
+            s = pre_norm
+            # s = x
+
+        attn = self.attn(pre_norm, s)
+        # attn = self.attn(x, s)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
         norm = self.LN_mid(head_wise)  # Can apply self.project before every LN_mid
         disentangled = norm.view(attn.shape)
 
-        out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
+        # out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
+        out = self.dropout(self.mlp(disentangled, x)) + x
 
         return out
 
@@ -388,7 +401,8 @@ class IndependentHeadsBlock(DisentangledBlock):
 
         shape = x.shape
 
-        attn = self.attn(x, s)  # [b, n, h * d]
+        attn = self.attn(pre_norm, s)  # [b, n, h * d]
+        # attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
@@ -401,7 +415,7 @@ class IndependentHeadsBlock(DisentangledBlock):
         relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
         # out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
-        out = self.dropout(self.RN(relation, residual))
+        out = self.dropout(self.RN(relation, residual))  # [b * n, d]
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
@@ -415,12 +429,16 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
 
     def forward(self, x, s=None):
+        pre_norm = self.LN_out(x)
+
         if s is None:
-            s = x  # [b, n, d] or [n, d] if tokens
+            s = pre_norm  # [b, n, d] or [n, d] if tokens
+            # s = x  # [b, n, d] or [n, d] if tokens
 
         shape = x.shape
 
-        attn = self.attn(x, s)  # [b, n, h * d]
+        attn = self.attn(pre_norm, s)  # [b, n, h * d]
+        # attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
         residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
@@ -433,7 +451,8 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
 
         s = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
 
-        out = self.LN_out(self.dropout(self.RN(relation, s)))  # [b * n, d]
+        # out = self.LN_out(self.dropout(self.RN(relation, s)))  # [b * n, d]
+        out = self.dropout(self.RN(relation, s))  # [b * n, d]
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
@@ -444,6 +463,22 @@ class RelativeBlock(IndependentHeadsBlock):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
         self.attn = ReLA(dim, self.heads, self.s_dim, self.k_dim, self.v_dim)
+
+
+# Re-param
+class RelationAttentionBlock(SelfAttentionBlock):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim)
+
+
+# Re-param
+class RelationReLABlock(SelfAttentionBlock):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout, rela=True)
+
+        self.attn = Relation(dim, self.heads, self.s_dim, self.k_dim, self.v_dim, rela=True)
 
 
 # Re-param

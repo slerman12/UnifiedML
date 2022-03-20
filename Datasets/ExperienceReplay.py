@@ -93,6 +93,7 @@ class ExperienceReplay:
                                                 capacity=np.inf if save else capacity // max(1, num_workers),
                                                 num_workers=min(num_workers, os.cpu_count()),
                                                 fetch_per=1000,
+                                                init_empty=not len(self),
                                                 save=save,
                                                 nstep=nstep,
                                                 discount=discount,
@@ -229,8 +230,8 @@ def Experiences(offline):
 
             self.save = save
 
-            if offline:
-                list(map(self.load_episode, sorted(self.path.glob('*.npz'))))
+            # Load in existing data
+            list(map(self.load_episode, sorted(path.glob('*.npz'))))
 
             self.nstep = nstep
             self.discount = discount
@@ -254,8 +255,9 @@ def Experiences(offline):
                 self.num_experiences_loaded -= early_episode_len
                 if offline:
                     self.index = self.index[early_episode_len:]
-                # Deletes early episode file
-                early_episode_name.unlink(missing_ok=True)
+                else:
+                    # Deletes early episode file
+                    early_episode_name.unlink(missing_ok=True)
             self.episode_names.append(episode_name)
             self.episode_names.sort()
             self.episodes[episode_name] = episode
@@ -282,15 +284,15 @@ def Experiences(offline):
 
             episode_names = sorted(self.path.glob('*.npz'), reverse=True)  # Episodes
             num_fetched = 0
-            # Find one new episode
+            # Find new episodes
             for episode_name in episode_names:
                 episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
                 if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
                     continue
                 if episode_name in self.episodes.keys():  # Don't store redundantly
                     break
-                if num_fetched + episode_len > self.capacity:  # Don't overfill
-                    break
+                # if num_fetched + episode_len > self.capacity:  # Don't overfill  (This is already accounted for)
+                #     break
                 num_fetched += episode_len
                 if not self.load_episode(episode_name):
                     break  # Resolve conflicts
