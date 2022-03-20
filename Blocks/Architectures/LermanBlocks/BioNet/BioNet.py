@@ -125,6 +125,15 @@ class BioNetV1(nn.Module):
         "The model also posits that visual perception encodes spatial properties of objects, such as size and location,
          relative to other objects in the visual field; in other words, it utilizes relative metrics and scene-based 
          frames of reference." - wiki, maybe supports relation block rather than attention block
+         
+         
+         We show the the dual-stream duo of bionet can beat the sum of its parts on imagenet within a consistent training paradigm
+
+Locally-equivariant stream: ventral - translation equivariant, and rotation equivariant due to two-stream interaction with differentiable argmax pool - CNN with max pooling based on attention from dorsal
+
+Positionally-localized non-locality stream: dorsal - locality embeddings positionally localize, non-local interactions “relate” parts relatively - perceiver that self attends to persistent tokens with intermittent re-attentions to ventral stream 
+
+Give-Work two-stream hypothesis? ventral stream gives so as to stay equivariant; it does not take from the dorsal stream and thereby stays equivariant and impartial to position, rotation, and non-locality — this impartiality facilitates the generalizability of resulting representations. Dorsal stream processes ventral stream by attending to it and its attention helps select which parts of the ventral stream survive
         """
 
 

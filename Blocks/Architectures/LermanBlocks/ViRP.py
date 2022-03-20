@@ -319,6 +319,10 @@ class CourseCorrectorBlock(ConcatBlock):  # "PurePreNormOnce"
         attn = self.attn(pre_norm, s) + x  # In this block, Attention = Reason-er,
         out = self.mlp(attn, x) + attn  # MLP = Course Corrector
 
+        # Original
+        # attn = self.LN_mid(self.attn(x, s)) + x  # In this block, Attention = Reason-er,
+        # out = self.LN_out(self.mlp(attn, x)) + attn  # MLP = Course Corrector
+
         return out
 
 
@@ -392,8 +396,8 @@ class IndependentHeadsBlock(DisentangledBlock):
         # norm = head_wise
         relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
-        out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
-        # out = self.dropout(self.RN(relation, residual))
+        # out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
+        out = self.dropout(self.RN(relation, residual))
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
 
