@@ -69,7 +69,7 @@ class CNNEncoder(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     # Encodes
-    def forward(self, obs, *context, flatten=True):
+    def forward(self, obs, *context, pool=True):
         obs_shape = obs.shape  # Preserve leading dims
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
@@ -89,8 +89,8 @@ class CNNEncoder(nn.Module):
         assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
                                                           f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
-        if flatten:
-            h = self.pool(h).flatten(1)
+        if pool:
+            h = self.pool(h)
             assert h.shape[-1] == self.repr_dim or tuple(h.shape[-3:]) == self.repr_shape, \
                 f'pre-computed repr_dim/repr_shape does not match output dim ' \
                 f'{self.repr_dim}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'

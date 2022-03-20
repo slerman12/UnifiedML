@@ -93,7 +93,6 @@ class ExperienceReplay:
                                                 capacity=np.inf if save else capacity // max(1, num_workers),
                                                 num_workers=min(num_workers, os.cpu_count()),
                                                 fetch_per=1000,
-                                                init_empty=not len(self),
                                                 save=save,
                                                 nstep=nstep,
                                                 discount=discount,

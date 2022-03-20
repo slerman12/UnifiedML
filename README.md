@@ -56,7 +56,7 @@ An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excel
 
 Yes.
 
-All agents support discrete and continuous control, classification, and generative modeling in a seamless, unified integration.
+All agents support discrete and continuous control, classification, and generative modeling in a seamless, unified integration of all.
 
 See example scripts of various configurations [below](#mag-sample-scripts).
 
@@ -168,16 +168,16 @@ python Run.py task=classify/mnist RL=false
 
 *Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning phase s.t. ```reward = -error```. 
 
-Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**). This pure RL training actually works.
+Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**). This is pure RL training and actually works.
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for passing in custom architectures. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
+Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for passing in pre-defined architectures. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
 
 ```
-python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}"  recipes.Eyes=Blocks.Architectures.ResNet18
+python Run.py task=classify/cifar10 ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
@@ -236,7 +236,7 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
 
-Replays also save uniquely w.r.t. a date-time to allow parallel training. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+Replays also save uniquely w.r.t. a date-time to allow multiple independent runs at the same time. In case of multiple saved replays per a unique experiment, the most recent is loaded with `load=true`.
 
 ### Custom Architectures
 
@@ -245,13 +245,13 @@ One can also optionally pass in custom architectures such as those defined in ``
 Atari with ViT:
 
 ```
-python Run.py recipes.Eyes=Blocks.Architectures.ViT 
+python Run.py Eyes=Blocks.Architectures.ViT 
 ```
 
 ResNet18 on CIFAR-10:
 
 ```
-python Run.py task=classify/cifar10 recipes.Eyes=Blocks.Architectures.ResNet18 
+python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
 ```
 
 <details>
@@ -261,7 +261,7 @@ python Run.py task=classify/cifar10 recipes.Eyes=Blocks.Architectures.ResNet18
 To train, for example MNIST, using ConvNeXt as the Encoder:
 
 ```
-python Run.py task=classify/mnist RL=false recipes.Eyes=Blocks.Architectures.ConvNeXt
+python Run.py task=classify/mnist RL=false Eyes=Blocks.Architectures.ConvNeXt
 ```
 
 A GAN with a CNN Discriminator:
@@ -273,7 +273,7 @@ python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
 ```
-python Run.py recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool task=classify/mnist offline=true recipes.encoder.pool._target_=Blocks.Architectures.Null
+python Run.py recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool task=classify/mnist offline=true pool=Blocks.Architectures.Null
 ```
 
 since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
@@ -288,7 +288,7 @@ since otherwise ```repr_shape``` is flattened to channel dim, with no features f
 
 [comment]: <> (```)
 
-[comment]: <> (python Run.py recipes.Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
+[comment]: <> (python Run.py Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
 
 [comment]: <> (```)
 
