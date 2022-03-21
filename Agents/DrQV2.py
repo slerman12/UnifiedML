@@ -92,7 +92,7 @@ class DrQV2Agent(torch.nn.Module):
             if self.discrete:
                 action = torch.argmax(action, -1)  # Since discrete is using vector representations
 
-            return action[:, 0]
+            return action
 
     # "Dream"
     def learn(self, replay):
