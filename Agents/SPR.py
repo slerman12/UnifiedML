@@ -119,7 +119,7 @@ class SPRAgent(torch.nn.Module):
         batch = next(replay)
         obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
-        traj_o, traj_a, traj_r = traj
+        traj_o, traj_a, traj_r, traj_l = traj
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
