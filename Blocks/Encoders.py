@@ -22,7 +22,7 @@ class CNNEncoder(nn.Module):
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, batch_norm=False, shift_max_norm=False,
+    def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, shift_max_norm=False,
                  recipe=None, parallel=False, lr=None, weight_decay=0, ema_decay=None):
 
         super().__init__()
@@ -33,13 +33,13 @@ class CNNEncoder(nn.Module):
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
         # CNN
-        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if ~(recipe and recipe.eyes._target_)
+        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth) if not (recipe and recipe.eyes._target_)
                                   else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.pool = nn.Flatten() if recipe.pool._target_ is None \
+        self.pool = nn.Flatten() if not (recipe and recipe.pool._target_) \
             else instantiate(recipe.pool, input_shape=self._feature_shape())
 
         # Initialize model
