@@ -211,10 +211,6 @@ class SPRAgent(torch.nn.Module):
                            self.critic,
                            self.dynamics, self.projector, self.predictor)
 
-            # Update critic
-            Utils.optimize(critic_loss,
-                           self.critic)
-
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
