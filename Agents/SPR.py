@@ -3,92 +3,109 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import time
+import math
+
+from hydra.utils import instantiate
 
 import torch
+from torch.nn.functional import cross_entropy
 
 import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
-from Blocks.Encoders import CNNEncoder, ResidualBlockEncoder
-from Blocks.Actors import CategoricalCriticActor, EnsembleGaussianActor
+from Blocks.Encoders import CNNEncoder, ResidualBlockEncoder, MLPEncoder
+from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
-from Blocks.Architectures.MLP import MLPBlock
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 
 class SPRAgent(torch.nn.Module):
     """Self-Predictive Representations (https://arxiv.org/abs/2007.05929)
-    Generalized for continuous, classification, and generative modeling support"""
+    Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim,  # Architecture
-                 lr, target_tau,  # Optimization
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, device, log,  # On-boarding
-                 depth=5  # SPR
-                 ):
+                 discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
+                 depth=5):  # SPR
         super().__init__()
 
-        self.discrete = discrete  # Continuous supported!
+        self.discrete = discrete and not generate  # Continuous supported!
+        self.supervise = supervise  # And classification...
+        self.RL = RL
+        self.generate = generate  # And generative modeling, too
         self.device = device
         self.log = log
         self.birthday = time.time()
         self.step = self.episode = 0
         self.explore_steps = explore_steps
-        self.action_dim = action_shape[-1]
+        self.ema = ema
+
+        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.depth = depth
 
-        self.encoder = CNNEncoder(obs_shape, shift_max_norm=True, lr=lr, target_tau=target_tau)
+        self.encoder = Utils.Rand(trunk_dim) if generate \
+            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
+                            lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        # Continuous actions creator
-        self.creator = None if self.discrete \
-            else EnsembleGaussianActor(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
-                                       stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr)
+        repr_shape = (trunk_dim,) if generate \
+            else self.encoder.repr_shape
 
-        self.dynamics = ResidualBlockEncoder(self.encoder.feature_shape, self.action_dim,
-                                             shift_max_norm=True, pixels=False, isotropic=True,
-                                             lr=lr)
+        # Continuous actions
+        self.actor = None if self.discrete \
+            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
+                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
-        self.projector = MLPBlock(self.encoder.feature_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,
-                                  target_tau=target_tau, lr=lr)
+        self.dynamics = ResidualBlockEncoder(repr_shape, self.action_dim,
+                                             shift_max_norm=True, data_norm=data_norm, isotropic=True,
+                                             lr=lr, weight_decay=weight_decay)
 
-        self.predictor = MLPBlock(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2, lr=lr)
+        self.projector = MLPEncoder(repr_shape, hidden_dim, hidden_dim, hidden_dim, depth=2,
+                                    lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        self.critic = EnsembleQCritic(self.encoder.feature_shape, trunk_dim, hidden_dim, self.action_dim,
-                                      discrete=discrete, lr=lr, target_tau=target_tau)
+        self.predictor = MLPEncoder(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,
+                                    lr=lr, weight_decay=weight_decay)
 
-        self.actor = CategoricalCriticActor(stddev_schedule)
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
+                                      discrete=self.discrete, ignore_obs=generate,
+                                      lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        # Data augmentation
-        self.aug = torch.nn.Sequential(RandomShiftsAug(pad=4), IntensityAug(0.05))
+        self.action_selector = CategoricalCriticActor(stddev_schedule) if self.discrete \
+            else None
+
+        # Image augmentation
+        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
+            else torch.nn.Sequential(RandomShiftsAug(pad=4), IntensityAug(0.05))
 
         # Birth
 
     def act(self, obs):
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.creator, self.critic, self.actor):
+        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device)
 
+            # EMA targets
+            encoder = self.encoder.ema if self.ema else self.encoder
+            actor = self.actor.ema if self.ema and not self.discrete else self.actor
+            critic = self.critic.ema if self.ema else self.critic
+
             # "See"
-            obs = self.encoder(obs)
+            obs = encoder(obs)
 
-            # "Candidate actions"
-            creations = None if self.discrete \
-                else self.creator(obs, self.step).sample(self.num_actions) if self.training \
-                else self.creator(obs, self.step).mean
-
-            # DQN actor is based on critic
-            Pi = self.actor(self.critic(obs, creations), self.step)
+            Pi = self.action_selector(critic(obs), self.step) if self.discrete \
+                else actor(obs, self.step)
 
             action = Pi.sample() if self.training \
-                else Pi.best
+                else Pi.best if self.discrete \
+                else Pi.mean
 
             if self.training:
                 self.step += 1
 
                 # Explore phase
-                if self.step < self.explore_steps:
+                if self.step < self.explore_steps and not self.generate:
                     action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
 
@@ -99,54 +116,118 @@ class SPRAgent(torch.nn.Module):
         # "Recollect"
 
         batch = next(replay)
-        obs, action, reward, discount, next_obs, *traj, step = Utils.to_torch(
+        obs, action, reward, discount, next_obs, label, *traj, step = Utils.to_torch(
             batch, self.device)
         traj_o, traj_a, traj_r = traj
 
+        # Actor-Critic -> Generator-Discriminator conversion
+        if self.generate:
+            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
+            next_obs[:] = label[:] = float('nan')
+
         # "Envision" / "Perceive"
 
-        # Augment
+        # Augment and encode
         obs = self.aug(obs)
-        next_obs = self.aug(next_obs)
+        features = self.encoder(obs, pool=False)
+        obs = self.encoder.pool(features)
 
-        # Encode
-        obs = self.encoder(obs, flatten=False)
-        with torch.no_grad():
-            next_obs = self.encoder(next_obs)
+        # Augment and encode future
+        if replay.nstep > 0 and not self.generate:
+            with torch.no_grad():
+                next_obs = self.aug(next_obs)
+                next_obs = self.encoder(next_obs)
+
+        # "Journal teachings"
 
         logs = {'time': time.time() - self.birthday,
                 'step': self.step, 'episode': self.episode} if self.log \
             else None
 
-        # "Predict" / "Plan" / "Discern" / "Learn" / "Grow"
+        instruction = ~torch.isnan(label)
 
-        # Critic loss
-        critic_loss = QLearning.ensembleQLearning(self.critic, self.creator,
-                                                  obs.flatten(-3), action, reward, discount, next_obs,
-                                                  self.step, logs=logs)
+        # "Acquire Wisdom"
 
-        # Dynamics loss
-        dynamics_loss = SelfSupervisedLearning.dynamicsLearning(obs, traj_o, traj_a, traj_r,
-                                                                self.encoder, self.dynamics, self.projector,
-                                                                self.predictor, depth=self.depth, logs=logs)
+        # Classification
+        if instruction.any():
+            # "Via Example" / "Parental Support" / "School"
 
-        # Update critic, dynamics
-        Utils.optimize(critic_loss + dynamics_loss,
-                       self.encoder,
-                       self.critic,
-                       self.dynamics, self.projector, self.predictor)
+            # Inference
+            y_predicted = self.actor(obs[instruction], self.step).mean
 
-        # Update EMA targets
-        for block in [self.encoder, self.critic, self.projector]:
-            block.update_target_params()
+            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-        if not self.discrete:
+            # Supervised learning
+            if self.supervise:
+                # Supervised loss
+                supervised_loss = mistake.mean()
+
+                # Update supervised
+                Utils.optimize(supervised_loss,
+                               self.actor, retain_graph=True)
+
+                if self.log:
+                    correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+
+                    logs.update({'supervised_loss': supervised_loss.item(),
+                                 'accuracy': correct.mean().item()})
+
+            # (Auxiliary) reinforcement
+            if self.RL:
+                half = len(instruction) // 2
+                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
+                                               label[instruction][:half].long(), reduction='none')
+                action[instruction] = y_predicted.detach()
+                reward[instruction] = -mistake[:, None].detach()  # reward = -error
+                next_obs[instruction] = float('nan')
+
+        # Reinforcement learning / generative modeling
+        if self.RL or self.generate:
+            # "Imagine"
+
+            # Generative modeling
+            if self.generate:
+                half = len(obs) // 2
+                generated_image = self.actor(obs[:half], self.step).mean
+
+                action[:half], reward[:half] = generated_image, 0  # Discriminate
+
+            # "Discern"
+
+            # Critic loss
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
+                                                      obs, action, reward, discount, next_obs,
+                                                      self.step, self.num_actions, logs=logs)
+
+            # Dynamics loss
+            dynamics_loss = 0 if replay.nstep == 0 or self.generate \
+                else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
+                                                             self.encoder, self.dynamics, self.projector,
+                                                             self.predictor, depth=self.depth, logs=logs)
+
+            # Update critic, dynamics
+            Utils.optimize(critic_loss + dynamics_loss,
+                           self.critic,
+                           self.dynamics, self.projector, self.predictor)
+
+            # Update critic
+            Utils.optimize(critic_loss,
+                           self.critic)
+
+        # Update encoder
+        if not self.generate:
+            Utils.optimize(None,  # Using gradients from previous losses
+                           self.encoder)
+
+        if self.generate or self.RL and not self.discrete:
+            # "Change" / "Grow"
+
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.creator, self.critic, obs.flatten(-3).detach(),
-                                                           self.step, logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
+                                                           self.step, self.num_actions, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.creator)
+                           self.actor)
 
         return logs

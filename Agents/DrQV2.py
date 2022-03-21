@@ -14,15 +14,15 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleGaussianActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
 
 
 class DrQV2Agent(torch.nn.Module):
-    """Deep Q Network
-    Generalized to continuous action spaces, classification, and generative modeling"""
+    """Data-Regularized Q-Network V2 (https://arxiv.org/abs/2107.09645)
+    Generalized to discrete action spaces, classification, and generative modeling"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization
@@ -41,24 +41,21 @@ class DrQV2Agent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
-
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
                             lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
+        action_dim = math.prod(obs_shape) if generate \
+            else action_shape[-1]
 
-        # Continuous actions
-        self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
-                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
+        self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.actor,
+                                           ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                           lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
-                                      discrete=self.discrete, ignore_obs=generate,
-                                      lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.critic,
+                                      ignore_obs=generate, lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
         # Image augmentation
         self.aug = instantiate(recipes.aug) if recipes.Aug is not None \

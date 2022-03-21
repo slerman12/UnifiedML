@@ -77,7 +77,7 @@ class DQNAgent(torch.nn.Module):
 
             # EMA targets
             encoder = self.encoder.ema if self.ema else self.encoder
-            actor = self.actor.ema if self.ema else self.actor
+            actor = self.actor.ema if self.ema and not self.discrete else self.actor
 
             # "See"
             obs = encoder(obs)
