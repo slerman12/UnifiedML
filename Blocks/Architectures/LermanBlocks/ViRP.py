@@ -371,7 +371,7 @@ class DisentangledBlock(ConcatBlock):
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
         project = self.project(head_wise)
         norm = self.LN_mid(project)
-        disentangled = norm.view(attn.shape)
+        disentangled = norm.view(x.shape)
 
         # out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
         out = self.dropout(self.mlp(disentangled, x)) + x
@@ -381,6 +381,11 @@ class DisentangledBlock(ConcatBlock):
 
 # Heads layer norm'd, in-to-mid residual
 class CourseCorrectorDisentangledBlock(DisentangledBlock):
+    def __init__(self, dim=32, heads=8, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+
+        self.LN_mid = nn.LayerNorm(dim)
+
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
 
@@ -391,12 +396,12 @@ class CourseCorrectorDisentangledBlock(DisentangledBlock):
         attn = self.attn(pre_norm, s)
         # attn = self.attn(x, s)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
-        project = self.project(head_wise) + x
-        norm = self.LN_mid(project)
-        disentangled = norm.view(attn.shape)
+        project = self.project(head_wise)
+        disentangled = project.view(x.shape) + x
+        norm = self.LN_mid(disentangled)
 
         # out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
-        out = self.dropout(self.mlp(disentangled, x)) + x
+        out = self.dropout(self.mlp(norm, x)) + x
 
         return out
 
