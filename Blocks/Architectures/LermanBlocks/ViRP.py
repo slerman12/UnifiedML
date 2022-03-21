@@ -55,6 +55,8 @@ class ViRP(ViT):
             block = PairwiseHeadsBlock
         elif experiment == 'independent':
             block = IndependentHeadsBlock
+        elif experiment == 'course_corrector_disentangled':
+            block = CourseCorrectorDisentangledBlock
         elif experiment == 'disentangled':
             block = DisentangledBlock
         elif experiment == 'course_corrector_norm':
@@ -228,13 +230,12 @@ class ConcatBlock(nn.Module):
         self.hidden_dim = hidden_dim
 
         self.attn = SelfAttention(dim, self.heads, s_dim, k_dim, v_dim)
-        # self.attn = ReLA(dim, self.heads, s_dim, k_dim, v_dim)  # TODO SelfAttention here, make separate Relative
-        # self.project = nn.Identity() if heads == 1 \
-        #     else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
-        self.mlp = MLP(v_dim + dim, dim, hidden_dim, 1, nn.GELU(), dropout)
+        self.project = nn.Identity() if heads == 1 \
+            else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
+        self.mlp = MLP(dim + dim, dim, hidden_dim, 1, nn.GELU(), dropout)
         self.dropout = nn.Dropout(dropout)
 
-        self.LN_mid = nn.LayerNorm(v_dim)  # dim if project
+        self.LN_mid = nn.LayerNorm(dim)  # dim if project
         self.LN_out = nn.LayerNorm(dim)
 
     def repr_shape(self, c, h, w):
@@ -244,7 +245,7 @@ class ConcatBlock(nn.Module):
         if s is None:
             s = x
 
-        attn = self.LN_mid(self.attn(x, s))  # Relation
+        attn = self.LN_mid(self.project(self.attn(x, s)))  # Relation
         out = self.LN_out(self.dropout(self.mlp(attn, x))) + x  # Reason-er
 
         return out
@@ -258,7 +259,7 @@ class ConcatPreNormOnceBlock(ConcatBlock):
         if s is None:
             s = pre_norm
 
-        attn = self.LN_mid(self.attn(pre_norm, s))  # Relation
+        attn = self.LN_mid(self.project(self.attn(pre_norm, s)))  # Relation
         out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
@@ -271,8 +272,8 @@ class ConcatPreNormBlock(ConcatBlock):
         if s is None:
             s = pre_norm
 
-        attn = self.LN_mid(self.attn(pre_norm, s))  # Relation  TODO Disentangled head-wise LN
-        out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er  TODO Alternatively, a new LN instead of pre_norm
+        attn = self.LN_mid(self.project(self.attn(pre_norm, s)))  # Relation
+        out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er
 
         return out
 
@@ -284,7 +285,7 @@ class ConcatPurePreNormBlock(ConcatBlock):
         if s is None:
             s = pre_norm
 
-        attn = self.attn(pre_norm, s)  # Relation
+        attn = self.project(self.attn(pre_norm, s))  # Relation
         out = self.dropout(self.mlp(attn, pre_norm)) + x  # Reason-er
 
         return out
@@ -297,7 +298,7 @@ class ConcatPurePreNormOnceBlock(ConcatBlock):
         if s is None:
             s = pre_norm
 
-        attn = self.attn(pre_norm, s)  # Relation
+        attn = self.project(self.attn(pre_norm, s))  # Relation
         out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
@@ -308,7 +309,7 @@ class ConcatNoNormBlock(ConcatBlock):
         if s is None:
             s = x
 
-        attn = self.attn(x, s)  # Relation
+        attn = self.project(self.attn(x, s))  # Relation
         out = self.dropout(self.mlp(attn, x)) + x  # Reason-er
 
         return out
@@ -325,11 +326,11 @@ class CourseCorrectorBlock(ConcatBlock):  # "PurePreNormOnce"
         if s is None:
             s = pre_norm
 
-        attn = self.attn(pre_norm, s) + x  # In this block, Attention = Reason-er,
+        attn = self.project(self.attn(pre_norm, s)) + x  # In this block, Attention = Reason-er,
         out = self.mlp(attn, x) + attn  # MLP = Course Corrector
 
         # Original
-        # attn = self.LN_mid(self.attn(x, s)) + x  # In this block, Attention = Reason-er,
+        # attn = self.LN_mid(self.attn(x, s)) + x  # In this block, Attention = Reason-er,  Sans project
         # out = self.LN_out(self.mlp(attn, x)) + attn  # MLP = Course Corrector
 
         return out
@@ -343,7 +344,7 @@ class CourseCorrectorNormBlock(ConcatBlock):  # "PreNormOnce"
         if s is None:
             s = pre_norm
 
-        attn = self.attn(pre_norm, s) + x  # In this block, Attention = Reason-er,
+        attn = self.project(self.attn(pre_norm, s)) + x  # In this block, Attention = Reason-er,  Sans project
         out = self.mlp(self.LN_mid(attn), x) + attn  # MLP = Course Corrector
 
         return out
@@ -354,9 +355,9 @@ class DisentangledBlock(ConcatBlock):
     def __init__(self, dim=32, heads=8, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        # self.project = nn.Identity() if heads == 1 \
-        #     else nn.Sequential(nn.Linear(self.v_dim // self.heads, self.v_dim // self.heads), nn.Dropout(dropout))
-        self.LN_mid = nn.LayerNorm(self.v_dim // self.heads)
+        self.project = nn.Identity() if heads == 1 \
+            else nn.Sequential(nn.Linear(self.v_dim // self.heads, dim // self.heads), nn.Dropout(dropout))
+        self.LN_mid = nn.LayerNorm(dim // self.heads)
 
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
@@ -368,7 +369,30 @@ class DisentangledBlock(ConcatBlock):
         attn = self.attn(pre_norm, s)
         # attn = self.attn(x, s)
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
-        norm = self.LN_mid(head_wise)  # Can apply self.project before every LN_mid
+        project = self.project(head_wise)
+        norm = self.LN_mid(project)
+        disentangled = norm.view(attn.shape)
+
+        # out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
+        out = self.dropout(self.mlp(disentangled, x)) + x
+
+        return out
+
+
+# Heads layer norm'd, in-to-mid residual
+class CourseCorrectorDisentangledBlock(DisentangledBlock):
+    def forward(self, x, s=None):
+        pre_norm = self.LN_out(x)
+
+        if s is None:
+            s = pre_norm
+            # s = x
+
+        attn = self.attn(pre_norm, s)
+        # attn = self.attn(x, s)
+        head_wise = attn.view(*attn.shape[:-1], self.heads, -1)
+        project = self.project(head_wise) + x
+        norm = self.LN_mid(project)
         disentangled = norm.view(attn.shape)
 
         # out = self.LN_out(self.dropout(self.mlp(disentangled, x))) + x
@@ -382,15 +406,12 @@ class IndependentHeadsBlock(DisentangledBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.downsample_mid = nn.Linear(dim, self.v_dim // self.heads) if dim != self.v_dim // self.heads \
+        self.downsample_mid = nn.Linear(dim, dim // self.heads) if self.heads != 1 \
             else nn.Identity()
 
-        self.RN = RN(self.v_dim // self.heads, self.v_dim // self.heads, 0, 0, self.hidden_dim, self.v_dim,
+        self.RN = RN(dim // self.heads, dim // self.heads, 0, 0, self.hidden_dim, dim,
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
         self.dropout = nn.Dropout(dropout)
-
-        self.downsample_out = nn.Linear(dim, self.v_dim) if dim != self.v_dim \
-            else nn.Identity()
 
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
@@ -405,19 +426,20 @@ class IndependentHeadsBlock(DisentangledBlock):
         # attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
-        residual = self.downsample_mid(x)  # [b * n, 1, d] or [n, 1, d] if tokens
+        residual = self.downsample_mid(x)  # [b, n, d] or [n, d] if tokens
         residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
 
-        norm = self.LN_mid(head_wise)  # [b, n, h, d]
+        project = self.project(head_wise)  # [b, n, h, d]
+        norm = self.LN_mid(project)  # [b, n, h, d]
         # norm = head_wise
         relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
         # out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
         out = self.dropout(self.RN(relation, residual))  # [b * n, d]
 
-        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
 
 
 # Head, head:in
@@ -425,7 +447,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.RN = RN(self.v_dim // self.heads, 2 * self.v_dim // self.heads, 0, 0, self.hidden_dim, self.v_dim,
+        self.RN = RN(dim // self.heads, 2 * dim // self.heads, 0, 0, self.hidden_dim, dim,
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
 
     def forward(self, x, s=None):
@@ -446,7 +468,8 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         residual = residual.expand(*head_wise.shape[:-1], -1)  # [b, n, h, d]
         residual = residual.view(-1, *residual.shape[-2:])  # [b * n, h, d]
 
-        norm = self.LN_mid(head_wise)  # [b, n, h, d]
+        project = self.project(head_wise)
+        norm = self.LN_mid(project)  # [b, n, h, d]
         relation = norm.view(-1, *norm.shape[-2:])  # [b * n, h, d]
 
         s = torch.cat([residual, relation], -1)  # [b * n, h, d * 2]
@@ -454,7 +477,7 @@ class PairwiseHeadsBlock(IndependentHeadsBlock):
         # out = self.LN_out(self.dropout(self.RN(relation, s)))  # [b * n, d]
         out = self.dropout(self.RN(relation, s))  # [b * n, d]
 
-        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + self.downsample_out(x)  # [b, n, d]
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
 
 
 # Rectified-linear attention
