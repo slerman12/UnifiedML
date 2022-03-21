@@ -106,20 +106,22 @@ class ResidualBlockEncoder(CNNEncoder):
     Isotropic means no bottleneck / dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, shift_max_norm=True,
-                 pixels=True, isotropic=False, recipe=None, lr=None, weight_decay=0, ema_decay=None):
+    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, data_norm=None,
+                 shift_max_norm=True, isotropic=False, recipe=None, parallel=False,
+                 lr=None, weight_decay=0, ema_decay=None):
 
-        super().__init__(obs_shape, hidden_channels, 0, pixels)
+        super().__init__(obs_shape, hidden_channels, 0, data_norm)
 
         # Dimensions
         in_channels = obs_shape[0] + context_dim
         out_channels = obs_shape[0] if isotropic else out_channels
 
         # CNN ResNet-ish
-        self.Eyes = nn.DataParallel(  # ! Automatically parallel across visible GPUs
-            nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 2 - isotropic,
-                                     [hidden_channels, out_channels], [num_blocks]),
-                          Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity()))
+        self.Eyes = nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 2 - isotropic,
+                                             [hidden_channels, out_channels], [num_blocks]),
+                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+        if parallel:
+            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.init(lr, weight_decay, ema_decay)
 
