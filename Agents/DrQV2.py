@@ -82,8 +82,6 @@ class DrQV2Agent(torch.nn.Module):
             action = Pi.sample() if self.training \
                 else Pi.mean
 
-            print(action.shape)
-
             if self.training:
                 self.step += 1
 
@@ -91,7 +89,10 @@ class DrQV2Agent(torch.nn.Module):
                 if self.step < self.explore_steps and not self.generate:
                     action = action.uniform_(-1, 1)
 
-            return action
+            if self.discrete:
+                action = torch.argmax(action, -1)  # Since discrete is using vector representations
+
+            return action[:, 0]
 
     # "Dream"
     def learn(self, replay):
