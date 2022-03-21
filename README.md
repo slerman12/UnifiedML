@@ -10,7 +10,7 @@
 
 # :runner: Running The Code
 
-To start a train session, once installed:
+To start a train session, once [installed](#wrench-setting-up):
 
 ```
 python Run.py
@@ -177,7 +177,7 @@ Train accuracies can be printed with ```agent.log=true```.
 Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for passing in pre-defined architectures. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
 
 ```
-python Run.py task=classify/cifar10 ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
+python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)

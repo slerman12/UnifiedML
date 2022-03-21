@@ -26,6 +26,7 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 
 class ClassifyEnv:
+    """A classification environment"""
     def __init__(self, experiences, batch_size, num_workers, offline, train, path=None):
 
         def worker_init_fn(worker_id):

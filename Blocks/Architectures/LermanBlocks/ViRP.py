@@ -401,7 +401,7 @@ class IndependentHeadsBlock(DisentangledBlock):
 
         shape = x.shape
 
-        attn = self.attn(pre_norm, s)  # [b, n, h * d]
+        attn = self.attn(pre_norm, s)  # [b, n, h * d]  Careful, tokens might not need to be norm'd in Perceiver
         # attn = self.attn(x, s)  # [b, n, h * d]
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
 
