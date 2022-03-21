@@ -117,7 +117,7 @@ class ResidualBlockEncoder(CNNEncoder):
         out_channels = obs_shape[0] if isotropic else out_channels
 
         # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 2 - isotropic,
+        self.Eyes = nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 3, 2 - isotropic,
                                              [hidden_channels, out_channels], [num_blocks]),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
@@ -148,8 +148,10 @@ class MLPEncoder(nn.Module):
                                nn.LayerNorm(layer_norm_dim),
                                nn.Tanh())
 
+        # Dimensions
         in_features = layer_norm_dim or input_dim
 
+        # MLP
         self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, dropout, binary, l2_norm)
 
         if parallel:

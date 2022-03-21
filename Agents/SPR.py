@@ -60,7 +60,7 @@ class SPRAgent(torch.nn.Module):
                                        lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         self.dynamics = ResidualBlockEncoder(repr_shape, self.action_dim,
-                                             shift_max_norm=True, data_norm=data_norm, isotropic=True,
+                                             shift_max_norm=True, isotropic=True,
                                              lr=lr, weight_decay=weight_decay)
 
         self.projector = MLPEncoder(repr_shape, hidden_dim, hidden_dim, 2, layer_norm_dim=hidden_dim,
