@@ -33,8 +33,7 @@ class CNNEncoder(nn.Module):
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
         # CNN
-        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm)
-                                  if not (recipe and recipe.eyes._target_)
+        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm) if ~(recipe and recipe.eyes._target_)
                                   else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
