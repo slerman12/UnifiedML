@@ -28,7 +28,8 @@ class SPRAgent(torch.nn.Module):
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 depth=5):  # SPR
+                 depth=5  # SPR
+                 ):
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
@@ -59,6 +60,7 @@ class SPRAgent(torch.nn.Module):
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
+        # Dynamics
         if not generate:
             self.dynamics = ResidualBlockEncoder(repr_shape, self.action_dim,
                                                  shift_max_norm=True, isotropic=True,
@@ -193,7 +195,7 @@ class SPRAgent(torch.nn.Module):
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
 
-            # "Discern"
+            # "Predict" / "Plan" / "Discern"
 
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,

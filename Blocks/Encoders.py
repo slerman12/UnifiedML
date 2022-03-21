@@ -113,11 +113,11 @@ class ResidualBlockEncoder(CNNEncoder):
         super().__init__(obs_shape, hidden_channels, 0, data_norm)
 
         # Dimensions
-        in_channels = obs_shape[0] + context_dim
+        self.in_channels = obs_shape[0] + context_dim
         out_channels = obs_shape[0] if isotropic else out_channels
 
         # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet((in_channels, *obs_shape[1:]), 3, 2 - isotropic,
+        self.Eyes = nn.Sequential(MiniResNet((self.in_channels, *obs_shape[1:]), 3, 2 - isotropic,
                                              [hidden_channels, out_channels], [num_blocks]),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
