@@ -33,7 +33,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
                     # Sample actions
                     next_Pi = actor(next_obs, step)
                     next_actions = next_Pi.rsample(num_actions)
-                    next_actions_log_probs = next_Pi.log_prob(next_actions).sum(-1).flatten(1)
+                    next_actions_log_probs = next_Pi.log_prob(next_actions).sum(-1, keepdim=True).flatten(1)
 
         target_q = reward
 
@@ -43,7 +43,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             next_q = torch.min(next_Q.Qs, 0)[0]
 
             next_v = torch.zeros_like(discount)
-            next_q_logits = next_q - next_q.max(dim=-1, keepdim=True)[0]
+            next_q_logits = next_q - next_q.max(-1, keepdim=True)[0]
             next_probs = torch.softmax(next_q_logits + next_actions_log_probs, -1)
             next_v[has_future] = torch.sum(next_q * next_probs, -1, keepdim=True)
 

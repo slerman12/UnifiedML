@@ -63,10 +63,10 @@ class EnsembleGaussianActor(nn.Module):
         obs = self.trunk(obs)
 
         if self.stddev_schedule is None or step is None:
-            mean_tanh, log_stddev = self.Pi_head(obs).chunk(2, dim=-1)
+            mean_tanh, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
             stddev = torch.exp(log_stddev)
         else:
-            mean_tanh = self.Pi_head(obs)
+            mean_tanh = self.Pi_head(obs).squeeze(1)
             stddev = torch.full_like(mean_tanh,
                                      Utils.schedule(self.stddev_schedule, step))
 
