@@ -38,6 +38,8 @@ Drink up! :beers:
 
 For detailed documentation, [see our :scroll:](https://arxiv.com).
 
+[comment]: <> ([![arXiv]&#40;https://img.shields.io/badge/arXiv-<NUMBER>.<NUMBER>-b31b1b.svg?style=flat&#41;]&#40;https://arxiv.org/abs/<NUMBER>.<NUMBER>&#41;)
+
 ```
 @inproceedings{cool,
   title={bla},
@@ -166,7 +168,7 @@ DQN Agent on MNIST:
 python Run.py task=classify/mnist RL=false
 ```
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL phase joins the supervised learning phase s.t. ```reward = -error```. 
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```. 
 
 Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**). This is pure RL training and actually works.
 
@@ -174,7 +176,7 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for passing in pre-defined architectures. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
+Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
 
 ```
 python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
@@ -371,7 +373,9 @@ All files are designed to be useful for educational and innovational purposes in
 
 [comment]: <> (We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging.)
 
-[comment]: <> (Feel free to [contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Appreciated!)
+[comment]: <> (Feel free to [contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. )
+
+[comment]: <> (Angel investors needed...)
 
 [comment]: <> (</details>)
 

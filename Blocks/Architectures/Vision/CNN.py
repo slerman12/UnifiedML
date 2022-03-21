@@ -31,6 +31,8 @@ class CNN(nn.Module):
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
 
+        self.apply(Utils.weight_init)
+
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.project)
 

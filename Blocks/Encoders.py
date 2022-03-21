@@ -5,8 +5,9 @@
 import copy
 import math
 
-import torch
 from hydra.utils import instantiate
+
+import torch
 from torch import nn
 
 from Blocks.Architectures.Vision.CNN import CNN
@@ -47,9 +48,6 @@ class CNNEncoder(nn.Module):
         return Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)
 
     def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Initialize weights
-        self.apply(Utils.weight_init)
-
         # Optimizer
         if lr is not None:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
