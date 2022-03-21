@@ -34,7 +34,7 @@ class CNNEncoder(nn.Module):
 
         # CNN
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth, batch_norm)
-                                  if None in (recipe, recipe.eyes._target_)
+                                  if not (recipe and recipe.eyes._target_)
                                   else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
