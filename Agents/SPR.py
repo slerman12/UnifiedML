@@ -198,7 +198,7 @@ class SPRAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs,
-                                                      self.step, self.num_actions, logs=logs)
+                                                      self.step, logs=logs)
 
             # Dynamics loss
             dynamics_loss = 0 if replay.nstep == 0 or self.generate \
@@ -225,7 +225,7 @@ class SPRAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, self.num_actions, logs=logs)
+                                                           self.step, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
