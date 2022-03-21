@@ -42,9 +42,9 @@ def dynamicsLearning(obs, traj_o, traj_a, traj_r,
         traj_a = Utils.rone_hot(traj_a)
 
     # Predict future
-    forecast = [dynamics(obs, traj_a[:, 0], flatten=False)]
+    forecast = [dynamics(obs, traj_a[:, 0], pool=False)]
     for k in range(1, depth):
-        forecast.append(dynamics(forecast[-1], traj_a[:, k], flatten=False))
+        forecast.append(dynamics(forecast[-1], traj_a[:, k], pool=False))
     forecast = torch.stack(forecast, 1).flatten(-3)
 
     # Self supervision
