@@ -10,6 +10,7 @@ from hydra.utils import instantiate
 import torch
 from torch import nn
 
+from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
@@ -128,3 +129,59 @@ class ResidualBlockEncoder(CNNEncoder):
         if isotropic:
             assert tuple(obs_shape) == self.feature_shape, \
                 f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
+
+
+class MLPEncoder(nn.Module):
+    """MLP encoder:
+    With LayerNorm
+    Can also l2-normalize penultimate layer (https://openreview.net/pdf?id=9xhgmsNVHu)"""
+
+    def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, data_norm=None, layer_norm_dim=None,
+                 non_linearity=nn.ReLU(inplace=True), dropout=0, binary=False, l2_norm=False,
+                 parallel=False, lr=None, weight_decay=0, ema_decay=None):
+        super().__init__()
+
+        self.data_norm = torch.tensor(data_norm or [0, 1])
+
+        self.trunk = nn.Identity() if layer_norm_dim is None \
+            else nn.Sequential(nn.Linear(input_dim, layer_norm_dim),
+                               nn.LayerNorm(layer_norm_dim),
+                               nn.Tanh())
+
+        in_features = layer_norm_dim or input_dim
+
+        self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, dropout, binary, l2_norm)
+
+        if parallel:
+            self.MLP = nn.DataParallel(self.MLP)  # Parallel on visible GPUs
+
+        self.init(lr, weight_decay, ema_decay)
+
+        self.repr_shape, self.repr_dim = (output_dim,), output_dim
+
+    def init(self, lr=None, weight_decay=0, ema_decay=None):
+        # Initialize weights
+        self.apply(Utils.weight_init)
+
+        # Optimizer
+        if lr is not None:
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+
+        # EMA
+        if ema_decay is not None:
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
+
+    def update_ema_params(self):
+        assert hasattr(self, 'ema_decay')
+        Utils.param_copy(self, self.ema, self.ema_decay)
+
+    def forward(self, x, *context):
+        h = torch.cat([x, *context], -1)
+
+        # Normalizes
+        mean, stddev = self.data_norm = self.data_norm.to(h.device)
+        h = (h - mean) / stddev
+
+        h = self.trunk(h)
+        return self.MLP(h)
