@@ -206,7 +206,7 @@ class SPRAgent(torch.nn.Module):
             dynamics_loss = 0 if replay.nstep == 0 or self.generate \
                 else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
                                                              self.encoder, self.dynamics, self.projector,
-                                                             self.predictor, depth=max(replay.nstep, self.depth),
+                                                             self.predictor, depth=min(replay.nstep, self.depth),
                                                              logs=logs)
 
             # Update critic, dynamics
