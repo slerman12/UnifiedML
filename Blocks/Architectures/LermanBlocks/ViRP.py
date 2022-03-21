@@ -470,7 +470,7 @@ class RelationAttentionBlock(SelfAttentionBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, s_dim, self.qk_dim, self.v_dim)
+        self.attn = Relation(dim, self.heads, s_dim, k_dim, self.v_dim)
 
 
 # Re-param
@@ -478,7 +478,7 @@ class RelationReLABlock(SelfAttentionBlock):
     def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
         super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout, rela=True)
 
-        self.attn = Relation(dim, self.heads, s_dim, self.qk_dim, self.v_dim, rela=True)
+        self.attn = Relation(dim, self.heads, s_dim, k_dim, self.v_dim, rela=True)
 
 
 # Re-param
