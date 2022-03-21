@@ -60,12 +60,12 @@ class SPRAgent(torch.nn.Module):
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
-        # Dynamics
         if not generate:
             self.dynamics = ResidualBlockEncoder(repr_shape, self.action_dim,
                                                  shift_max_norm=True, isotropic=True,
                                                  lr=lr, weight_decay=weight_decay)
 
+            # Self supervisors
             self.projector = MLPEncoder(self.encoder.repr_dim, hidden_dim, hidden_dim, 2, layer_norm_dim=hidden_dim,
                                         lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
@@ -206,7 +206,8 @@ class SPRAgent(torch.nn.Module):
             dynamics_loss = 0 if replay.nstep == 0 or self.generate \
                 else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
                                                              self.encoder, self.dynamics, self.projector,
-                                                             self.predictor, depth=self.depth, logs=logs)
+                                                             self.predictor, depth=max(replay.nstep, self.depth),
+                                                             logs=logs)
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss,
