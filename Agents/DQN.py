@@ -142,7 +142,7 @@ class DQNAgent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
+            y_predicted = self.actor(obs[instruction], self.step).mean
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -177,7 +177,7 @@ class DQNAgent(torch.nn.Module):
             # Generative modeling
             if self.generate:
                 half = len(obs) // 2
-                generated_image = self.actor(obs[:half], self.step).mean[:, 0]
+                generated_image = self.actor(obs[:half], self.step).mean
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
 
