@@ -63,10 +63,10 @@ class SPRAgent(torch.nn.Module):
                                              shift_max_norm=True, data_norm=data_norm, isotropic=True,
                                              lr=lr, weight_decay=weight_decay)
 
-        self.projector = MLPEncoder(repr_shape, hidden_dim, hidden_dim, hidden_dim, depth=2,
+        self.projector = MLPEncoder(repr_shape, hidden_dim, hidden_dim, 2, layer_norm_dim=hidden_dim,
                                     lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        self.predictor = MLPEncoder(hidden_dim, hidden_dim, hidden_dim, hidden_dim, depth=2,
+        self.predictor = MLPEncoder(hidden_dim, hidden_dim, hidden_dim, 2, layer_norm_dim=hidden_dim,
                                     lr=lr, weight_decay=weight_decay)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
