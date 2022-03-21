@@ -9,9 +9,10 @@ import torch
 from hydra.utils import instantiate
 from torch import nn
 
-import Utils
 from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
+
+import Utils
 
 
 class CNNEncoder(nn.Module):

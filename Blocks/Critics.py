@@ -11,9 +11,9 @@ import torch
 from torch import nn
 from torch.distributions import Normal
 
-import Utils
-
 from Blocks.Architectures.MLP import MLP
+
+import Utils
 
 
 class EnsembleQCritic(nn.Module):

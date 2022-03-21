@@ -13,9 +13,9 @@ from torch.distributions import Categorical
 
 from Distributions import TruncatedNormal
 
-import Utils
-
 from Blocks.Architectures.MLP import MLP
+
+import Utils
 
 
 class EnsembleGaussianActor(nn.Module):
