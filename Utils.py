@@ -276,7 +276,7 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
                 model.optim.zero_grad(set_to_none=True)
 
 
-# Increment/decrement a value in proportion to a step count based on a string-formatted schedule (only supports linear)
+# Increment/decrement a value in proportion to a step count based on a string-formatted schedule
 def schedule(schedule, step):
     try:
         return float(schedule)
