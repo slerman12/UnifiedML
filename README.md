@@ -242,7 +242,7 @@ Replays also save uniquely w.r.t. a date-time to allow multiple independent runs
 
 ### Custom Architectures
 
-One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
+One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```. 
 
 ResNet18 on CIFAR-10:
 
@@ -256,14 +256,16 @@ Atari with ViT:
 python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
 ```
 
+Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes``` keyword.
+
 <details>
 <summary><i>See more examples :open_book: </i></summary>
 <br>
 
-To train, for example MNIST, using ConvNeXt as the Encoder:
+CIFAR-10 with ViT:
 
 ```
-python Run.py task=classify/mnist RL=false Eyes=Blocks.Architectures.ConvNeXt
+python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=512 +recipes.encoder.eyes.hidden_dim=512 replay.transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" recipes.Aug=Blocks.Architectures.Null
 ```
 
 A GAN with a CNN Discriminator:

@@ -61,7 +61,7 @@ class ViRP(ViT):
             block = CourseCorrectorDisentangledBlock
         elif experiment == 'disentangled':
             block = DisentangledBlock
-        elif experiment == 'course_corrector_norm':
+        elif experiment == 'course_corrector_norm':  # Most analogous to attention pre-norm block, except with concat
             block = CourseCorrectorNormBlock
         elif experiment == 'course_corrector':
             block = CourseCorrectorBlock
@@ -473,10 +473,10 @@ class RelationSimplestBlock(DisentangledBlock):
 
         shape = x.shape
 
-        attn = self.attn(pre_norm, s)  # [b, n, h * d]  Careful, tokens might not need to be norm'd in Perceiver
-        # attn = self.attn(x, s)  # [b, n, h * d]
+        relation = self.attn(pre_norm, s)  # [b, n, h * d]  Careful, tokens might not need to be norm'd in Perceiver
+        # relation = self.attn(x, s)  # [b, n, h * d]
 
-        head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
+        head_wise = relation.view(*relation.shape[:-1], self.heads, -1)  # [b, n, h, d]
         head_wise = head_wise.view(-1, *head_wise.shape[-2:])  # [b * n, h, d]
         head_wise = self.LN_relation(head_wise)
 
