@@ -150,7 +150,7 @@ class ClassifyEnv:
         # 'reward' and 'action' paired with 'next obs'
         self.time_step.reward[1:] = correct
         self.time_step.reward[0] = correct.mean()
-        self.time_step.action[1:] = action
+        self.time_step.action[1:] = self.time_step.action if action is None else action
 
         self.time_step = self.time_step._replace(step_type=StepType.LAST, observation=x, label=y)
 
