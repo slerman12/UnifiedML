@@ -52,7 +52,8 @@ class Environment:
             if not self.offline:
                 action = agent.act(exp.observation)
 
-                exp = self.env.step(action.cpu().numpy())
+                if not self.generate:
+                    exp = self.env.step(action.cpu().numpy())
 
                 exp.step = agent.step
                 experiences.append(exp)
