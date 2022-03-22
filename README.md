@@ -277,10 +277,10 @@ python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
 ```
-python Run.py recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool task=classify/mnist offline=true pool=Blocks.Architectures.Null
+python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool pool=Blocks.Architectures.Null
 ```
 
-since otherwise ```repr_shape``` is flattened to channel dim, with no features for the attention to pool.
+since otherwise ```repr_shape``` is flattened, with no features for the attention to pool.
 
 [comment]: <> (<details>)
 
