@@ -12,7 +12,6 @@ from torch import nn
 
 from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.CNN import CNN
-from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
 
@@ -20,9 +19,10 @@ import Utils
 class CNNEncoder(nn.Module):
     """
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
+    Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, shift_max_norm=False,
+    def __init__(self, obs_shape, context_dim=0, data_norm=(127.5, 255), shift_max_norm=False, isotropic=False,
                  recipe=None, parallel=False, lr=None, weight_decay=0, ema_decay=None):
 
         super().__init__()
@@ -30,15 +30,16 @@ class CNNEncoder(nn.Module):
         assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
 
         self.obs_shape = obs_shape
-        self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
+        self.data_norm = torch.tensor(Utils.default(data_norm, (0, 1))).view(2, 1, -1, 1, 1)
+
+        # Dimensions
+        self.in_channels = obs_shape[0] + context_dim
+        self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth) if not (recipe and recipe.eyes._target_)
-                                  else instantiate(recipe.eyes),
+        self.Eyes = nn.Sequential(Utils.init(recipe,
+                                             __default=CNN(self.in_channels, self.out_channels, depth=3)),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
-        # self.Eyes = nn.Sequential(Utils.init(recipe,
-        #                                      __default=CNN(obs_shape, out_channels, depth)),
-        #                           Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
@@ -47,6 +48,11 @@ class CNNEncoder(nn.Module):
 
         # Initialize model
         self.init(lr, weight_decay, ema_decay)
+
+        # Isotropic
+        if isotropic:
+            assert tuple(obs_shape) == self.feature_shape, \
+                f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
 
     def _feature_shape(self):
         return Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)
@@ -101,37 +107,6 @@ class CNNEncoder(nn.Module):
         # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[1:])
         return h
-
-
-class ResidualBlockEncoder(CNNEncoder):
-    """
-    Residual block-based CNN encoder,
-    Isotropic means no bottleneck / dimensionality conserving
-    """
-
-    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, data_norm=None,
-                 shift_max_norm=True, isotropic=False, recipe=None, parallel=False,
-                 lr=None, weight_decay=0, ema_decay=None):
-
-        super().__init__(obs_shape, hidden_channels, 0, data_norm)
-
-        # Dimensions
-        self.in_channels = obs_shape[0] + context_dim
-        out_channels = obs_shape[0] if isotropic else out_channels
-
-        # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet((self.in_channels, *obs_shape[1:]), 3, 2 - isotropic,
-                                             [hidden_channels, out_channels], [num_blocks]),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
-        if parallel:
-            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
-
-        self.init(lr, weight_decay, ema_decay)
-
-        # Isotropic
-        if isotropic:
-            assert tuple(obs_shape) == self.feature_shape, \
-                f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
 
 
 class MLPEncoder(nn.Module):
