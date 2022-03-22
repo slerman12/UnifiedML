@@ -5,15 +5,15 @@
 import time
 import math
 
+from hydra.utils import instantiate
+
 import torch
 from torch.nn.functional import cross_entropy
-
-from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
-from Blocks.Encoders import CNNEncoder, MLPEncoder
+from Blocks.Encoders import CNNEncoder, ResidualBlockEncoder, MLPEncoder
 from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
@@ -28,7 +28,8 @@ class SPRAgent(torch.nn.Module):
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 depth=5):  # SPR
+                 depth=5  # SPR
+                 ):
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
@@ -60,10 +61,9 @@ class SPRAgent(torch.nn.Module):
                                        lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         if not generate:
-            resnet = MiniResNet((self.in_channels, *obs_shape[1:]), 3, 1, [64, self.encoder.out_channels], [1])
-
-            self.dynamics = CNNEncoder(repr_shape, self.action_dim, None, True, True, recipe=resnet,
-                                       lr=lr, weight_decay=weight_decay)
+            self.dynamics = ResidualBlockEncoder(repr_shape, self.action_dim,
+                                                 shift_max_norm=True, isotropic=True,
+                                                 lr=lr, weight_decay=weight_decay)
 
             # Self supervisors
             self.projector = MLPEncoder(self.encoder.repr_dim, hidden_dim, hidden_dim, 2, layer_norm_dim=hidden_dim,
@@ -80,8 +80,8 @@ class SPRAgent(torch.nn.Module):
             else None
 
         # Image augmentation
-        self.aug = Utils.init(recipes.aug, __default=torch.nn.Sequential(RandomShiftsAug(pad=4),
-                                                                         IntensityAug(0.05)))
+        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
+            else torch.nn.Sequential(RandomShiftsAug(pad=4), IntensityAug(0.05))
 
         # Birth
 

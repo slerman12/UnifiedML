@@ -40,13 +40,30 @@ For detailed documentation, [see our :scroll:](https://arxiv.com).
 
 [comment]: <> ([![arXiv]&#40;https://img.shields.io/badge/arXiv-<NUMBER>.<NUMBER>-b31b1b.svg?style=flat&#41;]&#40;https://arxiv.org/abs/<NUMBER>.<NUMBER>&#41;)
 
-```
-@inproceedings{cool,
-  title={bla},
-  author={Sam Lerman and Chenliang Xu},
-  booktitle={bla},
-  year={2022},
-  url={https://openreview.net}
+[comment]: <> (```)
+
+[comment]: <> (@inproceedings{cool,)
+
+[comment]: <> (  title={bla},)
+
+[comment]: <> (  author={Sam Lerman and Chenliang Xu},)
+
+[comment]: <> (  booktitle={bla},)
+
+[comment]: <> (  year={2022},)
+
+[comment]: <> (  url={https://openreview.net})
+
+[comment]: <> (})
+
+[comment]: <> (```)
+
+```bibtex
+@article{cool,
+  title   = {UnifiedML: A Unified Library For Intelligence Training},
+  author  = {Lerman, Sam and Xu, Chenliang},
+  journal = {arXiv preprint arXiv:2203.08913},
+  year    = {2022}
 }
 ```
 
