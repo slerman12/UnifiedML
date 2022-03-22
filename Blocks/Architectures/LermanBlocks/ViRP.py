@@ -484,7 +484,7 @@ class RelationSimplestBlock(DisentangledBlock):
         residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
-        residual = self.LN_residual(residual)  # TODO Should it get its own norm?
+        # residual = self.LN_residual(residual)  # TODO Should it get its own norm?
 
         out = self.dropout(self.RN(head_wise, residual))  # [b * n, d]
 
