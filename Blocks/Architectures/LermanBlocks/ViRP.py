@@ -458,6 +458,9 @@ class RelationSimplestBlock(DisentangledBlock):
         self.downsample = nn.Linear(dim, self.v_dim // self.heads) if self.heads != 1 \
             else nn.Identity()
 
+        self.LN_relation = nn.LayerNorm(self.v_dim // self.heads)
+        self.LN_residual = nn.LayerNorm(self.v_dim // self.heads)
+
         self.RN = RN(self.v_dim // self.heads, self.v_dim // self.heads, 0, 0, self.hidden_dim, dim,
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
 
@@ -475,11 +478,13 @@ class RelationSimplestBlock(DisentangledBlock):
 
         head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
         head_wise = head_wise.view(-1, *head_wise.shape[-2:])  # [b * n, h, d]
+        head_wise = self.LN_relation(head_wise)
 
         residual = self.downsample(x)  # [b, n, d] or [n, d] if tokens
         residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
         residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
         residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
+        residual = self.LN_residual(residual)  # TODO Should it get its own norm?
 
         out = self.dropout(self.RN(head_wise, residual))  # [b * n, d]
 
