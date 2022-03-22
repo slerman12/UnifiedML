@@ -146,7 +146,7 @@ class ClassifyEnv:
         # Concat a dummy batch item ('next obs')
         x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
 
-        correct = np.zeros_like(self.time_step.label) if action is None \
+        correct = np.full_like(self.time_step.label, np.NaN) if action is None \
             else (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
         # 'reward' and 'action' paired with 'next obs'
