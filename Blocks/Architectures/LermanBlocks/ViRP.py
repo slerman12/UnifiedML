@@ -53,6 +53,8 @@ class ViRP(ViT):
             block = RelativeBlock
         elif experiment == 'pairwise':
             block = PairwiseHeadsBlock
+        elif experiment == 'relation_simplest':
+            block = RelationSimplestBlock
         elif experiment == 'independent':
             block = IndependentHeadsBlock
         elif experiment == 'course_corrector_disentangled':
@@ -345,7 +347,7 @@ class CourseCorrectorNormBlock(ConcatBlock):  # "PreNormOnce"
             s = pre_norm
 
         attn = self.project(self.attn(pre_norm, s)) + x  # In this block, Attention = Reason-er,  Sans project
-        out = self.mlp(self.LN_mid(attn), x) + attn  # MLP = Course Corrector
+        out = self.mlp(self.LN_mid(attn), x) + attn  # MLP = Course Corrector  TODO Maybe project a RN, MLP linear
 
         return out
 
@@ -416,7 +418,6 @@ class IndependentHeadsBlock(DisentangledBlock):
 
         self.RN = RN(dim // self.heads, dim // self.heads, 0, 0, self.hidden_dim, dim,
                      mid_nonlinearity=nn.GELU(), dropout=dropout)
-        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, s=None):
         pre_norm = self.LN_out(x)
@@ -443,6 +444,44 @@ class IndependentHeadsBlock(DisentangledBlock):
 
         # out = self.LN_out(self.dropout(self.RN(relation, residual)))  # [b * n, d]
         out = self.dropout(self.RN(relation, residual))  # [b * n, d]
+
+        return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
+
+
+# Head, in
+class RelationSimplestBlock(DisentangledBlock):
+    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+
+        self.attn = Relation(dim, self.heads, s_dim, k_dim, self.v_dim, impartial_q_head=True)
+
+        self.downsample = nn.Linear(dim, self.v_dim // self.heads) if self.heads != 1 \
+            else nn.Identity()
+
+        self.RN = RN(self.v_dim // self.heads, self.v_dim // self.heads, 0, 0, self.hidden_dim, dim,
+                     mid_nonlinearity=nn.GELU(), dropout=dropout)
+
+    def forward(self, x, s=None):
+        pre_norm = self.LN_out(x)
+
+        if s is None:
+            s = pre_norm  # [b, n, d] or [n, d] if tokens
+            # s = x  # [b, n, d] or [n, d] if tokens
+
+        shape = x.shape
+
+        attn = self.attn(pre_norm, s)  # [b, n, h * d]  Careful, tokens might not need to be norm'd in Perceiver
+        # attn = self.attn(x, s)  # [b, n, h * d]
+
+        head_wise = attn.view(*attn.shape[:-1], self.heads, -1)  # [b, n, h, d]
+        head_wise = head_wise.view(-1, *head_wise.shape[-2:])  # [b * n, h, d]
+
+        residual = self.downsample(x)  # [b, n, d] or [n, d] if tokens
+        residual = residual.unsqueeze(-2)  # [b, n, 1, d] or [n, 1, d] if tokens
+        residual = residual.expand(shape[0], -1, -1, -1)  # [b, n, 1, d]
+        residual = residual.view(-1, 1, residual.shape[-1])  # [b * n, 1, d]
+
+        out = self.dropout(self.RN(head_wise, residual))  # [b * n, d]
 
         return out.view(*(shape[:-2] or [-1]), *shape[-2:]) + x  # [b, n, d]
 

@@ -244,16 +244,16 @@ Replays also save uniquely w.r.t. a date-time to allow multiple independent runs
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
-Atari with ViT:
-
-```
-python Run.py Eyes=Blocks.Architectures.ViT 
-```
-
 ResNet18 on CIFAR-10:
 
 ```
 python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
+```
+
+Atari with ViT:
+
+```
+python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
 ```
 
 <details>
