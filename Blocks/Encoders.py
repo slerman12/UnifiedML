@@ -36,6 +36,9 @@ class CNNEncoder(nn.Module):
         self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth) if not (recipe and recipe.eyes._target_)
                                   else instantiate(recipe.eyes),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+        # self.Eyes = nn.Sequential(Utils.init(recipe,
+        #                                      __default=CNN(obs_shape, out_channels, depth)),
+        #                           Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 

@@ -26,12 +26,12 @@ class RandomAgent(torch.nn.Module):
 
         action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
-        self.actor = Utils.Rand(action_dim)
+        self.actor = Utils.Rand(action_dim, uniform=True)
 
         # Birth
 
     def act(self, obs):
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor):
+        with torch.no_grad(), Utils.act_mode(self.actor):
             action = self.actor(obs) * 2 - 1  # [-1, 1]
 
             if self.discrete:

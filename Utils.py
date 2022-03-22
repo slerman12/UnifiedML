@@ -8,6 +8,8 @@ import re
 import warnings
 from pathlib import Path
 
+from hydra.utils import instantiate
+
 import numpy as np
 
 import torch
@@ -154,12 +156,21 @@ class MergeCritics(nn.Module):
 
 # Replaces tensor's batch items with Normal-sampled random latent
 class Rand(nn.Module):
-    def __init__(self, size=1):
+    def __init__(self, size=1, uniform=False):
         super().__init__()
         self.size = size
+        self.uniform = uniform
 
     def forward(self, x):
-        return torch.randn((x.shape[0], self.size), device=x.device)
+        x = torch.randn((x.shape[0], self.size), device=x.device)
+        return x.uniform_() if self.uniform else x
+
+
+# Initializes a recipe, returning a default if None, the instantiated config if a hydra arg, or the module itself
+def init(recipe, __default=None, **kwargs):
+    return __default if recipe is None \
+        else instantiate(recipe, **kwargs) if hasattr(recipe, '_target_') \
+        else recipe
 
 
 # (Multi-dim) one-hot encoding

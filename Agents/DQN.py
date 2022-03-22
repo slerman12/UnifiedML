@@ -76,7 +76,7 @@ class DQNAgent(torch.nn.Module):
             obs = torch.as_tensor(obs, device=self.device)
 
             # EMA targets
-            encoder = self.encoder.ema if self.ema else self.encoder
+            encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
             actor = self.actor.ema if self.ema and not self.discrete else self.actor
 
             # "See"
