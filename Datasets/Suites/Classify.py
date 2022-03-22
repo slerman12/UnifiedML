@@ -140,7 +140,8 @@ class ClassifyEnv:
 
     # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' paired with (<->) 'next obs'
     def step(self, action):
-        assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
+        if action is not None:
+            assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
 
         # Concat a dummy batch item ('next obs')
         x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
