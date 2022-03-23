@@ -73,7 +73,6 @@ class AtariPreprocessing(dm_env.Environment):
     def action_spec(self):
         space = self.gym_env.action_space
         if isinstance(space, gym.spaces.Discrete):
-            print(space.n)
             return specs.Array(shape=[space.n],
                                dtype=space.dtype,
                                name="action")
@@ -244,4 +243,5 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
     # Augment attributes to env and time step, prepare specs for loading by Hydra
     env = AugmentAttributesWrapper(env)
+    print(env.action_spec)
     return env
