@@ -340,7 +340,7 @@ class DiscreteEnvWrapper(dm_env.Environment):
         # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
         if action.shape[-1] > 1:
             # Discretize
-            action = np.argmax(action, -1).expand_dims(-1)
+            action = np.argmax(action, -1)
         return self.env.step(action)
 
     def reset(self):
