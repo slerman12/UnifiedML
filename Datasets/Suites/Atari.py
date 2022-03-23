@@ -73,6 +73,7 @@ class AtariPreprocessing(dm_env.Environment):
     def action_spec(self):
         space = self.gym_env.action_space
         if isinstance(space, gym.spaces.Discrete):
+            print(space.n)
             return specs.Array(shape=[space.n],
                                dtype=space.dtype,
                                name="action")

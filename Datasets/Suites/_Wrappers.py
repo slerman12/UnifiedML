@@ -253,7 +253,6 @@ class AugmentAttributesWrapper(dm_env.Environment):
         time_step = self.env.step(a)
         # Augment time_step with extra functionality
         self.time_step = self.augment_time_step(time_step, action=action)
-        print(action.shape, 'aa')
         return self.to_attr_dict(self.time_step)
 
     def reset(self):
@@ -341,9 +340,7 @@ class DiscreteEnvWrapper(dm_env.Environment):
         # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
         if action.shape[-1] > 1:
             # Discretize
-            print(action.shape, 'hhh1')
             action = np.argmax(action, -1)
-            print(action.shape, 'hhh')
         return self.env.step(action)
 
     def reset(self):

@@ -152,9 +152,9 @@ class ExperienceReplay:
 
                 # Validate consistency
                 assert spec['shape'] == exp[spec['name']].shape[1:], \
-                    f'Unexpected {spec["name"]} shape: {exp[spec["name"]].shape} vs {spec["shape"]}'
+                    f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
                 assert spec['dtype'] == exp[spec['name']].dtype.name, \
-                    f'Unexpected {spec["name"]} dtype: {exp[spec["name"]].dtype.name} vs. {spec["dtype"]}'
+                    f'Unexpected {spec["name"]} dtype: {spec["dtype"]} vs. {exp[spec["name"]].dtype.name}'
 
                 # Adds the experiences
                 self.episode[spec['name']].append(exp[spec['name']])
