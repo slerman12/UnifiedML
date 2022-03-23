@@ -12,7 +12,7 @@
 
 To start a train session, once [installed](#wrench-setting-up):
 
-```
+```console
 python Run.py
 ```
 
@@ -67,7 +67,7 @@ For detailed documentation, [see our :scroll:](https://arxiv.com).
 }
 ```
 
-If you use any part of this code, **be sure to cite the above!**
+If you find this work helpful, please give us a star :star: and cite the above.
 
 An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excellent [DrQV2 repo](https://github.com/facebookresearch/drqv2) inspired much of this library and its design.
 
@@ -85,20 +85,20 @@ Let's get to business.
 
 ## 1. Clone The Repo
 
-```
+```console
 git clone git@github.com:agi-init/UnifiedML.git
 cd UnifiedML
 ```
 
 ## 2. Gemme Some Dependencies
 
-```
+```console
 conda env create --name ML --file=Conda.yml
 ```
 
 ## 3. Activate Your Conda Env.
 
-```
+```console
 conda activate ML
 ```
 
@@ -114,12 +114,12 @@ Comes preinstalled.
 
 You can use ```AutoROM``` if you accept the license.
 
-```
+```console
 pip install autorom
 AutoROM --accept-license
 ```
 Then:
-```
+```console
 mkdir ./Datasets/Suites/Atari_ROMS
 AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
@@ -131,20 +131,20 @@ Download MuJoCo from here: https://mujoco.org/download.
 
 Make a ```.mujoco``` folder in your home directory:
 
-```
+```console
 mkdir ~/.mujoco
 ```
 
 Extract and move downloaded MuJoCo folder into ```~/.mujoco```. For a linux x86_64 architecture, this looks like:
 
-```
+```console
 tar -xf mujoco210-linux-x86_64.tar.gz
 mv mujoco210/ ~/.mujoco/ 
 ```
 
 And run:
 
-```
+```console
 pip install --user dm_control
 ```
 
@@ -163,17 +163,17 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 ### RL
 
 Humanoid example:
-```
+```console
 python Run.py task=dmc/humanoid_run
 ```
 
 DrQV2 Agent in Atari:
-```
+```console
 python Run.py Agent=Agents.DrQV2Agent task=atari/battlezone
 ```
 
 SPR Agent in DeepMind Control:
-```
+```console
 python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 ```
 
@@ -181,7 +181,7 @@ python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
 
 DQN Agent on MNIST:
 
-```
+```console
 python Run.py task=classify/mnist RL=false
 ```
 
@@ -195,7 +195,7 @@ Train accuracies can be printed with ```agent.log=true```.
 
 Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
 
-```
+```console
 python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
@@ -206,14 +206,14 @@ python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.t
 ### Generative Modeling
 
 Via the ```generate=true``` flag:
-```
+```console
 python Run.py task=classify/mnist generate=true
 ```
 Implicitly treats as offline, and assumes a replay [is saved](#saving) that can be loaded.
 
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
-```
+```console
 python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 
 ```
 
@@ -227,7 +227,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 From a saved experience replay, sans additional rollouts:
 
-```
+```console
 python Run.py task=atari/breakout offline=true
 ```
 
@@ -241,13 +241,13 @@ Is true by default for classification; replays are automatically downloaded.
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
-```
+```console
 python Run.py save_per_steps=100000 load=true
 ```
 
 An **experience replay** can be saved or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
 
-```
+```console
 python Run.py replay.save=true replay.load=true
 ```
 
@@ -263,13 +263,13 @@ One can also optionally pass in custom architectures such as those defined in ``
 
 ResNet18 on CIFAR-10:
 
-```
+```console
 python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
 ```
 
 Atari with ViT:
 
-```
+```console
 python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
 ```
 
@@ -281,19 +281,19 @@ Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom a
 
 CIFAR-10 with ViT:
 
-```
+```console
 python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=512 +recipes.encoder.eyes.hidden_dim=512 replay.transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" recipes.Aug=Blocks.Architectures.Null
 ```
 
 A GAN with a CNN Discriminator:
 
-```
+```console
 python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component,
 
-```
+```console
 python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool pool=Blocks.Architectures.Null
 ```
 
@@ -328,7 +328,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
 
-```
+```console
 python Run.py parallel=true 
 ```
 
@@ -343,11 +343,11 @@ you can use the ```load_per_steps=``` flag.
 
 For example, a data-collector agent and an update agent,
 
-```
+```console
 python Run.py learn_per_steps=0 replay.save=true load_per_steps=1 
 ```
 
-```
+```console
 python Run.py offline=true save_per_steps=2
 ```
 
@@ -362,7 +362,7 @@ The order in which these are run matters, lest the replays be saved to and loade
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
-```
+```console
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
