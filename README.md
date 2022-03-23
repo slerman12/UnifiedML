@@ -60,7 +60,7 @@ For detailed documentation, [see our :scroll:](https://arxiv.com).
 
 ```bibtex
 @article{cool,
-  title   = {UnifiedML: A Unified Library For Intelligence Training},
+  title   = {UnifiedML: A Unified Framework For Intelligence Training},
   author  = {Lerman, Sam and Xu, Chenliang},
   journal = {arXiv preprint arXiv:2203.08913},
   year    = {2022}
