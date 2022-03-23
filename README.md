@@ -67,7 +67,7 @@ For detailed documentation, [see our :scroll:](https://arxiv.com).
 }
 ```
 
-If you find this work helpful, please give us a star :star: and cite the above.
+If you use this work, please give us a star :star: and cite the above.
 
 An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excellent [DrQV2 repo](https://github.com/facebookresearch/drqv2) inspired much of this library and its design.
 
