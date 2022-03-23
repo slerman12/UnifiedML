@@ -151,10 +151,10 @@ class ExperienceReplay:
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
 
                 # Validate consistency
-                assert spec['shape'] == exp[spec['name']].shape[1:], \
-                    f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
-                assert spec['dtype'] == exp[spec['name']].dtype.name, \
-                    f'Unexpected {spec["name"]} dtype: {spec["dtype"]} vs. {exp[spec["name"]].dtype.name}'
+                # assert spec['shape'] == exp[spec['name']].shape[1:], \
+                #     f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
+                # assert spec['dtype'] == exp[spec['name']].dtype.name, \
+                #     f'Unexpected {spec["name"]} dtype: {spec["dtype"]} vs. {exp[spec["name"]].dtype.name}'
 
                 # Adds the experiences
                 self.episode[spec['name']].append(exp[spec['name']])
