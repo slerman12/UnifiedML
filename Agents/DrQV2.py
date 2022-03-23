@@ -51,7 +51,7 @@ class DrQV2Agent(torch.nn.Module):
             else action_shape[-1]
 
         self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.actor,
-                                           1, self.discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                           ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                            lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.critic,
