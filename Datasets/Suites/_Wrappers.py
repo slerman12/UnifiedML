@@ -338,7 +338,7 @@ class DiscreteEnvWrapper(dm_env.Environment):
         # Warning: Assumes a single action, so if no batch dim, then whole vector reduced to one index
         # Alternatively, can check len(action.shape) > 1 as well,
         # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
-        if action.shape[-1] > 1:
+        if len(action.shape) and action.shape[-1] > 1:
             # Discretize
             action = np.argmax(action, -1)
         return self.env.step(action)
