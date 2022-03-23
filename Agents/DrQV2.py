@@ -86,6 +86,8 @@ class DrQV2Agent(torch.nn.Module):
                 if self.step < self.explore_steps and not self.generate:
                     action = action.uniform_(-1, 1)
 
+            print(action.shape)
+
             return action
 
     # "Dream"
