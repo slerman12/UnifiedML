@@ -334,7 +334,7 @@ class DiscreteEnvWrapper(dm_env.Environment):
         self.env = env
 
     def step(self, action):
-        print(len(action.shape) > 1, action.shape[1] > 1:)
+        print(len(action.shape) > 1, action.shape[1] > 1)
         if len(action.shape) > 1 and action.shape[1] > 1:
             # Discretize
             action = np.argmax(action, -1).expand_dims(-1)
