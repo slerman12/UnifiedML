@@ -14,23 +14,19 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
     # Compute Bellman target
     with torch.no_grad():
-        if critic.discrete:
-            next_actions, next_actions_log_probs = None, 0  # Critic uses all discrete actions
-        else:
-            if has_future.any():
-                next_Pi = actor(next_obs, step)  # Sampling continuous actions
-                next_actions = next_Pi.rsample(num_actions)
-                next_actions_log_probs = next_Pi.log_prob(next_actions).sum(-1, keepdim=True).flatten(1)
-
-            if actor.discrete:
-                action = action.softmax(-1)
-                next_actions = next_actions.softmax(-1) if has_future.any() else next_actions
-
         # Current reward
         target_q = reward
 
         # Discounted future reward
         if has_future.any():
+            # Get actions for next_obs
+            if critic.discrete:
+                next_actions, next_actions_log_probs = None, 0  # Critic uses all discrete actions
+            else:
+                next_Pi = actor(next_obs, step)  # Sampling actions
+                next_actions = next_Pi.rsample(num_actions)
+                next_actions_log_probs = next_Pi.log_prob(next_actions).sum(-1, keepdim=True).flatten(1)
+
             # Q-values per action
             next_Q = critic.ema(next_obs, next_actions)
             next_q = torch.min(next_Q.Qs, 0)[0]  # Min-reduced ensemble
@@ -54,7 +50,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     q_loss = re_prioritized_td_error.mean()
 
     if logs is not None:
-        assert isinstance(logs, dict)
         logs['q_mean'] = Q.mean.mean().item()
         logs['q_stddev'] = Q.stddev.mean().item()
         logs.update({f'q{i}': q.median().item() for i, q in enumerate(Q.Qs)})
