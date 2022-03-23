@@ -86,9 +86,6 @@ class DrQV2Agent(torch.nn.Module):
                 if self.step < self.explore_steps and not self.generate:
                     action = action.uniform_(-1, 1)
 
-            if self.discrete:
-                action = torch.argmax(action, -1)  # Since discrete is using vector representations
-
             return action
 
     # "Dream"
@@ -191,7 +188,7 @@ class DrQV2Agent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, one_hot=self.discrete, logs=logs)
+                                                           self.step, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
