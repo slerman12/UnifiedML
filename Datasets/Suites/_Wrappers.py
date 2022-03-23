@@ -334,11 +334,13 @@ class DiscreteEnvWrapper(dm_env.Environment):
         self.env = env
 
     def step(self, action):
-        print(action.shape)
-        if len(action.shape) > 1 and action.shape[1] > 1:
+        # Takes discrete argmax of an action vector
+        # Assumes a single action
+        # Alternatively, can check len(action.shape) > 1 as well,
+        # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
+        if action.shape[-1] > 1:
             # Discretize
             action = np.argmax(action, -1).expand_dims(-1)
-            print(action)
         return self.env.step(action)
 
     def reset(self):
