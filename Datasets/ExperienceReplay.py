@@ -52,10 +52,6 @@ class ExperienceReplay:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)
 
-        if not save:
-            # Delete replay on terminate
-            atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
-
         # Data specs
 
         if obs_spec is None:
@@ -74,6 +70,9 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.epoch = 0
         self.save = save
+
+        # Delete replay on terminate
+        atexit.register(lambda r: 0 if len(r) and save else (shutil.rmtree(r.path), print('Deleting replay')), self)
 
         # Data transform
 
