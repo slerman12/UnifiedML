@@ -21,7 +21,8 @@ from Losses import QLearning, PolicyLearning
 
 
 class AC2Agent(torch.nn.Module):
-    """Actor Critic Creator (AC2)"""
+    """Actor Critic Creator (AC2)
+    Does ensemble-learning with multiple critics and actors, for RL, classification, and generative modeling"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization

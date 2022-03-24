@@ -21,7 +21,8 @@ from Losses import QLearning, PolicyLearning
 
 
 class DPGAgent(torch.nn.Module):
-    """Deep Policy Gradient (DPG)"""
+    """Deep Policy Gradient (DPG)
+    Treats discrete and classification RL as one-hot continuous"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization
@@ -29,10 +30,10 @@ class DPGAgent(torch.nn.Module):
                  discrete, RL, supervise, generate, device, parallel, log):  # On-boarding
         super().__init__()
 
-        self.discrete = discrete and not generate  # Discrete supported!
-        self.supervise = supervise  # And classification...
+        self.discrete = discrete and not generate
+        self.supervise = supervise
         self.RL = RL
-        self.generate = generate  # And generative modeling, too
+        self.generate = generate
         self.device = device
         self.log = log
         self.birthday = time.time()
@@ -172,7 +173,7 @@ class DPGAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs,
-                                                      self.step, one_hot=self.discrete or instruction.any(),
+                                                      self.step,
                                                       logs=logs)
 
             # Update critic
@@ -189,7 +190,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, one_hot=self.discrete or instruction.any(),
+                                                           self.step,
                                                            logs=logs)
 
             # Update actor

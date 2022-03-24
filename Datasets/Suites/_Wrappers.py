@@ -335,10 +335,10 @@ class DiscreteEnvWrapper(dm_env.Environment):
         self.train = train
 
     def step(self, action):
-        # Takes discrete argmax of an action vector
+        # Takes discrete argmax of an action vector, or discrete categorical sampling
         # Warning: Assumes a single action, so if no batch dim, then whole vector reduced to one index
         # Alternatively, can check len(action.shape) > 1 as well,
-        # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
+        # and in that case be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
         if len(action.shape) and action.shape[-1] > 1:
             # Discretize
             if self.train:
