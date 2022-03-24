@@ -41,6 +41,7 @@ class DPGAgent(torch.nn.Module):
         self.ema = ema
 
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
+        self.action_space = torch.arange(self.action_dim, device=self.device)[None, :]
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -79,7 +80,7 @@ class DPGAgent(torch.nn.Module):
             Pi = actor(obs, self.step)
 
             if self.discrete:
-                Pi = self.action_selector(Pi, self.step, action=torch.arange(self.action_dim, device=self.device)[None, :])
+                Pi = self.action_selector(Pi, self.step, action=self.action_space)
 
             action = Pi.sample() if self.training \
                 else Pi.best if self.discrete \
