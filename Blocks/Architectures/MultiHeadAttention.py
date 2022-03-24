@@ -215,13 +215,12 @@ class SelfAttention(CrossAttention):
 
 
 class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None,
-                 hidden_dim=None, output_dim=None, dropout=0, talk_h=False, rela=False):
+    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0,
+                 talk_h=False, rela=False):
         super().__init__()
 
         v_dim = dim if v_dim is None else v_dim
         hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
-        output_dim = dim if output_dim is None else output_dim
 
         self.heads = math.gcd(8, v_dim) if heads is None else heads
 
@@ -231,13 +230,11 @@ class CrossAttentionBlock(nn.Module):
         self.LN_ReLA = nn.LayerNorm(v_dim) if rela \
             else nn.Identity()
         self.project = nn.Identity() if heads == 1 \
-            else nn.Sequential(nn.Linear(v_dim, output_dim), nn.Dropout(dropout))
-        self.downsample = nn.Identity() if dim == output_dim \
-            else nn.Linear(dim, output_dim)
-        self.mlp = nn.Sequential(MLP(output_dim, output_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+            else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
+        self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_pre = nn.LayerNorm(dim)
-        self.LN_mid = nn.LayerNorm(output_dim)
+        self.LN_mid = nn.LayerNorm(dim)
 
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
@@ -248,7 +245,7 @@ class CrossAttentionBlock(nn.Module):
         if context is None:
             context = pre_norm
 
-        attn = self.project(self.LN_ReLA(self.attn(pre_norm, context))) + self.downsample(x)
+        attn = self.project(self.LN_ReLA(self.attn(pre_norm, context))) + x
         out = self.mlp(self.LN_mid(attn)) + attn
 
         return out
