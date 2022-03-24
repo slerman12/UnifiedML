@@ -92,13 +92,13 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         Psi = Categorical(logits=u_logits / entropy_temp + action_log_prob)
 
         best_eps, best_ind = torch.max(u, -1)
-        best_action = Utils.gather_indices(action or Q.action, best_ind.unsqueeze(-1), 1).squeeze(1)
+        best_action = Utils.gather_indices(Utils.default(action, Q.action), best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
 
         def action_sampler(sample_shape=torch.Size()):
             i = sample(sample_shape)
-            return Utils.gather_indices(action or Q.action, i.unsqueeze(-1), 1).squeeze(1)
+            return Utils.gather_indices(Utils.default(action, Q.action), i.unsqueeze(-1), 1).squeeze(1)
 
         Psi.__dict__.update({'best': best_action,
                              'best_u': best_eps,
@@ -106,6 +106,6 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
                              'sample': action_sampler,
                              'Q': Q,
                              'q': q,
-                             'actions': action or Q.action,
+                             'action': Utils.default(action, Q.action),
                              'u': u})
         return Psi
