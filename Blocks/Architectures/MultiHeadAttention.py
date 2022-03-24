@@ -257,7 +257,7 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, input_shape=None, avg_pool=False):
+    def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, input_shape=None):
         super().__init__()
 
         self.input_shape = input_shape
@@ -277,7 +277,7 @@ class AttentionPool(nn.Module):
                                                        v_dim=output_dim) for i in range(depth)],
                                   nn.Linear(channels_in, output_dim) if channels_in != output_dim else nn.Identity(),
                                   Utils.ChSwap,
-                                  AvgPool() if avg_pool else nn.Flatten(-3))
+                                  AvgPool())
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
