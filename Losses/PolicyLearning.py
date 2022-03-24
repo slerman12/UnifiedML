@@ -11,7 +11,7 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
                        one_hot=False, priority_temp=0, logs=None):
     Pi = actor(obs, step)
 
-    action = Pi.mean
+    action = Pi.rsample(num_actions)
     if one_hot:
         action = Utils.rone_hot(action, null_value=-1)
 

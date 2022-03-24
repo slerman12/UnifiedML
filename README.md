@@ -4,7 +4,7 @@
 [![Accolade](https://img.shields.io/badge/Modern,_Academic--Standard-Image_Classification-blue.svg??style=flat&logo=instatus)]()<br>
 [![Accolade](https://img.shields.io/badge/Technically--Working-Generative_Modeling-blue.svg??style=flat&logo=angellist)]()<br>
 [![Accolade](https://img.shields.io/badge/In--Progress-Multi_Modalities-red.svg??style=flat&logo=plex)]()<br>
-[![Accolade](https://img.shields.io/badge/Unified_in_one_Framework_(Really)-Seamless,_General.svg??style=flat&logo=immer)]()
+[![Accolade](https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer)]()
 
 ### Quick Links
 
@@ -415,7 +415,7 @@ All files are designed to be useful for educational and innovational purposes in
 
 # :people_holding_hands: Contributing
 
-Please support financially:  
+Please support financially: <br>  
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/) <br>
 We are a nonprofit, single-PhD student team. If possible, compute resources would be appreciated especially.
 
@@ -425,7 +425,7 @@ Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 [comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
 
-[comment]: <> (We are a nonprofit, single-PhD student team. Compute resources appreciated especially.)
+[comment]: <> (We are a nonprofit, single-PhD student team. Compute resources appreciated.)
 
 [comment]: <> (Feel free to [contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Angel investors welcome.)
 

@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleGaussianActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -40,25 +40,22 @@ class DPGAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
-        self.action_space = torch.arange(self.action_dim, device=self.device)[None, :]
-
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
                             lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
+        action_dim = math.prod(obs_shape) if generate \
+            else action_shape[-1]
 
-        self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
+        self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.actor,
                                            ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                            lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.critic,
                                       ensemble_size=2, ignore_obs=generate,
                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
-
-        self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
         self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
@@ -72,18 +69,14 @@ class DPGAgent(torch.nn.Module):
 
             # EMA targets
             encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
-            actor = self.actor.ema if self.ema and not self.discrete else self.actor
+            actor = self.actor.ema if self.ema else self.actor
 
             # "See"
             obs = encoder(obs)
 
             Pi = actor(obs, self.step)
 
-            if self.discrete:
-                Pi = self.action_selector(Pi, self.step, action=self.action_space)
-
             action = Pi.sample() if self.training \
-                else Pi.best if self.discrete \
                 else Pi.mean
 
             if self.training:
@@ -91,8 +84,7 @@ class DPGAgent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
-                        else action.uniform_(-1, 1)
+                    action = action.uniform_(-1, 1)
 
             return action
 
@@ -180,7 +172,8 @@ class DPGAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs,
-                                                      self.step, one_hot=self.discrete, logs=logs)
+                                                      self.step, one_hot=self.discrete or instruction.any(),
+                                                      logs=logs)
 
             # Update critic
             Utils.optimize(critic_loss,
@@ -196,7 +189,8 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, logs=logs)
+                                                           self.step, one_hot=self.discrete or instruction.any(),
+                                                           logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,

@@ -330,8 +330,9 @@ class AugmentAttributesWrapper(dm_env.Environment):
 
 
 class DiscreteEnvWrapper(dm_env.Environment):
-    def __init__(self, env):
+    def __init__(self, env, train):
         self.env = env
+        self.train = train
 
     def step(self, action):
         # Takes discrete argmax of an action vector
@@ -340,7 +341,8 @@ class DiscreteEnvWrapper(dm_env.Environment):
         # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
         if len(action.shape) and action.shape[-1] > 1:
             # Discretize
-            action = np.argmax(action, -1)
+            action = np.random.choice(action.shape[-1], p=action) if self.train \
+                else np.argmax(action, -1)
         return self.env.step(action)
 
     def reset(self):

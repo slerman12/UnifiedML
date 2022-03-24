@@ -14,9 +14,10 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     has_future = ~torch.isnan(next_obs.flatten(1).sum(1))
     next_obs = next_obs[has_future]
 
-    # One-hot encoding in case continuous actions need to be treated as discrete
+    # One-hot encoding in case discrete actions need to be treated as continuous or vice versa
     if one_hot:
-        action = Utils.one_hot(action, critic.action_dim) * 2 - 1
+        action = Utils.one_hot(action, critic.action_dim) * 2 - 1 if action.shape[-1] == 1 \
+            else Utils.rone_hot(action, null_value=-1)
 
     # Compute Bellman target
     with torch.no_grad():

@@ -27,7 +27,7 @@ class AC2Agent(torch.nn.Module):
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actors=1, num_actions=1, num_critics=2):  # AC2
+                 num_actors=5, num_actions=1, num_critics=2):  # AC2
         super().__init__()
 
         self.discrete = discrete and not generate  # Continuous supported!
@@ -43,7 +43,8 @@ class AC2Agent(torch.nn.Module):
 
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
-        self.num_actions = num_actions  # Num actions sampled by actor
+        self.num_actors = num_actors  # Num actors in ensemble
+        self.num_actions = num_actions  # Num actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -142,7 +143,9 @@ class AC2Agent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            y_predicted = self.actor(obs[instruction], self.step).mean
+            candidates = self.actor(obs[instruction], self.step).mean
+            y_predicted = self.action_selector(self.critic(obs[instruction], candidates), self.step) if self.RL \
+                else candidates[:, 0] if self.num_actors > 1 else candidates
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -177,7 +180,8 @@ class AC2Agent(torch.nn.Module):
             # Generative modeling
             if self.generate:
                 half = len(obs) // 2
-                generated_image = self.actor(obs[:half], self.step).mean
+                candidates = self.actor(obs[:half], self.step).mean
+                generated_image = self.action_selector(self.critic(obs[:half], candidates), self.step)
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
 

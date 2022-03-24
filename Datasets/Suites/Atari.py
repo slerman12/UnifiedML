@@ -239,7 +239,7 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
                           train=train)
 
     # Take argmax if necessary of vector actions on action dim
-    env = DiscreteEnvWrapper(env)
+    env = DiscreteEnvWrapper(env, train)
 
     # Augment attributes to env and time step, prepare specs for loading by Hydra
     env = AugmentAttributesWrapper(env)
