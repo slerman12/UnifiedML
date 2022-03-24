@@ -5,10 +5,9 @@
 import math
 import random
 import re
+import time
 import warnings
 from pathlib import Path
-
-from hydra.utils import instantiate
 
 import numpy as np
 
@@ -43,6 +42,7 @@ def load(path, device, attr=None, persevere=False):
     except Exception as e:  # Pytorch's load and save are not atomic transactions
         if persevere:
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
+            time.sleep(1)
             return load(path, device, attr, True)
         else:
             assert Path(path).exists(), f'Load path {path} does not exist.'

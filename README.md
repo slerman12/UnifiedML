@@ -378,7 +378,7 @@ in concurrent processes.
 
 Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
 
-The order in which these are run matters, lest the replays be saved to and loaded from different paths, potentially.
+The order in which these are run matters, lest the replays be saved to and loaded from different paths, potentially. It's a bit finicky; there are a few timing delicacies that I don't account for.
 </details>
 
 ### Experiment naming, plotting
