@@ -35,15 +35,18 @@ def save(path, model):
 
 
 # Loads model
-def load(path, device, attr=None):
+def load(path, device, attr=None, wait_until=False):
     path = path.replace('Agents.', '')
 
-    assert Path(path).exists(), f'Load path {path} does not exist.'
     try:
         model = torch.load(path)
-    except:  # Pytorch's load and save are not atomic transactions
-        warnings.warn(f'Load conflict, resolving...')  # For distributed training
-        return load(path, device, attr)
+    except Exception as e:  # Pytorch's load and save are not atomic transactions
+        if wait_until:
+            warnings.warn(f'Load conflict, resolving...')  # For distributed training
+            return load(path, device, attr)
+        else:
+            assert Path(path).exists(), f'Load path {path} does not exist.'
+            raise Exception(e, '\nCTry calling load with wait_until=True to recursively try loading until resolution')
 
     if attr is not None:
         for attr in attr.split('.'):
