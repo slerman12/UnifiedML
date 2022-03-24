@@ -88,6 +88,7 @@ def main(args):
                 logs = agent.train().learn(replay)  # Trains the agent
                 if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:
                     logger.log(logs, 'Train')
+        print(training, args.save_per_steps, agent.step)
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):
             Utils.save(args.save_path, agent)
