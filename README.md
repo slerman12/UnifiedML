@@ -4,7 +4,7 @@
 [![Accolade](https://img.shields.io/badge/Modern,_Academic--Standard-Image_Classification-blue.svg??style=flat&logo=instatus)]()<br>
 [![Accolade](https://img.shields.io/badge/Technically--Working-Generative_Modeling-blue.svg??style=flat&logo=angellist)]()<br>
 [![Accolade](https://img.shields.io/badge/In--Progress-Multi_Modalities-red.svg??style=flat&logo=plex)]()<br>
-[![Accolade](https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer)]()
+[![Accolade](https://img.shields.io/badge/Unified_in_one_Framework_(Really)-Seamless,_General.svg??style=flat&logo=immer)]()
 
 ### Quick Links
 
@@ -176,7 +176,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 # :file_cabinet: Key files
 
-```Run.py``` handles training and evaluation loops, saving, distributed training, logging, plotting.
+```Run.py``` handles learning and evaluation loops, saving, logging, plotting.
 
 ```Environment.py``` handles rollouts.
 
@@ -357,29 +357,37 @@ python Run.py parallel=true
 
 which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
 
-To share whole agents across multiple parallel instances,
-<details>
-<summary><i>Click to open :open_book: </i></summary>
-<br>
+[comment]: <> (To share whole agents across multiple parallel instances,)
 
-you can use the ```load_per_steps=``` flag.
+[comment]: <> (<details>)
 
-For example, a data-collector agent and an update agent,
+[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
 
-```console
-python Run.py learn_per_steps=0 replay.save=true load_per_steps=100
-```
+[comment]: <> (<br>)
 
-```console
-python Run.py offline=true save_per_steps=20
-```
+[comment]: <> (you can use the ```load_per_steps=``` flag.)
 
-in concurrent processes.
+[comment]: <> (For example, a data-collector agent and an update agent,)
 
-Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
+[comment]: <> (```console)
 
-The order in which these are run matters, or else the replays may be saved to and loaded from different paths, potentially. It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second script.
-</details>
+[comment]: <> (python Run.py learn_per_steps=0 replay.save=true load_per_steps=100)
+
+[comment]: <> (```)
+
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py offline=true save_per_steps=20)
+
+[comment]: <> (```)
+
+[comment]: <> (in concurrent processes.)
+
+[comment]: <> (Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**)
+
+[comment]: <> (It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second script. This is not meant as a deployable means of distributed training. It just happens to work, incidentally, sort of.)
+
+[comment]: <> (</details>)
 
 ### Experiment naming, plotting
 
@@ -407,11 +415,19 @@ All files are designed to be useful for educational and innovational purposes in
 
 # :people_holding_hands: Contributing
 
-Support financially  
+Please support financially:  
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/) <br>
-We are a nonprofit, single-PhD student team whose bank account is quickly hemmoraging. Compute resources appreciated especially.
+We are a nonprofit, single-PhD student team. If possible, compute resources would be appreciated especially.
 
-Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com). Angel investors welcome.
+Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
+
+[comment]: <> (Support financially  )
+
+[comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
+
+[comment]: <> (We are a nonprofit, single-PhD student team. Compute resources appreciated especially.)
+
+[comment]: <> (Feel free to [contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Angel investors welcome.)
 
 # Note
 

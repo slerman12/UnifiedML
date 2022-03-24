@@ -82,23 +82,23 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
         self.entropy_sched = entropy_sched
 
-    def forward(self, Q, step=None, exploit_temp=1, sample_q=False, actions_log_prob=0):
+    def forward(self, Q, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
         # Sample q or mean
         q = Q.rsample() if sample_q else Q.mean
 
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
         entropy_temp = Utils.schedule(self.entropy_sched, step)
-        Psi = Categorical(logits=u_logits / entropy_temp + actions_log_prob)
+        Psi = Categorical(logits=u_logits / entropy_temp + action_log_prob)
 
         best_eps, best_ind = torch.max(u, -1)
-        best_action = Utils.gather_indices(Q.action, best_ind.unsqueeze(-1), 1).squeeze(1)
+        best_action = Utils.gather_indices(action or Q.action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
 
         def action_sampler(sample_shape=torch.Size()):
             i = sample(sample_shape)
-            return Utils.gather_indices(Q.action, i.unsqueeze(-1), 1).squeeze(1)
+            return Utils.gather_indices(action or Q.action, i.unsqueeze(-1), 1).squeeze(1)
 
         Psi.__dict__.update({'best': best_action,
                              'best_u': best_eps,
@@ -106,6 +106,6 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
                              'sample': action_sampler,
                              'Q': Q,
                              'q': q,
-                             'actions': Q.action,
+                             'actions': action or Q.action,
                              'u': u})
         return Psi
