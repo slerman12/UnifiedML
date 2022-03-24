@@ -4,8 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import torch
 
-import Utils
-
 
 def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discount=1,
                        priority_temp=0, logs=None):

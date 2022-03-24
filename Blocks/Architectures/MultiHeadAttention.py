@@ -13,6 +13,7 @@ from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from Blocks.Architectures.MLP import MLP
+from Blocks.Architectures.Vision.CNN import AvgPool
 
 import Utils
 
@@ -256,7 +257,7 @@ class SelfAttentionBlock(CrossAttentionBlock):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, recursions=0, input_shape=None):
+    def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, input_shape=None, avg_pool=False):
         super().__init__()
 
         self.input_shape = input_shape
@@ -271,14 +272,12 @@ class AttentionPool(nn.Module):
             heads = math.gcd(output_dim, 8)  # Approx 8
 
         self.pool = nn.Sequential(Utils.ChSwap,
-                                  # Alternatively could also recurse
-                                  *([SelfAttentionBlock(channels_in, heads)] * recursions),
                                   # "Transformer"
                                   *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
                                                        v_dim=output_dim) for i in range(depth)],
+                                  nn.Linear(channels_in, output_dim) if channels_in != output_dim else nn.Identity(),
                                   Utils.ChSwap,
-                                  nn.AdaptiveAvgPool2d((1, 1)),
-                                  nn.Flatten(-3))
+                                  AvgPool() if avg_pool else nn.Flatten(-3))
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
