@@ -341,13 +341,13 @@ class DiscreteEnvWrapper(dm_env.Environment):
         # and be sure to apply this wrapper after AugmentAttributesWrapper which removes batch dims
         if len(action.shape) and action.shape[-1] > 1:
             # Discretize
-            action = np.random.choice(action.shape[-1], p=self.shift_norm(action)) if self.train \
-                else np.argmax(action, -1)
+            if self.train:
+                action -= action.min()
+                action /= action.sum()
+                action = np.random.choice(action.shape[-1], p=action)
+            else:
+                action = np.argmax(action, -1)
         return self.env.step(action)
-
-    def shift_norm(self, logits):
-        probs = logits - logits.min()
-        return probs / probs.max()
 
     def reset(self):
         return self.env.reset()
