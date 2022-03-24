@@ -378,7 +378,7 @@ in concurrent processes.
 
 Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**
 
-The order in which these are run matters, lest the replays be saved to and loaded from different paths, potentially. It's a bit finicky; there are a few timing delicacies that I don't account for.
+The order in which these are run matters, lest the replays be saved to and loaded from different paths, potentially. It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second.
 </details>
 
 ### Experiment naming, plotting
