@@ -79,7 +79,7 @@ class DPGAgent(torch.nn.Module):
             Pi = actor(obs, self.step)
 
             if self.discrete:
-                Pi = self.action_selector(Pi, self.step, action=torch.arange(self.action_dim))
+                Pi = self.action_selector(Pi, self.step, action=torch.arange(self.action_dim, device=self.device))
 
             action = Pi.sample() if self.training \
                 else Pi.best if self.discrete \
