@@ -237,7 +237,7 @@ class CrossAttentionBlock(nn.Module):
         self.mlp = nn.Sequential(MLP(output_dim, output_dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
 
         self.LN_pre = nn.LayerNorm(dim)
-        self.LN_mid = nn.LayerNorm(dim)
+        self.LN_mid = nn.LayerNorm(output_dim)
 
     def repr_shape(self, c, h, w):
         return self.v_dim, h, w  # Assumes channels last
