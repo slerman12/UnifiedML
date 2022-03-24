@@ -296,6 +296,7 @@ class AttentionPool(nn.Module):
         x = x.view(-1, *x.shape[-3:])
 
         x = self.pool(x)
+        print(x.shape)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
