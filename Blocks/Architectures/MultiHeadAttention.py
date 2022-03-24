@@ -276,8 +276,8 @@ class AttentionPool(nn.Module):
 
         self.pool = nn.Sequential(Utils.ChSwap,
                                   # "Transformer"
-                                  *[SelfAttentionBlock(dim=channels_in if i == 0 else output_dim, heads=heads,
-                                                       v_dim=output_dim, output_dim=output_dim) for i in range(depth)],
+                                  *[SelfAttentionBlock(dim=channels_in, heads=heads) for _ in range(depth)],
+                                  nn.Linear(channels_in, output_dim),
                                   Utils.ChSwap,
                                   AvgPool())
 
