@@ -283,6 +283,7 @@ class AttentionPool(nn.Module):
         return Utils.cnn_feature_shape(c, h, w, self.pool)
 
     def forward(self, *x):
+        print(x.shape)
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
@@ -296,7 +297,6 @@ class AttentionPool(nn.Module):
         x = x.view(-1, *x.shape[-3:])
 
         x = self.pool(x)
-        print(x.shape)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
