@@ -46,7 +46,8 @@ def load(path, device, attr=None, persevere=False):
             return load(path, device, attr, True)
         else:
             assert Path(path).exists(), f'Load path {path} does not exist.'
-            raise Exception(e, '\nCTry calling load with persevere=True to recursively try loading until resolution')
+            raise Exception(e, '\nCTry calling load with persevere=True to recursively try loading until resolution; '
+                               'this is a hacky way to make distributed training work')
 
     if attr is not None:
         for attr in attr.split('.'):
