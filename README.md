@@ -367,11 +367,11 @@ you can use the ```load_per_steps=``` flag.
 For example, a data-collector agent and an update agent,
 
 ```console
-python Run.py learn_per_steps=0 replay.save=true load_per_steps=1 
+python Run.py learn_per_steps=0 replay.save=true load_per_steps=100
 ```
 
 ```console
-python Run.py offline=true save_per_steps=2
+python Run.py offline=true save_per_steps=20
 ```
 
 in concurrent processes.

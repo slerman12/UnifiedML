@@ -42,7 +42,6 @@ def load(path, device, attr=None, persevere=False):
     except Exception as e:  # Pytorch's load and save are not atomic transactions
         if persevere:
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
-            print(Path(path).exists())
             time.sleep(0.1)
             return load(path, device, attr, True)
         else:
