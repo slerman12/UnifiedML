@@ -180,8 +180,9 @@ class DPGAgent(torch.nn.Module):
 
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
-                                                      obs, action, reward, discount, next_obs,
-                                                      self.step, one_hot=self.discrete, logs=logs)
+                                                      obs, action, reward, discount, next_obs, self.step,
+                                                      one_hot=self.discrete or instruction.any() and not self.generate,
+                                                      logs=logs)
 
             # Update critic
             Utils.optimize(critic_loss,
@@ -197,7 +198,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, one_hot=self.discrete, logs=logs)
+                                                           self.step, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,

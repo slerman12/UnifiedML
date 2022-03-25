@@ -145,7 +145,7 @@ class AC2Agent(torch.nn.Module):
 
             # Inference
             candidates = self.actor(obs[instruction], self.step).mean
-            y_predicted = self.action_selector(self.critic(obs[instruction], candidates), self.step) if self.RL \
+            y_predicted = self.action_selector(self.critic(obs[instruction], candidates), self.step).best if self.RL \
                 else candidates[:, 0] if self.num_actors > 1 else candidates
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
@@ -182,7 +182,7 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 half = len(obs) // 2
                 candidates = self.actor(obs[:half], self.step).mean
-                generated_image = self.action_selector(self.critic(obs[:half], candidates), self.step)
+                generated_image = self.action_selector(self.critic(obs[:half], candidates), self.step).best
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
 

@@ -20,8 +20,7 @@ import Utils
 
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe, ensemble_size=2,
-                 discrete=False, stddev_schedule=None, stddev_clip=None,
-                 lr=None, weight_decay=0, ema_decay=None):
+                 discrete=False, stddev_schedule=None, stddev_clip=None, lr=None, weight_decay=0, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
@@ -84,14 +83,14 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
     def forward(self, Q, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
         # Sample q or mean
-        q = Q.rsample() if sample_q else Q.mean
+        q = Q.rsample() if sample_q else Q.mean if hasattr(Q, 'mean') else Q.best
 
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
         entropy_temp = Utils.schedule(self.entropy_sched, step)
         Psi = Categorical(logits=u_logits / entropy_temp + action_log_prob)
 
-        best_eps, best_ind = torch.max(u, -1)
+        best_u, best_ind = torch.max(u, -1)
         best_action = Utils.gather_indices(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
@@ -101,11 +100,12 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
             return Utils.gather_indices(Q.action if action is None else action, i.unsqueeze(-1), 1).squeeze(1)
 
         Psi.__dict__.update({'best': best_action,
-                             'best_u': best_eps,
+                             'best_u': best_u,
                              'sample_ind': sample,
-                             'sample': action_sampler,
+                             'sample': lambda x=torch.Size(): action_sampler(x).detach(),
+                             'rsample': action_sampler,
                              'Q': Q,
                              'q': q,
-                             'actions': Q.action if action is None else action,
+                             'action': Q.action if action is None else action,
                              'u': u})
         return Psi
