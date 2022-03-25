@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor
+from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
