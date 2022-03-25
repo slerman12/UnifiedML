@@ -28,7 +28,7 @@ class DPGAgent(torch.nn.Module):
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 Q_one_hot=True, Q_one_hot_next=True, policy_one_hot=False):  # DPG
+                 sample_q=False, Q_one_hot_next=True, policy_one_hot=False):  # DPG
         super().__init__()
 
         self.discrete = discrete and not generate  # Discrete supported!
@@ -45,9 +45,7 @@ class DPGAgent(torch.nn.Module):
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
         self.action_space = torch.arange(self.action_dim, device=self.device)[None, :]
 
-        self.Q_one_hot = Q_one_hot and not generate
-        self.Q_one_hot_next = Q_one_hot_next and not generate
-        self.policy_one_hot = policy_one_hot and not generate
+        self.sample_q, self.Q_one_hot_next, self.policy_one_hot = sample_q, Q_one_hot_next, policy_one_hot
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -86,7 +84,8 @@ class DPGAgent(torch.nn.Module):
             Pi = actor(obs, self.step)
 
             if self.discrete:  # Can also disable discrete
-                Pi = self.action_selector(Pi, self.step, sample_q=self.training, action=self.action_space)
+                Pi = self.action_selector(Pi, self.step,
+                                          sample_q=self.sample_q and self.training, action=self.action_space)
 
             action = Pi.sample() if self.training \
                 else Pi.best if self.discrete \
@@ -186,7 +185,7 @@ class DPGAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs, self.step,
-                                                      one_hot=self.Q_one_hot and (self.discrete or instruction.any()),
+                                                      one_hot=self.discrete,
                                                       one_hot_next=self.Q_one_hot_next and self.discrete, logs=logs)
 
             # Update critic
@@ -203,7 +202,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step,
-                                                           one_hot=self.policy_one_hot, logs=logs)
+                                                           one_hot=self.policy_one_hot and not self.generate, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,

@@ -342,7 +342,8 @@ class DiscreteEnvWrapper(dm_env.Environment):
         if len(action.shape) and action.shape[-1] > 1:
             # Discretize
             if self.train:
-                action = np.exp(action)
+                temp = 1
+                action = np.exp(action) / temp
                 action = np.random.choice(action.shape[-1], p=action / action.sum())
             else:
                 action = np.argmax(action, -1)
