@@ -76,10 +76,10 @@ class EnsembleGaussianActor(nn.Module):
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
-    def __init__(self, entropy_sched=1):
+    def __init__(self, entropy_schedule=1):
         super().__init__()
 
-        self.entropy_sched = entropy_sched
+        self.entropy_schedule = entropy_schedule
 
     def forward(self, Q, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
         # Sample q or mean
@@ -87,7 +87,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
-        entropy_temp = Utils.schedule(self.entropy_sched, step)
+        entropy_temp = Utils.schedule(self.entropy_schedule, step)
         Psi = Categorical(logits=u_logits / entropy_temp + action_log_prob)
 
         best_u, best_ind = torch.max(u, -1)

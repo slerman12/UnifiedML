@@ -23,6 +23,7 @@ from Losses import QLearning, PolicyLearning
 class DPGAgent(torch.nn.Module):
     """Deep Policy Gradient (DPG)
     Treats discrete and classification RL as one-hot continuous"""
+
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization
@@ -193,12 +194,13 @@ class DPGAgent(torch.nn.Module):
             Utils.optimize(None,  # Using gradients from previous losses
                            self.encoder)
 
-        if self.generate or self.RL and not self.discrete:
+        if self.RL or self.generate:
             # "Change" / "Grow"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step,
+                                                           one_hot=self.discrete or instruction.any() and not
+                                                           self.generate, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
