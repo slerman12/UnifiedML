@@ -9,7 +9,7 @@ import Utils
 
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step,
-                      num_actions=1, one_hot=False, priority_temp=0, logs=None):
+                      num_actions=1, one_hot=False, one_hot_next=False, priority_temp=0, logs=None):
     # Non-NaN next_obs
     has_future = ~torch.isnan(next_obs.flatten(1).sum(1))
     next_obs = next_obs[has_future]
@@ -34,7 +34,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
                 # One-hot or sample
                 next_action = torch.eye(critic.action_dim,
-                                        device=obs.device).expand(next_obs.shape[0], -1, -1) * 2 - 1 if one_hot \
+                                        device=obs.device).expand(next_obs.shape[0], -1, -1) * 2 - 1 if one_hot_next \
                     else next_Pi.rsample(num_actions)
                 next_action_log_probs = next_Pi.log_prob(next_action).sum(-1, keepdim=True).flatten(1)
 
