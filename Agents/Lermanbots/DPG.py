@@ -197,7 +197,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, logs=logs)
+                                                           self.step, one_hot=self.discrete, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
