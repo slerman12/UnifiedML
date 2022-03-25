@@ -28,7 +28,8 @@ class DPGAgent(torch.nn.Module):
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, RL, supervise, generate, device, parallel, log):  # On-boarding
+                 discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
+                 one_hot=True):  # DPG
         super().__init__()
 
         self.discrete = discrete and not generate  # Discrete supported!
@@ -44,6 +45,8 @@ class DPGAgent(torch.nn.Module):
 
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
         self.action_space = torch.arange(self.action_dim, device=self.device)[None, :]
+
+        self.one_hot = one_hot and not generate
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -182,7 +185,7 @@ class DPGAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs, self.step,
-                                                      one_hot=self.discrete or instruction.any() and not self.generate,
+                                                      one_hot=self.one_hot and (self.discrete or instruction.any()),
                                                       logs=logs)
 
             # Update critic
@@ -199,8 +202,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step,
-                                                           one_hot=self.discrete or instruction.any() and not
-                                                           self.generate, logs=logs)
+                                                           logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
