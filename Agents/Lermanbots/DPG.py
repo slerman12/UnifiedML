@@ -28,7 +28,7 @@ class DPGAgent(torch.nn.Module):
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 sample_q=False, Q_one_hot_next=True, policy_one_hot=False):  # DPG
+                 sample_q=False, Q_one_hot=False, Q_one_hot_next=True, policy_one_hot=False, treat_as_continuous=False):  # DPG
         super().__init__()
 
         self.discrete = discrete and not generate  # Discrete supported!
@@ -45,7 +45,8 @@ class DPGAgent(torch.nn.Module):
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
         self.action_space = torch.arange(self.action_dim, device=self.device)[None, :]
 
-        self.sample_q, self.Q_one_hot_next, self.policy_one_hot = sample_q, Q_one_hot_next, policy_one_hot
+        self.sample_q, self.Q_one_hot, self.Q_one_hot_next, self.policy_one_hot, self.treat_as_continuous = \
+            sample_q, Q_one_hot, Q_one_hot_next, policy_one_hot, treat_as_continuous
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -83,21 +84,21 @@ class DPGAgent(torch.nn.Module):
 
             Pi = actor(obs, self.step)
 
-            if self.discrete:  # Can also disable discrete
+            if self.discrete and not self.treat_as_continuous:
                 Pi = self.action_selector(Pi, self.step,
                                           sample_q=self.sample_q and self.training, action=self.action_space)
 
             action = Pi.sample() if self.training \
-                else Pi.best if self.discrete \
-                else Pi.mean
+                else Pi.mean if self.treat_as_continuous \
+                else Pi.best
 
             if self.training:
                 self.step += 1
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
-                        else action.uniform_(-1, 1)
+                    action = action.uniform_(-1, 1) if self.treat_as_continuous \
+                        else torch.randint(self.action_dim, size=action.shape)
 
             return action
 
@@ -185,8 +186,8 @@ class DPGAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs, self.step,
-                                                      one_hot=self.discrete,
-                                                      one_hot_next=self.Q_one_hot_next and self.discrete, logs=logs)
+                                                      one_hot=self.discrete and not self.treat_as_continuous or self.Q_one_hot and self.discrete and not self.generate,  # must: if discrete and not treat, must not: if not discrete or generate, otherwise: q_one_hot
+                                                      one_hot_next=self.Q_one_hot_next and self.discrete, logs=logs)  # must: must not: if not discrete, otherwise: q_one_hot_next
 
             # Update critic
             Utils.optimize(critic_loss,
@@ -202,7 +203,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step,
-                                                           one_hot=self.policy_one_hot and not self.generate, logs=logs)
+                                                           one_hot=self.policy_one_hot and self.discrete and not self.generate, logs=logs)  # must: must not: if not discrete or generate, otherwise: policy_one_hot
 
             # Update actor
             Utils.optimize(actor_loss,
