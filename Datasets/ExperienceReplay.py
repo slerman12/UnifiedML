@@ -89,12 +89,13 @@ class ExperienceReplay:
 
         self.nstep = nstep
 
-        self.experiences = Experiences(path=self.path,
+        experiences = OfflineExperiences if offline else OnlineExperiences
+
+        self.experiences = experiences(path=self.path,
                                        capacity=np.inf if save else capacity // max(1, num_workers),
                                        num_workers=min(num_workers, os.cpu_count()),
                                        fetch_per=1000,
                                        save=save,
-                                       offline=offline,
                                        nstep=nstep,
                                        discount=discount,
                                        transform=transform)
@@ -208,7 +209,7 @@ def worker_init_fn(worker_id):
 
 
 # Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
-class Experiences(Dataset):
+class Experiences:
     def __init__(self, path, capacity, num_workers, fetch_per, save, offline=True, nstep=0, discount=1, transform=None):
 
         # Dataset construction via parallel workers
@@ -359,29 +360,23 @@ class Experiences(Dataset):
 
         return self.process(episode, idx)  # Process episode into a compact experience
 
+
+class OnlineExperiences(Experiences, IterableDataset):
+    def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, num_workers, fetch_per, save, False, nstep, discount, transform)
+
+    def __iter__(self):
+        # Keep fetching, sampling, and building batches
+        while True:
+            yield self.fetch_sample_process()  # Yields a single experience
+
+
+class OfflineExperiences(Experiences, Dataset):
+    def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, num_workers, fetch_per, save, True, nstep, discount, transform)
+
     def __getitem__(self, idx):
-        return self.fetch_sample_process(idx if self.offline else None)  # Get single experience
+        return self.fetch_sample_process(idx)  # Get single experience by index
 
     def __len__(self):
-        return self.num_experiences_loaded or self.capacity
-
-
-# class OfflineExperiences(Experiences, Dataset):
-#     def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
-#         super().__init__(path, capacity, num_workers, fetch_per, save, True, nstep, discount, transform)
-#
-#     def __getitem__(self, idx):
-#         return self.fetch_sample_process(idx)  # Get single experience by index
-#
-#     def __len__(self):
-#         return self.num_experiences_loaded
-#
-#
-# class OnlineExperiences(Experiences, IterableDataset):
-#     def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
-#         super().__init__(capacity, num_workers, fetch_per, save, False, nstep, discount, transform)
-#
-#     def __iter__(self):
-#         # Keep fetching, sampling, and building batches
-#         while True:
-#             yield self.fetch_sample_process()  # Yields a single experience
+        return self.num_experiences_loaded
