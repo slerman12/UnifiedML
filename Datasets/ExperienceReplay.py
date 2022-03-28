@@ -89,16 +89,16 @@ class ExperienceReplay:
 
         self.nstep = nstep
 
-        experiences = OfflineExperiences if offline else OnlineExperiences
+        num_workers = max(1, min(num_workers, os.cpu_count()))
 
-        self.experiences = experiences(path=self.path,
-                                       capacity=np.inf if save else capacity // max(1, num_workers),
-                                       num_workers=min(num_workers, os.cpu_count()),
-                                       fetch_per=1000,
-                                       save=save,
-                                       nstep=nstep,
-                                       discount=discount,
-                                       transform=transform)
+        self.experiences = (Offline if offline else Online)(path=self.path,
+                                                            capacity=np.inf if save else capacity // num_workers,
+                                                            num_workers=num_workers,
+                                                            fetch_per=1000,
+                                                            save=save,
+                                                            nstep=nstep,
+                                                            discount=discount,
+                                                            transform=transform)
 
         # Batch loading
 
@@ -223,7 +223,7 @@ class Experiences:
         self.capacity = capacity
         self.index = []
 
-        self.num_workers = max(1, num_workers)
+        self.num_workers = num_workers
 
         self.fetch_per = fetch_per
         self.samples_since_last_fetch = fetch_per
@@ -361,7 +361,8 @@ class Experiences:
         return self.process(episode, idx)  # Process episode into a compact experience
 
 
-class OnlineExperiences(Experiences, IterableDataset):
+# Loads Experiences with an Iterable Dataset
+class Online(Experiences, IterableDataset):
     def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, num_workers, fetch_per, save, False, nstep, discount, transform)
 
@@ -371,7 +372,8 @@ class OnlineExperiences(Experiences, IterableDataset):
             yield self.fetch_sample_process()  # Yields a single experience
 
 
-class OfflineExperiences(Experiences, Dataset):
+# Loads Experiences with a standard Dataset
+class Offline(Experiences, Dataset):
     def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, num_workers, fetch_per, save, True, nstep, discount, transform)
 
