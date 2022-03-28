@@ -1,10 +1,14 @@
 ![alt text](https://i.imgur.com/rjw4eFg.png)
 
-[![](https://img.shields.io/badge/State_of_the_Art-Data--Efficient_RL-blue.svg??style=flat&logo=google-analytics)]()<br>
-[![](https://img.shields.io/badge/Modern,_Academic--Standard-Image_Classification-blue.svg??style=flat&logo=instatus)]()<br>
-[![](https://img.shields.io/badge/Technically--Working-Generative_Modeling-blue.svg??style=flat&logo=angellist)]()<br>
-[![](https://img.shields.io/badge/In--Progress-Multi_Modalities-red.svg??style=flat&logo=plex)]()<br>
-[![](https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer)]()
+[comment]: <> ([![]&#40;https://img.shields.io/badge/State_of_the_Art-Data--Efficient_RL-blue.svg??style=flat&logo=google-analytics&#41;]&#40;&#41;<br>)
+
+[comment]: <> ([![]&#40;https://img.shields.io/badge/Modern,_Academic--Standard-Image_Classification-blue.svg??style=flat&logo=instatus&#41;]&#40;&#41;<br>)
+
+[comment]: <> ([![]&#40;https://img.shields.io/badge/Technically--Working-Generative_Modeling-blue.svg??style=flat&logo=angellist&#41;]&#40;&#41;<br>)
+
+[comment]: <> ([![]&#40;https://img.shields.io/badge/In--Progress-Multi_Modalities-red.svg??style=flat&logo=plex&#41;]&#40;&#41;<br>)
+
+[comment]: <> ([![]&#40;https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer&#41;]&#40;&#41;)
 
 ### Quick Links
 
@@ -99,7 +103,7 @@ An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excel
 
 Yes.
 
-All agents support discrete and continuous control, classification, and generative modeling in a seamless, unified integration of all.
+All agents support discrete and continuous control, classification, and generative modeling.
 
 See example scripts of various configurations [below](#mag-sample-scripts).
 
@@ -420,6 +424,8 @@ Please support financially: <br>
 We are a nonprofit, single-PhD student team. If possible, compute resources appreciated.
 
 Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
+
+I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
 
 [comment]: <> (Support financially  )
 

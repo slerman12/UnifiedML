@@ -29,11 +29,6 @@ class ClassifyEnv:
     """A classification environment"""
     def __init__(self, experiences, batch_size, num_workers, offline, train, path=None):
 
-        def worker_init_fn(worker_id):
-            seed = np.random.get_state()[1][0] + worker_id
-            np.random.seed(seed)
-            random.seed(seed)
-
         self.num_classes = len(experiences.classes)
         self.action_repeat = 1
 
@@ -193,10 +188,6 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}'
 
-    class Transform:
-        def __call__(self, sample):
-            return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]
-
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
@@ -212,3 +203,14 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
                                    add_remove_batch_dim=False)  # Disables the modification of batch dims
 
     return env
+
+
+class Transform:
+    def __call__(self, sample):
+        return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]
+
+
+def worker_init_fn(worker_id):
+    seed = np.random.get_state()[1][0] + worker_id
+    np.random.seed(seed)
+    random.seed(seed)

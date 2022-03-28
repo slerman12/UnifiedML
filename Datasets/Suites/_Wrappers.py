@@ -330,9 +330,13 @@ class AugmentAttributesWrapper(dm_env.Environment):
 
 
 class DiscreteEnvWrapper(dm_env.Environment):
-    def __init__(self, env, train):
+    def __init__(self, env, train, entropy_schedule=None):
         self.env = env
         self.train = train
+        self.count = 1
+
+        self.entropy_schedule = [1, 1, 1] if entropy_schedule is None \
+            else entropy_schedule
 
     def step(self, action):
         # Takes discrete argmax of an action vector, or discrete categorical sampling
@@ -342,9 +346,14 @@ class DiscreteEnvWrapper(dm_env.Environment):
         if len(action.shape) and action.shape[-1] > 1:
             # Discretize
             if self.train:
-                temp = 1
+                # Entropy scheduling
+                start, stop, duration = self.entropy_schedule
+                mix = np.clip(self.count / duration, 0.0, 1.0)
+                temp = (1.0 - mix) * start + mix * stop
+
                 action = np.exp(action) / temp
                 action = np.random.choice(action.shape[-1], p=action / action.sum())
+                self.count += 1
             else:
                 action = np.argmax(action, -1)
         return self.env.step(action)
