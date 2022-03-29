@@ -208,7 +208,7 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# Multi-cpu workers iteratively and efficiently build batches of experience in parallel (from files)
+# A CPU worker that can iteratively and efficiently build batches of experience in parallel (from files)
 class Experiences:
     def __init__(self, path, capacity, num_workers, fetch_per, save, offline=True, nstep=0, discount=1, transform=None):
 

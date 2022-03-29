@@ -413,7 +413,7 @@ Then we frame actions as "predictions" in supervised learning. We can even augme
 
 For generative modeling, well, it turns out that the difference between a Generator-Discriminator and Actor-Critic is rather nominal.
 
-![alt text](https://i.imgur.com/CQbUk02.png)
+<img width="70%" alt="flowchart" src="https://i.imgur.com/UWAChy3.png">
 
 # :mortar_board: Pedagogy and Research
 
