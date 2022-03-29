@@ -22,19 +22,19 @@ from Losses import QLearning, PolicyLearning
 
 class DPGAgent(torch.nn.Module):
     """Deep Policy Gradient (DPG)
-    Treats discrete and classification RL as one-hot continuous"""
+    Treats discrete RL as continuous RL with optionally one-hots for actions"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 sample_q=False, Q_one_hot=False, Q_one_hot_next=True, policy_one_hot=False, treat_as_continuous=False):  # DPG
+                 sample_q=False, Q_one_hot=False, Q_one_hot_next=True, policy_one_hot=False, as_continuous=False):  # DPG
         super().__init__()
 
-        self.discrete = discrete and not generate  # Discrete supported!
-        self.supervise = supervise  # And classification...
+        self.discrete = discrete and not generate
+        self.supervise = supervise
         self.RL = RL
-        self.generate = generate  # And generative modeling, too
+        self.generate = generate
         self.device = device
         self.log = log
         self.birthday = time.time()
@@ -45,8 +45,11 @@ class DPGAgent(torch.nn.Module):
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
         self.action_space = torch.arange(self.action_dim, device=self.device)[None, :]
 
-        self.sample_q, self.Q_one_hot, self.Q_one_hot_next, self.policy_one_hot, self.treat_as_continuous = \
-            sample_q, Q_one_hot, Q_one_hot_next, policy_one_hot, treat_as_continuous
+        self.sample_q = sample_q  # Sample Q values from actor prior to sampling a discrete action
+        self.Q_one_hot = Q_one_hot and self.discrete  # One-hot discrete actions in Q-Learning
+        self.Q_one_hot_next = Q_one_hot_next and self.discrete  # One-hot discrete next-actions in Q-Learning
+        self.policy_one_hot = policy_one_hot and self.discrete  # One-hot discrete actions in Policy Learning
+        self.as_continuous = as_continuous or not self.discrete  # Treat actions as continuous end-to-end
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -84,12 +87,13 @@ class DPGAgent(torch.nn.Module):
 
             Pi = actor(obs, self.step)
 
-            if self.discrete and not self.treat_as_continuous:  # TODO simplify with treat = treat or not discrete
+            if not self.as_continuous:
+                # Samples a discrete action
                 Pi = self.action_selector(Pi, self.step,
                                           sample_q=self.sample_q and self.training, action=self.action_space)
 
             action = Pi.sample() if self.training \
-                else Pi.best if self.discrete and not self.treat_as_continuous \
+                else Pi.best if not self.as_continuous \
                 else Pi.mean
 
             if self.training:
@@ -97,7 +101,7 @@ class DPGAgent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.action_dim, size=action.shape) if self.discrete and not self.treat_as_continuous \
+                    action = torch.randint(self.action_dim, size=action.shape) if not self.as_continuous \
                         else action.uniform_(-1, 1)
 
             return action
@@ -186,9 +190,8 @@ class DPGAgent(torch.nn.Module):
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs, self.step,
-                                                      one_hot=self.discrete and (not self.treat_as_continuous or
-                                                                                 self.Q_one_hot),
-                                                      one_hot_next=self.Q_one_hot_next and self.discrete, logs=logs)
+                                                      one_hot=not self.as_continuous or self.Q_one_hot,
+                                                      one_hot_next=self.Q_one_hot_next, logs=logs)
 
             # Update critic
             Utils.optimize(critic_loss,
@@ -204,7 +207,7 @@ class DPGAgent(torch.nn.Module):
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step,
-                                                           one_hot=self.policy_one_hot and self.discrete, logs=logs)
+                                                           one_hot=self.policy_one_hot, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,

@@ -192,7 +192,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 Humanoid example:
 ```console
-python Run.py task=dmc/humanoid_run
+python Run.py task=dmc/humanoid_walk
 ```
 
 DrQV2 Agent in Atari:
@@ -202,7 +202,7 @@ python Run.py Agent=Agents.DrQV2Agent task=atari/battlezone
 
 SPR Agent in DeepMind Control:
 ```console
-python Run.py Agent=Agents.SPRAgent task=dmc/humanoid_walk
+python Run.py Agent=Agents.SPRAgent task=dmc/cheetah_run
 ```
 
 ### Classification
@@ -221,7 +221,7 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
+Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
 
 ```console
 python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
@@ -237,7 +237,7 @@ Via the ```generate=true``` flag:
 ```console
 python Run.py task=classify/mnist generate=true
 ```
-Implicitly treats as offline, and assumes a replay [is saved](#saving) that can be loaded.
+Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
 
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
@@ -412,6 +412,8 @@ We use our new Creator framework to unify RL discrete and continuous action spac
 Then we frame actions as "predictions" in supervised learning. We can even augment supervised learning with an RL phase, treating reward as negative error.
 
 For generative modeling, well, it turns out that the difference between a Generator-Discriminator and Actor-Critic is rather nominal.
+
+![alt text](https://i.imgur.com/CQbUk02.png)
 
 # :mortar_board: Pedagogy and Research
 

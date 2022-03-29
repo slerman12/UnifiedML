@@ -85,7 +85,7 @@ class ExperienceReplay:
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
-        # Parallelized experience loading
+        # Parallelized experience loading, either online or offline
 
         self.nstep = nstep
 
