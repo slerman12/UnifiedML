@@ -416,7 +416,7 @@ For generative modeling, well, it turns out that the difference between a Genera
 [comment]: <> (![alt text]&#40;https://i.imgur.com/Yf8ltyI.png&#41;)
 
 <p align="left">
-  <img width="90%" alt="flowchart" src="https://i.imgur.com/UWAChy3.png">
+  <img width="90%" alt="flowchart" src="https://i.imgur.com/pVJqkMU.png">
 </p>
 
 
