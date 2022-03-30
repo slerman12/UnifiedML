@@ -419,6 +419,8 @@ For generative modeling, well, it turns out that the difference between a Genera
   <img width="80%" alt="flowchart" src="https://i.imgur.com/CYrNTn1.png">
 </p>
 
+We hope this unification continues to expand to include multi-modalities, "on-policy"/streaming data, multi-task learning, and more.
+
 
 [comment]: <> (<br>)
 
