@@ -77,7 +77,7 @@ class MiniResNet(nn.Module):
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
 
-        self.apply(weight_init)
+        # self.apply(weight_init)
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.project)
