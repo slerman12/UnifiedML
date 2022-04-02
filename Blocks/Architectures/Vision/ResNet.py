@@ -62,7 +62,7 @@ class MiniResNet(nn.Module):
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
                                              kernel_size=kernel_size, padding=1, bias=False),
-                                             # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
+                                   # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True),
                                    # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -76,6 +76,8 @@ class MiniResNet(nn.Module):
 
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
+
+        self.apply(weight_init)
 
     def repr_shape(self, c, h, w):
         return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.project)
@@ -110,3 +112,17 @@ class ResNet18(MiniResNet):
 class ResNet50(MiniResNet):
     def __init__(self, input_shape, output_dim=None):
         super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [3, 4, 6, 3], output_dim)
+
+
+def weight_init(m):
+    if isinstance(m, nn.Conv2d):
+        nn.init.kaiming_normal(m.weight, mode='fan_out')
+        if m.bias:
+            nn.init.constant(m.bias, 0)
+    elif isinstance(m, nn.BatchNorm2d):
+        nn.init.constant(m.weight, 1)
+        nn.init.constant(m.bias, 0)
+    elif isinstance(m, nn.Linear):
+        nn.init.normal(m.weight, std=1e-3)
+        if m.bias:
+            nn.init.constant(m.bias, 0)

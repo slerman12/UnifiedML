@@ -141,23 +141,6 @@ class Ensemble(nn.Module):
                            self.dim)
 
 
-# Merges multiple critics into one if so desired (ensembles of ensembles)
-class MergeCritics(nn.Module):
-    def __init__(self, *critics):
-        super().__init__()
-        self.critics = critics
-
-    def forward(self, obs, action=None, context=None):
-        Q = [critic(obs, action, context) for critic in self.critics]
-        Qs = torch.cat([Q_.Qs for Q_ in Q], 0)
-        # Dist
-        stddev, mean = torch.std_mean(Qs, dim=0)
-        merged_Q = Normal(mean, stddev + 1e-12)
-        merged_Q.__dict__.update({'Qs': Qs,
-                                  'action': Q[0].action})
-        return merged_Q
-
-
 # Replaces tensor's batch items with Normal-sampled random latent
 class Rand(nn.Module):
     def __init__(self, size=1, uniform=False):
