@@ -5,9 +5,10 @@
 import math
 import random
 import re
-import time
 import warnings
 from pathlib import Path
+
+from hydra.utils import instantiate
 
 import numpy as np
 
@@ -17,9 +18,6 @@ import torch.nn.functional as F
 
 
 # Sets all Pytorch and Numpy random seeds
-from hydra.utils import instantiate
-
-
 def set_seeds(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():

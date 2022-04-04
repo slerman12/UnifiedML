@@ -30,7 +30,7 @@ def main(args):
             setattr(args, arg, getattr(generalize, arg))
 
     # Agent
-    agent = Utils.load(args.save_path, args.device) if args.load \
+    agent = Utils.load(args.save_path, device=args.device) if args.load \
         else instantiate(args.agent).to(args.device)
 
     args.train_steps += agent.step
