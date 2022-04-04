@@ -57,7 +57,7 @@ def set_seeds(seed):
 #     return model.to(device)
 
 
-# Saves agent + attributes
+# Saves agent + hyperparams + attributes
 def save(path, agent, cfg, *attributes):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
@@ -87,7 +87,8 @@ def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu'
                 assert agent is not None, f'Load path {path} does not exist.'
                 warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
             break
-        except:  # For distributed training: Pytorch's load and save are not atomic transactions
+        except Exception as e:  # For distributed training: Pytorch's load and save are not atomic transactions
+            print(e)
             # Catch conflict, try again
             warnings.warn(f'Load conflict, resolving...')
 
