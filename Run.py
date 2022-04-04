@@ -30,7 +30,7 @@ def main(args):
             setattr(args, arg, getattr(generalize, arg))
 
     # Agent
-    agent = Utils.load(args.save_path, args.Agent, args.device) if args.load \
+    agent = Utils.load(args.save_path, args.device) if args.load \
         else instantiate(args.agent).to(args.device)
 
     args.train_steps += agent.step
@@ -90,10 +90,10 @@ def main(args):
                     logger.log(logs, 'Train')
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):
-            Utils.save(args.save_path, agent, 'step', 'episode')
+            Utils.save(args.save_path, agent)
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            Utils.load(args.save_path, agent, args.device)
+            agent = Utils.load(args.save_path, args.device, persevere=True)
 
 
 if __name__ == '__main__':
