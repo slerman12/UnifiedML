@@ -120,6 +120,8 @@ cd UnifiedML
 
 ## 2. Gemme Some Dependencies
 
+All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/miniconda.html):
+
 ```console
 conda env create --name ML --file=Conda.yml
 ```
@@ -221,11 +223,13 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 Train accuracies can be printed with ```agent.log=true```.
 
-Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```replay.transform=```. For example,
+Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```transform=```. For example,
 
 ```console
-python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 replay.transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18
+python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
 ```
+
+The above returns a 93% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -310,7 +314,7 @@ Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom a
 CIFAR-10 with ViT:
 
 ```console
-python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=512 +recipes.encoder.eyes.hidden_dim=512 replay.transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" recipes.Aug=Blocks.Architectures.Null
+python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=512 +recipes.encoder.eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" recipes.Aug=Blocks.Architectures.Null
 ```
 
 A GAN with a CNN Discriminator:
