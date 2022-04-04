@@ -27,86 +27,78 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Saves model
-def save(path, model):
-    path = path.replace('Agents.', '')
-    Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    torch.save(model, path)
-
-
-# Loads model
-def load(path, device, attr=None, persevere=False):
-    path = path.replace('Agents.', '')
-
-    try:
-        model = torch.load(path)
-    except Exception as e:  # Pytorch's load and save are not atomic transactions
-        if persevere:
-            warnings.warn(f'Load conflict, resolving...')  # For distributed training
-            time.sleep(0.1)
-            return load(path, device, attr, True)
-        else:
-            assert Path(path).exists(), f'Load path {path} does not exist.'
-            raise Exception(e, '\nTry calling load with persevere=True to recursively try loading until resolution; '
-                               'this is a hacky way to make distributed training work')
-
-    if attr is not None:
-        for attr in attr.split('.'):
-            model = getattr(model, attr)
-
-    return model.to(device)
-
-
-# # Saves agent + attributes
-# def save(path, agent, cfg, *attributes):
+# # Saves model
+# def save(path, model):
 #     path = path.replace('Agents.', '')
 #     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-#     to_save = {'state_dict': agent.state_dict(), 'cfg': cfg}
-#     to_save.update({attr: getattr(agent, attr) for attr in attributes})
-#     torch.save(to_save, path)
-
-
-# # Loads agent or part of agent
-# def load(path, agent=None, device='cuda', attr=None):
-#     # Can pass in an instantiated agent or a config
-#     if agent is None:
-#         # Agent's string path can be automatically deduced from path, assuming default path structure
-#         agent = path.split('/')[3]  # e.g. "Agents.DQNAgent"
+#     torch.save(model, path)
 #
-#     if not isinstance(agent, nn.Module):
-#         # Instantiate a new agent
-#         agent = instantiate(agent).to(device)
 #
+# # Loads model
+# def load(path, device, attr=None, persevere=False):
 #     path = path.replace('Agents.', '')
 #
-#     while True:
-#         try:
-#             if Path(path).exists():
-#                 # Load agent's params
-#                 to_load = torch.load(path, map_location=agent.device)
-#                 agent.load_state_dict(to_load['state_dict'], strict=False)
-#                 del to_load['state_dict']
-#                 # Update its saved attributes
-#                 for key in to_load:
-#                     if hasattr(agent, key):
-#                         setattr(agent, key, to_load[key])
-#             else:
-#                 assert agent is not None, f'Load path {path} does not exist.'
-#                 warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
-#             break
-#         except:  # For distributed training: Pytorch's load and save are not atomic transactions
-#             assert agent is not None, f'Could not load agent.'
-#             # Catch conflict, try again
-#             warnings.warn(f'Load conflict, resolving...')
+#     try:
+#         model = torch.load(path)
+#     except Exception as e:  # Pytorch's load and save are not atomic transactions
+#         if persevere:
+#             warnings.warn(f'Load conflict, resolving...')  # For distributed training
+#             time.sleep(0.1)
+#             return load(path, device, attr, True)
+#         else:
+#             assert Path(path).exists(), f'Load path {path} does not exist.'
+#             raise Exception(e, '\nTry calling load with persevere=True to recursively try loading until resolution; '
+#                                'this is a hacky way to make distributed training work')
 #
-#     # Can also load part of an agent, e.g. its encoder.
-#     # This method can be used as a recipe to pass in saved checkpoint components
-#     # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
 #     if attr is not None:
 #         for attr in attr.split('.'):
-#             agent = getattr(agent, attr)
+#             model = getattr(model, attr)
 #
-#     return agent
+#     return model.to(device)
+
+
+# Saves agent + attributes
+def save(path, agent, cfg, *attributes):
+    path = path.replace('Agents.', '')
+    Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
+    to_save = {'state_dict': agent.state_dict(), 'cfg': cfg}
+    to_save.update({attr: getattr(agent, attr) for attr in attributes})
+    torch.save(to_save, path)
+
+
+# Loads agent or part of agent
+def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', attr=None):
+    path = path.replace('Agents.', '')
+
+    while True:
+        try:
+            if Path(path).exists():
+                # Load agent's params
+                to_load = torch.load(path, map_location=getattr(agent, 'device', device))
+                if agent is None:
+                    agent = instantiate(to_load['cfg']).to(device)
+                agent.load_state_dict(to_load['state_dict'], strict=False)
+                del to_load['state_dict']
+                del to_load['cfg']
+                # Update its saved attributes
+                for key in to_load:
+                    setattr(agent, key, to_load[key])
+            else:
+                assert agent is not None, f'Load path {path} does not exist.'
+                warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
+            break
+        except:  # For distributed training: Pytorch's load and save are not atomic transactions
+            # Catch conflict, try again
+            warnings.warn(f'Load conflict, resolving...')
+
+    # Can also load part of an agent, e.g. its encoder.
+    # This method can be used as a recipe to pass in saved checkpoint components
+    # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
+    if attr is not None:
+        for attr in attr.split('.'):
+            agent = getattr(agent, attr)
+
+    return agent
 
 
 # Assigns a default value to x if x is None
