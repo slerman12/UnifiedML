@@ -71,26 +71,28 @@ def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu'
     path = path.replace('Agents.', '')
 
     while True:
-        try:
-            if Path(path).exists():
-                # Load agent's params
+        if Path(path).exists():
+            try:
                 to_load = torch.load(path, map_location=getattr(agent, 'device', device))
-                if agent is None:
-                    agent = instantiate(to_load['cfg']).to(device)
-                agent.load_state_dict(to_load['state_dict'], strict=False)
-                del to_load['state_dict']
-                del to_load['cfg']
-                # Update its saved attributes
-                for key in to_load:
-                    setattr(agent, key, to_load[key])
-            else:
-                assert agent is not None, f'Load path {path} does not exist.'
-                warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
-            break
-        except Exception as e:  # For distributed training: Pytorch's load and save are not atomic transactions
-            print(e)
-            # Catch conflict, try again
-            warnings.warn(f'Load conflict, resolving...')
+            except:  # For distributed training: Pytorch's load and save are not atomic transactions
+                warnings.warn(f'Load conflict, resolving...')
+                continue  # Catch conflict, try again
+
+            if agent is None:
+                agent = instantiate(to_load['cfg']).to(device)
+
+            # Load agent's params
+            agent.load_state_dict(to_load['state_dict'], strict=False)
+
+            del to_load['state_dict']
+            del to_load['cfg']
+            # Update its saved attributes
+            for key in to_load:
+                setattr(agent, key, to_load[key])
+        else:
+            assert agent is not None, f'Load path {path} does not exist.'
+            warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
+        break
 
     # Can also load part of an agent, e.g. its encoder.
     # This method can be used as a recipe to pass in saved checkpoint components
