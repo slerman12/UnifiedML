@@ -67,31 +67,32 @@ def save(path, agent, *attributes):
 
 # Loads agent or part of agent
 def load(path, agent=None, device='cuda', attr=None):
-    Agent = 'Agents.' + path.split('Agents.')[1].split('Agent')[0] + 'Agent'  # e.g. Agents.DQNAgent
+    # Can pass in an instantiated agent or a string path
+    if agent is None:
+        # Agent's string path can be automatically deduced from path, assuming default path structure
+        agent = path.split('/')[3]  # e.g. "Agents.DQNAgent"
+
+    if isinstance(agent, str):
+        # Instantiate a new agent
+        agent = instantiate(agent).to(device)
+
     path = path.replace('Agents.', '')
 
     while True:
         try:
             if Path(path).exists():
-                # Load agent
-                to_load = torch.load(path, map_location=getattr(agent, 'device', device))
-                if agent is None:
-                    # Instantiate a new agent
-                    agent = instantiate(Agent).to(device)
-                else:
-                    # Load agent's params
-                    agent.load_state_dict(to_load['state_dict'], strict=False)
+                # Load agent's params\
+                to_load = torch.load(path, map_location=agent.device)
+                agent.load_state_dict(to_load['state_dict'], strict=False)
                 del to_load['state_dict']
                 # Update its saved attributes
                 for key in to_load:
                     if hasattr(agent, key):
                         setattr(agent, key, to_load[key])
             else:
-                assert agent is not None, f'Load path {path} does not exist.'
                 warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
             break
-        except Exception as e:  # For distributed training: Pytorch's load and save are not atomic transactions
-            assert agent is not None, f'{e}\nCould not load agent.'
+        except:  # For distributed training: Pytorch's load and save are not atomic transactions
             # Catch conflict, try again
             warnings.warn(f'Load conflict, resolving...')
 
