@@ -57,51 +57,84 @@ def set_seeds(seed):
 
 
 # Saves agent + hyperparams + attributes
-def save(path, agent, cfg, *attributes):
+# def save(path, agent, cfg, *attributes):
+#     path = path.replace('Agents.', '')
+#     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
+#     to_save = {'state_dict': agent.state_dict(), 'cfg': cfg}
+#     to_save.update({attr: getattr(agent, attr) for attr in attributes})
+#     torch.save(to_save, path)
+#
+#
+# # Loads agent or part of agent, resolving conflicts in distributed setups
+# def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', exclude_attributes=(), attr=None):
+#     path = path.replace('Agents.', '')
+#
+#     while True:
+#         if Path(path).exists():
+#             try:
+#                 to_load = torch.load(path, map_location=getattr(agent, 'device', device))
+#             except:  # For distributed training: Pytorch's load and save are not atomic transactions
+#                 warnings.warn(f'Load conflict, resolving... This happens during distributed training.')
+#                 continue  # Catch conflict, try again
+#
+#             if agent is None:
+#                 agent = instantiate(to_load['cfg']).to(device)
+#
+#             # Load agent's params
+#             agent.load_state_dict(to_load['state_dict'], strict=False)
+#
+#             del to_load['state_dict']
+#             del to_load['cfg']
+#             # Update its saved attributes
+#             for key in to_load:
+#                 if key not in exclude_attributes:
+#                     setattr(agent, key, to_load[key])
+#         else:
+#             assert agent is not None, f'Load path {path} does not exist.'
+#             warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
+#         break
+#
+#     # Can also load part of an agent, e.g. its encoder.
+#     # This method can be used as a recipe to pass in saved checkpoint components
+#     # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
+#     if attr is not None:
+#         for attr in attr.split('.'):
+#             agent = getattr(agent, attr)
+#
+#     return agent
+
+
+# Saves model
+def save(path, model):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    to_save = {'state_dict': agent.state_dict(), 'cfg': cfg}
-    to_save.update({attr: getattr(agent, attr) for attr in attributes})
-    torch.save(to_save, path)
+    torch.save(model, path)
 
 
-# Loads agent or part of agent, resolving conflicts in distributed setups
-def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', exclude_attributes=(), attr=None):
-    path = path.replace('Agents.', '')
+# Loads model or part of model
+def load(path, device, attr=None, **attributes):
+    path, model = path.replace('Agents.', ''), None
 
-    while True:
-        if Path(path).exists():
-            try:
-                to_load = torch.load(path, map_location=getattr(agent, 'device', device))
-            except:  # For distributed training: Pytorch's load and save are not atomic transactions
-                warnings.warn(f'Load conflict, resolving... This happens during distributed training.')
-                continue  # Catch conflict, try again
+    for try_catch in range(1000):
+        try:
+            model = torch.load(path)
+            break
+        except:  # Pytorch's load and save are not atomic transactions
+            warnings.warn(f'Load conflict, resolving...')  # For distributed training
+            if try_catch == 999:
+                warnings.warn('Failed to load model.' +
+                              ('' if Path(path).exists() else f'Load path {path} does not exist.'))
+                return
 
-            if agent is None:
-                agent = instantiate(to_load['cfg']).to(device)
-
-            # Load agent's params
-            agent.load_state_dict(to_load['state_dict'], strict=False)
-
-            del to_load['state_dict']
-            del to_load['cfg']
-            # Update its saved attributes
-            for key in to_load:
-                if key not in exclude_attributes:
-                    setattr(agent, key, to_load[key])
-        else:
-            assert agent is not None, f'Load path {path} does not exist.'
-            warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
-        break
-
-    # Can also load part of an agent, e.g. its encoder.
-    # This method can be used as a recipe to pass in saved checkpoint components
-    # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
     if attr is not None:
+        # Can also load part of an agent
         for attr in attr.split('.'):
-            agent = getattr(agent, attr)
+            model = getattr(model, attr)
 
-    return agent
+    for attr in attributes:
+        setattr(model, attr, attributes[attr])
+
+    return model.to(device)
 
 
 # Assigns a default value to x if x is None

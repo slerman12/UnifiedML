@@ -199,7 +199,7 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     def __len__(self):
-        return self.episodes_stored if self.offline \
+        return self.episodes_stored if self.offline or not self.save \
             else len(list(self.path.glob('*.npz')))
 
 

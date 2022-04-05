@@ -182,7 +182,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 # :file_cabinet: Key files
 
-```Run.py``` handles learning and evaluation loops, saving, logging, plotting.
+```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
 
 ```Environment.py``` handles rollouts.
 
