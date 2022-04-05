@@ -231,6 +231,8 @@ python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 transfor
 
 The above returns a 93% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
+And if you set ```supervise=false```, we get a 94%... vis a vis pure-RL. 
+
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
 [comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
@@ -365,37 +367,37 @@ python Run.py parallel=true
 
 which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
 
-[comment]: <> (To share whole agents across multiple parallel instances,)
+To share whole agents across multiple parallel instances and/or machines,
 
-[comment]: <> (<details>)
+<details>
 
-[comment]: <> (<summary><i>Click to open :open_book: </i></summary>)
+<summary><i>Click to open :open_book: </i></summary>
 
-[comment]: <> (<br>)
+<br>
 
-[comment]: <> (you can use the ```load_per_steps=``` flag.)
+you can use the ```load_per_steps=``` flag.
 
-[comment]: <> (For example, a data-collector agent and an update agent,)
+For example, a data-collector agent and an update agent,
 
-[comment]: <> (```console)
+```console
 
-[comment]: <> (python Run.py learn_per_steps=0 replay.save=true load_per_steps=100)
+python Run.py learn_per_steps=0 replay.save=true load_per_steps=1
 
-[comment]: <> (```)
+```
 
-[comment]: <> (```console)
+```console
 
-[comment]: <> (python Run.py offline=true save_per_steps=20)
+python Run.py offline=true save_per_steps=2
 
-[comment]: <> (```)
+```
 
-[comment]: <> (in concurrent processes.)
+in concurrent processes.
 
-[comment]: <> (Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. **Highly experimental!**)
+Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. Just make sure the replay from the first script is created before launching the second script. **Highly experimental!**
 
 [comment]: <> (It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second script. This is not meant as a deployable means of distributed training. It just happens to work, incidentally, sort of.)
 
-[comment]: <> (</details>)
+</details>
 
 ### Experiment naming, plotting
 
