@@ -5,7 +5,6 @@
 import math
 import random
 import re
-import time
 import warnings
 from pathlib import Path
 
@@ -66,7 +65,7 @@ def save(path, agent, cfg, *attributes):
     torch.save(to_save, path)
 
 
-# Loads agent or part of agent
+# Loads agent or part of agent, resolving conflicts in distributed setups
 def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', attr=None):
     path = path.replace('Agents.', '')
 

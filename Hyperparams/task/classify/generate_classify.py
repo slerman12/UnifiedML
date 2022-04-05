@@ -1,17 +1,12 @@
-import torchvision
-from torchvision.transforms import transforms
-
 IMAGE_DATASETS = [
-    'LSUN', 'LSUNClass',
-    'ImageFolder', 'DatasetFolder', 'FakeData',
-    'CocoCaptions', 'CocoDetection',
     'CIFAR10', 'CIFAR100', 'EMNIST', 'FashionMNIST', 'QMNIST',
     'MNIST', 'KMNIST', 'STL10', 'SVHN', 'PhotoTour', 'SEMEION',
     'Omniglot', 'SBU', 'Flickr8k', 'Flickr30k',
     'VOCSegmentation', 'VOCDetection', 'Cityscapes', 'ImageNet',
     'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
-    'VisionDataset', 'USPS', 'Kinetics400', 'HMDB51', 'UCF101',
-    'Places365', 'TinyImageNet'
+    'USPS', 'Kinetics400', "Kinetics", 'HMDB51', 'UCF101',
+    'Places365', 'Kitti', "INaturalist", "LFWPeople", "LFWPairs",
+    'TinyImageNet'
 ]
 
 if __name__ == '__main__':

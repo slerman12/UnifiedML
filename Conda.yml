@@ -11,7 +11,7 @@ dependencies:
   - scikit-image=0.18.1
   - seaborn=0.11.2
   - pytorch::pytorch
-  - pytorch::torchvision
+  - pytorch::torchvision==0.11.3
   - pytorch::torchaudio
   - pip:
       - dm-env
