@@ -93,7 +93,7 @@ def main(args):
             Utils.save(args.save_path, agent, args.agent, 'step', 'episode')
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            Utils.load(args.save_path, agent, args.device)
+            Utils.load(args.save_path, agent, exclude_attributes=['step', 'episode'])
 
 
 if __name__ == '__main__':

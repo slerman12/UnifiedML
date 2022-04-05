@@ -66,7 +66,7 @@ def save(path, agent, cfg, *attributes):
 
 
 # Loads agent or part of agent, resolving conflicts in distributed setups
-def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', attr=None):
+def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', exclude_attributes=(), attr=None):
     path = path.replace('Agents.', '')
 
     while True:
@@ -87,7 +87,8 @@ def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu'
             del to_load['cfg']
             # Update its saved attributes
             for key in to_load:
-                setattr(agent, key, to_load[key])
+                if key not in exclude_attributes:
+                    setattr(agent, key, to_load[key])
         else:
             assert agent is not None, f'Load path {path} does not exist.'
             warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')

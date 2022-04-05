@@ -231,7 +231,7 @@ python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 transfor
 
 The above returns a 93% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
-And if you set ```supervise=false```, we get a 94%... vis a vis pure-RL. 
+And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL. 
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -387,7 +387,7 @@ python Run.py learn_per_steps=0 replay.save=true load_per_steps=1
 
 ```console
 
-python Run.py offline=true save_per_steps=2
+python Run.py offline=true replay.offline=false save_per_steps=2
 
 ```
 
