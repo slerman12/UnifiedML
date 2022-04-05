@@ -8,8 +8,6 @@ import re
 import warnings
 from pathlib import Path
 
-from hydra.utils import instantiate
-
 import numpy as np
 
 import torch
@@ -18,6 +16,9 @@ import torch.nn.functional as F
 
 
 # Sets all Pytorch and Numpy random seeds
+from hydra.utils import instantiate
+
+
 def set_seeds(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -57,12 +58,12 @@ def set_seeds(seed):
 
 
 # Saves agent + hyperparams + attributes
-# def save(path, agent, cfg, *attributes):
-#     path = path.replace('Agents.', '')
-#     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-#     to_save = {'state_dict': agent.state_dict(), 'cfg': cfg}
-#     to_save.update({attr: getattr(agent, attr) for attr in attributes})
-#     torch.save(to_save, path)
+def save(path, agent, args, *attributes):
+    path = path.replace('Agents.', '')
+    Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
+    to_save = {'state_dict': agent.state_dict(), 'args': args}
+    to_save.update({attr: getattr(agent, attr) for attr in attributes})
+    torch.save(to_save, path)
 #
 #
 # # Loads agent or part of agent, resolving conflicts in distributed setups
@@ -112,29 +113,42 @@ def save(path, model):
 
 
 # Loads model or part of model
-def load(path, device, attr=None, **attributes):
-    path, model = path.replace('Agents.', ''), None
+def load(path, device, model=None, *exclude_attributes, distributed=False, attr=None):
+    path, to_load = path.replace('Agents.', ''), None
 
     for try_catch in range(1000):
         try:
-            model = torch.load(path)
+            to_load = torch.load(path, map_location=getattr(model, 'device', device))
             break
-        except:  # Pytorch's load and save are not atomic transactions
+        except Exception as e:  # Pytorch's load and save are not atomic transactions
+            if not distributed:
+                raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
             if try_catch == 999:
-                warnings.warn('Failed to load model.' +
-                              ('' if Path(path).exists() else f'Load path {path} does not exist.'))
-                return
+                warnings.warn('Failed to load.' +
+                              ('' if Path(path).exists() else f'\nLoad path {path} does not exist.'))
+                return model
+
+    if model is None:
+        model = instantiate(to_load['args']).to(device)
+
+    # Load agent's params
+    model.load_state_dict(to_load['state_dict'], strict=False)
 
     if attr is not None:
-        # Can also load part of an agent
+        # Can also load part of a model
+        # Useful for recipes,
+        # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint>
+        #                       +recipes.encoder.eyes.attr=encoder.Eyes
         for attr in attr.split('.'):
             model = getattr(model, attr)
 
-    for attr in attributes:
-        setattr(model, attr, attributes[attr])
+    # Load saved attributes as well
+    for attr in to_load:
+        if hasattr(model, attr) and attr not in ['state_dict', 'args', *exclude_attributes]:
+            setattr(model, attr, to_load[attr])
 
-    return model.to(device)
+    return model
 
 
 # Assigns a default value to x if x is None
