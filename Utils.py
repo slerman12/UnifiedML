@@ -57,12 +57,12 @@ def set_seeds(seed):
 #     return model.to(device)
 
 
-# Saves agent + hyperparams + attributes
-def save(path, agent, args, *attributes):
+# Saves model + hyperparams + attributes
+def save(path, model, args, *attributes):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    to_save = {'state_dict': agent.state_dict(), 'args': args}
-    to_save.update({attr: getattr(agent, attr) for attr in attributes})
+    to_save = {'state_dict': model.state_dict(), 'args': args}
+    to_save.update({attr: getattr(model, attr) for attr in attributes})
     torch.save(to_save, path)
 #
 #
@@ -106,17 +106,17 @@ def save(path, agent, args, *attributes):
 
 
 # Saves model
-def save(path, model):
-    path = path.replace('Agents.', '')
-    Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    torch.save(model, path)
+# def save(path, model):
+#     path = path.replace('Agents.', '')
+#     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
+#     torch.save(model, path)
 
 
 # Loads model or part of model
-def load(path, device, model=None, *exclude_attributes, distributed=False, attr=None):
+def load(path, device, model=None, *exclude_attributes, distributed=False, attr=''):
     path, to_load = path.replace('Agents.', ''), None
 
-    for try_catch in range(1000):
+    while True:
         try:
             to_load = torch.load(path, map_location=getattr(model, 'device', device))
             break
@@ -124,10 +124,6 @@ def load(path, device, model=None, *exclude_attributes, distributed=False, attr=
             if not distributed:
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
-            if try_catch == 999:
-                warnings.warn('Failed to load.' +
-                              ('' if Path(path).exists() else f'\nLoad path {path} does not exist.'))
-                return model
 
     if model is None:
         model = instantiate(to_load['args']).to(device)
@@ -135,18 +131,16 @@ def load(path, device, model=None, *exclude_attributes, distributed=False, attr=
     # Load agent's params
     model.load_state_dict(to_load['state_dict'], strict=False)
 
-    if attr is not None:
-        # Can also load part of a model
-        # Useful for recipes,
-        # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint>
-        #                       +recipes.encoder.eyes.attr=encoder.Eyes
-        for attr in attr.split('.'):
-            model = getattr(model, attr)
-
     # Load saved attributes as well
-    for attr in to_load:
-        if hasattr(model, attr) and attr not in ['state_dict', 'args', *exclude_attributes]:
-            setattr(model, attr, to_load[attr])
+    for key in to_load:
+        if hasattr(model, key) and key not in ['state_dict', 'args', *exclude_attributes]:
+            setattr(model, key, to_load[key])
+
+    # Can also load part of a model
+    # Useful for recipes,
+    # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
+    for key in attr.split('.'):
+        model = getattr(model, key)
 
     return model
 
