@@ -139,8 +139,10 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     # Can also load part of a model
     # Useful for recipes,
     # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
+
     for key in attr.split('.'):
-        model = getattr(model, key)
+        if key:
+            model = getattr(model, key)
 
     return model
 
