@@ -128,7 +128,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     if model is None:
         model = instantiate(to_load['args']).to(device)
 
-    # Load agent's params
+    # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
 
     # Load saved attributes as well
