@@ -387,7 +387,7 @@ python Run.py learn_per_steps=0 replay.save=true load_per_steps=1
 
 ```console
 
-python Run.py offline=true replay.offline=false replay.load=true save_per_steps=2
+python Run.py offline=true replay.offline=false replay.save=true replay.load=true save_per_steps=2
 
 ```
 
