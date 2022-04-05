@@ -113,7 +113,7 @@ def save(path, model, args, *attributes):
 
 
 # Loads model or part of model
-def load(path, device, model=None, *exclude_attributes, distributed=False, attr=''):
+def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     path, to_load = path.replace('Agents.', ''), None
 
     while True:
@@ -133,7 +133,7 @@ def load(path, device, model=None, *exclude_attributes, distributed=False, attr=
 
     # Load saved attributes as well
     for key in to_load:
-        if hasattr(model, key) and key not in ['state_dict', 'args', *exclude_attributes]:
+        if hasattr(model, key) and key not in ['state_dict', 'args', *preserve]:
             setattr(model, key, to_load[key])
 
     # Can also load part of a model
