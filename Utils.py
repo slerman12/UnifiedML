@@ -74,7 +74,7 @@ def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu'
             try:
                 to_load = torch.load(path, map_location=getattr(agent, 'device', device))
             except:  # For distributed training: Pytorch's load and save are not atomic transactions
-                warnings.warn(f'Load conflict, resolving...')
+                warnings.warn(f'Load conflict, resolving... This happens during distributed training.')
                 continue  # Catch conflict, try again
 
             if agent is None:

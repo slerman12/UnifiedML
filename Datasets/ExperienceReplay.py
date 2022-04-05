@@ -74,6 +74,7 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.epoch = 0
         self.save = save
+        self.offline = offline
 
         # Data transform
 
@@ -198,7 +199,8 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     def __len__(self):
-        return self.episodes_stored
+        return self.episodes_stored if self.offline \
+            else len(list(self.path.glob('*.npz')))
 
 
 # How to initialize each worker
