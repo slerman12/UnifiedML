@@ -12,9 +12,9 @@ torch.backends.cudnn.benchmark = True
 
 
 # Hydra conveniently and cleanly manages sys args
-# Hyper-param cfg files located in ./Hyperparams
+# Hyper-param args file located in ./Hyperparams
 
-@hydra.main(config_path='Hyperparams', config_name='cfg')
+@hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
     # Set seeds
     Utils.set_seeds(args.seed)
@@ -30,7 +30,7 @@ def main(args):
             setattr(args, arg, getattr(generalize, arg))
 
     # Agent
-    agent = Utils.load(args.save_path, args.device) if args.load \
+    agent = Utils.load(args.save_path) if args.load \
         else instantiate(args.agent).to(args.device)
 
     args.train_steps += agent.step
@@ -93,7 +93,7 @@ def main(args):
             Utils.save(args.save_path, agent, args.agent, 'step', 'episode')
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            agent = Utils.load(args.save_path, args.device, agent, preserve=['step', 'episode'], distributed=True)
+            agent = Utils.load(args.save_path, agent, preserve=['step', 'episode'], distributed=True)
 
 
 if __name__ == '__main__':

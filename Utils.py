@@ -8,6 +8,8 @@ import re
 import warnings
 from pathlib import Path
 
+from hydra.utils import instantiate
+
 import numpy as np
 
 import torch
@@ -16,9 +18,6 @@ import torch.nn.functional as F
 
 
 # Sets all Pytorch and Numpy random seeds
-from hydra.utils import instantiate
-
-
 def set_seeds(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -27,94 +26,17 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# # Saves model
-# def save(path, model):
-#     path = path.replace('Agents.', '')
-#     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-#     torch.save(model, path)
-#
-#
-# # Loads model
-# def load(path, device, attr=None, persevere=False):
-#     path = path.replace('Agents.', '')
-#
-#     try:
-#         model = torch.load(path)
-#     except Exception as e:  # Pytorch's load and save are not atomic transactions
-#         if persevere:
-#             warnings.warn(f'Load conflict, resolving...')  # For distributed training
-#             time.sleep(0.1)
-#             return load(path, device, attr, True)
-#         else:
-#             assert Path(path).exists(), f'Load path {path} does not exist.'
-#             raise Exception(e, '\nTry calling load with persevere=True to recursively try loading until resolution; '
-#                                'this is a hacky way to make distributed training work')
-#
-#     if attr is not None:
-#         for attr in attr.split('.'):
-#             model = getattr(model, attr)
-#
-#     return model.to(device)
-
-
-# Saves model + hyperparams + attributes
+# Saves model + args + attributes
 def save(path, model, args, *attributes):
     path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    to_save = {'state_dict': model.state_dict(), 'args': args}
-    to_save.update({attr: getattr(model, attr) for attr in attributes})
-    torch.save(to_save, path)
-#
-#
-# # Loads agent or part of agent, resolving conflicts in distributed setups
-# def load(path, agent=None, device='cuda' if torch.cuda.is_available() else 'cpu', exclude_attributes=(), attr=None):
-#     path = path.replace('Agents.', '')
-#
-#     while True:
-#         if Path(path).exists():
-#             try:
-#                 to_load = torch.load(path, map_location=getattr(agent, 'device', device))
-#             except:  # For distributed training: Pytorch's load and save are not atomic transactions
-#                 warnings.warn(f'Load conflict, resolving... This happens during distributed training.')
-#                 continue  # Catch conflict, try again
-#
-#             if agent is None:
-#                 agent = instantiate(to_load['cfg']).to(device)
-#
-#             # Load agent's params
-#             agent.load_state_dict(to_load['state_dict'], strict=False)
-#
-#             del to_load['state_dict']
-#             del to_load['cfg']
-#             # Update its saved attributes
-#             for key in to_load:
-#                 if key not in exclude_attributes:
-#                     setattr(agent, key, to_load[key])
-#         else:
-#             assert agent is not None, f'Load path {path} does not exist.'
-#             warnings.warn(f'Load path {path} does not exist. Proceeding without loading.')
-#         break
-#
-#     # Can also load part of an agent, e.g. its encoder.
-#     # This method can be used as a recipe to pass in saved checkpoint components
-#     # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
-#     if attr is not None:
-#         for attr in attr.split('.'):
-#             agent = getattr(agent, attr)
-#
-#     return agent
-
-
-# Saves model
-# def save(path, model):
-#     path = path.replace('Agents.', '')
-#     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-#     torch.save(model, path)
+    torch.save({'state_dict': model.state_dict(), 'args': args,
+                **{attr: getattr(model, attr) for attr in attributes}}, path)
 
 
 # Loads model or part of model
-def load(path, device, model=None, preserve=(), distributed=False, attr=''):
-    path, to_load = path.replace('Agents.', ''), None
+def load(path, model=None, preserve=(), distributed=False, attr=''):
+    path, device, to_load = path.replace('Agents.', ''), 'cuda' if torch.cuda.is_available() else 'cpu', None
 
     while True:
         try:
@@ -139,7 +61,6 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     # Can also load part of a model
     # Useful for recipes,
     # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
-
     for key in attr.split('.'):
         if key:
             model = getattr(model, key)
