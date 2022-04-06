@@ -35,8 +35,8 @@ def save(path, model, args, *attributes):
 
 
 # Loads model or part of model
-def load(path, model=None, preserve=(), distributed=False, attr=''):
-    path, device, to_load = path.replace('Agents.', ''), 'cuda' if torch.cuda.is_available() else 'cpu', None
+def load(path, device, model=None, preserve=(), distributed=False, attr=''):
+    path, to_load = path.replace('Agents.', ''), None
 
     while True:
         try:
