@@ -29,7 +29,7 @@ git pull origin master""")
 # git clone git@github.com:slerman12/UnifiedML.git""")
 
 commands.append(f"""cd /scratch/slerman/UnifiedML
-python sbatch.py --sweep_name ViRP --ANY_BIGish""")
+python sbatch.py --sweep_name DQN --ANY_BIGish""")
 
 # params = """Agent=Agents.DQNAgent task=atari/boxing experiment='intense'"""
 # commands.append(f"""cd /scratch/slerman/UnifiedML

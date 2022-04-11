@@ -95,7 +95,7 @@ For detailed documentation, [see our :scroll:](https://arxiv.com).
 
 [comment]: <> (```)
 
-If you use this work, please give us a star :star: and cite the above.
+If you use this work, please give us a star :star: and be sure to cite the above.
 
 An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excellent [DrQV2 repo](https://github.com/facebookresearch/drqv2) inspired much of this library and its design.
 
@@ -236,6 +236,8 @@ And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL.
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
 [comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
+
+This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including TinyImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual downloading needed.
 
 ### Generative Modeling
 
@@ -394,6 +396,18 @@ python Run.py offline=true replay.offline=false replay.save=true replay.load=tru
 in concurrent processes.
 
 Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. Just make sure the replay from the first script is created before launching the second script. **Highly experimental!**
+
+Here is another example of distributed training, via shared replays:
+
+```console
+python Run.py replay.save=true 
+```
+
+Then, in a separate process, after that replay has been created:
+
+```console
+python Run.py replay.load=true replay.save=true 
+```
 
 [comment]: <> (It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second script. This is not meant as a deployable means of distributed training. It just happens to work, incidentally, sort of.)
 

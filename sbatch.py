@@ -11,17 +11,17 @@ from Hyperparams.task.atari.generate_atari import atari_tasks
 from Hyperparams.task.dmc.generate_dmc import easy, medium, hard
 agents = [
     # 'SPR',
-    # 'DQN',
+    'DQN',
     # 'DrQV2',
     # 'DQNDPG',
     # 'DynoSOAR',
     # 'Ascend', 'AC2'
-    'Random'
+    # 'Random'
           ]
 seeds = [1]
-experiment = 'Random 100 Episodes (Original Settings)'
+experiment = 'DQN'
 
-common_params = f'train_steps=0 evaluate_episodes=100 experiment={experiment}'
+common_params = f'experiment={experiment}'
 classify_RL = 'false'
 classify_supervise = 'true'
 
