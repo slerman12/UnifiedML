@@ -9,22 +9,21 @@ from pexpect import spawn
 
 pw = getpass.getpass()
 
-if len(sys.argv) > 1:
-    try:
-        p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
-        p.expect('Username: ')
-        p.sendline('')
-        p.expect('Password: ')
-        p.sendline(pw)
-        p.expect('Second Password: ')
-        p.sendline('push')
-        p.expect('VPN>')
-    except:
-        pass
+try:
+    p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
+    p.expect('Username: ')
+    p.sendline('')
+    p.expect('Password: ')
+    p.sendline(pw)
+    p.expect('Second Password: ')
+    p.sendline('push')
+    p.expect('VPN>')
+except:
+    pass
 
-experiment = "*"
-agent = "*"
-suite = "*"
+experiment = "*" if len(sys.argv) < 2 else sys.argv[1]
+agent = "*" if len(sys.argv) < 3 else sys.argv[2]
+suite = "*" if len(sys.argv) < 4 else sys.argv[3]
 
 path = f'./Benchmarking/{experiment}/Plots'
 
