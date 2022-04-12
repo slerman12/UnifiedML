@@ -4,7 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 from pathlib import Path
 
-from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from numpy import random

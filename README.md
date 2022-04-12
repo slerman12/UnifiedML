@@ -423,6 +423,12 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeO
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
 
+Alternatively, you can call ```Plot.py``` directly
+
+```console
+python Plot.py ExpName1 SomeOtherExp
+```
+
 # :bar_chart: Agents & Performances
 
 # :interrobang: How is this possible
