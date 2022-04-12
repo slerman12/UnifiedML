@@ -21,7 +21,8 @@ agents = [
 seeds = [1]
 experiment = 'Pure-RL'
 
-common_params = f'experiment={experiment} Eyes=Blocks.Architectures.ResNet18 ema=true weight_decay=0.01'
+common_params = f'experiment={experiment} Eyes=Blocks.Architectures.ResNet18 ema=true weight_decay=0.01' \
+                + 'transform="{RandomHorizontalFlip:{p:0.5}}"'
 classify_RL = 'true'
 classify_supervise = 'false'
 datasets = ['tinyimagenet']
