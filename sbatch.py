@@ -19,7 +19,7 @@ agents = [
     # 'Random'
           ]
 seeds = [1]
-experiment = 'TinyImageNet'
+experiment = 'iNaturalist'
 
 common_params = f'experiment={experiment} Eyes=Blocks.Architectures.ResNet18'
 classify_RL = 'false'
