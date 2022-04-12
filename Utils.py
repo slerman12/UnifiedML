@@ -42,7 +42,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
         try:
             to_load = torch.load(path, map_location=getattr(model, 'device', device))
             break
-        except Exception as e:  # Pytorch's load and save are not atomic transactions
+        except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
             if not distributed:
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training

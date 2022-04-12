@@ -237,7 +237,7 @@ And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL.
 
 [comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
 
-This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including TinyImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual downloading needed.
+This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including Tiny-ImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual downloading needed.
 
 ### Generative Modeling
 

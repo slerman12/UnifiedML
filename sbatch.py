@@ -19,11 +19,11 @@ agents = [
     # 'Random'
           ]
 seeds = [1]
-experiment = 'TinyImageNet-PureRL'
+experiment = 'TinyImageNet'
 
 common_params = f'experiment={experiment} Eyes=Blocks.Architectures.ResNet18'
-classify_RL = 'true'
-classify_supervise = 'false'
+classify_RL = 'false'
+classify_supervise = 'true'
 datasets = ['inaturalist']
 
 common_sweeps = {'atari': [f'task=atari/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in atari_tasks for agent in agents for seed in seeds],

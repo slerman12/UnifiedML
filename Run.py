@@ -12,9 +12,9 @@ torch.backends.cudnn.benchmark = True
 
 
 # Hydra conveniently and cleanly manages sys args
-# Hyper-param cfg files located in ./Hyperparams
+# Hyper-param arg files located in ./Hyperparams
 
-@hydra.main(config_path='Hyperparams', config_name='cfg')
+@hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
     # Set seeds
     Utils.set_seeds(args.seed)
