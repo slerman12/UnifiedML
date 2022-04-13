@@ -22,7 +22,7 @@ seeds = [1]
 experiment = 'Pure-RL'
 
 common_params = f'experiment={experiment} Eyes=Blocks.Architectures.ResNet18 ema=true weight_decay=0.01 ' \
-                + 'transform="{RandomHorizontalFlip:{p:0.5}}" plot_per_steps=0'
+                + 'transform="{RandomHorizontalFlip:{p:0.5}}" plot_per_steps=0 parallel=true num_workers=18'
 classify_RL = 'true'
 classify_supervise = 'false'
 datasets = ['tinyimagenet']
@@ -64,8 +64,10 @@ parser.add_argument('--ANY_BIG', action='store_true', default=False,
                     help='uses K80, V100, or A100 GPU')
 parser.add_argument('--ANY_BIGish', action='store_true', default=False,
                     help='uses K80 or V100 GPU, no A100')
-parser.add_argument('--num-cpus', type=int, default=5,
+parser.add_argument('--num-cpus', type=int, default=20,
                     help='how many CPUs to use')
+parser.add_argument('--num-gpus', type=int, default=4,
+                    help='how many GPUs to use')
 parser.add_argument('--mem', type=int, default=25,
                     help='memory to request')
 parser.add_argument('--file', type=str, default="Run.py",
@@ -91,8 +93,8 @@ for i, param in enumerate(args.params):
 
     slurm_script = f"""#!/bin/bash
 #SBATCH {"-c {}".format(args.num_cpus) if args.cpu else "-p gpu -c {}".format(args.num_cpus)}
-{"" if args.cpu else "#SBATCH --gres=gpu"}
-{"#SBATCH -p csxu -A cxu22_lab" if args.cpu and args.lab else "#SBATCH -p csxu -A cxu22_lab --gres=gpu" if args.lab else ""}
+{"" if args.cpu else f"#SBATCH --gres=gpu:{args.num_gpus}"}
+{"#SBATCH -p csxu -A cxu22_lab" if args.cpu and args.lab else f"#SBATCH -p csxu -A cxu22_lab --gres=gpu:{args.num_gpus}" if args.lab else ""}
 #SBATCH -t {"15-00:00:00" if args.lab else "5-00:00:00"} -o ./Benchmarking/{args.name}_{i}.log -J {args.name}_{i}
 #SBATCH --mem={args.mem}gb 
 {"#SBATCH -C K80" if K80 else "#SBATCH -C V100" if args.V100 else "#SBATCH -C A100" if args.A100 else "#SBATCH -C K80|V100|A100" if args.ANY_BIG else "#SBATCH -C K80|V100" if args.ANY_BIGish else ""}
