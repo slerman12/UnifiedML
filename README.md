@@ -165,7 +165,7 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
 <img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
 </a>
-<i>Video of different tasks in action.</i>
+<br><i>Video of different tasks in action.</i>
 </p>
 
 Download MuJoCo from here: https://mujoco.org/download.
