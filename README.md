@@ -155,7 +155,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 [comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
 </p>
 
-Comes preinstalled.
+[comment]: <> (Comes preinstalled.)
 
 No additional preparation needed. All datasets download automatically.
 
