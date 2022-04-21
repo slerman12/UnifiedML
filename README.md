@@ -288,7 +288,7 @@ Assumes a replay [is saved](#saving).
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
-Is true by default for classification; replays are automatically downloaded.
+Is true by default for classification, where replays are automatically downloaded.
 
 ### Saving
 
