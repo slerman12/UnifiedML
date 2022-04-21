@@ -138,8 +138,6 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 ## 1. Classify
 
-Comes preinstalled.
-
 <p align="left">
 
 [comment]: <> (<img src="https://i.imgur.com/F633xwk.png" width="320">)
@@ -156,6 +154,8 @@ Comes preinstalled.
 
 [comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
 </p>
+
+Comes preinstalled.
 
 No additional preparation needed.
 
