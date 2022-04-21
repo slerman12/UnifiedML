@@ -77,8 +77,8 @@ class Environment:
         if self.episode_done:
             if agent.training:
                 agent.episode += 1
-            self.env.reset()
 
+            self.env.reset()
             self.last_episode_len = self.episode_step
 
         # Log stats

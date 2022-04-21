@@ -42,7 +42,6 @@ class SPRAgent(torch.nn.Module):
         self.step = self.episode = 0
         self.explore_steps = explore_steps
         self.ema = ema
-
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.depth = depth
@@ -60,6 +59,7 @@ class SPRAgent(torch.nn.Module):
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
+        # Dynamics
         if not generate:
             self.dynamics = ResidualBlockEncoder(repr_shape, self.action_dim,
                                                  shift_max_norm=True, isotropic=True,

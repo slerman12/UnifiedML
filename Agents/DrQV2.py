@@ -40,7 +40,6 @@ class DrQV2Agent(torch.nn.Module):
         self.step = self.episode = 0
         self.explore_steps = explore_steps
         self.ema = ema
-
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
