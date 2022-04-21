@@ -161,9 +161,9 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 [comment]: <> (No additional preparation needed. All datasets download automatically.)
 
-[comment]: <> ([All datasets]&#40;Hyperparams/task/classify&#41; come ready-to-use :white_check_mark:)
+[All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
-All datasets come ready-to-use :white_check_mark:
+[comment]: <> (All datasets come preinstalled :white_check_mark:)
 
 ## 2. Atari Arcade
 
