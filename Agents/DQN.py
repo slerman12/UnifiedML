@@ -166,6 +166,7 @@ class DQNAgent(torch.nn.Module):
                 half = len(instruction) // 2
                 mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
                                                label[instruction][:half].long(), reduction='none')
+                # y_predicted[-third:], mistake[-third:] = Utils.one_hot(label[-third:], self.action_dim, -1), 0
                 action[instruction] = y_predicted.detach()
                 reward[instruction] = -mistake[:, None].detach()  # reward = -error
                 next_obs[instruction] = float('nan')

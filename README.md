@@ -142,6 +142,8 @@ Comes preinstalled.
 
 ## 2. Atari Arcade
 
+![alt text](https://i.imgur.com/ppm4LJw.jpg)
+
 You can use ```AutoROM``` if you accept the license.
 
 ```console
@@ -156,6 +158,8 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
 ## 3. DeepMind Control
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/rAai4QzcYbs/3.jpg)](https://www.youtube.com/watch?v=rAai4QzcYbs)
 
 Download MuJoCo from here: https://mujoco.org/download.
 
@@ -237,7 +241,7 @@ And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL.
 
 [comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
 
-This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including Tiny-ImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual downloading needed.
+This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including Tiny-ImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual work needed.
 
 ### Generative Modeling
 
@@ -441,36 +445,26 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 [comment]: <> (![alt text]&#40;https://i.imgur.com/Yf8ltyI.png&#41;)
 
-<p align="center">
-  <img width="80%" alt="flowchart" src="https://i.imgur.com/CYrNTn1.png">
-</p>
+<img width="80%" alt="flowchart" src="https://i.imgur.com/nMUR9Ue.png">
 
-We hope this unification continues to expand to include multi-modalities (audio, proprioceptive), "on-policy"/streaming data, multi-task learning, and more. Already seeded: self-supervised learning, explainable ML, and other modalities that we look forward to flourishing. 
+[comment]: <> (</p>)
 
-
-[comment]: <> (<br>)
+[comment]: <> (<img width="80%" alt="flowchart" src="https://i.imgur.com/RM52cfJ.png?1">)
 
 # :mortar_board: Pedagogy and Research
 
-All files are designed to be useful for educational and innovational purposes in their simplicity and structure.
+All files are designed for pedagogical clarity and extendability for research, to be useful for educational and innovational purposes in their simplicity and structure
 
 # :people_holding_hands: Contributing
 
 Please support financially: <br>
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat)](https://www.paypal.com/cgi-bin/) <br>
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/) <br>
+
 We are a nonprofit, single-PhD student team. If possible, compute resources appreciated.
 
 Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
-
-[comment]: <> (Support financially  )
-
-[comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
-
-[comment]: <> (We are a nonprofit, single-PhD student team. Compute resources appreciated.)
-
-[comment]: <> (Feel free to [contact **agi.\_\_init\_\_**]&#40;mailto:agi.init@gmail.com&#41;. Angel investors welcome.)
 
 # Note
 
@@ -482,4 +476,4 @@ It does with RL to this library what PyCharm does with Python to IntelliJ, i.e.,
 
 <hr class="solid">
 
-[MIT license Included.](MIT_LICENSE)
+[MIT license Included.](MIT_LICENSE)  
