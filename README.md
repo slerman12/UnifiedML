@@ -145,6 +145,8 @@ Comes preinstalled.
 <br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>
 <img src="https://i.imgur.com/N1st6uO.png" width="320">
 <br><i>Eight different ladybug species in iNaturalist dataset.</i>
+<br><br><img src="https://i.imgur.com/etoaz2b.png" width="320">
+<br><i>CIFAR-100</i>
 </p>
 
 ## 2. Atari Arcade
