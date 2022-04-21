@@ -141,10 +141,8 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 Comes preinstalled.
 
 <p align="left">
-
-[comment]: <> (<img src="https://i.imgur.com/F633xwk.png" width="320">)
-
-[comment]: <> (<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>)
+<img src="https://i.imgur.com/F633xwk.png" width="320">
+<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>
 <img src="https://i.imgur.com/N1st6uO.png" width="320">
 <br><i>Eight different ladybug species in iNaturalist dataset.</i>
 </p>
