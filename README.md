@@ -167,7 +167,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 <p align="left">
 <img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
-<br><i>A [collection](Hyperparams/task/atari) of retro Atari games.</i>
+<br><i>A collection of retro Atari games.</i>
 </p>
 
 You can install via ```AutoROM``` if you accept the license.
