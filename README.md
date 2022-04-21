@@ -165,7 +165,7 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs"><i>:arrow_forward: Click to play</i></a><br>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
-<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="320" />
+<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="310" />
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
