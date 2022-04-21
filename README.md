@@ -157,6 +157,8 @@ Comes preinstalled.
 [comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
 </p>
 
+No additional preparation needed.
+
 ## 2. Atari Arcade
 
 <p align="left">
