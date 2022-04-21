@@ -142,8 +142,8 @@ Comes preinstalled.
 
 ## 2. Atari Arcade
 
-<p align="center">
-<img src="https://i.imgur.com/ppm4LJw.jpg" height="180" >
+<p align="left">
+<img src="https://i.imgur.com/ppm4LJw.jpg" width="300" >
 </p>
 
 You can use ```AutoROM``` if you accept the license.
@@ -161,9 +161,9 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 ## 3. DeepMind Control
 
-<p align="center">
+<p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
-<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" height="180" border="10" />
+<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
 </a>
 </p>
 
