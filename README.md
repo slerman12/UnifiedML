@@ -148,8 +148,8 @@ Comes preinstalled.
 
 [comment]: <> (<img src="https://i.imgur.com/N1st6uO.png" width="320">)
 
-[comment]: <> (<br><i>Eight different ladybug species in iNaturalist dataset.</i>)
-<br><br><img src="https://i.imgur.com/etoaz2b.png" width="320">
+[comment]: <> (<br><i>Eight different ladybug species in iNaturalist dataset.</i><br><br>)
+<img src="https://i.imgur.com/etoaz2b.png" width="320">
 <br><i>Samples of images from the CIFAR-100 dataset.</i>
 
 [comment]: <> (<br><br><img src="https://i.imgur.com/E1v1jvm.jpg" width="320">)
