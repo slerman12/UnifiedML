@@ -146,7 +146,9 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 [comment]: <> (<img src="https://i.imgur.com/N1st6uO.png" width="320">)
 
-[comment]: <> (<br><i>Eight different ladybug species in iNaturalist dataset.</i><br><br>)
+[comment]: <> (<br><i>Eight different ladybug species in iNaturalist dataset.</i>)
+
+[comment]: <> (<br><br>)
 <img src="https://i.imgur.com/etoaz2b.png" width="320">
 <br><i>Samples of images from the CIFAR-100 dataset.</i>
 
@@ -159,7 +161,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 [comment]: <> (No additional preparation needed. All datasets download automatically.)
 
-All datasets come preinstalled.
+All datasets come preinstalled, are automatically downloaded when called.
 
 ## 2. Atari Arcade
 
