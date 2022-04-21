@@ -160,13 +160,14 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
 ## 3. DeepMind Control
-Video of different tasks in action:
 
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
 <img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
 </a>
 </p>
+
+Above is a video of different tasks in action.
 
 Download MuJoCo from here: https://mujoco.org/download.
 
