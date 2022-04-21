@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task@_global_: atari/pong
+  - task: atari/pong
   - override hydra/launcher: submitit_local
 
 # Agent
