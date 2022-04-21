@@ -144,6 +144,7 @@ Comes preinstalled.
 
 <p align="left">
 <img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
+<br><i>A collection of retro Atari games.</i>
 </p>
 
 You can use ```AutoROM``` if you accept the license.
