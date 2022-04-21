@@ -163,7 +163,7 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 <p align="center">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
-<img src="https://img.youtube.com/vi/rAai4QzcYbs/3.jpg" alt="Play video" width="240" height="180" border="10" />
+<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="240" height="180" border="10" />
 </a>
 </p>
 
