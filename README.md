@@ -145,12 +145,16 @@ Comes preinstalled.
 [comment]: <> (<img src="https://i.imgur.com/F633xwk.png" width="320">)
 
 [comment]: <> (<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>)
-<img src="https://i.imgur.com/N1st6uO.png" width="320">
-<br><i>Eight different ladybug species in iNaturalist dataset.</i>
+
+[comment]: <> (<img src="https://i.imgur.com/N1st6uO.png" width="320">)
+
+[comment]: <> (<br><i>Eight different ladybug species in iNaturalist dataset.</i>)
 <br><br><img src="https://i.imgur.com/etoaz2b.png" width="320">
 <br><i>Samples of images from the CIFAR-100 dataset.</i>
-<br><br><img src="https://i.imgur.com/E1v1jvm.jpg" width="320">
-<br><i>Samples of images from the Tiny-ImageNet dataset.</i>
+
+[comment]: <> (<br><br><img src="https://i.imgur.com/E1v1jvm.jpg" width="320">)
+
+[comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
 </p>
 
 ## 2. Atari Arcade
