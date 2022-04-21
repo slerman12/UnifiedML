@@ -141,6 +141,8 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 Comes preinstalled.
 
 <p align="left">
+<img src="https://i.imgur.com/F633xwk.png" width="320">
+<br><i>Alpaca or Llama? Donkey or mule? Roses or kale?</i>
 <img src="https://i.imgur.com/6lfZzg6.png" width="320">
 <br><i>Eight different ladybug species in iNaturalist dataset.</i>
 </p>
