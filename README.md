@@ -148,9 +148,9 @@ Comes preinstalled.
 <img src="https://i.imgur.com/N1st6uO.png" width="320">
 <br><i>Eight different ladybug species in iNaturalist dataset.</i>
 <br><br><img src="https://i.imgur.com/etoaz2b.png" width="320">
-<br><i>Samples of images from CIFAR-100.</i>
+<br><i>Samples of images from the CIFAR-100 dataset.</i>
 <br><br><img src="https://i.imgur.com/E1v1jvm.jpg" width="320">
-<br><i>Samples of images from Tiny-ImageNet.</i>
+<br><i>Samples of images from the Tiny-ImageNet dataset.</i>
 </p>
 
 ## 2. Atari Arcade
