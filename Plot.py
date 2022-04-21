@@ -5,10 +5,12 @@
 import json
 import re
 import sys
-import warnings
 from typing import MutableSequence
 import glob
 from pathlib import Path
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import os
 os.environ['NUMEXPR_MAX_THREADS'] = '8'
