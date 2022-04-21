@@ -190,7 +190,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
 <img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
 </a>
-<br><i>Click to play</i>
+<br><a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs"><i>Click to play.</i></a>
 </p>
 
 # :file_cabinet: Key files
