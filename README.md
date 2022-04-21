@@ -141,9 +141,11 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 Comes preinstalled.
 
 <p align="left">
-<img src="https://i.imgur.com/F633xwk.png" width="320">
-<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>
-<img src="https://i.imgur.com/6lfZzg6.png" width="320">
+
+[comment]: <> (<img src="https://i.imgur.com/F633xwk.png" width="320">)
+
+[comment]: <> (<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>)
+<img src="https://i.imgur.com/N1st6uO.png" width="320">
 <br><i>Eight different ladybug species in iNaturalist dataset.</i>
 </p>
 
@@ -481,6 +483,8 @@ Please support financially: <br>
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/) <br>
 
 We are a nonprofit, single-PhD student team. If possible, compute resources appreciated.
+
+[comment]: <> (Our work will go towards helping nature through AI, making academic-level research accessible to all, and simplifying, bridging, and unifying the vast array of problem domains in our field.)
 
 Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
