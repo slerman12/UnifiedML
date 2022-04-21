@@ -142,7 +142,7 @@ Comes preinstalled.
 
 <p align="left">
 <img src="https://i.imgur.com/F633xwk.png" width="320">
-<br><i>Alpaca or Llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>
+<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>
 <img src="https://i.imgur.com/6lfZzg6.png" width="320">
 <br><i>Eight different ladybug species in iNaturalist dataset.</i>
 </p>
