@@ -142,7 +142,7 @@ Comes preinstalled.
 
 ## 2. Atari Arcade
 
-<img src="https://i.imgur.com/ppm4LJw.jpg" width="100" height="100">
+<img src="https://i.imgur.com/ppm4LJw.jpg" height="100">
 
 You can use ```AutoROM``` if you accept the license.
 
@@ -159,7 +159,9 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 ## 3. DeepMind Control
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/rAai4QzcYbs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
+<img src="https://img.youtube.com/vi/rAai4QzcYbs/3.jpg" alt="Play video" width="240" height="180" border="10" />
+</a>
 
 Download MuJoCo from here: https://mujoco.org/download.
 
