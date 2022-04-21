@@ -204,9 +204,7 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 
 ### RL
 
-All agents generalize to all tasks.
-
-Humanoid example:
+Humanoid walking example:
 ```console
 python Run.py task=dmc/humanoid_walk
 ```
