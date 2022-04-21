@@ -160,7 +160,7 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
 ## 3. DeepMind Control
-See video here:
+Video of different tasks in action:
 
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
