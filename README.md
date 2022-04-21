@@ -142,11 +142,6 @@ Comes preinstalled.
 
 ## 2. Atari Arcade
 
-<p align="left">
-<img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
-<br><i>A collection of retro Atari games.</i>
-</p>
-
 You can use ```AutoROM``` if you accept the license.
 
 ```console
@@ -160,14 +155,12 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-## 3. DeepMind Control
-
 <p align="left">
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
-<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
-</a>
-<br><i>Video of different tasks in action.</i>
+<img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
+<br><i>A collection of retro Atari games.</i>
 </p>
+
+## 3. DeepMind Control
 
 Download MuJoCo from here: https://mujoco.org/download.
 
@@ -191,6 +184,14 @@ pip install --user dm_control
 ```
 
 to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
+
+
+<p align="left">
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
+<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
+</a>
+<br><i>Video of different tasks in action.</i>
+</p>
 
 # :file_cabinet: Key files
 
