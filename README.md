@@ -162,6 +162,14 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 ## 3. DeepMind Control
 
+<p align="left">
+<i>Video of different tasks in action.</i><br>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
+<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
+</a>
+<br><a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs"><i>:arrow_forward: Click to play</i></a>
+</p>
+
 Download MuJoCo from here: https://mujoco.org/download.
 
 Make a ```.mujoco``` folder in your home directory:
@@ -184,14 +192,6 @@ pip install --user dm_control
 ```
 
 to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
-
-<p align="left">
-<i>Video of different tasks in action.</i><br>
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
-<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="300" border="10" />
-</a>
-<br><a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs"><i>:arrow_forward: Click to play</i></a>
-</p>
 
 # :file_cabinet: Key files
 
