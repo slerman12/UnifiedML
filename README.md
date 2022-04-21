@@ -170,7 +170,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 <br><i>A collection of retro Atari games.</i>
 </p>
 
-You can use ```AutoROM``` if you accept the license.
+You can install via ```AutoROM``` if you accept the license.
 
 ```console
 pip install autorom
