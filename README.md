@@ -143,7 +143,7 @@ Comes preinstalled.
 ## 2. Atari Arcade
 
 <p align="left">
-<img src="https://i.imgur.com/ppm4LJw.jpg" width="300" >
+<img src="https://i.imgur.com/ppm4LJw.jpg" width="300" border="10">
 </p>
 
 You can use ```AutoROM``` if you accept the license.
