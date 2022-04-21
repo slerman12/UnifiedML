@@ -161,7 +161,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 [comment]: <> (No additional preparation needed. All datasets download automatically.)
 
-All datasets come preinstalled, are automatically downloaded when called.
+All datasets come preinstalled.
 
 ## 2. Atari Arcade
 
