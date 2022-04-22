@@ -257,16 +257,17 @@ DQN Agent on MNIST:
 python Run.py task=classify/mnist RL=false
 ```
 
-[comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```.)
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```.
 
-[comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;**experimental**&#41;. This is pure-RL training and actually works.)
+Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**). This is pure-RL training and actually works.
 
-with a simple CNN and some small random crop transforms.
+[comment]: <> (with a simple CNN and some small random crop transforms.)
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification.
-Without ```RL=false```, an **Augmented RL** update joins the supervised learning update s.t. ```reward = -error```.
+[comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification.)
 
-**Pure-RL** Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (*experimental*). This is pure-RL training and actually works.
+[comment]: <> (Without ```RL=false```, an **Augmented RL** update joins the supervised learning update s.t. ```reward = -error```.)
+
+[comment]: <> (**Pure-RL** Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;*experimental*&#41;. This is pure-RL training and actually works.)
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
@@ -353,6 +354,7 @@ ResNet18 on CIFAR-10:
 python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
 ```
 
+[comment]: <> (TODO: MiniViT, ViT)
 Atari with ViT:
 
 ```console
