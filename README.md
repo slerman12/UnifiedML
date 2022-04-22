@@ -257,7 +257,7 @@ DQN Agent on MNIST:
 python Run.py task=classify/mnist RL=false
 ```
 
-*Note:* ```RL=false``` sets training to **Standard** supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```.
+*Note:* ```RL=false``` sets training to **Standard** supervised-only classification. Without ```RL=false```, an **Additional RL** update joins the supervised learning update s.t. ```reward = -error```.
 
 Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (*experimental*). This is **Pure-RL** training and actually works.
 
