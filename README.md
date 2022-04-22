@@ -261,7 +261,7 @@ python Run.py task=classify/mnist RL=false
 
 [comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;**experimental**&#41;. This is pure-RL training and actually works.)
 
-which scores 99% with a simple CNN and small random crops by default.
+which scores 99% with a simple CNN and small random crops during training by default.
 
 *Note:* ```RL=false``` sets training to standard supervised-only classification.
 
