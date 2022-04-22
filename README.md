@@ -211,7 +211,7 @@ pip install --user dm_control
 to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
 <p align="left">
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs"><i>:arrow_forward: Click to play</i></a><br>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank"><i>:arrow_forward: Click to play</i></a><br>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
 <img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="310" />
 </a>
@@ -366,7 +366,7 @@ python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=t
 A GAN with a CNN Discriminator:
 
 ```console
-python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' recipes.critic.trunk._target_=Blocks.Architectures.Null
+python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.
