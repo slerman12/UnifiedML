@@ -263,9 +263,7 @@ python Run.py task=classify/mnist RL=false
 
 which scores 99% with a simple CNN and small random crop transforms by default.
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification.
-
-**Augmented RL** Without ```RL=false```, an augmented RL update joins the supervised learning update s.t. ```reward = -error```.
+*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an augmented RL update joins the supervised learning update s.t. ```reward = -error```.
 
 **Pure-RL** Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (*experimental*). This is pure-RL training and actually works.
 
