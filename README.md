@@ -261,9 +261,7 @@ python Run.py task=classify/mnist RL=false
 
 [comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;*experimental*&#41;. This is **Pure-RL** training and actually works.)
 
-*Note:* ```RL=false``` sets training to **Standard** supervised-only classification. 
-
-Without ```RL=false```, an **Augmented RL** update joins the supervised learning update s.t. ```reward = -error```.
+*Note:* ```RL=false``` sets training to **Standard** supervised-only classification. Without ```RL=false```, an **Augmented RL** update joins the supervised learning update s.t. ```reward = -error```.
 
 Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (*experimental*). This is **Pure-RL** training and actually works.
 
