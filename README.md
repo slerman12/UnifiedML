@@ -518,7 +518,7 @@ I am always looking for collaborators. Don't hesitate to volunteer in any way to
 
 # Note
 
-While UnifiedML in its current version is a fully-realized, self-complete library, we note that it is also a ground for expansion beyond what is presented, with more performative breadth and depth on the way.
+*While* UnifiedML *in its current version is a fully-realized, self-complete library, we note that it is also a ground for expansion beyond what is presented, with more performative breadth and depth on the way.*
 
 ### If you are only interested in the RL portion,
 
