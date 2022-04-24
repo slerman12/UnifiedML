@@ -345,15 +345,8 @@ classify_high = {
     'classify': 1
 }
 
-low = {}
-low.update(atari_random)
-low.update(dmc_low)
-low.update(classify_low)
-
-high = {}
-high.update(atari_human)
-high.update(dmc_high)
-high.update(classify_high)
+low = {**atari_random, **dmc_low, **classify_low}
+high = {**atari_human, **dmc_high, **classify_high}
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+defaults:
+  - Hyperparams/args
+  - _self_
+  - override hydra/launcher: null
+
+conda: 'source /scratch/slerman/miniconda/bin/activate agi'
+num_cpus: 4
+num_gpus: 1
+mem: 25
+lab: false
+
