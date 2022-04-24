@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import subprocess
 import sys
+from pathlib import Path
 
 import hydra
 
@@ -20,11 +21,14 @@ def getattr_recursive(__o, name):
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
+    path = args.logger.path.replace('Agents.', '')
+    Path(path).mkdir(parents=True, exist_ok=True)
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
 {'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
-#SBATCH -t 5-00:00:00 -o {args.logger.path}.log -J {args.experiment}
+#SBATCH -t 5-00:00:00 -o {path}log -J {args.experiment}
 #SBATCH --mem={args.mem}gb 
 {'#SBATCH -C K80|V100' if args.num_gpus else ''}
 {args.conda}
