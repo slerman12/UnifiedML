@@ -166,6 +166,9 @@ recipes:
       input_shape: null
 
 hydra:
+  run:
+    dir: ./
   sweep:
     dir: ./
     subdir: ./
+

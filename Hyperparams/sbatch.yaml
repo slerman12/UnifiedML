@@ -10,6 +10,12 @@ lab: false
 task: ${suite}/${task_name}
 
 hydra:
+  run:
+    dir: ./
   sweep:
     dir: ./
     subdir: ./
+  launcher:
+    _target_: hydra._internal.core_plugins.basic_launcher.BasicLauncher
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
