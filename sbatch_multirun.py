@@ -35,7 +35,8 @@ python3 Run.py {' '.join([f'{key}={getattr_recursive(args, key)}' for key in sys
     with open("sbatch_script", "w") as file:
         file.write(script)
 
-    print(script)
+    with open("sbatch_script", "r") as file:
+            print(file.read())
 
     # Launch script (with error checking / re-launching)
     while True:
