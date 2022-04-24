@@ -24,6 +24,9 @@ def main(args):
     path = args.logger.path.replace('Agents.', '')
     Path(path).mkdir(parents=True, exist_ok=True)
 
+    if 'transform' in sys_args:
+        args.transform = f'"{args.transform}"'
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
