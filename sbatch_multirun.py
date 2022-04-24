@@ -18,7 +18,7 @@ def getattr_recursive(__o, name):
     return __o
 
 
-@hydra.main(config_path='./', config_name='sbatch')
+@hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}'
@@ -28,7 +28,7 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {'#SBATCH -C K80|V100' if args.num_gpus else ''}
 {args.conda}
-python3 Run.py {' '.join([f'{key}={getattr_recursive(args.Hyperparams, key)}' for key in sys_args if key not in meta])}
+python3 Run.py {' '.join([f'{key}={getattr_recursive(args, key)}' for key in sys_args if key not in meta])}
 """
 
     # Write script
