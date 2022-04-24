@@ -8,4 +8,6 @@ mem: 25
 lab: false
 
 hydra:
-  output_subdir: null
+  sweep:
+    dir: ./
+    subdir: ./
