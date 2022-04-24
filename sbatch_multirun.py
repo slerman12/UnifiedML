@@ -25,7 +25,7 @@ def main(args):
     Path(path).mkdir(parents=True, exist_ok=True)
 
     if 'task' in sys_args:
-        setattr(args, 'task', f'{args.suite}/{args.task_name}'.lower())
+        args.task = args.task.lower()
 
     if 'transform' in sys_args:
         args.transform = f'"{args.transform}"'.replace("'", '')
