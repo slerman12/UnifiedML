@@ -16,6 +16,8 @@ meta = ['conda', 'num_gpus', 'mem', 'lab', '-m', 'task']
 def getattr_recursive(__o, name):
     for key in name.split('.'):
         __o = getattr(__o, key)
+    if isinstance(__o, str):
+        __o = f'"{__o}"'
     return __o
 
 
@@ -32,7 +34,7 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {'#SBATCH -C K80|V100' if args.num_gpus else ''}
 {args.conda}
-python3 Run.py {' '.join([f'"{key}={getattr_recursive(args, key)}"' for key in sys_args if key not in meta])}
+python3 Run.py {' '.join([f'{key}={getattr_recursive(args, key)}' for key in sys_args if key not in meta])}
 """
 
     # Write script
