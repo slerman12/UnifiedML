@@ -21,7 +21,7 @@ def getattr_recursive(__o, name):
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
-    path = args.path.replace('Agents.', '')
+    path = args.logger.path.replace('Agents.', '')
     Path(path).mkdir(parents=True, exist_ok=True)
 
     if 'task' in sys_args:
