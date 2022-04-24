@@ -35,7 +35,7 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {'#SBATCH -C K80|V100' if args.num_gpus else ''}
 {args.conda}
-python3 Run.py {' '.join([f'{key}="{getattr_recursive(args, key)}"' for key in sys_args if key not in meta])}
+python3 Run.py {' '.join([f'{key}={getattr_recursive(args, key)}' for key in sys_args if key not in meta])}
 """
 
     # Write script
