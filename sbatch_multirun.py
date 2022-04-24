@@ -9,7 +9,7 @@ import hydra
 
 
 sys_args = [arg.split('=')[0] for arg in sys.argv[1:]]
-meta = ['conda', 'num_workers + 1', 'num_gpus', 'mem', 'lab', '-m']
+meta = ['conda', 'num_gpus', 'mem', 'lab', '-m', 'task']
 
 
 def getattr_recursive(__o, name):
