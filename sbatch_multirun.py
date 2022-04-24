@@ -21,7 +21,7 @@ def getattr_recursive(__o, name):
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
     script = f"""#!/bin/bash
-#SBATCH -c {args.num_workers + 1}'
+#SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
 {'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
 #SBATCH -t 5-00:00:00 -o {args.logger.path}.log -J {args.experiment}
