@@ -1,5 +1,5 @@
 defaults:
-  - ./Hyperparams/args
+  - args: Hyperparams/args
   - _self_
 
 conda: 'source /scratch/slerman/miniconda/bin/activate agi'
