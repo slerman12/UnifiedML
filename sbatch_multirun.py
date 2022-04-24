@@ -16,6 +16,7 @@ meta = ['conda', 'num_gpus', 'mem', 'lab', '-m', 'task']
 def getattr_recursive(__o, name):
     for key in name.split('.'):
         __o = getattr(__o, key)
+    print(__o, type(__o))
     return __o
 
 
