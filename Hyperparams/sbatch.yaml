@@ -7,7 +7,7 @@ conda: 'source /scratch/slerman/miniconda/bin/activate agi'
 num_gpus: 1
 mem: 25
 lab: false
-task: ${suite}/${task_name}
+path: ./Benchmarking/${experiment}/${Agent}/${suite}/
 
 hydra:
   sweep:

@@ -21,11 +21,11 @@ def getattr_recursive(__o, name):
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
-    path = args.logger.path.replace('Agents.', '')
+    path = args.path.replace('Agents.', '')
     Path(path).mkdir(parents=True, exist_ok=True)
 
     if 'task' in sys_args:
-        args.task = args.task.lower()
+        setattr(args, 'task', f'{args.suite}/{args.task_name}'.lower())
 
     if 'transform' in sys_args:
         args.transform = f'"{args.transform}"'.replace("'", '')
