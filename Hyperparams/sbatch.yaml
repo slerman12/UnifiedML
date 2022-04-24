@@ -1,6 +1,7 @@
 defaults:
   - args
   - _self_
+  - task@_global_: atari/pong
 
 conda: 'source /scratch/slerman/miniconda/bin/activate agi'
 num_gpus: 1
