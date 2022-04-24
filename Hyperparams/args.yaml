@@ -44,7 +44,7 @@ log_per_episodes: 1
 # Plotting
 plot_per_steps: 10000
 # Misc
-device: ??? # To be specified later
+device: null
 parallel: false
 num_workers: 4
 # Experiment
@@ -164,3 +164,8 @@ recipes:
     q_head:
       _target_: null
       input_shape: null
+
+hydra:
+  sweep:
+    dir: ./
+    subdir: ./

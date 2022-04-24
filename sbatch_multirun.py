@@ -34,7 +34,7 @@ def main(args):
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
 {'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
-#SBATCH -t 5-00:00:00 -o {path}log -J {args.experiment}
+#SBATCH -t 5-00:00:00 -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
 #SBATCH --mem={args.mem}gb 
 {'#SBATCH -C K80|V100' if args.num_gpus else ''}
 {args.conda}
