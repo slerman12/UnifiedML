@@ -25,7 +25,7 @@ def main(args):
     Path(path).mkdir(parents=True, exist_ok=True)
 
     if 'transform' in sys_args:
-        args.transform = f'"{args.transform}"'
+        args.transform = f'"{args.transform}"'.strip("'")
 
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
