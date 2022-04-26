@@ -32,3 +32,5 @@ p.expect('VPN>')
 # To disconnect:
 # p = spawn('/opt/cisco/anyconnect/bin/vpn disconnect')
 # p.expect('b')
+
+print('Connected to VPN\nFor Bluehive:\nssh slerman@bluehive.circ.rochester.edu')
