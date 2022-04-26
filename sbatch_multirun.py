@@ -36,7 +36,7 @@ def main(args):
 {'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
 #SBATCH -t 5-00:00:00 -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
 #SBATCH --mem={args.mem}gb 
-{'#SBATCH -C K80|V100' if args.num_gpus else ''}
+{f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {args.conda}
 python3 Run.py {' '.join([f'{key}={getattr_recursive(args, key)}' for key in sys_args if key not in meta])}
 """

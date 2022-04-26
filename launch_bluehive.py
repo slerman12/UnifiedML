@@ -38,10 +38,19 @@ except Exception:
     pass
 
 # Define sweep
-sweep = ['task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
+# sweep = ['task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+#          'Eyes=Blocks.Architectures.ResNet18 '
+#          'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
+#          'parallel=true num_workers=20 num_gpus=4 mem=100 '
+#          'plot_per_steps=0']
+sweep = ['task=dmc/cheetah_run,atari/pong experiment="K80" train_steps=100000 '
+         'num_workers=4 num_gpus=1 mem=20 gpu="K80" '
+         'plot_per_steps=0',
+         'task=dmc/cheetah_run,atari/pong experiment="V100" train_steps=100000 '
+         'num_workers=4 num_gpus=1 mem=20 gpu="V100" '
+         'plot_per_steps=0',
+         'task=dmc/cheetah_run,atari/pong experiment="CPU" train_steps=100000 '
+         'num_workers=4 num_gpus=0 mem=20 '
          'plot_per_steps=0']
 
 # Launch on Bluehive
