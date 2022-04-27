@@ -30,6 +30,9 @@ def main(args):
     if 'transform' in sys_args:
         args.transform = f'"{args.transform}"'.replace("'", '')
 
+    if 'experiment' in sys_args:
+        args.experiment = f'"{args.experiment}"'
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
