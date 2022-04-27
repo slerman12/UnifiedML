@@ -20,14 +20,18 @@ else:
     with open('pass', 'w') as file:
         file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
 
-p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
-p.expect('Username: ')
-p.sendline('')
-p.expect('Password: ')
-p.sendline(password)
-p.expect('Second Password: ')
-p.sendline('push')
-p.expect('VPN>')
+# Connect VPN
+try:
+    p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
+    p.expect('Username: ')
+    p.sendline('')
+    p.expect('Password: ')
+    p.sendline(password)
+    p.expect('Second Password: ')
+    p.sendline('push')
+    p.expect('VPN>')
+except Exception:
+    pass
 
 # To disconnect:
 # p = spawn('/opt/cisco/anyconnect/bin/vpn disconnect')

@@ -22,7 +22,7 @@ else:
     with open('pass', 'w') as file:
         file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
 
-conda = 'source /scratch/slerman/miniconda/bin/activate agi'
+conda = 'source /scratch/slerman/miniconda/bin/activate t1'
 
 # Connect VPN
 try:
@@ -43,13 +43,13 @@ except Exception:
 #          'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
 #          'parallel=true num_workers=20 num_gpus=4 mem=100 '
 #          'plot_per_steps=0']
-sweep = ['task=dmc/cheetah_run,atari/pong experiment="K80" train_steps=100000 '
+sweep = ['task=dmc/cheetah_run experiment="K80" train_steps=100000 '
          'num_workers=4 num_gpus=1 mem=20 gpu="K80" '
          'plot_per_steps=0',
-         'task=dmc/cheetah_run,atari/pong experiment="V100" train_steps=100000 '
+         'task=dmc/cheetah_run experiment="V100" train_steps=100000 '
          'num_workers=4 num_gpus=1 mem=20 gpu="V100" '
          'plot_per_steps=0',
-         'task=dmc/cheetah_run,atari/pong experiment="CPU" train_steps=100000 '
+         'task=dmc/cheetah_run experiment="CPU" train_steps=100000 '
          'num_workers=4 num_gpus=0 mem=20 '
          'plot_per_steps=0']
 
