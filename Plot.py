@@ -81,7 +81,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         datums = [experiment, suite.lower(), suite_task, agent]
         for i, spec in enumerate(specs):
             if spec is not None and not re.match('^(%s)+$' % '|'.join(spec), datums[i]):
-                print(experiment, datums[0])
+                print(spec, datums[i])
                 include = False
 
         if not include:
