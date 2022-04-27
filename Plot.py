@@ -150,7 +150,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                task_data['Agent'] = ')'.join('('.join(task_data.Agent.str.split('(').str[1:]).str.split(')').str[:-2])
+                task_data['Agent'] = ')'.join('('.join(task_data.Agent.str.split('(').str[1:]).str.split(')').str[:-1])
 
         row = i // num_cols
         col = i % num_cols
@@ -184,7 +184,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         tabular_normalized_median[agent][suite][task] = normalized.median()
                         continue
 
-        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax)
+        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+                     palette='pastel')
         ax.set_title(f'{title}')
 
         if 'classify' in suite.lower():
@@ -234,7 +235,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         ax = axs[col] if num_cols > 1 else axs
         hue_order = np.sort(task_data.Agent.unique())
 
-        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax)
+        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+                     palette='pastel')
         ax.set_title(f'{suite}')
 
         if suite.lower() == 'atari':
