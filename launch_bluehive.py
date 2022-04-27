@@ -43,8 +43,8 @@ except Exception:
 #          'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
 #          'parallel=true num_workers=20 num_gpus=4 mem=100 '
 #          'plot_per_steps=0']
-sweep = ['task=dmc/cheetah_run,atari/pong,classify/mnist experiment="agi_K80_test" train_steps=100000 '
-         'num_workers=4 num_gpus=1 mem=20 gpu="K80" '
+sweep = ['task=dmc/cheetah_run,atari/pong,classify/mnist experiment="agi_A100_test" train_steps=100000 '
+         'num_workers=4 num_gpus=1 mem=20 gpu="A100" '
          'plot_per_steps=0']
 
 # Launch on Bluehive

@@ -10,9 +10,9 @@ dependencies:
   - jupyterlab=3.0.14
   - scikit-image=0.18.1
   - seaborn=0.11.2
-  - pytorch::pytorch
+  - pytorch::pytorch==1.11.0
   - pytorch::torchvision==0.12.0
-  - pytorch::torchaudio
+  - pytorch::torchaudio==0.11.0
   - pip:
       - dm-env
       - termcolor==1.1.0
