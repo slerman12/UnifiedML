@@ -30,6 +30,9 @@ def main(args):
     if 'transform' in sys_args:
         args.transform = f'"{args.transform}"'.replace("'", '')
 
+    if 'stddev_schedule' in sys_args:
+        args.stddev_schedule = f'"{args.stddev_schedule}"'
+
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
 
@@ -41,7 +44,7 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {args.conda}
-python3 Run.py {' '.join([f'{key}={getattr_recursive(args, key)}' for key in sys_args if key not in meta])}
+python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key)}'" for key in sys_args if key not in meta])}
 """
 
     # Write script

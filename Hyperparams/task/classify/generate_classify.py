@@ -18,7 +18,7 @@ if __name__ == '__main__':
     
 suite: classify
 train_steps: 200000
-stddev_schedule: [1.0,0.1,100000]
+stddev_schedule: 'linear(1.0,0.1,100000)'
 frame_stack: null
 action_repeat: null
 nstep: 0

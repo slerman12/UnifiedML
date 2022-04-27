@@ -43,10 +43,10 @@ except Exception:
 #          'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
 #          'parallel=true num_workers=20 num_gpus=4 mem=100 '
 #          'plot_per_steps=0']
-sweep = [f'stddev_schedule={stddev_schedule} experiment="{stddev_schedule}" '
+sweep = [f'"stddev_schedule={stddev_schedule}" "experiment={stddev_schedule}" '
          'num_workers=4 num_gpus=1 mem=20 gpu="V100" '
-         'plot_per_steps=0' for stddev_schedule in ["[1.0,0.1,20000]", "[0.5,0.1,20000]",
-                                                    "[1.0,0.4,20000]", "[1.0,0.1,40000]"]]
+         'plot_per_steps=0' for stddev_schedule in ["'linear(1.0,0.1,20000)'", "'linear(0.5,0.1,20000)'",
+                                                    "'linear(1.0,0.4,20000)'", "'linear(1.0,0.1,40000)'"]]
 
 # Launch on Bluehive
 try:
