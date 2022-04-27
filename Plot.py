@@ -183,11 +183,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         tabular_normalized_mean[agent][suite][task] = normalized.mean()
                         tabular_normalized_median[agent][suite][task] = normalized.median()
                         continue
-        import matplotlib as mpl
-        font_paths = mpl.font_manager.findSystemFonts()
-        font_objects = mpl.font_manager.createFontList(font_paths)
-        font_names = [f.name for f in font_objects]
-        print(font_names)
+
+        sns.set(font="Verdana", font_size=20)
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette='pastel')
         ax.set_title(f'{title}')
