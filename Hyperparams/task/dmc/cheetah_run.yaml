@@ -7,7 +7,7 @@ action_repeat: 2
 frame_stack: 3
 nstep: 3
 task_name: cheetah_run
-    
+
 hydra:
     job:
         env_set:

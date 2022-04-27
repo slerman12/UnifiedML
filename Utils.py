@@ -279,14 +279,11 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
                 model.optim.zero_grad(set_to_none=True)
 
 
-# Increment/decrement a value in proportion to a step count based on a string-formatted schedule
+# Increment/decrement a value in proportion to a step count based on a list-ordered schedule
 def schedule(schedule, step):
-    try:
-        return float(schedule)
-    except ValueError:
-        match = re.match(r'linear\((.+),(.+),(.+)\)', schedule)
-        if match:
-            start, stop, duration = [float(g) for g in match.groups()]
-            mix = np.clip(step / duration, 0.0, 1.0)
-            return (1.0 - mix) * start + mix * stop
+    if isinstance(schedule, (int, float)):
+        return schedule
+    start, stop, duration = schedule
+    mix = np.clip(step / duration, 0.0, 1.0)
+    return (1.0 - mix) * start + mix * stop
 
