@@ -37,33 +37,13 @@ try:
 except Exception:
     pass
 
-# Define sweep
-# sweep = ['task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-#          'Eyes=Blocks.Architectures.ResNet18 '
-#          'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
-#          'parallel=true num_workers=20 num_gpus=4 mem=100 '
-#          'plot_per_steps=0']
-sweep = [f'"experiment=learn-after20k-per1" learn_per_steps=1 '
-         f'num_workers=4 num_gpus=1 mem=20 gpu="K80" learn_steps_after={steps} '
-         'plot_per_steps=0']
-
-# Launch on Bluehive
+# squeue
 try:
     s = pxssh.pxssh()
     s.login('bluehive.circ.rochester.edu', username, password)
-    s.sendline(f'cd /scratch/{username}/UnifiedML')     # Run a command
+    s.sendline(f'squeue -u {username}')                 # Run a command
     s.prompt()                                          # Match the prompt
     print(s.before)                                     # Print everything before the prompt.
-    s.sendline('git pull origin master')
-    s.prompt()
-    print(s.before)
-    s.sendline(conda)
-    s.prompt()
-    print(s.before)
-    for hyperparams in sweep:
-        s.sendline(f'python sbatch_multirun.py -m {hyperparams} conda="{conda}"')
-        s.prompt()
-        print(s.before)
     s.logout()
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")
