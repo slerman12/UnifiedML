@@ -82,10 +82,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if not include_train and eval.lower() != 'eval':
             include = False
 
-        datums = [experiment, suite.lower(), suite_task, agent]
+        datums = [experiment, agent, suite.lower(), suite_task]
         for i, spec in enumerate(specs):
             if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', '\(').replace(')', '\)'),
                                                  datums[i]):
+                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', '\(').replace(')', '\)'),
+                                       datums[i]):
+                    break
                 include = False
 
         if not include:
