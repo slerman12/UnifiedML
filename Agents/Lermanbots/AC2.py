@@ -43,8 +43,7 @@ class AC2Agent(torch.nn.Module):
         self.ema = ema
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
-        self.num_actors = num_actors  # Num actors in ensemble
-        self.num_actions = num_actions  # Num actions sampled per actor
+        self.num_actors, self.num_actions = num_actors, num_actions  # Num actors in ensemble, actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
@@ -64,7 +63,7 @@ class AC2Agent(torch.nn.Module):
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        self.action_selector = CategoricalCriticActor(stddev_schedule)
+        self.creator = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
         self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
@@ -88,7 +87,7 @@ class AC2Agent(torch.nn.Module):
                 else actor(obs, self.step).mean
 
             # DQN action selector is based on critic
-            Pi = self.action_selector(self.critic(obs, actions), self.step)
+            Pi = self.creator(self.critic(obs, actions), self.step)
 
             action = Pi.sample() if self.training \
                 else Pi.best
@@ -144,8 +143,7 @@ class AC2Agent(torch.nn.Module):
 
             # Inference
             candidates = self.actor(obs[instruction], self.step).mean
-            y_predicted = self.action_selector(self.critic(obs[instruction], candidates), self.step).best if self.RL \
-                else candidates[:, 0] if self.num_actors > 1 else candidates
+            y_predicted = self.creator(self.critic(obs[instruction], candidates), self.step).best
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -165,43 +163,41 @@ class AC2Agent(torch.nn.Module):
                                  'accuracy': correct.mean().item()})
 
             # (Auxiliary) reinforcement
-            if self.RL:
-                half = len(instruction) // 2
-                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
-                                               label[instruction][:half].long(), reduction='none')
-                action[instruction] = y_predicted.detach()
-                reward[instruction] = -mistake[:, None].detach()  # reward = -error
-                next_obs[instruction] = float('nan')
+            half = len(instruction) // 2
+            mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
+                                           label[instruction][:half].long(), reduction='none')
+            action[instruction] = y_predicted.detach()
+            reward[instruction] = -mistake[:, None].detach()  # reward = -error
+            next_obs[instruction] = float('nan')
 
-        # Reinforcement learning / generative modeling
-        if self.RL or self.generate:
-            # "Imagine"
+        # "Imagine"
 
-            # Generative modeling
-            if self.generate:
-                half = len(obs) // 2
-                candidates = self.actor(obs[:half], self.step).mean
-                generated_image = self.action_selector(self.critic(obs[:half], candidates), self.step).best
+        # Generative modeling
+        if self.generate:
+            half = len(obs) // 2
+            candidates = self.actor(obs[:half], self.step).mean
+            generated_image = self.creator(self.critic(obs[:half], candidates), self.step).best
 
-                action[:half], reward[:half] = generated_image, 0  # Discriminate
+            action[:half], reward[:half] = generated_image, 0  # Discriminate
 
-            # "Discern"
+        # "Discern"
 
-            # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
-                                                      obs, action, reward, discount, next_obs,
-                                                      self.step, self.num_actions, logs=logs)
+        # Critic loss
+        critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
+                                                  obs, action, reward, discount, next_obs,
+                                                  self.step, self.num_actions, logs=logs)
 
-            # Update critic
-            Utils.optimize(critic_loss,
-                           self.critic)
+        # Update critic
+        Utils.optimize(critic_loss,
+                       self.critic)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
                            self.encoder)
 
-        if self.generate or self.RL and not self.discrete:
+        # Reinforcement learning / generative modeling
+        if self.RL and not self.discrete or self.generate:
             # "Change" / "Grow"
 
             # Actor loss
