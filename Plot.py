@@ -358,7 +358,7 @@ high = {**atari_human, **dmc_high, **classify_high}
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
-    del args['_target_']
+    del args.plotting['_target_']
     plot(**args.plotting)
 
 
