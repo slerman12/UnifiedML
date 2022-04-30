@@ -9,7 +9,7 @@ from pathlib import Path
 import hydra
 
 
-sys_args = [arg.split('=')[0] for arg in sys.argv[1:]]
+sys_args = [arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]]
 meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m']
 
 
