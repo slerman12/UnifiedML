@@ -38,24 +38,26 @@ except Exception:
     pass
 
 # Define sweep
-sweep = ['task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="No-Contrastive" '
-         'Agent=Agents.ExperimentAgent '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
-         'plot_per_steps=0',
-         'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive" '
-         'Agent=Agents.ExperimentAgent half=true '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
-         'plot_per_steps=0',
-         'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="Third-Label" '
-         'Agent=Agents.ExperimentAgent third=true '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
-         'plot_per_steps=0']
+sweep = [
+    # 'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    # 'Eyes=Blocks.Architectures.ResNet18 '
+    # 'transform="{RandomHorizontalFlip:{}}" experiment="No-Contrastive" '
+    # 'Agent=Agents.ExperimentAgent '
+    # 'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    # 'plot_per_steps=0',
+    'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    'Eyes=Blocks.Architectures.ResNet18 '
+    'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive" '
+    'Agent=Agents.ExperimentAgent +agent.half=true '
+    'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    'plot_per_steps=0',
+    'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    'Eyes=Blocks.Architectures.ResNet18 '
+    'transform="{RandomHorizontalFlip:{}}" experiment="Third-Label" '
+    'Agent=Agents.ExperimentAgent +agent.third=true '
+    'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    'plot_per_steps=0'
+]
 # sweep = [f'"experiment=learn-after20k-per1" learn_per_steps=1 '
 #          f'num_workers=4 num_gpus=1 mem=20 gpu="K80" '
 #          'plot_per_steps=0']
@@ -80,6 +82,7 @@ try:
     s.prompt()
     print(s.before)
     for hyperparams in sweep:
+        print(f'python sbatch_multirun.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.sendline(f'python sbatch_multirun.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.prompt()
         print(s.before)
