@@ -12,6 +12,9 @@ from pathlib import Path
 import hydra
 
 import warnings
+
+from omegaconf import OmegaConf
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import os
@@ -358,7 +361,7 @@ high = {**atari_human, **dmc_high, **classify_high}
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
-    args.set_struct(False)
+    OmegaConf.set_struct(args, False)
     del args.plotting['_target_']
     plot(**args.plotting)
 
