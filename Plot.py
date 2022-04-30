@@ -358,8 +358,7 @@ high = {**atari_human, **dmc_high, **classify_high}
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
-    plot(args.path, args.plot_experiments, args.plot_agents, args.plot_suites, args.plot_tasks, args.steps,
-         args.plot_tabular)
+    plot(**args)
 
 
 if __name__ == "__main__":
