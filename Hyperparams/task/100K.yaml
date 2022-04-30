@@ -1,2 +1,0 @@
-train_steps: 100000
-stddev_schedule: 'linear(1.0,0.1,20000)'

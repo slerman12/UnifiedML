@@ -9,3 +9,4 @@ from Agents.Random import RandomAgent
 
 from Agents.Lermanbots.DPG import DPGAgent
 from Agents.Lermanbots.AC2 import AC2Agent
+from Agents.Lermanbots.Experiment import ExperimentAgent

@@ -482,6 +482,11 @@ Alternatively, you can call ```Plot.py``` directly
 ```console
 python Plot.py ExpName1 SomeOtherExp
 ```
+To do a hyperparameter sweep, just use the ```-m``` flag.
+```console
+python Run.py -m seed=1,2,3 ema=true,false
+```
+The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.
 
 # :bar_chart: Agents & Performances
 

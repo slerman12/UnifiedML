@@ -166,13 +166,13 @@ class Rand(nn.Module):
 
 
 # (Multi-dim) one-hot encoding
-def one_hot(x, num_classes):
+def one_hot(x, num_classes, null_value=0):
     # assert x.shape[-1] == 1
     x = x.squeeze(-1).unsqueeze(-1)  # Or this
     x = x.long()
     shape = x.shape[:-1]
-    zeros = torch.zeros(*shape, num_classes, dtype=x.dtype, device=x.device)
-    return zeros.scatter(len(shape), x, 1).float()
+    nulls = torch.full([*shape, num_classes], null_value, dtype=x.dtype, device=x.device)
+    return nulls.scatter(len(shape), x, 1).float()
 
 
 # Differentiable one_hot

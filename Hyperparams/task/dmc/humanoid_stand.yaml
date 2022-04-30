@@ -1,5 +1,4 @@
 defaults:
-      - 15M
       - _self_
     
 suite: dmc
@@ -7,6 +6,8 @@ action_repeat: 2
 frame_stack: 3
 nstep: 3
 task_name: humanoid_stand
+train_steps: 15000000
+stddev_schedule: 'linear(1.0,0.1,2000000)'
 lr: 8e-5
 trunk_dim: 100
 

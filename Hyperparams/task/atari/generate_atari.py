@@ -11,13 +11,14 @@ if __name__ == '__main__':
     for task in atari_tasks:
         f = open(f"./{task.lower()}.yaml", "w")
         f.write(r"""defaults:
-      - 100K
       - _self_
     
 suite: atari
 action_repeat: 4
 nstep: 10
 frame_stack: 3
+train_steps: 100000
+stddev_schedule: 'linear(1.0,0.1,20000)'
 task_name: {}""".format(task))
         f.close()
         out += ' "' + task.lower() + '"'
