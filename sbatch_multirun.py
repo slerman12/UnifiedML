@@ -10,7 +10,7 @@ import hydra
 
 
 sys_args = [arg.split('=')[0] for arg in sys.argv[1:]]
-meta = ['conda', 'num_gpus', 'gpu', 'mem', 'lab', '-m']
+meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m']
 
 
 def getattr_recursive(__o, name):
@@ -40,7 +40,8 @@ def main(args):
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
 {'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
-#SBATCH -t 5-00:00:00 -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
+{f'#SBATCH -p reserved --reservation={args.username}-{args.reservation_id}' if args.reservation_id else ''}
+#SBATCH -t {args.time} -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {args.conda}

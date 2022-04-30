@@ -39,8 +39,7 @@ except Exception:
 
 experiments = ["'linear(1.0,0.1,20000)'", "'linear(1.0,0.1,20000)learn-after'",
                "'linear(1.0,0.1,60000)learn-after'", "'linear(1.0,0.1,20000)learn-after20k'",
-               "'linear(1.0,0.1,20000)learn-after30k'", "'linear(1.0,0.1,20000)learn-after40k'",
-               "'linear(1.0,0.1,20000)learn-after50k'"]
+               "learn-after20k-per1"]
 
 # Plot experiments
 try:

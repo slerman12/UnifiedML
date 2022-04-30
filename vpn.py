@@ -38,3 +38,4 @@ except Exception:
 # p.expect('b')
 
 print('Connected to VPN\nFor Bluehive:\nssh slerman@bluehive.circ.rochester.edu')
+# https://github-profile-summary-cards.vercel.app/demo.html

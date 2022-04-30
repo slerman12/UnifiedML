@@ -22,7 +22,7 @@ else:
     with open('pass', 'w') as file:
         file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
 
-conda = 'source /scratch/slerman/miniconda/bin/activate agi'
+conda = f'source /scratch/{username}/miniconda/bin/activate agi'  # TODO different CUDA per GPU
 
 # Connect VPN
 try:
@@ -43,9 +43,15 @@ except Exception:
 #          'transform="{RandomHorizontalFlip:{}}" experiment="Supervised-RL" '
 #          'parallel=true num_workers=20 num_gpus=4 mem=100 '
 #          'plot_per_steps=0']
-sweep = [f'"experiment=learn-after20k-per1" learn_per_steps=1 '
-         f'num_workers=4 num_gpus=1 mem=20 gpu="K80" learn_steps_after={steps} '
-         'plot_per_steps=0']
+# sweep = [f'"experiment=learn-after20k-per1" learn_per_steps=1 '
+#          f'num_workers=4 num_gpus=1 mem=20 gpu="K80" '
+#          'plot_per_steps=0']
+sweep = [f'experiment=lab-test task=dmc/cheetah_run '
+         f'num_workers=4 num_gpus=1 mem=20 gpu="V100" '
+         'plot_per_steps=0 reservation_id=20220502']
+
+medium = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk']
+print(f'python Run.py -m Agent=Agents.AC2Agent num_actors=3,5 train_steps=500000 seed=1,2,3 task={",".join(["dmc/" + task for task in medium])} experiment=“Actor-Ensemble”')
 
 # Launch on Bluehive
 try:
@@ -61,7 +67,7 @@ try:
     s.prompt()
     print(s.before)
     for hyperparams in sweep:
-        s.sendline(f'python sbatch_multirun.py -m {hyperparams} conda="{conda}"')
+        s.sendline(f'python sbatch_multirun.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.prompt()
         print(s.before)
     s.logout()
