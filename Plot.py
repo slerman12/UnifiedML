@@ -230,15 +230,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         # High-low-normalize
-        for suite_task in task_data.Task.unique():
-            for t in low:
-                if t.lower() in suite_task.lower():
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-
-                        task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
-                        task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
-                        continue
+        # for suite_task in task_data.Task.unique():
+        #     for t in low:
+        #         if t.lower() in suite_task.lower():
+        #             with warnings.catch_warnings():
+        #                 warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+        #
+        #                 task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
+        #                 task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
+        #                 continue
 
         ax = axs[col] if num_cols > 1 else axs
         hue_order = np.sort(task_data.Agent.unique())
