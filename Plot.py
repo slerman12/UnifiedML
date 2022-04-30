@@ -9,6 +9,8 @@ from typing import MutableSequence
 import glob
 from pathlib import Path
 
+import hydra
+
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -354,16 +356,14 @@ low = {**atari_random, **dmc_low, **classify_low}
 high = {**atari_human, **dmc_high, **classify_high}
 
 
+@hydra.main(config_path='Hyperparams', config_name='args')
+def main(args):
+    plot(args.path, args.plot_experiments, args.plot_agents, args.plot_suites, args.plot_tasks, args.steps,
+         args.plot_tabular)
+
+
 if __name__ == "__main__":
-    # Experiments to plot
-    plot_experiments = sys.argv[1:] if len(sys.argv) > 1 else 'Exp'
-
-    # Optionally pass in number of steps to plot
-    steps = np.inf
-    if 'steps=' in sys.argv[-1]:
-        plot_experiments = plot_experiments[:-1]
-        steps = int(sys.argv[-1].split('=')[1])
-
-    path = f"./Benchmarking/{'_'.join(plot_experiments)}/Plots"
-
-    plot(path, plot_experiments=plot_experiments, plot_tabular=True, steps=steps)
+    for i in range(1, len(sys.argv)):
+        sys.argv[i] = 'plotting.' + sys.argv[i] if sys.argv[i][0] != "'" and sys.argv[i][0] != '"' \
+            else sys.argv[i][0] + 'plotting.' + sys.argv[i][1:]
+    main()
