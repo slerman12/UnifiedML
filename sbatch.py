@@ -2,120 +2,68 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import argparse
-import json
 import subprocess
+import sys
+from pathlib import Path
 
-# Common sweeps
-from Hyperparams.task.atari.generate_atari import atari_tasks
-from Hyperparams.task.dmc.generate_dmc import easy, medium, hard
-agents = [
-    # 'SPR',
-    'DQN',
-    # 'DrQV2',
-    # 'DQNDPG',
-    # 'DynoSOAR',
-    # 'Ascend', 'AC2'
-    # 'Random'
-          ]
-seeds = [1]
-experiment = 'Pure-RL'
+import hydra
 
-common_params = f'experiment={experiment} Eyes=Blocks.Architectures.ResNet18 ema=true weight_decay=0.01 ' \
-                + 'transform="{RandomHorizontalFlip:{p:0.5}}" plot_per_steps=0 parallel=true num_workers=18'
-classify_RL = 'true'
-classify_supervise = 'false'
-datasets = ['tinyimagenet']
 
-common_sweeps = {'atari': [f'task=atari/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in atari_tasks for agent in agents for seed in seeds],
-                 'dmc': [f'task=dmc/{task.lower()} Agent=Agents.{agent}Agent seed={seed} {common_params}' for task in easy + medium + hard for agent in agents for seed in seeds],
-                 'classify': [f'task=classify/{task.lower()} Agent=Agents.{agent}Agent RL={classify_RL} supervise={classify_supervise} seed={seed} {common_params}' for task in datasets for agent in agents for seed in seeds]}
-common_sweeps.update({'all': sum(common_sweeps.values(), [])})
-common_sweeps.update({'rl': common_sweeps['dmc'] + common_sweeps['atari']})
-common_sweeps.update({'continuous': common_sweeps['dmc'] + common_sweeps['classify']})
+sys_args = [arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]]
+meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m']
 
-sweep = {'ViRP':
-             [f'recipes.Encoder.Eyes=Blocks.Architectures.LermanBlocks.ViRP '
-                  f'experiment="ViRP-3" ema=true weight_decay=0.01 task=classify/{task.lower()} RL=False'
-                  for task in ['cifar10']]
-             + []
-                 # [f'recipes.Encoder.Eyes=Blocks.Architectures.ViT '
-                 #  f'experiment="ViT-3" ema=true weight_decay=0.01 task=classify/{task.lower()} RL=False'
-                 #  for task in ['cifar10']]
-         }
-common_sweeps.update(sweep)
-# +recipes.encoder.eyes.experiment='plus_in_concat_plus_mid'
 
-# Arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('--name', type=str, default="job",
-                    help='job name')
-parser.add_argument('--cpu', action='store_true', default=False,
-                    help='uses CPUs only, not GPUs')
-parser.add_argument('--lab', action='store_true', default=False,
-                    help='uses csxu')
-parser.add_argument('--K80', action='store_true', default=False,
-                    help='uses K80 GPU')
-parser.add_argument('--V100', action='store_true', default=False,
-                    help='uses V100 GPU')
-parser.add_argument('--A100', action='store_true', default=False,
-                    help='uses A100 GPU')
-parser.add_argument('--ANY_BIG', action='store_true', default=False,
-                    help='uses K80, V100, or A100 GPU')
-parser.add_argument('--ANY_BIGish', action='store_true', default=False,
-                    help='uses K80 or V100 GPU, no A100')
-parser.add_argument('--num-cpus', type=int, default=20,
-                    help='how many CPUs to use')
-parser.add_argument('--num-gpus', type=int, default=4,
-                    help='how many GPUs to use')
-parser.add_argument('--mem', type=int, default=25,
-                    help='memory to request')
-parser.add_argument('--file', type=str, default="Run.py",
-                    help='file to run')
-parser.add_argument('--params', type=str, default="",
-                    help='params to pass into file')
-parser.add_argument('--sweep_name', type=str, default="",
-                    help='a common sweep to run')
-args = parser.parse_args()
+def getattr_recursive(__o, name):
+    for key in name.split('.'):
+        __o = getattr(__o, key)
+    return __o
 
-if len(args.sweep_name) > 0 and args.sweep_name in common_sweeps:
-    args.params = common_sweeps[args.sweep_name]
-elif args.params[0] == '[':
-    args.params = json.loads(args.params)
-else:
-    args.params = [args.params]
 
-# Sweep
-for i, param in enumerate(args.params):
-    K80 = args.K80
-    # if len(args.sweep_name) > 0 and args.sweep_name in common_sweeps:
-    #     K80 = True if 'task=dmc/' in param.lower() else args.K80
+@hydra.main(config_path='./Hyperparams', config_name='sbatch')
+def main(args):
+    path = args.logger.path.replace('Agents.', '')
+    Path(path).mkdir(parents=True, exist_ok=True)
 
-    slurm_script = f"""#!/bin/bash
-#SBATCH {"-c {}".format(args.num_cpus) if args.cpu else "-p gpu -c {}".format(args.num_cpus)}
-{"" if args.cpu else f"#SBATCH --gres=gpu:{args.num_gpus}"}
-{"#SBATCH -p csxu -A cxu22_lab" if args.cpu and args.lab else f"#SBATCH -p csxu -A cxu22_lab --gres=gpu:{args.num_gpus}" if args.lab else ""}
-#SBATCH -t {"15-00:00:00" if args.lab else "5-00:00:00"} -o ./Benchmarking/{args.name}_{i}.log -J {args.name}_{i}
+    if 'task' in sys_args:
+        args.task = args.task.lower()
+
+    if 'transform' in sys_args:
+        args.transform = f'"{args.transform}"'.replace("'", '')
+
+    if 'stddev_schedule' in sys_args:
+        args.stddev_schedule = f'"{args.stddev_schedule}"'
+
+    if 'experiment' in sys_args:
+        args.experiment = f'"{args.experiment}"'
+
+    script = f"""#!/bin/bash
+#SBATCH -c {args.num_workers + 1}
+{f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
+{'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
+{f'#SBATCH -p reserved --reservation={args.username}-{args.reservation_id}' if args.reservation_id else ''}
+#SBATCH -t {args.time} -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
 #SBATCH --mem={args.mem}gb 
-{"#SBATCH -C K80" if K80 else "#SBATCH -C V100" if args.V100 else "#SBATCH -C A100" if args.A100 else "#SBATCH -C K80|V100|A100" if args.ANY_BIG else "#SBATCH -C K80|V100" if args.ANY_BIGish else ""}
-source /scratch/slerman/miniconda/bin/activate agi
-python3 {args.file} {param}
+{f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
+{args.conda}
+python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
 """
 
     # Write script
-    with open("sbatch_script", "w") as file:
-        file.write(slurm_script)
+    with open("./sbatch_script", "w") as file:
+        file.write(script)
 
     # Launch script (with error checking / re-launching)
-    success = "error"
-    while "error" in success:
+    while True:
         try:
             success = str(subprocess.check_output(['sbatch {}'.format("sbatch_script")], shell=True))
             print(success[2:][:-3])
-            if "error" in success:
-                print("Errored... trying again")
+            if "error" not in success:
+                break
         except Exception:
-            success = "error"
-            if "error" in success:
-                print("Errored... trying again")
+            pass
+        print("Errored... trying again")
     print("Success!")
+
+
+if __name__ == '__main__':
+    main()

@@ -83,7 +83,7 @@ try:
     print(s.before)
     for hyperparams in sweep:
         print(f'python sbatch_multirun.py -m {hyperparams} username="{username}" conda="{conda}"')
-        s.sendline(f'python sbatch_multirun.py -m {hyperparams} username="{username}" conda="{conda}"')
+        s.sendline(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.prompt()
         print(s.before)
     s.logout()
