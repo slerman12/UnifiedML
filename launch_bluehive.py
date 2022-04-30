@@ -39,12 +39,12 @@ except Exception:
 
 # Define sweep
 sweep = [
-    # 'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-    # 'Eyes=Blocks.Architectures.ResNet18 '
-    # 'transform="{RandomHorizontalFlip:{}}" experiment="No-Contrastive" '
-    # 'Agent=Agents.ExperimentAgent '
-    # 'parallel=true num_workers=20 num_gpus=4 mem=100 '
-    # 'plot_per_steps=0',
+    'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    'Eyes=Blocks.Architectures.ResNet18 '
+    'transform="{RandomHorizontalFlip:{}}" experiment="No-Contrastive" '
+    'Agent=Agents.ExperimentAgent '
+    'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    'plot_per_steps=0',
     'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
     'Eyes=Blocks.Architectures.ResNet18 '
     'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive" '
