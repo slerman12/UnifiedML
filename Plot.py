@@ -211,7 +211,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Plot suites
     for col, suite in enumerate(found_suites):
-        task_data = df[df['Suite'].lower() == suite.lower()]
+        task_data = df[df['Suite'].str.lower() == suite.lower()]
 
         # Capitalize column names
         task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
