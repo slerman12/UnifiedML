@@ -10,10 +10,11 @@ from pexpect import pxssh, spawn
 username = 'slerman'
 host = 'cornea'
 conda = 'conda activate agi'
-steps = 500000
 
+steps = 500000
 # experiments = ["No-Contrastive", "Half-Half-Contrastive", "Third-Label"]
-experiments = ["Actor-Ensemble-3", "Actor-Ensemble-5", "Reference"]
+experiments = ['Actor-Ensemble-3', 'Actor-Ensemble-5', 'Reference']
+tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk']
 
 # Plot experiments
 try:
@@ -28,8 +29,10 @@ try:
     s.sendline(conda)
     s.prompt(timeout=None)
     print(s.before)
-    print(f"""python Plot.py plot_experiments=['{"','".join(experiments)}'] {f"steps={steps}" if steps else ""}""")
-    s.sendline(f"""python Plot.py plot_experiments=['{"','".join(experiments)}'] {f"steps={steps}" if steps else ""}""")
+    plot_experiments = f"""plot_experiments=['{"','".join(experiments)}']""" if len(experiments) else ""
+    plot_tasks = f"""plot_tasks=['{"','".join(tasks)}']""" if len(tasks) else ""
+    print(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
+    s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
     s.prompt(timeout=None)
     print(s.before)
     s.logout()

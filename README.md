@@ -480,7 +480,7 @@ A unique experiment for benchmarking and saving purposes, is distinguished by: `
 Alternatively, you can call ```Plot.py``` directly
 
 ```console
-python Plot.py ExpName1 SomeOtherExp
+python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console

@@ -10,10 +10,9 @@ import glob
 from pathlib import Path
 
 import hydra
+from omegaconf import OmegaConf
 
 import warnings
-
-from omegaconf import OmegaConf
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -363,11 +362,17 @@ high = {**atari_human, **dmc_high, **classify_high}
 def main(args):
     OmegaConf.set_struct(args, False)
     del args.plotting['_target_']
+    if 'path' not in sys_args:
+        args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
+    if 'steps' not in sys_args:
+        args.plotting.steps = np.inf
     plot(**args.plotting)
 
 
 if __name__ == "__main__":
+    sys_args = []
     for i in range(1, len(sys.argv)):
+        sys_args.append(sys.argv[i].split('=')[0].strip('"').strip("'"))
         sys.argv[i] = 'plotting.' + sys.argv[i] if sys.argv[i][0] != "'" and sys.argv[i][0] != '"' \
             else sys.argv[i][0] + 'plotting.' + sys.argv[i][1:]
     main()

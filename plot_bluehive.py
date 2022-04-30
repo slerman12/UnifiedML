@@ -37,9 +37,11 @@ try:
 except Exception:
     pass
 
+steps = None
 experiments = ["'linear(1.0,0.1,20000)'", "'linear(1.0,0.1,20000)learn-after'",
                "'linear(1.0,0.1,60000)learn-after'", "'linear(1.0,0.1,20000)learn-after20k'",
                "learn-after20k-per1"]
+tasks = []
 
 # Plot experiments
 try:
@@ -54,7 +56,10 @@ try:
     s.sendline(conda)
     s.prompt(timeout=None)
     print(s.before)
-    s.sendline('python Plot.py ' + ' '.join(experiments))
+    plot_experiments = f"""plot_experiments=['{"','".join(experiments)}']""" if len(experiments) else ""
+    plot_tasks = f"""plot_tasks=['{"','".join(tasks)}']""" if len(tasks) else ""
+    print(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
+    s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
     s.prompt(timeout=None)
     print(s.before)
     s.logout()
