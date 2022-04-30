@@ -366,7 +366,7 @@ def main(args):
         args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
     if 'steps' not in sys_args:
         args.plotting.steps = np.inf
-    print(**args.plotting)
+    print(args.plotting.path)
     plot(**args.plotting)
 
 
