@@ -38,9 +38,11 @@ except Exception:
     pass
 
 steps = None
-experiments = ["Self-Supervised", "DQN-Based", "Reference", "Critic-Ensemble"]
-tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
-         'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert']
+tasks = []
+# steps = 5e5
+experiments = ["Random"]
+# tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
+#          'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert']
 
 # Plot experiments
 try:

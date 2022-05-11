@@ -13,10 +13,10 @@ import Utils
 class RandomAgent(torch.nn.Module):
     """Random Agent"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, recipes,  # Architecture
-                 lr, ema_decay, ema,  # Optimization
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, RL, supervise, generate, device, log  # On-boarding
+                 discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  ):
         super().__init__()
 
