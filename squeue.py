@@ -41,7 +41,7 @@ except Exception:
 try:
     s = pxssh.pxssh()
     s.login('bluehive.circ.rochester.edu', username, password)
-    s.sendline(f'squeue -u {username}')                 # Run a command
+    s.sendline(f'squeue -a -u {username}')                 # Run a command
     s.prompt()                                          # Match the prompt
     print(s.before)                                     # Print everything before the prompt.
     s.logout()

@@ -42,6 +42,20 @@ except pxssh.ExceptionPxssh as e:
 
 # SFTP experiment results
 
+generative = True
+if generative:
+    path = f'./Benchmarking/Exp/Video_Image'
+    (Path(path) / 'cornea').mkdir(parents=True, exist_ok=True)
+
+    p = spawn('sftp cornea')
+    p.expect('sftp> ')
+    p.sendline(f"lcd {path}/cornea")
+    p.expect('sftp> ')
+    p.sendline("cd UnifiedML")
+    p.expect('sftp> ')
+    p.sendline(f"get ./Benchmarking/Exp/*/*/CIFAR10_1_Video_Image/*png")
+    p.expect('sftp> ', timeout=1000000)
+
 local_path = f"./Benchmarking/Results/{'_'.join(experiments)}"
 remote_path = f"./Benchmarking/{'_'.join(experiments)}/Plots"
 

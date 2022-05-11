@@ -86,6 +86,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         for i, spec in enumerate(specs):
             if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', '\(').replace(')', '\)'),
                                                  datums[i]):
+                print(spec, datums[i])
                 if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', '\(').replace(')', '\)'),
                                        datums[i]):
                     break

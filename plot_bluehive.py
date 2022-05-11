@@ -38,10 +38,9 @@ except Exception:
     pass
 
 steps = None
-experiments = ["'linear(1.0,0.1,20000)'", "'linear(1.0,0.1,20000)learn-after'",
-               "'linear(1.0,0.1,60000)learn-after'", "'linear(1.0,0.1,20000)learn-after20k'",
-               "learn-after20k-per1"]
-tasks = []
+experiments = ["Self-Supervised", "DQN-Based", "Reference", "Critic-Ensemble"]
+tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
+         'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert']
 
 # Plot experiments
 try:
@@ -66,6 +65,9 @@ try:
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")
     print(e)
+except pxssh.TIMEOUT as e:
+    print("Timeout occurred.")
+    print(e)
 
 # SFTP experiment results
 
@@ -76,18 +78,17 @@ Path(local_path).mkdir(parents=True, exist_ok=True)
 os.chdir(local_path)
 
 p = spawn(f'sftp {username}@bluehive.circ.rochester.edu')
-p.expect('Password: ')
+p.expect('Password: ', timeout=None)
 p.sendline(password)
-p.expect('sftp> ')
+p.expect('sftp> ', timeout=None)
 p.sendline(f"lcd {local_path}")
-p.expect('sftp> ')
+p.expect('sftp> ', timeout=None)
 p.sendline(f"cd /scratch/{username}/UnifiedML")
-p.expect('sftp> ')
+p.expect('sftp> ', timeout=None)
 p.sendline(f"get {remote_path}/*png")
-p.expect('sftp> ')
+p.expect('sftp> ', timeout=None)
 p.sendline(f"get {remote_path}/*json")
-p.expect('sftp> ')
+p.expect('sftp> ', timeout=None)
 for experiment in experiments:
     p.sendline(f"get -r ./Benchmarking/{experiment}")
-    p.expect('sftp> ')
-
+    p.expect('sftp> ', timeout=None)
