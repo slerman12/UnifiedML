@@ -80,7 +80,7 @@ agent:
   ema_decay: 0.99
   ema: ${ema}
   explore_steps: ${explore_steps}
-  stddev_schedule: ${stddev_schedule} # Specified in task/100K,500K,etc.
+  stddev_schedule: ${stddev_schedule} # Specified per task
   stddev_clip: 0.3
   discrete: ${discrete}
   RL: ${RL}

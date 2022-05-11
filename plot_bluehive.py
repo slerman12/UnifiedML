@@ -37,12 +37,12 @@ try:
 except Exception:
     pass
 
-steps = None
-tasks = []
-# steps = 5e5
-experiments = ["Random"]
-# tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
-#          'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert']
+# steps, tasks = None, []
+
+steps = 5e5
+experiments = ["Self-Supervised", "DQN-Based", "Reference", "Critic-Ensemble"]
+tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
+         'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert']
 
 # Plot experiments
 try:
@@ -60,7 +60,7 @@ try:
     plot_experiments = f"""plot_experiments=['{"','".join(experiments)}']""" if len(experiments) else ""
     plot_tasks = f"""plot_tasks=['{"','".join(tasks)}']""" if len(tasks) else ""
     print(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
-    s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
+    s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""} plot_tabular=true')
     s.prompt(timeout=None)
     print(s.before)
     s.logout()
