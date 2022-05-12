@@ -58,7 +58,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     plt.rcParams['legend.loc'] = 'lower right'
 
     # All CSVs from path, recursive
-    csv_names = glob.glob('./Benchmarking/**/*.csv', recursive=True)
+    csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
 
     csv_list = []
     # max_csv_list = []  # Unused
@@ -182,14 +182,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     if suite not in tabular[agent]:
                         tabular[agent][suite] = {}
                 scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
+                tabular_mean[agent][suite][task] = scores.mean()
+                tabular_median[agent][suite][task] = scores.median()
                 for t in low:
                     if t.lower() in suite_task.lower():
-                        tabular_mean[agent][suite][task] = scores.mean()
-                        tabular_median[agent][suite][task] = scores.median()
                         normalized = (scores - low[t]) / (high[t] - low[t])
                         tabular_normalized_mean[agent][suite][task] = normalized.mean()
                         tabular_normalized_median[agent][suite][task] = normalized.median()
-                        continue
+                        break
 
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      # palette='pastel'
@@ -283,6 +283,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         json.dump(tabular_data, f, indent=2)
         f.close()
 
+        hue_order = sorted(set([agent for agent in tabular_median]))
+        sns.catplot(x='Task', y='Median', hue='Agent', col='Suite', data=tabular_data, kind='bar', hue_order=hue_order)
+
+        plt.tight_layout()
+        plt.savefig(path / (plot_name + 'Bar.png'))
+
+        plt.close()
+
 
 # Lows and highs for normalization
 
@@ -343,8 +351,8 @@ atari_human = {
     'UpNDown': 11693.2
 }
 
-low = {**atari_random}
-high = {**atari_human}
+low = {**atari_random, 'dmc': 0, 'classify': 0}
+high = {**atari_human, 'dmc': 1000, 'classify': 1}
 
 
 @hydra.main(config_path='Hyperparams', config_name='args')
@@ -352,6 +360,8 @@ def main(args):
     OmegaConf.set_struct(args, False)
     del args.plotting['_target_']
     if 'path' not in sys_args:
+        if isinstance(args.plotting.plot_experiments, str):
+            args.plotting.plot_experiments = [args.plotting.plot_experiments]
         args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
     if 'steps' not in sys_args:
         args.plotting.steps = np.inf

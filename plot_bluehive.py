@@ -40,7 +40,8 @@ except Exception:
 # steps, tasks = None, []
 
 steps = 5e5
-experiments = ["Self-Supervised", "DQN-Based", "Reference", "Critic-Ensemble"]
+experiments = ["Self-Supervised", "DQN-Based", "Reference", "Critic-Ensemble",
+               '"linear(2.0,0.1,20000)"', '"linear(2.0,0.1,40000)"']
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
          'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert']
 

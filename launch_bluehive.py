@@ -63,10 +63,11 @@ atari_tasks = [
     'KungFuMaster', 'MsPacman', 'Pong', 'PrivateEye', 'Qbert', 'RoadRunner',
     'Seaquest', 'UpNDown'
 ]
-sweep = ['experiment=Random Agent=Agents.RandomAgent train_steps=0 evaluate_episodes=100 '
-         f'task=atari/{",atari/".join([a.lower() for a in atari_tasks])} '
+full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
+sweep = ['\'experiment="linear(2.0,0.1,40000)"\' \'stddev_schedule="linear(2.0,0.1,40000)"\' train_steps=100000 '
+         f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
          'num_workers=4 num_gpus=1 mem=20 gpu="K80" '
-         'plot_per_steps=0 reservation_id=20220509']
+         'plot_per_steps=0 lab=true']
 
 
 # Launch on Bluehive
