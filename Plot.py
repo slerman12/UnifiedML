@@ -29,7 +29,7 @@ import seaborn as sns
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         plot_tabular=False,
+         write_tabular=False, plot_bar=True,
          include_train=False):  # TODO
     include_train = False
 
@@ -51,11 +51,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         return
 
     # Style
-    plt.style.use('bmh')
+    # plt.style.use('bmh')
     plt.rcParams['figure.dpi'] = 400
-    plt.rcParams['font.size'] = 8
-    plt.rcParams['legend.fontsize'] = 7
-    plt.rcParams['legend.loc'] = 'lower right'
+    # plt.rcParams['font.size'] = 8
+    # plt.rcParams['legend.fontsize'] = 7
+    # plt.rcParams['legend.loc'] = 'lower right'
+    sns.set_theme(style="darkgrid")
 
     # All CSVs from path, recursive
     csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
@@ -134,10 +135,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # PLOTTING (tasks)
 
     # Dynamically compute num columns/rows
-    num_cols = int(np.floor(np.sqrt(len(found_suite_tasks))))
-    while len(found_suite_tasks) % num_cols != 0:
-        num_cols -= 1
-    num_rows = len(found_suite_tasks) // num_cols
+    num_rows = int(np.floor(np.sqrt(len(found_suite_tasks))))
+    while len(found_suite_tasks) % num_rows != 0:
+        num_rows -= 1
+    num_cols = len(found_suite_tasks) // num_rows
 
     # Create subplots
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(4 * num_cols, 3 * num_rows))
@@ -169,11 +170,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
 
         suite = title.split('(')[1].split(')')[0]
-        task = title.split('(')[0]
+        task = title.split(' (')[0]
 
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
-        if plot_tabular:
+        if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
             for agent in task_data.Agent.unique():
                 for tabular in [tabular_mean, tabular_median, tabular_normalized_mean, tabular_normalized_median]:
@@ -264,7 +265,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     plt.close()
 
     # Tabular data
-    if plot_tabular:
+    if write_tabular:
         f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")
         tabular_data = {'Mean': tabular_mean,
                         'Median': tabular_median,
@@ -283,8 +284,40 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         json.dump(tabular_data, f, indent=2)
         f.close()
 
-        hue_order = sorted(set([agent for agent in tabular_median]))
-        sns.catplot(x='Task', y='Median', hue='Agent', col='Suite', data=tabular_data, kind='bar', hue_order=hue_order)
+    # Bar plot
+    if plot_bar:
+        bar_data = {suite_name: {'Task': [], 'Median': [], 'Experiment': []} for suite_name in found_suites}
+        for experiment in tabular_normalized_median:
+            for suite in tabular_normalized_median[experiment]:
+                for task_name in tabular_normalized_median[experiment][suite]:
+                    bar_data[suite]['Task'].append(task_name)
+                    bar_data[suite]['Median'].append(tabular_normalized_median[experiment][suite][task_name])
+                    bar_data[suite]['Experiment'].append(experiment)
+
+        # Create subplots
+        fig, axs = plt.subplots(1, num_cols, figsize=(4 * num_cols, 3))
+
+        for col, suite in enumerate(bar_data):
+            task_data = pd.DataFrame(bar_data[suite])
+
+            ax = axs[col] if num_cols > 1 else axs
+
+            hue_order = sorted(set(bar_data[suite]['Experiment']))
+            sns.barplot(x='Task', y='Median', ci='sd', hue='Experiment', data=task_data, ax=ax, hue_order=hue_order,
+                        palette='pastel')
+
+            ax.set_title(f'{suite} (@{min_steps} Steps)')
+
+            if suite.lower() == 'atari':
+                ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+                ax.set_ylabel('Median Human-Normalized')
+            elif suite.lower() == 'dmc':
+                ax.set_ybound(0, 1000)
+                ax.set_ylabel('Median Reward')
+            elif suite.lower() == 'classify':
+                ax.set_ybound(0, 1)
+                ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+                ax.set_ylabel('Median Eval Accuracy')
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))

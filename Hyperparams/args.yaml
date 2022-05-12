@@ -42,7 +42,7 @@ load_per_steps: 0
 log_video: ${generate}
 log_per_episodes: 1
 # Plotting
-plot_per_steps: 10000
+plot_per_steps: 50000
 # Misc
 device: null
 parallel: false
@@ -129,7 +129,8 @@ plotting:
   plot_suites: null
   plot_tasks: null
   steps: ${train_steps}
-  plot_tabular: true
+  write_tabular: false
+  plot_bar: true
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
