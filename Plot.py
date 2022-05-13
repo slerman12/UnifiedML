@@ -151,7 +151,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     num_cols = len(found_suite_tasks) // num_rows
 
     # Create subplots
-    fig, axs = plt.subplots(num_rows, num_cols, figsize=(4 * num_cols, 3 * num_rows))
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
 
     # Plot tasks
     for i, suite_task in enumerate(found_suite_tasks):
@@ -211,12 +211,21 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
 
+        # Legend in subplots
         # ax.legend(frameon=False).set_title(None)
+
+        ax.tick_params(axis='x', rotation=20)
+
+        # Legend next to subplots
+        ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
+        # Data for universal legend
         handle, label = ax.get_legend_handles_labels()
         handles.update({l: h for l, h in zip(label, handle)})
-        ax.legend().remove()
-    axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-                             borderaxespad=0, frameon=False).set_title('Agent')
+        # ax.legend().remove()
+    # Universal legend
+    # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
+    #                          borderaxespad=0, frameon=False).set_title('Agent')
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Tasks.png'))
@@ -228,7 +237,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     num_cols = len(found_suites)
 
     # Create subplots
-    fig, axs = plt.subplots(1, num_cols, figsize=(4 * num_cols, 3))
+    fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
 
     # Sort suites
     found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found]
@@ -274,10 +283,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
 
-        ax.legend().remove()
+        # Legend next to subplots
+        ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
-    axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-                             borderaxespad=0, frameon=False).set_title('Agent')
+        # ax.legend().remove()
+
+    # Universal legend
+    # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
+    #                          borderaxespad=0, frameon=False).set_title('Agent')
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Suites.png'))
@@ -354,10 +367,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                             # color='#3b423d'
                             )
 
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=20)
+            ax.tick_params(axis='x', rotation=20)
             ax.set(xlabel=None)
+
+            # Legend next to subplots
+            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
             ax.legend().remove()
 
+        # Universal legend
         axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
                                  borderaxespad=0, frameon=False).set_title('Agent')
 
