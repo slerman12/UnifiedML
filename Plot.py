@@ -341,11 +341,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     bar_data[suite]['Median'].append(median[agent][suite][task])
                     bar_data[suite]['Agent'].append(agent)
 
-        # Create subplots
+        # Max agents for a task
         max_agents = max([len(set([bar_data[suite]['Agent'][i] for i, _ in enumerate(bar_data[suite]['Agent'])
                                    if bar_data[suite]['Task'][i] == task])) for suite in bar_data
-                          for task in bar_data[suite]['Task']])
-        fig, axs = plt.subplots(1, num_cols, figsize=(1.7 * max_agents * num_cols, 3))
+                          for task in set(bar_data[suite]['Task'])])
+
+        # Create subplots
+        fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * num_cols, 3))
 
         for col, suite in enumerate(bar_data):
             task_data = pd.DataFrame(bar_data[suite])
