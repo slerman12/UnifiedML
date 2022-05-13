@@ -56,7 +56,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                   # palette='Set2',
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
-                      'legend.fontsize': 4.5, 'legend.title_fontsize': 4.5,
+                      'legend.fontsize': 5.5, 'legend.title_fontsize': 5.5,
                       # 'axes.titlesize': 4, 'axes.labelsize': 4, 'font.size': 4,
                       # 'xtick.labelsize': 7, 'ytick.labelsize': 7,
                       # 'figure.titlesize': 4
@@ -206,7 +206,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
 
-        ax.legend().set_title(None)
+        ax.legend(frameon=False).set_title(None)
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Tasks.png'))
@@ -265,7 +265,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
 
-        ax.legend().set_title(None)
+        ax.legend(frameon=False).set_title(None)
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Suites.png'))
@@ -342,7 +342,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax.set_xticklabels(ax.get_xticklabels(), rotation=20)
             ax.set(xlabel=None)
-            ax.legend().set_title(None)
+            ax.legend(frameon=False).set_title(None)
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
