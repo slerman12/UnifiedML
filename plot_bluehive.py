@@ -4,7 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import getpass
 import os
-import time
 from pathlib import Path
 from cryptography.fernet import Fernet
 
@@ -65,7 +64,6 @@ try:
     s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""} write_tabular=true')
     s.prompt(timeout=None)
     print(s.before)
-    time.sleep(5)
     s.logout()
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")
