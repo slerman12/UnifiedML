@@ -55,11 +55,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     sns.set_theme(style="darkgrid", palette='Set2', font_scale=0.7,
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
-                      # 'legend.fontsize': 4, 'font.size': 4,
-                      # 'axes.titlesize': 4, 'axes.labelsize': 4,
-                      # 'xtick.labelsize': 7,
-                      # 'ytick.labelsize': 7,
-                      # 'figure.titlesize': 4, 'legend.title_fontsize': 4
+                      'legend.fontsize': 7, 'legend.title_fontsize': 7,
+                      # 'axes.titlesize': 4, 'axes.labelsize': 4, 'font.size': 4,
+                      # 'xtick.labelsize': 7, 'ytick.labelsize': 7,
+                      # 'figure.titlesize': 4
                   })
 
     # All CSVs from path, recursive
