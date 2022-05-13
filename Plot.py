@@ -138,9 +138,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     tabular_normalized_mean = {}
     tabular_normalized_median = {}
 
-    hue_order = np.sort(df.Agent.unique())
-    palette = {agent: color for agent, color in zip(hue_order, palette_colors[:len(hue_order)])}
-    handles = {}
+    universal_hue_order, handles = np.sort(df.Agent.unique()), {}
+    palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
 
     # PLOTTING (tasks)
 
@@ -164,7 +163,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if steps < np.inf:
             task_data = task_data[task_data['Step'] <= steps]
 
-        # No need to show Agent in legend if all same
+        # No need to show Agent in legend if all same (Note: need to debug if using universal legend)
         if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=SettingWithCopyWarning)
@@ -201,6 +200,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         tabular_normalized_median[agent][suite][task] = normalized.median()
                         break
 
+        hue_order = np.sort(task_data.Agent.unique())
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette=palette
                      )
@@ -212,17 +212,18 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.set_ylabel('Eval Accuracy')
 
         # Legend in subplots
-        # ax.legend(frameon=False).set_title(None)
+        ax.legend(frameon=False).set_title(None)
 
         ax.tick_params(axis='x', rotation=20)
 
         # Legend next to subplots
-        ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+        # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
         # Data for universal legend
-        handle, label = ax.get_legend_handles_labels()
-        handles.update({l: h for l, h in zip(label, handle)})
+        # handle, label = ax.get_legend_handles_labels()
+        # handles.update({l: h for l, h in zip(label, handle)})
         # ax.legend().remove()
+
     # Universal legend
     # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
     #                          borderaxespad=0, frameon=False).set_title('Agent')
@@ -268,6 +269,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         ax = axs[col] if num_cols > 1 else axs
 
+        hue_order = np.sort(task_data.Agent.unique())
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette=palette
                      )
@@ -283,8 +285,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
 
+        # Legend in subplots
+        ax.legend(frameon=False).set_title(None)
+
+        ax.tick_params(axis='x', rotation=20)
+
         # Legend next to subplots
-        ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+        # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
         # ax.legend().remove()
 
@@ -340,6 +347,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax = axs[col] if num_cols > 1 else axs
 
+            hue_order = np.sort(task_data.Agent.unique())
             sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
                         palette=palette
                         )
@@ -362,7 +370,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 height = p.get_height()
                 x, y = p.get_xy()
                 ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
-                            (x + width/2, y + height), ha='center', size=6,
+                            (x + width/2, y + height), ha='center', size=30 * width,
                             # color='#498057'
                             # color='#3b423d'
                             )
@@ -370,14 +378,17 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.tick_params(axis='x', rotation=20)
             ax.set(xlabel=None)
 
+            # Legend in subplots
+            ax.legend(frameon=False).set_title(None)
+
             # Legend next to subplots
             # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
-            ax.legend().remove()
+            # ax.legend().remove()
 
         # Universal legend
-        axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-                                 borderaxespad=0, frameon=False).set_title('Agent')
+        # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
+        #                          borderaxespad=0, frameon=False).set_title('Agent')
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
