@@ -51,9 +51,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         return
 
     # Style
-    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire
+    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire, tab10_r
     sns.set_theme(font_scale=0.7,
-                  # palette='Set2',
+                  palette='tab10_r',
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
                       'legend.fontsize': 5.5, 'legend.title_fontsize': 5.5,
