@@ -340,7 +340,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     bar_data[suite]['Agent'].append(agent)
 
         # Create subplots
-        fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
+        fig, axs = plt.subplots(1, num_cols, figsize=(5.5 * num_cols, 3))
 
         for col, suite in enumerate(bar_data):
             task_data = pd.DataFrame(bar_data[suite])
