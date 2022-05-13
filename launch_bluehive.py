@@ -65,9 +65,9 @@ atari_tasks = [
 ]
 full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 sweep = ['\'experiment="linear(2.0,0.1,40000)"\' \'stddev_schedule="linear(2.0,0.1,40000)"\' train_steps=100000 '
-         f'task=atari/qbert '
+         f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
          'num_workers=4 num_gpus=1 mem=20 '
-         'plot_per_steps=0 lab=true']
+         'plot_per_steps=0 reservation_id=20220509']
 
 
 # Launch on Bluehive
