@@ -52,7 +52,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Style
     # plt.style.use('bmh')
-    sns.set_theme(style="darkgrid", palette='Set1', font_scale=0.4,
+    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire
+    sns.set_theme(style="darkgrid", palette='Set2', font_scale=0.4,
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
                       # 'legend.fontsize': 4, 'font.size': 4,
@@ -336,7 +337,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 width = p.get_width()
                 height = p.get_height()
                 x, y = p.get_xy()
-                ax.annotate(f'{height:.1}' if suite.lower() == 'dmc' else f'{height:.0%}',
+                ax.annotate('{:.1f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
                             (x + width/2, y + height), ha='center')
 
         plt.tight_layout()
