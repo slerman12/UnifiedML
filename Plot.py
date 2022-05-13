@@ -379,10 +379,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.set(xlabel=None)
 
             # Legend in subplots
-            ax.legend(frameon=False).set_title(None)
+            # ax.legend(frameon=False).set_title(None)
 
             # Legend next to subplots
-            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+            ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
             # ax.legend().remove()
 
