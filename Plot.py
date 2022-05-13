@@ -287,12 +287,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Bar plot
     if plot_bar:
         bar_data = {suite_name: {'Task': [], 'Median': [], 'Experiment': []} for suite_name in found_suites}
-        for experiment in tabular_median:
-            for suite in tabular_median[experiment]:
-                median = tabular_median if suite.lower() == 'dmc' else tabular_normalized_median
-                for task_name in median[experiment][suite]:
+        for experiment in tabular_normalized_median:
+            for suite in tabular_normalized_median[experiment]:
+                for task_name in tabular_normalized_median[experiment][suite]:
                     bar_data[suite]['Task'].append(task_name)
-                    bar_data[suite]['Median'].append(median[experiment][suite][task_name])
+                    bar_data[suite]['Median'].append(tabular_normalized_median[experiment][suite][task_name])
                     bar_data[suite]['Experiment'].append(experiment)
 
         # Create subplots
@@ -385,8 +384,8 @@ atari_human = {
     'UpNDown': 11693.2
 }
 
-low = {**atari_random, 'dmc': 0, 'classify': 0}
-high = {**atari_human, 'dmc': 1000, 'classify': 1}
+low = {**atari_random}
+high = {**atari_human}
 
 
 @hydra.main(config_path='Hyperparams', config_name='args')
