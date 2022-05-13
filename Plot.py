@@ -51,12 +51,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         return
 
     # Style
-    plt.style.use('bmh')
-    plt.rcParams['figure.dpi'] = 400
-    plt.rcParams['font.size'] = 8
-    plt.rcParams['legend.fontsize'] = 7
-    plt.rcParams['legend.loc'] = 'lower right'
-    # sns.set_theme(style="darkgrid")
+    # plt.style.use('bmh')
+    sns.set_theme(style="darkgrid", palette='pastel', font_scale=0.7,
+                  rc={'legend.loc': 'lower right', 'figure.dpi': 400})
+    # plt.rcParams['figure.dpi'] = 400
+    # plt.rcParams['font.size'] = 4
+    # plt.rcParams['legend.fontsize'] = 4
+    # plt.rcParams['legend.loc'] = 'lower right'
 
     # All CSVs from path, recursive
     csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
@@ -286,13 +287,18 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Bar plot
     if plot_bar:
-        bar_data = {suite_name: {'Task': [], 'Median': [], 'Experiment': []} for suite_name in found_suites}
-        for experiment in tabular_normalized_median:
-            for suite in tabular_normalized_median[experiment]:
-                for task_name in tabular_normalized_median[experiment][suite]:
-                    bar_data[suite]['Task'].append(task_name)
-                    bar_data[suite]['Median'].append(tabular_normalized_median[experiment][suite][task_name])
-                    bar_data[suite]['Experiment'].append(experiment)
+        bar_data = {suite_name: {'Task': [], 'Median': [], 'Agent': []} for suite_name in found_suites}
+        for agent in tabular_median:
+            for suite in tabular_median[agent]:
+                for task in tabular_median[agent][suite]:
+                    median = tabular_median
+                    for t in low:
+                        if t.lower() == suite.lower() or t.lower() == task.lower():
+                            median = tabular_normalized_median
+                            break
+                    bar_data[suite]['Task'].append(task)
+                    bar_data[suite]['Median'].append(median[agent][suite][task])
+                    bar_data[suite]['Agent'].append(agent)
 
         # Create subplots
         fig, axs = plt.subplots(1, num_cols, figsize=(4 * num_cols, 3))
@@ -302,14 +308,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax = axs[col] if num_cols > 1 else axs
 
-            hue_order = sorted(set(bar_data[suite]['Experiment']))
-            sns.barplot(x='Task', y='Median', ci='sd', hue='Experiment', data=task_data, ax=ax, hue_order=hue_order,
-                        palette='pastel')
-
-            ax.set_title(f'{suite} (@{min_steps} Steps)')
+            hue_order = sorted(set(bar_data[suite]['Agent']))
+            sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
+                        palette='pastel'
+                        )
 
             for container in ax.containers:
                 ax.bar_label(container)
+
+            ax.set_title(f'{suite} (@{min_steps} Steps)')
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))

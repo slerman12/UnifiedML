@@ -25,7 +25,7 @@ dependencies:
       - ipdb==0.13.9
       - yapf==0.31.0
       - sklearn==0.0
-      - matplotlib==3.4.2
+      - matplotlib==3.5.2
       - wandb
       - opencv-python==4.5.3.56
       - PyOpenGL-accelerate
