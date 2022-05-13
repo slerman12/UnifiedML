@@ -52,7 +52,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Style
     # plt.style.use('bmh')
-    sns.set_theme(style="darkgrid", palette='pastel', font_scale=0.4,
+    sns.set_theme(style="darkgrid", palette='Accent', font_scale=0.4,
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
                       # 'legend.fontsize': 4, 'font.size': 4,
@@ -316,7 +316,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             hue_order = sorted(set(bar_data[suite]['Agent']))
             sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                        palette='pastel'
+                        # palette='pastel'
                         )
 
             ax.set_title(f'{suite} (@{min_steps} Steps)')
