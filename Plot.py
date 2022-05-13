@@ -52,7 +52,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Style
     # RdYlBu, Set1, Set2, Set3, gist_stern, icefire
-    sns.set_theme(style="darkgrid", palette='icefire', font_scale=0.5,
+    sns.set_theme(style="darkgrid", palette='Set2', font_scale=0.45,
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
                       # 'legend.fontsize': 4, 'font.size': 4,
