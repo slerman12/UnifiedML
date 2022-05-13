@@ -370,7 +370,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 height = p.get_height()
                 x, y = p.get_xy()
                 ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
-                            (x + width/2, y + height), ha='center', size=30 * width,
+                            (x + width/2, y + height), ha='center', size=20 * width,
                             # color='#498057'
                             # color='#3b423d'
                             )
