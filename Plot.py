@@ -52,8 +52,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Style
     # plt.style.use('bmh')
-    sns.set_theme(style="darkgrid", palette='pastel', font_scale=0.7,
-                  rc={'legend.loc': 'lower right', 'figure.dpi': 400})
+    sns.set_theme(style="darkgrid", palette='pastel', font_scale=0.4,
+                  rc={
+                      'legend.loc': 'lower right', 'figure.dpi': 400,
+                      # 'legend.fontsize': 4, 'font.size': 4,
+                      # 'axes.titlesize': 4, 'axes.labelsize': 4,
+                      # 'xtick.labelsize': 4, 'ytick.labelsize': 4,
+                      # 'figure.titlesize': 4, 'legend.title_fontsize': 4
+                  })
     # plt.rcParams['figure.dpi'] = 400
     # plt.rcParams['font.size'] = 4
     # plt.rcParams['legend.fontsize'] = 4
@@ -313,9 +319,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         palette='pastel'
                         )
 
-            for container in ax.containers:
-                ax.bar_label(container)
-
             ax.set_title(f'{suite} (@{min_steps} Steps)')
 
             if suite.lower() == 'atari':
@@ -328,6 +331,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 ax.set_ybound(0, 1)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
                 ax.set_ylabel('Median Eval Accuracy')
+
+            for p in ax.patches:
+                width = p.get_width()
+                height = p.get_height()
+                x, y = p.get_xy()
+                ax.annotate(height if suite.lower() == 'dmc' else f'{height:.0%}',
+                            (x + width/2, y + height), ha='center')
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
