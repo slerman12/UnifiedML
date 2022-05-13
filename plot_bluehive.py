@@ -60,8 +60,8 @@ try:
     print(s.before)
     plot_experiments = f"""plot_experiments=['{"','".join(experiments)}']""" if len(experiments) else ""
     plot_tasks = f"""plot_tasks=['{"','".join(tasks)}']""" if len(tasks) else ""
-    print(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""}')
-    s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""} plot_tabular=true')
+    print(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""} write_tabular=true')
+    s.sendline(f'python Plot.py {plot_experiments} {plot_tasks} {f"steps={steps}" if steps else ""} write_tabular=true')
     s.prompt(timeout=None)
     print(s.before)
     s.logout()

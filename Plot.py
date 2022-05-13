@@ -51,12 +51,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         return
 
     # Style
-    plt.style.use('bmh')
+    # plt.style.use('bmh')
     plt.rcParams['figure.dpi'] = 400
     plt.rcParams['font.size'] = 8
     plt.rcParams['legend.fontsize'] = 7
     plt.rcParams['legend.loc'] = 'lower right'
-    # sns.set_theme(style="darkgrid")
+    sns.set_theme(style="darkgrid")
 
     # All CSVs from path, recursive
     csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
