@@ -51,9 +51,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         return
 
     # Style
-    # plt.style.use('bmh')
     # RdYlBu, Set1, Set2, Set3, gist_stern, icefire
-    sns.set_theme(style="darkgrid", palette='Set2', font_scale=0.4,
+    sns.set_theme(style="darkgrid", palette='Set3', font_scale=0.4,
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
                       # 'legend.fontsize': 4, 'font.size': 4,
@@ -61,10 +60,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                       # 'xtick.labelsize': 4, 'ytick.labelsize': 4,
                       # 'figure.titlesize': 4, 'legend.title_fontsize': 4
                   })
-    # plt.rcParams['figure.dpi'] = 400
-    # plt.rcParams['font.size'] = 4
-    # plt.rcParams['legend.fontsize'] = 4
-    # plt.rcParams['legend.loc'] = 'lower right'
 
     # All CSVs from path, recursive
     csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
@@ -337,7 +332,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 width = p.get_width()
                 height = p.get_height()
                 x, y = p.get_xy()
-                ax.annotate('{:.1f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
+                ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
                             (x + width/2, y + height), ha='center')
 
         plt.tight_layout()
