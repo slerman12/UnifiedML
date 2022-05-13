@@ -308,6 +308,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax.set_title(f'{suite} (@{min_steps} Steps)')
 
+            for container in ax.containers:
+                ax.bar_label(container)
+
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
                 ax.set_ylabel('Median Human-Normalized')
