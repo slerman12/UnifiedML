@@ -52,7 +52,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Style
     # RdYlBu, Set1, Set2, Set3, gist_stern, icefire
-    sns.set_theme(style="darkgrid", palette='Set2', font_scale=0.7,
+    sns.set_theme(font_scale=0.7,
+                  # palette='Set2',
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
                       'legend.fontsize': 7, 'legend.title_fontsize': 7,
@@ -337,6 +338,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax.set_xticklabels(ax.get_xticklabels(), rotation=20)
             ax.set(xlabel=None)
+            sns.move_legend(ax, "lower right")
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
