@@ -338,7 +338,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax.set_xticklabels(ax.get_xticklabels(), rotation=20)
             ax.set(xlabel=None)
-            sns.move_legend(ax, "lower right")
+            sns.move_legend(ax, "lower right", bbox_to_anchor=(1.05, 1), borderaxespad=0.)
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
