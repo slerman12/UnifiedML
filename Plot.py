@@ -336,7 +336,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
                             (x + width/2, y + height), ha='center', size=4.5)
 
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=20)
+            ax.set(xlabel=None)
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
