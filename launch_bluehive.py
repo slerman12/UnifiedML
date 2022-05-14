@@ -46,8 +46,8 @@ sweep = [
     # f'Agent=Agents.SPRAgent train_steps=500000 seed=1,2,3 task={dmc} experiment="Self-Supervised" plot_per_steps=0 reservation_id=20220502',
     # f'Agent=Agents.DQNAgent +agents.num_critics=5 train_steps=100000 seed=1,2,3 task={atari},{dmc} experiment="Critic-Ensemble" plot_per_steps=0 reservation_id=20220502',
     # f'Agent=Agents.AC2Agent +agents.num_actors=3,5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actor-Ensemble" plot_per_steps=0 reservation_id=20220502',
-    f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actions-Sampling" plot_per_steps=0 lab=true'
-    f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=500000 seed=1,2,3 task={dmc} experiment="Actions-Sampling" plot_per_steps=0 reservation_id=20220509',
+    # f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actions-Sampling" plot_per_steps=0 lab=true',
+    # f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=500000 seed=1,2,3 task={dmc} experiment="Actions-Sampling" plot_per_steps=0 reservation_id=20220509',
     # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} ema=true weight_decay=0.01 experiment="CV-RL" plot_per_steps=0 reservation_id=20220502',
 
     # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} '

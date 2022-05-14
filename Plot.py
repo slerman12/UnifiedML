@@ -117,7 +117,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         csv['Task'] = found_suite_task
 
         if verbose and length < steps != np.inf:
-            print(f'[Experiment {experiment} Agent {agent} Suite-Task {suite_task} Seed {seed}] has {length} steps.')
+            print(f'[Experiment {experiment} Agent {agent} Task {suite}/{suite_task} Seed {seed}] has {length} steps.')
 
         # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pdf/2108.13264.pdf
         # max_csv = csv.copy()
@@ -182,7 +182,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
             for agent in task_data.Agent.unique():
-                for tabular in [tabular_mean, tabular_median, tabular_normalized_mean, tabular_normalized_median]:
+                for tabular in [tabular_mean, tabular_median]:
                     if agent not in tabular:
                         tabular[agent] = {}
                     if suite not in tabular[agent]:
@@ -192,6 +192,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 tabular_median[agent][suite][task] = scores.median()
                 for t in low:
                     if t.lower() in suite_task.lower():
+                        for tabular in [tabular_normalized_mean, tabular_normalized_median]:
+                            if agent not in tabular:
+                                tabular[agent] = {}
+                            if suite not in tabular[agent]:
+                                tabular[agent][suite] = {}
                         normalized = (scores - low[t]) / (high[t] - low[t])
                         tabular_normalized_mean[agent][suite][task] = normalized.mean()
                         tabular_normalized_median[agent][suite][task] = normalized.median()
@@ -317,16 +322,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         'Normalized Mean': tabular_normalized_mean,
                         'Normalized Median': tabular_normalized_median}
         # Aggregating across suites
-        # for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
-        #     for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
-        #         tabular_data.update({
-        #             f'{agg_name} Normalized-{name}': {
-        #                 agent: {
-        #                     suite:
-        #                         agg([val for val in tabular[agent][suite].values()])
-        #                     for suite in tabular[agent]}
-        #                 for agent in tabular}
-        #         })
+        for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
+            for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
+                tabular_data.update({
+                    f'{agg_name} Normalized-{name}': {
+                        agent: {
+                            suite:
+                                agg([val for val in tabular[agent][suite].values()])
+                            for suite in tabular[agent]}
+                        for agent in tabular}
+                })
         json.dump(tabular_data, f, indent=2)
         f.close()
 
