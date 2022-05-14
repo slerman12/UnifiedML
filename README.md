@@ -502,7 +502,7 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 # :mortar_board: Pedagogy and Research
 
-All files are designed for pedagogical clarity and extendability for research, to be useful for educational and innovational purposes in their simplicity and structure
+All files are designed for pedagogical clarity and extendability for research, to be useful for educational and innovational purposes, with simplicity at heart
 
 # :people_holding_hands: Contributing
 
