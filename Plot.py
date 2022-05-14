@@ -46,7 +46,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             if not isinstance(spec, MutableSequence):
                 specs[i] = [spec]
             # Plot name
-            plot_name += "_".join(specs[i] if i == 0 or len(specs[i]) < 10 else specs[i][:10] + ['etc']) + '_'
+            plot_name += "_".join(specs[i] if i == 0 or len(specs[i]) < 10 else (specs[i][:10] + ['etc'])) + '_'
     if empty:
         return
 
@@ -176,8 +176,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
-        print('OKAY')
-
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
             for agent in task_data.Agent.unique():
@@ -195,8 +193,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         tabular_normalized_mean[agent][suite][task] = normalized.mean()
                         tabular_normalized_median[agent][suite][task] = normalized.median()
                         break
-
-        print('OKAYY')
 
         # No need to show Agent in legend if all same
         short_palette = palette
