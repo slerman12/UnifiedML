@@ -313,16 +313,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         'Median': tabular_median,
                         'Normalized Mean': tabular_normalized_mean,
                         'Normalized Median': tabular_normalized_median}
-        for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
-            for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
-                tabular_data.update({
-                    f'{agg_name} Normalized-{name}': {
-                        agent: {
-                            suite:
-                                agg([val for val in tabular[agent][suite].values()])
-                            for suite in tabular[agent]}
-                        for agent in tabular}
-                })
+        # for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
+        #     for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
+        #         tabular_data.update({
+        #             f'{agg_name} Normalized-{name}': {
+        #                 agent: {
+        #                     suite:
+        #                         agg([val for val in tabular[agent][suite].values()])
+        #                     for suite in tabular[agent]}
+        #                 for agent in tabular}
+        #         })
         json.dump(tabular_data, f, indent=2)
         f.close()
 
