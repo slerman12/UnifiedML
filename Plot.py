@@ -33,6 +33,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
          include_train=False):  # TODO
     include_train = False
 
+    print("HUH")
+
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
 
