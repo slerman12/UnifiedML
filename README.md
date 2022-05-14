@@ -132,7 +132,7 @@ conda env create --name ML --file=Conda.yml
 conda activate ML
 ```
 
-Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
+Optionally, for GPU support, you may need to install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
 
 [comment]: <> (```console)
 
@@ -142,36 +142,7 @@ Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/
 
 # :joystick: Installing The Suites
 
-## 1. Classify
-
-<p align="left">
-
-[comment]: <> (<img src="https://i.imgur.com/F633xwk.png" width="320">)
-
-[comment]: <> (<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>)
-
-[comment]: <> (<img src="https://i.imgur.com/N1st6uO.png" width="320">)
-
-[comment]: <> (<br><i>Eight different ladybug species in iNaturalist dataset.</i>)
-
-[comment]: <> (<br><br>)
-<img src="https://i.imgur.com/etoaz2b.png" width="320">
-<br><i>Samples of images from the CIFAR-100 dataset.</i>
-
-[comment]: <> (<br><br><img src="https://i.imgur.com/E1v1jvm.jpg" width="320">)
-
-[comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
-</p>
-
-[comment]: <> (Comes preinstalled.)
-
-[comment]: <> (No additional preparation needed. All datasets download automatically.)
-
-[All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
-
-[comment]: <> (All datasets come preinstalled :white_check_mark:)
-
-## 2. Atari Arcade
+## 1. Atari Arcade
 
 <p align="left">
 <img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
@@ -191,30 +162,9 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-## 3. DeepMind Control
+## 2. DeepMind Control
 
-Download MuJoCo from here: https://mujoco.org/download.
-
-Make a ```.mujoco``` folder in your home directory:
-
-```console
-mkdir ~/.mujoco
-```
-
-Extract and move downloaded MuJoCo folder into ```~/.mujoco```. For a linux x64 architecture, this looks like:
-
-```console
-tar -xf mujoco210-linux-x86_64.tar.gz
-mv mujoco210/ ~/.mujoco/ 
-```
-
-And run:
-
-```console
-pip install --user dm_control
-```
-
-to install DeepMind Control. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
+Comes pre-installed. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank"><i>:arrow_forward: Click to play</i></a><br>
@@ -223,6 +173,35 @@ to install DeepMind Control. For any issues, consult the [DMC repo](https://gith
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
+
+## 3. Classify
+
+<p align="left">
+
+[comment]: <> (<img src="https://i.imgur.com/F633xwk.png" width="320">)
+
+[comment]: <> (<br><i>Alpaca or llama? Donkey or mule? Roses or kale? — iNaturalist</i><br><br>)
+<img src="https://i.imgur.com/N1st6uO.png" width="320">
+<br><i>Eight different ladybug species in the iNaturalist dataset.</i>
+
+[comment]: <> (<br><br>)
+
+[comment]: <> (<img src="https://i.imgur.com/etoaz2b.png" width="320">)
+
+[comment]: <> (<br><i>Samples of images from the CIFAR-100 dataset.</i>)
+
+[comment]: <> (<br><br><img src="https://i.imgur.com/E1v1jvm.jpg" width="320">)
+
+[comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
+</p>
+
+[comment]: <> (Comes preinstalled.)
+
+[comment]: <> (No additional preparation needed. All datasets download automatically.)
+
+[All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
+
+[comment]: <> (All datasets come preinstalled :white_check_mark:)
 
 # :file_cabinet: Key files
 
@@ -265,9 +244,15 @@ DQN Agent on MNIST:
 python Run.py task=classify/mnist RL=false
 ```
 
-*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```.
+*Note:* ```RL=false``` sets training to **standard** supervised-only classification.
 
-Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` (**experimental**). This is pure-RL training and actually works.
+Without ```RL=false```, an **augmented RL** update joins the supervised learning update s.t. ```reward = -error``` (***experimental***).
+
+Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error```. This is **pure-RL** training and actually works!
+
+[comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```.)
+
+[comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;**experimental**&#41;. This is pure-RL training and actually works.)
 
 [comment]: <> (with a simple CNN and some small random crop transforms.)
 
