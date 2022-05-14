@@ -45,18 +45,22 @@ sweep = [
     # f'plot_per_steps=0 reservation_id=20220502',
     # f'Agent=Agents.SPRAgent train_steps=500000 seed=1,2,3 task={dmc} experiment="Self-Supervised" plot_per_steps=0 reservation_id=20220502',
     # f'Agent=Agents.DQNAgent +agents.num_critics=5 train_steps=100000 seed=1,2,3 task={atari},{dmc} experiment="Critic-Ensemble" plot_per_steps=0 reservation_id=20220502',
-    # f'Agent=Agents.AC2Agent +agents.num_actors=3,5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actor-Ensemble" plot_per_steps=0 reservation_id=20220502',
-    # f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actions-Sampling" plot_per_steps=0 lab=true',
-    # f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=500000 seed=1,2,3 task={dmc} experiment="Actions-Sampling" plot_per_steps=0 reservation_id=20220509',
+    # f'Agent=Agents.AC2Agent +agents.num_actors=3 train_steps=100000 seed=1,2,3 task={atari} experiment="Actor-Ensemble-3" plot_per_steps=0 reservation_id=20220502',
+    # f'Agent=Agents.AC2Agent +agents.num_actors=5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actor-Ensemble-5" plot_per_steps=0 reservation_id=20220502',
+    # f'Agent=Agents.AC2Agent +agents.num_actions=3 train_steps=100000 seed=1,2,3 task={atari} experiment="Actions-Sampling-3" plot_per_steps=0 lab=true',
+    # f'Agent=Agents.AC2Agent +agents.num_actions=5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actions-Sampling-5" plot_per_steps=0 lab=true',
+    # f'Agent=Agents.AC2Agent +agents.num_actions=3 train_steps=500000 seed=1,2,3 task={dmc} experiment="Actions-Sampling-3" plot_per_steps=0 reservation_id=20220509',
+    # f'Agent=Agents.AC2Agent +agents.num_actions=5 train_steps=500000 seed=1,2,3 task={dmc} experiment="Actions-Sampling-5" plot_per_steps=0 reservation_id=20220509',
     # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} ema=true weight_decay=0.01 experiment="CV-RL" plot_per_steps=0 reservation_id=20220502',
 
     # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} '
     # 'transform="{RandomCrop:{padding:4}}" recipes.Aug=Blocks.Architectures.Null experiment="CV-Transform-RL" plot_per_steps=0 gpu="K80"',
     # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7 experiment="ViT" plot_per_steps=0 reservation_id=20220509',
-    # 'task=classify/cifar10,classify/tinyimagenet RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Supervised" plot_per_steps=0 lab=true',
 
-    # 'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Supervised+RL" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220502',
-    # 'Agent=Agents.AC2Agent +agents.num_actors=5 task=classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Actor-Experts" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220509'
+    # 'task=classify/cifar10,classify/tinyimagenet RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18 experiment="Supervised" plot_per_steps=0 lab=true',
+
+    # 'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18 experiment="Supervised+RL" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220502',
+    'Agent=Agents.AC2Agent +agents.num_actors=5 task=classify/cifar10 ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18 experiment="Actor-Experts" RL=false plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true'
 ]
 atari_tasks = [
     'Alien', 'Amidar', 'Assault', 'Asterix', 'BankHeist', 'BattleZone',
@@ -90,10 +94,6 @@ try:
         s.sendline(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.prompt()
         print(s.before)
-    print(f'squeue -a -u {username}')
-    s.sendline(f'squeue -a -u {username}')
-    s.prompt()
-    print(s.before)
     s.logout()
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")

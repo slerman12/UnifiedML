@@ -380,7 +380,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             elif suite.lower() == 'classify':
                 ax.set_ybound(0, 1)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-                ax.set_ylabel('Median Eval Accuracy')
+                ax.set_ylabel('Eval Accuracy')
 
             for p in ax.patches:
                 width = p.get_width()

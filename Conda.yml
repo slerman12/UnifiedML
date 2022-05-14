@@ -21,7 +21,7 @@ dependencies:
       - termcolor==1.1.0
       - wandb
       - tb-nightly
-      - imageio==2.9.0  # need to comment out two lines for m1 macs
+      - imageio==2.9.0
       - imageio-ffmpeg==0.4.4
       - opt_einsum_torch
       - einops

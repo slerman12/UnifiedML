@@ -43,10 +43,12 @@ except Exception:
 
 # steps, tasks = None, []
 steps = 5e5
-experiments = ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble',
-               'linear(2.0,0.1,20000)', 'linear(2.0,0.1,40000)']
-# experiments = ['CV-RL', 'ViT', 'Reference']
+# experiments = ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble',
+#                'linear(2.0,0.1,20000)', 'linear(2.0,0.1,40000)']
+experiments = ['CV-RL', 'ViT', 'Reference']
 # experiments = ['Supervised-RL', 'Actor-Experts', 'Supervised']
+# experiments = ["No-Contrastive", "Half-Half-Contrastive", "Third-Label", 'Supervised', 'Supervised-RL']
+# experiments = ['Actor-Ensemble-3', 'Actor-Ensemble-5', 'Actions-Sampling-3', 'Actions-Sampling-5', 'Reference']
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
          'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert', 'cifar10', 'tinyimagenet']
 

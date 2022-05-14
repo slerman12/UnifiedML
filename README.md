@@ -132,7 +132,7 @@ conda env create --name ML --file=Conda.yml
 conda activate ML
 ```
 
-Optionally, for GPU support, you may need to install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
+[comment]: <> (For GPU support, you may need to install Pytorch with CUDA from https://pytorch.org/get-started/locally/.)
 
 [comment]: <> (```console)
 
