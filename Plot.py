@@ -29,7 +29,7 @@ import seaborn as sns
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         write_tabular=False, plot_bar=True,
+         write_tabular=False, plot_bar=True, verbose=False,
          include_train=False):  # TODO
     include_train = False
 
@@ -115,6 +115,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         csv['Agent'] = agent + ' (' + experiment + ')'
         csv['Suite'] = suite
         csv['Task'] = found_suite_task
+
+        if verbose and length < steps != np.inf:
+            print(f'[Experiment {experiment} Agent {agent} Suite-Task {suite_task} Seed {seed}] has {length} steps.')
 
         # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pdf/2108.13264.pdf
         # max_csv = csv.copy()
