@@ -134,6 +134,12 @@ conda activate ML
 
 Optionally, for GPU support, install Pytorch with CUDA from https://pytorch.org/get-started/locally/.
 
+[comment]: <> (```console)
+
+[comment]: <> (conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch)
+
+[comment]: <> (```)
+
 # :joystick: Installing The Suites
 
 ## 1. Classify

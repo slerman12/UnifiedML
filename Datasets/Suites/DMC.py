@@ -2,12 +2,19 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import os
 
 
 def make(task, frame_stack=3, action_repeat=2, episode_max_frames=False, episode_truncate_resume_frames=False,
          offline=False, train=True, seed=1, batch_size=1, num_workers=1):
-    # Imports in make() to avoid glfw warning when using other envs
-    from dm_control import manipulation, suite
+    # Imports in make() to avoid glfw warning
+    try:
+        from dm_control import manipulation, suite
+    except ImportError:
+        del os.environ['MKL_SERVICE_FORCE_INTEL']
+        del os.environ['MUJOCO_GL']
+        from dm_control import manipulation, suite
+
     from dm_control.suite.wrappers import action_scale, pixels
 
     from Datasets.Suites._Wrappers import ActionSpecWrapper, ActionRepeatWrapper, FrameStackWrapper, \
