@@ -10,3 +10,11 @@ train_steps: 1500000
 stddev_schedule: 'linear(1.0,0.1,500000)'
 
 
+
+    
+hydra:
+    job:
+        env_set:
+          # Environment variables for MuJoCo
+          MKL_SERVICE_FORCE_INTEL: '1'
+          MUJOCO_GL: 'egl'
