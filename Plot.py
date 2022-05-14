@@ -33,8 +33,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
          include_train=False):  # TODO
     include_train = False
 
-    print("HUH")
-
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
 
@@ -178,6 +176,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
+        print('OKAY')
+
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
             for agent in task_data.Agent.unique():
@@ -195,6 +195,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         tabular_normalized_mean[agent][suite][task] = normalized.mean()
                         tabular_normalized_median[agent][suite][task] = normalized.median()
                         break
+
+        print('OKAYY')
 
         # No need to show Agent in legend if all same
         short_palette = palette
