@@ -153,9 +153,10 @@ class ClassifyEnv:
 
         return self.time_step
 
-    # TODO
-    # def render(self):
-    #     return self.time_step.x[0]
+    def render(self):
+        image = np.array(self.time_step.x[0] if hasattr(self.time_step, 'x')
+                         else self.batch[0][0], dtype='uint8')
+        return image.transpose(1, 2, 0)
 
     def observation_spec(self):
         if not hasattr(self, 'observation'):

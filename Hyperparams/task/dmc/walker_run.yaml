@@ -11,3 +11,9 @@ stddev_schedule: 'linear(1.0,0.1,500000)'
 
 
 batch_size: 512
+    
+hydra:
+    job:
+        env_set:
+          # Environment variables for MuJoCo
+          MUJOCO_GL: 'egl'
