@@ -201,6 +201,8 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
+That's it.
+
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
 # :file_cabinet: Key files
