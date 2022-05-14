@@ -51,18 +51,20 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         return
 
     # Style
-
-    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire, tab10_r
-    palette_colors = sns.color_palette('Accent')
-
-    sns.set_theme(font_scale=0.7,
+    # plt.style.use('bmh')
+    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire
+    sns.set_theme(style="darkgrid", palette='Set2', font_scale=0.4,
                   rc={
                       'legend.loc': 'lower right', 'figure.dpi': 400,
-                      'legend.fontsize': 5.5, 'legend.title_fontsize': 5.5,
-                      # 'axes.titlesize': 4, 'axes.labelsize': 4, 'font.size': 4,
-                      # 'xtick.labelsize': 7, 'ytick.labelsize': 7,
-                      # 'figure.titlesize': 4
+                      # 'legend.fontsize': 4, 'font.size': 4,
+                      # 'axes.titlesize': 4, 'axes.labelsize': 4,
+                      # 'xtick.labelsize': 4, 'ytick.labelsize': 4,
+                      # 'figure.titlesize': 4, 'legend.title_fontsize': 4
                   })
+    # plt.rcParams['figure.dpi'] = 400
+    # plt.rcParams['font.size'] = 4
+    # plt.rcParams['legend.fontsize'] = 4
+    # plt.rcParams['legend.loc'] = 'lower right'
 
     # All CSVs from path, recursive
     csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
@@ -138,9 +140,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     tabular_normalized_mean = {}
     tabular_normalized_median = {}
 
-    universal_hue_order, handles = np.sort(df.Agent.unique()), {}
-    palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
-
     # PLOTTING (tasks)
 
     # Dynamically compute num columns/rows
@@ -150,7 +149,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     num_cols = len(found_suite_tasks) // num_rows
 
     # Create subplots
-    fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(4 * num_cols, 3 * num_rows))
 
     # Plot tasks
     for i, suite_task in enumerate(found_suite_tasks):
@@ -163,7 +162,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if steps < np.inf:
             task_data = task_data[task_data['Step'] <= steps]
 
-        # No need to show Agent in legend if all same (Note: need to debug if using universal legend)
+        # No need to show Agent in legend if all same
         if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=SettingWithCopyWarning)
@@ -173,6 +172,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         col = i % num_cols
         ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
             else axs[row] if num_rows > 1 else axs
+        hue_order = np.sort(task_data.Agent.unique())
 
         # Format title
         title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
@@ -200,9 +200,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         tabular_normalized_median[agent][suite][task] = normalized.median()
                         break
 
-        hue_order = np.sort(task_data.Agent.unique())
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                     palette=palette
+                     # palette='pastel'
                      )
         ax.set_title(f'{title}')
 
@@ -210,23 +209,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
-
-        # Legend in subplots
-        ax.legend(frameon=False).set_title(None)
-
-        ax.tick_params(axis='x', rotation=20)
-
-        # Legend next to subplots
-        # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
-
-        # Data for universal legend
-        # handle, label = ax.get_legend_handles_labels()
-        # handles.update({l: h for l, h in zip(label, handle)})
-        # ax.legend().remove()
-
-    # Universal legend
-    # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-    #                          borderaxespad=0, frameon=False).set_title('Agent')
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Tasks.png'))
@@ -238,7 +220,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     num_cols = len(found_suites)
 
     # Create subplots
-    fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
+    fig, axs = plt.subplots(1, num_cols, figsize=(4 * num_cols, 3))
 
     # Sort suites
     found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found]
@@ -268,10 +250,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         continue
 
         ax = axs[col] if num_cols > 1 else axs
-
         hue_order = np.sort(task_data.Agent.unique())
+
         sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                     palette=palette
+                     # palette='pastel'
                      )
         ax.set_title(f'{suite}')
 
@@ -284,20 +266,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel('Eval Accuracy')
-
-        # Legend in subplots
-        ax.legend(frameon=False).set_title(None)
-
-        ax.tick_params(axis='x', rotation=20)
-
-        # Legend next to subplots
-        # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
-
-        # ax.legend().remove()
-
-    # Universal legend
-    # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-    #                          borderaxespad=0, frameon=False).set_title('Agent')
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Suites.png'))
@@ -340,16 +308,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     bar_data[suite]['Agent'].append(agent)
 
         # Create subplots
-        fig, axs = plt.subplots(1, num_cols, figsize=(5.5 * num_cols, 3))
+        fig, axs = plt.subplots(1, num_cols, figsize=(4 * num_cols, 3))
 
         for col, suite in enumerate(bar_data):
             task_data = pd.DataFrame(bar_data[suite])
 
             ax = axs[col] if num_cols > 1 else axs
 
-            hue_order = np.sort(task_data.Agent.unique())
+            hue_order = sorted(set(bar_data[suite]['Agent']))
             sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                        palette=palette
+                        # palette='pastel'
                         )
 
             ax.set_title(f'{suite} (@{min_steps} Steps)')
@@ -369,26 +337,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 width = p.get_width()
                 height = p.get_height()
                 x, y = p.get_xy()
-                ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
-                            (x + width/2, y + height), ha='center', size=24 * width,
-                            # color='#498057'
-                            # color='#3b423d'
-                            )
-
-            ax.tick_params(axis='x', rotation=20)
-            ax.set(xlabel=None)
-
-            # Legend in subplots
-            # ax.legend(frameon=False).set_title(None)
-
-            # Legend next to subplots
-            ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
-
-            # ax.legend().remove()
-
-        # Universal legend
-        # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-        #                          borderaxespad=0, frameon=False).set_title('Agent')
+                ax.annotate('{:.1f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
+                            (x + width/2, y + height), ha='center')
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Bar.png'))
