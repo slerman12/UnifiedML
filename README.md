@@ -164,7 +164,7 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 ## 2. DeepMind Control
 
-Comes pre-installed. For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
+Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank"><i>:arrow_forward: Click to play</i></a><br>
