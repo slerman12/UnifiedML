@@ -46,13 +46,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             if not isinstance(spec, MutableSequence):
                 specs[i] = [spec]
             # Plot name
-            plot_name += "_".join(specs[i] if i == 0 or len(specs[i]) < 10 else (specs[i][:10] + ['etc'])) + '_'
+            plot_name += "_".join(specs[i]) + '_'
     if empty:
         return
 
     # Style
 
-    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire, tab10_r, Dark2
+    # RdYlBu, Set1, Set2, Set3, gist_stern, icefire, tab10_r
     palette_colors = sns.color_palette('Accent')
 
     sns.set_theme(font_scale=0.7,
