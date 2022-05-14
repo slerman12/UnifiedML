@@ -337,7 +337,7 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
 
-Replays also save uniquely w.r.t. a date-time to allow multiple independent runs at the same time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
 ### Custom Architectures
 
