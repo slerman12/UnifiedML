@@ -42,7 +42,6 @@ except Exception:
     pass
 
 # steps, tasks = None, []
-
 steps = 5e5
 experiments = ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble',
                'linear(2.0,0.1,20000)', 'linear(2.0,0.1,40000)']

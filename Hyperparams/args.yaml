@@ -1,6 +1,7 @@
 defaults:
   - _self_
   - task@_global_: atari/pong
+  - override hydra/job_logging: none
 
 # Agent
 obs_shape: ???  # To be specified later

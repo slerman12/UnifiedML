@@ -249,6 +249,8 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across both Atari and DMC.
 
+Save videos with ```log_video=true```.
+
 ### Classification
 
 DQN Agent on MNIST:

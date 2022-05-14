@@ -91,9 +91,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         datums = [experiment, agent, suite.lower(), suite_task]
         for i, spec in enumerate(specs):
-            if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', '\(').replace(')', '\)'),
+            if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(')', r'\)'),
                                                  datums[i], re.IGNORECASE):
-                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', '\(').replace(')', '\)'),
+                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(')', r'\)'),
                                        datums[i], re.IGNORECASE):
                     break
                 include = False
@@ -117,7 +117,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         csv['Task'] = found_suite_task
 
         if verbose and length < steps != np.inf:
-            print(f'[Experiment {experiment} Agent {agent} Task {suite}/{suite_task} Seed {seed}] has {length} steps.')
+            print(f'[Experiment {experiment} Agent {agent} Suite {suite} Task {suite_task} Seed {seed}] '
+                  f'has {length} steps.')
 
         # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pdf/2108.13264.pdf
         # max_csv = csv.copy()

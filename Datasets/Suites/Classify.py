@@ -153,6 +153,10 @@ class ClassifyEnv:
 
         return self.time_step
 
+    # TODO
+    # def render(self):
+    #     return self.time_step.x[0]
+
     def observation_spec(self):
         if not hasattr(self, 'observation'):
             self.observation = np.array(self.batch[0])

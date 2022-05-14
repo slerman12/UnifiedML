@@ -90,6 +90,10 @@ try:
         s.sendline(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.prompt()
         print(s.before)
+    print(f'squeue -a -u {username}')
+    s.sendline(f'squeue -a -u {username}')
+    s.prompt()
+    print(s.before)
     s.logout()
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")
