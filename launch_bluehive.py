@@ -49,12 +49,14 @@ sweep = [
     # f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=100000 seed=1,2,3 task={atari} experiment="Actions-Sampling" plot_per_steps=0'
     # f'Agent=Agents.AC2Agent +agents.num_actions=3,5 train_steps=500000 seed=1,2,3 task={dmc} experiment="Actions-Sampling" plot_per_steps=0 reservation_id=20220502',
     # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} ema=true weight_decay=0.01 experiment="CV-RL" plot_per_steps=0 reservation_id=20220502',
-    # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} '
-    # 'transform="{RandomCrop:{pad:4}}" Aug=Blocks.Architectures.Null experiment="CV-Transform-RL" plot_per_steps=0 reservation_id=20220502',
-    # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} Eyes=Blocks.Architectures.ViT experiment="ViT" plot_per_steps=0 reservation_id=20220502',
-    # 'task=classify/cifar10,classify/tinyimagenet RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Supervised" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220502',
+
+    f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} '
+    '\'transform="{RandomCrop:{pad:4}}"\' recipes.Aug=Blocks.Architectures.Null experiment="CV-Transform-RL" plot_per_steps=0 lab=true',
+    # f'Agent=Agents.DrQV2Agent train_steps=500000 seed=1,2,3 task={dmc} Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7 experiment="ViT" plot_per_steps=0 reservation_id=20220509',
+    'task=classify/cifar10,classify/tinyimagenet RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Supervised" plot_per_steps=0 lab=true',
+
     # 'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Supervised+RL" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220502',
-    'Agent=Agents.AC2Agent +agents.num_actors=5 task=classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Actor-Experts" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220502'
+    # 'Agent=Agents.AC2Agent +agents.num_actors=5 task=classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" experiment="Actor-Experts" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true reservation_id=20220509'
 ]
 atari_tasks = [
     'Alien', 'Amidar', 'Assault', 'Asterix', 'BankHeist', 'BattleZone',
@@ -64,10 +66,10 @@ atari_tasks = [
     'Seaquest', 'UpNDown'
 ]
 full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
-sweep = ['\'experiment="linear(2.0,0.1,40000)"\' \'stddev_schedule="linear(2.0,0.1,40000)"\' train_steps=100000 '
-         f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
-         'num_workers=4 num_gpus=1 mem=20 '
-         'plot_per_steps=0 reservation_id=20220509']
+# sweep = ['\'experiment="linear(2.0,0.1,40000)"\' \'stddev_schedule="linear(2.0,0.1,40000)"\' train_steps=100000 '
+#          f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
+#          'num_workers=4 num_gpus=1 mem=20 '
+#          'plot_per_steps=0 reservation_id=20220509']
 
 
 # Launch on Bluehive
