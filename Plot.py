@@ -313,6 +313,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         'Median': tabular_median,
                         'Normalized Mean': tabular_normalized_mean,
                         'Normalized Median': tabular_normalized_median}
+        # Aggregating across suites
         # for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
         #     for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
         #         tabular_data.update({
