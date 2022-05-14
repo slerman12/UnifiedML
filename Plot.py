@@ -163,7 +163,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if steps < np.inf:
             task_data = task_data[task_data['Step'] <= steps]
 
-        # No need to show Agent in legend if all same
+        # No need to show Agent in legend if all same (Note: need to debug if using universal legend)
         if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=SettingWithCopyWarning)
@@ -219,7 +219,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Legend next to subplots
         # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
-        # Data for universal legend (Note: need to debug if not showing Agent)
+        # Data for universal legend
         # handle, label = ax.get_legend_handles_labels()
         # handles.update({l: h for l, h in zip(label, handle)})
         # ax.legend().remove()
