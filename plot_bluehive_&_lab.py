@@ -41,62 +41,76 @@ try:
 except Exception:
     pass
 
+sftp = True
 # steps, tasks = None, []
 steps = 5e5
-# experiments = ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble',
-#                'linear(2.0,0.1,20000)', 'linear(2.0,0.1,40000)']
-experiments = ['CV-RL', 'ViT', 'Reference']
+
+# Generalized reference implementations: DQN, DrQV2, SPR
+# experiments = ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble']
+
+# Quickly integrating and prototyping computer vision advances in RL:
+# EMA, weight decay, augmentations, & architectures (e.g. ViT)
+experiments = ['CV-RL', 'ViT', 'Reference', 'CV-Transform-RL']
+
+# Can RL augment supervision?
 # experiments = ['Supervised-RL', 'Actor-Experts', 'Supervised']
+
+# When is reward enough?
 # experiments = ["No-Contrastive", "Half-Half-Contrastive", "Third-Label", 'Supervised', 'Supervised-RL']
-# experiments = ['Actor-Ensemble-3', 'Actor-Ensemble-5', 'Actions-Sampling-3', 'Actions-Sampling-5', 'Reference']
+
+# Unifying RL as a discrete control problem: AC2
+# experiments = ['Actor-Ensemble-3', 'Actor-Ensemble-5',
+#                # 'Actions-Sampling-3', 'Actions-Sampling-5',
+#                'Reference']
+
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
          'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert', 'cifar10', 'tinyimagenet']
 
 # SFTP experiment results
+if sftp:
+    print(f'SFTP\'ing: {", ".join(experiments)}')
+    if len(tasks):
+        print(f'plotting for tasks: {", ".join(tasks)}')
+    if steps:
+        print(f'up to steps: {steps:.0f}')
 
-print(f'SFTP\'ing: {", ".join(experiments)}')
-if len(tasks):
-    print(f'plotting for tasks: {", ".join(tasks)}')
-if steps:
-    print(f'up to steps: {steps:.0f}')
+    cwd = os.getcwd()
+    local_path = f"./Benchmarking"
 
-cwd = os.getcwd()
-local_path = f"./Benchmarking"
+    Path(local_path).mkdir(parents=True, exist_ok=True)
+    os.chdir(local_path)
 
-Path(local_path).mkdir(parents=True, exist_ok=True)
-os.chdir(local_path)
-
-print('\nConnecting to Bluehive', end=" ")
-p = spawn(f'sftp {username}@bluehive.circ.rochester.edu')
-p.expect('Password: ', timeout=None)
-p.sendline(password)
-p.expect('sftp> ', timeout=None)
-print('- Connected! ✓\n')
-p.sendline(f"lcd {local_path}")
-p.expect('sftp> ', timeout=None)
-p.sendline(f"cd /scratch/{username}/UnifiedML")
-p.expect('sftp> ', timeout=None)
-for i, experiment in enumerate(experiments):
-    print(f'{i + 1}/{len(experiments)} [bluehive] SFTP\'ing "{experiment}"')
-    p.sendline(f"get -r ./Benchmarking/{experiment}")
+    print('\nConnecting to Bluehive', end=" ")
+    p = spawn(f'sftp {username}@bluehive.circ.rochester.edu')
+    p.expect('Password: ', timeout=None)
+    p.sendline(password)
     p.expect('sftp> ', timeout=None)
+    print('- Connected! ✓\n')
+    p.sendline(f"lcd {local_path}")
+    p.expect('sftp> ', timeout=None)
+    p.sendline(f"cd /scratch/{username}/UnifiedML")
+    p.expect('sftp> ', timeout=None)
+    for i, experiment in enumerate(experiments):
+        print(f'{i + 1}/{len(experiments)} [bluehive] SFTP\'ing "{experiment}"')
+        p.sendline(f"get -r ./Benchmarking/{experiment}")
+        p.expect('sftp> ', timeout=None)
 
-print('\nConnecting to lab', end=" ")
-p = spawn(f'sftp cornea')
-p.expect('sftp> ')
-print('- Connected! ✓\n')
-p.sendline(f"lcd {local_path}")
-p.expect('sftp> ')
-p.sendline("cd UnifiedML")
-p.expect('sftp> ')
-for i, experiment in enumerate(experiments):
-    print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
-    p.sendline(f"get -r ./Benchmarking/{experiment}")
+    print('\nConnecting to lab', end=" ")
+    p = spawn(f'sftp cornea')
     p.expect('sftp> ')
+    print('- Connected! ✓\n')
+    p.sendline(f"lcd {local_path}")
+    p.expect('sftp> ')
+    p.sendline("cd UnifiedML")
+    p.expect('sftp> ')
+    for i, experiment in enumerate(experiments):
+        print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
+        p.sendline(f"get -r ./Benchmarking/{experiment}")
+        p.expect('sftp> ')
 
-print('\nPlotting results...')
+    print('\nPlotting results...')
 
-os.chdir(cwd)
+    os.chdir(cwd)
 
 plot(path=f"./Benchmarking/{'_'.join(experiments)}/Plots",
      plot_experiments=experiments if len(experiments) else None,

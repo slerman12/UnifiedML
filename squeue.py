@@ -41,9 +41,9 @@ except Exception:
 try:
     s = pxssh.pxssh()
     s.login('bluehive.circ.rochester.edu', username, password)
-    s.sendline(f'squeue -a -u {username}')                 # Run a command
+    s.sendline(f'squeue -a -u {username}')              # Run a command
     s.prompt()                                          # Match the prompt
-    print(s.before)                                     # Print everything before the prompt.
+    print(s.before.decode("utf-8"))                                     # Print everything before the prompt.
     s.logout()
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")

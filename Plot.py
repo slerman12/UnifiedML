@@ -369,7 +369,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         palette=palette
                         )
 
-            ax.set_title(f'{suite} (@{min_steps} Steps)')
+            ax.set_title(f'{suite} (@{min_steps:.0f} Steps)')
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
