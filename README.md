@@ -479,7 +479,7 @@ python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
-python Run.py -m task=dmc/cheetah_run,classify/mnist seed=1,2,3 
+python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
 
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
