@@ -46,7 +46,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             if not isinstance(spec, MutableSequence):
                 specs[i] = [spec]
             # Plot name
-            plot_name += "_".join(specs[i] if i == 0 or len(specs[i]) < 10 else (specs[i][:10] + ['etc'])) + '_'
+            plot_name += "_".join(specs[i] if i == 0 or len(specs[i]) < 5 else (specs[i][:5] + ['etc'])) + '_'
     if empty:
         return
 
@@ -317,16 +317,18 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Tabular data
     if write_tabular:
-        f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")
+        f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")  # TODO name after steps if provided
         tabular_data = {'Mean': tabular_mean,
                         'Median': tabular_median,
                         'Normalized Mean': tabular_normalized_mean,
                         'Normalized Median': tabular_normalized_median}
         # Aggregating across suites
         for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
-            for name, tabular in zip(['Mean', 'Median'], [tabular_normalized_mean, tabular_normalized_median]):
+            for name, tabular in zip(['Mean', 'Median', 'Normalized-Mean', 'Normalized-Median'],
+                                     [tabular_mean, tabular_median,
+                                      tabular_normalized_mean, tabular_normalized_median]):
                 tabular_data.update({
-                    f'{agg_name} Normalized-{name}': {
+                    f'{agg_name} {name}': {
                         agent: {
                             suite:
                                 agg([val for val in tabular[agent][suite].values()])
@@ -387,7 +389,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 height = p.get_height()
                 x, y = p.get_xy()
                 ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
-                            (x + width/2, y + height), ha='center', size=24 * width,
+                            (x + width/2, y + height), ha='center', size=min(24 * width, 7),
                             # color='#498057'
                             # color='#3b423d'
                             )
@@ -408,7 +410,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         #                          borderaxespad=0, frameon=False).set_title('Agent')
 
         plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Bar.png'))
+        plt.savefig(path / (plot_name + 'Bar.png'))  # TODO add step count to name if provided as arg
 
         plt.close()
 
@@ -416,32 +418,32 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 # Lows and highs for normalization
 
 atari_random = {
-    'Alien': 88.4,
-    'Amidar': 1.09,
-    'Assault': 67.2,
-    'Asterix': 154.0,
-    'BankHeist': 2.6,
-    'BattleZone': 660.0,
-    'Boxing': 1.1,
-    'Breakout': 0.1,
-    'ChopperCommand': 285.0,
-    'CrazyClimber': 1205.0,
-    'DemonAttack': 45.4,
+    'Alien': 227.8,
+    'Amidar': 5.8,
+    'Assault': 222.4,
+    'Asterix': 210.0,
+    'BankHeist': 14.2,
+    'BattleZone': 2360.0,
+    'Boxing': 0.1,
+    'Breakout': 1.7,
+    'ChopperCommand': 811.0,
+    'CrazyClimber': 10780.5,
+    'DemonAttack': 152.1,
     'Freeway': 0.0,
-    'Frostbite': 20.2,
-    'Gopher': 208.8,
-    'Hero': 16.5,
-    'Jamesbond': 0.5,
-    'Kangaroo': 14.0,
-    'Krull': 611.2,
-    'KungFuMaster': 92.0,
-    'MsPacman': 107.2,
-    'Pong': -20.44,
-    'PrivateEye': -1.14,
-    'Qbert': 67.75,
-    'RoadRunner': 2.0,
-    'Seaquest': 20.4,
-    'UpNDown': 65.8
+    'Frostbite': 65.2,
+    'Gopher': 257.6,
+    'Hero': 1027.0,
+    'Jamesbond': 29.0,
+    'Kangaroo': 52.0,
+    'Krull': 1598.0,
+    'KungFuMaster': 258.5,
+    'MsPacman': 307.3,
+    'Pong': -20.7,
+    'PrivateEye': 24.9,
+    'Qbert': 163.9,
+    'RoadRunner': 11.5,
+    'Seaquest': 68.4,
+    'UpNDown': 533.4
 }
 atari_human = {
     'Alien': 7127.7,

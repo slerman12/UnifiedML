@@ -41,8 +41,7 @@ class ExperienceReplay:
                     print('All data loaded. Training of classifier underway.')
                 else:
                     if path != standard:
-                        warnings.warn(f'Loading a saved replay of a classify task from a previous online session,'
-                                      f'which may not be intentional. '
+                        warnings.warn(f'Loading a saved replay of a classify task from a previous online session.'
                                       f'For the standard offline dataset, set replay.path="{standard}" '  # If exists
                                       f'or delete the saved buffer in {path}.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'

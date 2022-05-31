@@ -41,30 +41,47 @@ try:
 except Exception:
     pass
 
-sftp = True
+sftp = False
+plot_group = 'UML_Paper'
 # steps, tasks = None, []
 steps = 5e5
 
-# Generalized reference implementations: DQN, DrQV2, SPR
-# experiments = ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble']
+plots = [
+    # Generalized reference implementations: DQN, DrQV2, SPR
+    ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble'],
 
-# Quickly integrating and prototyping computer vision advances in RL:
-# EMA, weight decay, augmentations, & architectures (e.g. ViT)
-experiments = ['CV-RL', 'ViT', 'Reference', 'CV-Transform-RL']
+    # Quickly integrating and prototyping computer vision advances in RL:
+    # EMA, weight decay, augmentations, & architectures (e.g. ViT)
+    ['CV-RL', 'ViT', 'Reference', 'CV-Transform-RL'],
 
-# Can RL augment supervision?
-# experiments = ['Supervised-RL', 'Actor-Experts', 'Supervised']
+    # Can RL augment supervision?
+    ["No-Contrastive", "Half-Half-Contrastive", "Third-Label",
+     'Supervised-RL', 'Actor-Experts', 'Supervised'],
 
-# When is reward enough?
-# experiments = ["No-Contrastive", "Half-Half-Contrastive", "Third-Label", 'Supervised', 'Supervised-RL']
+    # When is reward enough?
+    ["No-Contrastive-Pure-RL", "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
+     'Supervised', 'Supervised-RL', 'Supervised-RL-No-Contrastive'],
 
-# Unifying RL as a discrete control problem: AC2
-# experiments = ['Actor-Ensemble-3', 'Actor-Ensemble-5',
-#                # 'Actions-Sampling-3', 'Actions-Sampling-5',
-#                'Reference']
+    # Unifying RL as a discrete control problem: AC2
+    ['Actor-Ensemble-3', 'Actor-Ensemble-5',
+     'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
+     'Reference']
+]
+
+experiments = set().union(*plots)
+
+bluehive_only = ["Half-Half-Contrastive", "Third-Label",
+                 "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
+                 'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
+                 'Critic-Ensemble', 'Reference']
+
+agents = []
+
+suites = []
 
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
          'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert', 'cifar10', 'tinyimagenet']
+
 
 # SFTP experiment results
 if sftp:
@@ -104,15 +121,21 @@ if sftp:
     p.sendline("cd UnifiedML")
     p.expect('sftp> ')
     for i, experiment in enumerate(experiments):
-        print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
-        p.sendline(f"get -r ./Benchmarking/{experiment}")
-        p.expect('sftp> ')
+        if experiment not in bluehive_only:
+            print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
+            p.sendline(f"get -r ./Benchmarking/{experiment}")
+            p.expect('sftp> ')
 
     print('\nPlotting results...')
 
     os.chdir(cwd)
 
-plot(path=f"./Benchmarking/{'_'.join(experiments)}/Plots",
-     plot_experiments=experiments if len(experiments) else None,
-     plot_tasks=tasks if len(tasks) else None,
-     steps=steps if steps else np.inf, write_tabular=True, verbose=True)
+# Generate each plot
+for plot_experiments in plots:
+
+    plot(path=f"./Benchmarking/{plot_group + '/' if plot_group else ''}{'_'.join(plot_experiments)}/Plots",
+         plot_experiments=plot_experiments if len(plot_experiments) else None,
+         plot_agents=agents if len(agents) else None,
+         plot_suites=suites if len(suites) else None,
+         plot_tasks=tasks if len(tasks) else None,
+         steps=steps if steps else np.inf, write_tabular=True, verbose=True)
