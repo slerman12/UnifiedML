@@ -63,7 +63,7 @@ def main(args):
         if args.plot_per_steps and agent.step > 1 and agent.step % args.plot_per_steps == 0:
             call(args.plotting)
 
-        if converged:
+        if converged or args.train_steps == 0:
             break
 
         # Rollout
