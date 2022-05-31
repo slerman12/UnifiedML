@@ -33,8 +33,7 @@ hydra:
         env_set:
           # Environment variables for MuJoCo
           MKL_SERVICE_FORCE_INTEL: '1'
-          MUJOCO_GL: 'egl'"""
-                )
+          MUJOCO_GL: 'egl'""")
         f.close()
         out += ' "' + task.lower() + '"'
     print(out)

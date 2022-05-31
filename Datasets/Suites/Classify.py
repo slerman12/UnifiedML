@@ -153,11 +153,6 @@ class ClassifyEnv:
 
         return self.time_step
 
-    def render(self):
-        image = self.time_step.x if hasattr(self.time_step, 'x') \
-            else self.batch[0]
-        return np.array(image[random.randint(0, len(image))], dtype='uint8').transpose(1, 2, 0)
-
     def observation_spec(self):
         if not hasattr(self, 'observation'):
             self.observation = np.array(self.batch[0])
@@ -175,14 +170,16 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     """
     'task' options:
 
-    ('CIFAR10', 'CIFAR100', 'EMNIST', 'FashionMNIST', 'QMNIST',
-    'MNIST', 'KMNIST', 'STL10', 'SVHN', 'PhotoTour', 'SEMEION',
-    'Omniglot', 'SBU', 'Flickr8k', 'Flickr30k',
-    'VOCSegmentation', 'VOCDetection', 'Cityscapes', 'ImageNet',
-    'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
-    'USPS', 'Kinetics400', "Kinetics", 'HMDB51', 'UCF101',
-    'Places365', 'Kitti', "INaturalist", "LFWPeople", "LFWPairs",
-    'TinyImageNet')
+    ('LSUN', 'LSUNClass',
+     'ImageFolder', 'DatasetFolder', 'FakeData',
+     'CocoCaptions', 'CocoDetection',
+     'CIFAR10', 'CIFAR100', 'EMNIST', 'FashionMNIST', 'QMNIST',
+     'MNIST', 'KMNIST', 'STL10', 'SVHN', 'PhotoTour', 'SEMEION',
+     'Omniglot', 'SBU', 'Flickr8k', 'Flickr30k',
+     'VOCSegmentation', 'VOCDetection', 'Cityscapes', 'ImageNet',
+     'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
+     'VisionDataset', 'USPS', 'Kinetics400', 'HMDB51', 'UCF101',
+     'Places365', 'TinyImageNet')
     """
 
     assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'
@@ -194,9 +191,8 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
-        experiences = dataset(root=path + "_Train" if train else path + "_Eval",
-                              **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
-                                 else dict(train=train)),
+        experiences = dataset(root=path + "_Train" if train else "_Eval",
+                              train=train,
                               download=True,
                               transform=Transform())
 
@@ -218,3 +214,5 @@ def worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
+
+# TODO inaturalist update!

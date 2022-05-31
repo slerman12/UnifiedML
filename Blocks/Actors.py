@@ -5,8 +5,6 @@
 import math
 import copy
 
-from hydra.utils import instantiate
-
 import torch
 from torch import nn
 from torch.distributions import Categorical
@@ -20,10 +18,8 @@ import Utils
 
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe, ensemble_size=2,
-                 discrete=False, stddev_schedule=None, stddev_clip=None, lr=None, weight_decay=0, ema_decay=None):
+                 stddev_schedule=None, stddev_clip=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         super().__init__()
-
-        self.discrete = discrete
 
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
@@ -31,26 +27,24 @@ class EnsembleGaussianActor(nn.Module):
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk._target_ is None \
-            else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, repr_shape))
+        self.trunk = Utils.init(recipe, 'trunk', input_shape=Utils.default(recipe, repr_shape, 'trunk', 'input_shape'),
+                                __default=nn.Sequential(nn.Linear(in_dim, trunk_dim),
+                                                        nn.LayerNorm(trunk_dim), nn.Tanh()))
 
-        self.Pi_head = Utils.Ensemble([MLP(trunk_dim, out_dim, hidden_dim, 2) if recipe.pi_head._target_ is None
-                                       else instantiate(recipe.pi_head, output_dim=out_dim)
+        self.Pi_head = Utils.Ensemble([Utils.init(recipe, 'pi_head', output_dim=out_dim,
+                                                  __default=MLP(trunk_dim, out_dim, hidden_dim, 2))
                                        for _ in range(ensemble_size)])
 
-        self.init(lr, weight_decay, ema_decay)
+        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
-    def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Initialize weights
-        self.apply(Utils.weight_init)
-
+    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr is not None:
+        if lr:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
-        if ema_decay is not None:
+        if ema_decay:
             self.ema = copy.deepcopy(self).eval()
             self.ema_decay = ema_decay
 
@@ -76,6 +70,7 @@ class EnsembleGaussianActor(nn.Module):
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
+    """Categorically samples over continuous or discrete actions based on critic Q-values"""
     def __init__(self, entropy_schedule=1):
         super().__init__()
 
@@ -85,12 +80,17 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         # Sample q or mean
         q = Q.rsample() if sample_q else Q.mean if hasattr(Q, 'mean') else Q.best
 
+        # Exploit Q value vs. explore Q uncertainty, e.g., UCB exploration
+        # Standard deviation of Q ensemble might be a good heuristic for uncertainty for exploration
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
+
+        # Entropy of action selection
         entropy_temp = Utils.schedule(self.entropy_schedule, step)
+
         Psi = Categorical(logits=u_logits / entropy_temp + action_log_prob)
 
-        best_u, best_ind = torch.max(u, -1)
+        best_eps, best_ind = torch.max(u, -1)
         best_action = Utils.gather_indices(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
@@ -100,7 +100,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
             return Utils.gather_indices(Q.action if action is None else action, i.unsqueeze(-1), 1).squeeze(1)
 
         Psi.__dict__.update({'best': best_action,
-                             'best_u': best_u,
+                             'best_u': best_eps,
                              'sample_ind': sample,
                              'sample': lambda x=torch.Size(): action_sampler(x).detach(),
                              'rsample': action_sampler,

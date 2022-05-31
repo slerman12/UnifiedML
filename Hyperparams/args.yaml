@@ -11,7 +11,9 @@ trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
 lr: 1e-4
+lr_decay_epochs: 0
 weight_decay: 0
+ema_decay: 0.99
 # Domains
 discrete: ??? # To be specified later
 offline: false  # Defaults to true for classify tasks
@@ -21,6 +23,7 @@ generate: false
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
+steps_per_epoch: null  # TODO can just count episodes instead
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -77,8 +80,9 @@ agent:
   data_norm: ${data_norm}
   recipes: ${recipes}
   lr: ${lr}
+  lr_decay_epochs: ${lr_decay_epochs}
   weight_decay: ${weight_decay}
-  ema_decay: 0.99
+  ema_decay: ${ema_decay}
   ema: ${ema}
   explore_steps: ${explore_steps}
   stddev_schedule: ${stddev_schedule} # Specified per task
@@ -100,6 +104,7 @@ replay:
   action_spec: ${action_spec}
   suite: ${suite}
   task: ${task_name}
+  steps_per_epoch: ${steps_per_epoch}
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}
@@ -174,4 +179,3 @@ hydra:
   sweep:
     dir: ./
     subdir: ./
-

@@ -12,7 +12,7 @@ torch.backends.cudnn.benchmark = True
 
 
 # Hydra conveniently and cleanly manages sys args
-# Hyper-param arg files located in ./Hyperparams
+# Hyper-param arg file located in ./Hyperparams
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
@@ -45,7 +45,7 @@ def main(args):
 
     # Start
     converged = training = False
-    while True:
+    while args.train_steps > 0:
         # Evaluate
         if args.evaluate_per_steps and agent.step % args.evaluate_per_steps == 0:
 

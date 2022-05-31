@@ -5,8 +5,6 @@
 import math
 import copy
 
-from hydra.utils import instantiate
-
 import torch
 from torch import nn
 from torch.distributions import Normal
@@ -22,7 +20,7 @@ class EnsembleQCritic(nn.Module):
     returns a Normal distribution over the ensemble.
     """
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe=None, ensemble_size=2, sigmoid=False,
-                 discrete=False, ignore_obs=False, lr=None, weight_decay=0, ema_decay=None):
+                 discrete=False, ignore_obs=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
@@ -33,30 +31,28 @@ class EnsembleQCritic(nn.Module):
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk._target_ is None \
-            else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, repr_shape))
+        self.trunk = Utils.init(recipe, 'trunk', input_shape=Utils.default(recipe, repr_shape, 'trunk', 'input_shape'),
+                                __default=nn.Sequential(nn.Linear(in_dim, trunk_dim),
+                                                        nn.LayerNorm(trunk_dim), nn.Tanh()))
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
-        shape = [dim] if recipe.q_head._target_ is None else recipe.q_head.input_shape
+        shape = [dim] if Utils.default(recipe, None, 'q_head', '_target_') is None else recipe.q_head.input_shape
         out_dim = action_dim if discrete else 1
 
-        self.Q_head = Utils.Ensemble([MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid) if recipe.q_head._target_ is None
-                                      else instantiate(recipe.q_head, input_shape=shape, output_dim=out_dim)
+        self.Q_head = Utils.Ensemble([Utils.init(recipe, 'q_head', input_shape=shape, output_dim=out_dim,
+                                                 __default=MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid))
                                       for _ in range(ensemble_size)], 0)
 
-        self.init(lr, weight_decay, ema_decay)
+        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
-    def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Initialize weights
-        self.apply(Utils.weight_init)
-
+    def init(self, lr=None, lr_decay_epcohs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr is not None:
+        if lr:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epcohs)
 
         # EMA
-        if ema_decay is not None:
+        if ema_decay:
             self.ema = copy.deepcopy(self).eval()
             self.ema_decay = ema_decay
 
@@ -84,7 +80,6 @@ class EnsembleQCritic(nn.Module):
             else:
                 # Q values for a discrete action
                 Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
-
         else:
             assert action is not None and \
                    action.shape[-1] == self.action_dim, f'action with dim={self.action_dim} needed for continuous space'

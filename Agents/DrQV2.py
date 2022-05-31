@@ -5,8 +5,6 @@
 import time
 import math
 
-from hydra.utils import instantiate
-
 import torch
 from torch.nn.functional import cross_entropy
 
@@ -14,7 +12,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleGaussianActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -25,9 +23,10 @@ class DrQV2Agent(torch.nn.Module):
     Generalized to discrete action spaces, classification, and generative modeling"""
     def __init__(self,
                  obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
-                 lr, weight_decay, ema_decay, ema,  # Optimization
+                 lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
-                 discrete, RL, supervise, generate, device, parallel, log):  # On-boarding
+                 discrete, RL, supervise, generate, device, parallel, log  # On-boarding
+                 ):
         super().__init__()
 
         self.discrete = discrete and not generate  # Discrete supported!
@@ -40,50 +39,47 @@ class DrQV2Agent(torch.nn.Module):
         self.step = self.episode = 0
         self.explore_steps = explore_steps
         self.ema = ema
-        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
-                            lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
+                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                            ema_decay=ema_decay * ema)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
+        action_dim = math.prod(obs_shape) if generate \
+            else action_shape[-1]
 
-        # Continuous actions
-        self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
-                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
+        self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.actor,
+                                           ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                           lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                           ema_decay=ema_decay * ema)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
-                                      ensemble_size=2, discrete=self.discrete, ignore_obs=generate,
-                                      lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
-
-        self.action_selector = CategoricalCriticActor(stddev_schedule)
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_dim, recipes.critic,
+                                      ignore_obs=generate,
+                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                      ema_decay=ema_decay)
 
         # Image augmentation
-        self.aug = instantiate(recipes.aug) if recipes.Aug is not None \
-            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+        self.aug = Utils.init(recipes, 'aug',
+                              __default=IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4))
 
         # Birth
 
     def act(self, obs):
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
+        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor):
             obs = torch.as_tensor(obs, device=self.device)
 
-            # EMA targets
+            # EMA shadows
             encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
-            actor = self.actor.ema if self.ema and not self.discrete else self.actor
-            critic = self.critic.ema if self.ema else self.critic
+            actor = self.actor.ema if self.ema else self.actor
 
             # "See"
             obs = encoder(obs)
 
-            Pi = self.action_selector(critic(obs), self.step) if self.discrete \
-                else actor(obs, self.step)
+            Pi = actor(obs, self.step)
 
             action = Pi.sample() if self.training \
-                else Pi.best if self.discrete \
                 else Pi.mean
 
             if self.training:
@@ -91,8 +87,7 @@ class DrQV2Agent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
-                        else action.uniform_(-1, 1)
+                    action = action.uniform_(-1, 1)
 
             return action
 
@@ -147,7 +142,7 @@ class DrQV2Agent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, retain_graph=True)
+                               self.actor, epoch=replay.epoch, retain_graph=True)
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -184,14 +179,14 @@ class DrQV2Agent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic)
+                           self.critic, epoch=replay.epoch)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder)
+                           self.encoder, epoch=replay.epoch)
 
-        if self.generate or self.RL and not self.discrete:
+        if self.generate or self.RL:
             # "Change" / "Grow"
 
             # Actor loss
@@ -200,6 +195,6 @@ class DrQV2Agent(torch.nn.Module):
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.actor)
+                           self.actor, epoch=replay.epoch)
 
         return logs

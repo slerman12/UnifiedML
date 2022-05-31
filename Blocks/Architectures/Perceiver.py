@@ -37,25 +37,8 @@ class Perceiver(nn.Module):
                                                         for _ in range(inner_depth - 1)])] * recurs
                                        for recurs, inner_depth in zip(recursions, depths)], []))
 
-    def forward(self, *x):
-        # Broadcast to 3 dims and concatenate inputs over channel dim*x):
-        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        x = torch.cat(
-            [context.flatten(1, -2) if len(context.shape) > 2
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
-             for context in x if context.nelement() > 0], dim=-3)
-        # Conserve leading dims
-        lead_shape = x.shape[:-3]
-        # Operate on last 3 dims
-        x = x.view(-1, *x.shape[-3:])
+    def forward(self, x):
         out = self.tokens.to(x.device)
         for reattn, attn in zip(self.reattn, self.attn):
             out = attn(reattn(out, x))
-        # Restore leading dims
-        # out = x.view(*lead_shape, *x.shape[1:])
         return out
-
-        # Restores original shape
-        return attn.view(-1, *mid_shape, attn.shape[-1])

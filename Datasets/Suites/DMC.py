@@ -47,7 +47,7 @@ def make(task, frame_stack=3, action_repeat=2, episode_max_frames=False, episode
     # Rescales actions to range
     env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
 
-    # Add renderings for classical tasks
+    # Add renderings for clasical tasks
     if (domain, task) in suite.ALL_TASKS:
         # Zoom in camera for quadruped
         camera_id = dict(quadruped=2).get(domain, 0)

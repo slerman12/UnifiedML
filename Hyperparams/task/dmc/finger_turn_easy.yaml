@@ -1,4 +1,5 @@
 defaults:
+      - 500K
       - _self_
     
 suite: dmc
@@ -6,11 +7,6 @@ action_repeat: 2
 frame_stack: 3
 nstep: 3
 task_name: finger_turn_easy
-train_steps: 1500000
-stddev_schedule: 'linear(1.0,0.1,500000)'
-
-
-
     
 hydra:
     job:

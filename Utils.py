@@ -15,6 +15,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Normal
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -69,7 +70,9 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
 
 
 # Assigns a default value to x if x is None
-def default(x, value):
+def default(x, value, *attributes):
+    for attribute in attributes:
+        x = getattr(x, attribute, __default=None)
     if x is None:
         x = value
     return x
@@ -140,6 +143,38 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
     return feature_shape
 
 
+# Fuses multiple encoders into one
+class FuseEncoders(nn.Module):
+    def __init__(self, *encoders):
+        super().__init__()
+
+        # A list of encoders or encoder lists
+        self.encoders = encoders
+
+        shapes = self.repr_shape
+        # TODO
+
+    def __getattr__(self, item):
+        parts = []
+        for part in self.encoders:
+            parts += part if isinstance(part, list) else [part]
+
+        # Allows recursively accessing all encoder's attributes and functions, e.g., stepping all of their optimizers
+        items = [getattr(part, item) for part in parts if hasattr(part, item)]
+        return lambda *vargs, **kwargs: tuple(f(*vargs, **kwargs) for f in items) if all([callable(i) for i in items]) \
+            else FuseEncoders(*items)
+
+    def __getitem__(self, item):
+        return self.encoders[item]
+
+    def forward(self, *x):
+        # Applies encoders sequentially or concatenates the outputs of the ones grouped by list
+        out = x[0]
+        for i, e in enumerate(self.encoders):
+            out = e(out) if isinstance(e, nn.Module) else torch.cat([encoder(x[i]) for encoder in e], -1)
+        return out
+
+
 # "Ensembles" (stacks) multiple modules' outputs
 class Ensemble(nn.Module):
     def __init__(self, modules, dim=1):
@@ -151,6 +186,23 @@ class Ensemble(nn.Module):
     def forward(self, *x):
         return torch.stack([m(*x) for m in self.ensemble],
                            self.dim)
+
+
+# Merges multiple critics into one if so desired (ensembles of ensembles)  TODO attributes/updates Fuse
+class MergeCritics(nn.Module):
+    def __init__(self, *critics):
+        super().__init__()
+        self.critics = critics
+
+    def forward(self, obs, action=None, context=None):
+        Q = [critic(obs, action, context) for critic in self.critics]
+        Qs = torch.cat([Q_.Qs for Q_ in Q], 0)
+        # Dist
+        stddev, mean = torch.std_mean(Qs, dim=0)
+        merged_Q = Normal(mean, stddev + 1e-12)
+        merged_Q.__dict__.update({'Qs': Qs,
+                                  'action': Q[0].action})
+        return merged_Q
 
 
 # Replaces tensor's batch items with Normal-sampled random latent
@@ -165,14 +217,24 @@ class Rand(nn.Module):
         return x.uniform_() if self.uniform else x
 
 
+# Initializes a recipe, returning a default if None, the instantiated config if a hydra arg, or the module itself
+def init(recipe, attribute=None, __default=None, **kwargs):
+    if attribute is not None:
+        recipe = getattr(recipe, attribute, __default=recipe)
+
+    return __default if recipe is None \
+        else instantiate(recipe, **kwargs) if hasattr(recipe, '_target_') \
+        else recipe
+
+
 # (Multi-dim) one-hot encoding
-def one_hot(x, num_classes, null_value=0):
+def one_hot(x, num_classes):
     # assert x.shape[-1] == 1
     x = x.squeeze(-1).unsqueeze(-1)  # Or this
     x = x.long()
     shape = x.shape[:-1]
-    nulls = torch.full([*shape, num_classes], null_value, dtype=x.dtype, device=x.device)
-    return nulls.scatter(len(shape), x, 1).float()
+    zeros = torch.zeros(*shape, num_classes, dtype=x.dtype, device=x.device)
+    return zeros.scatter(len(shape), x, 1).float()
 
 
 # Differentiable one_hot
@@ -255,8 +317,8 @@ def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
 
-# Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
-def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, ema=True):
+# Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers
+def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, epoch=0, ema=True):
     # Clear grads
     if clear_grads and loss is not None:
         for model in models:
@@ -270,6 +332,10 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
     if step_optim:
         for model in models:
             model.optim.step()
+
+            # Step scheduler
+            if epoch > model.scheduler.last_epoch:
+                model.scheduler.step(epoch)
 
             # Update ema target
             if ema and hasattr(model, 'ema'):

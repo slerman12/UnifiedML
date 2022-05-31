@@ -25,7 +25,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
-                 obs_spec=None, nstep=0, discount=1, transform=None):
+                 obs_spec=None, steps_per_epoch=None, nstep=0, discount=1, transform=None):
         # Path and loading
 
         path = path.replace("Agents.", "")
@@ -41,7 +41,8 @@ class ExperienceReplay:
                     print('All data loaded. Training of classifier underway.')
                 else:
                     if path != standard:
-                        warnings.warn(f'Loading a saved replay of a classify task from a previous online session.'
+                        warnings.warn(f'Loading a saved replay of a classify task from a previous online session,'
+                                      f'which may not be intentional. '
                                       f'For the standard offline dataset, set replay.path="{standard}" '  # If exists
                                       f'or delete the saved buffer in {path}.')
             assert len(exists) > 0, f'No existing replay buffer found in path: {path}'
@@ -71,9 +72,7 @@ class ExperienceReplay:
         self.episode = {spec['name']: [] for spec in self.specs}
         self.episode_len = 0
         self.episodes_stored = len(list(self.path.glob('*.npz')))
-        self.epoch = 0
         self.save = save
-        self.offline = offline
 
         # Data transform
 
@@ -102,6 +101,9 @@ class ExperienceReplay:
 
         # Batch loading
 
+        self.epoch = self.step = 0
+        self.steps_per_epoch = steps_per_epoch
+
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
                                                    shuffle=offline,
@@ -109,6 +111,7 @@ class ExperienceReplay:
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
         # Replay
+
         self._replay = None
 
     # Returns a batch of experiences
@@ -117,11 +120,14 @@ class ExperienceReplay:
 
     # Allows iteration
     def __next__(self):
+        self.step += 1
+        if self.steps_per_epoch and self.step % self.steps_per_epoch == 0:
+            self.epoch += 1
         try:
             return next(self.replay)
         except StopIteration:
-            self.epoch += 1
-            # print(f'End epoch {self.epoch - 1}. Start epoch {self.epoch}.')
+            if self.steps_per_epoch is None:
+                self.epoch += 1
             self._replay = None
             return next(self)
 
@@ -154,9 +160,9 @@ class ExperienceReplay:
 
                 # Validate consistency
                 # assert spec['shape'] == exp[spec['name']].shape[1:], \
-                #     f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
+                #     f'Unexpected {spec["name"]} shape: {exp[spec["name"]].shape} vs {spec["shape"]}'
                 # assert spec['dtype'] == exp[spec['name']].dtype.name, \
-                #     f'Unexpected {spec["name"]} dtype: {spec["dtype"]} vs. {exp[spec["name"]].dtype.name}'
+                #     f'Unexpected {spec["name"]} dtype: {exp[spec["name"]].dtype.name} vs. {spec["dtype"]}'
 
                 # Adds the experiences
                 self.episode[spec['name']].append(exp[spec['name']])
@@ -198,8 +204,7 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     def __len__(self):
-        return self.episodes_stored if self.offline or not self.save \
-            else len(list(self.path.glob('*.npz')))
+        return self.episodes_stored
 
 
 # How to initialize each worker
