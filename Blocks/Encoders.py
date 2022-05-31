@@ -5,14 +5,11 @@
 import copy
 import math
 
-from hydra.utils import instantiate
-
 import torch
 from torch import nn
 
 from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.CNN import CNN
-from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
 
@@ -20,10 +17,11 @@ import Utils
 class CNNEncoder(nn.Module):
     """
     Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
+    Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, out_channels=32, depth=3, data_norm=None, shift_max_norm=False,
-                 recipe=None, parallel=False, lr=None, weight_decay=0, ema_decay=None):
+    def __init__(self, obs_shape, context_dim=0, data_norm=None, shift_max_norm=False, isotropic=False,
+                 recipe=None, parallel=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
 
         super().__init__()
 
@@ -32,35 +30,41 @@ class CNNEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
+        # Dimensions
+        self.in_channels = obs_shape[0] + context_dim
+        self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
+
         # CNN
-        self.Eyes = nn.Sequential(CNN(obs_shape, out_channels, depth) if not (recipe and recipe.eyes._target_)
-                                  else instantiate(recipe.eyes),
+        self.Eyes = nn.Sequential(Utils.init(recipe, 'encoder',
+                                             __default=CNN(self.in_channels, self.out_channels, depth=3)),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.pool = nn.Flatten() if not (recipe and recipe.pool._target_) \
-            else instantiate(recipe.pool, input_shape=self._feature_shape())
+        self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
 
-        # Initialize model
-        self.init(lr, weight_decay, ema_decay)
-
-    def _feature_shape(self):
-        return Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)
-
-    def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Optimizer
-        if lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # Dimensions
-        self.feature_shape = self._feature_shape()  # Feature map shape
+        self.pool = Utils.init(recipe, 'pool', input_shape=self.feature_shape,
+                               __default=nn.Flatten())
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
 
+        # Initialize model
+        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
+
+        # Isotropic
+        if isotropic:
+            assert tuple(obs_shape) == self.feature_shape, \
+                f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
+
+    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+        # Optimizer
+        if lr:
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+
         # EMA
-        if ema_decay is not None:
+        if ema_decay:
             self.ema = copy.deepcopy(self).eval()
             self.ema_decay = ema_decay
 
@@ -100,37 +104,6 @@ class CNNEncoder(nn.Module):
         return h
 
 
-class ResidualBlockEncoder(CNNEncoder):
-    """
-    Residual block-based CNN encoder,
-    Isotropic means no bottleneck / dimensionality conserving
-    """
-
-    def __init__(self, obs_shape, context_dim=0, out_channels=32, hidden_channels=64, num_blocks=1, data_norm=None,
-                 shift_max_norm=True, isotropic=False, recipe=None, parallel=False,
-                 lr=None, weight_decay=0, ema_decay=None):
-
-        super().__init__(obs_shape, hidden_channels, 0, data_norm)
-
-        # Dimensions
-        self.in_channels = obs_shape[0] + context_dim
-        out_channels = obs_shape[0] if isotropic else out_channels
-
-        # CNN ResNet-ish
-        self.Eyes = nn.Sequential(MiniResNet((self.in_channels, *obs_shape[1:]), 3, 2 - isotropic,
-                                             [hidden_channels, out_channels], [num_blocks]),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
-        if parallel:
-            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
-
-        self.init(lr, weight_decay, ema_decay)
-
-        # Isotropic
-        if isotropic:
-            assert tuple(obs_shape) == self.feature_shape, \
-                f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
-
-
 class MLPEncoder(nn.Module):
     """MLP encoder:
     With LayerNorm
@@ -138,7 +111,7 @@ class MLPEncoder(nn.Module):
 
     def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, data_norm=None, layer_norm_dim=None,
                  non_linearity=nn.ReLU(inplace=True), dropout=0, binary=False, l2_norm=False,
-                 parallel=False, lr=None, weight_decay=0, ema_decay=None):
+                 parallel=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         super().__init__()
 
         self.data_norm = torch.tensor(data_norm or [0, 1])
@@ -157,20 +130,18 @@ class MLPEncoder(nn.Module):
         if parallel:
             self.MLP = nn.DataParallel(self.MLP)  # Parallel on visible GPUs
 
-        self.init(lr, weight_decay, ema_decay)
+        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
         self.repr_shape, self.repr_dim = (output_dim,), output_dim
 
-    def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Initialize weights
-        self.apply(Utils.weight_init)
-
+    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr is not None:
+        if lr:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
-        if ema_decay is not None:
+        if ema_decay:
             self.ema = copy.deepcopy(self).eval()
             self.ema_decay = ema_decay
 

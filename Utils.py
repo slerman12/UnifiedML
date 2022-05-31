@@ -69,7 +69,9 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
 
 
 # Assigns a default value to x if x is None
-def default(x, value):
+def default(x, value, *attributes):
+    for attribute in attributes:
+        x = getattr(x, attribute, __default=None)
     if x is None:
         x = value
     return x
@@ -165,6 +167,16 @@ class Rand(nn.Module):
         return x.uniform_() if self.uniform else x
 
 
+# Initializes a recipe, returning a default if None, the instantiated config if a hydra arg, or the module itself
+def init(recipe, attribute=None, __default=None, **kwargs):
+    if attribute is not None:
+        recipe = getattr(recipe, attribute, __default=recipe)
+
+    return __default if recipe is None \
+        else instantiate(recipe, **kwargs) if hasattr(recipe, '_target_') \
+        else recipe
+
+
 # (Multi-dim) one-hot encoding
 def one_hot(x, num_classes, null_value=0):
     # assert x.shape[-1] == 1
@@ -255,8 +267,8 @@ def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
 
-# Backward pass on a loss; clear the grads of models; update EMAs; step optimizers
-def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, ema=True):
+# Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers
+def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, epoch=0, ema=True):
     # Clear grads
     if clear_grads and loss is not None:
         for model in models:
@@ -270,6 +282,10 @@ def optimize(loss=None, *models, clear_grads=True, backward=True, retain_graph=F
     if step_optim:
         for model in models:
             model.optim.step()
+
+            # Step scheduler
+            if epoch > model.scheduler.last_epoch:
+                model.scheduler.step(epoch)
 
             # Update ema target
             if ema and hasattr(model, 'ema'):
