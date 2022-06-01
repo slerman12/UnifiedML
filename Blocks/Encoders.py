@@ -37,16 +37,14 @@ class CNNEncoder(nn.Module):
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(CNN(self.in_channels, self.out_channels, depth=3) if eyes is None
-                                  else Utils.init(eyes),
+        self.Eyes = nn.Sequential(Utils.init(eyes, default=CNN(self.in_channels, self.out_channels, depth=3)),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
 
-        self.pool = nn.Flatten() if pool is None \
-            else Utils.init(pool, input_shape=self.feature_shape)
+        self.pool = Utils.init(pool, input_shape=self.feature_shape, default=nn.Flatten())
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim

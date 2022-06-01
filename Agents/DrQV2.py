@@ -42,7 +42,7 @@ class DrQV2Agent(torch.nn.Module):
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
+            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder, parallel=parallel,
                             lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                             ema_decay=ema_decay * ema)
 

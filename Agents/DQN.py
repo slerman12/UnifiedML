@@ -45,9 +45,9 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled by actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder, parallel=parallel,
-                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                            ema_decay=ema_decay * ema)
+            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
+                            parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
+                            weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
@@ -67,8 +67,7 @@ class DQNAgent(torch.nn.Module):
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
-        self.aug = Utils.init(recipes, 'aug',
-                              __default=IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4))
+        self.aug = Utils.init(recipes.aug) or (IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4))
 
         # Birth
 

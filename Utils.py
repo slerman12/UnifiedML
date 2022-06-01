@@ -68,15 +68,6 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     return model
 
 
-# Assigns a default value to x if x is None
-def default(x, value, *attributes):
-    for attribute in attributes:
-        x = getattr(x, attribute, __default=None)
-    if x is None:
-        x = value
-    return x
-
-
 # Initializes model weights according to orthogonality
 def weight_init(m):
     if isinstance(m, nn.Linear):
@@ -168,9 +159,9 @@ class Rand(nn.Module):
 
 
 # Initializes a recipe: returning the instantiated config if a hydra arg, or the module itself
-def init(recipe, **kwargs):
+def init(recipe, default=None, **kwargs):
     return recipe if isinstance(recipe, nn.Module) \
-        else instantiate(recipe, **kwargs)
+        else instantiate(recipe, **kwargs) or default
 
 
 # (Multi-dim) one-hot encoding
