@@ -167,15 +167,10 @@ class Rand(nn.Module):
         return x.uniform_() if self.uniform else x
 
 
-# Initializes a recipe, returning a default if None, the instantiated config if a hydra arg, or the module itself
-# TODO no recipe/attribute, just return __default if ... else instantiate(architecture, **kwargs) ... else architecture
-def init(recipe, attribute=None, __default=None, **kwargs):
-    if attribute is not None:
-        recipe = getattr(recipe, attribute, __default=recipe)
-
-    return __default if recipe is None \
-        else instantiate(recipe, **kwargs) if hasattr(recipe, '_target_') \
-        else recipe
+# Initializes a recipe: returning a default if None, the instantiated config if a hydra arg, or the module itself
+def init(recipe, __default=None, **kwargs):
+    return recipe if isinstance(recipe, nn.Module) \
+        else instantiate(recipe, **kwargs) or __default
 
 
 # (Multi-dim) one-hot encoding

@@ -45,7 +45,7 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled by actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.visual_encoder, parallel=parallel,
+            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder, parallel=parallel,
                             lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                             ema_decay=ema_decay * ema)
 
@@ -54,12 +54,12 @@ class DQNAgent(torch.nn.Module):
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
+            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.actor,
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                        ema_decay=ema_decay * ema)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)

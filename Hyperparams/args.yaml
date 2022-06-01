@@ -142,6 +142,13 @@ plotting:
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 pool: null  # Shorthand for recipes.encoder.pool._target_
+Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
+Q_trunk: null  # Shorthand for recipes.critic.trunk._target_
+Generator: null  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_
+Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
+Pi_head: ${Generator}  # Shorthand for recipes.actor.Pi_head._target_
+Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
+
 recipes:
   Aug: null  # Shorthand for recipes.aug._target_
   aug:
@@ -157,20 +164,20 @@ recipes:
       output_dim: null
   actor:
     trunk:
-      _target_: null
+      _target_: ${Pi_trunk}
       input_shape: null
       output_dim: ${trunk_dim}
     pi_head:
-      _target_: null
+      _target_: ${Pi_head}
       input_shape:
         - ${trunk_dim}
   critic:
     trunk:
-      _target_: null
+      _target_: ${Q_trunk}
       input_shape: null
       output_dim: ${trunk_dim}
     q_head:
-      _target_: null
+      _target_: ${Q_head}
       input_shape: null
 
 hydra:
