@@ -36,6 +36,10 @@ def main(args):
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
 
+    cuda = ''.join([f'*"{gpu}"*)\nsource /scratch/{args.username}/miniconda/bin/activate {version}\n;;\n'
+                    for gpu, version in [('K80', 'agi'), ('V100', 'agi'), ('A100', 'agi'), ('RTX', 'agi')]])
+                   # for gpu, version in [('K80', 11.0), ('V100', 11.2), ('A100', 11.3), ('RTX', 11.2)]])
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
@@ -45,9 +49,11 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)
-echo $GPU_TYPE
+case $GPU_TYPE in
+  {cuda}
+esac
 {args.conda}
-
+python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
 """
 
     # Write script
