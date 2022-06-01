@@ -44,36 +44,33 @@ class Environment:
 
         exp = self.exp
 
-        self.episode_done = agent.training and self.offline
-        # TODO skip train env for offline. isn't this always the case and same as:
-        # self.episode_done = self.offline_train
+        self.episode_done = self.offline
 
         step = 0
         while not self.episode_done and step < steps:
             # Act
-            if not self.offline:  # TODO why is this necessary? delete?
-                action = agent.act(exp.observation)
+            action = agent.act(exp.observation)
 
-                exp = self.env.step(None if self.generate else action.cpu().numpy())
+            exp = self.env.step(None if self.generate else action.cpu().numpy())
 
-                exp.step = agent.step
-                experiences.append(exp)
+            exp.step = agent.step
+            experiences.append(exp)
 
-                if vlog or self.generate:
-                    frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
-                        else self.env.physics.render(height=256, width=256, camera_id=0) \
-                        if hasattr(self.env, 'physics') else self.env.render()
-                    video_image.append(frame)
+            if vlog or self.generate:
+                frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
+                    else self.env.physics.render(height=256, width=256, camera_id=0) \
+                    if hasattr(self.env, 'physics') else self.env.render()
+                video_image.append(frame)
 
-                # Tally reward, done
-                self.episode_reward += exp.reward.mean()
-                self.episode_done = exp.last()
+            # Tally reward, done
+            self.episode_reward += exp.reward.mean()
+            self.episode_done = exp.last()
 
-            step += 1  # todo i guess it's just the weird corner case if agent is eval while env is train; cant happen
+            step += 1
 
-        self.episode_step += step  # todo does this ever iterate for offline? should it?
+        self.episode_step += step
 
-        if agent.training and self.offline:  # TODO again Here, it just says to iterate even when skip train env
+        if self.offline:
             agent.step += 1
 
         if self.episode_done:
@@ -93,7 +90,8 @@ class Environment:
                 'episode': agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
-                'fps': frames / (sundown - self.daybreak)} if not self.offline else None
+                'fps': frames / (sundown - self.daybreak)} if not self.offline \
+            else None
 
         if self.episode_done:
             self.episode_step = self.episode_reward = 0
