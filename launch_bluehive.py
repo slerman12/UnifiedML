@@ -11,6 +11,8 @@ from pexpect import pxssh, spawn
 
 username = 'slerman'
 
+branch = 'UnifiedML'
+
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
     with open('pass', 'r') as file:
@@ -22,7 +24,7 @@ else:
     with open('pass', 'w') as file:
         file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
 
-conda = f'source /scratch/{username}/miniconda/bin/activate agi'  # TODO different CUDA per GPU
+conda = f'source /scratch/{username}/miniconda/bin/activate agi'
 
 # Connect VPN
 try:
@@ -106,6 +108,9 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 #          f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
 #          'num_workers=4 num_gpus=1 mem=20 '
 #          'plot_per_steps=0 reservation_id=20220509']
+sweep = ['"gpu=\'V100|A100\'" experiment=\'nvidia_smi_${gpu}\'']
+sweep = ['task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_agi\'',
+         'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_agi\' lab=true']
 
 
 # Launch on Bluehive
@@ -114,16 +119,24 @@ try:
     s.login('bluehive.circ.rochester.edu', username, password)
     s.sendline(f'cd /scratch/{username}/UnifiedML')     # Run a command
     s.prompt()                                          # Match the prompt
-    print(s.before.decode("utf-8"))                                     # Print everything before the prompt.
+    print(s.before.decode("utf-8"))                     # Print everything before the prompt.
     s.sendline('git pull origin master')
     s.prompt()
     print(s.before.decode("utf-8"))
+    s.sendline('git pull')
+    s.prompt()
+    print(s.before.decode("utf-8"))
+    s.sendline(f'git checkout {branch or "master"}')
+    s.prompt()
+    prompt = s.before.decode("utf-8")
+    print(s.before.decode("utf-8"))
+    assert 'error' not in prompt
     s.sendline(conda)
     s.prompt()
     print(s.before.decode("utf-8"))
     for hyperparams in sweep:
-        print(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
-        s.sendline(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
+        print(f'python sbatch.py -m {hyperparams} username="{username}"')
+        s.sendline(f'python sbatch.py -m {hyperparams} username="{username}"')
         s.prompt()
         print(s.before.decode("utf-8"))
     s.logout()
