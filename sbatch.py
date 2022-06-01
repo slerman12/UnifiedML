@@ -37,9 +37,9 @@ def main(args):
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
 
-    conda = ''.join([f'*"{gpu}"*)\nsource /scratch/{args.username}/miniconda/bin/activate {env}\n;;\n'
-                     for gpu, cuda_version, env in [('K80', 11.0, 'agi'), ('V100', 11.0, 'agi'),
-                                                    ('A100', 11.2, 'agi'), ('RTX', 11.2, 'agi')]])
+    conda = ''.join([f'*"{gpu}"*)\nsource /scratch/{args.username}/miniconda/bin/activate CUDA{env}\n;;\n'
+                     for gpu, cuda_version, env in [('K80', 11.0, 'CUDA11.0'), ('V100', 11.0, 'CUDA11.0'),
+                                                    ('A100', 11.2, 'CUDA11.0'), ('RTX', 11.2, 'CUDA11.0')]])
     cuda = f'GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)\ncase $GPU_TYPE in\n{conda}esac'
 
     script = f"""#!/bin/bash
