@@ -5,6 +5,8 @@
 import math
 import copy
 
+from hydra.utils import instantiate
+
 import torch
 from torch import nn
 from torch.distributions import Categorical
@@ -17,7 +19,7 @@ import Utils
 
 
 class EnsembleGaussianActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe, ensemble_size=2,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk, pi_head, ensemble_size=2,
                  stddev_schedule=None, stddev_clip=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         super().__init__()
 
@@ -27,9 +29,14 @@ class EnsembleGaussianActor(nn.Module):
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.trunk = Utils.init(recipe, 'trunk', input_shape=Utils.default(recipe, repr_shape, 'trunk', 'input_shape'),
-                                __default=nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                                        nn.LayerNorm(trunk_dim), nn.Tanh()))
+        if trunk is None:
+            self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
+        elif not isinstance(trunk, nn.Module):
+            self.trunk = instantiate(trunk, input_shape=getattr(trunk, 'input_shape', repr_shape))
+
+        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh()) if trunk is None \
+            else trunk if isinstance(trunk, nn.Module) \
+            else instantiate(trunk, input_shape=getattr(trunk, 'input_shape', repr_shape))
 
         self.Pi_head = Utils.Ensemble([Utils.init(recipe, 'pi_head', output_dim=out_dim,
                                                   __default=MLP(trunk_dim, out_dim, hidden_dim, 2))
