@@ -31,13 +31,13 @@ class EnsembleQCritic(nn.Module):
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = Utils.init(trunk, input_shape=getattr(trunk, 'input_shape', repr_shape),
+        self.trunk = Utils.init(trunk, input_shape=getattr(trunk, 'input_shape', None) or repr_shape,
                                 default=nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh()))
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         out_dim = action_dim if discrete else 1
 
-        self.Q_head = Utils.Ensemble([Utils.init(q_head, input_shape=getattr(q_head, 'input_shape', [dim]),
+        self.Q_head = Utils.Ensemble([Utils.init(q_head, input_shape=getattr(q_head, 'input_shape', None) or [dim],
                                                  output_dim=out_dim, default=MLP(dim, out_dim, hidden_dim, 2))
                                       for _ in range(ensemble_size)], 0)
 
