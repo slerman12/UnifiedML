@@ -38,8 +38,7 @@ def main(args):
         args.experiment = f'"{args.experiment}"'
 
     cuda = ''.join([f'*"{gpu}"*)\necho -n "{version}"\n;;\n'
-                    for gpu, version in [('K80', 'agi'), ('V100', 'agi'), ('A100', 'agi'), ('RTX', 'agi')]])
-                   # for gpu, version in [('K80', 11.0), ('V100', 11.2), ('A100', 11.3), ('RTX', 11.2)]])
+                   for gpu, version in [('K80', 11.0), ('V100', 11.2), ('A100', 11.3), ('RTX', 11.2)]])
 
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
