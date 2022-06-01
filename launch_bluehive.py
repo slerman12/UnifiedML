@@ -11,7 +11,7 @@ from pexpect import pxssh, spawn
 
 username = 'slerman'
 
-branch = 'UnifiedML2'
+branch = 'master'
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
