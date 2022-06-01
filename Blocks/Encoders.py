@@ -34,7 +34,7 @@ class CNNEncoder(nn.Module):
         self.in_channels = obs_shape[0] + context_dim
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
-        # CNN
+        # CNN  TODO no recipes, just Eyes
         self.Eyes = nn.Sequential(Utils.init(recipe, 'encoder',
                                              __default=CNN(self.in_channels, self.out_channels, depth=3)),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
