@@ -12,7 +12,7 @@ class Environment:
     def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
                  seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
-        self.offline = (offline or generate) and train
+        self.disable = (offline or generate) and train
         self.generate = generate
 
         self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
@@ -44,7 +44,7 @@ class Environment:
 
         exp = self.exp
 
-        self.episode_done = self.offline
+        self.episode_done = self.disable
 
         step = 0
         while not self.episode_done and step < steps:
@@ -70,11 +70,11 @@ class Environment:
 
         self.episode_step += step
 
-        if self.offline:
+        if self.disable:
             agent.step += 1
 
         if self.episode_done:
-            if agent.training and not self.offline:
+            if agent.training and not self.disable:
                 agent.episode += 1
 
             self.env.reset()
@@ -90,7 +90,7 @@ class Environment:
                 'episode': agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
-                'fps': frames / (sundown - self.daybreak)} if not self.offline \
+                'fps': frames / (sundown - self.daybreak)} if not self.disable \
             else None
 
         if self.episode_done:

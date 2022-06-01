@@ -13,37 +13,10 @@ import numpy as np
 
 from Plot import plot
 
-username = 'slerman'
-
-# Get password, encrypt, and save for reuse
-if os.path.exists('pass'):
-    with open('pass', 'r') as file:
-        key, encoded = file.readlines()
-        password = Fernet(key).decrypt(bytes(encoded, 'utf-8'))
-else:
-    password, key = getpass.getpass(), Fernet.generate_key()
-    encoded = Fernet(key).encrypt(bytes(password, 'utf-8'))
-    with open('pass', 'w') as file:
-        file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
-
-conda = 'source /scratch/slerman/miniconda/bin/activate agi'
-
-# Connect VPN
-try:
-    p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
-    p.expect('Username: ')
-    p.sendline('')
-    p.expect('Password: ')
-    p.sendline(password)
-    p.expect('Second Password: ')
-    p.sendline('push')
-    p.expect('VPN>')
-except Exception:
-    pass
 
 sftp = False
 plot_group = 'UML_Paper'
-# steps, tasks = None, []
+# steps = None
 steps = 5e5
 
 plots = [
@@ -63,7 +36,7 @@ plots = [
      'Supervised'],
 
     # Unifying RL as a discrete control problem: AC2
-    ['Actor-Ensemble-3', 'Actor-Ensemble-5',
+    ['Actor-Ensemble-3', 'Actor-Ensemble-5', 'DQN-Based',
      'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
      'Reference']
 ]
@@ -87,6 +60,36 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
 
 # SFTP experiment results
 if sftp:
+    username = 'slerman'
+
+    # Get password, encrypt, and save for reuse
+    if os.path.exists('pass'):
+        with open('pass', 'r') as file:
+            key, encoded = file.readlines()
+            password = Fernet(key).decrypt(bytes(encoded, 'utf-8'))
+    else:
+        password, key = getpass.getpass(), Fernet.generate_key()
+        encoded = Fernet(key).encrypt(bytes(password, 'utf-8'))
+        with open('pass', 'w') as file:
+            file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
+
+    conda = 'source /scratch/slerman/miniconda/bin/activate agi'
+
+    # Connect VPN
+    try:
+        p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
+        p.expect('Username: ')
+        p.sendline('')
+        p.expect('Password: ')
+        p.sendline(password)
+        p.expect('Second Password: ')
+        p.sendline('push')
+        p.expect('VPN>')
+    except Exception:
+        pass
+
+    # SFTP
+
     print(f'SFTP\'ing: {", ".join(experiments)}')
     if len(tasks):
         print(f'plotting for tasks: {", ".join(tasks)}')
