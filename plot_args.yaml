@@ -1,0 +1,18 @@
+sftp: false
+
+tasks: ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
+        'pong', 'breakout', 'boxing', 'cifar10', 'tinyimagenet' ]
+
+UML_Paper:
+  Generalized_reference_implementations:
+    steps: 5e5
+    description: 'Generalized reference implementations: DQN, DrQV2, SPR'
+    experiments: ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble']
+    tasks: ${tasks}
+    launch: ''
+  CV_to_RL:
+    steps: 5e5
+    description: 'Quickly integrating and prototyping computer vision advances in RL. EMA, weight decay, augmentations, & architectures (e.g. ViT)'
+    experiments: ['CV-RL', 'ViT', 'Reference', 'CV-Transform-RL']
+    tasks: ${tasks}
+    launch: ''

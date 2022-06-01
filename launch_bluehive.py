@@ -106,6 +106,7 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 #          f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
 #          'num_workers=4 num_gpus=1 mem=20 '
 #          'plot_per_steps=0 reservation_id=20220509']
+sweep = ['gpu=K80,V100,A100 experiment=nvidia_smi${GPU}']
 
 
 # Launch on Bluehive
