@@ -135,9 +135,6 @@ try:
         s.sendline(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
         s.prompt()
         print(s.before.decode("utf-8"))
-    s.sendline('cat sbatch_script')
-    s.prompt()
-    print(s.before.decode("utf-8"))
     s.logout()
 except pxssh.ExceptionPxssh as e:
     print("pxssh failed on login.")
