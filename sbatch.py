@@ -4,7 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import subprocess
 import sys
-import textwrap
 from pathlib import Path
 
 import hydra
@@ -51,7 +50,6 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {cuda}
-nvidia-smi
 python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
 """
 
