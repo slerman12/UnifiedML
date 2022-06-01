@@ -24,6 +24,8 @@ else:
 
 conda = f'source /scratch/{username}/miniconda/bin/activate agi'  # TODO different CUDA per GPU
 
+branch = 'UnifiedML2'
+
 # Connect VPN
 try:
     p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
@@ -106,7 +108,7 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 #          f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
 #          'num_workers=4 num_gpus=1 mem=20 '
 #          'plot_per_steps=0 reservation_id=20220509']
-sweep = ['gpu=K80,V100,A100 experiment=nvidia_smi${GPU}']
+sweep = ['gpu="Tesla K20Xm" experiment=\'nvidia_smi_${gpu}\'']
 
 
 # Launch on Bluehive
@@ -115,8 +117,14 @@ try:
     s.login('bluehive.circ.rochester.edu', username, password)
     s.sendline(f'cd /scratch/{username}/UnifiedML')     # Run a command
     s.prompt()                                          # Match the prompt
-    print(s.before.decode("utf-8"))                                     # Print everything before the prompt.
+    print(s.before.decode("utf-8"))                     # Print everything before the prompt.
     s.sendline('git pull origin master')
+    s.prompt()
+    print(s.before.decode("utf-8"))
+    s.sendline('git fetch')
+    s.prompt()
+    print(s.before.decode("utf-8"))
+    s.sendline(f'git checkout {branch or "master"}')
     s.prompt()
     print(s.before.decode("utf-8"))
     s.sendline(conda)

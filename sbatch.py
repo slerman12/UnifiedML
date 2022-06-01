@@ -44,8 +44,10 @@ def main(args):
 #SBATCH -t {args.time} -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
+GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)
+echo $GPU_TYPE
 {args.conda}
-nvidia-smi
+
 """
 
     # Write script
