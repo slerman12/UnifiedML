@@ -37,8 +37,8 @@ def main(args):
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
 
-    cuda = ''.join([f'*"{gpu}"*)\necho -n "{version}"\n;;\n'
-                   for gpu, version in [('K80', 11.0), ('V100', 11.2), ('A100', 11.3), ('RTX', 11.2)]])
+    cuda_and_conda = ''.join([f'*"{gpu}"*)\necho -n "{version}"\n;;\n'
+                              for gpu, version in [('K80', 11.0), ('V100', 11.0), ('A100', 11.2), ('RTX', 11.2)]])
 
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
@@ -50,8 +50,9 @@ def main(args):
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)
 case $GPU_TYPE in
-{cuda}
+{cuda_and_conda}
 esac
+nvidia-smi
 {args.conda}
 
 """
