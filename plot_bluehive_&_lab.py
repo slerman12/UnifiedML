@@ -56,11 +56,11 @@ plots = [
 
     # Can RL augment supervision?
     ["No-Contrastive", "Half-Half-Contrastive", "Third-Label",
-     'Supervised-RL', 'Actor-Experts', 'Supervised'],
+     'Actor-Experts', 'Supervised'],
 
     # When is reward enough?
     ["No-Contrastive-Pure-RL", "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
-     'Supervised', 'Supervised-RL', 'Supervised-RL-No-Contrastive'],
+     'Supervised'],
 
     # Unifying RL as a discrete control problem: AC2
     ['Actor-Ensemble-3', 'Actor-Ensemble-5',
@@ -80,7 +80,9 @@ agents = []
 suites = []
 
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
-         'pong', 'breakout', 'boxing', 'krull', 'seaquest', 'qbert', 'cifar10', 'tinyimagenet']
+         'pong', 'breakout', 'boxing',
+         # 'krull', 'seaquest', 'qbert',
+         'cifar10', 'tinyimagenet']
 
 
 # SFTP experiment results

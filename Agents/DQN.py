@@ -135,6 +135,9 @@ class DQNAgent(torch.nn.Module):
                 'step': self.step, 'episode': self.episode} if self.log \
             else None
 
+        if replay.epoch > self.episode:
+            self.episode = replay.epoch
+
         instruction = ~torch.isnan(label)
 
         # "Acquire Wisdom"
@@ -155,7 +158,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, epoch=replay.epoch, retain_graph=True)
+                               self.actor, epoch=self.episode, retain_graph=True)
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -192,12 +195,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic, epoch=replay.epoch)
+                           self.critic, epoch=self.episode)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder, epoch=replay.epoch)
+                           self.encoder, epoch=self.episode)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
@@ -208,6 +211,6 @@ class DQNAgent(torch.nn.Module):
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.actor, epoch=replay.epoch)
+                           self.actor, epoch=self.episode)
 
         return logs

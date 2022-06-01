@@ -45,11 +45,13 @@ class Environment:
         exp = self.exp
 
         self.episode_done = agent.training and self.offline
+        # TODO skip train env for offline. isn't this always the case and same as:
+        # self.episode_done = self.offline_train
 
         step = 0
         while not self.episode_done and step < steps:
             # Act
-            if not self.offline:
+            if not self.offline:  # TODO why is this necessary? delete?
                 action = agent.act(exp.observation)
 
                 exp = self.env.step(None if self.generate else action.cpu().numpy())
@@ -67,15 +69,15 @@ class Environment:
                 self.episode_reward += exp.reward.mean()
                 self.episode_done = exp.last()
 
-            step += 1
+            step += 1  # todo i guess it's just the weird corner case if agent is eval while env is train; cant happen
 
-        self.episode_step += step
+        self.episode_step += step  # todo does this ever iterate for offline? should it?
 
-        if agent.training and self.offline:
+        if agent.training and self.offline:  # TODO again Here, it just says to iterate even when skip train env
             agent.step += 1
 
         if self.episode_done:
-            if agent.training:
+            if agent.training and not self.offline:
                 agent.episode += 1
 
             self.env.reset()
