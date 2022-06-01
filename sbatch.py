@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import hydra
@@ -50,7 +51,7 @@ def main(args):
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)
 case $GPU_TYPE in
-  {cuda}
+{textwrap.indent(cuda, '  ')}
 esac
 {args.conda}
 python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
