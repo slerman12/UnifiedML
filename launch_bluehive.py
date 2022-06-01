@@ -108,7 +108,7 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 #          f'task=atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert '
 #          'num_workers=4 num_gpus=1 mem=20 '
 #          'plot_per_steps=0 reservation_id=20220509']
-sweep = ['experiment=\'nvidia_smi_RTX\'']
+sweep = ['"gpu=\'V100|A100\'" experiment=\'nvidia_smi_${gpu}\'']
 
 
 # Launch on Bluehive
@@ -131,8 +131,8 @@ try:
     s.prompt()
     print(s.before.decode("utf-8"))
     for hyperparams in sweep:
-        print(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
-        s.sendline(f'python sbatch.py -m {hyperparams} username="{username}" conda="{conda}"')
+        print(f'python sbatch.py -m {hyperparams} username="{username}""')
+        s.sendline(f'python sbatch.py -m {hyperparams} username="{username}""')
         s.prompt()
         print(s.before.decode("utf-8"))
     s.logout()
