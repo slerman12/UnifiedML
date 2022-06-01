@@ -19,7 +19,7 @@ class EnsembleQCritic(nn.Module):
     MLP-based Critic network, employs ensemble Q learning,
     returns a Normal distribution over the ensemble.
     """
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe=None, ensemble_size=2, sigmoid=False,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk=None, q_head=None, ensemble_size=2,
                  discrete=False, ignore_obs=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         super().__init__()
 
@@ -31,16 +31,15 @@ class EnsembleQCritic(nn.Module):
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = Utils.init(recipe, 'trunk', input_shape=Utils.default(recipe, repr_shape, 'trunk', 'input_shape'),
-                                __default=nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                                        nn.LayerNorm(trunk_dim), nn.Tanh()))
+        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh()) if trunk is None \
+            else Utils.init(trunk, input_shape=getattr(trunk, 'input_shape', repr_shape))
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
-        shape = [dim] if Utils.default(recipe, None, 'q_head', '_target_') is None else recipe.q_head.input_shape
         out_dim = action_dim if discrete else 1
 
-        self.Q_head = Utils.Ensemble([Utils.init(recipe, 'q_head', input_shape=shape, output_dim=out_dim,
-                                                 __default=MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid))
+        self.Q_head = Utils.Ensemble([MLP(dim, out_dim, hidden_dim, 2) if q_head is None
+                                      else Utils.init(q_head, input_shape=getattr(q_head, 'input_shape', [dim]),
+                                                      output_dim=out_dim)
                                       for _ in range(ensemble_size)], 0)
 
         self.init(lr, lr_decay_epochs, weight_decay, ema_decay)

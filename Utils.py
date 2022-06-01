@@ -167,6 +167,12 @@ class Rand(nn.Module):
         return x.uniform_() if self.uniform else x
 
 
+# Initializes a recipe: returning the instantiated config if a hydra arg, or the module itself
+def init(recipe, **kwargs):
+    return recipe if isinstance(recipe, nn.Module) \
+        else instantiate(recipe, **kwargs)
+
+
 # (Multi-dim) one-hot encoding
 def one_hot(x, num_classes, null_value=0):
     # assert x.shape[-1] == 1

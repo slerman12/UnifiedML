@@ -38,18 +38,15 @@ class CNNEncoder(nn.Module):
 
         # CNN
         self.Eyes = nn.Sequential(CNN(self.in_channels, self.out_channels, depth=3) if eyes is None
-                                  else eyes if isinstance(eyes, nn.Module)
-                                  else instantiate(eyes),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm
-                                  else nn.Identity())
+                                  else Utils.init(eyes),
+                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
 
         self.pool = nn.Flatten() if pool is None \
-            else pool if isinstance(pool, nn.Module) \
-            else instantiate(pool, input_shape=self.feature_shape)
+            else Utils.init(pool, input_shape=self.feature_shape)
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
