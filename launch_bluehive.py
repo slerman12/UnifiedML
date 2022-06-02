@@ -121,14 +121,21 @@ try:
     s.sendline(f'cd /scratch/{username}/UnifiedML')     # Run a command
     s.prompt()                                          # Match the prompt
     print(s.before.decode("utf-8"))                     # Print everything before the prompt.
-    s.sendline(f'git pull --commit origin {branch}')
+    s.sendline(f'git fetch origin')
     s.prompt()
     print(s.before.decode("utf-8"))
-    s.sendline(f'git checkout origin/{branch or "master"}')
+    s.sendline(f'git checkout -b {branch} origin/{branch or "master"}')
     s.prompt()
     prompt = s.before.decode("utf-8")
-    print(s.before.decode("utf-8"))
+    if f"fatal: A branch named '{branch}' already exists." in prompt:
+        s.sendline(f'git checkout {branch}')
+        s.prompt()
+        prompt = s.before.decode("utf-8")
+    print(prompt)
     assert 'error' not in prompt
+    s.sendline(f'git pull origin {branch}')
+    s.prompt()
+    print(s.before.decode("utf-8"))
     s.sendline(conda)
     s.prompt()
     print(s.before.decode("utf-8"))
