@@ -36,10 +36,9 @@ def main(args):
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
 
-    # CUDA11 is broken. Launches CPU-only
     conda = ''.join([f'*"{gpu}"*)\nsource /scratch/{args.username}/miniconda/bin/activate {env}\n;;\n'
                      for gpu, cuda_version, env, _ in [('K80', 11.0, 'agi', 10.2), ('V100', 11.0, 'agi', 10.2),
-                                                       ('A100', 11.2, 'CUDA11', None), ('RTX', 11.2, 'agi', 10.2)]])
+                                                       ('A100', 11.2, 'CUDA11.3', 11.3), ('RTX', 11.2, 'agi', 10.2)]])
     cuda = f'GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)\ncase $GPU_TYPE in\n{conda}esac'
 
     # 10.2
