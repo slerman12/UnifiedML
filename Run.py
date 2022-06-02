@@ -20,7 +20,6 @@ def main(args):
     Utils.set_seeds(args.seed)
 
     args.device = args.device or ('cuda' if torch.cuda.is_available() else 'cpu')
-    print(args.device)
 
     # Train, test environments
     env = instantiate(args.environment)
