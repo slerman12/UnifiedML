@@ -121,7 +121,7 @@ try:
     s.sendline(f'cd /scratch/{username}/UnifiedML')     # Run a command
     s.prompt()                                          # Match the prompt
     print(s.before.decode("utf-8"))                     # Print everything before the prompt.
-    s.sendline('git pull -X --theirs')
+    s.sendline(f'git pull --commit origin {branch}')
     s.prompt()
     print(s.before.decode("utf-8"))
     s.sendline(f'git checkout origin/{branch or "master"}')
