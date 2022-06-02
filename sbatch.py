@@ -45,6 +45,9 @@ def main(args):
     # 10.2
     cuda = f'source /scratch/{args.username}/miniconda/bin/activate agi'
 
+    # 11.3
+    cuda = f'source /scratch/{args.username}/miniconda/bin/activate CUDA11.3'
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
