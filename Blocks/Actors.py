@@ -29,12 +29,15 @@ class EnsembleGaussianActor(nn.Module):
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.trunk = Utils.init(trunk, input_shape=getattr(trunk, 'input_shape', None) or repr_shape,
-                                default=nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh()))
+        self.trunk = trunk if isinstance(trunk, nn.Module) \
+            else instantiate(trunk, input_shape=trunk.input_shape or repr_shape) \
+            or nn.Sequential(nn.Linear(in_dim, trunk_dim),
+                             nn.LayerNorm(trunk_dim), nn.Tanh())  # Default
 
-        self.Pi_head = Utils.Ensemble([Utils.init(pi_head, output_dim=out_dim,
-                                                  default=MLP(trunk_dim, out_dim, hidden_dim, 2))
-                                       for _ in range(ensemble_size)])
+        self.Pi_head = Utils.Ensemble([pi_head if isinstance(pi_head, nn.Module)
+                                       else pi_head[i] if isinstance(pi_head, list) else instantiate(pi_head,
+                                                                                                     output_dim=out_dim)
+                                       or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
         self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
