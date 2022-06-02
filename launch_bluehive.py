@@ -111,7 +111,7 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 sweep = ['"gpu=\'V100|A100\'" experiment=\'nvidia_smi_${gpu}\'']
 sweep = [
     # 'task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_cudas\'',
-         'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_cudas\' lab=true']
+         'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_cudas2\' lab=true']
 
 
 # Launch on Bluehive
