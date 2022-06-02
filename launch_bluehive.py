@@ -109,8 +109,9 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 #          'num_workers=4 num_gpus=1 mem=20 '
 #          'plot_per_steps=0 reservation_id=20220509']
 sweep = ['"gpu=\'V100|A100\'" experiment=\'nvidia_smi_${gpu}\'']
-sweep = ['task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_agi\'',
-         'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_agi\' lab=true']
+sweep = [
+    # 'task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_cudas\'',
+         'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_cudas\' lab=true']
 
 
 # Launch on Bluehive
