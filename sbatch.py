@@ -41,6 +41,9 @@ def main(args):
                                                        ('A100', 11.2, 'CUDA11', 11.3), ('RTX', 11.2, 'agi', 10.2)]])
     cuda = f'GPU_TYPE=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)\ncase $GPU_TYPE in\n{conda}esac'
 
+    # TODO delete; just testing
+    cuda = f'source /scratch/{args.username}/miniconda/bin/activate CUDA11'
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
