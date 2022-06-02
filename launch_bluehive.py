@@ -11,7 +11,7 @@ from pexpect import pxssh, spawn
 
 username = 'slerman'
 
-branch = 'master'
+branch = 'UnifiedML2'
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
@@ -110,8 +110,9 @@ full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
 #          'plot_per_steps=0 reservation_id=20220509']
 sweep = ['"gpu=\'V100|A100\'" experiment=\'nvidia_smi_${gpu}\'']
 sweep = [
-    'task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_cudas\'',
-         'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_cudas\' lab=true']
+    'task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_cudas2\'',
+         # 'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_cudas\' lab=true'
+]
 
 
 # Launch on Bluehive
