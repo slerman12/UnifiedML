@@ -11,7 +11,7 @@ from pexpect import pxssh, spawn
 
 username = 'slerman'
 
-branch = 'master'
+branch = 'UnifiedML2'
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
@@ -122,7 +122,7 @@ try:
     s.sendline(f'cd /scratch/{username}/UnifiedML')     # Run a command
     s.prompt()                                          # Match the prompt
     print(s.before.decode("utf-8"))                     # Print everything before the prompt.
-    s.sendline('git pull origin master')
+    s.sendline('git pull -X --theirs')
     s.prompt()
     print(s.before.decode("utf-8"))
     s.sendline(f'git checkout origin/{branch or "master"}')
