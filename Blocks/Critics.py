@@ -39,13 +39,14 @@ class EnsembleQCritic(nn.Module):
                              nn.LayerNorm(trunk_dim), nn.Tanh())  # Default
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
+        in_shape = q_head.input_shape or [dim]
         out_dim = action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([q_head if isinstance(q_head, nn.Module)
-                                      else q_head[i] if isinstance(q_head, list)
-                                      else instantiate(q_head, input_shape=q_head.input_shape or [dim],
-                                                       output_dim=out_dim) or MLP(dim, out_dim, hidden_dim, 2)
-                                      for i in range(ensemble_size)], 0)
+                                      else q_head[i] if isinstance(q_head, list) else instantiate(q_head,
+                                                                                                  input_shape=in_shape,
+                                                                                                  output_dim=out_dim)
+                                      or MLP(dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
 
         self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
