@@ -34,8 +34,8 @@ class EnsembleQCritic(nn.Module):
         in_dim = math.prod(repr_shape)
 
         self.trunk = trunk if isinstance(trunk, nn.Module) \
-            else nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh()) if not trunk._target_ \
-            else instantiate(trunk, input_shape=trunk.input_shape or repr_shape)
+            else instantiate(trunk, input_shape=trunk.input_shape or repr_shape) if trunk and trunk._target_ \
+            else nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
         in_shape = q_head.input_shape or [dim]
@@ -44,7 +44,7 @@ class EnsembleQCritic(nn.Module):
         self.Q_head = Utils.Ensemble([q_head if isinstance(q_head, nn.Module) else q_head[i] if isinstance(q_head, list)
                                       else instantiate(q_head,
                                                        input_shape=in_shape,
-                                                       output_dim=out_dim) if q_head._target_
+                                                       output_dim=out_dim) if q_head and q_head._target_
                                       else MLP(dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
 
         self.init(lr, lr_decay_epochs, weight_decay, ema_decay)

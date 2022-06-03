@@ -38,7 +38,7 @@ class CNNEncoder(nn.Module):
 
         # CNN
         self.Eyes = nn.Sequential(eyes if isinstance(eyes, nn.Module)
-                                  else instantiate(eyes) if eyes._target_
+                                  else instantiate(eyes) if eyes and eyes._target_
                                   else CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
@@ -47,7 +47,7 @@ class CNNEncoder(nn.Module):
         self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
 
         self.pool = pool if isinstance(pool, nn.Module) \
-            else instantiate(pool, input_shape=self.feature_shape) if pool._target_ \
+            else instantiate(pool, input_shape=self.feature_shape) if pool and pool._target_ \
             else nn.Flatten()
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)

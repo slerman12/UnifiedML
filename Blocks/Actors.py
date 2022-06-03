@@ -30,12 +30,12 @@ class EnsembleGaussianActor(nn.Module):
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
         self.trunk = trunk if isinstance(trunk, nn.Module) \
-            else nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh()) if not trunk._target_ \
-            else instantiate(trunk, input_shape=trunk.input_shape or repr_shape)
+            else instantiate(trunk, input_shape=trunk.input_shape or repr_shape) if trunk and trunk._target_ \
+            else nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
         self.Pi_head = Utils.Ensemble([pi_head if isinstance(pi_head, nn.Module)
                                        else pi_head[i] if isinstance(pi_head, list)
-                                       else instantiate(pi_head, output_dim=out_dim) if pi_head._target_
+                                       else instantiate(pi_head, output_dim=out_dim) if pi_head and pi_head._target_
                                        else MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
 
 
