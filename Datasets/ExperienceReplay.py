@@ -25,7 +25,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
-                 obs_spec=None, steps_per_epoch=None, nstep=0, discount=1, transform=None):
+                 obs_spec=None, nstep=0, discount=1, transform=None):
         # Path and loading
 
         path = path.replace("Agents.", "")
@@ -102,7 +102,6 @@ class ExperienceReplay:
         # Batch loading
 
         self.epoch = self.step = 0
-        self.steps_per_epoch = steps_per_epoch
 
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
@@ -121,13 +120,10 @@ class ExperienceReplay:
     # Allows iteration
     def __next__(self):
         self.step += 1
-        if self.steps_per_epoch and self.step % self.steps_per_epoch == 0:
-            self.epoch += 1
         try:
             return next(self.replay)
         except StopIteration:
-            if self.steps_per_epoch is None:
-                self.epoch += 1
+            self.epoch += 1
             self._replay = None
             return next(self)
 

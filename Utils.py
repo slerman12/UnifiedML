@@ -265,8 +265,9 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
             model.optim.step()
 
             # Step scheduler
-            if epoch > model.scheduler.last_epoch:
-                model.scheduler.step(epoch)
+            if hasattr(model, 'scheduler') and epoch > model.scheduler.last_epoch:
+                model.scheduler.step()
+                model.scheduler.last_epoch = epoch
 
             # Update ema target
             if ema and hasattr(model, 'ema'):

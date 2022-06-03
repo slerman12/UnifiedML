@@ -65,6 +65,8 @@ class CNNEncoder(nn.Module):
         # Optimizer
         if lr:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+
+        if lr_decay_epochs:
             self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA

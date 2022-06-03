@@ -49,11 +49,13 @@ class EnsembleQCritic(nn.Module):
 
         self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
-    def init(self, lr=None, lr_decay_epcohs=0, weight_decay=0, ema_decay=None):
+    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
         if lr:
             self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epcohs)
+
+        if lr_decay_epochs:
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:

@@ -23,7 +23,6 @@ generate: false
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
-steps_per_epoch: null  # TODO can just count episodes instead
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -104,7 +103,6 @@ replay:
   action_spec: ${action_spec}
   suite: ${suite}
   task: ${task_name}
-  steps_per_epoch: ${steps_per_epoch}
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}
