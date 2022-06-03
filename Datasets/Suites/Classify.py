@@ -194,6 +194,14 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
+        # If custom, should override environment.dataset and generalize.dataset, otherwise just environment.dataset
+        # experiences = instantiate(custom) if custom._target_ \
+        #     else dataset(root=path + "_Train" if train else path + "_Eval",
+        #                  **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
+        #                     else dict(train=train)),
+        #                  download=True,
+        #                  transform=Transform())
+
         experiences = dataset(root=path + "_Train" if train else path + "_Eval",
                               **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
                                  else dict(train=train)),
