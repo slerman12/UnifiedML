@@ -3,7 +3,11 @@ from torch.utils.data import Dataset
 
 from torchaudio.transforms import Spectrogram
 
+from torchvision.transforms import ToPILImage
+
 import numpy as np
+
+from PIL import Image
 
 
 class RRUFF(Dataset):
@@ -24,6 +28,7 @@ class RRUFF(Dataset):
         assert self.size == len(self.labels), 'num features and labels not same'
 
         self.spectrogram = Spectrogram()
+        self.image = ToPILImage()
         self.transform = transform
 
     def __len__(self):
@@ -34,6 +39,7 @@ class RRUFF(Dataset):
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
         x = self.spectrogram(x)
+        x = self.image(x)
         print(x.shape)
         x = self.transform(x)
 
