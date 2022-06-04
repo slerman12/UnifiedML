@@ -62,6 +62,7 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {cuda}
+wandb login 55c12bece18d43a51c2fcbcb5b7203c395f9bc40
 python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
 """
 

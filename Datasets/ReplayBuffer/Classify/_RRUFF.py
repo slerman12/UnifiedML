@@ -9,7 +9,7 @@ import numpy as np
 
 
 class RRUFF(Dataset):
-    def __init__(self, root='../XRDs/xrd_data/05_29_data/', transform=None, num_classes=7, train=True, **kwargs):
+    def __init__(self, root='../XRDs/xrd_data/05_29_data/', num_classes=7, train=True, **kwargs):
         root += 'icsd171k_ps1_noise20' if train else 'XY_DIF_noiseAll'
 
         self.feature_path = root + "/features.csv"
@@ -27,7 +27,6 @@ class RRUFF(Dataset):
 
         self.spectrogram = Spectrogram()
         self.image = ToPILImage()
-        self.transform = transform
 
     def __len__(self):
         return self.size
@@ -36,8 +35,7 @@ class RRUFF(Dataset):
         x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))[None, :]
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
-        x = self.spectrogram(x)  # Should run afterwards on collated batches?
+        x = self.spectrogram(x)
         x = self.image(x)
-        x = self.transform(x)
 
         return x, y

@@ -115,7 +115,8 @@ sweep = ['task=dmc/cheetah_run gpu=A100,K80,V100 experiment=\'cuda_adaptive\'',
          'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'cuda_adaptive\' lab=true']
 sweep = [
     # 'task=classify/custom lab=true experiment=\'PS1_to_RRUFF\' Aug=Blocks.Architectures.Null',
-    'task=classify/custom experiment=\'PS1_noise_20_to_RRUFF_ResNet18\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet18 num_gpus=4 parallel=true',
+    # 'task=classify/custom experiment=\'PS1_noise_20_to_RRUFF_ResNet18\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet18 num_gpus=4 parallel=true',
+    'experiment="wandb" logger.wandb=true'
 ]
 
 
