@@ -210,7 +210,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
                                download=True,
                                transform=Transform())
 
-        assert issubclass(experiences, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
+        assert isinstance(experiences, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
         assert hasattr(experiences, 'classes'), 'Classify Dataset must define a "classes" attribute'
 
     env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path)

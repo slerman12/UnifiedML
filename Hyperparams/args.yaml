@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task@_global_: atari/pong
+  - task@_global_: classify/mnist
   - override hydra/job_logging: none
 
 # Agent
@@ -59,6 +59,7 @@ experiment: Exp
 
 environment:
   _target_: Datasets.Environment.Environment
+  _recursive_: false
   task_name: ${task_name}
   frame_stack: ${frame_stack}
   action_repeat: ${action_repeat}
