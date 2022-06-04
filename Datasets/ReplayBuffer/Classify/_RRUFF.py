@@ -1,7 +1,8 @@
-import torch
 from torch.utils.data import Dataset
 from torchaudio.transforms import Spectrogram
 from torchvision.transforms import Compose
+
+import numpy as np
 
 
 class RRUFF(Dataset):
@@ -28,15 +29,9 @@ class RRUFF(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-        line = self.features[idx]
-        x = list(map(float, line.strip().split(',')))
-        x = torch.FloatTensor(x)
+        x = np.array(list(map(float, self.features[idx].strip().split(','))))
+        y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
         x = self.transform(x)
-
-        line = self.labels[idx]
-        y = list(map(float, line.strip().split(',')))
-        y = torch.FloatTensor(y)
-        y = torch.argmax(y)
 
         return x, y
