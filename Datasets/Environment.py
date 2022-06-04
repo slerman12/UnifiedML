@@ -10,12 +10,12 @@ from Datasets.Suites import DMC, Atari, Classify
 
 class Environment:
     def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
-                 seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
+                 dataset, seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
         self.disable = (offline or generate) and train
         self.generate = generate
 
-        self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
+        self.env = self.raw_env.make(task_name, dataset, frame_stack, action_repeat, episode_max_frames,
                                      episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
 
         self.env.reset()

@@ -20,6 +20,8 @@ offline: false  # Defaults to true for classify tasks
 RL: true
 supervise: true
 generate: false
+# Environment
+Dataset: null
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
@@ -62,6 +64,8 @@ environment:
   action_repeat: ${action_repeat}
   episode_max_frames: false
   episode_truncate_resume_frames: 1000
+  dataset:
+    _target_: ${Dataset}
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}
