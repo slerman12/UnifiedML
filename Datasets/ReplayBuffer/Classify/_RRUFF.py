@@ -34,6 +34,7 @@ class RRUFF(Dataset):
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
         x = self.spectrogram(x)
+        print(x.shape)
         x = self.transform(x)
 
         return x, y
