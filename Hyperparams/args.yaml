@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task@_global_: classify/mnist
+  - task@_global_: classify/custom
   - override hydra/job_logging: none
 
 # Agent
@@ -21,7 +21,7 @@ RL: true
 supervise: true
 generate: false
 # Environment
-Dataset: null
+Dataset: Datasets.ReplayBuffer.Classify._TinyImageNet.TinyImageNet
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
@@ -67,6 +67,7 @@ environment:
   episode_truncate_resume_frames: 1000
   dataset:
     _target_: ${Dataset}
+    root: null
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}
