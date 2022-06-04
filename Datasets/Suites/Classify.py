@@ -193,7 +193,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
     if 'Custom.' not in task:
         dataset_class = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
 
-    path = dataset.root or f'./Datasets/ReplayBuffer/Classify/{task}'
+    path = f'./Datasets/ReplayBuffer/Classify/{task}'
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
