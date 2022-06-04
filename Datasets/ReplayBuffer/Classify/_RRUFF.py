@@ -1,9 +1,6 @@
-import torchaudio
 from torch.utils.data import Dataset
 
 from torchaudio.transforms import Spectrogram
-
-from torchvision.transforms import Compose
 
 import numpy as np
 
@@ -35,7 +32,8 @@ class RRUFF(Dataset):
         x = np.array(list(map(float, self.features[idx].strip().split(','))))
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
-        x = self.spectrogram(x)
+        # x = self.spectrogram(x)
+        print(x.shape)
         x = self.transform(x)
 
         return x, y
