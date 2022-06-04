@@ -37,7 +37,8 @@ class Logger:
         self.logs = {}
         self.counts = {}
 
-        self.wandb = wandb
+        self.wandb = 'uninitialized' if wandb \
+            else None
 
     def log(self, log=None, name="Logs", dump=False):
         if log is not None:
@@ -81,7 +82,7 @@ class Logger:
     def _dump_logs(self, logs, name):
         self.dump_to_console(logs, name=name)
         self.dump_to_csv(logs, name=name)
-        if self.wandb:
+        if self.wandb is not None:
             self.log_wandb(logs, name=name)
 
     def dump_to_console(self, logs, name):
@@ -141,10 +142,9 @@ class Logger:
     #             self.tensorboard_writer.add_scalar(f'{key}', logs[key], logs['step'])
 
     def log_wandb(self, logs, name):
-        if self.wandb != 'initialized':
+        if self.wandb == 'uninitialized':
             import wandb
-            wandb.init(project=self.path.replace('/', '_'),
-                       name=f'_{self.task}_{self.seed}')
-            self.wandb = 'initialized'
+            wandb.init(project=self.path.replace('/', '_'), name=f'_{self.task}_{self.seed}')
+            self.wandb = wandb
         logs.update({'name': name})
-        wandb.log(logs)
+        self.wandb.log(logs)
