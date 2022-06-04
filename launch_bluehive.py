@@ -113,7 +113,7 @@ sweep = ['task=dmc/cheetah_run gpu=K80,V100,A100 experiment=\'dmc_${gpu}_cudas\'
          'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'dmc_${gpu}_cudas\' lab=true']
 sweep = ['task=dmc/cheetah_run gpu=A100,K80,V100 experiment=\'cuda_adaptive\'',
          'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'cuda_adaptive\' lab=true']
-sweep = ['task=classify/custom lab=true experiment=\'PS1_to_RRUFF\'']
+sweep = ['task=classify/custom lab=true experiment=\'PS1_to_RRUFF\' Aug=Blocks.Architectures.Null']
 
 
 # Launch on Bluehive

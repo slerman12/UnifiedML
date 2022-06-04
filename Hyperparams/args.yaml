@@ -144,6 +144,7 @@ plotting:
   verbose: false
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
+Aug: null  # Shorthand for recipes.aug._target_
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 pool: null  # Shorthand for recipes.encoder.pool._target_
 Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
@@ -154,7 +155,6 @@ Pi_head: ${Generator}  # Shorthand for recipes.actor.Pi_head._target_
 Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 
 recipes:
-  Aug: null  # Shorthand for recipes.aug._target_
   aug:
     _target_: ${recipes.Aug}
   encoder:
