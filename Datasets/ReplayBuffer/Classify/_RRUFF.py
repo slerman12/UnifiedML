@@ -41,6 +41,5 @@ class RRUFF(Dataset):
         x = self.spectrogram(x)  # Should run afterwards on GPU?
         x = self.image(x)
         x = self.transform(x)
-        print(x.shape)
 
         return x, y
