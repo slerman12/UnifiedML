@@ -144,7 +144,7 @@ class Logger:
     def log_wandb(self, logs, name):
         if self.wandb == 'uninitialized':
             import wandb
-            wandb.init(project=self.path.replace('/', '_'), name=f'_{self.task}_{self.seed}')
+            wandb.init(project=self.path.replace('/', '_'), name=f'{self.task}_{self.seed}')
             self.wandb = wandb
         logs.update({'name': name})
         self.wandb.log(logs)
