@@ -7,7 +7,7 @@ dependencies:
   - numpy
   - pandas
   - seaborn=0.11.2
-  - opencv>=4.5.3
+  - opencv
   - pip:
       - torch==1.11.0
       - torchvision==0.12.0
