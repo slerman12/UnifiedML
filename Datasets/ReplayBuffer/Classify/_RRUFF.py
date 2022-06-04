@@ -30,11 +30,10 @@ class RRUFF(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-        x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))[:, None]
+        x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))[None, :]
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
-        print(x.shape)
 
-        # x = self.spectrogram(x)
-        # x = self.transform(x)
+        x = self.spectrogram(x)
+        x = self.transform(x)
 
         return x, y
