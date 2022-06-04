@@ -34,4 +34,4 @@ class Vlogger:
 #                    dsize=(self.render_size, self.render_size),
 #                    interpolation=cv2.INTER_CUBIC)
 
-# in Environment.py
+# in World.py
