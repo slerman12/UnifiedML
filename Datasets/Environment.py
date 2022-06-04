@@ -5,35 +5,33 @@
 import time
 from math import inf
 
-from Datasets.Suites import DMC, Atari, Classify
+from hydra.utils import instantiate
 
 
-class Environment:
-    def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
-                 seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
+class World:
+    def __init__(self, suite, environments, num_environments=1, offline=False, generate=False, train=True, seed=0):
         self.suite = suite
+
+        self.num_environments = num_environments
+
         self.disable = (offline or generate) and train
         self.generate = generate
 
-        self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
-                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+        # self.action_repeat = action_repeat  # Repeat the same action times
+        # self.episode_max_frames = episode_max_frames  # When to reset an episode early
+        # self.episode_truncate_resume_frames = episode_truncate_resume_frames  # When toggle episode_done then resume
 
-        self.env.reset()
+        # self.world = World(suite, task_name, frame_stack, seed, train, offline, num_environments, batch_size,
+        #                    num_workers, action_repeat=1, episode_max_frames=False, episode_truncate_resume_frames=800)
+        self.envs = instantiate(environments, train=train, seed=seed)
+
+        self.exps = self.envs.init()  # Experiences
 
         self.episode_done = self.episode_step = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
 
-    @property
-    def raw_env(self):
-        if self.suite.lower() == "dmc":
-            return DMC
-        elif self.suite.lower() == "atari":
-            return Atari
-        elif self.suite.lower() == 'classify':
-            return Classify
-
     def __getattr__(self, item):
-        return getattr(self.env, item)
+        return getattr(self.world, item)
 
     def rollout(self, agent, steps=inf, vlog=False):
         if self.daybreak is None:
@@ -42,36 +40,34 @@ class Environment:
         experiences = []
         video_image = []
 
-        exp = self.exp
-
-        self.episode_done = self.disable
+        self.episode_done = [self.disable] * self.num_environments
 
         step = 0
         while not self.episode_done and step < steps:
             # Act
-            action = agent.act(exp.observation)
+            action = agent.act(self.exps.observation)
 
-            exp = self.env.step(None if self.generate else action.cpu().numpy())
+            exps = self.exps = self.envs.step(None if self.generate else action.cpu().numpy())
 
-            exp.step = agent.step
-            experiences.append(exp)
+            exps.step = agent.step
+            experiences.append((exps.observation, exps.action, exps.reward, exps.label))
 
             if vlog or self.generate:
-                frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
+                frame = action[:24].view(-1, *exps.observation.shape[1:]) if self.generate \
                     else self.env.physics.render(height=256, width=256, camera_id=0) \
                     if hasattr(self.env, 'physics') else self.env.render()
                 video_image.append(frame)
 
             # Tally reward, done
-            self.episode_reward += exp.reward.mean()
-            self.episode_done = exp.last()
+            self.episode_reward += exps.reward.mean()
+            self.episode_done = exps.episode_done
 
             step += 1
 
-        self.episode_step += step
+        self.episode_step += step  # TODO * batch_size?
 
         if self.disable:
-            agent.step += 1
+            agent.step += 1  # TODO agent should iterate by batch size
 
         if self.episode_done and not self.disable:
             if agent.training:
@@ -89,7 +85,7 @@ class Environment:
                 'frame': agent.step * self.action_repeat,
                 'episode': agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
-                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
+                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),  # Multi-step/batch acc
                 'fps': frames / (sundown - self.daybreak)} if not self.disable \
             else None
 

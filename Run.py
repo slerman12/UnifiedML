@@ -73,12 +73,11 @@ def main(args):
 
         replay.add(experiences)
 
-        if env.episode_done:
+        if env.episode_done.any():  # TODO compatibility with "multi-step" env effectively occurring due to batching
             if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
-            if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes
+            replay.add(dump=True, inds=env.episode_done & env.last_episode_len > args.nstep)  # Only store full episodes
 
         converged = agent.step >= args.train_steps
         training = training or (agent.step > args.seed_steps or env.disable) and len(replay) >= args.num_workers
