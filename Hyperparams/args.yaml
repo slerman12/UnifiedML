@@ -156,7 +156,7 @@ Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 
 recipes:
   aug:
-    _target_: ${recipes.Aug}
+    _target_: ${Aug}
   encoder:
     eyes:
       _target_: ${Eyes}
