@@ -187,10 +187,10 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
     'TinyImageNet')
     """
 
-    assert task in torchvision.datasets.__all__ or task == 'TinyImageNet' or 'Custom' in task
+    assert task in torchvision.datasets.__all__ or task == 'TinyImageNet' or 'Custom.' in task
 
     # TODO clean
-    if 'Custom' not in task:
+    if 'Custom.' not in task:
         dataset_class = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}'
@@ -198,9 +198,9 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
-        assert dataset._target_ or 'Custom' not in task, 'Custom task must specify the `Dataset=` flag'
+        assert dataset._target_ or 'Custom.' not in task, 'Custom task must specify the `Dataset=` flag'
 
-        if dataset._target_ and 'Custom' not in task and train:
+        if dataset._target_ and 'Custom.' not in task and train:
             print(f'Setting train dataset to {dataset._target_}.\n'
                   f'Note: to also set eval, set `task=classify/custom`. Eval: {task}')
 
@@ -208,7 +208,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
         experiences = instantiate(dataset,
                                   root=dataset.root or (path + "_Train" if train else path + "_Eval"), train=train,
                                   download=True,
-                                  transform=Transform()) if dataset._target_ and ('Custom' in task or train) \
+                                  transform=Transform()) if dataset._target_ and ('Custom.' in task or train) \
             else dataset_class(root=path + "_Train" if train else path + "_Eval",
                                **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
                                   else dict(train=train)),
