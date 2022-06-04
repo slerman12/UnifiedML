@@ -198,6 +198,10 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
 
         assert dataset._target_ or 'Custom' not in task, 'Custom task must specify the `Dataset=` flag'
 
+        if dataset._target_ and 'Custom' not in task and train:
+            print(f'Setting train dataset to {dataset._target_}.\n'
+                  f'Note: to also set eval, set `task=classify/custom`. Eval: {task}')
+
         # If custom, should override environment.dataset and generalize.dataset, otherwise just environment.dataset
         experiences = instantiate(dataset, train=train) if dataset._target_ and ('Custom' in task or train) \
             else dataset_class(root=path + "_Train" if train else path + "_Eval",
