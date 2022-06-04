@@ -48,6 +48,8 @@ class Environment:
 
         # if self.episode_done:
         #     agent.step += len(exp.observation)  # instead of 76-77
+        #       equivalent to len(batch_size) ... in both cases: problem: stays constant but not all batches=batch_size
+        #       even if envs load consistently, replay doesn't (unless I add remainder to length and mod/sample cycle)
 
         step = 0
         while not self.episode_done and step < steps:
@@ -89,7 +91,7 @@ class Environment:
 
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
-                'frame': agent.step * self.action_repeat,
+                'frame': agent.step * self.action_repeat,  # TODO multiply by batch size... but not all batches equal
                 'episode': agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),

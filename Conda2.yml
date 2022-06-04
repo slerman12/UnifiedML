@@ -1,0 +1,29 @@
+name: ML
+channels:
+  - defaults
+dependencies:
+  - pip>=22.1.2
+  - python=3.8
+  - pandas=1.4.2
+  - opencv
+  - seaborn=0.11.2
+  - pip:
+    - torch==1.11.0
+    - torchvision==0.12.0
+    - torchaudio==0.11.0
+    - hydra-core==1.1.0
+    - hydra-submitit-launcher==1.1.5
+    - gym
+    - ale-py
+    - dm_control>=1.0.2
+    - PyOpenGL-accelerate
+    - termcolor==1.1.0
+    - wandb
+    - tb-nightly
+    - imageio==2.9.0
+    - imageio-ffmpeg==0.4.4
+    - opt_einsum_torch
+    - einops
+# Only for me
+#      - cryptography
+#      - pexpect
