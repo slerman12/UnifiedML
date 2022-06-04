@@ -29,11 +29,10 @@ class RRUFF(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-        x = np.array(list(map(float, self.features[idx].strip().split(','))))
+        x = np.array(list(map(float, self.features[idx].strip().split(','))))[:, np.newaxis]
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
-        # x = self.spectrogram(x)
-        print(x.shape)
+        x = self.spectrogram(x)
         x = self.transform(x)
 
         return x, y
