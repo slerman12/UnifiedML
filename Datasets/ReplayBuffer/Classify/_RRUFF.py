@@ -25,8 +25,8 @@ class RRUFF(Dataset):
         self.size = len(self.features)
         assert self.size == len(self.labels), 'num features and labels not same'
 
-        self.transform = Compose([Spectrogram()] + ([] if transform is None
-                                                    else [transform]))
+        self.spectrogram = Spectrogram()
+        self.transform = transform
 
     def __len__(self):
         return self.size
@@ -35,8 +35,7 @@ class RRUFF(Dataset):
         x = np.array(list(map(float, self.features[idx].strip().split(','))))
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
-        print(x.shape)
-        print('\n\nOOOO')
+        x = self.spectrogram(x)
         x = self.transform(x)
 
         return x, y
