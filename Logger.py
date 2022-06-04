@@ -143,8 +143,8 @@ class Logger:
     def log_wandb(self, logs, name):
         if self.wandb != 'initialized':
             import wandb
-            wandb.init(project=str(datetime.datetime.now()),
-                       name=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
+            wandb.init(project=self.path.replace('/', '_'),
+                       name=f'_{self.task}_{self.seed}')
             self.wandb = 'initialized'
         logs.update({'name': name})
         wandb.log(logs)

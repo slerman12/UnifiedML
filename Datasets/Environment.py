@@ -46,6 +46,9 @@ class Environment:
 
         self.episode_done = self.disable
 
+        # if self.episode_done:
+        #     agent.step += len(exp.observation)  # instead of 76-77
+
         step = 0
         while not self.episode_done and step < steps:
             # Act
