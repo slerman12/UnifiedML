@@ -21,7 +21,7 @@ RL: true
 supervise: true
 generate: false
 # Environment
-Dataset: Datasets.ReplayBuffer.Classify._TinyImageNet.TinyImageNet
+Dataset: Datasets.ReplayBuffer.Classify._RRUFF.RRUFF
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
@@ -67,7 +67,7 @@ environment:
   episode_truncate_resume_frames: 1000
   dataset:
     _target_: ${Dataset}
-    root: null
+    root: ../XRDs/xrd_data/05_29_data/
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}
