@@ -65,7 +65,8 @@ def main(args):
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {cuda}
 wandb login {wandb_login_key}
-python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
+python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+')).replace('None','null')}'" 
+                          for key in sys_args if key not in meta])}
 """
 
     # Write script
