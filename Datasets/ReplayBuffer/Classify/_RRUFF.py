@@ -7,8 +7,6 @@ from torchvision.transforms import ToPILImage
 
 import numpy as np
 
-from PIL import Image
-
 
 class RRUFF(Dataset):
     def __init__(self, root='../XRDs/xrd_data/05_29_data/', transform=None, num_classes=7, train=True, **kwargs):
