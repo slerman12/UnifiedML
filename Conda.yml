@@ -20,7 +20,7 @@ dependencies:
       - termcolor==1.1.0
       - wandb
       - tb-nightly
-      - opencv==4.5.3.56
+      - opencv-python==4.5.3.56
       - imageio==2.9.0
       - imageio-ffmpeg==0.4.4
       - opt_einsum_torch
