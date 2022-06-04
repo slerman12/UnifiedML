@@ -36,6 +36,7 @@ class RRUFF(Dataset):
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
         print(x.shape)
+        print('\n\nOOOO')
         x = self.transform(x)
 
         return x, y
