@@ -38,9 +38,9 @@ class RRUFF(Dataset):
         x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))[None, :]
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
-        x = self.spectrogram(x)
+        x = self.spectrogram(x)  # Should run afterwards on GPU?
         x = self.image(x)
-        print(x.shape)
         x = self.transform(x)
+        print(x.shape)
 
         return x, y
