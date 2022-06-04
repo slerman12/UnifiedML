@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task@_global_: atari/pong
+  - task@_global_: classify/custom
   - override hydra/job_logging: none
 
 # Agent
@@ -20,6 +20,8 @@ offline: false  # Defaults to true for classify tasks
 RL: true
 supervise: true
 generate: false
+# Environment
+Dataset: Datasets.ReplayBuffer.Classify._TinyImageNet.TinyImageNet
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
@@ -57,11 +59,15 @@ experiment: Exp
 
 environment:
   _target_: Datasets.Environment.Environment
+  _recursive_: false
   task_name: ${task_name}
   frame_stack: ${frame_stack}
   action_repeat: ${action_repeat}
   episode_max_frames: false
   episode_truncate_resume_frames: 1000
+  dataset:
+    _target_: ${Dataset}
+    root: null
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}

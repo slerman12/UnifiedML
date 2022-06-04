@@ -36,7 +36,7 @@ class EnsembleGaussianActor(nn.Module):
         self.Pi_head = Utils.Ensemble([pi_head if isinstance(pi_head, nn.Module)
                                        else pi_head[i] if isinstance(pi_head, list)
                                        else instantiate(pi_head, output_dim=out_dim) if pi_head and pi_head._target_
-                                       else MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
+                                       else MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
         self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 

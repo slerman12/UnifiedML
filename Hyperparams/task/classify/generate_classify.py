@@ -6,7 +6,7 @@ IMAGE_DATASETS = [
     'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
     'USPS', 'Kinetics400', "Kinetics", 'HMDB51', 'UCF101',
     'Places365', 'Kitti', "INaturalist", "LFWPeople", "LFWPairs",
-    'TinyImageNet'
+    'TinyImageNet', 'Custom'
 ]
 
 if __name__ == '__main__':
@@ -30,7 +30,7 @@ seed_steps: 50
 explore_steps: 0
 log_per_episodes: 10
 offline: true
-task_name: {}""".format(task))
+task_name: {}""".format(task if task != 'Custom' else task + f'{".${Dataset}"}'))
         f.close()
         out += ' "' + task.lower() + '"'
     print(out)

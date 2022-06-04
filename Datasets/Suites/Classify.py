@@ -11,12 +11,14 @@ import warnings
 from pathlib import Path
 from tqdm import tqdm
 
+from hydra.utils import instantiate
+
 from dm_env import specs, StepType
 
 import numpy as np
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 import torchvision
 from torchvision.transforms import functional as F
@@ -170,7 +172,7 @@ class ClassifyEnv:
         return len(self.batches)
 
 
-def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
+def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
          offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     """
     'task' options:
@@ -185,28 +187,36 @@ def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode
     'TinyImageNet')
     """
 
-    assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'
+    assert task in torchvision.datasets.__all__ or task == 'TinyImageNet' or 'Custom.' in task
 
-    dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
+    # TODO clean
+    if 'Custom.' not in task:
+        dataset_class = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
 
     path = f'./Datasets/ReplayBuffer/Classify/{task}'
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', '.*The given NumPy array.*')
 
-        # If custom, should override environment.dataset and generalize.dataset, otherwise just environment.dataset
-        # experiences = instantiate(custom) if custom._target_ \
-        #     else dataset(root=path + "_Train" if train else path + "_Eval",
-        #                  **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
-        #                     else dict(train=train)),
-        #                  download=True,
-        #                  transform=Transform())
+        assert dataset._target_ or 'Custom.' not in task, 'Custom task must specify the `Dataset=` flag'
 
-        experiences = dataset(root=path + "_Train" if train else path + "_Eval",
-                              **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
-                                 else dict(train=train)),
-                              download=True,
-                              transform=Transform())
+        if dataset._target_ and 'Custom.' not in task and train:
+            print(f'Setting train dataset to {dataset._target_}.\n'
+                  f'Note: to also set eval, set `task=classify/custom`. Eval: {task}')
+
+        # If custom, should override environment.dataset and generalize.dataset, otherwise just environment.dataset
+        experiences = instantiate(dataset,
+                                  root=dataset.root or (path + "_Train" if train else path + "_Eval"), train=train,
+                                  download=True,
+                                  transform=Transform()) if dataset._target_ and ('Custom.' in task or train) \
+            else dataset_class(root=path + "_Train" if train else path + "_Eval",
+                               **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
+                                  else dict(train=train)),
+                               download=True,
+                               transform=Transform())
+
+        assert isinstance(experiences, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
+        assert hasattr(experiences, 'classes'), 'Classify Dataset must define a "classes" attribute'
 
     env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path)
 
