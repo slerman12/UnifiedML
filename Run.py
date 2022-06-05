@@ -74,11 +74,11 @@ def main(args):
         replay.add(experiences)
 
         if env.episode_done:
-            if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:
+            if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:  # TODO log_per_steps since epochs
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes
+                replay.add(store=True)  # Only store full episodes  # TODO clean up episode/epoch distinction
 
         converged = agent.step >= args.train_steps
         training = training or (agent.step > args.seed_steps or env.disable) and len(replay) >= args.num_workers

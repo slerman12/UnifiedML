@@ -147,4 +147,4 @@ class Logger:
             wandb.init(project=self.path.replace('/', '_').strip('._'), name=f'{self.task}_{self.seed}')
             self.wandb = wandb
         logs[f'reward ({name})'] = logs.pop('reward')
-        self.wandb.log(logs)  # TODO add to Vlogger (https://docs.wandb.ai/guides/track/log/media/image-logging-de-duplication)
+        self.wandb.log(logs, step=logs['step'])  # TODO add to Vlogger (https://docs.wandb.ai/guides/track/log/media/image-logging-de-duplication)
