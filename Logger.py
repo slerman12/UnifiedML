@@ -50,7 +50,7 @@ class Logger:
             logs = self.logs[name]
             counts = self.counts[name]
 
-            for k, l in log.items():  # TODO Aggregate per step, median
+            for k, l in log.items():  # TODO Aggregate per step median
                 if k in logs:
                     logs[k] += l
                     counts[k] += 1
@@ -147,4 +147,4 @@ class Logger:
             wandb.init(project=self.path.replace('/', '_').strip('._'), name=f'{self.task}_{self.seed}')
             self.wandb = wandb
         logs[f'reward ({name})'] = logs.pop('reward')
-        self.wandb.log(logs, step=logs['step'])  # TODO add to Vlogger (https://docs.wandb.ai/guides/track/log/media/image-logging-de-duplication)
+        self.wandb.log(logs, step=int(logs['step']))  # TODO add to Vlogger (https://docs.wandb.ai/guides/track/log/media/image-logging-de-duplication)

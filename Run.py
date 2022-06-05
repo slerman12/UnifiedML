@@ -78,7 +78,7 @@ def main(args):
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes  # TODO clean up episode/epoch distinction
+                replay.add(store=True)  # Only store full episodes
 
         converged = agent.step >= args.train_steps
         training = training or (agent.step > args.seed_steps or env.disable) and len(replay) >= args.num_workers

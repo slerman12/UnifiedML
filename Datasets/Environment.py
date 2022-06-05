@@ -51,7 +51,7 @@ class Environment:
         #       equivalent to len(batch_size) ... in both cases: problem: stays constant but not all batches=batch_size
         #       even if envs load consistently, replay doesn't (unless I add remainder to length and mod/sample cycle)
 
-        step = 0
+        step = 0  # TODO step here is right, but refers to temproal step, not batch (maybe call len)
         while not self.episode_done and step < steps:
             # Act
             action = agent.act(exp.observation)
@@ -75,13 +75,7 @@ class Environment:
 
         self.episode_step += step
 
-        if self.disable:
-            agent.step += 1
-
         if self.episode_done and not self.disable:
-            if agent.training:
-                agent.episode += 1
-
             self.env.reset()
             self.last_episode_len = self.episode_step
 
