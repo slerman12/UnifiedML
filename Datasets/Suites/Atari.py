@@ -221,16 +221,16 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
                        )
     except gym.error.NameNotFound as e:
         print(e)
-        raise('The Atari ROMs appear to be not installed.\n'
-              'Try the following commands to install them, as in the README.\n'
-              'Accept the license:\n'
-              '$ pip install autorom\n'
-              '$ AutoROM --accept-license\n'
-              'Now, the ROMs:\n'
-              '$ mkdir ./Datasets/Suites/Atari_ROMS\n'
-              '$ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS\n'
-              '$ ale-import-roms ./Datasets/Suites/Atari_ROMS\n'
-              'You should be good to go!')
+        raise gym.error.NameNotFound('The Atari ROMs appear to be not installed.\n'
+                                     'Try the following commands to install them, as in the README.\n'
+                                     'Accept the license:\n'
+                                     '$ pip install autorom\n'
+                                     '$ AutoROM --accept-license\n'
+                                     'Now, the ROMs:\n'
+                                     '$ mkdir ./Datasets/Suites/Atari_ROMS\n'
+                                     '$ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS\n'
+                                     '$ ale-import-roms ./Datasets/Suites/Atari_ROMS\n'
+                                     'You should be good to go!')
     # minimal_action_set = env.getMinimalActionSet()
     # full_action_set = env.getLegalActionSet()
     # env = gym.make(task, full_action_space=False)  # For minimal action spaces
