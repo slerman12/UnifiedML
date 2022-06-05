@@ -220,8 +220,8 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
                        render_mode=None                  # None | human | rgb_array
                        )
     except gym.error.NameNotFound as e:
-        raise gym.error.NameNotFound(str(e) + '\nThe Atari ROMs appear to be not installed.\n'
-                                     'Try the following commands to install them, as in the README.\n'
+        raise gym.error.NameNotFound(str(e) + '\nYou may have not installed the Atari ROMs.\n'
+                                     'Try the following to install them, as in the README.\n'
                                      'Accept the license:\n'
                                      '$ pip install autorom\n'
                                      '$ AutoROM --accept-license\n'
