@@ -5,7 +5,7 @@ dependencies:
   - pip=21.2.4
   - python=3.8
   - pandas=1.4.2
-  - opencv=4.5.3
+  - py-opencv=4.5.3
   - seaborn=0.11.2
   - pip:
     - torch==1.11.0
