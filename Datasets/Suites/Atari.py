@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import gym
 # import cv2
+from skimage.transform import resize
 import numpy as np
 
 import dm_env
