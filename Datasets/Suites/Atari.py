@@ -184,9 +184,12 @@ class AtariPreprocessing(dm_env.Environment):
             np.maximum(self.screen_buffer[0], self.screen_buffer[1],
                        out=self.screen_buffer[0])
 
-        transformed_image = cv2.resize(self.screen_buffer[0],
-                                       (self.screen_size, self.screen_size),
-                                       interpolation=cv2.INTER_AREA)
+        # transformed_image = cv2.resize(self.screen_buffer[0],
+        #                                (self.screen_size, self.screen_size),
+        #                                interpolation=cv2.INTER_AREA)
+        transformed_image = resize(self.screen_buffer[0],
+                                   (self.screen_size, self.screen_size),
+                                   preserve_range=True)
         int_image = np.asarray(transformed_image, dtype=np.uint8)
         return np.expand_dims(int_image, axis=2)
 
@@ -205,16 +208,30 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
         sticky_action_proba = sticky_action_proba  # TODO only for training?
         action_repeat = action_repeat  # TODO only for training, change generative modeling readme
 
-    env = gym.make(task,
-                   obs_type='rgb',                   # ram | rgb | grayscale
-                   frameskip=1,                      # frame skip
-                   # mode=0,                           # game mode, see Machado et al. 2018
-                   difficulty=0,                     # game difficulty, see Machado et al. 2018
-                   repeat_action_probability
-                   =sticky_action_proba,             # Sticky action probability
-                   full_action_space=recommended,    # Use all actions
-                   render_mode=None                  # None | human | rgb_array
-                   )
+    try:
+        env = gym.make(task,
+                       obs_type='rgb',                   # ram | rgb | grayscale
+                       frameskip=1,                      # frame skip
+                       # mode=0,                           # game mode, see Machado et al. 2018
+                       difficulty=0,                     # game difficulty, see Machado et al. 2018
+                       repeat_action_probability
+                       =sticky_action_proba,             # Sticky action probability
+                       full_action_space=recommended,    # Use all actions
+                       render_mode=None                  # None | human | rgb_array
+                       )
+    except gym.error.NameNotFound as e:
+        print(e)
+        print('The Atari ROMs appear to be not installed.\n'
+              'Try the following commands to install them, as in the README.\n'
+              'Accept the license:\n'
+              '$ pip install autorom\n'
+              '$ AutoROM --accept-license\n'
+              'Now, the ROMs:\n'
+              '$ mkdir ./Datasets/Suites/Atari_ROMS\n'
+              '$ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS\n'
+              '$ ale-import-roms ./Datasets/Suites/Atari_ROMS\n'
+              'You should be good to go!')
+        raise gym.error.NameNotFound
     # minimal_action_set = env.getMinimalActionSet()
     # full_action_set = env.getLegalActionSet()
     # env = gym.make(task, full_action_space=False)  # For minimal action spaces
