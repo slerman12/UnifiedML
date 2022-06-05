@@ -184,9 +184,11 @@ class AtariPreprocessing(dm_env.Environment):
             np.maximum(self.screen_buffer[0], self.screen_buffer[1],
                        out=self.screen_buffer[0])
 
+        # OpenCV can cause dependency conflicts
         # transformed_image = cv2.resize(self.screen_buffer[0],
         #                                (self.screen_size, self.screen_size),
         #                                interpolation=cv2.INTER_AREA)
+        # (Identical to torchvision's resize in case skimage causes conflict)
         transformed_image = resize(self.screen_buffer[0],
                                    (self.screen_size, self.screen_size),
                                    preserve_range=True)

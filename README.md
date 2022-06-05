@@ -479,6 +479,13 @@ Alternatively, you can call ```Plot.py``` directly
 ```console
 python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
+
+And/or use [WandB](https://wandb.ai/):
+
+```console
+python Run.py logger.wandb=true
+```
+
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
