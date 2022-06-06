@@ -16,7 +16,7 @@ torch.backends.cudnn.benchmark = True
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
-    # Set random seeds, device, path name
+    # Set random seeds, device, path names
     Utils.init(args)
 
     # Train, test environments

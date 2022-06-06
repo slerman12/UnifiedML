@@ -57,6 +57,10 @@ Agent: Agents.DQNAgent
 seed: 1
 experiment: Exp
 
+dataset:
+  _target_: ${Dataset}
+  root: null
+
 environment:
   _target_: Datasets.Environment.Environment
   _recursive_: false
@@ -65,9 +69,7 @@ environment:
   action_repeat: ${action_repeat}
   episode_max_frames: false
   episode_truncate_resume_frames: 1000
-  dataset:
-    _target_: ${Dataset}
-    root: null
+  dataset: ${dataset}
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import hydra
-
+from omegaconf import OmegaConf
 
 sys_args = [arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]]
 meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m']
@@ -23,8 +23,11 @@ def getattr_recursive(__o, name):
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
-    path = args.logger.path.replace('Agents.', '')
-    Path(path).mkdir(parents=True, exist_ok=True)
+    # Format path names
+    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
+    Path(args.logger.path).mkdir(parents=True, exist_ok=True)
 
     if 'task' in sys_args:
         args.task = args.task.lower()
