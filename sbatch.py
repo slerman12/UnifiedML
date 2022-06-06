@@ -27,7 +27,8 @@ def main(args):
     # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
     OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
-    Path(args.logger.path).mkdir(parents=True, exist_ok=True)
+    path = args.logger.path
+    Path(path).mkdir(parents=True, exist_ok=True)
 
     if 'task' in sys_args:
         args.task = args.task.lower()
