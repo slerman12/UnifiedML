@@ -97,8 +97,8 @@ class DQNAgent(torch.nn.Module):
                 else Pi.best
 
             if self.training:
-                self.step += len(obs)
-                # self.step += 1
+                # self.step += len(obs)
+                self.step += 1
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
@@ -138,9 +138,9 @@ class DQNAgent(torch.nn.Module):
                 'step': self.step, 'episode': self.episode} if self.log \
             else None
 
-        if replay.offline:
-            self.step += len(obs)
-            self.episode = replay.epoch
+        # if replay.offline:
+        #     self.step += len(obs)
+        #     self.episode = replay.epoch
 
         instruction = ~torch.isnan(label)
 

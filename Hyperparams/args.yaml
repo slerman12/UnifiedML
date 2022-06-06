@@ -32,7 +32,7 @@ transform: null
 # Training
 seed_steps: 2000
 learn_per_steps: 2
-learn_steps_after: 10000
+learn_steps_after: 20000
 # Evaluating
 evaluate_per_steps: 5000
 evaluate_episodes: 10

@@ -14,7 +14,7 @@ import numpy as np
 from Plot import plot
 
 
-sftp = False
+sftp = True
 plot_group = 'UML_Paper'
 # steps = None
 steps = 5e5
@@ -41,8 +41,6 @@ plots = [
      'Reference']
 ]
 
-experiments = set().union(*plots)
-
 bluehive_only = ["Half-Half-Contrastive", "Third-Label",
                  "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
                  'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
@@ -56,6 +54,12 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
          'pong', 'breakout', 'boxing',
          # 'krull', 'seaquest', 'qbert',
          'cifar10', 'tinyimagenet']
+
+plot_group = 'XRD'
+plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18']]
+tasks =[]
+
+experiments = set().union(*plots)
 
 
 # SFTP experiment results

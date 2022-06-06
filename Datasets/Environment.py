@@ -75,7 +75,13 @@ class Environment:
 
         self.episode_step += step
 
+        if self.disable:
+            agent.step += 1  # todo comment out
+
         if self.episode_done and not self.disable:
+            if agent.training:
+                agent.episode += 1  # todo comment out
+
             self.env.reset()
             self.last_episode_len = self.episode_step
 
