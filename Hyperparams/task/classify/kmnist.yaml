@@ -15,4 +15,5 @@ seed_steps: 50
 explore_steps: 0
 log_per_episodes: 10
 offline: true
+RL: false
 task_name: KMNIST

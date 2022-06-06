@@ -21,7 +21,7 @@ RL: true
 supervise: true
 generate: false
 # Environment
-Dataset: Datasets.ReplayBuffer.Classify._RRUFF.RRUFF
+Dataset: null
 # Replay
 obs_spec: ??? # To be specified later
 action_spec: ??? # To be specified later
@@ -67,7 +67,7 @@ environment:
   episode_truncate_resume_frames: 1000
   dataset:
     _target_: ${Dataset}
-    root: ../XRDs/xrd_data/05_29_data/
+    root: null
   seed: ${seed}
   suite: ${suite}
   offline: ${offline}
@@ -123,7 +123,7 @@ logger:
   path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/
   task: ${task_name}
   seed: ${seed}
-  wandb: False
+  wandb: false
 
 vlogger:
   _target_: Vlogger.Vlogger

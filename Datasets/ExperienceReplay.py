@@ -101,7 +101,7 @@ class ExperienceReplay:
 
         # Batch loading
 
-        self.epoch = self.step = 0
+        self.epoch = 1
 
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
@@ -119,7 +119,6 @@ class ExperienceReplay:
 
     # Allows iteration
     def __next__(self):
-        self.step += 1
         try:
             return next(self.replay)
         except StopIteration:

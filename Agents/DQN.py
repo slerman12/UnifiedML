@@ -39,7 +39,8 @@ class DQNAgent(torch.nn.Module):
         self.device = device
         self.log = log
         self.birthday = time.time()
-        self.episode = self.epoch = self.step = 0
+        self.step = self.frame = 0
+        self.episode = self.epoch = 1
         self.explore_steps = explore_steps
         self.ema = ema
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
@@ -97,7 +98,8 @@ class DQNAgent(torch.nn.Module):
                 else Pi.best
 
             if self.training:
-                self.step += len(obs)
+                self.step += 1
+                self.frame += len(obs)
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
@@ -138,7 +140,8 @@ class DQNAgent(torch.nn.Module):
             else None
 
         if replay.offline:
-            self.step += len(obs)
+            self.step += 1
+            self.frame += len(obs)
             self.epoch = replay.epoch
 
         instruction = ~torch.isnan(label)

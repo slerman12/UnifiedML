@@ -22,7 +22,6 @@ dependencies:
     - wandb==0.12.17
     - imageio==2.9.0
     - imageio-ffmpeg==0.4.4
-#    - opencv-python==4.5.3.56
     - opt_einsum_torch==0.1.0
     - einops==0.4.1
 # Only for me

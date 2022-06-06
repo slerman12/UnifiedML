@@ -89,7 +89,7 @@ class Environment:
 
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
-                'frame': agent.step * self.action_repeat,
+                'frame': agent.frame * max(1, self.action_repeat),
                 'epoch' if self.offline or self.generate else 'episode': agent.epoch or agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
