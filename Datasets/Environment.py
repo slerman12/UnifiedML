@@ -21,7 +21,7 @@ class Environment:
 
         self.env.reset()
 
-        self.episode_done = self.episode_step = self.last_episode_len = self.episode_reward = 0
+        self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
 
     @property
@@ -47,12 +47,7 @@ class Environment:
 
         self.episode_done = self.disable
 
-        # if self.episode_done:
-        #     agent.step += len(exp.observation)  # instead of 76-77
-        #       equivalent to len(batch_size) ... in both cases: problem: stays constant but not all batches=batch_size
-        #       even if envs load consistently, replay doesn't (unless I add remainder to length and mod/sample cycle)
-
-        step = 0  # TODO step here is right but refers to temproal step, not batch (maybe call len/beats/tick/heartbeat)
+        step = frame = 0
         while not self.episode_done and step < steps:
             # Act
             action = agent.act(exp.observation)
@@ -73,31 +68,33 @@ class Environment:
             self.episode_done = exp.last()
 
             step += 1
+            frame += len(action)
 
         self.episode_step += step
+        self.episode_frame += frame
 
         if self.episode_done:
             if agent.training:
                 agent.episode += 1
 
             self.env.reset()
-            self.last_episode_len = self.episode_step
+            self.last_episode_len = self.episode_frame
 
         # Log stats
         sundown = time.time()
-        frames = self.episode_step * self.action_repeat
+        frames = self.episode_frame * self.action_repeat
 
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
-                'frame': agent.frame * max(1, self.action_repeat),
-                'epoch' if self.offline or self.generate else 'episode': agent.epoch or agent.episode,
+                'frame': agent.frame * self.action_repeat,
+                'epoch' if self.offline or self.generate else 'episode': agent.epoch if self.offline else agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
-                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
+                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),  # Accuracy is %
                 'fps': frames / (sundown - self.daybreak)} if not self.disable \
             else None
 
         if self.episode_done:
-            self.episode_step = self.episode_reward = 0
+            self.episode_step = self.episode_frame = self.episode_reward = 0
             self.daybreak = sundown
 
         return experiences, logs, video_image

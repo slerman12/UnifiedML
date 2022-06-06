@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task@_global_: classify/custom
+  - task@_global_: classify/mnist
   - override hydra/job_logging: none
 
 # Agent

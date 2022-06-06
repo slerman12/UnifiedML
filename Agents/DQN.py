@@ -164,7 +164,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, epoch=self.epoch or self.episode, retain_graph=True)
+                               self.actor, epoch=self.epoch if replay.offline else self.episode, retain_graph=True)
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -201,12 +201,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic, epoch=self.epoch or self.episode)
+                           self.critic, epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder, epoch=self.epoch or self.episode)
+                           self.encoder, epoch=self.epoch if replay.offline else self.episode)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
@@ -217,6 +217,6 @@ class DQNAgent(torch.nn.Module):
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.actor, epoch=self.epoch or self.episode)
+                           self.actor, epoch=self.epoch if replay.offline else self.episode)
 
         return logs
