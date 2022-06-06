@@ -60,7 +60,7 @@ experiment: Exp
 dataset:
   _target_: ${Dataset}
   root: null
-  name: ''
+  name: Dataset
 
 environment:
   _target_: Datasets.Environment.Environment
