@@ -16,4 +16,4 @@ explore_steps: 0
 log_per_episodes: 10
 offline: true
 RL: false
-task_name: Custom.${format:${Dataset}}
+task_name: Custom.${format:${Dataset}}.${dataset.name}

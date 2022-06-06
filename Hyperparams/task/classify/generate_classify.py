@@ -31,7 +31,7 @@ explore_steps: 0
 log_per_episodes: 10
 offline: true
 RL: false
-task_name: {}""".format(task if task != 'Custom' else f'Custom.{"${format:${Dataset}}.${dataset.name}"}'))
+task_name: {}""".format(task if task != 'Custom' else 'Custom.${format:${Dataset}}.${dataset.name}'))
         f.close()
         out += ' "' + task.lower() + '"'
     print(out)
