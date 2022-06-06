@@ -22,16 +22,18 @@ class ViT(nn.Module):
 
         self.input_shape = input_shape
         in_channels = input_shape[0]
-        self.out_channels = out_channels
+        self.out_channels = out_channels  # TODO "dim"
         image_size = input_shape[1]
         self.patch_size = patch_size
         self.output_dim = output_dim
 
         assert input_shape[1] == input_shape[2], f'Compatible with square images only, got shape {input_shape}'
-        assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
+        assert image_size % patch_size == 0, f'Image dimensions ({image_size}) must be divisible ' \
+                                             f'by the patch size ({patch_size}).'
         num_patches = (image_size // patch_size) ** 2
         patch_dim = in_channels * patch_size ** 2
-        assert pool_type in {'cls', 'mean'}, 'Pool type must be either cls (cls token) or mean (mean pooling)'
+        assert pool_type in {'cls', 'mean'}, f'Pool type must be either "cls" (cls token) or "mean" (mean pooling), ' \
+                                             f'got {pool_type}'
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
