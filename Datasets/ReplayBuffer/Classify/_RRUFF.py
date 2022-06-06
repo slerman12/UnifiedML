@@ -9,8 +9,8 @@ import numpy as np
 
 
 class RRUFF(Dataset):
-    def __init__(self, root='../XRDs/xrd_data/05_29_data/', num_classes=7, train=True, **kwargs):
-        root += 'icsd171k_ps1_noise20' if train else 'XY_DIF_noiseAll'
+    def __init__(self, root='../XRDs/xrd_data/05_29_data/', transform=None, num_classes=7, train=True, **kwargs):
+        root += 'icsd171k_ps1' if train else 'XY_DIF_noiseAll'
 
         self.feature_path = root + "/features.csv"
         self.label_path = root + f"/labels{num_classes}.csv"
@@ -27,6 +27,7 @@ class RRUFF(Dataset):
 
         self.spectrogram = Spectrogram()
         self.image = ToPILImage()
+        self.transform = transform
 
     def __len__(self):
         return self.size
@@ -37,5 +38,6 @@ class RRUFF(Dataset):
 
         x = self.spectrogram(x)
         x = self.image(x)
+        x = self.transform(x)
 
         return x, y

@@ -229,7 +229,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
 
 class Transform:
     def __call__(self, sample):
-        return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]
+        return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]  TODO redundant if normalizing?
 
 
 def worker_init_fn(worker_id):

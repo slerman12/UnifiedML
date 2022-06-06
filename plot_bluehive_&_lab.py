@@ -56,7 +56,7 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
          'cifar10', 'tinyimagenet']
 
 plot_group = 'XRD'
-plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18']]
+plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18', 'PS1_to_RRUFF_ViT']]
 tasks =[]
 
 experiments = set().union(*plots)
