@@ -27,7 +27,7 @@ class ViT(nn.Module):
         self.patch_size = patch_size
         self.output_dim = output_dim
 
-        assert input_shape[1] == input_shape[2], 'Compatible with square images only'
+        assert input_shape[1] == input_shape[2], f'Compatible with square images only, got shape {input_shape}'
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
         num_patches = (image_size // patch_size) ** 2
         patch_dim = in_channels * patch_size ** 2
