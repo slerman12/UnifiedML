@@ -39,7 +39,7 @@ class DQNAgent(torch.nn.Module):
         self.device = device
         self.log = log
         self.birthday = time.time()
-        self.step = self.episode = 0
+        self.episode = self.epoch = self.step = 0
         self.explore_steps = explore_steps
         self.ema = ema
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
@@ -97,8 +97,7 @@ class DQNAgent(torch.nn.Module):
                 else Pi.best
 
             if self.training:
-                # self.step += len(obs)
-                self.step += 1
+                self.step += len(obs)
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
@@ -138,9 +137,9 @@ class DQNAgent(torch.nn.Module):
                 'step': self.step, 'episode': self.episode} if self.log \
             else None
 
-        # if replay.offline:
-        #     self.step += len(obs)
-        #     self.episode = replay.epoch
+        if replay.offline:
+            self.step += len(obs)
+            self.epoch = replay.epoch
 
         instruction = ~torch.isnan(label)
 
@@ -162,7 +161,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, epoch=self.episode, retain_graph=True)
+                               self.actor, epoch=self.epoch or self.episode, retain_graph=True)
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -199,12 +198,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic, epoch=self.episode)
+                           self.critic, epoch=self.epoch or self.episode)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder, epoch=self.episode)
+                           self.encoder, epoch=self.epoch or self.episode)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
@@ -215,6 +214,6 @@ class DQNAgent(torch.nn.Module):
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.actor, epoch=self.episode)
+                           self.actor, epoch=self.epoch or self.episode)
 
         return logs

@@ -12,6 +12,7 @@ class Environment:
     def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
                  dataset, seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
         self.suite = suite
+        self.offline = offline
         self.disable = (offline or generate) and train
         self.generate = generate
 
@@ -51,7 +52,7 @@ class Environment:
         #       equivalent to len(batch_size) ... in both cases: problem: stays constant but not all batches=batch_size
         #       even if envs load consistently, replay doesn't (unless I add remainder to length and mod/sample cycle)
 
-        step = 0  # TODO step here is right, but refers to temproal step, not batch (maybe call len)
+        step = 0  # TODO step here is right but refers to temproal step, not batch (maybe call len/beats/tick/heartbeat)
         while not self.episode_done and step < steps:
             # Act
             action = agent.act(exp.observation)
@@ -75,12 +76,9 @@ class Environment:
 
         self.episode_step += step
 
-        if self.disable:
-            agent.step += 1  # todo comment out
-
-        if self.episode_done and not self.disable:
+        if self.episode_done:
             if agent.training:
-                agent.episode += 1  # todo comment out
+                agent.episode += 1
 
             self.env.reset()
             self.last_episode_len = self.episode_step
@@ -91,8 +89,8 @@ class Environment:
 
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
-                'frame': agent.step * self.action_repeat,  # TODO multiply by batch size... but not all batches equal
-                'episode': agent.episode,
+                'frame': agent.step * self.action_repeat,
+                'epoch' if self.offline or self.generate else 'episode': agent.epoch or agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
                 'fps': frames / (sundown - self.daybreak)} if not self.disable \

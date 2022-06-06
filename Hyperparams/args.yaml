@@ -40,7 +40,7 @@ ema: false
 # Saving
 save: true
 save_per_steps: 0
-save_path: ./Checkpoints/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Agent.pt
+save_path: ./Checkpoints/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Agent.pt
 load: false
 load_per_steps: 0
 # Logging
@@ -116,18 +116,18 @@ replay:
   generate: ${generate}
   save: false
   load: false
-  path: ./Datasets/ReplayBuffer/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Memories
+  path: ./Datasets/ReplayBuffer/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
 
 logger:
   _target_: Logger.Logger
-  path: ./Benchmarking/${experiment}/${Agent}/${environment.suite}/
+  path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/
   task: ${task_name}
   seed: ${seed}
   wandb: False
 
 vlogger:
   _target_: Vlogger.Vlogger
-  path: ./Benchmarking/${experiment}/${Agent}/${environment.suite}/${task_name}_${seed}_Video_Image
+  path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Video_Image
   fps: 20
   reel: ${generate}
 

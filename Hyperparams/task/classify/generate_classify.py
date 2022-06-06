@@ -30,7 +30,7 @@ seed_steps: 50
 explore_steps: 0
 log_per_episodes: 10
 offline: true
-task_name: {}""".format(task if task != 'Custom' else task + f'{".${Dataset}"}'))
+task_name: {}""".format(task if task != 'Custom' else f'{"${format:${Dataset}}"}'))
         f.close()
         out += ' "' + task.lower() + '"'
     print(out)

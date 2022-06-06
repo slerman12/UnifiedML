@@ -16,12 +16,8 @@ torch.backends.cudnn.benchmark = True
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
-    # Set seeds
-    Utils.set_seeds(args.seed)
-
-    # args.device = args.device or ('cuda' if torch.cuda.is_available()
-    #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    args.device = args.device or ('cuda' if torch.cuda.is_available() else 'cpu')
+    # Set random seeds, device, path name
+    Utils.init(args)
 
     # Train, test environments
     env = instantiate(args.environment)
@@ -74,7 +70,7 @@ def main(args):
         replay.add(experiences)
 
         if env.episode_done:
-            if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:  # TODO log_per_steps since epochs
+            if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:

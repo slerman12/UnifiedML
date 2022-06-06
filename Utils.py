@@ -9,6 +9,7 @@ import warnings
 from pathlib import Path
 
 from hydra.utils import instantiate
+from omegaconf import OmegaConf
 
 import numpy as np
 
@@ -24,6 +25,21 @@ def set_seeds(seed):
         torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
+
+
+# Initializes run state
+def init(args):
+    # Set seeds
+    set_seeds(args.seed)
+
+    # Set device
+    # args.device = args.device or ('cuda' if torch.cuda.is_available()
+    #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    args.device = args.device or ('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Format path names
+    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 # Saves model + args + attributes
@@ -68,7 +84,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     return model
 
 
-# Initializes model weights according to orthogonality
+# Initializes model weights a la orthogonality
 def weight_init(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
@@ -81,7 +97,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Copies parameters from one model to another, with optional EMA weighing
+# Copies parameters from one model to another, with optionally EMA weighing
 def param_copy(model, target, ema_decay=0):
     with torch.no_grad():
         for target_param, model_param in zip(target.state_dict().values(), model.state_dict().values()):
@@ -160,8 +176,8 @@ class Rand(nn.Module):
 
 # (Multi-dim) one-hot encoding
 def one_hot(x, num_classes, null_value=0):
-    # assert x.shape[-1] == 1
-    x = x.squeeze(-1).unsqueeze(-1)  # Or this
+    # assert x.shape[-1] == 1  # Can check this
+    x = x.squeeze(-1).unsqueeze(-1)  # Or do this
     x = x.long()
     shape = x.shape[:-1]
     nulls = torch.full([*shape, num_classes], null_value, dtype=x.dtype, device=x.device)
@@ -218,7 +234,7 @@ class ChannelSwap(nn.Module):
         return x.transpose(-1, -3)
 
 
-ChSwap = ChannelSwap()
+ChSwap = ChannelSwap()  # Convenient helper
 
 
 # Context manager that temporarily switches on eval() mode for specified models; then resets them
@@ -243,7 +259,7 @@ class act_mode:
         return False
 
 
-# Converts data to Torch Tensors and moves them to the specified device as floats
+# Converts data to torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
@@ -277,7 +293,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 model.optim.zero_grad(set_to_none=True)
 
 
-# Increment/decrement a value in proportion to a step count based on a string-formatted schedule
+# Increment/decrement a value in proportion to a step count and a string-formatted schedule
 def schedule(schedule, step):
     try:
         return float(schedule)
