@@ -287,11 +287,18 @@ class Experiences:
             if not self.offline:
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
+
+        episode['id'] = len(self.index) + self.deleted_indices  # IDs remain unique even as experiences deleted
+
         self.episode_names.append(episode_name)
         self.episode_names.sort()
         self.episodes[episode_name] = episode
         self.num_experiences_loaded += episode_len
         self.index += list(enumerate([episode_name] * episode_len))
+
+        assert self.num_experiences_loaded == len(self.index)  # TODO delete, just checking
+        if self.num_experiences_loaded != len(self.index):
+            print('wahhhhhhhhhwbbbabababa')
 
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
@@ -354,22 +361,17 @@ class Experiences:
                 update_name.unlink(missing_ok=True)  # Delete update spec when stored
             except:
                 continue
-        # todo make sure experiences returns an exp_id
 
-    def sample(self):
-        idx = random.randint(0, len(self.index))  # Uniform sampling of experiences
-        return idx
+    def sample(self, episode_names, metrics=None):
+        episode_name = random.choice(episode_names)  # Uniform sampling of experiences
+        return episode_name
 
     # N-step cumulative discounted rewards
-    def process(self, idx):
-        exp_id = idx + self.deleted_indices
-
-        idx, episode_name = self.index[idx]
-        episode = self.episodes[episode_name]
-
+    def process(self, episode, idx=None):
         episode_len = len(episode['observation'])
         limit = episode_len - (self.nstep or 1)
-        idx = idx % limit
+        # TODO think, i guess last step is ignored?
+        idx = np.random.randint(limit) if idx is None else idx % limit
 
         # Transition
         obs = episode['observation'][idx]
@@ -379,6 +381,7 @@ class Experiences:
         discount = np.ones_like(episode['discount'][idx + 1])
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
+        exp_id = episode['id'] + idx
 
         # Trajectory
         if self.nstep > 0:
@@ -415,11 +418,15 @@ class Experiences:
 
         self.samples_since_last_fetch += 1
 
+        # Sample or index an episode
         if idx is None:
-            # Sample an experience
-            idx = self.sample()
+            episode_name = self.sample(self.episode_names)
+        else:
+            idx, episode_name = self.index[idx]
 
-        return self.process(idx)  # Process episode into a compact experience
+        episode = self.episodes[episode_name]
+
+        return self.process(episode, idx)  # Process episode into a compact experience
 
 
 # Loads Experiences with an Iterable Dataset
