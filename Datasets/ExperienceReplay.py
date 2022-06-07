@@ -28,7 +28,6 @@ class ExperienceReplay:
                  obs_spec=None, nstep=0, discount=1, transform=None):
         # Path and loading
 
-        path = path.replace("Agents.", "")
         exists = glob.glob(path + '*/')
 
         offline = offline or generate
@@ -50,6 +49,14 @@ class ExperienceReplay:
         else:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)
+
+        # Directory for sending updates to replay workers
+        (self.path / 'Updates').mkdir(exist_ok=True, parents=True)
+
+        # Delete any pre-existing ones
+        update_names = (self.path / 'Updates').glob('*.npz')
+        for update_name in update_names:
+            update_name.unlink(missing_ok=True)  # Deletes file
 
         if not save:
             # Delete replay on terminate
@@ -198,6 +205,24 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored += 1
 
+    # Updates experiences (in workers) by storing dicts of update values and IDs to file system
+    def update_experiences(self, updates, exp_ids):
+        assert isinstance(updates, dict), f'replay can only update based on a dict ' \
+                                          f'of spec names and values, got {type(updates)}'
+
+        # Store into replay buffer for workers
+        for update, exp_id in zip(updates, exp_ids):
+            timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+            update_name = f'{exp_id}_{timestamp}.npz'
+
+            # Save update
+            save_path = self.path / 'Updates' / update_name
+            with io.BytesIO() as buffer:
+                np.savez_compressed(buffer, update)
+                buffer.seek(0)
+                with save_path.open('wb') as f:
+                    f.write(buffer.read())
+
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
             else len(list(self.path.glob('*.npz')))
@@ -210,7 +235,7 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# A CPU worker that can iteratively and efficiently build batches of experience in parallel (from files)
+# A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
     def __init__(self, path, capacity, num_workers, fetch_per, save, offline=True, nstep=0, discount=1, transform=None):
 
@@ -223,7 +248,8 @@ class Experiences:
 
         self.num_experiences_loaded = 0
         self.capacity = capacity
-        self.index = []
+        self.index = []  # Maps stored experiences to episodes' names
+        self.deleted_indices = 0
 
         self.num_workers = num_workers
 
@@ -255,18 +281,17 @@ class Experiences:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
             early_episode_len = next(iter(early_episode.values())).shape[0] - 1
+            self.index = self.index[early_episode_len:]
+            self.deleted_indices += early_episode_len  # To derive a consistent experience index even as data deleted
             self.num_experiences_loaded -= early_episode_len
-            if self.offline:
-                self.index = self.index[early_episode_len:]
-            else:
+            if not self.offline:
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
         self.episode_names.append(episode_name)
         self.episode_names.sort()
         self.episodes[episode_name] = episode
         self.num_experiences_loaded += episode_len
-        if self.offline:
-            self.index += list(enumerate([episode_name] * episode_len))
+        self.index += list(enumerate([episode_name] * episode_len))
 
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
@@ -300,15 +325,51 @@ class Experiences:
             if not self.load_episode(episode_name):
                 break  # Resolve conflicts
 
-    def sample(self, episode_names, metrics=None):
-        episode_name = random.choice(episode_names)  # Uniform sampling of experiences
-        return episode_name
+    # Workers update their own data based on file-stored update specs
+    def worker_fetch_updates(self):
+        try:
+            worker = torch.utils.data.get_worker_info().id
+        except:
+            worker = 0
+
+        update_names = (self.path / 'Updates').glob('*.npz')  # Updates
+
+        # Fetch updates
+        for update_name in update_names:
+            exp_id = int(update_name.stem.split('_')[0])
+
+            # Get corresponding experience and episode
+            idx, episode_name = self.index[exp_id - self.deleted_indices]
+            episode_idx = int(episode_name.stem.split('_')[1])
+
+            if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
+                continue
+            try:
+                with update_name.open('rb') as update_file:
+                    update = np.load(update_file)
+                    # Iterate through each update spec
+                    for key in update.keys():
+                        # Update experience in replay
+                        self.episodes[episode_name][key][idx] = update[key]
+                update_name.unlink(missing_ok=True)  # Delete update spec when stored
+            except:
+                continue
+        # todo make sure experiences returns an exp_id
+
+    def sample(self):
+        idx = random.randint(0, len(self.index))  # Uniform sampling of experiences
+        return idx
 
     # N-step cumulative discounted rewards
-    def process(self, episode, idx=None):
+    def process(self, idx):
+        exp_id = idx + self.deleted_indices
+
+        idx, episode_name = self.index[idx]
+        episode = self.episodes[episode_name]
+
         episode_len = len(episode['observation'])
         limit = episode_len - (self.nstep or 1)
-        idx = np.random.randint(limit) if idx is None else idx % limit
+        idx = idx % limit
 
         # Transition
         obs = episode['observation'][idx]
@@ -341,26 +402,24 @@ class Experiences:
         if self.transform is not None:
             obs = self.transform(torch.as_tensor(obs).div(255)) * 255
 
-        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step
+        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, exp_id
 
     def fetch_sample_process(self, idx=None):
         try:
+            # Populate workers with up-to-date data
             if not self.offline:
-                self.worker_fetch_episodes()  # Populate workers with up-to-date data
+                self.worker_fetch_episodes()
+            self.worker_fetch_updates()
         except:
             traceback.print_exc()
 
         self.samples_since_last_fetch += 1
 
-        # Sample or index an episode
         if idx is None:
-            episode_name = self.sample(self.episode_names)
-        else:
-            idx, episode_name = self.index[idx]
+            # Sample an experience
+            idx = self.sample()
 
-        episode = self.episodes[episode_name]
-
-        return self.process(episode, idx)  # Process episode into a compact experience
+        return self.process(idx)  # Process episode into a compact experience
 
 
 # Loads Experiences with an Iterable Dataset
