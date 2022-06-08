@@ -16,6 +16,7 @@ torch.backends.cudnn.benchmark = True
 
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
+
     # Set random seeds, device, path names
     Utils.init(args)
 
@@ -35,7 +36,7 @@ def main(args):
 
     # Experience replay
     replay = instantiate(args.replay,
-                         metadata_shape=getattr(agent, 'metadata_shape', None))  # Optional agent-dependant metadata
+                         meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-dependant metadata
 
     # Loggers
     logger = instantiate(args.logger)

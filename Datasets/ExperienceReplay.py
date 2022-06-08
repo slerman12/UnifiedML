@@ -25,7 +25,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
-                 obs_spec=None, nstep=0, discount=1, metadata_shape=None, transform=None):
+                 obs_spec=None, nstep=0, discount=1, meta_shape=None, transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -64,13 +64,16 @@ class ExperienceReplay:
 
         # Data specs
 
-        if obs_spec is None:
-            obs_spec = {'name': 'obs', 'shape': (1,)}
-
         # todo obs_shape, action_shape, meta_shape, no specs
+        # self.specs = {'obs': obs_shape <or (1,)?>, 'action': action_shape, 'meta': meta_shape}
+        # self.specs.update({name: (0,) for name in ['reward', 'discount', 'label', 'step']})
+
+        if obs_spec is None:
+            obs_spec = {'name': 'obs', 'shape': (1,)}  # todo when is obs-spec none?
+
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
                                                for name in ['reward', 'discount', 'label', 'step']],
-                      {'name': 'meta', 'shape': metadata_shape or (0,)},)
+                      {'name': 'meta', 'shape': meta_shape})
 
         # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
 
@@ -161,9 +164,14 @@ class ExperienceReplay:
 
                 # Add batch dimension
                 if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None:
-                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']])
+                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']], 'float32')
                 if len(exp[spec['name']].shape) == len(spec['shape']):
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
+
+                # Expands attributes that are unique per batch (such as 'step')
+                batch_size = getattr(exp, 'obs', getattr(exp, 'action')).shape[0]
+                if 1 == exp[spec['name']].shape[0] < batch_size:
+                    exp[spec['name']] = np.repeat(exp[spec['name']], batch_size, axis=0)
 
                 # Validate consistency
                 assert spec['shape'] == exp[spec['name']].shape[1:], \
@@ -187,11 +195,6 @@ class ExperienceReplay:
             self.episode[spec['name']] = np.concatenate(self.episode[spec['name']], axis=0)
 
         self.episode_len = self.episode['observation'].shape[0]
-
-        # Expands attributes that are unique per batch (such as 'step')
-        for spec in self.specs:
-            if self.episode[spec['name']].shape[0] == 1:
-                self.episode[spec['name']] = np.repeat(self.episode[spec['name']], self.episode_len, axis=0)
 
         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
         num_episodes = len(self)
