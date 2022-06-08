@@ -135,7 +135,7 @@ class ClassifyEnv:
 
         return self.time_step
 
-    # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' paired with (<->) 'next obs'
+    # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' index-paired with (<->) 'next obs'
     def step(self, action=None):
         if action is not None:
             assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'

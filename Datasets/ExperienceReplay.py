@@ -95,11 +95,11 @@ class ExperienceReplay:
 
         self.nstep = nstep
 
-        num_workers = max(1, min(num_workers, os.cpu_count()))
+        self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
         self.experiences = (Offline if offline else Online)(path=self.path,
-                                                            capacity=np.inf if save else capacity // num_workers,
-                                                            num_workers=num_workers,
+                                                            capacity=np.inf if save else capacity // self.num_workers,
+                                                            num_workers=self.num_workers,
                                                             fetch_per=1000,
                                                             save=save,
                                                             nstep=nstep,
@@ -113,7 +113,7 @@ class ExperienceReplay:
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
                                                    shuffle=offline,
-                                                   num_workers=num_workers,
+                                                   num_workers=self.num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn)
         # Replay
@@ -206,22 +206,23 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     # Updates experiences (in workers) by storing dicts of update values and IDs to file system
-    def update_experiences(self, updates, exp_ids):
-        assert isinstance(updates, dict), f'replay can only update based on a dict ' \
-                                          f'of spec names and values, got {type(updates)}'
+    def update_experiences(self, updates, ids):
+        assert isinstance(updates, dict), f'replay reads updates from dicts ' \
+                                          f'of spec-name: value, got {type(updates)}'
 
         # Store into replay buffer for workers
-        for update, exp_id in zip(updates, exp_ids):
-            timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            update_name = f'{exp_id}_{timestamp}.npz'
+        for update, (exp_id, worker) in zip(updates, *ids):
+            for worker_id in (range(self.num_workers) if self.offline else [worker]):
+                timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+                update_name = f'{exp_id}_{worker_id}_{timestamp}.npz'
+                save_path = self.path / 'Updates' / update_name
 
-            # Save update
-            save_path = self.path / 'Updates' / update_name
-            with io.BytesIO() as buffer:
-                np.savez_compressed(buffer, update)
-                buffer.seek(0)
-                with save_path.open('wb') as f:
-                    f.write(buffer.read())
+                # Save update
+                with io.BytesIO() as buffer:
+                    np.savez_compressed(buffer, update)
+                    buffer.seek(0)
+                    with save_path.open('wb') as f:
+                        f.write(buffer.read())
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -267,6 +268,13 @@ class Experiences:
 
         self.transform = transform
 
+    @property
+    def worker_id(self):
+        try:
+            return torch.utils.data.get_worker_info().id
+        except:
+            return 0
+
     def load_episode(self, episode_name):
         try:
             with episode_name.open('rb') as episode_file:
@@ -275,7 +283,7 @@ class Experiences:
         except:
             return False
 
-        episode_len = next(iter(episode.values())).shape[0] - 1
+        episode_len = next(iter(episode.values())).shape[0] - 1  # todo should it be minus nstep for unique epochs?
 
         while episode_len + self.num_experiences_loaded > self.capacity:
             early_episode_name = self.episode_names.pop(0)
@@ -296,9 +304,9 @@ class Experiences:
         self.num_experiences_loaded += episode_len
         self.index += list(enumerate([episode_name] * episode_len))
 
-        assert self.num_experiences_loaded == len(self.index)  # TODO delete, just checking
         if self.num_experiences_loaded != len(self.index):
             print('wahhhhhhhhhwbbbabababa')
+        assert self.num_experiences_loaded == len(self.index)  # TODO delete, just checking
 
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
@@ -312,17 +320,12 @@ class Experiences:
 
         self.samples_since_last_fetch = 0
 
-        try:
-            worker = torch.utils.data.get_worker_info().id
-        except:
-            worker = 0
-
         episode_names = sorted(self.path.glob('*.npz'), reverse=True)  # Episodes
         num_fetched = 0
         # Find new episodes
         for episode_name in episode_names:
             episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
-            if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
+            if episode_idx % self.num_workers != self.worker:  # Each worker stores their own dedicated data
                 continue
             if episode_name in self.episodes.keys():  # Don't store redundantly
                 break
@@ -334,23 +337,18 @@ class Experiences:
 
     # Workers update their own data based on file-stored update specs
     def worker_fetch_updates(self):
-        try:
-            worker = torch.utils.data.get_worker_info().id
-        except:
-            worker = 0
+        update_names = (self.path / 'Updates').glob('*.npz')
 
-        update_names = (self.path / 'Updates').glob('*.npz')  # Updates
-
-        # Fetch updates
+        # Fetch updates  TODO check for MetaShape_[]
         for update_name in update_names:
-            exp_id = int(update_name.stem.split('_')[0])
+            exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:1]]
+
+            if worker_id != self.worker_id:  # Each worker updates own dedicated data
+                continue
 
             # Get corresponding experience and episode
             idx, episode_name = self.index[exp_id - self.deleted_indices]
-            episode_idx = int(episode_name.stem.split('_')[1])
 
-            if episode_idx % self.num_workers != worker:  # Each worker stores their own dedicated data
-                continue
             try:
                 with update_name.open('rb') as update_file:
                     update = np.load(update_file)
@@ -370,7 +368,11 @@ class Experiences:
     def process(self, episode, idx=None):
         episode_len = len(episode['observation'])
         limit = episode_len - (self.nstep or 1)
-        # TODO think, i guess last step is ignored?
+        # TODO think, i guess last nstep is ignored? then maybe offline idx and index should reflect that.
+        #  we're getting redundant epochs, unles the minus-1 in episode-len accounts for that... minus-nstep ?
+        #     might not need this paragraph at all
+        assert idx % limit == idx, 'checking in offline or nstep == 1 setting. then test in nstep. ' \
+                                   'then test in episode_len-=nstep'
         idx = np.random.randint(limit) if idx is None else idx % limit
 
         # Transition
@@ -381,7 +383,7 @@ class Experiences:
         discount = np.ones_like(episode['discount'][idx + 1])
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
-        exp_id = episode['id'] + idx
+        exp_id, worker_id = episode['id'] + idx, self.worker_id
 
         # Trajectory
         if self.nstep > 0:
@@ -405,7 +407,7 @@ class Experiences:
         if self.transform is not None:
             obs = self.transform(torch.as_tensor(obs).div(255)) * 255
 
-        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, exp_id
+        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, exp_id, worker_id
 
     def fetch_sample_process(self, idx=None):
         try:
