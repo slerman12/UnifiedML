@@ -210,7 +210,7 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     # Updates experiences (in workers) by storing dicts of update values for corresponding experience IDs to file system
-    def rewrite(self, updates, ids):
+    def rewrite(self, updates, ids):  # todo should updates be stored in a buffer until sufficiently big per worker?
         assert isinstance(updates[0], dict), f'expected \'updates\' as list of dicts, got {type(updates)}'
 
         # Store into replay buffer
@@ -223,7 +223,7 @@ class ExperienceReplay:
                 update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
                 path = self.path / 'Updates'
 
-                # Send update to workers
+                # Send update to workers todo group by worker
                 with io.BytesIO() as buffer:
                     np.savez_compressed(buffer, update)
                     buffer.seek(0)
