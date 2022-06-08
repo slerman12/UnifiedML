@@ -25,7 +25,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load, path,
-                 obs_spec=None, nstep=0, discount=1, transform=None):
+                 obs_spec=None, nstep=0, discount=1, metadata_shape=None, transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -65,15 +65,14 @@ class ExperienceReplay:
         # Data specs
 
         if obs_spec is None:
-            obs_spec = {'name': 'obs', 'shape': (1,), 'dtype': 'float32'},
+            obs_spec = {'name': 'obs', 'shape': (1,)}
 
-        self.specs = (obs_spec, action_spec,
-                      {'name': 'reward', 'shape': (1,), 'dtype': 'float32'},
-                      {'name': 'discount', 'shape': (1,), 'dtype': 'float32'},
-                      {'name': 'label', 'shape': (1,), 'dtype': 'float32'},
-                      {'name': 'step', 'shape': (1,), 'dtype': 'float32'},)
+        # todo obs_shape, action_shape, meta_shape, no specs
+        self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
+                                               for name in ['reward', 'discount', 'label', 'step']],
+                      {'name': 'meta', 'shape': metadata_shape or (0,)},)
 
-        # Episode traces
+        # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
 
         self.episode = {spec['name']: [] for spec in self.specs}
         self.episode_len = 0
@@ -99,7 +98,7 @@ class ExperienceReplay:
 
         self.experiences = (Offline if offline else Online)(path=self.path,
                                                             capacity=np.inf if save else capacity // self.num_workers,
-                                                            num_workers=self.num_workers,
+                                                            num_workers=self.num_workers,  # don't need todo
                                                             fetch_per=1000,
                                                             save=save,
                                                             nstep=nstep,
@@ -115,7 +114,9 @@ class ExperienceReplay:
                                                    shuffle=offline,
                                                    num_workers=self.num_workers,
                                                    pin_memory=True,
-                                                   worker_init_fn=worker_init_fn)
+                                                   worker_init_fn=worker_init_fn,
+                                                   persistent_workers=True  #Testing todo
+                                                   )
         # Replay
 
         self._replay = None
@@ -144,29 +145,31 @@ class ExperienceReplay:
             self._replay = iter(self.batches)
         return self._replay
 
-    # Tracks single episode in memory buffer
+    # Tracks single episode "trace" in memory buffer
     def add(self, experiences=None, store=False):
         if experiences is None:
             experiences = []
 
-        # An "episode" of experiences
+        # An "episode" or part of episode of experiences
         assert isinstance(experiences, (list, tuple))
 
         for exp in experiences:
             for spec in self.specs:
-                # Make sure everything is a numpy batch
+                # Missing data
+                if not hasattr(exp, spec['name']):
+                    setattr(exp, spec['name'], None)
+
+                # Add batch dimension
                 if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None:
-                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']], spec['dtype'])
+                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']])
                 if len(exp[spec['name']].shape) == len(spec['shape']):
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
 
                 # Validate consistency
-                # assert spec['shape'] == exp[spec['name']].shape[1:], \
-                #     f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
-                # assert spec['dtype'] == exp[spec['name']].dtype.name, \
-                #     f'Unexpected {spec["name"]} dtype: {spec["dtype"]} vs. {exp[spec["name"]].dtype.name}'
+                assert spec['shape'] == exp[spec['name']].shape[1:], \
+                    f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
 
-                # Adds the experiences
+                # Add the experience
                 self.episode[spec['name']].append(exp[spec['name']])
 
         self.episode_len += len(experiences)
@@ -185,9 +188,10 @@ class ExperienceReplay:
 
         self.episode_len = self.episode['observation'].shape[0]
 
-        # Expands 'step' since it has no batch length in classification
-        if self.episode['step'].shape[0] == 1:
-            self.episode['step'] = np.repeat(self.episode['step'], self.episode_len, axis=0)
+        # Expands attributes that are unique per batch (such as 'step')
+        for spec in self.specs:
+            if self.episode[spec['name']].shape[0] == 1:
+                self.episode[spec['name']] = np.repeat(self.episode[spec['name']], self.episode_len, axis=0)
 
         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
         num_episodes = len(self)
@@ -205,24 +209,29 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored += 1
 
-    # Updates experiences (in workers) by storing dicts of update values and IDs to file system
-    def update_experiences(self, updates, ids):
-        assert isinstance(updates, dict), f'replay reads updates from dicts ' \
-                                          f'of spec-name: value, got {type(updates)}'
+    # Updates experiences (in workers) by storing dicts of update values for corresponding experience IDs to file system
+    def rewrite(self, updates, ids):
+        assert isinstance(updates[0], dict), f'expected \'updates\' as list of dicts, got {type(updates)}'
 
-        # Store into replay buffer for workers
-        for update, (exp_id, worker) in zip(updates, *ids):
-            for worker_id in (range(self.num_workers) if self.offline else [worker]):
+        # Store into replay buffer
+        for update, exp_id, worker_id in zip(updates, *ids.T):
+
+            # In the offline setting, each worker has a copy of all the data
+            for worker in range(self.num_workers):
+
                 timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-                update_name = f'{exp_id}_{worker_id}_{timestamp}.npz'
-                save_path = self.path / 'Updates' / update_name
+                update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
+                path = self.path / 'Updates'
 
-                # Save update
+                # Send update to workers
                 with io.BytesIO() as buffer:
                     np.savez_compressed(buffer, update)
                     buffer.seek(0)
-                    with save_path.open('wb') as f:
+                    with (path / update_name).open('wb') as f:
                         f.write(buffer.read())
+
+                if not self.offline:
+                    break
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -270,10 +279,12 @@ class Experiences:
 
     @property
     def worker_id(self):
+        # todo do i need the try clause?
         try:
             return torch.utils.data.get_worker_info().id
         except:
             return 0
+        # todo can get num_workers same way
 
     def load_episode(self, episode_name):
         try:
@@ -313,7 +324,7 @@ class Experiences:
 
         return True
 
-    # Populates workers with up-to-date data
+    # Populates workers with new data
     def worker_fetch_episodes(self):
         if self.samples_since_last_fetch < self.fetch_per:
             return
@@ -325,7 +336,7 @@ class Experiences:
         # Find new episodes
         for episode_name in episode_names:
             episode_idx, episode_len = [int(x) for x in episode_name.stem.split('_')[1:]]
-            if episode_idx % self.num_workers != self.worker:  # Each worker stores their own dedicated data
+            if episode_idx % self.num_workers != self.worker_id:  # Each worker stores their own dedicated data
                 continue
             if episode_name in self.episodes.keys():  # Don't store redundantly
                 break
@@ -335,11 +346,11 @@ class Experiences:
             if not self.load_episode(episode_name):
                 break  # Resolve conflicts
 
-    # Workers update their own data based on file-stored update specs
+    # Workers can update/write-to their own data based on file-stored update specs
     def worker_fetch_updates(self):
         update_names = (self.path / 'Updates').glob('*.npz')
 
-        # Fetch updates  TODO check for MetaShape_[]
+        # Fetch update specs  TODO check for MetaShape_[], update and set meta
         for update_name in update_names:
             exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:1]]
 
@@ -356,6 +367,7 @@ class Experiences:
                     for key in update.keys():
                         # Update experience in replay
                         self.episodes[episode_name][key][idx] = update[key]
+                        # todo first set meta by the meta shape in storage
                 update_name.unlink(missing_ok=True)  # Delete update spec when stored
             except:
                 continue
@@ -380,10 +392,14 @@ class Experiences:
         action = episode['action'][idx + 1]
         next_obs = episode['observation'][idx + self.nstep]
         reward = np.full_like(episode['reward'][idx + 1], np.NaN)
+        print(np.full_like(episode['reward'][idx + 1], np.NaN), np.NaN, 'np.NaN suffices?',
+              np.full_like(episode['reward'][idx + 1], np.NaN).shape)
         discount = np.ones_like(episode['discount'][idx + 1])
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
         exp_id, worker_id = episode['id'] + idx, self.worker_id
+        ids = np.array([exp_id, worker_id])
+        meta = episode['meta'][idx]
 
         # Trajectory
         if self.nstep > 0:
@@ -404,10 +420,10 @@ class Experiences:
                 discount *= episode['discount'][idx + i] * self.discount
 
         # Transform
-        if self.transform is not None:
+        if self.transform is not None:  # todo audio
             obs = self.transform(torch.as_tensor(obs).div(255)) * 255
 
-        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, exp_id, worker_id
+        return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
 
     def fetch_sample_process(self, idx=None):
         try:

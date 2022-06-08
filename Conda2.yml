@@ -25,5 +25,5 @@ dependencies:
     - opt_einsum_torch==0.1.0
     - einops==0.4.1
 # Only for me
-#      - cryptography
-#      - pexpect
+#   - cryptography
+#   - pexpect

@@ -34,7 +34,8 @@ def main(args):
     args.train_steps += agent.step
 
     # Experience replay
-    replay = instantiate(args.replay)
+    replay = instantiate(args.replay,
+                         metadata_shape=getattr(agent, 'metadata_shape', None))  # Optional agent-dependant metadata
 
     # Loggers
     logger = instantiate(args.logger)
