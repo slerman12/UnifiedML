@@ -9,7 +9,7 @@ import numpy as np
 
 
 class RRUFF(Dataset):
-    def __init__(self, root='../XRDs/xrd_data/05_29_data/', data='icsd171k_ps1', transform=None, num_classes=7, train=True, **kwargs):
+    def __init__(self, root='../XRDs/xrd_data/', data='icsd171k_mix', transform=None, num_classes=7, train=True, **kwargs):
         root += data if train else 'XY_DIF_noiseAll'
 
         self.feature_path = root + "/features.csv"

@@ -118,7 +118,7 @@ class ExperienceReplay:
                                                    num_workers=self.num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn,
-                                                   persistent_workers=True  #Testing todo
+                                                   persistent_workers=True  # Testing todo
                                                    )
         # Replay
 
@@ -213,7 +213,7 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     # Updates experiences (in workers) by storing dicts of update values for corresponding experience IDs to file system
-    def rewrite(self, updates, ids):  # todo should updates be stored in a buffer until sufficiently big per worker?
+    def rewrite(self, updates, ids):
         assert isinstance(updates[0], dict), f'expected \'updates\' as list of dicts, got {type(updates)}'
 
         # Store into replay buffer
@@ -299,6 +299,7 @@ class Experiences:
 
         episode_len = next(iter(episode.values())).shape[0] - 1  # todo should it be minus nstep for unique epochs?
 
+        # Deleting experiences upon overfill
         while episode_len + self.num_experiences_loaded > self.capacity:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
@@ -310,7 +311,7 @@ class Experiences:
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
 
-        episode['id'] = len(self.index) + self.deleted_indices  # IDs remain unique even as experiences deleted
+        episode['id'] = len(self.index) + self.deleted_indices  # IDs remain unique even if experiences deleted
 
         self.episode_names.append(episode_name)
         self.episode_names.sort()
@@ -353,7 +354,7 @@ class Experiences:
     def worker_fetch_updates(self):
         update_names = (self.path / 'Updates').glob('*.npz')
 
-        # Fetch update specs  TODO check for MetaShape_[], update and set meta
+        # Fetch update specs
         for update_name in update_names:
             exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:1]]
 
@@ -370,7 +371,6 @@ class Experiences:
                     for key in update.keys():
                         # Update experience in replay
                         self.episodes[episode_name][key][idx] = update[key]
-                        # todo first set meta by the meta shape in storage
                 update_name.unlink(missing_ok=True)  # Delete update spec when stored
             except:
                 continue

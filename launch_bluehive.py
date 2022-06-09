@@ -11,7 +11,7 @@ from pexpect import pxssh, spawn
 
 username = 'slerman'
 
-branch = 'Epochs_And_Inits'
+branch = 'UnifiedML2'
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
@@ -115,11 +115,15 @@ sweep = ['task=dmc/cheetah_run gpu=A100,K80,V100 experiment=\'cuda_adaptive\'',
          'task=dmc/cheetah_run gpu=\'RTX\' experiment=\'cuda_adaptive\' lab=true']
 sweep = [
     # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' lab=true experiment=\'PS1_to_RRUFF\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
-    'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' +dataset.num_classes=230 dataset.name=\'230way\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' experiment=\'PS1_to_RRUFF\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
+    # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' +dataset.num_classes=230 dataset.name=\'230way\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' experiment=\'PS1_to_RRUFF\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
     # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' experiment=\'PS1_to_RRUFF_Random_Crop\' num_gpus=4 parallel=true logger.wandb=true',
     # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' lab=true experiment=\'PS1_to_RRUFF_ResNet18\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet18 num_gpus=4 parallel=true logger.wandb=true',
     # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' dataset.name=\'noise20\' experiment=\'PS1_noise20_to_RRUFF\' +dataset.data=\'icsd171k_ps1_noise20\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
     # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' lab=true experiment=\'PS1_to_RRUFF_ViT\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=128 num_gpus=8 parallel=true logger.wandb=true'
+]
+sweep = [
+    'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' lab=true experiment=\'mix_to_RRUFF\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
+    # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' lab=true experiment=\'mix_to_RRUFF_ResNet18\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet18 num_gpus=4 parallel=true logger.wandb=true',
 ]
 
 
