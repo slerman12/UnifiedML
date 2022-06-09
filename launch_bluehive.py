@@ -11,7 +11,7 @@ from pexpect import pxssh, spawn
 
 username = 'slerman'
 
-branch = 'UnifiedML2'
+branch = 'Epochs_And_Inits'
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
@@ -122,8 +122,8 @@ sweep = [
     # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/05_29_data/\' lab=true experiment=\'PS1_to_RRUFF_ViT\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=128 num_gpus=8 parallel=true logger.wandb=true'
 ]
 sweep = [
-    'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' lab=true experiment=\'mix_to_RRUFF\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
-    # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' lab=true experiment=\'mix_to_RRUFF_ResNet18\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet18 num_gpus=4 parallel=true logger.wandb=true',
+    'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' +dataset.data=\'icsd171k_mix\' lab=true experiment=\'mix_to_RRUFF\' Aug=Blocks.Architectures.Null num_gpus=4 parallel=true logger.wandb=true',
+    # 'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' +dataset.data=\'icsd171k_mix\' lab=true experiment=\'mix_to_RRUFF_ResNet18\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet18 num_gpus=4 parallel=true logger.wandb=true',
 ]
 
 
