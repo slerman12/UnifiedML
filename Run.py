@@ -79,10 +79,10 @@ def main(args):
                 replay.add(store=True)  # Only store full episodes
 
         converged = agent.step >= args.train_steps
-        training = training or (agent.step > args.seed_steps or env.disable) and len(replay) >= args.num_workers
+        training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers
 
         # Train agent
-        if training and args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged:
+        if training and args.learn_per_steps and agent.step % args.learn_per_steps == 0 or env.disable or converged:
 
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
                 logs = agent.train().learn(replay)  # Trains the agent

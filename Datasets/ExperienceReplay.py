@@ -69,7 +69,7 @@ class ExperienceReplay:
         # self.specs.update({name: (0,) for name in ['reward', 'discount', 'label', 'step']})
 
         if obs_spec is None:
-            obs_spec = {'name': 'obs', 'shape': (1,)}  # todo when is obs-spec none?
+            obs_spec = {'name': 'observation', 'shape': (1,)}  # todo when is obs-spec none?
 
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
                                                for name in ['reward', 'discount', 'label', 'step']],
@@ -99,9 +99,15 @@ class ExperienceReplay:
 
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
+        assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
+                                                             f'exceeds offline replay size ({len(self)})'
+
+        capacity = capacity // self.num_workers if capacity and not offline \
+            else np.inf
+
         self.experiences = (Offline if offline else Online)(path=self.path,
-                                                            capacity=np.inf if save else capacity // self.num_workers,
-                                                            num_workers=self.num_workers,  # don't need todo
+                                                            capacity=capacity,
+                                                            specs=self.specs,
                                                             fetch_per=1000,
                                                             save=save,
                                                             nstep=nstep,
@@ -118,8 +124,7 @@ class ExperienceReplay:
                                                    num_workers=self.num_workers,
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn,
-                                                   persistent_workers=True  # Testing todo
-                                                   )
+                                                   persistent_workers=True)
         # Replay
 
         self._replay = None
@@ -169,7 +174,7 @@ class ExperienceReplay:
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
 
                 # Expands attributes that are unique per batch (such as 'step')
-                batch_size = getattr(exp, 'obs', getattr(exp, 'action')).shape[0]
+                batch_size = getattr(exp, 'observation', getattr(exp, 'action')).shape[0]
                 if 1 == exp[spec['name']].shape[0] < batch_size:
                     exp[spec['name']] = np.repeat(exp[spec['name']], batch_size, axis=0)
 
@@ -194,25 +199,24 @@ class ExperienceReplay:
             # Concatenate into one big episode batch
             self.episode[spec['name']] = np.concatenate(self.episode[spec['name']], axis=0)
 
-        self.episode_len = self.episode['observation'].shape[0]
+        self.episode_len = len(self.episode['observation'])
 
         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
         num_episodes = len(self)
         episode_name = f'{timestamp}_{num_episodes}_{self.episode_len}.npz'
 
         # Save episode
-        save_path = self.path / episode_name
         with io.BytesIO() as buffer:
             np.savez_compressed(buffer, **self.episode)
             buffer.seek(0)
-            with save_path.open('wb') as f:
+            with (self.path / episode_name).open('wb') as f:
                 f.write(buffer.read())
 
         self.episode = {spec['name']: [] for spec in self.specs}
         self.episode_len = 0
         self.episodes_stored += 1
 
-    # Updates experiences (in workers) by storing dicts of update values for corresponding experience IDs to file system
+    # Update experiences (in workers) by IDs (experience index and worker ID) and dicts like {spec: update value}
     def rewrite(self, updates, ids):
         assert isinstance(updates[0], dict), f'expected \'updates\' as list of dicts, got {type(updates)}'
 
@@ -224,13 +228,12 @@ class ExperienceReplay:
 
                 timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
                 update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
-                path = self.path / 'Updates'
 
-                # Send update to workers todo group by worker
+                # Send update to workers TODO group by worker
                 with io.BytesIO() as buffer:
                     np.savez_compressed(buffer, update)
                     buffer.seek(0)
-                    with (path / update_name).open('wb') as f:
+                    with (self.path / 'Updates' / update_name).open('wb') as f:
                         f.write(buffer.read())
 
                 if not self.offline:
@@ -250,7 +253,7 @@ def worker_init_fn(worker_id):
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
-    def __init__(self, path, capacity, num_workers, fetch_per, save, offline=True, nstep=0, discount=1, transform=None):
+    def __init__(self, path, capacity, specs, fetch_per, save, offline=True, nstep=0, discount=1, transform=None):
 
         # Dataset construction via parallel workers
 
@@ -259,35 +262,33 @@ class Experiences:
         self.episode_names = []
         self.episodes = dict()
 
-        self.num_experiences_loaded = 0
+        self.experience_indices = []
         self.capacity = capacity
-        self.index = []  # Maps stored experiences to episodes' names
         self.deleted_indices = 0
 
-        self.num_workers = num_workers
+        self.specs = specs
 
-        self.fetch_per = fetch_per
+        self.fetch_per = fetch_per  # How often to fetch
         self.samples_since_last_fetch = fetch_per
 
         self.save = save
         self.offline = offline
-
-        # Load in existing data
-        list(map(self.load_episode, sorted(path.glob('*.npz'))))
 
         self.nstep = nstep
         self.discount = discount
 
         self.transform = transform
 
+        # Load in existing data
+        _ = list(map(self.load_episode, sorted(path.glob('*.npz'))))
+
     @property
     def worker_id(self):
-        # todo do i need the try clause?
-        try:
-            return torch.utils.data.get_worker_info().id
-        except:
-            return 0
-        # todo can get num_workers same way
+        return torch.utils.data.get_worker_info().id
+
+    @property
+    def num_workers(self):
+        return torch.utils.data.get_worker_info().num_workers
 
     def load_episode(self, episode_name):
         try:
@@ -297,31 +298,28 @@ class Experiences:
         except:
             return False
 
-        episode_len = next(iter(episode.values())).shape[0] - 1  # todo should it be minus nstep for unique epochs?
+        offset = self.nstep or 1
+        episode_len = len(episode['observation']) - offset
+        episode = {spec['name']: episode.get(spec['name'], np.full((episode_len + 1, *spec['shape']), np.NaN))
+                   for spec in self.specs}
 
         # Deleting experiences upon overfill
-        while episode_len + self.num_experiences_loaded > self.capacity:
+        while episode_len + len(self) > self.capacity:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
-            early_episode_len = next(iter(early_episode.values())).shape[0] - 1
-            self.index = self.index[early_episode_len:]
+            early_episode_len = len(early_episode['observation']) - offset
+            self.experience_indices = self.experience_indices[early_episode_len:]
             self.deleted_indices += early_episode_len  # To derive a consistent experience index even as data deleted
-            self.num_experiences_loaded -= early_episode_len
-            if not self.offline:
+            if not self.save:
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
 
-        episode['id'] = len(self.index) + self.deleted_indices  # IDs remain unique even if experiences deleted
+        episode['id'] = len(self.experience_indices) + self.deleted_indices  # IDs remain unique even if experiences deleted
 
         self.episode_names.append(episode_name)
         self.episode_names.sort()
         self.episodes[episode_name] = episode
-        self.num_experiences_loaded += episode_len
-        self.index += list(enumerate([episode_name] * episode_len))
-
-        if self.num_experiences_loaded != len(self.index):
-            print('wahhhhhhhhhwbbbabababa')
-        assert self.num_experiences_loaded == len(self.index)  # TODO delete, just checking
+        self.experience_indices += list(enumerate([episode_name] * episode_len))
 
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
@@ -362,7 +360,7 @@ class Experiences:
                 continue
 
             # Get corresponding experience and episode
-            idx, episode_name = self.index[exp_id - self.deleted_indices]
+            idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
 
             try:
                 with update_name.open('rb') as update_file:
@@ -381,49 +379,51 @@ class Experiences:
 
     # N-step cumulative discounted rewards
     def process(self, episode, idx=None):
-        episode_len = len(episode['observation'])
-        limit = episode_len - (self.nstep or 1)
-        # TODO think, i guess last nstep is ignored? then maybe offline idx and index should reflect that.
-        #  we're getting redundant epochs, unles the minus-1 in episode-len accounts for that... minus-nstep ?
-        #     might not need this paragraph at all
-        assert idx % limit == idx, 'checking in offline or nstep == 1 setting. then test in nstep. ' \
-                                   'then test in episode_len-=nstep'
-        idx = np.random.randint(limit) if idx is None else idx % limit
+        offset = self.nstep or 1
+        episode_len = len(episode['observation']) - offset
+        if idx is None:
+            idx = np.random.randint(episode_len)
 
         # Transition
         obs = episode['observation'][idx]
         action = episode['action'][idx + 1]
         next_obs = episode['observation'][idx + self.nstep]
-        reward = np.full_like(episode['reward'][idx + 1], np.NaN)
-        print(np.full_like(episode['reward'][idx + 1], np.NaN), np.NaN, 'np.NaN suffices?',
-              np.full_like(episode['reward'][idx + 1], np.NaN).shape)
-        discount = np.ones_like(episode['discount'][idx + 1])
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
+
         exp_id, worker_id = episode['id'] + idx, self.worker_id
         ids = np.array([exp_id, worker_id])
+
         meta = episode['meta'][idx]
 
         # Trajectory
-        if self.nstep > 0:
+        if self.nstep:
             traj_o = episode['observation'][idx:idx + self.nstep + 1]
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
             traj_l = episode['label'][idx:idx + self.nstep + 1]
+
+            # Compute cumulative discounted reward TODO store cache
+            discounts = self.discount ** np.arange(self.nstep + 1)
+            reward = np.dot(discounts[:-1], traj_r)
+            discount = discounts[-1:]
         else:
-            traj_o = traj_a = traj_r = traj_l = np.NaN
+            traj_o = traj_a = traj_r = traj_l = reward = np.array([np.NaN])
+            discount = np.array([1.0])
 
         # Compute cumulative discounted reward
-        for i in range(1, self.nstep + 1):
-            if episode['reward'][idx + i] != np.NaN:
-                step_reward = episode['reward'][idx + i]
-                if np.isnan(reward):
-                    reward = np.zeros(1)
-                reward += discount * step_reward
-                discount *= episode['discount'][idx + i] * self.discount
+        # reward = np.array([np.NaN])
+        # discount = np.array([1.0])
+        # for i in range(1, self.nstep + 1):
+        #     if episode['reward'][idx + i] != np.NaN:
+        #         step_reward = episode['reward'][idx + i]
+        #         if np.isnan(reward):
+        #             reward = np.zeros(1)
+        #         reward += discount * step_reward
+        #         discount *= episode['discount'][idx + i] * self.discount
 
         # Transform
-        if self.transform is not None:  # todo audio
+        if self.transform is not None:  # TODO audio
             obs = self.transform(torch.as_tensor(obs).div(255)) * 255
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
@@ -443,17 +443,20 @@ class Experiences:
         if idx is None:
             episode_name = self.sample(self.episode_names)
         else:
-            idx, episode_name = self.index[idx]
+            idx, episode_name = self.experience_indices[idx]
 
         episode = self.episodes[episode_name]
 
         return self.process(episode, idx)  # Process episode into a compact experience
 
+    def __len__(self):
+        return len(self.experience_indices)
+
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, capacity, num_workers, fetch_per, save, False, nstep, discount, transform)
+    def __init__(self, path, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, specs, fetch_per, save, False, nstep, discount, transform)
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
@@ -463,11 +466,8 @@ class Online(Experiences, IterableDataset):
 
 # Loads Experiences with a standard Dataset
 class Offline(Experiences, Dataset):
-    def __init__(self, path, capacity, num_workers, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, capacity, num_workers, fetch_per, save, True, nstep, discount, transform)
+    def __init__(self, path, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, specs, fetch_per, save, True, nstep, discount, transform)
 
     def __getitem__(self, idx):
         return self.fetch_sample_process(idx)  # Get single experience by index
-
-    def __len__(self):
-        return self.num_experiences_loaded

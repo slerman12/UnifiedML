@@ -17,7 +17,7 @@ ema_decay: 0.99
 # Domains
 discrete: ??? # To be specified later
 offline: false  # Defaults to true for classify tasks
-RL: true
+RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
 # Environment
@@ -147,6 +147,7 @@ plotting:
   verbose: false
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
+
 Aug: null  # Shorthand for recipes.aug._target_
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 pool: null  # Shorthand for recipes.encoder.pool._target_
