@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task@_global_: classify/mnist
+  - task@_global_: atari/pong
   - override hydra/job_logging: none
 
 # Agent
