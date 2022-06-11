@@ -188,8 +188,8 @@ class MetaDQNAgent(torch.nn.Module):
                 supervised_loss = mistake.mean()
 
                 # Forward-prop
-                self.encoder.optim.propagate(supervised_loss, meta[:, 0], batch_size, retain_graph=True)
-                self.actor.optim.propagate(supervised_loss, meta[:, 0], batch_size)
+                self.encoder.optim.propagate(mistake, meta[:, 0], batch_size, retain_graph=True)
+                self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
 
                 # Update supervised
                 Utils.optimize(supervised_loss,  # <- Not really necessary
@@ -232,8 +232,8 @@ class MetaDQNAgent(torch.nn.Module):
             losses[:, 1] = critic_loss
 
             # Forward-prop
-            self.encoder.optim.propagate(critic_loss.mean(), meta[:, 1], batch_size)
-            self.critic.optim.propagate(critic_loss.mean(), meta[:, 1], batch_size)
+            self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
+            self.critic.optim.propagate(critic_loss, meta[:, 1], batch_size)
 
             # Update critic
             Utils.optimize(critic_loss,  # <- Not really necessary
@@ -255,13 +255,13 @@ class MetaDQNAgent(torch.nn.Module):
 
             losses[:, 2] = actor_loss
 
-            self.actor.optim.propagate(actor_loss.mean(), meta[:, 2], batch_size)
+            self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
 
             # Update actor
             Utils.optimize(actor_loss,
                            self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
                            step_optim=step_optim)
 
-        replay.update({'meta': torch.min(losses, meta)}, ids)
+        replay.rewrite({'meta': torch.min(losses, meta)}, ids)
 
         return logs

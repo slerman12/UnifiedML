@@ -24,14 +24,20 @@ class F_ckGradientDescent(torch.nn.Module):
 
         self.decoys = self.params = self._decoys = self.dists = self.running_sum = None
 
+        # Torch initializes grads to None by default
+        for param_group in self.optim.param_groups:
+            for params in param_group.values():
+                if isinstance(params, list):
+                    for param in params:
+                        param.grad = torch.zeros_like(param.data)
+
         self.step()
-        self.zero_grad()
 
     def propagate(self, loss, previous_loss, batch_size, retain_graph=False):
         uninitialized = previous_loss.isnan()
         previous_loss[uninitialized] = 2 * loss[uninitialized]
 
-        advantage = torch.relu(loss - previous_loss) * batch_size
+        advantage = torch.relu(loss - previous_loss).mean() * batch_size
         self.running_sum += advantage
 
         for decoy, param, _decoy, dist in zip(self.decoys, self.params, self._decoys, self.dists):
@@ -49,7 +55,7 @@ class F_ckGradientDescent(torch.nn.Module):
 
         self.decoys = sum([param_group[key]
                            for param_group in self.optim.param_groups
-                           for key in param_group], [])
+                           for key in param_group if isinstance(param_group[key], list)], [])
 
         self._decoys = deepcopy(self.decoys)
 

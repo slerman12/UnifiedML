@@ -221,7 +221,7 @@ class ExperienceReplay:
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
         # Store into replay buffer
-        for i, exp_id, worker_id in enumerate(zip(*ids.T)):
+        for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
 
             # In the offline setting, each worker has a copy of all the data
             for worker in range(self.num_workers):
@@ -379,7 +379,8 @@ class Experiences:
 
         # Fetch update specs
         for update_name in update_names:
-            exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:1]]
+            print(update_name.stem)
+            exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:2]]
 
             if worker_id != self.worker_id:  # Each worker updates own dedicated data
                 continue
