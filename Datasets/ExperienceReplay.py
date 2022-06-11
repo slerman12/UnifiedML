@@ -216,29 +216,53 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored += 1
 
-    # Update experiences (in workers) by ID (experience, worker ID) and dict like {spec: update value}
+    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
-        exp_ids, worker_ids = ids.T
-        updates['exp_ids'] = exp_ids
+        # Store into replay buffer
+        for i, exp_id, worker_id in enumerate(zip(*ids.T)):
 
-        # Store into replay buffer per worker
-        for worker_id in torch.unique(worker_ids, sorted=False):
             # In the offline setting, each worker has a copy of all the data
-            per_worker = self.offline or (ids[:, 1] == worker_id)  # Otherwise each worker has dedicated data
+            for worker in range(self.num_workers):
 
-            update = {key: updates[key][per_worker].cpu().numpy() for key in updates}
+                timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+                update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
+                update = {key: updates[key][i] for key in updates}
 
-            timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            update_name = f'{worker_id}_{timestamp}.npz'
+                # Send update to workers
+                with io.BytesIO() as buffer:
+                    np.savez_compressed(buffer, update)
+                    buffer.seek(0)
+                    with (self.path / 'Updates' / update_name).open('wb') as f:
+                        f.write(buffer.read())
 
-            # Send update to workers
-            with io.BytesIO() as buffer:
-                np.savez_compressed(buffer, update)
-                buffer.seek(0)
-                with (self.path / 'Updates' / update_name).open('wb') as f:
-                    f.write(buffer.read())
+                if not self.offline:
+                    break
+
+    # Update experiences (in workers) by ID (experience, worker ID) and dict like {spec: update value}
+    # def rewrite(self, updates, ids):
+    #     assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
+    #
+    #     exp_ids, worker_ids = ids.T
+    #     updates['exp_ids'] = exp_ids
+    #
+    #     # Store into replay buffer per worker
+    #     for worker_id in torch.unique(worker_ids, sorted=False):
+    #         # In the offline setting, each worker has a copy of all the data
+    #         per_worker = self.offline or (ids[:, 1] == worker_id)  # Otherwise each worker has dedicated data
+    #
+    #         update = {key: updates[key][per_worker].cpu().numpy() for key in updates}
+    #
+    #         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+    #         update_name = f'{worker_id}_{timestamp}.npz'
+    #
+    #         # Send update to workers
+    #         with io.BytesIO() as buffer:
+    #             np.savez_compressed(buffer, update)
+    #             buffer.seek(0)
+    #             with (self.path / 'Updates' / update_name).open('wb') as f:
+    #                 f.write(buffer.read())
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -355,29 +379,52 @@ class Experiences:
 
         # Fetch update specs
         for update_name in update_names:
-            worker_id = int(update_name.stem.split('_')[0])
+            exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:1]]
 
             if worker_id != self.worker_id:  # Each worker updates own dedicated data
                 continue
 
+            # Get corresponding experience and episode
+            idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
+
             try:
                 with update_name.open('rb') as update_file:
                     update = np.load(update_file)
-                    update = {key: update[key] for key in update.keys()}
-
-                exp_ids = update.pop('exp_ids')
-
-                for i, exp_id in enumerate(exp_ids):
-                    # Get corresponding experience and episode
-                    idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
-
                     # Iterate through each update spec
                     for key in update.keys():
                         # Update experience in replay
-                        self.episodes[episode_name][key][idx] = update[key][i]
-                    update_name.unlink(missing_ok=True)  # Delete update spec when stored
+                        self.episodes[episode_name][key][idx] = update[key]
+                update_name.unlink(missing_ok=True)  # Delete update spec when stored
             except:
                 continue
+
+    # Workers can update/write-to their own data based on file-stored update specs
+    # def worker_fetch_updates(self):
+    #     update_names = (self.path / 'Updates').glob('*.npz')
+    #
+    #     # Fetch update specs
+    #     for update_name in update_names:
+    #         worker_id = int(update_name.stem.split('_')[0])
+    #
+    #         if worker_id != self.worker_id:  # Each worker updates own dedicated data
+    #             continue
+    #
+    #         try:
+    #             with update_name.open('rb') as update_file:
+    #                 update = np.load(update_file)
+    #                 update = {key: update[key] for key in update.keys()}
+    #         except:
+    #             continue
+    #
+    #         for i, exp_id in enumerate(update.pop('exp_ids')):
+    #             # Get corresponding experience and episode
+    #             idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
+    #
+    #             # Iterate through each update spec
+    #             for key in update.keys():
+    #                 # Update experience in replay
+    #                 self.episodes[episode_name][key][idx] = update[key][i]
+    #             update_name.unlink(missing_ok=True)  # Delete update spec when stored
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
