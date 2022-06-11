@@ -111,7 +111,7 @@ class ExperienceReplay:
         capacity = capacity // self.num_workers if capacity and not offline \
             else np.inf
 
-        self.queue = multiprocessing.Queue()
+        self.queue = multiprocessing.Queue()  # TODO use pipe
 
         self.experiences = (Offline if offline else Online)(path=self.path,
                                                             queue=self.queue,
@@ -424,7 +424,7 @@ class Experiences:
     def worker_fetch_updates(self):
         update_names = (self.path / 'Updates').glob('*.npz')
 
-        if self.worker_id == 0:
+        if self.worker_id == 2:
             while not self.queue.empty():
                 bla = self.queue.get()
 
