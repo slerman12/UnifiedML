@@ -216,11 +216,11 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored += 1
 
-    # Update experiences (in workers) by IDs (experience index and worker ID) and dicts like {spec: update value}
+    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
-        assert isinstance(updates[0], dict), f'expected \'updates\' as list of dicts, got {type(updates)}'
+        assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
-        # Store into replay buffer
+        # Store into replay buffer todo from one dict group by worker
         for update, exp_id, worker_id in zip(updates, *ids.T):
 
             # In the offline setting, each worker has a copy of all the data
