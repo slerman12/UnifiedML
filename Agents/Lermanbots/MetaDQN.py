@@ -50,6 +50,8 @@ class MetaDQNAgent(torch.nn.Module):
         self.meta_shape = (3,)
 
         self.num_actions = num_actions  # Num actions sampled by actor
+        self.step_optim_per_steps = step_optim_per_steps  # How often to step optimizer
+        self.optim_step = 0  # Count optimizer steps
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
@@ -83,7 +85,7 @@ class MetaDQNAgent(torch.nn.Module):
             block = getattr(self, name)
 
             setattr(block, 'optim',
-                    F_ckGradientDescent(block.optim, step_optim_per_steps) if hasattr(block, 'optim')
+                    F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
                     else None)
 
         # Birth
@@ -162,6 +164,9 @@ class MetaDQNAgent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
+        self.optim_step += 1
+        step_optim = self.optim_step % self.step_optim_per_steps == 0
+
         instruction = ~torch.isnan(label)
 
         # "Acquire Wisdom"
@@ -188,7 +193,8 @@ class MetaDQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,  # <- Not really necessary
-                               self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False)
+                               self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
+                               step_optim=step_optim)
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -231,12 +237,14 @@ class MetaDQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,  # <- Not really necessary
-                           self.critic, epoch=self.epoch if replay.offline else self.episode, backward=False)
+                           self.critic, epoch=self.epoch if replay.offline else self.episode, backward=False,
+                           step_optim=step_optim)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,
-                           self.encoder, epoch=self.epoch if replay.offline else self.episode)
+                           self.encoder, epoch=self.epoch if replay.offline else self.episode,
+                           step_optim=step_optim)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
@@ -251,8 +259,9 @@ class MetaDQNAgent(torch.nn.Module):
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False)
+                           self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
+                           step_optim=step_optim)
 
-        replay.update({'meta': losses}, ids)
+        replay.update({'meta': torch.min(losses, meta)}, ids)
 
         return logs
