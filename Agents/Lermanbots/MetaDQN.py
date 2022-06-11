@@ -139,9 +139,14 @@ class MetaDQNAgent(torch.nn.Module):
         batch_size = obs.shape[0]
 
         losses = torch.full(size=(batch_size, 3),
-                            fill_value=float('nan'))
+                            fill_value=float('nan'))  # TODO can just use min with meta
 
         # "Envision" / "Perceive"
+
+        # Just for metrics / debugging
+        # with Utils.act_mode(self.encoder, self.actor):
+        #     obs_1 = self.aug(obs)
+        #     obs_1 = self.encoder(obs_1)
 
         # Augment and encode
         obs = self.aug(obs)
@@ -163,6 +168,10 @@ class MetaDQNAgent(torch.nn.Module):
             self.step += 1
             self.frame += len(obs)
             self.epoch = replay.epoch
+
+        if self.epoch > 1:
+            print(meta[:, 0], label)
+            assert (meta[:, 0] == label).all()
 
         self.optim_step += 1
         step_optim = self.optim_step % self.step_optim_per_steps == 0
@@ -187,13 +196,20 @@ class MetaDQNAgent(torch.nn.Module):
                 # Supervised loss
                 supervised_loss = mistake.mean()
 
+                # Just for metrics / debugging
+                # if step_optim:
+                #     with Utils.act_mode(self.encoder, self.actor):
+                #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
+                #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
+                #         supervised_loss_1 = mistake_1.mean()
+
                 # Forward-prop
-                self.encoder.optim.propagate(mistake, meta[:, 0], batch_size, retain_graph=True)
+                self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
                 self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
 
                 # Update supervised
-                Utils.optimize(supervised_loss,  # <- Not really necessary
-                               self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
+                Utils.optimize(None,
+                               self.actor, epoch=self.epoch if replay.offline else self.episode,
                                step_optim=step_optim)
 
                 if self.log:
@@ -231,13 +247,13 @@ class MetaDQNAgent(torch.nn.Module):
 
             losses[:, 1] = critic_loss
 
-            # Forward-prop
+            # Forward-prop todo retain graph above
             self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
             self.critic.optim.propagate(critic_loss, meta[:, 1], batch_size)
 
             # Update critic
-            Utils.optimize(critic_loss,  # <- Not really necessary
-                           self.critic, epoch=self.epoch if replay.offline else self.episode, backward=False,
+            Utils.optimize(None,
+                           self.critic, epoch=self.epoch if replay.offline else self.episode,
                            step_optim=step_optim)
 
         # Update encoder
@@ -245,6 +261,20 @@ class MetaDQNAgent(torch.nn.Module):
             Utils.optimize(None,
                            self.encoder, epoch=self.epoch if replay.offline else self.episode,
                            step_optim=step_optim)
+
+            # Just for metrics / debugging
+            # if step_optim:
+            #     with Utils.act_mode(self.encoder, self.actor):
+            #         if not hasattr(self, 'count_optim_steps'):
+            #             setattr(self, 'count_optim_steps', 0)
+            #         if not hasattr(self, 'count_improvements'):
+            #             setattr(self, 'count_improvements', 0)
+            #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
+            #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
+            #         self.count_improvements += mistake_1.mean() < supervised_loss_1
+            #         self.count_optim_steps += 1
+            #         print('Improvements:', self.count_improvements.item(), '/', self.count_optim_steps,
+            #               '({:.02%})'.format(self.count_improvements.item() / self.count_optim_steps))
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
@@ -258,10 +288,11 @@ class MetaDQNAgent(torch.nn.Module):
             self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
 
             # Update actor
-            Utils.optimize(actor_loss,
+            Utils.optimize(None,
                            self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
                            step_optim=step_optim)
 
-        replay.rewrite({'meta': torch.min(losses, meta)}, ids)
+        meta[:, 0] = label
+        replay.rewrite({'meta': meta}, ids)
 
         return logs

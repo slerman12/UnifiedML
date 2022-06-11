@@ -220,6 +220,8 @@ class ExperienceReplay:
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
+        updates = {key: updates[key].detach().cpu().numpy() for key in updates}
+
         # Store into replay buffer
         for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
 
@@ -232,7 +234,7 @@ class ExperienceReplay:
 
                 # Send update to workers
                 with io.BytesIO() as buffer:
-                    np.savez_compressed(buffer, update)
+                    np.savez_compressed(buffer, **update)
                     buffer.seek(0)
                     with (self.path / 'Updates' / update_name).open('wb') as f:
                         f.write(buffer.read())
@@ -378,8 +380,7 @@ class Experiences:
         update_names = (self.path / 'Updates').glob('*.npz')
 
         # Fetch update specs
-        for update_name in update_names:
-            print(update_name.stem)
+        for i, update_name in enumerate(update_names):
             exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:2]]
 
             if worker_id != self.worker_id:  # Each worker updates own dedicated data
@@ -391,6 +392,7 @@ class Experiences:
             try:
                 with update_name.open('rb') as update_file:
                     update = np.load(update_file)
+
                     # Iterate through each update spec
                     for key in update.keys():
                         # Update experience in replay
