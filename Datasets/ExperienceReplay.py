@@ -222,45 +222,37 @@ class ExperienceReplay:
         self.episodes_stored += 1
 
     # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
-    # def rewrite(self, updates, ids):
-    #     assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
-    #
-    #     now = time.time()
-    #     updates = {key: updates[key].detach().cpu().numpy() for key in updates}
-    #     print(time.time() - now, '1')
-    #     now_main = time.time()
-    #
-    #     # Store into replay buffer
-    #     for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
-    #
-    #         now_inner = time.time()
-    #
-    #         # In the offline setting, each worker has a copy of all the data
-    #         for worker in range(self.num_workers):
-    #
-    #             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-    #             update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
-    #             update = {key: updates[key][i] for key in updates}
-    #
-    #             # Send update to workers
-    #             with io.BytesIO() as buffer:
-    #                 np.savez_compressed(buffer, **update)
-    #                 buffer.seek(0)
-    #                 with (self.path / 'Updates' / update_name).open('wb') as f:
-    #                     f.write(buffer.read())
-    #
-    #             if not self.offline:
-    #                 break
-    #         print(time.time() - now_inner, 'inner')
-    #     print(time.time() - now_main, 'main')
-
-    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
-        updates = {key: updates[key].detach().numpy() for key in updates}
+        updates = {key: updates[key].detach().cpu().numpy() for key in updates}
 
-        threading.Thread(target=store, args=(updates, ids, self.num_workers, self.offline, self.path)).start()
+        # Store into replay buffer
+        for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
+            # In the offline setting, each worker has a copy of all the data
+            for worker in range(self.num_workers):
+
+                timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+                update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
+                update = {key: updates[key][i] for key in updates}
+
+                # Send update to workers
+                with io.BytesIO() as buffer:
+                    np.savez_compressed(buffer, **update)
+                    buffer.seek(0)
+                    with (self.path / 'Updates' / update_name).open('wb') as f:
+                        f.write(buffer.read())
+
+                if not self.offline:
+                    break
+
+    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
+    # def rewrite(self, updates, ids):
+    #     assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
+    #
+    #     updates = {key: updates[key].detach().numpy() for key in updates}
+    #
+    #     threading.Thread(target=store, args=(updates, ids, self.num_workers, self.offline, self.path)).start()
 
         # multiprocessing.Process(target=store, args=(updates, ids, self.num_workers, self.offline, self.path)).start()
 
@@ -302,24 +294,24 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-def store(updates, ids, num_workers, offline, path):
-    for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
-        # In the offline setting, each worker has a copy of all the data
-        for worker in range(num_workers):
-
-            timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            update_name = f'{exp_id}_{worker if offline else worker_id}_{timestamp}.npz'
-            update = {key: updates[key][i] for key in updates}
-
-            # Send update to workers
-            with io.BytesIO() as buffer:
-                np.savez_compressed(buffer, **update)
-                buffer.seek(0)
-                with (path / 'Updates' / update_name).open('wb') as f:
-                    f.write(buffer.read())
-
-            if not offline:
-                break
+# def store(updates, ids, num_workers, offline, path):
+#     for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
+#         # In the offline setting, each worker has a copy of all the data
+#         for worker in range(num_workers):
+#
+#             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+#             update_name = f'{exp_id}_{worker if offline else worker_id}_{timestamp}.npz'
+#             update = {key: updates[key][i] for key in updates}
+#
+#             # Send update to workers
+#             with io.BytesIO() as buffer:
+#                 np.savez_compressed(buffer, **update)
+#                 buffer.seek(0)
+#                 with (path / 'Updates' / update_name).open('wb') as f:
+#                     f.write(buffer.read())
+#
+#             if not offline:
+#                 break
 
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)

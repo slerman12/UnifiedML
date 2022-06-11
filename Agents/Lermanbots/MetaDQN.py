@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import multiprocessing
+import threading
 import time
 import math
 
@@ -303,8 +305,11 @@ class MetaDQNAgent(torch.nn.Module):
         # print(time.time() - now, 'everything')
         now = time.time()
         meta[:, 0] = label
-        replay.rewrite({'meta': meta}, ids)
+        # replay.rewrite({'meta': meta}, ids)
         # print(time.time() - now, ' replay')
         # print(self.step, self.frame)
+
+        threading.Thread(target=replay.rewrite, args=({'meta': meta}, ids)).start()
+        # multiprocessing.Process(target=replay.rewrite, args=({'meta': meta}, ids)).start()
 
         return logs
