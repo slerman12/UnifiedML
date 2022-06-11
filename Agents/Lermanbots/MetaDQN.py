@@ -305,11 +305,11 @@ class MetaDQNAgent(torch.nn.Module):
         # print(time.time() - now, 'everything')
         now = time.time()
         meta[:, 0] = label
-        # replay.rewrite({'meta': meta}, ids)
+        replay.rewrite({'meta': meta}, ids)
         # print(time.time() - now, ' replay')
         # print(self.step, self.frame)
 
-        threading.Thread(target=replay.rewrite, args=({'meta': meta}, ids)).start()
+        # threading.Thread(target=replay.rewrite, args=({'meta': meta}, ids)).start()
         # multiprocessing.Process(target=replay.rewrite, args=({'meta': meta}, ids)).start()
 
         return logs
