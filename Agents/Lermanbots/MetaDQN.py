@@ -31,7 +31,7 @@ class MetaDQNAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actions=1, num_critics=2, step_optim_per_steps=10  # MetaDQN
+                 num_actions=1, num_critics=2, step_optim_per_learn=10  # MetaDQN
                  ):
         super().__init__()
 
@@ -50,8 +50,8 @@ class MetaDQNAgent(torch.nn.Module):
         self.meta_shape = (3,)
 
         self.num_actions = num_actions  # Num actions sampled by actor
-        self.step_optim_per_steps = step_optim_per_steps  # How often to step optimizer
-        self.optim_step = 0  # Count optimizer steps
+        self.step_optim_per_learn = step_optim_per_learn  # How often to step optimizer
+        self.learn_step = 0  # Count learn steps
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
@@ -166,8 +166,8 @@ class MetaDQNAgent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
-        self.optim_step += 1
-        step_optim = self.optim_step % self.step_optim_per_steps == 0
+        self.learn_step += 1
+        step_optim = self.learn_step % self.step_optim_per_learn == 0
 
         instruction = ~torch.isnan(label)
 
