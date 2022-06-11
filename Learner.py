@@ -67,6 +67,7 @@ class F_ckGradientDescent(torch.nn.Module):
         self.optim.zero_grad()
 
     def train(self, mode=True):
+        super().train(mode)
         for decoy, param, _decoy in zip(self.decoys, self.params, self._decoys):
             decoy.data = _decoy.data if mode else param.data
 
