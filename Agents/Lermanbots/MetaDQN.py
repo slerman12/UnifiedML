@@ -84,9 +84,9 @@ class MetaDQNAgent(torch.nn.Module):
 
             block = getattr(self, name)
 
-            setattr(block, 'optim',
-                    F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
-                    else None)
+            # setattr(block, 'optim',
+            #         F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
+            #         else None)
 
         # Birth
 
@@ -127,7 +127,10 @@ class MetaDQNAgent(torch.nn.Module):
     def learn(self, replay):
         # "Recollect"
 
+        now = time.time()
         batch = next(replay)
+        # print(time.time() - now, 'batch')
+        now = time.time()
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
 
@@ -166,6 +169,12 @@ class MetaDQNAgent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
+        if self.epoch > 1:
+            if not (meta[:, 0] == label).all():
+                print(meta[:, 0], label)
+                print(list((replay.path / 'Updates').glob('*.npz')))
+            assert (meta[:, 0] == label).all()
+
         self.learn_step += 1
         step_optim = self.learn_step % self.step_optim_per_learn == 0
 
@@ -197,13 +206,14 @@ class MetaDQNAgent(torch.nn.Module):
                 #         supervised_loss_1 = mistake_1.mean()
 
                 # Forward-prop
-                self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
-                self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
+                # self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
+                # self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
 
                 # Update supervised
-                Utils.optimize(None,
+                Utils.optimize(supervised_loss,
                                self.actor, epoch=self.epoch if replay.offline else self.episode,
-                               step_optim=step_optim)
+                               # step_optim=step_optim
+                               )
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -238,6 +248,8 @@ class MetaDQNAgent(torch.nn.Module):
                                                       obs, action, reward, discount, next_obs,
                                                       self.step, self.num_actions, logs=logs, reduction='none')
 
+            print(critic_loss.shape)
+
             meta[:, 1] = torch.min(critic_loss, meta[:, 1])
 
             # Forward-prop todo retain graph above
@@ -253,7 +265,8 @@ class MetaDQNAgent(torch.nn.Module):
         if not self.generate:
             Utils.optimize(None,
                            self.encoder, epoch=self.epoch if replay.offline else self.episode,
-                           step_optim=step_optim)
+                           # step_optim=step_optim
+                           )
 
             # Just for metrics / debugging
             # if step_optim:
@@ -276,6 +289,8 @@ class MetaDQNAgent(torch.nn.Module):
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
                                                            self.step, self.num_actions, logs=logs, reduction='none')
 
+            print(actor_loss.shape)
+
             meta[:, 2] = torch.min(actor_loss, meta[:, 2])
 
             self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
@@ -285,6 +300,11 @@ class MetaDQNAgent(torch.nn.Module):
                            self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
                            step_optim=step_optim)
 
+        # print(time.time() - now, 'everything')
+        now = time.time()
+        meta[:, 0] = label
         replay.rewrite({'meta': meta}, ids)
+        # print(time.time() - now, ' replay')
+        # print(self.step, self.frame)
 
         return logs
