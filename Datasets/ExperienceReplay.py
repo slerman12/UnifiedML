@@ -216,28 +216,29 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored += 1
 
-    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
+    # Update experiences (in workers) by ID (experience, worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
-        # Store into replay buffer todo from one dict group by worker
-        for update, exp_id, worker_id in zip(updates, *ids.T):
+        exp_ids, worker_ids = ids.T
+        updates['exp_ids'] = exp_ids
 
+        # Store into replay buffer per worker
+        for worker_id in torch.unique(worker_ids, sorted=False):
             # In the offline setting, each worker has a copy of all the data
-            for worker in range(self.num_workers):
+            per_worker = self.offline or (ids[:, 1] == worker_id)  # Otherwise each worker has dedicated data
 
-                timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-                update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
+            update = {key: updates[key][per_worker].cpu().numpy() for key in updates}
 
-                # Send update to workers TODO group by worker
-                with io.BytesIO() as buffer:
-                    np.savez_compressed(buffer, update)
-                    buffer.seek(0)
-                    with (self.path / 'Updates' / update_name).open('wb') as f:
-                        f.write(buffer.read())
+            timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+            update_name = f'{worker_id}_{timestamp}.npz'
 
-                if not self.offline:
-                    break
+            # Send update to workers
+            with io.BytesIO() as buffer:
+                np.savez_compressed(buffer, update)
+                buffer.seek(0)
+                with (self.path / 'Updates' / update_name).open('wb') as f:
+                    f.write(buffer.read())
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -354,22 +355,27 @@ class Experiences:
 
         # Fetch update specs
         for update_name in update_names:
-            exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:1]]
+            worker_id = int(update_name.stem.split('_')[0])
 
             if worker_id != self.worker_id:  # Each worker updates own dedicated data
                 continue
 
-            # Get corresponding experience and episode
-            idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
-
             try:
                 with update_name.open('rb') as update_file:
                     update = np.load(update_file)
+                    update = {key: update[key] for key in update.keys()}
+
+                exp_ids = update.pop('exp_ids')
+
+                for i, exp_id in enumerate(exp_ids):
+                    # Get corresponding experience and episode
+                    idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
+
                     # Iterate through each update spec
                     for key in update.keys():
                         # Update experience in replay
-                        self.episodes[episode_name][key][idx] = update[key]
-                update_name.unlink(missing_ok=True)  # Delete update spec when stored
+                        self.episodes[episode_name][key][idx] = update[key][i]
+                    update_name.unlink(missing_ok=True)  # Delete update spec when stored
             except:
                 continue
 
@@ -394,7 +400,7 @@ class Experiences:
         exp_id, worker_id = episode['id'] + idx, self.worker_id
         ids = np.array([exp_id, worker_id])
 
-        meta = episode['meta'][idx]
+        meta = episode['meta'][idx]  # Agent-writable Metadata
 
         # Trajectory
         if self.nstep:
@@ -439,7 +445,7 @@ class Experiences:
 
         self.samples_since_last_fetch += 1
 
-        # Sample or index an episode
+        # Sample or index an experience
         if idx is None:
             episode_name = self.sample(self.episode_names)
         else:
