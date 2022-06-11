@@ -138,9 +138,6 @@ class MetaDQNAgent(torch.nn.Module):
 
         batch_size = obs.shape[0]
 
-        losses = torch.full(size=(batch_size, 3),
-                            fill_value=float('nan'))  # TODO can just use min with meta
-
         # "Envision" / "Perceive"
 
         # Just for metrics / debugging
@@ -169,10 +166,6 @@ class MetaDQNAgent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
-        if self.epoch > 1:
-            print(meta[:, 0], label)
-            assert (meta[:, 0] == label).all()
-
         self.optim_step += 1
         step_optim = self.optim_step % self.step_optim_per_steps == 0
 
@@ -189,7 +182,7 @@ class MetaDQNAgent(torch.nn.Module):
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-            losses[:, 0] = mistake
+            meta[:, 0] = torch.min(mistake, meta[:, 0])
 
             # Supervised learning
             if self.supervise:
@@ -245,7 +238,7 @@ class MetaDQNAgent(torch.nn.Module):
                                                       obs, action, reward, discount, next_obs,
                                                       self.step, self.num_actions, logs=logs, reduction='none')
 
-            losses[:, 1] = critic_loss
+            meta[:, 1] = torch.min(critic_loss, meta[:, 1])
 
             # Forward-prop todo retain graph above
             self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
@@ -283,7 +276,7 @@ class MetaDQNAgent(torch.nn.Module):
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
                                                            self.step, self.num_actions, logs=logs, reduction='none')
 
-            losses[:, 2] = actor_loss
+            meta[:, 2] = torch.min(actor_loss, meta[:, 2])
 
             self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
 
@@ -292,7 +285,6 @@ class MetaDQNAgent(torch.nn.Module):
                            self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
                            step_optim=step_optim)
 
-        meta[:, 0] = label
         replay.rewrite({'meta': meta}, ids)
 
         return logs
