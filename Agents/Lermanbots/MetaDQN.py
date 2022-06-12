@@ -53,10 +53,13 @@ class MetaDQNAgent(torch.nn.Module):
         self.step_optim_per_learn = step_optim_per_learn  # How often to step optimizer
         self.learn_step = 0  # Count learn steps
 
+        for name in ('encoder', 'actor', 'critic'):
+            del getattr(recipes, name)['optim']
+
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
-                            parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
-                            weight_decay=weight_decay, ema_decay=ema_decay * ema)
+            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder, lr=lr, lr_decay_epochs=lr_decay_epochs,
+                            weight_decay=weight_decay, ema_decay=ema_decay * ema, parallel=parallel,
+                            optim=torch.optim.SGD)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
@@ -66,14 +69,14 @@ class MetaDQNAgent(torch.nn.Module):
             else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.actor,
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                       ema_decay=ema_decay * ema)
+                                       ema_decay=ema_decay * ema, optim=torch.optim.SGD)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                      ema_decay=ema_decay)
+                                      ema_decay=ema_decay, optim=torch.optim.SGD)
 
-        self.action_selector = CategoricalCriticActor(stddev_schedule)
+        self.action_selector = CategoricalCriticActor(recipes.creator.stddev_schedule or stddev_schedule)
 
         # Image augmentation
         self.aug = instantiate(recipes.aug) if recipes.aug._target_ \
@@ -128,10 +131,7 @@ class MetaDQNAgent(torch.nn.Module):
         with torch.no_grad():
             # "Recollect"
 
-            now = time.time()
             batch = next(replay)
-            # print(time.time() - now, 'batch')
-            now = time.time()
             obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
                 batch, self.device)
 
@@ -143,11 +143,6 @@ class MetaDQNAgent(torch.nn.Module):
             batch_size = obs.shape[0]
 
             # "Envision" / "Perceive"
-
-            # Just for metrics / debugging
-            # with Utils.act_mode(self.encoder, self.actor):
-            #     obs_1 = self.aug(obs)
-            #     obs_1 = self.encoder(obs_1)
 
             # Augment and encode
             obs = self.aug(obs)
@@ -194,7 +189,7 @@ class MetaDQNAgent(torch.nn.Module):
 
                 mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-                meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
+                # meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
                 # meta[:, 0] = torch.max(mistake, meta[:, 0])
                 meta[:, 0] = mistake
 
@@ -202,13 +197,6 @@ class MetaDQNAgent(torch.nn.Module):
                 if self.supervise:
                     # Supervised loss
                     supervised_loss = mistake.mean()
-
-                    # Just for metrics / debugging
-                    # if step_optim:
-                    #     with Utils.act_mode(self.encoder, self.actor):
-                    #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
-                    #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
-                    #         supervised_loss_1 = mistake_1.mean()
 
                     # Forward-prop
                     self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
@@ -252,10 +240,9 @@ class MetaDQNAgent(torch.nn.Module):
                                                           obs, action, reward, discount, next_obs,
                                                           self.step, self.num_actions, logs=logs, reduction='none')
 
-                print(critic_loss.shape)
-
-                meta[:, 1][meta[:, 1].isnan()] = critic_loss[meta[:, 1].isnan()]
-                meta[:, 1] = torch.min(critic_loss, meta[:, 1])
+                # meta[:, 1][meta[:, 1].isnan()] = critic_loss[meta[:, 1].isnan()]
+                # meta[:, 1] = torch.min(critic_loss, meta[:, 1])
+                meta[:, 1] = critic_loss
 
                 # Forward-prop todo retain graph above
                 self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
@@ -272,20 +259,6 @@ class MetaDQNAgent(torch.nn.Module):
                                self.encoder, epoch=self.epoch if replay.offline else self.episode,
                                step_optim=step_optim)
 
-                # Just for metrics / debugging
-                # if step_optim:
-                #     with Utils.act_mode(self.encoder, self.actor):
-                #         if not hasattr(self, 'count_optim_steps'):
-                #             setattr(self, 'count_optim_steps', 0)
-                #         if not hasattr(self, 'count_improvements'):
-                #             setattr(self, 'count_improvements', 0)
-                #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
-                #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
-                #         self.count_improvements += mistake_1.mean() < supervised_loss_1
-                #         self.count_optim_steps += 1
-                #         print('Improvements:', self.count_improvements.item(), '/', self.count_optim_steps,
-                #               '({:.02%})'.format(self.count_improvements.item() / self.count_optim_steps))
-
             if self.generate or self.RL and not self.discrete:
                 # "Change" / "Grow"
 
@@ -293,10 +266,9 @@ class MetaDQNAgent(torch.nn.Module):
                 actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
                                                                self.step, self.num_actions, logs=logs, reduction='none')
 
-                print(actor_loss.shape)
-
-                meta[:, 2][meta[:, 2].isnan()] = actor_loss[meta[:, 2].isnan()]
-                meta[:, 2] = torch.min(actor_loss, meta[:, 2])
+                # meta[:, 2][meta[:, 2].isnan()] = actor_loss[meta[:, 2].isnan()]
+                # meta[:, 2] = torch.min(actor_loss, meta[:, 2])
+                meta[:, 2] = actor_loss
 
                 self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
 
@@ -305,14 +277,8 @@ class MetaDQNAgent(torch.nn.Module):
                                self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
                                step_optim=step_optim)
 
-            # print(time.time() - now, 'everything')
-            now = time.time()
             # meta[:, 0] = label + self.epoch + 1
             replay.rewrite({'meta': meta}, ids)
-            # print(time.time() - now, ' replay')
-            # print(self.step, self.frame)
-
             # threading.Thread(target=replay.rewrite, args=({'meta': meta}, ids)).start()
-            # multiprocessing.Process(target=replay.rewrite, args=({'meta': meta}, ids)).start()
 
             return logs

@@ -19,8 +19,9 @@ import Utils
 
 
 class EnsembleGaussianActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk, pi_head, ensemble_size=2,
-                 stddev_schedule=None, stddev_clip=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk=None, pi_head=None, ensemble_size=2,
+                 stddev_schedule=None, stddev_clip=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
+                 weight_decay=0, ema_decay=0):
         super().__init__()
 
         self.stddev_schedule = stddev_schedule
@@ -38,15 +39,17 @@ class EnsembleGaussianActor(nn.Module):
                                        else instantiate(pi_head, output_dim=out_dim) if pi_head and pi_head._target_
                                        else MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
-        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
+        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
 
-    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+        if lr or hasattr(optim, '_target_') and optim._target_:
+            self.optim = instantiate(optim) if hasattr(optim, '_target_') and optim._target_ \
+                else (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
 
-        if lr_decay_epochs:
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+        if lr_decay_epochs or hasattr(scheduler, '_target_') and scheduler._target_:
+            self.scheduler = instantiate(scheduler) if hasattr(scheduler, '_target_') and scheduler._target_ \
+                else scheduler or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:

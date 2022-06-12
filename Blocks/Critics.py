@@ -22,7 +22,8 @@ class EnsembleQCritic(nn.Module):
     returns a Normal distribution over the ensemble.
     """
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk=None, q_head=None, ensemble_size=2,
-                 discrete=False, ignore_obs=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+                 discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
+                 weight_decay=0, ema_decay=0):
         super().__init__()
 
         self.discrete = discrete
@@ -47,15 +48,17 @@ class EnsembleQCritic(nn.Module):
                                                        output_dim=out_dim) if q_head and q_head._target_
                                       else MLP(dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
 
-        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
+        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
 
-    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+        if lr or hasattr(optim, '_target_') and optim._target_:
+            self.optim = instantiate(optim) if hasattr(optim, '_target_') and optim._target_ \
+                else (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
 
-        if lr_decay_epochs:
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+        if lr_decay_epochs or hasattr(scheduler, '_target_') and scheduler._target_:
+            self.scheduler = instantiate(scheduler) if hasattr(scheduler, '_target_') and scheduler._target_ \
+                else scheduler or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:

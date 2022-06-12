@@ -149,6 +149,7 @@ plotting:
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
 
 Aug: null  # Shorthand for recipes.aug._target_
+
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 pool: null  # Shorthand for recipes.encoder.pool._target_
 Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
@@ -157,6 +158,9 @@ Generator: null  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_
 Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
 Pi_head: ${Generator}  # Shorthand for recipes.actor.Pi_head._target_
 Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
+
+Optim: null  # Shorthand for recipes.<block>.optim._target_
+Scheduler: null  # Shorthand for recipes.<block>.optim._target_
 
 recipes:
   aug:
@@ -170,6 +174,12 @@ recipes:
       _target_: ${pool}
       input_shape: null
       output_dim: null
+    optim:
+      _target_: ${Optim}
+      lr: ${lr}
+      weight_decay: ${weight_decay}
+    scheduler:
+      _target_: ${Scheduler}
   actor:
     trunk:
       _target_: ${Pi_trunk}
@@ -179,6 +189,12 @@ recipes:
       _target_: ${Pi_head}
       input_shape:
         - ${trunk_dim}
+    optim:
+      _target_: ${Optim}
+      lr: ${lr}
+      weight_decay: ${weight_decay}
+    scheduler:
+      _target_: ${Scheduler}
   critic:
     trunk:
       _target_: ${Q_trunk}
@@ -187,6 +203,14 @@ recipes:
     q_head:
       _target_: ${Q_head}
       input_shape: null
+    optim:
+      _target_: ${Optim}
+      lr: ${lr}
+      weight_decay: ${weight_decay}
+    scheduler:
+      _target_: ${Scheduler}
+  creator:
+    stddev_schedule: null
 
 hydra:
   run:

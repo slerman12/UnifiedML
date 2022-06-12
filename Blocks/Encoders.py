@@ -22,8 +22,9 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_norm=None, shift_max_norm=False, isotropic=False,
-                 eyes=None, pool=None, parallel=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def __init__(self, obs_shape, context_dim=0, data_norm=None, shift_max_norm=False, isotropic=False, parallel=False,
+                 eyes=None, pool=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
+                 weight_decay=0, ema_decay=0):
 
         super().__init__()
 
@@ -54,20 +55,22 @@ class CNNEncoder(nn.Module):
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
 
         # Initialize model
-        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
+        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
 
         # Isotropic
         if isotropic:
             assert tuple(obs_shape) == self.feature_shape, \
                 f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
 
-    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+        if lr or hasattr(optim, '_target_') and optim._target_:
+            self.optim = instantiate(optim) if hasattr(optim, '_target_') and optim._target_ \
+                else (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
 
-        if lr_decay_epochs:
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+        if lr_decay_epochs or hasattr(scheduler, '_target_') and scheduler._target_:
+            self.scheduler = instantiate(scheduler) if hasattr(scheduler, '_target_') and scheduler._target_ \
+                    else scheduler or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:
