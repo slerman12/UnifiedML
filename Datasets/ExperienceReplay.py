@@ -19,7 +19,7 @@ import numpy as np
 
 import torch
 from torch.utils.data import IterableDataset, Dataset
-from torch import multiprocessing
+from torch.multiprocessing import Pipe
 
 from torchvision.transforms import transforms
 
@@ -107,7 +107,7 @@ class ExperienceReplay:
             else np.inf
 
         # Sending data to workers directly
-        pipes, self.pipes = zip(*[multiprocessing.Pipe() for _ in range(self.num_workers)])
+        pipes, self.pipes = zip(*[Pipe() for _ in range(self.num_workers)])
 
         self.experiences = (Offline if offline else Online)(path=self.path,
                                                             pipes=pipes,

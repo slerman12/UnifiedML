@@ -172,7 +172,7 @@ class MetaDQNAgent(torch.nn.Module):
             self.epoch = replay.epoch
 
         if self.epoch > 1:
-            if (meta[:, 0] == label).all():
+            if (meta[:, 0] == label + self.epoch).all():
                 print('good')
             else:
                 print(meta[:, 0], '\n', label)
@@ -306,7 +306,7 @@ class MetaDQNAgent(torch.nn.Module):
 
         # print(time.time() - now, 'everything')
         now = time.time()
-        meta[:, 0] = label
+        meta[:, 0] = label + self.epoch + 1
         replay.rewrite({'meta': meta}, ids)
         # print(time.time() - now, ' replay')
         # print(self.step, self.frame)
