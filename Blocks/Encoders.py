@@ -36,7 +36,8 @@ class CNNEncoder(nn.Module):
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes) or CNN(self.in_channels, self.out_channels, depth=3),
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_shape)
+                                  or CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs

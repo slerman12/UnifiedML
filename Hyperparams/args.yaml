@@ -168,7 +168,6 @@ recipes:
   encoder:
     eyes:
       _target_: ${Eyes}
-      input_shape: ${obs_shape}
       output_dim: null
     pool:
       _target_: ${pool}
