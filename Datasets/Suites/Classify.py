@@ -206,7 +206,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
 
         # If custom, should override environment.dataset and generalize.dataset, otherwise just environment.dataset
         experiences = Utils.instantiate(dataset, train=train, transform=Transform()) if dataset._target_ and \
-                                                                                  ('Custom.' in task or train) \
+                                                                                        ('Custom.' in task or train) \
             else dataset_class(root=path + "_Train" if train else path + "_Eval",
                                **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
                                   else dict(train=train)),
