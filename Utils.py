@@ -44,11 +44,11 @@ def init(args):
     OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
-# Simple instantiation of a class or module by various semantics
+# Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
     if isinstance(args, str):
         for key in kwargs:
-            args.replace(f'${{{key}}}', kwargs[key])
+            args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')
         args = eval(args)
 
     return hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
@@ -60,9 +60,7 @@ def instantiate(args, i=0, **kwargs):
 
 # Checks if args can be instantiated
 def can_instantiate(args):
-    return isinstance(args, nn.Module) \
-           or isinstance(args, list) \
-           or hasattr(args, '_target_') and args._target_
+    return isinstance(args, (str, nn.Module, list)) or hasattr(args, '_target_') and args._target_
 
 
 # Saves model + args + attributes

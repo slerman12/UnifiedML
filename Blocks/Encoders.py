@@ -59,7 +59,7 @@ class CNNEncoder(nn.Module):
     def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
         if lr or Utils.can_instantiate(optim):
-            self.optim = Utils.instantiate(optim, params=self.parameters()) \
+            self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
                          or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # Learning rate scheduler

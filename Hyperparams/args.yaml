@@ -146,7 +146,7 @@ plotting:
   plot_bar: true
   verbose: false
 
-# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
+# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures or optimizers
 
 Aug: null  # Shorthand for recipes.aug._target_
 
@@ -177,7 +177,6 @@ recipes:
     optim:
       _target_: ${Optim}
       lr: ${lr}
-      weight_decay: ${weight_decay}
     scheduler:
       _target_: ${Scheduler}
   actor:
