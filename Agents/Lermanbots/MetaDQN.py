@@ -86,9 +86,9 @@ class MetaDQNAgent(torch.nn.Module):
 
             block = getattr(self, name)
 
-            setattr(block, 'optim',
-                    F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
-                    else None)
+            # setattr(block, 'optim',
+            #         F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
+            #         else None)
 
         # Birth
 
@@ -172,11 +172,12 @@ class MetaDQNAgent(torch.nn.Module):
             self.epoch = replay.epoch
 
         if self.epoch > 1:
-            if (meta[:, 0] == label + self.epoch).all():
-                print('good')
-            else:
-                print(meta[:, 0], '\n', label)
-                time.sleep(2)
+            assert (meta[:, 0] == label + self.epoch).all()
+            # if (meta[:, 0] == label + self.epoch).all():
+            #     print('good')
+            # else:
+            #     print(meta[:, 0], '\n', label)
+            #     time.sleep(2)
 
         self.learn_step += 1
         step_optim = self.learn_step % self.step_optim_per_learn == 0
@@ -194,8 +195,8 @@ class MetaDQNAgent(torch.nn.Module):
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-            meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
-            meta[:, 0] = torch.min(mistake, meta[:, 0])
+            # meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
+            # meta[:, 0] = torch.min(mistake, meta[:, 0])
 
             # Supervised learning
             if self.supervise:
@@ -210,13 +211,14 @@ class MetaDQNAgent(torch.nn.Module):
                 #         supervised_loss_1 = mistake_1.mean()
 
                 # Forward-prop
-                self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
-                self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
+                # self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
+                # self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
 
                 # Update supervised
-                Utils.optimize(None,
+                Utils.optimize(supervised_loss,
                                self.actor, epoch=self.epoch if replay.offline else self.episode,
-                               step_optim=step_optim)
+                               # step_optim=step_optim
+                               )
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -269,7 +271,8 @@ class MetaDQNAgent(torch.nn.Module):
         if not self.generate:
             Utils.optimize(None,
                            self.encoder, epoch=self.epoch if replay.offline else self.episode,
-                           step_optim=step_optim)
+                           # step_optim=step_optim
+                           )
 
             # Just for metrics / debugging
             # if step_optim:
