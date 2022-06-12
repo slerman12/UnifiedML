@@ -51,14 +51,6 @@ class ExperienceReplay:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)
 
-        # Directory for sending updates to replay workers
-        (self.path / 'Updates').mkdir(exist_ok=True, parents=True)
-
-        # Delete any pre-existing ones
-        update_names = (self.path / 'Updates').glob('*.npz')
-        for update_name in update_names:
-            update_name.unlink(missing_ok=True)  # Deletes file
-
         if not save:
             # Delete replay on terminate
             atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
@@ -107,7 +99,7 @@ class ExperienceReplay:
             else np.inf
 
         # Sending data to workers directly
-        pipes, self.pipes = zip(*[Pipe() for _ in range(self.num_workers)])
+        pipes, self.pipes = zip(*[Pipe() for _ in range(self.num_workers)])  # TODO update_pipes and storage_pipes?
 
         self.experiences = (Offline if offline else Online)(path=self.path,
                                                             pipes=pipes,
@@ -232,13 +224,13 @@ class ExperienceReplay:
         if self.offline:
             # In the offline setting, each worker has a copy of all the data
             for worker in range(self.num_workers):
-                self.pipes[worker].send((updates, exp_ids))  # TODO somehow need to sync up
+                self.pipes[worker].send((updates, exp_ids))
         else:
             # Send update to dedicated worker
             for worker_id in torch.unique(worker_ids):
                 worker = worker_ids == worker_id
                 update = {key: updates[key][worker] for key in updates}
-                self.pipes[worker].send((update, exp_ids[worker]))  # TODO somehow need to sync up
+                self.pipes[worker].send((update, exp_ids[worker]))
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
