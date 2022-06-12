@@ -266,7 +266,7 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
-In addition to Eval accuracies, Train accuracies can be printed with ```agent.log=true```.
+In addition to Eval accuracies, more in-depth Train accuracies can always be printed with ```agent.log=true```.
 
 Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```transform=```. For example,
 
