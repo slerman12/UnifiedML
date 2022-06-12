@@ -270,7 +270,7 @@ In addition to Eval accuracies, more in-depth Train accuracies can always be pri
 
 **Important features** Many popular features are unified in this library and generalized across domains with more being added: 
 
-* Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay with ```ema_decay=```. 
+* Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
   
 * See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined (such as ResNet50) or custom architectures via the command line syntax. 
   
