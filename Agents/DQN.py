@@ -70,8 +70,7 @@ class DQNAgent(torch.nn.Module):
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
-        self.aug = instantiate(recipes.aug) if recipes.aug._target_ \
-            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+        self.aug = Utils.instantiate(recipes.aug) or IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
 
         # Birth
 

@@ -5,8 +5,6 @@
 import copy
 import math
 
-from hydra.utils import instantiate
-
 import torch
 from torch import nn
 
@@ -38,18 +36,14 @@ class CNNEncoder(nn.Module):
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(eyes if isinstance(eyes, nn.Module)
-                                  else instantiate(eyes) if eyes and eyes._target_
-                                  else CNN(self.in_channels, self.out_channels, depth=3),
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes) or CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
 
-        self.pool = pool if isinstance(pool, nn.Module) \
-            else instantiate(pool, input_shape=self.feature_shape) if pool and pool._target_ \
-            else nn.Flatten()
+        self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
@@ -64,13 +58,13 @@ class CNNEncoder(nn.Module):
 
     def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr or hasattr(optim, '_target_') and optim._target_:
-            self.optim = instantiate(optim) if hasattr(optim, '_target_') and optim._target_ \
-                else (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
+        if lr or Utils.can_instantiate(optim):
+            self.optim = Utils.instantiate(optim, params=self.parameters()) \
+                         or (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
 
-        if lr_decay_epochs or hasattr(scheduler, '_target_') and scheduler._target_:
-            self.scheduler = instantiate(scheduler) if hasattr(scheduler, '_target_') and scheduler._target_ \
-                    else scheduler or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+        if lr_decay_epochs or Utils.can_instantiate(scheduler):
+            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) or scheduler \
+                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:

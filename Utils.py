@@ -8,7 +8,7 @@ import re
 import warnings
 from pathlib import Path
 
-from hydra.utils import instantiate
+import hydra
 from omegaconf import OmegaConf
 
 import numpy as np
@@ -44,7 +44,6 @@ def init(args):
 
 # Saves model + args + attributes
 def save(path, model, args, *attributes):
-    path = path.replace('Agents.', '')
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
     torch.save({'state_dict': model.state_dict(), 'args': args,
                 **{attr: getattr(model, attr) for attr in attributes}}, path)
@@ -52,8 +51,6 @@ def save(path, model, args, *attributes):
 
 # Loads model or part of model
 def load(path, device, model=None, preserve=(), distributed=False, attr=''):
-    path, to_load = path.replace('Agents.', ''), None
-
     while True:
         try:
             to_load = torch.load(path, map_location=getattr(model, 'device', device))
@@ -64,7 +61,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
     if model is None:
-        model = instantiate(to_load['args']).to(device)
+        model = hydra.utils.instantiate(to_load['args']).to(device)
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
@@ -82,6 +79,21 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
             model = getattr(model, key)
 
     return model
+
+
+# Simple instantiation of a class or module
+def instantiate(args, i=0, __default=None, **kwargs):
+    return args if isinstance(args, nn.Module) \
+        else args[i] if isinstance(args, list) \
+        else hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
+        else __default
+
+
+# Checks if args can be instantiated
+def can_instantiate(args):
+    return isinstance(args, nn.Module) \
+           or isinstance(args, list) \
+           or hasattr(args, '_target_') and args._target_
 
 
 # Initializes model weights a la orthogonality
