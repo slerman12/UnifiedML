@@ -39,7 +39,8 @@ class F_ckGradientDescent(torch.nn.Module):
 
     def propagate(self, loss, previous_loss, batch_size, retain_graph=False):
         uninitialized = previous_loss.isnan()
-        previous_loss[uninitialized] = 2 * loss[uninitialized]
+        # previous_loss[uninitialized] = 2 * loss[uninitialized]
+        previous_loss[uninitialized] = loss[uninitialized]
 
         advantage = torch.relu(previous_loss - loss).mean() * batch_size
         self.running_sum += advantage
@@ -55,13 +56,15 @@ class F_ckGradientDescent(torch.nn.Module):
             #     decoy.grad = param.data - decoy.data
             if not retain_graph:
                 decoy.data = dist.sample()
+                decoy.data = torch.sign(decoy.data) * self.lr  # Added this (can remove lr altogether this way)
                 _decoy.data = decoy.data
 
     def step(self):
         if self.running_sum:
 
             for decoy in self.decoys:
-                decoy.grad /= self.running_sum
+                # decoy.grad /= self.running_sum
+                decoy.grad /= max(self.running_sum, 1)
             self.optim.step()
 
         else:

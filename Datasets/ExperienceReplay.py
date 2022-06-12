@@ -2,21 +2,17 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import asyncio
-import multiprocessing
 import os
 import random
 import glob
 import shutil
 import atexit
-import threading
-import time
 import warnings
-from multiprocessing import Pool
 from pathlib import Path
 import datetime
 import io
 import traceback
+import multiprocessing
 
 from omegaconf import OmegaConf
 
@@ -26,7 +22,6 @@ import torch
 from torch.utils.data import IterableDataset, Dataset
 
 from torchvision.transforms import transforms
-import h5py
 
 
 class ExperienceReplay:
@@ -111,10 +106,11 @@ class ExperienceReplay:
         capacity = capacity // self.num_workers if capacity and not offline \
             else np.inf
 
-        self.queue = multiprocessing.Queue()  # TODO use pipe
+        # Sending data to workers directly
+        self.queues = [multiprocessing.Queue() for _ in range(self.num_workers)]
 
         self.experiences = (Offline if offline else Online)(path=self.path,
-                                                            queue=self.queue,
+                                                            queues=self.queues,
                                                             capacity=capacity,
                                                             specs=self.specs,
                                                             fetch_per=1000,
@@ -229,65 +225,20 @@ class ExperienceReplay:
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
-        updates = {key: updates[key].detach().cpu().numpy() for key in updates}
+        updates = {key: updates[key].detach().numpy() for key in updates}
 
         # Store into replay buffer
         for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
             # In the offline setting, each worker has a copy of all the data
             for worker in range(self.num_workers):
 
-                timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-                update_name = f'{exp_id}_{worker if self.offline else worker_id}_{timestamp}.npz'
                 update = {key: updates[key][i] for key in updates}
 
                 # Send update to workers
-                self.queue.put(update)
-                # with io.BytesIO() as buffer:
-                #     np.savez_compressed(buffer, **update)
-                #     buffer.seek(0)
-                #     with (self.path / 'Updates' / update_name).open('wb') as f:
-                #         f.write(buffer.read())
-                # file = h5py.File('arrays.h5', 'w', dtype=data.dtype)
-                # file.create_dataset(update_name, data=update)
+                self.queues[worker if self.offline else worker_id].put((update, exp_id))
 
                 if not self.offline:
                     break
-
-    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
-    # def rewrite(self, updates, ids):
-    #     assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
-    #
-    #     updates = {key: updates[key].detach().numpy() for key in updates}
-    #
-    #     threading.Thread(target=store, args=(updates, ids, self.num_workers, self.offline, self.path)).start()
-
-    # multiprocessing.Process(target=store, args=(updates, ids, self.num_workers, self.offline, self.path)).start()
-
-    # store(*(updates, ids, self.num_workers, self.offline, self.path))
-
-    # Update experiences (in workers) by ID (experience, worker ID) and dict like {spec: update value}
-    # def rewrite(self, updates, ids):
-    #     assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
-    #
-    #     exp_ids, worker_ids = ids.T
-    #     updates['exp_ids'] = exp_ids
-    #
-    #     # Store into replay buffer per worker
-    #     for worker_id in torch.unique(worker_ids, sorted=False):
-    #         # In the offline setting, each worker has a copy of all the data
-    #         per_worker = self.offline or (ids[:, 1] == worker_id)  # Otherwise each worker has dedicated data
-    #
-    #         update = {key: updates[key][per_worker].cpu().numpy() for key in updates}
-    #
-    #         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-    #         update_name = f'{worker_id}_{timestamp}.npz'
-    #
-    #         # Send update to workers
-    #         with io.BytesIO() as buffer:
-    #             np.savez_compressed(buffer, update)
-    #             buffer.seek(0)
-    #             with (self.path / 'Updates' / update_name).open('wb') as f:
-    #                 f.write(buffer.read())
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -301,35 +252,16 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# def store(updates, ids, num_workers, offline, path):
-#     for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
-#         # In the offline setting, each worker has a copy of all the data
-#         for worker in range(num_workers):
-#
-#             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-#             update_name = f'{exp_id}_{worker if offline else worker_id}_{timestamp}.npz'
-#             update = {key: updates[key][i] for key in updates}
-#
-#             # Send update to workers
-#             with io.BytesIO() as buffer:
-#                 np.savez_compressed(buffer, **update)
-#                 buffer.seek(0)
-#                 with (path / 'Updates' / update_name).open('wb') as f:
-#                     f.write(buffer.read())
-#
-#             if not offline:
-#                 break
-
-
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
-    def __init__(self, path, queue, capacity, specs, fetch_per, save, offline=True, nstep=0, discount=1, transform=None):
+    def __init__(self, path, queues, capacity, specs, fetch_per, save, offline, nstep=0, discount=1, transform=None):
 
         # Dataset construction via parallel workers
 
         self.path = path
 
-        self.queue = queue
+        # Multiprocessing queues
+        self.queues = queues  # Receiving data directly from Replay
 
         self.episode_names = []
         self.episodes = dict()
@@ -361,6 +293,10 @@ class Experiences:
     @property
     def num_workers(self):
         return torch.utils.data.get_worker_info().num_workers
+
+    @property
+    def queue(self):
+        return self.queues[self.worker_id]
 
     def load_episode(self, episode_name):
         try:
@@ -422,61 +358,16 @@ class Experiences:
 
     # Workers can update/write-to their own data based on file-stored update specs
     def worker_fetch_updates(self):
-        update_names = (self.path / 'Updates').glob('*.npz')
-
-        if self.worker_id == 2:
-            while not self.queue.empty():
-                bla = self.queue.get()
-
-        # Fetch update specs
-        for i, update_name in enumerate(update_names):
-            exp_id, worker_id = [int(ids) for ids in update_name.stem.split('_')[:2]]
-
-            if worker_id != self.worker_id:  # Each worker updates own dedicated data
-                continue
+        while not self.queue.empty():
+            update, exp_id = self.queue.get()
 
             # Get corresponding experience and episode
             idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
 
-            try:
-                with update_name.open('rb') as update_file:
-                    update = np.load(update_file)
-
-                    # Iterate through each update spec
-                    for key in update.keys():
-                        # Update experience in replay
-                        self.episodes[episode_name][key][idx] = update[key]
-                update_name.unlink(missing_ok=True)  # Delete update spec when stored
-            except:
-                continue
-
-    # Workers can update/write-to their own data based on file-stored update specs
-    # def worker_fetch_updates(self):
-    #     update_names = (self.path / 'Updates').glob('*.npz')
-    #
-    #     # Fetch update specs
-    #     for update_name in update_names:
-    #         worker_id = int(update_name.stem.split('_')[0])
-    #
-    #         if worker_id != self.worker_id:  # Each worker updates own dedicated data
-    #             continue
-    #
-    #         try:
-    #             with update_name.open('rb') as update_file:
-    #                 update = np.load(update_file)
-    #                 update = {key: update[key] for key in update.keys()}
-    #         except:
-    #             continue
-    #
-    #         for i, exp_id in enumerate(update.pop('exp_ids')):
-    #             # Get corresponding experience and episode
-    #             idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
-    #
-    #             # Iterate through each update spec
-    #             for key in update.keys():
-    #                 # Update experience in replay
-    #                 self.episodes[episode_name][key][idx] = update[key][i]
-    #             update_name.unlink(missing_ok=True)  # Delete update spec when stored
+            # Iterate through each update spec
+            for key in update.keys():
+                # Update experience in replay
+                self.episodes[episode_name][key][idx] = update[key]
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
@@ -516,17 +407,6 @@ class Experiences:
             traj_o = traj_a = traj_r = traj_l = reward = np.array([np.NaN])
             discount = np.array([1.0])
 
-        # Compute cumulative discounted reward
-        # reward = np.array([np.NaN])
-        # discount = np.array([1.0])
-        # for i in range(1, self.nstep + 1):
-        #     if episode['reward'][idx + i] != np.NaN:
-        #         step_reward = episode['reward'][idx + i]
-        #         if np.isnan(reward):
-        #             reward = np.zeros(1)
-        #         reward += discount * step_reward
-        #         discount *= episode['discount'][idx + i] * self.discount
-
         # Transform
         if self.transform is not None:  # TODO audio
             obs = self.transform(torch.as_tensor(obs).div(255)) * 255
@@ -560,8 +440,8 @@ class Experiences:
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    def __init__(self, path, queue, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, queue, capacity, specs, fetch_per, save, False, nstep, discount, transform)
+    def __init__(self, path, queues, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, queues, capacity, specs, fetch_per, save, False, nstep, discount, transform)
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
@@ -571,8 +451,8 @@ class Online(Experiences, IterableDataset):
 
 # Loads Experiences with a standard Dataset
 class Offline(Experiences, Dataset):
-    def __init__(self, path, queue, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, queue, capacity, specs, fetch_per, save, True, nstep, discount, transform)
+    def __init__(self, path, queues, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, queues, capacity, specs, fetch_per, save, True, nstep, discount, transform)
 
     def __getitem__(self, idx):
         return self.fetch_sample_process(idx)  # Get single experience by index
