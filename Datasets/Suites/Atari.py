@@ -212,7 +212,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
 
     try:
         env = gym.make(task,
-                       obs_type='rgb',                   # ram | rgb | grayscale
+                       obs_type='grayscale',                   # ram | rgb | grayscale
                        frameskip=1,                      # frame skip
                        # mode=0,                           # game mode, see Machado et al. 2018
                        difficulty=0,                     # game difficulty, see Machado et al. 2018

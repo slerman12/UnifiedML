@@ -186,10 +186,6 @@ class MetaDQNAgent(torch.nn.Module):
 
                 mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-                # meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
-                # meta[:, 0] = torch.max(mistake, meta[:, 0])
-                meta[:, 0] = mistake
-
                 # Supervised learning
                 if self.supervise:
                     # Supervised loss
@@ -198,6 +194,10 @@ class MetaDQNAgent(torch.nn.Module):
                     # Forward-prop
                     self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
                     self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
+
+                    # meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
+                    # meta[:, 0] = torch.max(mistake, meta[:, 0])
+                    meta[:, 0] = mistake
 
                     # Update supervised
                     Utils.optimize(None,
@@ -237,13 +237,13 @@ class MetaDQNAgent(torch.nn.Module):
                                                           obs, action, reward, discount, next_obs,
                                                           self.step, self.num_actions, logs=logs, reduction='none')
 
-                # meta[:, 1][meta[:, 1].isnan()] = critic_loss[meta[:, 1].isnan()]
-                # meta[:, 1] = torch.min(critic_loss, meta[:, 1])
-                meta[:, 1] = critic_loss
-
                 # Forward-prop todo retain graph above
                 self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
                 self.critic.optim.propagate(critic_loss, meta[:, 1], batch_size)
+
+                # meta[:, 1][meta[:, 1].isnan()] = critic_loss[meta[:, 1].isnan()]
+                # meta[:, 1] = torch.min(critic_loss, meta[:, 1])
+                meta[:, 1] = critic_loss
 
                 # Update critic
                 Utils.optimize(None,
@@ -263,11 +263,11 @@ class MetaDQNAgent(torch.nn.Module):
                 actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
                                                                self.step, self.num_actions, logs=logs, reduction='none')
 
+                self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
+
                 # meta[:, 2][meta[:, 2].isnan()] = actor_loss[meta[:, 2].isnan()]
                 # meta[:, 2] = torch.min(actor_loss, meta[:, 2])
                 meta[:, 2] = actor_loss
-
-                self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
 
                 # Update actor
                 Utils.optimize(None,

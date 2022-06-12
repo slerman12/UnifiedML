@@ -26,7 +26,8 @@ class F_ckGradientDescent(torch.nn.Module):
         for param in self.optim.param_groups:
             param['lr'] = 1
 
-        self.decoys = self.params = self._decoys = self.samplers = self.running_sum = self.elite_score = None
+        self.decoys = self.params = self._decoys = self.samplers = None
+        self.running_sum = self.elite_score = 0
 
         self.samplers = []
 
@@ -42,12 +43,14 @@ class F_ckGradientDescent(torch.nn.Module):
         self.step()
 
     def propagate(self, loss, previous_loss, batch_size, retain_graph=False):
+        previous_loss = deepcopy(previous_loss)
+
         uninitialized = previous_loss.isnan()
         # previous_loss[uninitialized] = 2 * loss[uninitialized]
         previous_loss[uninitialized] = loss[uninitialized]
 
         # advantage = torch.relu(previous_loss - loss).sum()
-        advantage = torch.relu(previous_loss.mean() - loss.mean()) ** .5
+        advantage = torch.relu(previous_loss.mean() - loss.mean())
         self.running_sum += advantage
 
         # update = False
@@ -70,7 +73,7 @@ class F_ckGradientDescent(torch.nn.Module):
             for param, decoy in zip(self.params, self.decoys):
                 # decoy.grad /= self.running_sum
                 decoy.data = param.data
-                decoy.grad /= max(self.running_sum, 1)
+                decoy.grad /= self.running_sum or 1
             self.optim.step()
 
         else:
@@ -82,9 +85,10 @@ class F_ckGradientDescent(torch.nn.Module):
 
         self.params = deepcopy(self.decoys)
 
-        self.running_sum = self.elite_score = 0
+        # self.elite_score = 0
 
     def zero_grad(self, **kwargs):
+        self.running_sum = 0
         self.optim.zero_grad()
 
     def train(self, mode=True):

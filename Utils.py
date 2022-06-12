@@ -45,8 +45,8 @@ def init(args):
 # Simple instantiation of a class or module
 def instantiate(args, i=0, **kwargs):
     return hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
+        else None if hasattr(args, '_target_') \
         else args[i] if isinstance(args, list) \
-        else None if isinstance(args, type) or hasattr(args, '_target_') \
         else args
 
 
