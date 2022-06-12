@@ -11,6 +11,8 @@ import warnings
 from pathlib import Path
 from tqdm import tqdm
 
+from hydra.utils import instantiate
+
 from dm_env import specs, StepType
 
 import numpy as np
@@ -23,8 +25,6 @@ from torchvision.transforms import functional as F
 
 from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
 from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
-
-import Utils
 
 
 class ClassifyEnv:
@@ -205,8 +205,8 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
                   f'Note: to also set eval, set `task=classify/custom`. Eval: {task}')
 
         # If custom, should override environment.dataset and generalize.dataset, otherwise just environment.dataset
-        experiences = Utils.instantiate(dataset, train=train, transform=Transform()) if dataset._target_ and \
-                                                                                        ('Custom.' in task or train) \
+        experiences = instantiate(dataset, train=train, transform=Transform()) if dataset._target_ and \
+                                                                                  ('Custom.' in task or train) \
             else dataset_class(root=path + "_Train" if train else path + "_Eval",
                                **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
                                   else dict(train=train)),

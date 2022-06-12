@@ -76,7 +76,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
     if model is None:
-        model = instantiate(to_load['args']).to(device)
+        model = hydra.utils.instantiate(to_load['args']).to(device)
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
@@ -86,17 +86,15 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
         if hasattr(model, key) and key not in ['state_dict', 'args', *preserve]:
             setattr(model, key, to_load[key])
 
-    # Can also load part of a model
-    # Useful for recipes,
+    # Can also load part of a model. Useful for recipes,
     # e.g. python Run.py Eyes=Utils.Load +recipes.encoder.eyes.path=<checkpoint> +recipes.encoder.eyes.attr=encoder.Eyes
     for key in attr.split('.'):
         if key:
             model = getattr(model, key)
-
     return model
 
 
-# Initializes model weights a la orthogonality
+# Initializes model weights a la orthogonal
 def weight_init(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
@@ -109,7 +107,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Copies parameters from one model to another, with optionally EMA weighing
+# Copies parameters from one model to another, optionally EMA weighing
 def param_copy(model, target, ema_decay=0):
     with torch.no_grad():
         for target_param, model_param in zip(target.state_dict().values(), model.state_dict().values()):
@@ -196,12 +194,12 @@ def one_hot(x, num_classes, null_value=0):
     return nulls.scatter(len(shape), x, 1).float()
 
 
-# Differentiable one_hot
+# Differentiable one_hot via "re-parameterization"
 def rone_hot(x, null_value=0):
     return x - (x - one_hot(torch.argmax(x, -1, keepdim=True), x.shape[-1]) * (1 - null_value) + null_value)
 
 
-# Differentiable clamp
+# Differentiable clamp via "re-parameterization"
 def rclamp(x, min, max):
     return x - (x - torch.clamp(x, min, max))
 

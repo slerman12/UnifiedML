@@ -50,14 +50,14 @@ class EnsembleQCritic(nn.Module):
             self.optim = Utils.instantiate(optim, params=self.parameters()) \
                          or (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
 
+        # Learning rate scheduler
         if lr_decay_epochs or Utils.can_instantiate(scheduler):
             self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) or scheduler \
                              or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:
-            self.ema = copy.deepcopy(self).eval()
-            self.ema_decay = ema_decay
+            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
 
     def update_ema_params(self):
         assert hasattr(self, 'ema')
