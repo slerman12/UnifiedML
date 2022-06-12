@@ -99,7 +99,7 @@ class ExperienceReplay:
             else np.inf
 
         # Sending data to workers directly
-        pipes, self.pipes = zip(*[Pipe() for _ in range(self.num_workers)])  # TODO update_pipes and storage_pipes?
+        pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])  # TODO update & storage_pipes?
 
         self.experiences = (Offline if offline else Online)(path=self.path,
                                                             pipes=pipes,

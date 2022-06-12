@@ -26,7 +26,9 @@ class F_ckGradientDescent(torch.nn.Module):
         for param in self.optim.param_groups:
             param['lr'] = 1
 
-        self.decoys = self.params = self._decoys = self.dists = self.running_sum = self.elite_score = None
+        self.decoys = self.params = self._decoys = self.samplers = self.running_sum = self.elite_score = None
+
+        self.samplers = []
 
         # Torch initializes grads to None by default
         for param_group in self.optim.param_groups:
@@ -34,6 +36,8 @@ class F_ckGradientDescent(torch.nn.Module):
                 if isinstance(params, list):
                     for param in params:
                         param.grad = torch.zeros_like(param.data)
+                        sampler = torch.distributions.Normal(torch.zeros_like(param), self.lr)
+                        self.samplers.append(sampler)
 
         self.step()
 
@@ -42,7 +46,8 @@ class F_ckGradientDescent(torch.nn.Module):
         # previous_loss[uninitialized] = 2 * loss[uninitialized]
         previous_loss[uninitialized] = loss[uninitialized]
 
-        advantage = torch.relu(previous_loss - loss).mean() * batch_size
+        # advantage = torch.relu(previous_loss - loss).sum()
+        advantage = torch.relu(previous_loss.mean() - loss.mean()) ** .5
         self.running_sum += advantage
 
         # update = False
@@ -50,20 +55,21 @@ class F_ckGradientDescent(torch.nn.Module):
         #     self.elite_score = advantage
         #     update = True
 
-        for decoy, param, _decoy, dist in zip(self.decoys, self.params, self._decoys, self.dists):
+        for decoy, param, _decoy, sampler in zip(self.decoys, self.params, self._decoys, self.samplers):
             decoy.grad += (param.data - decoy.data) * advantage
             # if update:
             #     decoy.grad = param.data - decoy.data
             if not retain_graph:
-                decoy.data = dist.sample()
-                decoy.data = torch.sign(decoy.data) * self.lr  # Added this (can remove lr altogether this way)
+                sample = sampler.sample()
+                decoy.data = param.data + sample
                 _decoy.data = decoy.data
 
     def step(self):
         if self.running_sum:
 
-            for decoy in self.decoys:
+            for param, decoy in zip(self.params, self.decoys):
                 # decoy.grad /= self.running_sum
+                decoy.data = param.data
                 decoy.grad /= max(self.running_sum, 1)
             self.optim.step()
 
@@ -75,12 +81,6 @@ class F_ckGradientDescent(torch.nn.Module):
         self._decoys = deepcopy(self.decoys)
 
         self.params = deepcopy(self.decoys)
-
-        self.dists = []
-
-        for param in self.params:
-            dist = torch.distributions.Normal(param.data, self.lr)
-            self.dists.append(dist)
 
         self.running_sum = self.elite_score = 0
 

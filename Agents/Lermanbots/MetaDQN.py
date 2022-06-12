@@ -2,8 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import multiprocessing
-import threading
 import time
 import math
 
@@ -33,7 +31,7 @@ class MetaDQNAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actions=1, num_critics=2, step_optim_per_learn=10  # MetaDQN
+                 num_actions=1, num_critics=2, step_optim_per_learn=200  # MetaDQN
                  ):
         super().__init__()
 
@@ -173,11 +171,12 @@ class MetaDQNAgent(torch.nn.Module):
                 self.epoch = replay.epoch
 
             # if self.epoch > 1:
-            #     if (meta[:, 0] == label + self.epoch).all():
-            #         print('good')
-            #     else:
-            #         print(meta[:, 0], '\n', label)
-            #         time.sleep(2)
+            #     assert (meta[:, 0] == label + self.epoch).all()
+                # if (meta[:, 0] == label + self.epoch).all():
+                #     print('good')
+                # else:
+                #     print(meta[:, 0], '\n', label)
+                #     time.sleep(2)
 
             self.learn_step += 1
             step_optim = self.learn_step % self.step_optim_per_learn == 0
@@ -196,7 +195,8 @@ class MetaDQNAgent(torch.nn.Module):
                 mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
                 meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
-                meta[:, 0] = torch.min(mistake, meta[:, 0])
+                # meta[:, 0] = torch.max(mistake, meta[:, 0])
+                meta[:, 0] = mistake
 
                 # Supervised learning
                 if self.supervise:
@@ -307,7 +307,7 @@ class MetaDQNAgent(torch.nn.Module):
 
             # print(time.time() - now, 'everything')
             now = time.time()
-            meta[:, 0] = label + self.epoch + 1
+            # meta[:, 0] = label + self.epoch + 1
             replay.rewrite({'meta': meta}, ids)
             # print(time.time() - now, ' replay')
             # print(self.step, self.frame)
