@@ -114,7 +114,7 @@ class MLPEncoder(nn.Module):
 
     def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, data_norm=None, layer_norm_dim=None,
                  non_linearity=nn.ReLU(inplace=True), dropout=0, binary=False, l2_norm=False,
-                 parallel=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+                 parallel=False, optim=None, scheduler=None, lr=0, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
         super().__init__()
 
         self.data_norm = torch.tensor(data_norm or [0, 1])
@@ -133,20 +133,24 @@ class MLPEncoder(nn.Module):
         if parallel:
             self.MLP = nn.DataParallel(self.MLP)  # Parallel on visible GPUs
 
-        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
+        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
 
         self.repr_shape, self.repr_dim = (output_dim,), output_dim
 
-    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+        if lr or Utils.can_instantiate(optim):
+            self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
+                         or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+
+        # Learning rate scheduler
+        if lr_decay_epochs or Utils.can_instantiate(scheduler):
+            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
+                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:
-            self.ema = copy.deepcopy(self).eval()
-            self.ema_decay = ema_decay
+            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
 
     def update_ema_params(self):
         assert hasattr(self, 'ema_decay')
