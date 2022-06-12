@@ -424,7 +424,7 @@ python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architect
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
-### Custom Optimization
+### Custom Optimizers
 
 ### Custom Datasets
 
