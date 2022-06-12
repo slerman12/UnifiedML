@@ -130,7 +130,7 @@ logger:
 
 vlogger:
   _target_: Vlogger.Vlogger
-  path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Video_Image
+  path: ${logger.path}${task_name}_${seed}_Video_Image
   fps: 20
   reel: ${generate}
 
@@ -207,6 +207,7 @@ recipes:
       _target_: ${Scheduler}
 
 hydra:
+  output_subdir: ${logger.path}${task_name}_${seed}_Hydra
   run:
     dir: ./
   sweep:
