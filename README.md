@@ -268,7 +268,9 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 In addition to Eval accuracies, more in-depth Train accuracies can always be printed with ```agent.log=true```.
 
-**Important features** Many popular features with more being added are unified in this library agnostic to domain, be it classification, RL, or generative modeling. Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. A [cosine annealing learning rate schedule](https://arxiv.org/abs/1608.03983) can be applied for 100 epochs (or episodes in RL) with ```lr_decay_epochs=100```. And torchvision transforms can be passed in as dicts via ```transform=```. For example,
+**Important features** Many popular features, with more being added, are unified in this library agnostic to domain, be it classification, RL, or generative modeling. 
+
+Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```, a [cosine annealing learning rate schedule](https://arxiv.org/abs/1608.03983) can be applied for 100 epochs (or episodes in RL) with ```lr_decay_epochs=100```, and torchvision transforms can be passed in as dicts via ```transform=```. For example,
 
 ```console
 python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
