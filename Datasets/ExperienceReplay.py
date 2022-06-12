@@ -12,7 +12,6 @@ from pathlib import Path
 import datetime
 import io
 import traceback
-import multiprocessing
 
 from omegaconf import OmegaConf
 
@@ -20,6 +19,7 @@ import numpy as np
 
 import torch
 from torch.utils.data import IterableDataset, Dataset
+from torch import multiprocessing
 
 from torchvision.transforms import transforms
 
@@ -225,20 +225,20 @@ class ExperienceReplay:
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
-        updates = {key: updates[key].detach().numpy() for key in updates}
+        updates = {key: updates[key].detach() for key in updates}
+        exp_ids, worker_ids = ids.detach().int().T
 
         # Store into replay buffer
-        for i, (exp_id, worker_id) in enumerate(zip(*ids.int().T)):
+        if self.offline:
             # In the offline setting, each worker has a copy of all the data
             for worker in range(self.num_workers):
-
-                update = {key: updates[key][i] for key in updates}
-
-                # Send update to workers
-                self.queues[worker if self.offline else worker_id].put((update, exp_id))
-
-                if not self.offline:
-                    break
+                self.queues[worker].put((updates, exp_ids))
+        else:
+            # Send update to dedicated worker
+            for worker_id in torch.unique(worker_ids):
+                worker = worker_ids == worker_id
+                update = {key: updates[key][worker] for key in updates}
+                self.queues[worker].put((update, exp_ids[worker]))
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -359,15 +359,16 @@ class Experiences:
     # Workers can update/write-to their own data based on file-stored update specs
     def worker_fetch_updates(self):
         while not self.queue.empty():
-            update, exp_id = self.queue.get()
-
-            # Get corresponding experience and episode
-            idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
+            updates, exp_ids = self.queue.get()
 
             # Iterate through each update spec
-            for key in update.keys():
-                # Update experience in replay
-                self.episodes[episode_name][key][idx] = update[key]
+            for key in updates:
+                for update, exp_id in zip(updates[key], exp_ids):
+                    # Get corresponding experience and episode
+                    idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
+
+                    # Update experience in replay
+                    self.episodes[episode_name][key][idx] = update
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
