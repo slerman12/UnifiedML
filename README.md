@@ -232,11 +232,11 @@ python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
+Save videos with ```log_video=true```.
+
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across both Atari and DMC.
-
-Save videos with ```log_video=true```.
 
 ### Classification 
 
