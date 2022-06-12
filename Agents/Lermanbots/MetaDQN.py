@@ -76,7 +76,7 @@ class MetaDQNAgent(torch.nn.Module):
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay, optim=torch.optim.SGD)
 
-        self.action_selector = CategoricalCriticActor(recipes.creator.stddev_schedule or stddev_schedule)
+        self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
         self.aug = instantiate(recipes.aug) if recipes.aug._target_ \

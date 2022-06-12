@@ -159,8 +159,10 @@ Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
 Pi_head: ${Generator}  # Shorthand for recipes.actor.Pi_head._target_
 Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 
+# Or optimization e.g. python Run.py Optim=Utils.torch.optim.SGD
+
 Optim: null  # Shorthand for recipes.<block>.optim._target_
-Scheduler: null  # Shorthand for recipes.<block>.optim._target_
+Scheduler: null  # Shorthand for recipes.<block>.scheduler._target_
 
 recipes:
   aug:
@@ -209,8 +211,6 @@ recipes:
       weight_decay: ${weight_decay}
     scheduler:
       _target_: ${Scheduler}
-  creator:
-    stddev_schedule: null
 
 hydra:
   run:
