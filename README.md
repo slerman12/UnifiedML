@@ -248,7 +248,7 @@ python Run.py task=classify/mnist
 
 *Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
-With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{\mathit{s.t. }} reward = -error$ (***experimental***).
+With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{\textit{s.t. }} reward = -error$ (***experimental***).
 
 Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
 
