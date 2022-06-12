@@ -217,19 +217,19 @@ That's it.
 
 ### RL
 
-Humanoid-walk example:
+Humanoid example:
 ```console
 python Run.py task=dmc/humanoid_walk
 ```
 
-DrQV2 Agent in Atari:
+[DrQV2 Agent](https://arxiv.org/abs/2107.09645) in Atari:
 ```console
-python Run.py Agent=Agents.DrQV2Agent task=atari/battlezone
+python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 ```
 
-SPR Agent in DeepMind Control:
+[SPR Agent](https://arxiv.org/abs/2007.05929) in DeepMind Control:
 ```console
-python Run.py Agent=Agents.SPRAgent task=dmc/cheetah_run
+python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
 Save videos with ```log_video=true```.
