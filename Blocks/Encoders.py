@@ -57,7 +57,7 @@ class CNNEncoder(nn.Module):
             assert tuple(obs_shape) == self.feature_shape, \
                 f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
 
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
         # Optimizer
         if lr or Utils.can_instantiate(optim):
             self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \

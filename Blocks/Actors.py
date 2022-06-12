@@ -36,7 +36,7 @@ class EnsembleGaussianActor(nn.Module):
 
         self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
 
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
         # Optimizer
         if lr or Utils.can_instantiate(optim):
             self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
