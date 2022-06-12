@@ -107,10 +107,10 @@ class ExperienceReplay:
             else np.inf
 
         # Sending data to workers directly
-        self.queues = [multiprocessing.Queue() for _ in range(self.num_workers)]
+        queues, self.queues = zip(*[multiprocessing.Pipe() for _ in range(self.num_workers)])
 
         self.experiences = (Offline if offline else Online)(path=self.path,
-                                                            queues=self.queues,
+                                                            queues=queues,
                                                             capacity=capacity,
                                                             specs=self.specs,
                                                             fetch_per=1000,
@@ -232,15 +232,13 @@ class ExperienceReplay:
         if self.offline:
             # In the offline setting, each worker has a copy of all the data
             for worker in range(self.num_workers):
-                timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-                open(self.path / 'Updates' / f'{worker}_{timestamp}', 'w')  # Tells worker how many updates to wait for
-                self.queues[worker].put((updates, exp_ids))  # TODO somehow need to sync up
+                self.queues[worker].send((updates, exp_ids))  # TODO somehow need to sync up
         else:
             # Send update to dedicated worker
             for worker_id in torch.unique(worker_ids):
                 worker = worker_ids == worker_id
                 update = {key: updates[key][worker] for key in updates}
-                self.queues[worker].put((update, exp_ids[worker]))  # TODO somehow need to sync up
+                self.queues[worker].send((update, exp_ids[worker]))  # TODO somehow need to sync up
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -360,14 +358,8 @@ class Experiences:
 
     # Workers can update/write-to their own data based on file-stored update specs
     def worker_fetch_updates(self):
-        num_updates = list((self.path / 'Updates').glob(f'{self.worker_id}_*'))  # Number of updates to wait for
-        tally = 0
-
-        while tally < len(num_updates):
-            try:
-                updates, exp_ids = self.queue.get(False)
-            except:
-                continue
+        while self.queue.poll():
+            updates, exp_ids = self.queue.recv()
 
             # Iterate through each update spec
             for key in updates:
@@ -377,11 +369,6 @@ class Experiences:
 
                     # Update experience in replay
                     self.episodes[episode_name][key][idx] = update
-
-            tally += 1
-
-        for num_update in num_updates:
-            num_update.unlink(missing_ok=True)  # Deletes file
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
