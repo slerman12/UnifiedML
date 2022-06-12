@@ -5,6 +5,8 @@
 import copy
 import math
 
+from hydra.utils import instantiate
+
 import torch
 from torch import nn
 
@@ -20,9 +22,8 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_norm=None, shift_max_norm=False, isotropic=False, parallel=False,
-                 eyes=None, pool=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
-                 weight_decay=0, ema_decay=0):
+    def __init__(self, obs_shape, context_dim=0, data_norm=None, shift_max_norm=False, isotropic=False,
+                 eyes=None, pool=None, parallel=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
 
         super().__init__()
 
@@ -36,41 +37,42 @@ class CNNEncoder(nn.Module):
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes) or CNN(self.in_channels, self.out_channels, depth=3),
+        self.Eyes = nn.Sequential(eyes if isinstance(eyes, nn.Module)
+                                  else instantiate(eyes) if eyes and eyes._target_
+                                  else CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
 
-        self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
+        self.pool = pool if isinstance(pool, nn.Module) \
+            else instantiate(pool, input_shape=self.feature_shape) if pool and pool._target_ \
+            else nn.Flatten()
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
         self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
 
         # Initialize model
-        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
+        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
 
         # Isotropic
         if isotropic:
             assert tuple(obs_shape) == self.feature_shape, \
                 f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
 
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
         # Optimizer
-        if lr or Utils.can_instantiate(optim):
-            self.optim = Utils.instantiate(optim, params=self.parameters()) \
-                         or (optim if isinstance(optim, type) else torch.optim.AdamW)(self.parameters(), lr=lr,
-                                                                                      weight_decay=weight_decay)
+        if lr:
+            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
-        # Learning rate scheduler
-        if lr_decay_epochs or Utils.can_instantiate(scheduler):
-            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
-                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
+        if lr_decay_epochs:
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA
         if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
+            self.ema = copy.deepcopy(self).eval()
+            self.ema_decay = ema_decay
 
     def update_ema_params(self):
         assert hasattr(self, 'ema')
