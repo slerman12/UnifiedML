@@ -86,9 +86,9 @@ class MetaDQNAgent(torch.nn.Module):
 
             block = getattr(self, name)
 
-            # setattr(block, 'optim',
-            #         F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
-            #         else None)
+            setattr(block, 'optim',
+                    F_ckGradientDescent(block.optim) if hasattr(block, 'optim')
+                    else None)
 
         # Birth
 
@@ -127,194 +127,192 @@ class MetaDQNAgent(torch.nn.Module):
 
     # "Dream"
     def learn(self, replay):
-        # "Recollect"
+        with torch.no_grad():
+            # "Recollect"
 
-        now = time.time()
-        batch = next(replay)
-        # print(time.time() - now, 'batch')
-        now = time.time()
-        obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
-            batch, self.device)
+            now = time.time()
+            batch = next(replay)
+            # print(time.time() - now, 'batch')
+            now = time.time()
+            obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
+                batch, self.device)
 
-        # Actor-Critic -> Generator-Discriminator conversion
-        if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
-            next_obs[:] = label[:] = float('nan')
+            # Actor-Critic -> Generator-Discriminator conversion
+            if self.generate:
+                action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
+                next_obs[:] = label[:] = float('nan')
 
-        batch_size = obs.shape[0]
+            batch_size = obs.shape[0]
 
-        # "Envision" / "Perceive"
+            # "Envision" / "Perceive"
 
-        # Just for metrics / debugging
-        # with Utils.act_mode(self.encoder, self.actor):
-        #     obs_1 = self.aug(obs)
-        #     obs_1 = self.encoder(obs_1)
+            # Just for metrics / debugging
+            # with Utils.act_mode(self.encoder, self.actor):
+            #     obs_1 = self.aug(obs)
+            #     obs_1 = self.encoder(obs_1)
 
-        # Augment and encode
-        obs = self.aug(obs)
-        obs = self.encoder(obs)
+            # Augment and encode
+            obs = self.aug(obs)
+            obs = self.encoder(obs)
 
-        # Augment and encode future
-        if replay.nstep > 0 and not self.generate:
-            with torch.no_grad():
-                next_obs = self.aug(next_obs)
-                next_obs = self.encoder(next_obs)
+            # Augment and encode future
+            if replay.nstep > 0 and not self.generate:
+                with torch.no_grad():
+                    next_obs = self.aug(next_obs)
+                    next_obs = self.encoder(next_obs)
 
-        # "Journal teachings"
+            # "Journal teachings"
 
-        logs = {'time': time.time() - self.birthday,
-                'step': self.step, 'episode': self.episode} if self.log \
-            else None
+            logs = {'time': time.time() - self.birthday,
+                    'step': self.step, 'episode': self.episode} if self.log \
+                else None
 
-        if replay.offline:
-            self.step += 1
-            self.frame += len(obs)
-            self.epoch = replay.epoch
+            if replay.offline:
+                self.step += 1
+                self.frame += len(obs)
+                self.epoch = replay.epoch
 
-        if self.epoch > 1:
-            assert (meta[:, 0] == label + self.epoch).all()
-            # if (meta[:, 0] == label + self.epoch).all():
-            #     print('good')
-            # else:
-            #     print(meta[:, 0], '\n', label)
-            #     time.sleep(2)
+            # if self.epoch > 1:
+            #     if (meta[:, 0] == label + self.epoch).all():
+            #         print('good')
+            #     else:
+            #         print(meta[:, 0], '\n', label)
+            #         time.sleep(2)
 
-        self.learn_step += 1
-        step_optim = self.learn_step % self.step_optim_per_learn == 0
+            self.learn_step += 1
+            step_optim = self.learn_step % self.step_optim_per_learn == 0
 
-        instruction = ~torch.isnan(label)
+            instruction = ~torch.isnan(label)
 
-        # "Acquire Wisdom"
+            # "Acquire Wisdom"
 
-        # Classification
-        if instruction.any():
-            # "Via Example" / "Parental Support" / "School"
+            # Classification
+            if instruction.any():
+                # "Via Example" / "Parental Support" / "School"
 
-            # Inference
-            y_predicted = self.actor(obs[instruction], self.step).mean
+                # Inference
+                y_predicted = self.actor(obs[instruction], self.step).mean
 
-            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
+                mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
-            # meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
-            # meta[:, 0] = torch.min(mistake, meta[:, 0])
+                meta[:, 0][meta[:, 0].isnan()] = mistake[meta[:, 0].isnan()]
+                meta[:, 0] = torch.min(mistake, meta[:, 0])
 
-            # Supervised learning
-            if self.supervise:
-                # Supervised loss
-                supervised_loss = mistake.mean()
+                # Supervised learning
+                if self.supervise:
+                    # Supervised loss
+                    supervised_loss = mistake.mean()
+
+                    # Just for metrics / debugging
+                    # if step_optim:
+                    #     with Utils.act_mode(self.encoder, self.actor):
+                    #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
+                    #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
+                    #         supervised_loss_1 = mistake_1.mean()
+
+                    # Forward-prop
+                    self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
+                    self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
+
+                    # Update supervised
+                    Utils.optimize(None,
+                                   self.actor, epoch=self.epoch if replay.offline else self.episode,
+                                   step_optim=step_optim)
+
+                    if self.log:
+                        correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+
+                        logs.update({'supervised_loss': supervised_loss.item(),
+                                     'accuracy': correct.mean().item()})
+
+                # (Auxiliary) reinforcement
+                if self.RL:
+                    half = len(instruction) // 2
+                    mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
+                                                   label[instruction][:half].long(), reduction='none')
+                    action[instruction] = y_predicted.detach()
+                    reward[instruction] = -mistake[:, None].detach()  # reward = -error
+                    next_obs[instruction] = float('nan')
+
+            # Reinforcement learning / generative modeling
+            if self.RL or self.generate:
+                # "Imagine"
+
+                # Generative modeling
+                if self.generate:
+                    half = len(obs) // 2
+                    generated_image = self.actor(obs[:half], self.step).mean
+
+                    action[:half], reward[:half] = generated_image, 0  # Discriminate
+
+                # "Discern"
+
+                # Critic loss
+                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
+                                                          obs, action, reward, discount, next_obs,
+                                                          self.step, self.num_actions, logs=logs, reduction='none')
+
+                print(critic_loss.shape)
+
+                meta[:, 1][meta[:, 1].isnan()] = critic_loss[meta[:, 1].isnan()]
+                meta[:, 1] = torch.min(critic_loss, meta[:, 1])
+
+                # Forward-prop todo retain graph above
+                self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
+                self.critic.optim.propagate(critic_loss, meta[:, 1], batch_size)
+
+                # Update critic
+                Utils.optimize(None,
+                               self.critic, epoch=self.epoch if replay.offline else self.episode,
+                               step_optim=step_optim)
+
+            # Update encoder
+            if not self.generate:
+                Utils.optimize(None,
+                               self.encoder, epoch=self.epoch if replay.offline else self.episode,
+                               step_optim=step_optim)
 
                 # Just for metrics / debugging
                 # if step_optim:
                 #     with Utils.act_mode(self.encoder, self.actor):
+                #         if not hasattr(self, 'count_optim_steps'):
+                #             setattr(self, 'count_optim_steps', 0)
+                #         if not hasattr(self, 'count_improvements'):
+                #             setattr(self, 'count_improvements', 0)
                 #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
                 #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
-                #         supervised_loss_1 = mistake_1.mean()
+                #         self.count_improvements += mistake_1.mean() < supervised_loss_1
+                #         self.count_optim_steps += 1
+                #         print('Improvements:', self.count_improvements.item(), '/', self.count_optim_steps,
+                #               '({:.02%})'.format(self.count_improvements.item() / self.count_optim_steps))
 
-                # Forward-prop
-                # self.encoder.optim.propagate(mistake, meta[:, 0], batch_size)
-                # self.actor.optim.propagate(mistake, meta[:, 0], batch_size)
+            if self.generate or self.RL and not self.discrete:
+                # "Change" / "Grow"
 
-                # Update supervised
-                Utils.optimize(supervised_loss,
-                               self.actor, epoch=self.epoch if replay.offline else self.episode,
-                               # step_optim=step_optim
-                               )
+                # Actor loss
+                actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
+                                                               self.step, self.num_actions, logs=logs, reduction='none')
 
-                if self.log:
-                    correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+                print(actor_loss.shape)
 
-                    logs.update({'supervised_loss': supervised_loss.item(),
-                                 'accuracy': correct.mean().item()})
+                meta[:, 2][meta[:, 2].isnan()] = actor_loss[meta[:, 2].isnan()]
+                meta[:, 2] = torch.min(actor_loss, meta[:, 2])
 
-            # (Auxiliary) reinforcement
-            if self.RL:
-                half = len(instruction) // 2
-                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
-                                               label[instruction][:half].long(), reduction='none')
-                action[instruction] = y_predicted.detach()
-                reward[instruction] = -mistake[:, None].detach()  # reward = -error
-                next_obs[instruction] = float('nan')
+                self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
 
-        # Reinforcement learning / generative modeling
-        if self.RL or self.generate:
-            # "Imagine"
+                # Update actor
+                Utils.optimize(None,
+                               self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
+                               step_optim=step_optim)
 
-            # Generative modeling
-            if self.generate:
-                half = len(obs) // 2
-                generated_image = self.actor(obs[:half], self.step).mean
+            # print(time.time() - now, 'everything')
+            now = time.time()
+            meta[:, 0] = label + self.epoch + 1
+            replay.rewrite({'meta': meta}, ids)
+            # print(time.time() - now, ' replay')
+            # print(self.step, self.frame)
 
-                action[:half], reward[:half] = generated_image, 0  # Discriminate
+            # threading.Thread(target=replay.rewrite, args=({'meta': meta}, ids)).start()
+            # multiprocessing.Process(target=replay.rewrite, args=({'meta': meta}, ids)).start()
 
-            # "Discern"
-
-            # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
-                                                      obs, action, reward, discount, next_obs,
-                                                      self.step, self.num_actions, logs=logs, reduction='none')
-
-            print(critic_loss.shape)
-
-            meta[:, 1][meta[:, 1].isnan()] = critic_loss[meta[:, 1].isnan()]
-            meta[:, 1] = torch.min(critic_loss, meta[:, 1])
-
-            # Forward-prop todo retain graph above
-            self.encoder.optim.propagate(critic_loss, meta[:, 1], batch_size)
-            self.critic.optim.propagate(critic_loss, meta[:, 1], batch_size)
-
-            # Update critic
-            Utils.optimize(None,
-                           self.critic, epoch=self.epoch if replay.offline else self.episode,
-                           step_optim=step_optim)
-
-        # Update encoder
-        if not self.generate:
-            Utils.optimize(None,
-                           self.encoder, epoch=self.epoch if replay.offline else self.episode,
-                           # step_optim=step_optim
-                           )
-
-            # Just for metrics / debugging
-            # if step_optim:
-            #     with Utils.act_mode(self.encoder, self.actor):
-            #         if not hasattr(self, 'count_optim_steps'):
-            #             setattr(self, 'count_optim_steps', 0)
-            #         if not hasattr(self, 'count_improvements'):
-            #             setattr(self, 'count_improvements', 0)
-            #         y_predicted_1 = self.actor(obs_1[instruction], self.step).mean
-            #         mistake_1 = cross_entropy(y_predicted_1, label[instruction].long(), reduction='none')
-            #         self.count_improvements += mistake_1.mean() < supervised_loss_1
-            #         self.count_optim_steps += 1
-            #         print('Improvements:', self.count_improvements.item(), '/', self.count_optim_steps,
-            #               '({:.02%})'.format(self.count_improvements.item() / self.count_optim_steps))
-
-        if self.generate or self.RL and not self.discrete:
-            # "Change" / "Grow"
-
-            # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, self.num_actions, logs=logs, reduction='none')
-
-            print(actor_loss.shape)
-
-            meta[:, 2][meta[:, 2].isnan()] = actor_loss[meta[:, 2].isnan()]
-            meta[:, 2] = torch.min(actor_loss, meta[:, 2])
-
-            self.actor.optim.propagate(actor_loss, meta[:, 2], batch_size)
-
-            # Update actor
-            Utils.optimize(None,
-                           self.actor, epoch=self.epoch if replay.offline else self.episode, backward=False,
-                           step_optim=step_optim)
-
-        # print(time.time() - now, 'everything')
-        now = time.time()
-        meta[:, 0] = label + self.epoch + 1
-        replay.rewrite({'meta': meta}, ids)
-        # print(time.time() - now, ' replay')
-        # print(self.step, self.frame)
-
-        # threading.Thread(target=replay.rewrite, args=({'meta': meta}, ids)).start()
-        # multiprocessing.Process(target=replay.rewrite, args=({'meta': meta}, ids)).start()
-
-        return logs
+            return logs
