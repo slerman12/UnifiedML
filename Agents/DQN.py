@@ -5,8 +5,6 @@
 import time
 import math
 
-from hydra.utils import instantiate
-
 import torch
 from torch.nn.functional import cross_entropy
 
