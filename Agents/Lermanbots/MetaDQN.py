@@ -77,7 +77,8 @@ class MetaDQNAgent(torch.nn.Module):
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
+                                                      else RandomShiftsAug(pad=4))
 
         # Custom optimizer
         for name in ('encoder', 'actor', 'critic'):

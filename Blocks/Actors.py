@@ -40,8 +40,7 @@ class EnsembleGaussianActor(nn.Module):
         # Optimizer
         if lr or Utils.can_instantiate(optim):
             self.optim = Utils.instantiate(optim, params=self.parameters()) \
-                         or (optim if isinstance(optim, type) else torch.optim.AdamW)(self.parameters(), lr=lr,
-                                                                                      weight_decay=weight_decay)
+                         or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # Learning rate scheduler
         if lr_decay_epochs or Utils.can_instantiate(scheduler):

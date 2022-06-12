@@ -17,6 +17,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from Blocks.Architectures import *
+
 
 # Sets all Pytorch and Numpy random seeds
 def set_seeds(seed):
@@ -42,10 +44,16 @@ def init(args):
     OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
-# Simple instantiation of a class or module
+# Simple instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
+    if isinstance(args, str):
+        for key in kwargs:
+            args.replace(f'${{{key}}}', kwargs[key])
+        args = eval(args)
+
     return hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
         else None if hasattr(args, '_target_') \
+        else args(**kwargs) if isinstance(args, type) \
         else args[i] if isinstance(args, list) \
         else args
 
