@@ -171,12 +171,12 @@ class MetaDQNAgent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
-        # if self.epoch > 1:
-        #     if (meta[:, 0] == label).all():
-        #         print('good')
-        #     else:
-        #         print(meta[:, 0], '\n', label)
-        #         time.sleep(2)
+        if self.epoch > 1:
+            if (meta[:, 0] == label).all():
+                print('good')
+            else:
+                print(meta[:, 0], '\n', label)
+                time.sleep(2)
 
         self.learn_step += 1
         step_optim = self.learn_step % self.step_optim_per_learn == 0
@@ -306,7 +306,7 @@ class MetaDQNAgent(torch.nn.Module):
 
         # print(time.time() - now, 'everything')
         now = time.time()
-        # meta[:, 0] = label
+        meta[:, 0] = label
         replay.rewrite({'meta': meta}, ids)
         # print(time.time() - now, ' replay')
         # print(self.step, self.frame)

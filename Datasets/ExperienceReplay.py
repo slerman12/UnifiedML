@@ -107,10 +107,10 @@ class ExperienceReplay:
             else np.inf
 
         # Sending data to workers directly
-        queues, self.queues = zip(*[multiprocessing.Pipe() for _ in range(self.num_workers)])
+        pipes, self.pipes = zip(*[multiprocessing.Pipe() for _ in range(self.num_workers)])
 
         self.experiences = (Offline if offline else Online)(path=self.path,
-                                                            queues=queues,
+                                                            pipes=pipes,
                                                             capacity=capacity,
                                                             specs=self.specs,
                                                             fetch_per=1000,
@@ -232,13 +232,13 @@ class ExperienceReplay:
         if self.offline:
             # In the offline setting, each worker has a copy of all the data
             for worker in range(self.num_workers):
-                self.queues[worker].send((updates, exp_ids))  # TODO somehow need to sync up
+                self.pipes[worker].send((updates, exp_ids))  # TODO somehow need to sync up
         else:
             # Send update to dedicated worker
             for worker_id in torch.unique(worker_ids):
                 worker = worker_ids == worker_id
                 update = {key: updates[key][worker] for key in updates}
-                self.queues[worker].send((update, exp_ids[worker]))  # TODO somehow need to sync up
+                self.pipes[worker].send((update, exp_ids[worker]))  # TODO somehow need to sync up
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -254,14 +254,14 @@ def worker_init_fn(worker_id):
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
-    def __init__(self, path, queues, capacity, specs, fetch_per, save, offline, nstep=0, discount=1, transform=None):
+    def __init__(self, path, pipes, capacity, specs, fetch_per, save, offline, nstep=0, discount=1, transform=None):
 
         # Dataset construction via parallel workers
 
         self.path = path
 
-        # Multiprocessing queues
-        self.queues = queues  # Receiving data directly from Replay
+        # Multiprocessing pipes
+        self.pipes = pipes  # Receiving data directly from Replay
 
         self.episode_names = []
         self.episodes = dict()
@@ -295,8 +295,8 @@ class Experiences:
         return torch.utils.data.get_worker_info().num_workers
 
     @property
-    def queue(self):
-        return self.queues[self.worker_id]
+    def pipe(self):
+        return self.pipes[self.worker_id]
 
     def load_episode(self, episode_name):
         try:
@@ -358,8 +358,8 @@ class Experiences:
 
     # Workers can update/write-to their own data based on file-stored update specs
     def worker_fetch_updates(self):
-        while self.queue.poll():
-            updates, exp_ids = self.queue.recv()
+        while self.pipe.poll():
+            updates, exp_ids = self.pipe.recv()
 
             # Iterate through each update spec
             for key in updates:
@@ -368,7 +368,7 @@ class Experiences:
                     idx, episode_name = self.experience_indices[exp_id - self.deleted_indices]
 
                     # Update experience in replay
-                    self.episodes[episode_name][key][idx] = update
+                    self.episodes[episode_name][key][idx] = update.numpy()
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
@@ -441,8 +441,8 @@ class Experiences:
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    def __init__(self, path, queues, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, queues, capacity, specs, fetch_per, save, False, nstep, discount, transform)
+    def __init__(self, path, pipes, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, pipes, capacity, specs, fetch_per, save, False, nstep, discount, transform)
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
@@ -452,8 +452,8 @@ class Online(Experiences, IterableDataset):
 
 # Loads Experiences with a standard Dataset
 class Offline(Experiences, Dataset):
-    def __init__(self, path, queues, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, queues, capacity, specs, fetch_per, save, True, nstep, discount, transform)
+    def __init__(self, path, pipes, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, pipes, capacity, specs, fetch_per, save, True, nstep, discount, transform)
 
     def __getitem__(self, idx):
         return self.fetch_sample_process(idx)  # Get single experience by index
