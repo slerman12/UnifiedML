@@ -48,11 +48,12 @@ class EnsembleQCritic(nn.Module):
         # Optimizer
         if lr or Utils.can_instantiate(optim):
             self.optim = Utils.instantiate(optim, params=self.parameters()) \
-                         or (optim or torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
+                         or (optim if isinstance(optim, type)
+                             else torch.optim.AdamW)(self.parameters(), lr=lr, weight_decay=weight_decay)
 
         # Learning rate scheduler
         if lr_decay_epochs or Utils.can_instantiate(scheduler):
-            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) or scheduler \
+            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
                              or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
 
         # EMA

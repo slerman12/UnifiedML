@@ -53,7 +53,7 @@ device: null
 parallel: false
 num_workers: 4
 # Experiment
-Agent: Agents.MetaDQNAgent
+Agent: Agents.DQNAgent
 seed: 1
 experiment: Exp
 
@@ -159,9 +159,7 @@ Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
 Pi_head: ${Generator}  # Shorthand for recipes.actor.Pi_head._target_
 Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 
-# Or optimization e.g. python Run.py Optim=Utils.torch.optim.SGD
-
-Optim: null  # Shorthand for recipes.<block>.optim._target_
+Optim: null  # Shorthand for recipes.<block>.optim._target_ ,  e.g. python Run.py Optim=Utils.torch.optim.SGD
 Scheduler: null  # Shorthand for recipes.<block>.scheduler._target_
 
 recipes:
