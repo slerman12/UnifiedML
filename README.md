@@ -240,15 +240,13 @@ Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from
 
 ### Classification 
 
-TODO: RL=false is now the default
-
-DQN Agent on MNIST:
+Vanilla CNN on MNIST:
 
 ```console
-python Run.py task=classify/mnist RL=false
+python Run.py task=classify/mnist 
 ```
 
-*Note:* ```RL=false``` is the default for classfiication, but it is shown just for emphasis. It keeps training at **standard** supervised-only classification.
+*Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
 With ```RL=true```, an **augmented RL** update joins the supervised learning update s.t. ```reward = -error``` (***experimental***).
 

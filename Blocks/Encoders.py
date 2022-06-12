@@ -55,7 +55,7 @@ class CNNEncoder(nn.Module):
         # Isotropic
         if isotropic:
             assert tuple(obs_shape) == self.feature_shape, \
-                f'specified to be isotropic, but in {tuple(obs_shape)} ≠ out {self.feature_shape}'
+                f'specified to be isotropic, but in ≠ out {tuple(obs_shape)} ≠ {self.feature_shape}'
 
     def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
         # Optimizer
