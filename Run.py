@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import hydra
-from hydra.utils import instantiate, call
+from hydra.utils import call
 
 import Utils
 
@@ -21,8 +21,8 @@ def main(args):
     Utils.init(args)
 
     # Train, test environments
-    env = instantiate(args.environment)
-    generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
+    env = Utils.instantiate(args.environment)
+    generalize = Utils.instantiate(args.environment, train=False, seed=args.seed + 1234)
 
     for arg in ('obs_shape', 'action_shape', 'discrete', 'obs_spec', 'action_spec', 'evaluate_episodes', 'data_norm'):
         if hasattr(generalize, arg):
@@ -30,18 +30,18 @@ def main(args):
 
     # Agent
     agent = Utils.load(args.save_path, args.device) if args.load \
-        else instantiate(args.agent).to(args.device)
+        else Utils.instantiate(args.agent).to(args.device)
 
     args.train_steps += agent.step
 
     # Experience replay
-    replay = instantiate(args.replay,
+    replay = Utils.instantiate(args.replay,
                          meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-dependant metadata
 
     # Loggers
-    logger = instantiate(args.logger)
+    logger = Utils.instantiate(args.logger)
 
-    vlogger = instantiate(args.vlogger)
+    vlogger = Utils.instantiate(args.vlogger)
 
     # Start
     converged = training = False

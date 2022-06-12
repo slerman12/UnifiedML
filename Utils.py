@@ -42,6 +42,21 @@ def init(args):
     OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
+# Simple instantiation of a class or module
+def instantiate(args, i=0, __default=None, **kwargs):
+    return args if isinstance(args, nn.Module) \
+        else args[i] if isinstance(args, list) \
+        else hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
+        else __default
+
+
+# Checks if args can be instantiated
+def can_instantiate(args):
+    return isinstance(args, nn.Module) \
+           or isinstance(args, list) \
+           or hasattr(args, '_target_') and args._target_
+
+
 # Saves model + args + attributes
 def save(path, model, args, *attributes):
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
@@ -61,7 +76,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
     if model is None:
-        model = hydra.utils.instantiate(to_load['args']).to(device)
+        model = instantiate(to_load['args']).to(device)
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
@@ -79,21 +94,6 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
             model = getattr(model, key)
 
     return model
-
-
-# Simple instantiation of a class or module
-def instantiate(args, i=0, __default=None, **kwargs):
-    return args if isinstance(args, nn.Module) \
-        else args[i] if isinstance(args, list) \
-        else hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
-        else __default
-
-
-# Checks if args can be instantiated
-def can_instantiate(args):
-    return isinstance(args, nn.Module) \
-           or isinstance(args, list) \
-           or hasattr(args, '_target_') and args._target_
 
 
 # Initializes model weights a la orthogonality
