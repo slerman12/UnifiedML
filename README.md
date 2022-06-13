@@ -217,6 +217,11 @@ That's it.
 
 ### RL
 
+<details>
+<summary>
+:mag: <i>Click to interact</i>
+</summary>
+
 Humanoid example:
 ```console
 python Run.py task=dmc/humanoid_walk
@@ -238,7 +243,14 @@ Save videos with ```log_video=true```.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across both Atari and DMC.
 
+</details>
+
 ### Classification 
+
+<details>
+<summary>
+:mag: <i>Click to ascertain</i>
+</summary>
 
 Vanilla CNN on MNIST:
 
@@ -306,7 +318,14 @@ This library is meant to be useful for academic research, and out of the box sup
 * CIFAR-100 (```task=classify/cifar100```), 
 * & [more](Hyperparams/task/classify), normalized and no manual preparation needed
 
+</details>
+
 ### Offline RL
+
+<details>
+<summary>
+:mag: <i>Click to recall</i>
+</summary>
 
 From a saved experience replay, sans additional rollouts:
 
@@ -320,7 +339,14 @@ Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only do
 
 Is true by default for classification, where replays are automatically downloaded.
 
+</details>
+
 ### Generative Modeling
+
+<details>
+<summary>
+:mag: <i>Click to synthesize</i>
+</summary>
 
 Via the ```generate=true``` flag:
 ```console
@@ -334,6 +360,8 @@ Can also work with RL (due to frame stack, the generated images are technically 
 ```console
 python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 
 ```
+
+</details>
 
 [comment]: <> (ensemble could help this:)
 
