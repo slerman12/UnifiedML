@@ -388,7 +388,7 @@ To share whole agents across multiple parallel instances and/or machines,
 
 <details>
 
-<summary><i>Click to open :open_book: </i></summary>
+<summary><i>Click to expand :open_book: </i></summary>
 
 <br>
 
