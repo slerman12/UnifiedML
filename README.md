@@ -300,6 +300,20 @@ And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL.
 
 This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including Tiny-ImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual preparation needed.
 
+### Offline RL
+
+From a saved experience replay, sans additional rollouts:
+
+```console
+python Run.py task=atari/breakout offline=true
+```
+
+Assumes a replay [is saved](#saving).
+
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+
+Is true by default for classification, where replays are automatically downloaded.
+
 ### Generative Modeling
 
 Via the ```generate=true``` flag:
@@ -320,20 +334,6 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 [comment]: <> (Extensions. Analyzing and extending the amortization components has been a key development in AVI methods. Cremer et al. &#40;2018&#41; investigate suboptimality in these models are categorize it as coming from an amortization gap where the amortized model for eq. &#40;30&#41; does not properly solve it, or the approximation gap where the variational posterior is incapable of approximating the true distribution. Semi-amortization plays a crucial role in addressing the amortization gap and is explored in the semi-amortized VAE &#40;SAVAE&#41; by)
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
-
-### Offline RL
-
-From a saved experience replay, sans additional rollouts:
-
-```console
-python Run.py task=atari/breakout offline=true
-```
-
-Assumes a replay [is saved](#saving).
-
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
-
-Is true by default for classification, where replays are automatically downloaded.
 
 ### Saving
 
