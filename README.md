@@ -344,7 +344,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 ### Saving
 <details>
 <summary>
-:mag:
+:mag: <i>Click to open</i>
 </summary>
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
