@@ -545,7 +545,7 @@ Of course, it's always possible to just modify the library code itself, which ma
 
 <details>
 <summary>
-:mag: <i>Click to search</i>
+:mag: <i>Click to search/explore</i>
 </summary>
 
 Optimization parts can be accessed *e.g.* 
