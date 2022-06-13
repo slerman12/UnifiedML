@@ -420,15 +420,15 @@ python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architect
 [comment]: <> (<br>)
 
 [comment]: <> (</details>)
-</details>
-
-Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
 *A little secret*, but pytorch code can be passed directly too:
 
 ```console
 python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```
+</details>
+
+Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
 ### Custom Optimizers
 
