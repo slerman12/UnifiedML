@@ -27,7 +27,6 @@ class F_ckGradientDescent(torch.nn.Module):
             param['lr'] = 1
 
         self.decoys = self.params = self._decoys = self.samplers = None
-        self.running_sum = self.elite_score = 0
 
         self.samplers = []
 
@@ -40,6 +39,7 @@ class F_ckGradientDescent(torch.nn.Module):
                         sampler = torch.distributions.Normal(torch.zeros_like(param), self.lr)
                         self.samplers.append(sampler)
 
+        self.running_sum = self.elite_score = 0
         self.step()
 
     def propagate(self, loss, previous_loss, batch_size, retain_graph=False):
@@ -85,10 +85,8 @@ class F_ckGradientDescent(torch.nn.Module):
 
         self.params = deepcopy(self.decoys)
 
-        # self.elite_score = 0
-
     def zero_grad(self, **kwargs):
-        self.running_sum = 0
+        self.running_sum = self.elite_score = 0
         self.optim.zero_grad()
 
     def train(self, mode=True):

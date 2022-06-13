@@ -29,7 +29,7 @@ class MetaDQNAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actions=1, num_critics=2, step_optim_per_learn=200  # MetaDQN
+                 num_actions=1, num_critics=2, step_optim_per_learn=1  # MetaDQN
                  ):
         super().__init__()
 

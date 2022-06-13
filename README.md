@@ -559,13 +559,17 @@ Of course, it's always possible to just modify the library code itself, which ma
 Optimization parts can be accessed *e.g.* 
 
 ```console
-python Run.py Optim=Utils.torch.optim.SGD
+python Run.py Optim=Utils.torch.optim.SGD lr=0.1
 ```
 
 or via the expressive recipe interface:
 
 ```console
-python Run.py recipes.encoder.optim=torch.optim.SGD
+python Run.py recipes.encoder.optim=torch.optim.SGD lr=0.1
+```
+
+```console
+python Run.py "recipes.encoder.optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
 </details>
