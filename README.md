@@ -221,6 +221,7 @@ That's it.
 <summary>
 :mag: <i>Click to interact</i>
 </summary>
+<br><br>
 
 Humanoid example:
 ```console
@@ -251,6 +252,7 @@ Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from
 <summary>
 :mag: <i>Click to ascertain</i>
 </summary>
+<br>
 
 Vanilla CNN on MNIST:
 
@@ -326,6 +328,7 @@ This library is meant to be useful for academic research, and out of the box sup
 <summary>
 :mag: <i>Click to recall</i>
 </summary>
+<br>
 
 From a saved experience replay, sans additional rollouts:
 
@@ -347,6 +350,7 @@ Is true by default for classification, where replays are automatically downloade
 <summary>
 :mag: <i>Click to synthesize</i>
 </summary>
+<br>
 
 Via the ```generate=true``` flag:
 ```console
@@ -374,6 +378,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 <summary>
 :mag: <i>Click to load</i>
 </summary>
+<br>
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -403,6 +408,7 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 <summary>
 :mag: <i>Click to disperse</i>
 </summary>
+<br>
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
 
@@ -464,6 +470,7 @@ python Run.py replay.load=true replay.save=true
 <summary>
 :mag: <i>Click to construct</i>
 </summary>
+<br>
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
@@ -547,6 +554,7 @@ Of course, it's always possible to just modify the library code itself, which ma
 <summary>
 :mag: <i>Click to search/explore</i>
 </summary>
+<br>
 
 Optimization parts can be accessed *e.g.* 
 
@@ -568,6 +576,7 @@ python Run.py recipes.encoder.optim=torch.optim.SGD
 <summary>
 :mag: <i>Click to read/parse</i>
 </summary>
+<br>
 
 </details>
 
@@ -577,6 +586,7 @@ python Run.py recipes.encoder.optim=torch.optim.SGD
 <summary>
 :mag: <i>Click to see</i>
 </summary>
+<br>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
