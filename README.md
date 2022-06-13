@@ -260,7 +260,7 @@ Vanilla CNN on MNIST:
 python Run.py task=classify/mnist 
 ```
 
-In addition to Eval accuracies, more in-depth Train accuracies can always be toggled to print with ```agent.log=true```.
+In addition to Eval accuracies, more in-depth Train accuracies can always be toggled with ```agent.log=true```.
 
 **Variations**
 
