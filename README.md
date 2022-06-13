@@ -232,9 +232,9 @@ An [SPR](https://arxiv.org/abs/2007.05929)Agent in DeepMind Control:
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
-Save videos with ```log_video=true```.
-
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+
+Save videos with ```log_video=true```.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across both Atari and DMC.
 
