@@ -59,7 +59,6 @@ experiment: Exp
 
 dataset:
   _target_: ${Dataset}
-  root: null
   name: Dataset
 
 environment:

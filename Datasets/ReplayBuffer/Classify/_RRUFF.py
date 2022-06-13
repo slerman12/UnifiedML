@@ -9,8 +9,9 @@ import numpy as np
 
 
 class RRUFF(Dataset):
-    def __init__(self, root='../XRDs/xrd_data/', data='icsd171k_mix', transform=None, num_classes=7, train=True, **kwargs):
-        root += data if train else 'XY_DIF_noiseAll'
+    def __init__(self, root='../XRDs/icsd_Datasets/', data='icsd_171k_ps3', transform=None, num_classes=7, train=True,
+                 **kwargs):
+        root += data if train else 'rruff/XY_DIF_noiseAll'
 
         self.feature_path = root + "/features.csv"
         self.label_path = root + f"/labels{num_classes}.csv"
@@ -25,7 +26,7 @@ class RRUFF(Dataset):
         self.size = len(self.features)
         assert self.size == len(self.labels), 'num features and labels not same'
 
-        self.spectrogram = Spectrogram()
+        # self.spectrogram = Spectrogram()
         self.image = ToPILImage()
         self.transform = transform
 
@@ -36,7 +37,7 @@ class RRUFF(Dataset):
         x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))[None, :]
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
-        x = self.spectrogram(x)
+        # x = self.spectrogram(x)
         x = self.image(x)
         x = self.transform(x)
 

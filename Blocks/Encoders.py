@@ -14,9 +14,10 @@ from Blocks.Architectures.Vision.CNN import CNN
 import Utils
 
 
-class CNNEncoder(nn.Module):
+class VisualEncoder(nn.Module):
     """
-    Basic CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
+    CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
+    Generalized to multi-dimensionality convolutions and obs shapes (1d or 2d)
     Isotropic here means dimensionality conserving
     """
 
@@ -26,19 +27,25 @@ class CNNEncoder(nn.Module):
 
         super().__init__()
 
-        assert len(obs_shape) == 3, 'image observation shape must have 3 dimensions'
-
         self.obs_shape = obs_shape
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
+
+        # Allow 1d inputs
+        while len(self.obs_shape) < 3:
+            self.obs_shape.append(1)
 
         # Dimensions
         self.in_channels = obs_shape[0] + context_dim
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_shape)
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=self.obs_shape)
                                   or CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+
+        if len(obs_shape) < 3:
+            Utils.adapt2d1d(self.Eyes)  # Adapt 2d CNN to 1d
+
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
@@ -79,8 +86,13 @@ class CNNEncoder(nn.Module):
     # Encodes
     def forward(self, obs, *context, pool=True):
         obs_shape = obs.shape  # Preserve leading dims
-        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
         obs = obs.flatten(0, -4)  # Encode last 3 dims
+
+        # 2d to 1d compatibility
+        while len(obs.shape) < 3:
+            obs = obs.unsqueeze(-1)
+
+        assert obs.shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
         # Normalizes pixels
         mean, stddev = self.data_norm = self.data_norm.to(obs.device)
