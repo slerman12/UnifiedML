@@ -30,10 +30,6 @@ class CNNEncoder(nn.Module):
         self.obs_shape = copy.copy(obs_shape)
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
-        # Allow 1d inputs
-        while len(self.obs_shape) < 3:
-            self.obs_shape.insert(0, 1)
-
         # Dimensions
         self.in_channels = obs_shape[0] + context_dim
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
@@ -43,7 +39,7 @@ class CNNEncoder(nn.Module):
                                   or CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
-        Utils.adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d compatibility
+        Utils.adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
@@ -84,14 +80,10 @@ class CNNEncoder(nn.Module):
 
     # Encodes
     def forward(self, obs, *context, pool=True):
-        # 2d to 1d compatibility
-        while len(obs.shape) < 4:
-            obs = obs.unsqueeze(1)
-
         obs_shape = obs.shape  # Preserve leading dims
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
-        assert obs.shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
+        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
         # Normalizes pixels
         mean, stddev = self.data_norm = self.data_norm.to(obs.device)

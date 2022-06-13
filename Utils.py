@@ -122,15 +122,17 @@ def param_copy(model, target, ema_decay=0):
 
 
 # Adapts a 2d CNN to a smaller dimensionality
+
 def adapt_cnn(block, obs_shape):
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
-        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[1:]))
-        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[1:]))
+        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
+        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
 
         block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
     elif hasattr(block, 'modules'):
         for layer in block.children():
-            adapt_cnn(layer, obs_shape)
+            adapt_cnn(layer, obs_shape[-3:])
+            obs_shape = cnn_feature_shape(*obs_shape[-3:], layer)
 
 
 # Compute the output shape of a CNN layer

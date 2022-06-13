@@ -227,7 +227,12 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
 
 class Transform:
     def __call__(self, sample):
-        return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]  TODO redundant if normalizing?
+        # Convert 1d to 2d
+        if hasattr(sample, 'shape'):
+            while len(sample.shape) < 3:
+                sample = np.expand_dims(sample, -1)  # Channel-last
+        sample = F.to_tensor(sample)
+        return sample
 
 
 def worker_init_fn(worker_id):

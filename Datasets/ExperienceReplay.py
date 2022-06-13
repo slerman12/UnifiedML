@@ -373,11 +373,6 @@ class Experiences:
         if idx is None:
             idx = np.random.randint(episode_len)
 
-        # Convert 1d inputs to 2d
-        traj_o = episode['observation'][idx:idx + self.nstep + 1]
-        while len(traj_o.shape) < 4:
-            traj_o[:] = np.expand_dims(traj_o, 1)
-
         # Transition
         obs = episode['observation'][idx]
         action = episode['action'][idx + 1]
@@ -392,6 +387,7 @@ class Experiences:
 
         # Trajectory
         if self.nstep:
+            traj_o = episode['observation'][idx:idx + self.nstep + 1]
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
             traj_l = episode['label'][idx:idx + self.nstep + 1]

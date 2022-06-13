@@ -279,6 +279,11 @@ class AugmentAttributesWrapper(dm_env.Environment):
         if self.add_remove_batch_dim:
             # Some environments like DMC/Atari return observations without batch dims
             specs['observation'] = np.expand_dims(specs['observation'], axis=0)
+
+        # Convert 1d to 2d
+        while len(specs['observation'].shape) < 4:
+            specs['observation'] = np.expand_dims(specs['observation'], 1)
+
         # Extend time step
         return ExtendedTimeStep(step_type=time_step.step_type, **specs)
 
@@ -297,7 +302,11 @@ class AugmentAttributesWrapper(dm_env.Environment):
 
     def observation_spec(self):
         obs_spec = self.env.observation_spec()
-        return self.simplify_spec(obs_spec)
+        obs_spec = self.simplify_spec(obs_spec)
+        # Convert 1d to 2d
+        while len(obs_spec['shape']) < 3:
+            obs_spec['shape'] = (1, *obs_spec['shape'])
+        return obs_spec
 
     @property
     def obs_spec(self):

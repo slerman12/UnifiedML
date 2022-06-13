@@ -542,6 +542,10 @@ python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```console
 python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
 ```
+```console
+recipes.encoder.eyes=CNN
+```
+
 </details>
 
 Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two Encoder variants in ```./Blocks/Encoders.py```.
