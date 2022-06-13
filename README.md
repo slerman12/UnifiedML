@@ -335,9 +335,11 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
+### Saving
 <details>
-<summary>### Saving</summary>
-
+<summary>
+:mag:
+</summary>
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -362,6 +364,11 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 </details>
 
 ### Custom Architectures
+
+<details>
+<summary>
+:mag:
+</summary>
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
 
@@ -437,7 +444,14 @@ python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,ke
 
 Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
+</details>
+
 ### Custom Optimizers
+
+<details>
+<summary>
+:mag:
+</summary>
 
 Optimization parts can be accessed *e.g.* 
 
@@ -451,9 +465,23 @@ or via the expressive recipe interface:
 python Run.py recipes.encoder.optim=torch.optim.SGD
 ```
 
+</details>
+
 ### Custom Dataset
 
+<details>
+<summary>
+:mag:
+</summary>
+
+</details>
+
 ### Distributed
+
+<details>
+<summary>
+:mag:
+</summary>
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
 
@@ -507,7 +535,14 @@ python Run.py replay.load=true replay.save=true
 
 </details>
 
+</details>
+
 ### Experiment naming, plotting
+
+<details>
+<summary>
+:mag:
+</summary>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
@@ -533,6 +568,8 @@ To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
+
+</details>
 
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
 
