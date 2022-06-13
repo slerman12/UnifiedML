@@ -242,7 +242,7 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
 
-Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across both Atari and DMC.
+Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
 </details>
 
