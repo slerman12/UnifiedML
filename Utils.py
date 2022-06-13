@@ -121,14 +121,22 @@ def param_copy(model, target, ema_decay=0):
             target_param.copy_(ema_decay * target_param + (1 - ema_decay) * model_param)
 
 
-# Adapts a 2d CNN to a smaller dimensionality
-
+# Adapts a 2d CNN to a smaller dimensionality (in case an image spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
+        # Represent conv hyper-params as tuples
+        if not isinstance(block.kernel_size, tuple):
+            block.kernel_size = (block.kernel_size, block.kernel_size)
+        if not isinstance(block.padding, tuple):
+            block.padding = (block.padding, block.padding)
+
+        # Set them to adapt to obs shape (2D --> 1D, etc)
         block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
         block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
 
-        block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
+        # Update the CNN architecture accordingly
+        if not isinstance(block, nn.MaxPool2d):
+            block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
     elif hasattr(block, 'modules'):
         for layer in block.children():
             adapt_cnn(layer, obs_shape[-3:])

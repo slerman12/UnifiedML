@@ -10,7 +10,7 @@ import numpy as np
 
 class RRUFF(Dataset):
     def __init__(self, root='../XRDs/icsd_Datasets/', data='icsd_171k_ps3', transform=None, num_classes=7, train=True,
-                 **kwargs):
+                 spectrogram=False, **kwargs):
         root += data if train else 'rruff/XY_DIF_noiseAll'
 
         self.feature_path = root + "/features.csv"
@@ -26,8 +26,8 @@ class RRUFF(Dataset):
         self.size = len(self.features)
         assert self.size == len(self.labels), 'num features and labels not same'
 
-        # self.spectrogram = Spectrogram()
-        # self.image = ToPILImage()
+        if spectrogram:
+            self.spectrogram = Spectrogram()
         self.transform = transform
 
     def __len__(self):
@@ -38,6 +38,8 @@ class RRUFF(Dataset):
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
         x = self.transform(x)
-        # x = self.spectrogram(x)
+
+        if hasattr(self, 'spectrogram'):
+            x = self.spectrogram(x)
 
         return x, y
