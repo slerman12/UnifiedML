@@ -246,6 +246,8 @@ Vanilla CNN on MNIST:
 python Run.py task=classify/mnist 
 ```
 
+In addition to Eval accuracies, more in-depth Train accuracies can always be printed with ```agent.log=true```.
+
 **Variations**
 
 *Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
@@ -267,8 +269,6 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 [comment]: <> (**Pure-RL** Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$ &#40;*experimental*&#41;. This is pure-RL training and actually works.)
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
-
-In addition to Eval accuracies, more in-depth Train accuracies can always be printed with ```agent.log=true```.
 
 **Important features** Many popular features are unified in this library and generalized across RL/CV/Generative domains, with more being added: 
 
