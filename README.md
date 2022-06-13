@@ -375,7 +375,7 @@ python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
 ```
 
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
-Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword. (Optimization parts can be accessed too *e.g.* ```python Run.py Optim=Utils.torch.optim.SGD```).
+Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword.
 
 <details>
 <summary><i>See more examples :open_book: </i></summary>
@@ -424,7 +424,25 @@ python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architect
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
+A little secret, but code can be passed directly into the recipes:
+
+```console
+python Run.py Agent=Agents.DQNAgent "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
+```
+
 ### Custom Optimizers
+
+Optimization parts can be accessed too *e.g.* 
+
+```console
+python Run.py Optim=Utils.torch.optim.SGD
+```
+
+or
+
+```console
+python Run.py recipes.encoder.optim=torch.optim.SGD
+```
 
 ### Custom Datasets
 
