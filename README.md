@@ -438,7 +438,7 @@ Optimization parts can be accessed too *e.g.*
 python Run.py Optim=Utils.torch.optim.SGD
 ```
 
-or
+or via the expressive recipe interface:
 
 ```console
 python Run.py recipes.encoder.optim=torch.optim.SGD
