@@ -221,7 +221,7 @@ That's it.
 <summary>
 :mag: <i>Click to interact</i>
 </summary>
-<br><br>
+<br>
 
 Humanoid example:
 ```console
