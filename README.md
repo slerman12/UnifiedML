@@ -302,6 +302,7 @@ This library is meant to be useful for academic research, and out of the box sup
 * Tiny-ImageNet (```task=classify/tinyimagenet```), 
 * iNaturalist, (```task=classify/inaturalist```),
 * and CIFAR-100 (```task=classify/cifar100```), 
+* [more](Hyperparams/task/classify)
   
 normalized and no manual preparation needed.
 
