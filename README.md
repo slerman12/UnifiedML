@@ -447,7 +447,7 @@ or via the expressive recipe interface:
 python Run.py recipes.encoder.optim=torch.optim.SGD
 ```
 
-### Custom Datasets
+### Custom Dataset
 
 ### Distributed
 
