@@ -424,10 +424,10 @@ python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architect
 *A little secret*, but pytorch code can be passed directly too:
 
 ```console
-python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
+python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```
 ```console
-python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
+python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
 ```
 </details>
 
