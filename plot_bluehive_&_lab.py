@@ -53,10 +53,13 @@ suites = []
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
          'pong', 'breakout', 'boxing',
          # 'krull', 'seaquest', 'qbert',
+         # 'mspacman', 'jamesbond', 'frostbite', 'demonattack', 'battlezone', 'alien', 'hero'
          'cifar10', 'tinyimagenet']
 
 plot_group = 'XRD'
-plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18', 'PS1_to_RRUFF_ViT']]
+plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18',
+          # 'PS1_to_RRUFF_ViT'
+          ]]
 tasks =[]
 
 experiments = set().union(*plots)
