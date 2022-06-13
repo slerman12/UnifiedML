@@ -367,6 +367,67 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 
 </details>
 
+### Distributed
+
+<details>
+<summary>
+:mag: <i>Click to disperse</i>
+</summary>
+
+The simplest way to do distributed training is to use the ```parallel=true``` flag,
+
+```console
+python Run.py parallel=true 
+```
+
+which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
+
+To share whole agents across multiple parallel instances and/or machines,
+
+<details>
+
+<summary><i>Click to open :open_book: </i></summary>
+
+<br>
+
+you can use the ```load_per_steps=``` flag.
+
+For example, a data-collector agent and an update agent,
+
+```console
+
+python Run.py learn_per_steps=0 replay.save=true load_per_steps=1
+
+```
+
+```console
+
+python Run.py offline=true replay.offline=false replay.save=true replay.load=true save_per_steps=2
+
+```
+
+in concurrent processes.
+
+Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. Just make sure the replay from the first script is created before launching the second script. **Highly experimental!**
+
+Here is another example of distributed training, via shared replays:
+
+```console
+python Run.py replay.save=true 
+```
+
+Then, in a separate process, after that replay has been created:
+
+```console
+python Run.py replay.load=true replay.save=true 
+```
+
+[comment]: <> (It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second script. This is not meant as a deployable means of distributed training. It just happens to work, incidentally, sort of.)
+
+</details>
+
+</details>
+
 ### Custom Architectures
 
 <details>
@@ -477,67 +538,6 @@ python Run.py recipes.encoder.optim=torch.optim.SGD
 <summary>
 :mag: <i>Click to read & parse</i>
 </summary>
-
-</details>
-
-### Distributed
-
-<details>
-<summary>
-:mag: <i>Click to disperse</i>
-</summary>
-
-The simplest way to do distributed training is to use the ```parallel=true``` flag,
-
-```console
-python Run.py parallel=true 
-```
-
-which automatically parallelizes the Encoder's "Eyes" across all visible GPUs. The Encoder is usually the most compute-intensive architectural portion.
-
-To share whole agents across multiple parallel instances and/or machines,
-
-<details>
-
-<summary><i>Click to open :open_book: </i></summary>
-
-<br>
-
-you can use the ```load_per_steps=``` flag.
-
-For example, a data-collector agent and an update agent,
-
-```console
-
-python Run.py learn_per_steps=0 replay.save=true load_per_steps=1
-
-```
-
-```console
-
-python Run.py offline=true replay.offline=false replay.save=true replay.load=true save_per_steps=2
-
-```
-
-in concurrent processes.
-
-Since both use the same experiment name, they will save and load from the same agent and replay, thereby emulating distributed training. Just make sure the replay from the first script is created before launching the second script. **Highly experimental!**
-
-Here is another example of distributed training, via shared replays:
-
-```console
-python Run.py replay.save=true 
-```
-
-Then, in a separate process, after that replay has been created:
-
-```console
-python Run.py replay.load=true replay.save=true 
-```
-
-[comment]: <> (It's a bit finicky; there are a few timing delicacies that I don't account for. I recommend to wait until at least 1 episode for the first script's replay to be created before launching the second script. This is not meant as a deployable means of distributed training. It just happens to work, incidentally, sort of.)
-
-</details>
 
 </details>
 
