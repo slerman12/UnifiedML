@@ -477,7 +477,7 @@ python Run.py recipes.encoder.optim=torch.optim.SGD
 
 <details>
 <summary>
-:mag: <i>Click to parse</i>
+:mag: <i>Click to read & parse</i>
 </summary>
 
 </details>
