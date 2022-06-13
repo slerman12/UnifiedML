@@ -272,7 +272,7 @@ In addition to Eval accuracies, more in-depth Train accuracies can always be pri
 
 * Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
   
-* See [Custom Architectures](#custom-architectures) for mix-and-matching custom or pre-defined (*e.g.* ResNet50) architectures via the command line syntax. 
+* See [Custom Architectures](#custom-architectures) for mix-and-matching custom or pre-defined (*e.g.* ViT, ResNet50) architectures via the command line syntax. 
   
 * Different optimizations [can be configured](#custom-optimization) too.
   
