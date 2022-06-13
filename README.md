@@ -335,7 +335,9 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
-### Saving
+<details>
+<summary>### Saving</summary>
+
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -356,6 +358,8 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
+
+</details>
 
 ### Custom Architectures
 
