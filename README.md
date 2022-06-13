@@ -427,7 +427,7 @@ Of course, it's always possible to just modify the code itself, which may be eas
 A little secret, but pytorch code can be passed directly into the recipes:
 
 ```console
-python Run.py Agent=Agents.DQNAgent "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
+python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```
 
 ### Custom Optimizers
