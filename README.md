@@ -431,7 +431,7 @@ python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,ke
 ```
 </details>
 
-Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
+Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
 ### Custom Optimizers
 
