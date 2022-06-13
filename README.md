@@ -276,7 +276,7 @@ In addition to Eval accuracies, more in-depth Train accuracies can always be pri
   
 * Different optimizations [can be configured](#custom-optimization) too.
   
-* As well as [Custom Datasets](#custom-datasets). 
+* As well as [Custom Dataset](#custom-datasets) classification. 
   
 * Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. 
   
