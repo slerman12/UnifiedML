@@ -344,7 +344,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 ### Saving
 <details>
 <summary>
-:mag: <i>Click to open</i>
+:mag: <i>Click to load</i>
 </summary>
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
@@ -373,7 +373,7 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 
 <details>
 <summary>
-:mag: <i>Click to open</i>
+:mag: <i>Click to construct</i>
 </summary>
 
 One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
@@ -456,7 +456,7 @@ Of course, it's always possible to just modify the library code itself, which ma
 
 <details>
 <summary>
-:mag: <i>Click to open</i>
+:mag: <i>Click to search</i>
 </summary>
 
 Optimization parts can be accessed *e.g.* 
@@ -477,7 +477,7 @@ python Run.py recipes.encoder.optim=torch.optim.SGD
 
 <details>
 <summary>
-:mag: <i>Click to open</i>
+:mag: <i>Click to parse</i>
 </summary>
 
 </details>
@@ -486,7 +486,7 @@ python Run.py recipes.encoder.optim=torch.optim.SGD
 
 <details>
 <summary>
-:mag: <i>Click to open</i>
+:mag: <i>Click to disperse</i>
 </summary>
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
@@ -547,7 +547,7 @@ python Run.py replay.load=true replay.save=true
 
 <details>
 <summary>
-:mag: <i>Click to open</i>
+:mag: <i>Click to see</i>
 </summary>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
