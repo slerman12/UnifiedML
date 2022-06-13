@@ -301,8 +301,8 @@ And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL.
 This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including 
 * Tiny-ImageNet (```task=classify/tinyimagenet```), 
 * iNaturalist, (```task=classify/inaturalist```),
-* and CIFAR-100 (```task=classify/cifar100```), 
-* [more](Hyperparams/task/classify)
+* CIFAR-100 (```task=classify/cifar100```), 
+* and [more](Hyperparams/task/classify),
   
 normalized and no manual preparation needed.
 
