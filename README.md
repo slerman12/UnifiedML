@@ -268,7 +268,7 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 In addition to Eval accuracies, more in-depth Train accuracies can always be printed with ```agent.log=true```.
 
-**Important features** Many popular features are unified in this library and generalized across RL/CV/generative domains with more being added: 
+**Important features** Many popular features are unified in this library and generalized across RL/CV/Generative domains with more being added: 
 
 * Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
   
