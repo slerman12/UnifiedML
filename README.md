@@ -222,12 +222,12 @@ Humanoid example:
 python Run.py task=dmc/humanoid_walk
 ```
 
-A [DrQV2](https://arxiv.org/abs/2107.09645) Agent in Atari:
+A [DrQV2](https://arxiv.org/abs/2107.09645)Agent in Atari:
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 ```
 
-An [SPR](https://arxiv.org/abs/2007.05929) Agent in DeepMind Control:
+An [SPR](https://arxiv.org/abs/2007.05929)Agent in DeepMind Control:
 ```console
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
