@@ -27,18 +27,18 @@ class RRUFF(Dataset):
         assert self.size == len(self.labels), 'num features and labels not same'
 
         # self.spectrogram = Spectrogram()
-        self.image = ToPILImage()
-        self.transform = transform
+        # self.image = ToPILImage()
+        # self.transform = transform
 
     def __len__(self):
         return self.size
 
     def __getitem__(self, idx):
-        x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))[None, :]
+        x = torch.FloatTensor(list(map(float, self.features[idx].strip().split(','))))
         y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
 
         # x = self.spectrogram(x)
-        x = self.image(x)
-        x = self.transform(x)
+        # x = self.image(x)
+        # x = self.transform(x)
 
         return x, y

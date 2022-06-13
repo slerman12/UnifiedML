@@ -121,14 +121,16 @@ def param_copy(model, target, ema_decay=0):
             target_param.copy_(ema_decay * target_param + (1 - ema_decay) * model_param)
 
 
-# Converts a 2d CNN into a 1d CNN
-def adapt2d1d(cnn):
-    for block in cnn:
-        if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
-            block.weight = block.weight[:, :, :, 0]
-        elif hasattr(block, 'modules'):
-            for layer in block.children():
-                adapt2d1d(layer)
+# Adapts a 2d CNN to a smaller dimensionality
+def adapt_cnn(block, obs_shape):
+    if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
+        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[1:]))
+        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[1:]))
+
+        block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
+    elif hasattr(block, 'modules'):
+        for layer in block.children():
+            adapt_cnn(layer, obs_shape)
 
 
 # Compute the output shape of a CNN layer

@@ -11,7 +11,7 @@ from torch.nn.functional import cross_entropy
 import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
-from Blocks.Encoders import VisualEncoder
+from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
@@ -46,9 +46,9 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = num_actions  # Num actions sampled by actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else VisualEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
-                               parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
-                               weight_decay=weight_decay, ema_decay=ema_decay * ema)
+            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
+                            parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
+                            weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape

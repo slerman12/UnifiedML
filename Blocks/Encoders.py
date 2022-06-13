@@ -14,7 +14,7 @@ from Blocks.Architectures.Vision.CNN import CNN
 import Utils
 
 
-class VisualEncoder(nn.Module):
+class CNNEncoder(nn.Module):
     """
     CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     Generalized to multi-dimensionality convolutions and obs shapes (1d or 2d)
@@ -27,12 +27,12 @@ class VisualEncoder(nn.Module):
 
         super().__init__()
 
-        self.obs_shape = obs_shape
+        self.obs_shape = copy.copy(obs_shape)
         self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
 
         # Allow 1d inputs
         while len(self.obs_shape) < 3:
-            self.obs_shape.append(1)
+            self.obs_shape.insert(0, 1)
 
         # Dimensions
         self.in_channels = obs_shape[0] + context_dim
@@ -43,8 +43,7 @@ class VisualEncoder(nn.Module):
                                   or CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
-        if len(obs_shape) < 3:
-            Utils.adapt2d1d(self.Eyes)  # Adapt 2d CNN to 1d
+        Utils.adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
@@ -85,12 +84,12 @@ class VisualEncoder(nn.Module):
 
     # Encodes
     def forward(self, obs, *context, pool=True):
+        # 2d to 1d compatibility
+        while len(obs.shape) < 4:
+            obs = obs.unsqueeze(1)
+
         obs_shape = obs.shape  # Preserve leading dims
         obs = obs.flatten(0, -4)  # Encode last 3 dims
-
-        # 2d to 1d compatibility
-        while len(obs.shape) < 3:
-            obs = obs.unsqueeze(-1)
 
         assert obs.shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
@@ -106,7 +105,7 @@ class VisualEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape' \
+        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
                                                           f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
         if pool:
