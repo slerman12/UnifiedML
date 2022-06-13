@@ -424,7 +424,7 @@ python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architect
 
 Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
 
-A little secret, but code can be passed directly into the recipes:
+A little secret, but pytorch code can be passed directly into the recipes:
 
 ```console
 python Run.py Agent=Agents.DQNAgent "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
