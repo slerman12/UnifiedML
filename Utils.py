@@ -47,13 +47,25 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 # Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
+    if hasattr(args, '_target_') and args._target_:
+        try:
+            return hydra.utils.instantiate(args, **kwargs)
+        except ImportError:
+            if '(' in args._target_ and ')' in args._target_:
+                args = args._target_
+            # elif ',' in args._target_:
+            #     for
+            #     return nn.Sequential(*list(map(instantiate, args._t)))
+            else:
+                args._target_ = 'Utils.' + args._target_
+                return hydra.utils.instantiate(args, **kwargs)
+
     if isinstance(args, str):
         for key in kwargs:
             args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')
         args = eval(args)
 
-    return hydra.utils.instantiate(args, **kwargs) if hasattr(args, '_target_') and args._target_ \
-        else None if hasattr(args, '_target_') \
+    return None if hasattr(args, '_target_') \
         else args(**kwargs) if isinstance(args, type) \
         else args[i] if isinstance(args, list) \
         else args

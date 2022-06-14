@@ -32,7 +32,7 @@ class EnsembleQCritic(nn.Module):
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = Utils.instantiate(trunk, input_shape=trunk.input_shape or repr_shape) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
             nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
         dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim

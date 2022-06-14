@@ -178,7 +178,6 @@ recipes:
   actor:
     trunk:
       _target_: ${Pi_trunk}
-      input_shape: null
       output_dim: ${trunk_dim}
     pi_head:
       _target_: ${Pi_head}
@@ -192,7 +191,6 @@ recipes:
   critic:
     trunk:
       _target_: ${Q_trunk}
-      input_shape: null
       output_dim: ${trunk_dim}
     q_head:
       _target_: ${Q_head}

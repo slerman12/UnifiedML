@@ -32,7 +32,7 @@ class MLP(nn.Module):
             for i in range(depth + 1)]
         )
 
-        self.apply(Utils.weight_init)
+        self.apply(Utils.weight_init)  # Note could I adapt/broadcast architectures this way? todo
 
     def repr_shape(self, *_):
         return self.output_dim, *_[1:]

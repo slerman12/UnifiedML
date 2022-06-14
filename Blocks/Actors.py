@@ -28,9 +28,10 @@ class EnsembleGaussianActor(nn.Module):
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.trunk = Utils.instantiate(trunk, input_shape=trunk.input_shape or repr_shape) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
+        # TODO input_dim and adapt critic for ignore obs trunk dim
         self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, output_dim=out_dim)
                                        or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
