@@ -53,9 +53,6 @@ def instantiate(args, i=0, **kwargs):
         except ImportError:
             if '(' in args._target_ and ')' in args._target_:
                 args = args._target_
-            # elif ',' in args._target_:
-            #     for
-            #     return nn.Sequential(*list(map(instantiate, args._t)))
             else:
                 args._target_ = 'Utils.' + args._target_
                 return hydra.utils.instantiate(args, **kwargs)

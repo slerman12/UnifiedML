@@ -546,6 +546,11 @@ python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,ke
 recipes.encoder.eyes=CNN
 ```
 
+An intricate example of the expressiveness of this syntax:
+```console
+python Run.py Optim=Utils.torch.optim.SGD lr=0.01 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim,nn.ReLU(inplace=True"')
+```
+
 </details>
 
 Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two Encoder variants in ```./Blocks/Encoders.py```.
