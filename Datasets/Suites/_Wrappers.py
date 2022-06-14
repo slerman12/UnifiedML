@@ -280,7 +280,7 @@ class AugmentAttributesWrapper(dm_env.Environment):
             # Some environments like DMC/Atari return observations without batch dims
             specs['observation'] = np.expand_dims(specs['observation'], axis=0)
 
-        # Convert 1d to 2d
+        # Convert 1d to 2d  TODO not for proprioceptive
         while len(specs['observation'].shape) < 4:
             specs['observation'] = np.expand_dims(specs['observation'], 1)
 
@@ -303,7 +303,7 @@ class AugmentAttributesWrapper(dm_env.Environment):
     def observation_spec(self):
         obs_spec = self.env.observation_spec()
         obs_spec = self.simplify_spec(obs_spec)
-        # Convert 1d to 2d
+        # Convert 1d to 2d  TODO not for proprioceptive
         while len(obs_spec['shape']) < 3:
             obs_spec['shape'] = (1, *obs_spec['shape'])
         return obs_spec

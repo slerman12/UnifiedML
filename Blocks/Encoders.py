@@ -39,7 +39,7 @@ class CNNEncoder(nn.Module):
                                   or CNN(self.in_channels, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
 
-        Utils.adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
+        adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
@@ -109,6 +109,25 @@ class CNNEncoder(nn.Module):
         # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[1:])
         return h
+
+
+# Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
+def adapt_cnn(block, obs_shape):
+    if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
+        # Represent conv hyper-params as tuples
+        if not isinstance(block.kernel_size, tuple):
+            block.kernel_size = (block.kernel_size, block.kernel_size)
+
+        # Set them to adapt to obs shape (2D --> 1D, etc)
+        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
+
+        # Update the CNN architecture accordingly
+        if not isinstance(block, nn.MaxPool2d):
+            block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
+    elif hasattr(block, 'modules'):
+        for layer in block.children():
+            adapt_cnn(layer, obs_shape[-3:])
+            obs_shape = Utils.cnn_feature_shape(*obs_shape[-3:], layer)
 
 
 class MLPEncoder(nn.Module):

@@ -227,7 +227,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
 
 class Transform:
     def __call__(self, sample):
-        # Convert 1d to 2d
+        # Convert 1d to 2d  TODO not for proprioceptive
         if hasattr(sample, 'shape'):
             while len(sample.shape) < 3:
                 sample = np.expand_dims(sample, -1)  # Channel-last
