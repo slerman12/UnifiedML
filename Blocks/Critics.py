@@ -50,7 +50,6 @@ class EnsembleQCritic(nn.Module):
             self.ema = copy.deepcopy(self).eval()
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema')
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, action=None, context=None):
