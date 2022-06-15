@@ -183,8 +183,8 @@ class Ensemble(nn.Module):
         self.ensemble = nn.ModuleList(modules)
         self.dim = dim
 
-    def forward(self, *x):
-        return torch.stack([m(*x) for m in self.ensemble],
+    def forward(self, *x, **kwargs):
+        return torch.stack([m(*x, **kwargs) for m in self.ensemble],
                            self.dim)
 
 

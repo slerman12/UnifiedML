@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
+from collections import Iterable
 
 import torch
 from torch import nn
@@ -11,12 +12,14 @@ import Utils
 
 
 class MLP(nn.Module):
-    def __init__(self, input_dim=128, output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
-                 dropout=0, binary=False, l2_norm=False, input_shape=None):
+    def __init__(self, input_shape=128, output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
+                 dropout=0, binary=False, l2_norm=False):
         super().__init__()
 
-        if input_shape is not None:
-            input_dim = math.prod(input_shape)
+        # input_dim, flatten_dim = (math.prod(input_shape), -len(input_shape)) if isinstance(input_shape, Iterable) \
+        #     else (input_shape, -1)
+        input_dim = math.prod(input_shape) if isinstance(input_shape, Iterable) else input_shape
+
         self.output_dim = output_dim
 
         self.MLP = nn.Sequential(*[nn.Sequential(

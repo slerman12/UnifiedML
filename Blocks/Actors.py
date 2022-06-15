@@ -26,6 +26,7 @@ class EnsembleGaussianActor(nn.Module):
         self.stddev_clip = stddev_clip
 
         action_dim = math.prod(action_shape)
+
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 

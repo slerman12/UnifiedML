@@ -40,7 +40,7 @@ class EnsembleQCritic(nn.Module):
         out_dim = self.action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
-                                      MLP(dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
+                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
 
         self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
 

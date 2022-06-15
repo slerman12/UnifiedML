@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import time
-import math
 
 import torch
 from torch.nn.functional import cross_entropy
@@ -41,7 +40,7 @@ class DQNAgent(torch.nn.Module):
         self.episode = self.epoch = 1
         self.explore_steps = explore_steps
         self.ema = ema
-        self.action_shape = obs_shape if generate else action_shape  # Generative
+        self.action_shape = obs_shape if generate else action_shape
 
         self.num_actions = num_actions  # Num actions sampled by actor
 
@@ -116,7 +115,7 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
+            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1  # TODO data norm?
             next_obs[:] = label[:] = float('nan')
 
         # "Envision" / "Perceive"
