@@ -36,7 +36,7 @@ class EnsembleGaussianActor(nn.Module):
         self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=[trunk_dim], output_dim=out_dim)
                                        or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
-        # Initializes model optimizer + EMA
+        # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:

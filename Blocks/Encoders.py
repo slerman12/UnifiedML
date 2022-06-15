@@ -56,7 +56,7 @@ class CNNEncoder(nn.Module):
             assert tuple(obs_shape) == self.feature_shape, \
                 f'specified to be isotropic, but in ≠ out {tuple(obs_shape)} ≠ {self.feature_shape}'
 
-        # Initializes model optimizer + EMA
+        # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
