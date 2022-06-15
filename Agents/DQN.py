@@ -116,16 +116,18 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
 
+        # "Envision" / "Perceive"
+
+        # Augment
+        obs = self.aug(obs)
+
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            obs = 2 * (obs - self.min) / (self.max - self.min) - 1  # Normalize first
+            obs = (obs - self.min) * 2 / (self.max - self.min) - 1  # Normalize first  TODO Aug on top?
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 
-        # "Envision" / "Perceive"
-
-        # Augment and encode
-        obs = self.aug(obs)
+        # Encode
         obs = self.encoder(obs)
 
         # Augment and encode future

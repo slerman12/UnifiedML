@@ -402,7 +402,7 @@ class Experiences:
 
         # Transform
         if self.transform is not None:  # TODO audio
-            obs = self.transform(obs)  # TODO torch.as_tensor(obs) ?
+            obs = self.transform(obs)  # TODO torch.as_tensor(obs) ?  Normalize first? Then un-normalize?
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
 
