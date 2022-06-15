@@ -21,14 +21,15 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_norm=None, shift_max_norm=False, isotropic=False, parallel=False,
-                 eyes=None, pool=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
+    def __init__(self, obs_shape, context_dim=0, data_norm=None, normalize=True, shift_max_norm=False, isotropic=False,
+                 parallel=False, eyes=None, pool=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
                  weight_decay=0, ema_decay=0):
 
         super().__init__()
 
         self.obs_shape = copy.copy(obs_shape)
-        self.data_norm = torch.tensor(data_norm or [127.5, 255]).view(2, 1, -1, 1, 1)
+        self.data_norm = torch.tensor(data_norm).view(4, 1, -1, 1, 1)  # Data for normalization (mean, stddev, min, max)
+        self.normalize = data_norm[0] and normalize  # Whether to center scale (normalize to 0 mean, 1 stddev)
 
         # Dimensions
         self.in_channels = obs_shape[0] + context_dim
@@ -85,9 +86,10 @@ class CNNEncoder(nn.Module):
 
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
-        # Normalizes pixels
-        mean, stddev = self.data_norm = self.data_norm.to(obs.device)
-        obs = (obs - mean) / stddev
+        # Normalizes pixels TODO note: makes model non-transferable/generalizable, domain-specific min/max, normalize=
+        mean, stddev, minim, maxim = self.data_norm = self.data_norm.to(obs.device)
+        obs = (obs - mean) / stddev if self.normalize \
+            else 2 * (obs - minim) / (maxim - minim) - 1
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])

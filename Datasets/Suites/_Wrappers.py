@@ -181,6 +181,30 @@ class FrameStackWrapper(dm_env.Environment):
         return getattr(self.env, name)
 
 
+class StatsWrapper(dm_env.Environment):
+    def __init__(self, env, minim, maxim):
+        self.env = env
+        self.data_norm = [None, None, minim, maxim]
+
+    def step(self, action):
+        return self.env.step(action)
+
+    def reset(self):
+        return self.env.reset()
+
+    def close(self):
+        self.gym_env.close()
+
+    def observation_spec(self):
+        return self.env.observation_spec()
+
+    def action_spec(self):
+        return self.env.action_spec()
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+
 # Note: Could technically do in Run.py just by setting rollout steps to truncate_episode_steps and always add to replay
 class TruncateWrapper(dm_env.Environment):
     def __init__(self, env, episode_max_steps=np.inf, episode_truncate_resume_steps=np.inf, train=True):

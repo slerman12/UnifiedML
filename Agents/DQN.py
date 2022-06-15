@@ -21,7 +21,7 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, normalize, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -40,12 +40,14 @@ class DQNAgent(torch.nn.Module):
         self.episode = self.epoch = 1
         self.explore_steps = explore_steps
         self.ema = ema
-        self.action_shape = obs_shape if generate else action_shape
 
         self.num_actions = num_actions  # Num actions sampled by actor
 
+        if generate:
+            action_shape = obs_shape
+
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
+            else CNNEncoder(obs_shape, data_norm=data_norm, normalize=normalize, **recipes.encoder,
                             parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
@@ -54,12 +56,12 @@ class DQNAgent(torch.nn.Module):
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_shape, **recipes.actor,
+            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.actor,
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                        ema_decay=ema_decay * ema)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_shape, **recipes.critic,
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
@@ -100,7 +102,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.action_shape[-1], size=action.shape) if self.discrete \
+                    action = torch.randint(critic.action_dim, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
 
             return action
@@ -115,7 +117,7 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1  # TODO data norm?
+            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
             next_obs[:] = label[:] = float('nan')
 
         # "Envision" / "Perceive"
