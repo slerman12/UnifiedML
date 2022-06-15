@@ -127,9 +127,6 @@ def weight_init(m):
 
 # Initializes model optimizer
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
-    lr, lr_decay_epochs = map(lambda x: x or None,
-                              (lr, lr_decay_epochs))  # 0 --> None
-
     # Optimizer
     optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \
             or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)  # Default
