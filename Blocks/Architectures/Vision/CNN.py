@@ -34,6 +34,7 @@ class CNN(nn.Module):
         c, h, w = Utils.cnn_feature_shape(*self.input_shape, self.trunk, self.CNN)
         self.feature_shape = c * h * w
 
+        # TODO Instead of projecting, use automatic feature computation in blocks
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.Flatten(), nn.ReLU(), nn.Linear(self.feature_shape, output_dim))
 

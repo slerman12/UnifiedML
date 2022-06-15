@@ -29,7 +29,7 @@ class CNNEncoder(nn.Module):
 
         self.obs_shape = copy.copy(obs_shape)
         self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1)  # Data for norm (mean, stddev, min, max)
-        self.standardize = data_stats[0] and standardize  # Whether to center scale (0 mean, 1 stddev)
+        self.standardize = ~self.data_stats.isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
 
         # Dimensions
         obs_shape[0] += context_dim
@@ -59,12 +59,12 @@ class CNNEncoder(nn.Module):
         # Initializes model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
-        self.ema_decay = ema_decay
+        if ema_decay:
+            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
 
     def update_ema_params(self):
-        if not hasattr(self, 'ema') and self.ema_decay:
-            self.ema = copy.deepcopy(self).eval()
-
+        assert hasattr(self, 'ema'), \
+            'exponential moving average (EMA) not initialized'
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     # Encodes

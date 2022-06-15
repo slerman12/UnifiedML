@@ -25,14 +25,14 @@ class EnsembleQCritic(nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.num_actions = math.prod(action_shape) if discrete else None  # n
+        self.num_actions = math.prod(action_shape) if discrete else torch.inf  # n
         self.action_dim = 0 if discrete else math.prod(self.action_shape)  # d
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
         self.ignore_obs = ignore_obs
 
         in_dim = math.prod(repr_shape)
-        out_dim = self.num_actions or 1
+        out_dim = self.num_actions if discrete else 1
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
                 nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
@@ -45,12 +45,12 @@ class EnsembleQCritic(nn.Module):
         # Initializes model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
-        self.ema_decay = ema_decay
+        if ema_decay:
+            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
 
     def update_ema_params(self):
-        if not hasattr(self, 'ema') and self.ema_decay:
-            self.ema = copy.deepcopy(self).eval()
-
+        assert hasattr(self, 'ema'), \
+            'exponential moving average (EMA) not initialized'
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, action=None, context=None):
