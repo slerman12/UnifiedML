@@ -38,6 +38,8 @@ def init(args):
     mps = getattr(torch.backends, 'mps', None)  # Wicked fast M1 MacBook speedup TODO check newer pytorch versions
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
+    # args.device = args.device or ('cuda' if torch.cuda.is_available()
+    #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
 
 # Format path names
@@ -121,6 +123,19 @@ def weight_init(m):
         nn.init.orthogonal_(m.weight.data, gain)
         if hasattr(m.bias, 'data'):
             m.bias.data.fill_(0.0)
+
+
+# Initializes model optimizer
+def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
+    # Optimizer
+    optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \
+            or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)  # Default
+
+    # Learning rate scheduler
+    scheduler = instantiate(scheduler, optimizer=optim) or lr_decay_epochs and lr \
+                and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs)  # Default
+
+    return optim, scheduler
 
 
 # Copies parameters from one model to another, optionally EMA weighing
@@ -304,15 +319,16 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
     # Optimize
     if step_optim:
         for model in models:
-            model.optim.step()
+            if model.optim is not None:
+                model.optim.step()
 
             # Step scheduler
-            if hasattr(model, 'scheduler') and epoch > model.scheduler.last_epoch:
+            if model.scheduler is not None and epoch > model.scheduler.last_epoch:
                 model.scheduler.step()
                 model.scheduler.last_epoch = epoch
 
             # Update ema target
-            if ema and hasattr(model, 'ema'):
+            if ema and model.ema is not None:
                 model.update_ema_params()
 
             if loss is None and clear_grads:

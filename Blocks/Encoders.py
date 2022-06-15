@@ -21,8 +21,8 @@ class CNNEncoder(nn.Module):
     """
 
     def __init__(self, obs_shape, context_dim=0, data_stats=None, standardize=True, feature_norm=False, isotropic=False,
-                 parallel=False, eyes=None, pool=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
-                 weight_decay=0, ema_decay=0):
+                 parallel=False, eyes=None, pool=None, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+                 weight_decay=None, ema_decay=None):
 
         super().__init__()
 
@@ -50,31 +50,21 @@ class CNNEncoder(nn.Module):
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
 
-        # Initialize model
-        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
-
         # Isotropic
         if isotropic:
             assert tuple(obs_shape) == self.feature_shape, \
                 f'specified to be isotropic, but in ≠ out {tuple(obs_shape)} ≠ {self.feature_shape}'
 
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
-        # Optimizer
-        if lr or Utils.can_instantiate(optim):
-            self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
-                         or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # Learning rate scheduler
-        if lr_decay_epochs or Utils.can_instantiate(scheduler):
-            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
-                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
-
-        # EMA
-        if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
+        # Initializes model optimizer + EMA
+        self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
+                                                          lr, lr_decay_epochs, weight_decay)
+        self.ema_decay = ema_decay
+        self.update_ema_params()
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema')
+        if not hasattr(self, 'ema') and self.ema_decay:
+            self.ema = copy.deepcopy(self).eval()
+
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     # Encodes

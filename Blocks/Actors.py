@@ -18,8 +18,8 @@ import Utils
 
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, pi_head=None, ensemble_size=2,
-                 stddev_schedule=None, stddev_clip=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
-                 weight_decay=0, ema_decay=0):
+                 stddev_schedule=None, stddev_clip=None, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+                 weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.stddev_schedule = stddev_schedule
@@ -36,25 +36,16 @@ class EnsembleGaussianActor(nn.Module):
         self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=[trunk_dim], output_dim=out_dim)
                                        or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
-        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
-
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
-        # Optimizer
-        if lr or Utils.can_instantiate(optim):
-            self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
-                         or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # Learning rate scheduler
-        if lr_decay_epochs or Utils.can_instantiate(scheduler):
-            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
-                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
-
-        # EMA
-        if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
+        # Initializes model optimizer + EMA
+        self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
+                                                          lr, lr_decay_epochs, weight_decay)
+        self.ema_decay = ema_decay
+        self.update_ema_params()
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema')
+        if not hasattr(self, 'ema') and self.ema_decay:
+            self.ema = copy.deepcopy(self).eval()
+
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, step=None):
