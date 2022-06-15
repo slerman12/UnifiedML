@@ -86,23 +86,23 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
 def instantiate(args, i=0, **kwargs):
     if hasattr(args, '_target_') and args._target_:
         try:
-            return hydra.utils.instantiate(args, **kwargs)
+            return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
         except ImportError:
-            if '(' in args._target_ and ')' in args._target_:
+            if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                 args = args._target_
             else:
-                args._target_ = 'Utils.' + args._target_
+                args._target_ = 'Utils.' + args._target_  # Portal into Utils
                 return hydra.utils.instantiate(args, **kwargs)
 
     if isinstance(args, str):
         for key in kwargs:
-            args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')
-        args = eval(args)
+            args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')  # Interpolation
+        args = eval(args)  # Direct code execution
 
     return None if hasattr(args, '_target_') \
         else args(**kwargs) if isinstance(args, type) \
         else args[i] if isinstance(args, list) \
-        else args
+        else args  # Additional useful semantics
 
 
 # Checks if args can be instantiated

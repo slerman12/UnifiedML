@@ -150,7 +150,7 @@ plotting:
 Aug: null  # Shorthand for recipes.aug._target_
 
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
-pool: null  # Shorthand for recipes.encoder.pool._target_
+Pool: null  # Shorthand for recipes.encoder.pool._target_
 Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
 Q_trunk: null  # Shorthand for recipes.critic.trunk._target_
 Generator: null  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_
@@ -161,39 +161,45 @@ Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 Optim: null  # Shorthand for recipes.<block>.optim._target_ ,  e.g. python Run.py Optim=Utils.torch.optim.SGD
 Scheduler: null  # Shorthand for recipes.<block>.scheduler._target_
 
+# Shorthands for recipes
+aug:
+  _target_: ${Aug}
+eyes:
+  _target_: ${Eyes}
+pool:
+  _target_: ${Pool}
+pi_trunk:
+  _target_: ${Pi_trunk}
+pi_head:
+  _target_: ${Pi_head}
+q_trunk:
+  _target_: ${Q_trunk}
+q_head:
+  _target_: ${Q_head}
+optim:
+  _target_: ${Optim}
+  lr: ${lr}
+scheduler:
+  _target_: ${Scheduler}
+
+# Recipes
 recipes:
-  aug:
-    _target_: ${Aug}
+  aug: ${aug}
   encoder:
-    eyes:
-      _target_: ${Eyes}
-    pool:
-      _target_: ${pool}
-    optim:
-      _target_: ${Optim}
-      lr: ${lr}
-    scheduler:
-      _target_: ${Scheduler}
+    eyes: ${eyes}
+    pool: ${pool}
+    optim: ${optim}
+    scheduler: ${scheduler}
   actor:
-    trunk:
-      _target_: ${Pi_trunk}
-    pi_head:
-      _target_: ${Pi_head}
-    optim:
-      _target_: ${Optim}
-      lr: ${lr}
-    scheduler:
-      _target_: ${Scheduler}
+    trunk: ${pi_trunk}
+    pi_head: ${pi_head}
+    optim: ${optim}
+    scheduler: ${scheduler}
   critic:
-    trunk:
-      _target_: ${Q_trunk}
-    q_head:
-      _target_: ${Q_head}
-    optim:
-      _target_: ${Optim}
-      lr: ${lr}
-    scheduler:
-      _target_: ${Scheduler}
+    trunk: ${q_trunk}
+    q_head: ${q_head}
+    optim: ${optim}
+    scheduler: ${scheduler}
 
 hydra:
   output_subdir: ${logger.path}${task_name}_${seed}_Hydra
