@@ -524,6 +524,12 @@ Here is a more complex example, disabling the Encoder's flattening of the featur
 python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool pool=Blocks.Architectures.Null
 ```
 
+Here is a nice example of the critic using a small CNN for downsampling features:
+
+```console
+python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
+```
+
 
 [comment]: <> (<details>)
 

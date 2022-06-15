@@ -29,11 +29,10 @@ from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
 
 class ClassifyEnv:
     """A classification environment"""
-    def __init__(self, experiences, batch_size, num_workers, offline, train, path=None, minim=0, maxim=255):
+    def __init__(self, experiences, batch_size, num_workers, offline, train, path=None):
 
         self.num_classes = len(experiences.classes)
         self.action_repeat = 1
-        self.min, self.max = minim, maxim
 
         if not train:
             # Give eval equal-sized batches for easy accuracy computation
@@ -60,9 +59,12 @@ class ClassifyEnv:
 
         if len(norm_path):
             mean, stddev = map(json.loads, norm_path[0].split('_')[-2:])
-            self.data_stats = [mean, stddev, minim, maxim]
+            self.data_stats = [mean, stddev]
         elif train:
             self.compute_norm(path)
+
+        self.min, self.max = [0] * self.observation_spec().shape[0], [1] * self.observation_spec().shape[0]
+        self.data_stats += [self.min, self.max]
 
     @property
     def batch(self):
@@ -112,7 +114,7 @@ class ClassifyEnv:
 
             cnt += nb_pixels
 
-        self.data_stats = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist(), self.min, self.max]
+        self.data_stats = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
         open(path + f'_Normalization_{self.data_stats[0]}_{self.data_stats[1]}', 'w')  # Save norm values for future reuse
 
     def reset_format(self, x, y):
@@ -174,7 +176,7 @@ class ClassifyEnv:
 
 
 def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1, minim=0, maxim=1):
+         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     """
     'task' options:
 
@@ -217,7 +219,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
         assert isinstance(experiences, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
         assert hasattr(experiences, 'classes'), 'Classify Dataset must define a "classes" attribute'
 
-    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path, minim, maxim)
+    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path)
 
     env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
     env = AugmentAttributesWrapper(env,

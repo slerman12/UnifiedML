@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
 import copy
 
 import torch
@@ -31,12 +32,12 @@ class CNNEncoder(nn.Module):
         self.standardize = data_stats[0] and standardize  # Whether to center scale (0 mean, 1 stddev)
 
         # Dimensions
-        self.in_channels = obs_shape[0] + context_dim
+        obs_shape[0] += context_dim
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
         self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=self.obs_shape)
-                                  or CNN(self.in_channels, self.out_channels, depth=3),
+                                  or CNN(obs_shape, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR eyes
 
         adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
@@ -90,9 +91,9 @@ class CNNEncoder(nn.Module):
 
         if pool:
             h = self.pool(h)
-            assert h.shape[-1] == self.repr_dim or tuple(h.shape[-3:]) == self.repr_shape, \
+            assert h.shape[-1] == math.prod(self.repr_shape) or tuple(h.shape[-3:]) == self.repr_shape, \
                 f'pre-computed repr_dim/repr_shape does not match output dim ' \
-                f'{self.repr_dim}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
+                f'{math.prod(self.repr_shape)}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
 
         # Restore leading dims
         h = h.view(*obs_shape[:-3], *h.shape[1:])

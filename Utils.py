@@ -41,7 +41,7 @@ def init(args):
     # args.device = args.device or ('cuda' if torch.cuda.is_available()
     #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
-
+torch.autograd.set_detect_anomaly(True)
 # Format path names
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])

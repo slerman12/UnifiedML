@@ -6,7 +6,7 @@ import os
 
 
 def make(task, dataset, frame_stack=3, action_repeat=2, episode_max_frames=False, episode_truncate_resume_frames=False,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1, minim=0, maxim=255):
+         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     # Imports in make() to avoid glfw warning
     try:
         from dm_control import manipulation, suite
@@ -59,6 +59,7 @@ def make(task, dataset, frame_stack=3, action_repeat=2, episode_max_frames=False
     env = FrameStackWrapper(env, frame_stack, pixels_key)
 
     # Add min, max specs for normalization
+    minim, maxim = [0] * env.observation_spec().shape[0], [255] * env.observation_spec().shape[0]
     env = StatsWrapper(env, minim, maxim)
 
     # Truncate-resume or cut episodes short

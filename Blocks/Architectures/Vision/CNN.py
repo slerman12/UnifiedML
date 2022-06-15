@@ -15,6 +15,9 @@ class CNN(nn.Module):
         if isinstance(input_shape, int):
             input_shape = [input_shape]
 
+        # while len(input_shape) < 3:
+        #     input_shape += [1]
+
         self.input_shape = torch.Size(input_shape)
         in_channels = input_shape[0]
 
@@ -28,8 +31,11 @@ class CNN(nn.Module):
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
 
+        c, h, w = Utils.cnn_feature_shape(*self.input_shape, self.trunk, self.CNN)
+        self.feature_shape = c * h * w
+
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
+            else nn.Sequential(nn.Flatten(), nn.ReLU(), nn.Linear(self.feature_shape, output_dim))
 
         self.apply(Utils.weight_init)
 

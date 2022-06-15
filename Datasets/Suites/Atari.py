@@ -197,7 +197,7 @@ class AtariPreprocessing(dm_env.Environment):
 
 
 def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1, minim=0, maxim=255):
+         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     task = f'ALE/{task}-v5'
 
     # Recommended vs. original settings
@@ -253,6 +253,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
         else np.inf
 
     # Add min, max specs for normalization
+    minim, maxim = [0] * env.observation_spec().shape[0], [255] * env.observation_spec().shape[0]
     env = StatsWrapper(env, minim, maxim)
 
     env = TruncateWrapper(env,

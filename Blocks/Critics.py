@@ -57,7 +57,7 @@ class EnsembleQCritic(nn.Module):
         batch_size = obs.shape[0]
 
         h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
-            else self.trunk(obs).to(action.device)
+            else self.trunk(obs)
 
         if context is None:
             context = torch.empty(0, device=h.device)
