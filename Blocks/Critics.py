@@ -19,25 +19,25 @@ class EnsembleQCritic(nn.Module):
     MLP-based Critic network, employs ensemble Q learning,
     returns a Normal distribution over the ensemble.
     """
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk=None, q_head=None, ensemble_size=2,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, q_head=None, ensemble_size=2,
                  discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
                  weight_decay=0, ema_decay=0):
         super().__init__()
 
         self.discrete = discrete
-        self.action_dim = action_dim
+        self.action_dim = math.prod(action_shape)
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
         self.ignore_obs = ignore_obs
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
-        in_shape = q_head.input_shape or [dim]
-        out_dim = action_dim if discrete else 1
+        dim = trunk_dim if discrete else self.action_dim if ignore_obs else trunk_dim + self.action_dim
+        in_shape = [dim] if discrete or not ignore_obs else action_shape
+        out_dim = self.action_dim if discrete else 1
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)

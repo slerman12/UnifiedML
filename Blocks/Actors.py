@@ -17,7 +17,7 @@ import Utils
 
 
 class EnsembleGaussianActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk=None, pi_head=None, ensemble_size=2,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, pi_head=None, ensemble_size=2,
                  stddev_schedule=None, stddev_clip=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
                  weight_decay=0, ema_decay=0):
         super().__init__()
@@ -25,14 +25,14 @@ class EnsembleGaussianActor(nn.Module):
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
 
+        action_dim = math.prod(action_shape)
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        # TODO input_dim and adapt critic for ignore obs trunk dim
-        self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, output_dim=out_dim)
+        self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=[trunk_dim], output_dim=out_dim)
                                        or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
         self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)

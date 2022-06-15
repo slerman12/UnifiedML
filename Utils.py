@@ -35,42 +35,14 @@ def init(args):
     set_seeds(args.seed)
 
     # Set device
-    # args.device = args.device or ('cuda' if torch.cuda.is_available()
-    #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    args.device = args.device or ('cuda' if torch.cuda.is_available() else 'cpu')
+    mps = getattr(torch.backends, 'mps', None)  # Wicked fast M1 MacBook speedup TODO check newer pytorch versions
+    args.device = args.device or ('cuda' if torch.cuda.is_available()
+                                  else 'mps' if mps and mps.is_available() else 'cpu')
 
 
 # Format path names
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
-
-
-# Simple-sophisticated instantiation of a class or module by various semantics
-def instantiate(args, i=0, **kwargs):
-    if hasattr(args, '_target_') and args._target_:
-        try:
-            return hydra.utils.instantiate(args, **kwargs)
-        except ImportError:
-            if '(' in args._target_ and ')' in args._target_:
-                args = args._target_
-            else:
-                args._target_ = 'Utils.' + args._target_
-                return hydra.utils.instantiate(args, **kwargs)
-
-    if isinstance(args, str):
-        for key in kwargs:
-            args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')
-        args = eval(args)
-
-    return None if hasattr(args, '_target_') \
-        else args(**kwargs) if isinstance(args, type) \
-        else args[i] if isinstance(args, list) \
-        else args
-
-
-# Checks if args can be instantiated
-def can_instantiate(args):
-    return isinstance(args, (str, nn.Module, list)) or hasattr(args, '_target_') and args._target_
 
 
 # Saves model + args + attributes
@@ -108,6 +80,34 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
         if key:
             model = getattr(model, key)
     return model
+
+
+# Simple-sophisticated instantiation of a class or module by various semantics
+def instantiate(args, i=0, **kwargs):
+    if hasattr(args, '_target_') and args._target_:
+        try:
+            return hydra.utils.instantiate(args, **kwargs)
+        except ImportError:
+            if '(' in args._target_ and ')' in args._target_:
+                args = args._target_
+            else:
+                args._target_ = 'Utils.' + args._target_
+                return hydra.utils.instantiate(args, **kwargs)
+
+    if isinstance(args, str):
+        for key in kwargs:
+            args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')
+        args = eval(args)
+
+    return None if hasattr(args, '_target_') \
+        else args(**kwargs) if isinstance(args, type) \
+        else args[i] if isinstance(args, list) \
+        else args
+
+
+# Checks if args can be instantiated
+def can_instantiate(args):
+    return isinstance(args, (str, nn.Module, list)) or hasattr(args, '_target_') and args._target_
 
 
 # Initializes model weights a la orthogonal

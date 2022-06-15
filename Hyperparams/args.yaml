@@ -169,7 +169,6 @@ recipes:
       _target_: ${Eyes}
     pool:
       _target_: ${pool}
-      output_dim: null
     optim:
       _target_: ${Optim}
       lr: ${lr}
@@ -178,11 +177,8 @@ recipes:
   actor:
     trunk:
       _target_: ${Pi_trunk}
-      output_dim: ${trunk_dim}
     pi_head:
       _target_: ${Pi_head}
-      input_shape:
-        - ${trunk_dim}
     optim:
       _target_: ${Optim}
       lr: ${lr}
@@ -191,10 +187,8 @@ recipes:
   critic:
     trunk:
       _target_: ${Q_trunk}
-      output_dim: ${trunk_dim}
     q_head:
       _target_: ${Q_head}
-      input_shape: null
     optim:
       _target_: ${Optim}
       lr: ${lr}

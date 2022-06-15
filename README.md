@@ -228,12 +228,12 @@ Humanoid example:
 python Run.py task=dmc/humanoid_walk
 ```
 
-A [DrQV2](https://arxiv.org/abs/2107.09645)Agent in Atari:
+[DrQV2](https://arxiv.org/abs/2107.09645) Agent in Atari:
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 ```
 
-An [SPR](https://arxiv.org/abs/2007.05929)Agent in DeepMind Control:
+[SPR](https://arxiv.org/abs/2007.05929) Agent in DeepMind Control:
 ```console
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
@@ -548,7 +548,7 @@ recipes.encoder.eyes=CNN
 
 An intricate example of the expressiveness of this syntax:
 ```console
-python Run.py Optim=Utils.torch.optim.SGD lr=0.01 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim,nn.ReLU(inplace=True"')
+python Run.py Optim=Utils.torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
 </details>
