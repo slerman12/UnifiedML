@@ -127,12 +127,15 @@ def weight_init(m):
 
 # Initializes model optimizer
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
+    lr, lr_decay_epochs = map(lambda x: x or None,
+                              (lr, lr_decay_epochs))  # 0 --> None
+
     # Optimizer
     optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \
             or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)  # Default
 
     # Learning rate scheduler
-    scheduler = instantiate(scheduler, optimizer=optim) or lr_decay_epochs and lr \
+    scheduler = instantiate(scheduler, optimizer=optim) or lr and lr_decay_epochs \
                 and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs)  # Default
 
     return optim, scheduler
@@ -319,8 +322,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
     # Optimize
     if step_optim:
         for model in models:
-            if model.optim is not None:
-                model.optim.step()
+            model.optim.step()
 
             # Step scheduler
             if model.scheduler is not None and epoch > model.scheduler.last_epoch:
@@ -328,7 +330,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 model.scheduler.last_epoch = epoch
 
             # Update ema target
-            if ema and model.ema is not None:
+            if ema and hasattr(model, 'ema'):
                 model.update_ema_params()
 
             if loss is None and clear_grads:

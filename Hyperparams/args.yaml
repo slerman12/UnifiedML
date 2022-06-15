@@ -12,7 +12,7 @@ trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
 lr: 1e-4
-lr_decay_epochs: 0
+lr_decay_epochs: null
 weight_decay: 0
 ema_decay: 0.99
 # Domains

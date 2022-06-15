@@ -123,7 +123,7 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            obs = (obs - self.min) * 2 / (self.max - self.min) - 1  # Normalize first  TODO Aug on top?
+            obs = (obs - self.min) * 2 / (self.max - self.min) - 1  # Normalize first
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 

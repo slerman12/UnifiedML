@@ -27,7 +27,7 @@ class CNNEncoder(nn.Module):
         super().__init__()
 
         self.obs_shape = copy.copy(obs_shape)
-        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1)  # Data for normalization (mean, stddev, min, max)
+        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1)  # Data for norm (mean, stddev, min, max)
         self.standardize = data_stats[0] and standardize  # Whether to center scale (0 mean, 1 stddev)
 
         # Dimensions
@@ -59,7 +59,6 @@ class CNNEncoder(nn.Module):
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         self.ema_decay = ema_decay
-        self.update_ema_params()
 
     def update_ema_params(self):
         if not hasattr(self, 'ema') and self.ema_decay:
@@ -103,18 +102,22 @@ class CNNEncoder(nn.Module):
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
-        # Represent conv hyper-params as tuples
+        # Represent hyper-params as tuples
         if not isinstance(block.kernel_size, tuple):
             block.kernel_size = (block.kernel_size, block.kernel_size)
+        if not isinstance(block.padding, tuple):
+            block.padding = (block.padding, block.padding)
 
-        # Set them to adapt to obs shape (2D --> 1D, etc)
+        # Set them to adapt to obs shape (2D --> 1D, etc) via contracted kernels / suitable padding
         block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
+        block.padding = tuple(0 if obs < pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
 
-        # Update the CNN architecture accordingly
+        # Shrink the CNN kernels accordingly
         if not isinstance(block, nn.MaxPool2d):
             block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
     elif hasattr(block, 'modules'):
         for layer in block.children():
+            # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
             obs_shape = Utils.cnn_feature_shape(*obs_shape[-3:], layer)
 

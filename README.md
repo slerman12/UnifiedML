@@ -354,16 +354,27 @@ Is true by default for classification, where replays are automatically downloade
 
 Via the ```generate=true``` flag:
 ```console
-python Run.py task=classify/mnist generate=true
+python Run.py task=classify/mnist generate=true Aug=Blocks.Architectures.Null
 ```
+
+```Aug=Blocks.Architectures.Null``` disables the default image augmentation, since it trains slower on the default settings.
+
 Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```console
-python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 
+python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 aug=Null
 ```
+
+A GAN with a CNN Discriminator:
+
+```console
+python Run.py generate=True Discriminator=CNN' 
+```
+
+See [Custom Architectures](#custom-architectures) for more info on this syntax.
 
 </details>
 
@@ -504,7 +515,7 @@ python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=t
 A GAN with a CNN Discriminator:
 
 ```console
-python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
+python Run.py generate=True Discriminator=CNN' 
 ```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.

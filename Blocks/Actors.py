@@ -40,7 +40,6 @@ class EnsembleGaussianActor(nn.Module):
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         self.ema_decay = ema_decay
-        self.update_ema_params()
 
     def update_ema_params(self):
         if not hasattr(self, 'ema') and self.ema_decay:
