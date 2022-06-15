@@ -36,7 +36,7 @@ class CNN(nn.Module):
 
         # TODO Instead of projecting, use automatic feature computation in blocks
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.Flatten(), nn.ReLU(), nn.Linear(self.feature_shape, output_dim))
+            else nn.Sequential(nn.Flatten(), nn.Linear(self.feature_shape, 50), nn.ReLU(), nn.Linear(50, output_dim))
 
         self.apply(Utils.weight_init)
 

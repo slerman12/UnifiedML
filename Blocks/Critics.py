@@ -27,9 +27,9 @@ class EnsembleQCritic(nn.Module):
         self.discrete = discrete
         self.num_actions = math.prod(action_shape) if discrete else -1  # n
         self.action_dim = 0 if discrete else math.prod(action_shape)  # d
+        self.ignore_obs = ignore_obs
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
-        self.ignore_obs = ignore_obs
 
         in_dim = math.prod(repr_shape)
         out_dim = self.num_actions if discrete else 1

@@ -28,7 +28,7 @@ class CNNEncoder(nn.Module):
         super().__init__()
 
         self.obs_shape = copy.copy(obs_shape)
-        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1)  # Data for norm (mean, stddev, min, max)
+        self.data_stats = data_stats
         self.standardize = ~self.data_stats.isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
 
         # Dimensions
@@ -36,16 +36,16 @@ class CNNEncoder(nn.Module):
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=self.obs_shape)
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_shape)
                                   or CNN(obs_shape, self.out_channels, depth=3),
-                                  Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR eyes
+                                  Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR
 
-        adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
+        adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.feature_shape = Utils.cnn_feature_shape(*self.obs_shape, self.Eyes)  # Feature map shape
+        self.feature_shape = Utils.cnn_feature_shape(*obs_shape, self.Eyes)  # Feature map shape
 
         self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
@@ -73,8 +73,8 @@ class CNNEncoder(nn.Module):
 
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
-        # Standardizes/normalizes pixels TODO Question: normalize or augment first?
-        mean, stddev, minim, maxim = self.data_stats.to(obs.device)
+        # Standardizes/normalizes pixels
+        mean, stddev, minim, maxim = self.data_stats
         obs = (obs - mean) / stddev if self.standardize else 2 * (obs - minim) / (maxim - minim) - 1
 
         # Optionally append context to channels assuming dimensions allow

@@ -365,7 +365,7 @@ Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#sa
 Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```console
-python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 aug=Null
+python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 'aug="Null"'
 ```
 
 A GAN with a CNN Discriminator:

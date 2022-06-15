@@ -45,10 +45,11 @@ class DQNAgent(torch.nn.Module):
 
         if generate:
             action_shape = obs_shape
-            _, _, self.min, self.max = data_stats
+
+        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1).to(device)  # Data mean, stddev, min, max
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_stats=data_stats, standardize=standardize, **recipes.encoder,
+            else CNNEncoder(obs_shape, data_stats=self.data_stats, standardize=standardize, **recipes.encoder,
                             parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
@@ -123,7 +124,8 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            obs = (obs - self.min) * 2 / (self.max - self.min) - 1  # Normalize first
+            _, _, minim, maxim = self.data_stats
+            obs = (obs - minim) * 2 / (maxim - minim) - 1  # Normalize first
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 

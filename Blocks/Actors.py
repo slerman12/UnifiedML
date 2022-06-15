@@ -22,8 +22,8 @@ class EnsembleGaussianActor(nn.Module):
                  weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.stddev_schedule = stddev_schedule
-        self.stddev_clip = stddev_clip
+        self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
+        self.stddev_clip = stddev_clip  # Max cutoff threshold on standard dev
 
         action_dim = math.prod(action_shape)
 
