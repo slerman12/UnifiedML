@@ -102,7 +102,7 @@ def instantiate(args, i=0, **kwargs):
     return None if hasattr(args, '_target_') \
         else args(**kwargs) if isinstance(args, type) \
         else args[i] if isinstance(args, list) \
-        else args  # Additional useful semantics
+        else args  # Additional useful ones
 
 
 # Checks if args can be instantiated
