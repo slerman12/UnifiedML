@@ -25,14 +25,14 @@ class EnsembleQCritic(nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.action_shape = action_shape
+        self.num_actions = math.prod(action_shape) if discrete else None  # n
         self.action_dim = 0 if discrete else math.prod(self.action_shape)  # d
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
         self.ignore_obs = ignore_obs
 
         in_dim = math.prod(repr_shape)
-        out_dim = self.action_dim if discrete else 1
+        out_dim = self.num_actions or 1
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
                 nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
@@ -69,7 +69,7 @@ class EnsembleQCritic(nn.Module):
             Qs = self.Q_head(h, context)  # [e, b, n]
 
             if action is None:
-                action = torch.arange(math.prod(self.action_shape), device=obs.device).expand_as(Qs[0])  # [b, n]
+                action = torch.arange(self.num_actions, device=obs.device).expand_as(Qs[0])  # [b, n]
             else:
                 # Q values for a discrete action
                 Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
