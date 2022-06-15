@@ -25,7 +25,7 @@ class EnsembleQCritic(nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.num_actions = math.prod(action_shape) if discrete else torch.inf  # n
+        self.num_actions = math.prod(action_shape) if discrete else -1  # n
         self.action_dim = 0 if discrete else math.prod(action_shape)  # d
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
@@ -46,10 +46,11 @@ class EnsembleQCritic(nn.Module):
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
+            self.ema_decay = ema_decay
+            self.ema = copy.deepcopy(self).eval()
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema'), 'exponential moving average (EMA) not initialized'
+        assert hasattr(self, 'ema')
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, action=None, context=None):

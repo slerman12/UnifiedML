@@ -60,10 +60,11 @@ class CNNEncoder(nn.Module):
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
+            self.ema_decay = ema_decay
+            self.ema = copy.deepcopy(self).eval()
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema'), 'exponential moving average (EMA) not initialized'
+        assert hasattr(self, 'ema')
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     # Encodes
