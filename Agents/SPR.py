@@ -24,7 +24,7 @@ class SPRAgent(torch.nn.Module):
     """Self-Predictive Representations (https://arxiv.org/abs/2007.05929)
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -47,7 +47,7 @@ class SPRAgent(torch.nn.Module):
         self.depth = depth
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
+            else CNNEncoder(obs_shape, data_stats=data_stats, recipe=recipes.encoder, parallel=parallel,
                             lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
 
         repr_shape = (trunk_dim,) if generate \

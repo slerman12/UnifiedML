@@ -184,7 +184,7 @@ class FrameStackWrapper(dm_env.Environment):
 class StatsWrapper(dm_env.Environment):
     def __init__(self, env, minim, maxim):
         self.env = env
-        self.data_norm = [None, None, minim, maxim]
+        self.data_stats = [None, None, minim, maxim]
 
     def step(self, action):
         return self.env.step(action)

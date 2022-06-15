@@ -21,7 +21,7 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, normalize, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, standardize, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -45,9 +45,10 @@ class DQNAgent(torch.nn.Module):
 
         if generate:
             action_shape = obs_shape
+            _, _, self.min, self.max = data_stats
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, normalize=normalize, **recipes.encoder,
+            else CNNEncoder(obs_shape, data_stats=data_stats, standardize=standardize, **recipes.encoder,
                             parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
@@ -117,7 +118,8 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
+            obs = 2 * (obs - self.min) / (self.max - self.min) - 1  # Normalize first
+            action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 
         # "Envision" / "Perceive"

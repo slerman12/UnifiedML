@@ -60,7 +60,7 @@ class ClassifyEnv:
 
         if len(norm_path):
             mean, stddev = map(json.loads, norm_path[0].split('_')[-2:])
-            self.data_norm = [mean, stddev, minim, maxim]
+            self.data_stats = [mean, stddev, minim, maxim]
         elif train:
             self.compute_norm(path)
 
@@ -112,8 +112,8 @@ class ClassifyEnv:
 
             cnt += nb_pixels
 
-        self.data_norm = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist(), self.min, self.max]
-        open(path + f'_Normalization_{self.data_norm[0]}_{self.data_norm[1]}', 'w')  # Save norm values for future reuse
+        self.data_stats = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist(), self.min, self.max]
+        open(path + f'_Normalization_{self.data_stats[0]}_{self.data_stats[1]}', 'w')  # Save norm values for future reuse
 
     def reset_format(self, x, y):
         x, y = [np.array(b, dtype='float32') for b in (x, y)]
@@ -174,7 +174,7 @@ class ClassifyEnv:
 
 
 def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1, minim=0, maxim=255):
+         offline=False, train=True, seed=1, batch_size=1, num_workers=1, minim=0, maxim=1):
     """
     'task' options:
 
@@ -231,8 +231,8 @@ class Transform:
         # Convert 1d to 2d  TODO not for proprioceptive? move to encoder?
         if hasattr(sample, 'shape'):
             while len(sample.shape) < 3:
-                sample = np.expand_dims(sample, -1)  # Channel-last
-        sample = F.to_tensor(sample) * 255
+                sample = np.expand_dims(sample, -1)  # Add spatial dims
+        sample = F.to_tensor(sample)
         return sample
 
 

@@ -22,7 +22,7 @@ class DrQV2Agent(torch.nn.Module):
     """Data-Regularized Q-Network V2 (https://arxiv.org/abs/2107.09645)
     Generalized to discrete action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log  # On-boarding
@@ -42,7 +42,7 @@ class DrQV2Agent(torch.nn.Module):
         self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder, parallel=parallel,
+            else CNNEncoder(obs_shape, data_stats=data_stats, **recipes.encoder, parallel=parallel,
                             lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                             ema_decay=ema_decay * ema)
 

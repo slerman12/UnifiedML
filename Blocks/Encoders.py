@@ -21,15 +21,15 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_norm=None, normalize=True, shift_max_norm=False, isotropic=False,
+    def __init__(self, obs_shape, context_dim=0, data_stats=None, standardize=True, feature_norm=False, isotropic=False,
                  parallel=False, eyes=None, pool=None, optim=None, scheduler=None, lr=0, lr_decay_epochs=0,
                  weight_decay=0, ema_decay=0):
 
         super().__init__()
 
         self.obs_shape = copy.copy(obs_shape)
-        self.data_norm = torch.tensor(data_norm).view(4, 1, -1, 1, 1)  # Data for normalization (mean, stddev, min, max)
-        self.normalize = data_norm[0] and normalize  # Whether to center scale (normalize to 0 mean, 1 stddev)
+        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1)  # Data for normalization (mean, stddev, min, max)
+        self.standardize = data_stats[0] and standardize  # Whether to center scale (0 mean, 1 stddev)
 
         # Dimensions
         self.in_channels = obs_shape[0] + context_dim
@@ -38,7 +38,7 @@ class CNNEncoder(nn.Module):
         # CNN
         self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=self.obs_shape)
                                   or CNN(self.in_channels, self.out_channels, depth=3),
-                                  Utils.ShiftMaxNorm(-3) if shift_max_norm else nn.Identity())
+                                  Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR eyes
 
         adapt_cnn(self.Eyes, self.obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
@@ -50,7 +50,6 @@ class CNNEncoder(nn.Module):
         self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
-        self.repr_dim = math.prod(self.repr_shape)  # Flattened repr dim
 
         # Initialize model
         self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
@@ -86,10 +85,9 @@ class CNNEncoder(nn.Module):
 
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
-        # Normalizes pixels TODO note: makes model non-transferable/generalizable, domain-specific min/max, normalize=
-        mean, stddev, minim, maxim = self.data_norm = self.data_norm.to(obs.device)
-        obs = (obs - mean) / stddev if self.normalize \
-            else 2 * (obs - minim) / (maxim - minim) - 1
+        # Standardizes/normalizes pixels TODO Question: normalize or augment first?
+        mean, stddev, minim, maxim = self.data_stats.to(obs.device)
+        obs = (obs - mean) / stddev if self.standardize else 2 * (obs - minim) / (maxim - minim) - 1
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
@@ -137,12 +135,10 @@ class MLPEncoder(nn.Module):
     With LayerNorm
     Can also l2-normalize penultimate layer (https://openreview.net/pdf?id=9xhgmsNVHu)"""
 
-    def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, data_norm=None, layer_norm_dim=None,
+    def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, layer_norm_dim=None,
                  non_linearity=nn.ReLU(inplace=True), dropout=0, binary=False, l2_norm=False,
                  parallel=False, optim=None, scheduler=None, lr=0, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
         super().__init__()
-
-        self.data_norm = torch.tensor(data_norm or [0, 1])
 
         self.trunk = nn.Identity() if layer_norm_dim is None \
             else nn.Sequential(nn.Linear(input_dim, layer_norm_dim),
@@ -183,10 +179,6 @@ class MLPEncoder(nn.Module):
 
     def forward(self, x, *context):
         h = torch.cat([x, *context], -1)
-
-        # Normalizes
-        mean, stddev = self.data_norm = self.data_norm.to(h.device)
-        h = (h - mean) / stddev
 
         h = self.trunk(h)
         return self.MLP(h)

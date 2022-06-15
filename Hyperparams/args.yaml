@@ -6,8 +6,8 @@ defaults:
 # Agent
 obs_shape: ???  # To be specified later
 action_shape: ??? # To be specified later
-data_norm: null
-normalize: true
+data_stats: null
+standardize: true
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
@@ -85,7 +85,8 @@ agent:
   action_shape: ${action_shape}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
-  data_norm: ${data_norm}
+  data_stats: ${data_stats}
+  standardize: ${standardize}
   recipes: ${recipes}
   lr: ${lr}
   lr_decay_epochs: ${lr_decay_epochs}
