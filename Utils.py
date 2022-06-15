@@ -330,7 +330,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 model.scheduler.last_epoch = epoch
 
             # Update ema target
-            if ema and hasattr(model, 'ema'):
+            if ema and model.ema_decay:
                 model.update_ema_params()
 
             if loss is None and clear_grads:
