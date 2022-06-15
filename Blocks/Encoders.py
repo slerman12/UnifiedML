@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import copy
-import math
 
 import torch
 from torch import nn
@@ -85,7 +84,7 @@ class CNNEncoder(nn.Module):
 
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
-        # Standardizes/normalizes pixels TODO Question: normalize or augment first? Normalize consistently to [-1, 1]?
+        # Standardizes/normalizes pixels TODO Question: normalize or augment first?
         mean, stddev, minim, maxim = self.data_stats.to(obs.device)
         obs = (obs - mean) / stddev if self.standardize else 2 * (obs - minim) / (maxim - minim) - 1
 

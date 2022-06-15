@@ -25,19 +25,19 @@ class EnsembleQCritic(nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.action_dim = math.prod(action_shape)
+        self.action_shape = action_shape
+        self.action_dim = 0 if discrete else math.prod(self.action_shape)
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
         self.ignore_obs = ignore_obs
 
         in_dim = math.prod(repr_shape)
+        out_dim = self.action_dim if discrete else 1
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
-            nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
+                nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
-        dim = trunk_dim if discrete else self.action_dim if ignore_obs else trunk_dim + self.action_dim
-        in_shape = [dim] if discrete or not ignore_obs else action_shape
-        out_dim = self.action_dim if discrete else 1
+        in_shape = action_shape if ignore_obs else [trunk_dim + self.action_dim]
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
@@ -67,7 +67,7 @@ class EnsembleQCritic(nn.Module):
         batch_size = obs.shape[0]
 
         h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
-            else self.trunk(obs)
+            else self.trunk(obs).to(action.device)
 
         if context is None:
             context = torch.empty(0, device=h.device)
@@ -79,7 +79,7 @@ class EnsembleQCritic(nn.Module):
             Qs = self.Q_head(h, context)  # [e, b, n]
 
             if action is None:
-                action = torch.arange(self.action_dim, device=obs.device).expand_as(Qs[0])  # [b, n]
+                action = torch.arange(math.prod(self.action_shape), device=obs.device).expand_as(Qs[0])  # [b, n]
             else:
                 # Q values for a discrete action
                 Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
