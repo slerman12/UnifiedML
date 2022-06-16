@@ -357,7 +357,7 @@ Via the ```generate=true``` flag:
 python Run.py task=classify/mnist generate=true Aug=Blocks.Architectures.Null
 ```
 
-```Aug=Blocks.Architectures.Null``` disables the image augmentation, since it trains slower with it on the default settings.
+```Aug=Blocks.Architectures.Null``` disables the image augmentation, since training is slower with it on the default settings.
 
 Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
 
