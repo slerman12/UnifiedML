@@ -41,7 +41,7 @@ def init(args):
     # args.device = args.device or ('cuda' if torch.cuda.is_available()
     #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
-torch.autograd.set_detect_anomaly(True)
+
 # Format path names
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
@@ -109,7 +109,7 @@ def instantiate(args, i=0, **kwargs):
 
 # Checks if args can be instantiated
 def can_instantiate(args):
-    return isinstance(args, (str, nn.Module, list)) or hasattr(args, '_target_') and args._target_
+    return isinstance(args, (str, type, list, nn.Module)) or hasattr(args, '_target_') and args._target_
 
 
 # Initializes model weights a la orthogonal
@@ -125,7 +125,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Initializes model optimizer
+# Initializes model optimizer a la AdamW + Cosine Anneal Schedule default, or custom
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
     # Optimizer
     optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \
