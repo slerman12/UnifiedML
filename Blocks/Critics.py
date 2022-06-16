@@ -40,7 +40,7 @@ class EnsembleQCritic(nn.Module):
         in_shape = action_shape if ignore_obs else [trunk_dim + self.action_dim]
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
-                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
+                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,

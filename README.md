@@ -595,14 +595,14 @@ Optimization parts can be accessed *e.g.*
 python Run.py Optim=Utils.torch.optim.SGD lr=0.1
 ```
 
-or via the expressive recipe interface:
+or via the expressive recipe interface described in [Custom Architectures](#custom-architectures):
 
 ```console
-python Run.py recipes.encoder.optim=torch.optim.SGD lr=0.1
+python Run.py optim=torch.optim.SGD lr=0.1
 ```
 
 ```console
-python Run.py "recipes.encoder.optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
+python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
 </details>
