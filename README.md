@@ -483,7 +483,7 @@ python Run.py replay.load=true replay.save=true
 </summary>
 <br>
 
-One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
+We use a rich and expressive command line syntax for selecting and customizing architectures such as those defined in ```./Blocks/Architectures```.
 
 ResNet18 on CIFAR-10:
 
