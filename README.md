@@ -499,7 +499,7 @@ python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
 ```
 
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
-Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword and their [corresponding shorthands](/blob/bcc2051bcae7e4858eb515e8e610393651bf97e6/Hyperparams/args.yaml#L166).
+Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword and their [corresponding shorthands](blob/bcc2051bcae7e4858eb515e8e610393651bf97e6/Hyperparams/args.yaml#L166).
 
 Generally, the rule of thumb is capital names for paths (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts (such as ```+eyes.depth=1```).
 
