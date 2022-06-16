@@ -83,6 +83,9 @@ class ExperienceReplay:
                 transform = OmegaConf.create(transform)
             if 'RandomCrop' in transform and 'size' not in transform['RandomCrop']:
                 transform['RandomCrop']['size'] = obs_spec['shape'][-2:]
+            if 'Normalize' in transform:
+                warnings.warn('"Normalizing" via transform. This may be redundant and dangerous if standardize=true, '
+                              'which is the default.')
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
