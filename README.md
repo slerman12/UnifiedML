@@ -571,9 +571,9 @@ An intricate example of the expressiveness of this syntax:
 python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
-Both the uppercase and lowercase syntax support direct function calls in lieu of their usual class paths and hyper-param shortcuts, distinguished by the parentheticals.
+Both the uppercase and lowercase syntax support direct function calls in lieu of their usual syntax, with function calls distinguished by parentheticals.
 
-The parser automatically registers the imports/paths in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and architectures/paths like ```CNN```.
+The parser automatically registers the imports/class paths in ```Utils``` in both the uppercase and lowercase syntax, including modules/classes ```torch```, ```torch.nn```, and architectures/paths like ```CNN```.
 
 </details>
 
