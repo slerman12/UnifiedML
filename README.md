@@ -303,7 +303,7 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 For example,
 
 ```console
-python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
+python Run.py task=classify/cifar10 ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
 The above returns a $93$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
@@ -511,7 +511,7 @@ Generally, the rule of thumb is capital names for paths to classes (such as ```E
 CIFAR-10 with ViT:
 
 ```console
-python Run.py Eyes=ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +eyes.depth=6 +eyes.out_channels=512 +eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" Aug=Blocks.Architectures.Null
+python Run.py Eyes=ViT task=classify/cifar10 ema=true weight_decay=0.01 +eyes.depth=6 +eyes.out_channels=512 +eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}"
 ```
 
 [comment]: <> (TODO: Generator/Discriminator shorthands, with default input_shape=${obs_shape})
@@ -551,7 +551,7 @@ python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
 
 [comment]: <> (</details>)
 
-*A little secret*, but pytorch code can be passed directly too:
+*A little secret*, but pytorch code can be passed directly too via quotes:
 
 ```console
 python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
@@ -567,7 +567,7 @@ An intricate example of the expressiveness of this syntax:
 python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
-Both the uppercase and lowercase syntax support direct function calls via quoted args as shown above.
+Both the uppercase and lowercase syntax support direct function calls in lieu of their usual class paths and hyper-param shortcuts, distinguished by the parentheticals.
 
 The parser automatically registers the imports/paths in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and architectures/paths like ```CNN```.
 
