@@ -53,7 +53,7 @@ class DQNAgent(torch.nn.Module):
                             parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
-        repr_shape = (trunk_dim,) if generate \
+        repr_shape = (trunk_dim, 1, 1) if generate \
             else self.encoder.repr_shape
 
         # Continuous actions

@@ -38,7 +38,8 @@ class MLP(nn.Module):
         self.apply(Utils.weight_init)  # Note could I adapt/broadcast architectures this way? todo
 
     def repr_shape(self, *_):
-        return self.output_dim, *_[1:]
+        return self.output_dim, *_[1:]  # TODO, should be o, 1, 1
+        # return self.output_dim, 1, 1
 
     def forward(self, *x):
         return self.MLP(torch.cat(x, -1))

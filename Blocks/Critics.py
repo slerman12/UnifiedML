@@ -35,8 +35,11 @@ class EnsembleQCritic(nn.Module):
         out_dim = self.num_actions if discrete else 1
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
-                nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
+            nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
+        # c, h, w = Utils.cnn_feature_shape(*repr_shape, self.trunk)
+
+        # in_shape = action_shape if ignore_obs else [c + self.action_dim, h, w]  # TODO Only works when h=w=1
         in_shape = action_shape if ignore_obs else [trunk_dim + self.action_dim]
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or

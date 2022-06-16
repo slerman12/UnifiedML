@@ -530,6 +530,10 @@ Here is a nice example of the critic using a small CNN for downsampling features
 python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
 ```
 
+A CNN Actor and Critic:
+```console
+python Run.py Q_trunk=CNN Pi_trunk=CNN +q_trunk.depth=1 +pi_trunk.depth=1 'Pool="Null"'
+```
 
 [comment]: <> (<details>)
 
