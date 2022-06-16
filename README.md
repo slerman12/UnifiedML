@@ -565,7 +565,7 @@ python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwa
 
 Both the uppercase and lowercase syntax support direct function calls via quoted args as shown above.
 
-The parser automatically registers the imports in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and architectures like ```CNN```.
+The parser automatically registers the imports/paths in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and architectures/paths like ```CNN```.
 
 </details>
 
