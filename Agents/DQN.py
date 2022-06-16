@@ -3,9 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import time
-import math
-
-from hydra.utils import instantiate
 
 import torch
 from torch.nn.functional import cross_entropy
@@ -24,7 +21,7 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, standardize, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -43,26 +40,30 @@ class DQNAgent(torch.nn.Module):
         self.episode = self.epoch = 1
         self.explore_steps = explore_steps
         self.ema = ema
-        self.action_dim = math.prod(obs_shape) if generate else action_shape[-1]
 
         self.num_actions = num_actions  # Num actions sampled by actor
 
+        if generate:
+            action_shape = obs_shape
+
+        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1).to(device)  # Data mean, stddev, min, max
+
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, **recipes.encoder,
+            else CNNEncoder(obs_shape, data_stats=self.data_stats, standardize=standardize, **recipes.encoder,
                             parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
-        repr_shape = (trunk_dim,) if generate \
+        repr_shape = (trunk_dim, 1, 1) if generate \
             else self.encoder.repr_shape
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.actor,
+            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.actor,
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                        ema_decay=ema_decay * ema)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.critic,
+        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
@@ -70,8 +71,8 @@ class DQNAgent(torch.nn.Module):
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
         # Image augmentation
-        self.aug = instantiate(recipes.aug) if recipes.aug._target_ \
-            else IntensityAug(0.05) if discrete else RandomShiftsAug(pad=4)
+        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
+                                                      else RandomShiftsAug(pad=4))
 
         # Birth
 
@@ -103,7 +104,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.action_dim, size=action.shape) if self.discrete \
+                    action = torch.randint(critic.num_actions, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
 
             return action
@@ -116,15 +117,19 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
 
-        # Actor-Critic -> Generator-Discriminator conversion
-        if self.generate:
-            action, reward[:] = obs.flatten(-3) / 127.5 - 1, 1
-            next_obs[:] = label[:] = float('nan')
-
         # "Envision" / "Perceive"
 
-        # Augment and encode
+        # Augment
         obs = self.aug(obs)
+
+        # Actor-Critic -> Generator-Discriminator conversion
+        if self.generate:
+            _, _, minim, maxim = self.data_stats
+            obs = (obs - minim) * 2 / (maxim - minim) - 1  # Normalize first
+            action, reward[:] = obs.flatten(-3), 1
+            next_obs[:] = label[:] = float('nan')
+
+        # Encode
         obs = self.encoder(obs)
 
         # Augment and encode future

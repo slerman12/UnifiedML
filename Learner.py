@@ -16,6 +16,9 @@ class F_ckGradientDescent(torch.nn.Module):
     - loss.backward is never called
     - instead, this module's propagate method is called. It takes no derivatives, is fully parallelizable per weight
     - this module defined within the pytorch module being optimized such that model.train() and model.eval() inherit
+
+    Algorithm: compare loss of randomly sampled weights to best previous loss for this exact batch data, then
+    update the weights in proportion to the "advantage" (improvement since last) of the randomly sampled weights
     """
     def __init__(self, optim):
         super().__init__()
@@ -27,7 +30,6 @@ class F_ckGradientDescent(torch.nn.Module):
             param['lr'] = 1
 
         self.decoys = self.params = self._decoys = self.samplers = None
-        self.running_sum = self.elite_score = 0
 
         self.samplers = []
 
@@ -36,17 +38,21 @@ class F_ckGradientDescent(torch.nn.Module):
             for params in param_group.values():
                 if isinstance(params, list):
                     for param in params:
+                        # Initialize to 0, set sampler
                         param.grad = torch.zeros_like(param.data)
                         sampler = torch.distributions.Normal(torch.zeros_like(param), self.lr)
                         self.samplers.append(sampler)
 
+        self.running_sum = self.elite_score = 0
         self.step()
 
+    # called for every batch
     def propagate(self, loss, previous_loss, batch_size, retain_graph=False):
+        # previous_loss is the previous errors w.r.t. each sample in the batch
+        # NOT previous batch's loss
         previous_loss = deepcopy(previous_loss)
 
         uninitialized = previous_loss.isnan()
-        # previous_loss[uninitialized] = 2 * loss[uninitialized]
         previous_loss[uninitialized] = loss[uninitialized]
 
         # advantage = torch.relu(previous_loss - loss).sum()
@@ -68,10 +74,10 @@ class F_ckGradientDescent(torch.nn.Module):
                 _decoy.data = decoy.data
 
     def step(self):
+        # step() is called once every K batches
         if self.running_sum:
 
             for param, decoy in zip(self.params, self.decoys):
-                # decoy.grad /= self.running_sum
                 decoy.data = param.data
                 decoy.grad /= self.running_sum or 1
             self.optim.step()
@@ -85,10 +91,9 @@ class F_ckGradientDescent(torch.nn.Module):
 
         self.params = deepcopy(self.decoys)
 
-        # self.elite_score = 0
-
+    # called once every K batches
     def zero_grad(self, **kwargs):
-        self.running_sum = 0
+        self.running_sum = self.elite_score = 0
         self.optim.zero_grad()
 
     def train(self, mode=True):

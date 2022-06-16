@@ -83,6 +83,9 @@ class ExperienceReplay:
                 transform = OmegaConf.create(transform)
             if 'RandomCrop' in transform and 'size' not in transform['RandomCrop']:
                 transform['RandomCrop']['size'] = obs_spec['shape'][-2:]
+            if 'Normalize' in transform:
+                warnings.warn('"Normalizing" via transform. This may be redundant and dangerous if standardize=true, '
+                              'which is the default.')
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
@@ -348,7 +351,7 @@ class Experiences:
             if not self.load_episode(episode_name):
                 break  # Resolve conflicts
 
-    # Workers can update/write-to their own data based on file-stored update specs
+    # Workers can update/write-to their own data based on piped update specs
     def worker_fetch_updates(self):
         while self.pipe.poll():
             updates, exp_ids = self.pipe.recv()
@@ -402,7 +405,7 @@ class Experiences:
 
         # Transform
         if self.transform is not None:  # TODO audio
-            obs = self.transform(torch.as_tensor(obs).div(255)) * 255
+            obs = self.transform(torch.as_tensor(obs))
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
 

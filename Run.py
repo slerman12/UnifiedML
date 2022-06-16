@@ -17,14 +17,14 @@ torch.backends.cudnn.benchmark = True
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
 
-    # Set random seeds, device, path names
+    # Set random seeds, device
     Utils.init(args)
 
     # Train, test environments
     env = instantiate(args.environment)
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
-    for arg in ('obs_shape', 'action_shape', 'discrete', 'obs_spec', 'action_spec', 'evaluate_episodes', 'data_norm'):
+    for arg in ('obs_shape', 'action_shape', 'data_stats', 'discrete', 'obs_spec', 'action_spec', 'evaluate_episodes'):
         if hasattr(generalize, arg):
             setattr(args, arg, getattr(generalize, arg))
 
@@ -76,7 +76,7 @@ def main(args):
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes
+                replay.add(store=True)  # Only store full episodes  TODO discard ones with less than nstep, or % nstep
 
         converged = agent.step >= args.train_steps
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers

@@ -217,97 +217,118 @@ That's it.
 
 ### RL
 
-Humanoid-walk example:
+<details>
+<summary>
+:mag: <i>Click to interact</i>
+</summary>
+<br>
+
+Humanoid example:
 ```console
 python Run.py task=dmc/humanoid_walk
 ```
 
-DrQV2 Agent in Atari:
+[DrQV2](https://arxiv.org/abs/2107.09645) Agent in Atari:
 ```console
-python Run.py Agent=Agents.DrQV2Agent task=atari/battlezone
+python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 ```
 
-SPR Agent in DeepMind Control:
+[SPR](https://arxiv.org/abs/2007.05929) Agent in DeepMind Control:
 ```console
-python Run.py Agent=Agents.SPRAgent task=dmc/cheetah_run
+python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
-
-Save videos with ```log_video=true```.
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
-Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across both Atari and DMC.
+Save videos with ```log_video=true```.
+
+Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
+
+</details>
 
 ### Classification 
 
-TODO: RL=false is now the default
+<details>
+<summary>
+:mag: <i>Click to ascertain</i>
+</summary>
+<br>
 
-DQN Agent on MNIST:
+Vanilla CNN on MNIST:
 
 ```console
-python Run.py task=classify/mnist RL=false
+python Run.py task=classify/mnist 
 ```
 
-*Note:* ```RL=false``` is the default for classfiication, but it is shown just for emphasis. It keeps training at **standard** supervised-only classification.
+In addition to Eval accuracies, more in-depth Train accuracies can always be toggled with ```agent.log=true```.
 
-With ```RL=true```, an **augmented RL** update joins the supervised learning update s.t. ```reward = -error``` (***experimental***).
+**Variations**
 
-Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error```. This is **pure-RL** training and actually works!
+*Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
-[comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. ```reward = -error```.)
+With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
 
-[comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;**experimental**&#41;. This is pure-RL training and actually works.)
+Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
+
+[comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. $reward = -error$.)
+
+[comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$ &#40;**experimental**&#41;. This is pure-RL training and actually works.)
 
 [comment]: <> (with a simple CNN and some small random crop transforms.)
 
 [comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification.)
 
-[comment]: <> (Without ```RL=false```, an **Augmented RL** update joins the supervised learning update s.t. ```reward = -error```.)
+[comment]: <> (Without ```RL=false```, an **Augmented RL** update joins the supervised learning update s.t. $reward = -error$.)
 
-[comment]: <> (**Pure-RL** Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL ```reward = -error``` &#40;*experimental*&#41;. This is pure-RL training and actually works.)
+[comment]: <> (**Pure-RL** Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$ &#40;*experimental*&#41;. This is pure-RL training and actually works.)
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
-Train accuracies can be printed with ```agent.log=true```.
+**Important features** Many popular features are unified in this library and generalized across RL/CV/Generative domains, with more being added: 
 
-Evaluation with exponential moving average (EMA) of params can be toggled with the ```ema=true``` flag. See [Custom Architectures](#custom-architectures) for mix-and-matching pre-defined or custom architectures via command line. Training with weight decay can be toggled via ```weight_decay=``` and torchvision transforms can be passed in as dicts via ```transform=```. For example,
+* Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
+  
+* See [Custom Architectures](#custom-architectures) for mix-and-matching custom or pre-defined (*e.g.* ViT, ResNet50) architectures via the command line syntax. 
+  
+* Different optimizations [can be configured](#custom-optimization) too.
+  
+* As well as [Custom Datasets](#custom-datasets). 
+  
+* Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. 
+  
+* A [cosine annealing learning rate schedule](https://arxiv.org/abs/1608.03983) can be applied for $N$ epochs (or episodes in RL) with ```lr_decay_epochs=```. 
+  
+* And [TorchVision transforms](https://pytorch.org/vision/stable/transforms.html) can be passed in as dicts via ```transform=```. 
+  
+For example,
 
 ```console
-python Run.py task=classify/cifar10 RL=false ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
+python Run.py task=classify/cifar10 ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
-The above returns a 93% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
+The above returns a $93$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
-And if you set ```supervise=false```, we get a 94%... vis-à-vis pure-RL. 
+And if you set ```supervise=false```, we get a $94$%... vis-à-vis pure-RL. 
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
 [comment]: <> (Automatically toggles ```offline=true``` by default, but can be set to ```false``` if past predictions or "streaming" data is needed.)
 
-This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including Tiny-ImageNet (```task=classify/tinyimagenet```), iNaturalist, (```task=classify/inaturalist```), and CIFAR-100 (```task=classify/cifar100```), normalized and no manual preparation needed.
+This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including 
+* Tiny-ImageNet (```task=classify/tinyimagenet```), 
+* iNaturalist, (```task=classify/inaturalist```),
+* CIFAR-100 (```task=classify/cifar100```), 
+* & [more](Hyperparams/task/classify), normalized and no manual preparation needed
 
-### Generative Modeling
-
-Via the ```generate=true``` flag:
-```console
-python Run.py task=classify/mnist generate=true
-```
-Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
-
-[comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
-Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
-
-```console
-python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 
-```
-
-[comment]: <> (ensemble could help this:)
-
-[comment]: <> (Extensions. Analyzing and extending the amortization components has been a key development in AVI methods. Cremer et al. &#40;2018&#41; investigate suboptimality in these models are categorize it as coming from an amortization gap where the amortized model for eq. &#40;30&#41; does not properly solve it, or the approximation gap where the variational posterior is incapable of approximating the true distribution. Semi-amortization plays a crucial role in addressing the amortization gap and is explored in the semi-amortized VAE &#40;SAVAE&#41; by)
-
-[comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
+</details>
 
 ### Offline RL
+
+<details>
+<summary>
+:mag: <i>Click to recall</i>
+</summary>
+<br>
 
 From a saved experience replay, sans additional rollouts:
 
@@ -321,7 +342,54 @@ Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only do
 
 Is true by default for classification, where replays are automatically downloaded.
 
+</details>
+
+### Generative Modeling
+
+<details>
+<summary>
+:mag: <i>Click to synthesize</i>
+</summary>
+<br>
+
+Via the ```generate=true``` flag:
+```console
+python Run.py task=classify/mnist generate=true Aug=Blocks.Architectures.Null
+```
+
+```Aug=Blocks.Architectures.Null``` disables the image augmentation, since training is slower with it on the default settings.
+
+Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
+
+[comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
+Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
+
+```console
+python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 'aug="Null"'
+```
+
+A GAN with a CNN Discriminator:
+
+```console
+python Run.py generate=True Discriminator=CNN
+```
+
+See [Custom Architectures](#custom-architectures) for more info on this syntax.
+
+</details>
+
+[comment]: <> (ensemble could help this:)
+
+[comment]: <> (Extensions. Analyzing and extending the amortization components has been a key development in AVI methods. Cremer et al. &#40;2018&#41; investigate suboptimality in these models are categorize it as coming from an amortization gap where the amortized model for eq. &#40;30&#41; does not properly solve it, or the approximation gap where the variational posterior is incapable of approximating the true distribution. Semi-amortization plays a crucial role in addressing the amortization gap and is explored in the semi-amortized VAE &#40;SAVAE&#41; by)
+
+[comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
+
 ### Saving
+<details>
+<summary>
+:mag: <i>Click to load</i>
+</summary>
+<br>
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
@@ -343,76 +411,15 @@ Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
 
-### Custom Architectures
-
-One can also optionally pass in custom architectures such as those defined in ```./Blocks/Architectures```.
-
-ResNet18 on CIFAR-10:
-
-```console
-python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
-```
-
-[comment]: <> (TODO: MiniViT, ViT)
-Atari with ViT:
-
-```console
-python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
-```
-
-[comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
-Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword.
-
-<details>
-<summary><i>See more examples :open_book: </i></summary>
-<br>
-
-CIFAR-10 with ViT:
-
-```console
-python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=512 +recipes.encoder.eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" recipes.Aug=Blocks.Architectures.Null
-```
-
-[comment]: <> (TODO: Generator/Discriminator shorthands, with default input_shape=${obs_shape})
-A GAN with a CNN Discriminator:
-
-```console
-python Run.py generate=True recipes.critic.q_head._target_=Blocks.Architectures.CNN recipes.critic.q_head.input_shape='${obs_shape}' 
-```
-
-Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.
-
-```console
-python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool pool=Blocks.Architectures.Null
-```
-
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary><i>See even more examples :open_book: </i></summary>)
-
-[comment]: <> (<br>)
-
-[comment]: <> (Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:)
-
-[comment]: <> (```)
-
-[comment]: <> (python Run.py Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
-
-[comment]: <> (```)
-
-[comment]: <> (You can imagine training a GAN CNN and then seamlessly using it for RL.)
-
-[comment]: <> (<br>)
-
-[comment]: <> (</details>)
 </details>
 
-Of course, it's always possible to just modify the code itself, which may be easier. See for example the two CNN variants in ```./Blocks/Encoders.py```.
-
-[comment]: <> (</details>)
-
 ### Distributed
+
+<details>
+<summary>
+:mag: <i>Click to disperse</i>
+</summary>
+<br>
 
 The simplest way to do distributed training is to use the ```parallel=true``` flag,
 
@@ -426,7 +433,7 @@ To share whole agents across multiple parallel instances and/or machines,
 
 <details>
 
-<summary><i>Click to open :open_book: </i></summary>
+<summary><i>Click to expand :open_book: </i></summary>
 
 <br>
 
@@ -466,7 +473,159 @@ python Run.py replay.load=true replay.save=true
 
 </details>
 
+</details>
+
+### Custom Architectures
+
+<details>
+<summary>
+:mag: <i>Click to construct</i>
+</summary>
+<br>
+
+We use a rich and expressive command line syntax for selecting and customizing architectures such as those defined in ```./Blocks/Architectures```.
+
+ResNet18 on CIFAR-10:
+
+```console
+python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
+```
+
+[comment]: <> (TODO: MiniViT, ViT)
+Atari with ViT:
+
+```console
+python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
+```
+
+[comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
+Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword or their [corresponding shorthands](Hyperparams/args.yaml#L166).
+
+Generally, the rule of thumb is capital names for paths to classes (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts to tinker with model args (such as ```+eyes.depth=1```).
+
+
+<details>
+<summary><i>See more examples :open_book: </i></summary>
+<br>
+
+CIFAR-10 with ViT:
+
+```console
+python Run.py Eyes=ViT task=classify/cifar10 ema=true weight_decay=0.01 +eyes.depth=6 +eyes.out_channels=512 +eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}"
+```
+
+[comment]: <> (TODO: Generator/Discriminator shorthands, with default input_shape=${obs_shape})
+
+Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.
+
+```console
+python Run.py task=classify/mnist Q_trunk=AttentionPool Pi_trunk=AttentionPool Pool=Blocks.Architectures.Null
+```
+
+It is recommended to use the full path for ```Blocks.Architectures.Null``` or to put it in quotes ```'Pool="Null"'``` or else Hydra may confuse it with the default ```null <-> None``` grammar. 
+
+Here is a nice example of the critic using a small CNN for downsampling features:
+
+```console
+python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
+```
+
+A CNN Actor and Critic:
+```console
+python Run.py Q_trunk=CNN Pi_trunk=CNN +q_trunk.depth=1 +pi_trunk.depth=1 'Pool="Null"'
+```
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary><i>See even more examples :open_book: </i></summary>)
+
+[comment]: <> (<br>)
+
+[comment]: <> (Here's how you can load another saved agent's encoder from a pre-configured agent checkpoint ```<path>```:)
+
+[comment]: <> (```)
+
+[comment]: <> (python Run.py Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
+
+[comment]: <> (```)
+
+[comment]: <> (You can imagine training a GAN CNN and then seamlessly using it for RL.)
+
+[comment]: <> (<br>)
+
+[comment]: <> (</details>)
+
+*A little secret*, but pytorch code can be passed directly too via quotes:
+
+```console
+python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
+```
+```console
+python Run.py "eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
+```
+
+Some blocks have default args which can be accessed with the ```kwargs.``` interpolation shown above.
+
+An intricate example of the expressiveness of this syntax:
+```console
+python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
+```
+
+Both the uppercase and lowercase syntax support direct function calls in lieu of their usual syntax, with function calls distinguished by parentheticals.
+
+The parser automatically registers the imports/class paths in ```Utils``` in both the uppercase and lowercase syntax, including modules/classes ```torch```, ```torch.nn```, and architectures/paths like ```CNN```.
+
+</details>
+
+Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two Encoder variants in ```./Blocks/Encoders.py```.
+
+To make your own architecture compatible with this expressive command line syntax, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as exemplified by the various predefined architectures in ```./Blocks/Architectures```. 
+
+</details>
+
+### Custom Optimizers
+
+<details>
+<summary>
+:mag: <i>Click to search/explore</i>
+</summary>
+<br>
+
+Optimization parts can be accessed *e.g.* 
+
+```console
+python Run.py Optim=Utils.torch.optim.SGD lr=0.1
+```
+
+or via the expressive recipe interface described in [Custom Architectures](#custom-architectures):
+
+```console
+python Run.py optim=torch.optim.SGD lr=0.1
+```
+
+```console
+python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
+```
+
+</details>
+
+### Custom Dataset
+
+<details>
+<summary>
+:mag: <i>Click to read/parse</i>
+</summary>
+<br>
+
+</details>
+
 ### Experiment naming, plotting
+
+<details>
+<summary>
+:mag: <i>Click to see</i>
+</summary>
+<br>
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
@@ -492,6 +651,8 @@ To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
+
+</details>
 
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
 

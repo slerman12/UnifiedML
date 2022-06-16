@@ -5,8 +5,6 @@
 import math
 import copy
 
-from hydra.utils import instantiate
-
 import torch
 from torch import nn
 from torch.distributions import Normal
@@ -21,49 +19,40 @@ class EnsembleQCritic(nn.Module):
     MLP-based Critic network, employs ensemble Q learning,
     returns a Normal distribution over the ensemble.
     """
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, trunk=None, q_head=None, ensemble_size=2,
-                 discrete=False, ignore_obs=False, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, q_head=None, ensemble_size=2,
+                 discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+                 weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
-        self.action_dim = action_dim
-
-        assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
+        self.num_actions = math.prod(action_shape) if discrete else -1  # n
+        self.action_dim = 0 if discrete else math.prod(action_shape)  # d
         self.ignore_obs = ignore_obs
 
+        assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
+
         in_dim = math.prod(repr_shape)
+        out_dim = self.num_actions if discrete else 1
 
-        self.trunk = trunk if isinstance(trunk, nn.Module) \
-            else instantiate(trunk, input_shape=trunk.input_shape or repr_shape) if trunk and trunk._target_ \
-            else nn.Sequential(nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
+            nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
-        dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
-        in_shape = q_head.input_shape or [dim]
-        out_dim = action_dim if discrete else 1
+        # c, h, w = Utils.cnn_feature_shape(*repr_shape, self.trunk)
 
-        self.Q_head = Utils.Ensemble([q_head if isinstance(q_head, nn.Module) else q_head[i] if isinstance(q_head, list)
-                                      else instantiate(q_head,
-                                                       input_shape=in_shape,
-                                                       output_dim=out_dim) if q_head and q_head._target_
-                                      else MLP(dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
+        # in_shape = action_shape if ignore_obs else [c + self.action_dim, h, w]  # TODO Only works when h=w=1
+        in_shape = action_shape if ignore_obs else [trunk_dim + self.action_dim]
 
-        self.init(lr, lr_decay_epochs, weight_decay, ema_decay)
+        self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
+                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e
 
-    def init(self, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
-        # Optimizer
-        if lr:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        if lr_decay_epochs:
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
-
-        # EMA
+        # Initialize model optimizer + EMA
+        self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
+                                                          lr, lr_decay_epochs, weight_decay)
         if ema_decay:
-            self.ema = copy.deepcopy(self).eval()
             self.ema_decay = ema_decay
+            self.ema = copy.deepcopy(self).eval()
 
     def update_ema_params(self):
-        assert hasattr(self, 'ema')
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, action=None, context=None):
@@ -82,7 +71,7 @@ class EnsembleQCritic(nn.Module):
             Qs = self.Q_head(h, context)  # [e, b, n]
 
             if action is None:
-                action = torch.arange(self.action_dim, device=obs.device).expand_as(Qs[0])  # [b, n]
+                action = torch.arange(self.num_actions, device=obs.device).expand_as(Qs[0])  # [b, n]
             else:
                 # Q values for a discrete action
                 Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]

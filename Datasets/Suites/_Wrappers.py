@@ -181,6 +181,30 @@ class FrameStackWrapper(dm_env.Environment):
         return getattr(self.env, name)
 
 
+class StatsWrapper(dm_env.Environment):
+    def __init__(self, env, minim, maxim):
+        self.env = env
+        self.data_stats = [[float('nan')] * len(minim), [float('nan')] * len(minim), minim, maxim]
+
+    def step(self, action):
+        return self.env.step(action)
+
+    def reset(self):
+        return self.env.reset()
+
+    def close(self):
+        self.gym_env.close()
+
+    def observation_spec(self):
+        return self.env.observation_spec()
+
+    def action_spec(self):
+        return self.env.action_spec()
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+
 # Note: Could technically do in Run.py just by setting rollout steps to truncate_episode_steps and always add to replay
 class TruncateWrapper(dm_env.Environment):
     def __init__(self, env, episode_max_steps=np.inf, episode_truncate_resume_steps=np.inf, train=True):
@@ -279,6 +303,11 @@ class AugmentAttributesWrapper(dm_env.Environment):
         if self.add_remove_batch_dim:
             # Some environments like DMC/Atari return observations without batch dims
             specs['observation'] = np.expand_dims(specs['observation'], axis=0)
+
+        # Convert 1d to 2d  TODO not for proprioceptive
+        while len(specs['observation'].shape) < 4:
+            specs['observation'] = np.expand_dims(specs['observation'], 1)
+
         # Extend time step
         return ExtendedTimeStep(step_type=time_step.step_type, **specs)
 
@@ -297,7 +326,11 @@ class AugmentAttributesWrapper(dm_env.Environment):
 
     def observation_spec(self):
         obs_spec = self.env.observation_spec()
-        return self.simplify_spec(obs_spec)
+        obs_spec = self.simplify_spec(obs_spec)
+        # Convert 1d to 2d  TODO not for proprioceptive
+        while len(obs_spec['shape']) < 3:
+            obs_spec['shape'] = (1, *obs_spec['shape'])
+        return obs_spec
 
     @property
     def obs_spec(self):

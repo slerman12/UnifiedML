@@ -10,7 +10,7 @@ import numpy as np
 import dm_env
 from dm_env import specs
 
-from Datasets.Suites._Wrappers import ActionSpecWrapper, TruncateWrapper, AugmentAttributesWrapper, \
+from Datasets.Suites._Wrappers import ActionSpecWrapper, StatsWrapper, TruncateWrapper, AugmentAttributesWrapper, \
     FrameStackWrapper, DiscreteEnvWrapper
 
 
@@ -251,6 +251,11 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
         else np.inf
     episode_max_steps = episode_max_frames // action_repeat if episode_max_frames \
         else np.inf
+
+    # Add min, max specs for normalization
+    minim, maxim = [0] * env.observation_spec().shape[0], [255] * env.observation_spec().shape[0]
+    env = StatsWrapper(env, minim, maxim)
+
     env = TruncateWrapper(env,
                           episode_max_steps=episode_max_steps,
                           episode_truncate_resume_steps=episode_truncate_resume_steps,

@@ -24,7 +24,7 @@ class AC2V2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2)
     Does ensemble-learning with multiple critics and actors, for RL, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, recipes,  # Architecture
                  lr, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -46,7 +46,7 @@ class AC2V2Agent(torch.nn.Module):
         self.num_actors, self.num_actions = num_actors, num_actions  # Num actors in ensemble, actions sampled per actor
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_norm=data_norm, recipe=recipes.encoder, parallel=parallel,
+            else CNNEncoder(obs_shape, data_stats=data_stats, recipe=recipes.encoder, parallel=parallel,
                             lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         repr_shape = (trunk_dim,) if generate \

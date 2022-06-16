@@ -52,20 +52,20 @@ class Environment:
             # Act
             action = agent.act(exp.observation)
 
-            exp = self.env.step(None if self.generate else action.cpu().numpy())
+            exp = self.env.step(action.cpu().numpy()) if not self.generate else exp
 
             exp.step = agent.step
             experiences.append(exp)
 
             if vlog or self.generate:
-                frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
+                image_frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
                     else self.env.physics.render(height=256, width=256, camera_id=0) \
                     if hasattr(self.env, 'physics') else self.env.render()
-                video_image.append(frame)
+                video_image.append(image_frame)
 
             # Tally reward, done
             self.episode_reward += exp.reward.mean()
-            self.episode_done = exp.last()
+            self.episode_done = exp.last() or self.generate
 
             step += 1
             frame += len(action)

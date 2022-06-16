@@ -6,12 +6,13 @@ defaults:
 # Agent
 obs_shape: ???  # To be specified later
 action_shape: ??? # To be specified later
-data_norm: null
+data_stats: null
+standardize: true
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
 lr: 1e-4
-lr_decay_epochs: 0
+lr_decay_epochs: null
 weight_decay: 0
 ema_decay: 0.99
 # Domains
@@ -53,13 +54,12 @@ device: null
 parallel: false
 num_workers: 4
 # Experiment
-Agent: Agents.MetaDQNAgent
+Agent: Agents.DQNAgent
 seed: 1
 experiment: Exp
 
 dataset:
   _target_: ${Dataset}
-  root: null
   name: Dataset
 
 environment:
@@ -85,7 +85,8 @@ agent:
   action_shape: ${action_shape}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
-  data_norm: ${data_norm}
+  data_stats: ${data_stats}
+  standardize: ${standardize}
   recipes: ${recipes}
   lr: ${lr}
   lr_decay_epochs: ${lr_decay_epochs}
@@ -130,7 +131,7 @@ logger:
 
 vlogger:
   _target_: Vlogger.Vlogger
-  path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Video_Image
+  path: ${logger.path}${task_name}_${seed}_Video_Image
   fps: 20
   reel: ${generate}
 
@@ -146,11 +147,12 @@ plotting:
   plot_bar: true
   verbose: false
 
-# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures
+# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures or optimizers
 
 Aug: null  # Shorthand for recipes.aug._target_
+
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
-pool: null  # Shorthand for recipes.encoder.pool._target_
+Pool: null  # Shorthand for recipes.encoder.pool._target_
 Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
 Q_trunk: null  # Shorthand for recipes.critic.trunk._target_
 Generator: null  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_
@@ -158,37 +160,51 @@ Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
 Pi_head: ${Generator}  # Shorthand for recipes.actor.Pi_head._target_
 Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 
+Optim: null  # Shorthand for recipes.<block>.optim._target_ ,  e.g. python Run.py Optim=Utils.torch.optim.SGD
+Scheduler: null  # Shorthand for recipes.<block>.scheduler._target_
+
+# Shorthands for recipes
+aug:
+  _target_: ${Aug}
+eyes:
+  _target_: ${Eyes}
+pool:
+  _target_: ${Pool}
+pi_trunk:
+  _target_: ${Pi_trunk}
+pi_head:
+  _target_: ${Pi_head}
+q_trunk:
+  _target_: ${Q_trunk}
+q_head:
+  _target_: ${Q_head}
+optim:
+  _target_: ${Optim}
+  lr: ${lr}
+scheduler:
+  _target_: ${Scheduler}
+
+# Recipes
 recipes:
-  aug:
-    _target_: ${Aug}
+  aug: ${aug}
   encoder:
-    eyes:
-      _target_: ${Eyes}
-      input_shape: ${obs_shape}
-      output_dim: null
-    pool:
-      _target_: ${pool}
-      input_shape: null
-      output_dim: null
+    eyes: ${eyes}
+    pool: ${pool}
+    optim: ${optim}
+    scheduler: ${scheduler}
   actor:
-    trunk:
-      _target_: ${Pi_trunk}
-      input_shape: null
-      output_dim: ${trunk_dim}
-    pi_head:
-      _target_: ${Pi_head}
-      input_shape:
-        - ${trunk_dim}
+    trunk: ${pi_trunk}
+    pi_head: ${pi_head}
+    optim: ${optim}
+    scheduler: ${scheduler}
   critic:
-    trunk:
-      _target_: ${Q_trunk}
-      input_shape: null
-      output_dim: ${trunk_dim}
-    q_head:
-      _target_: ${Q_head}
-      input_shape: null
+    trunk: ${q_trunk}
+    q_head: ${q_head}
+    optim: ${optim}
+    scheduler: ${scheduler}
 
 hydra:
+  output_subdir: ${logger.path}${task_name}_${seed}_Hydra
   run:
     dir: ./
   sweep:

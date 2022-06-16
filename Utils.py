@@ -8,7 +8,7 @@ import re
 import warnings
 from pathlib import Path
 
-from hydra.utils import instantiate
+import hydra
 from omegaconf import OmegaConf
 
 import numpy as np
@@ -16,6 +16,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from Blocks.Architectures import *
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -33,13 +35,16 @@ def init(args):
     set_seeds(args.seed)
 
     # Set device
+    mps = getattr(torch.backends, 'mps', None)  # Wicked fast M1 MacBook speedup TODO check newer pytorch versions
+    args.device = args.device or ('cuda' if torch.cuda.is_available()
+                                  else 'mps' if mps and mps.is_available() else 'cpu')
     # args.device = args.device or ('cuda' if torch.cuda.is_available()
     #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    args.device = args.device or ('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # Format path names
-    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
-    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
+# Format path names
+# e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 # Saves model + args + attributes
@@ -61,7 +66,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
     if model is None:
-        model = instantiate(to_load['args']).to(device)
+        model = hydra.utils.instantiate(to_load['args']).to(device)
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
@@ -79,6 +84,34 @@ def load(path, device, model=None, preserve=(), distributed=False, attr=''):
     return model
 
 
+# Simple-sophisticated instantiation of a class or module by various semantics
+def instantiate(args, i=0, **kwargs):
+    if hasattr(args, '_target_') and args._target_:
+        try:
+            return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
+        except ImportError:
+            if '(' in args._target_ and ')' in args._target_:  # Direct code execution
+                args = args._target_
+            else:
+                args._target_ = 'Utils.' + args._target_  # Portal into Utils
+                return hydra.utils.instantiate(args, **kwargs)
+
+    if isinstance(args, str):
+        for key in kwargs:
+            args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')  # Interpolation
+        args = eval(args)  # Direct code execution
+
+    return None if hasattr(args, '_target_') \
+        else args(**kwargs) if isinstance(args, type) \
+        else args[i] if isinstance(args, list) \
+        else args  # Additional useful ones  TODO null/None -> Null
+
+
+# Checks if args can be instantiated
+def can_instantiate(args):
+    return isinstance(args, (str, type, list, nn.Module)) or hasattr(args, '_target_') and args._target_
+
+
 # Initializes model weights a la orthogonal
 def weight_init(m):
     if isinstance(m, nn.Linear):
@@ -90,6 +123,19 @@ def weight_init(m):
         nn.init.orthogonal_(m.weight.data, gain)
         if hasattr(m.bias, 'data'):
             m.bias.data.fill_(0.0)
+
+
+# Initializes model optimizer a la AdamW + Cosine Anneal Schedule default, or custom
+def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
+    # Optimizer
+    optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \
+            or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)  # Default
+
+    # Learning rate scheduler
+    scheduler = instantiate(scheduler, optimizer=optim) or lr and lr_decay_epochs \
+                and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs)  # Default
+
+    return optim, scheduler
 
 
 # Copies parameters from one model to another, optionally EMA weighing
@@ -127,7 +173,7 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
                                                     padding=block.padding)
         elif isinstance(block, nn.Linear):
             channels = block.out_features  # Assumes channels-last if linear
-        elif isinstance(block, nn.Flatten) and block.start_dim == -3:
+        elif isinstance(block, nn.Flatten) and (block.start_dim == -3 or block.start_dim == 1):  # TODO added == 1. safe?
             channels, height, width = channels * height * width, 1, 1  # Placeholder height/width dims
         elif isinstance(block, nn.AdaptiveAvgPool2d):
             height, width = block.output_size
@@ -152,8 +198,8 @@ class Ensemble(nn.Module):
         self.ensemble = nn.ModuleList(modules)
         self.dim = dim
 
-    def forward(self, *x):
-        return torch.stack([m(*x) for m in self.ensemble],
+    def forward(self, *x, **kwargs):
+        return torch.stack([m(*x, **kwargs) for m in self.ensemble],
                            self.dim)
 
 
@@ -276,7 +322,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
             model.optim.step()
 
             # Step scheduler
-            if hasattr(model, 'scheduler') and epoch > model.scheduler.last_epoch:
+            if model.scheduler is not None and epoch > model.scheduler.last_epoch:
                 model.scheduler.step()
                 model.scheduler.last_epoch = epoch
 
@@ -298,4 +344,3 @@ def schedule(schedule, step):
             start, stop, duration = [float(g) for g in match.groups()]
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * start + mix * stop
-
