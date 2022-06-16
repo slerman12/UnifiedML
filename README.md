@@ -499,7 +499,10 @@ python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
 ```
 
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
-Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword.
+Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword and their corresponding shorthands.
+
+Generally, the rule of thumb is capital names for paths (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts (such as ```+eyes.depth=1```).
+
 
 <details>
 <summary><i>See more examples :open_book: </i></summary>
@@ -567,6 +570,10 @@ An intricate example of the expressiveness of this syntax:
 ```console
 python Run.py Optim=Utils.torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
+
+Both the uppercase and lowercase syntax support direct function calls via quoted args as shown above.
+
+The parser automatically registers the imports in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and the architectures like ```CNN```.
 
 </details>
 
