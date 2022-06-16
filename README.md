@@ -519,8 +519,10 @@ python Run.py Eyes=ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.
 
 ```console
-python Run.py task=classify/mnist recipes.critic.trunk._target_=Blocks.Architectures.AttentionPool recipes.actor.trunk._target_=Blocks.Architectures.AttentionPool pool=Blocks.Architectures.Null
+python Run.py task=classify/mnist Q_trunk=AttentionPool Pi_trunk_=AttentionPool Pool=Blocks.Architectures.Null
 ```
+
+It is recommended to use the full path for ```Blocks.Architectures.Null``` or to put it in quotes ```'Pool="Null"'``` or else Hydra may confuse it with the default ```null <-> None``` grammar. 
 
 Here is a nice example of the critic using a small CNN for downsampling features:
 
@@ -557,6 +559,8 @@ python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```console
 python Run.py "eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
 ```
+
+Some blocks have default args which can be accessed with the ```kwargs.``` interpolation shown above.
 
 An intricate example of the expressiveness of this syntax:
 ```console
