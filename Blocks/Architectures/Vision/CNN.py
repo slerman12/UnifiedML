@@ -35,6 +35,7 @@ class CNN(nn.Module):
         self.feature_shape = c * h * w
 
         # TODO Instead of projecting, use automatic feature computation in blocks
+        # TODO flatten works better than pool I think? eitehr ay, linear before relu, then linear -> in other archs
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.Flatten(), nn.Linear(self.feature_shape, 50), nn.ReLU(), nn.Linear(50, output_dim))
 

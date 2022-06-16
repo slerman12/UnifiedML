@@ -52,7 +52,7 @@ class Environment:
             # Act
             action = agent.act(exp.observation)
 
-            exp = self.env.step(None if self.generate else action.cpu().numpy())
+            exp = self.env.step(action.cpu().numpy()) if not self.generate else exp
 
             exp.step = agent.step
             experiences.append(exp)
@@ -65,7 +65,7 @@ class Environment:
 
             # Tally reward, done
             self.episode_reward += exp.reward.mean()
-            self.episode_done = exp.last()
+            self.episode_done = exp.last() or self.generate
 
             step += 1
             frame += len(action)
