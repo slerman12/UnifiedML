@@ -579,7 +579,7 @@ The parser automatically registers the imports/class paths in ```Utils``` in bot
 
 Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two Encoder variants in ```./Blocks/Encoders.py```.
 
-To make your own architecture compatible with this expressive command line syntax, just make a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as exemplified by the various predefined architectures in ```./Blocks/Architectures```. 
+To make your own architecture compatible with this expressive command line syntax, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as exemplified by the various predefined architectures in ```./Blocks/Architectures```. 
 
 </details>
 

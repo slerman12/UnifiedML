@@ -90,10 +90,10 @@ configTraining = "icsd171k_mix"
 num_classes = 7
 modelIdx = 11
 
-folder = f"../database_models/{configTraining}_{config2Theta}/CNN_model_para{modelIdx}/"
+folder = f"../XRDs/icsd_Datasets/{configTraining}_{config2Theta}/CNN_model_para{modelIdx}/"
 if not os.path.exists(folder):
     os.makedirs(folder)
-featuresFolder = f"../database_datasets/{config2Theta}/{configTraining}/"
+featuresFolder = f"../XRDs/icsd_Datasets/{configTraining}/"
 
 
 class XRDData(Dataset):
