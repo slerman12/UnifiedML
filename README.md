@@ -357,7 +357,7 @@ Via the ```generate=true``` flag:
 python Run.py task=classify/mnist generate=true Aug=Blocks.Architectures.Null
 ```
 
-```Aug=Blocks.Architectures.Null``` disables the default image augmentation, since it trains slower on the default settings.
+```Aug=Blocks.Architectures.Null``` disables the image augmentation, since it trains slower with it on the default settings.
 
 Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
 
@@ -371,7 +371,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 A GAN with a CNN Discriminator:
 
 ```console
-python Run.py generate=True Discriminator=CNN' 
+python Run.py generate=True Discriminator=CNN
 ```
 
 See [Custom Architectures](#custom-architectures) for more info on this syntax.
@@ -511,15 +511,10 @@ Generally, the rule of thumb is capital names for paths (such as ```Eyes=Blocks.
 CIFAR-10 with ViT:
 
 ```console
-python Run.py Eyes=Blocks.Architectures.ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +recipes.encoder.eyes.depth=6 +recipes.encoder.eyes.out_channels=512 +recipes.encoder.eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" recipes.Aug=Blocks.Architectures.Null
+python Run.py Eyes=ViT task=classify/cifar10 RL=false ema=true weight_decay=0.01 +eyes.depth=6 +eyes.out_channels=512 +eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" Aug=Blocks.Architectures.Null
 ```
 
 [comment]: <> (TODO: Generator/Discriminator shorthands, with default input_shape=${obs_shape})
-A GAN with a CNN Discriminator:
-
-```console
-python Run.py generate=True Discriminator=CNN' 
-```
 
 Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.
 
@@ -560,20 +555,17 @@ python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
 python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```
 ```console
-python Run.py "recipes.encoder.eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
-```
-```console
-recipes.encoder.eyes=CNN
+python Run.py "eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
 ```
 
 An intricate example of the expressiveness of this syntax:
 ```console
-python Run.py Optim=Utils.torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
+python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
 Both the uppercase and lowercase syntax support direct function calls via quoted args as shown above.
 
-The parser automatically registers the imports in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and the architectures like ```CNN```.
+The parser automatically registers the imports in ```Utils``` with both the uppercase and lowercase syntax, including modules ```torch```, ```torch.nn```, and architectures like ```CNN```.
 
 </details>
 
