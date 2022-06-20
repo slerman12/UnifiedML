@@ -18,7 +18,7 @@ import Utils
 
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, pi_head=None, ensemble_size=2,
-                 stddev_schedule=None, stddev_clip=None, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+                 stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
         super().__init__()
 
@@ -48,10 +48,10 @@ class EnsembleGaussianActor(nn.Module):
     def update_ema_params(self):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
-    def forward(self, obs, step=None):
+    def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        if self.stddev_schedule is None or step is None:
+        if self.stddev_schedule is None:
             mean_tanh, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
             stddev = torch.exp(log_stddev)
         else:

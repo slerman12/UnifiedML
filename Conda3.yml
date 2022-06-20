@@ -4,7 +4,7 @@ channels:
 dependencies:
   - pip=21.1.3  # Installer
   - python=3.8.13  # Um, Python
-  - numpy  # Array computations
+  - numpy  # Array computations  # TODO Can get rid of (pytorch)
   - pandas=1.3.0  # Dataframes, CSVs
   - seaborn=0.11.2  # Plotting
   - scikit-image=0.19.2  # TODO Can get rid of (torchvision.resize)

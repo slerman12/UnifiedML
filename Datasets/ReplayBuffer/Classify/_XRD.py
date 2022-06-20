@@ -1,14 +1,17 @@
-import torch
-from torch.utils.data import Dataset
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
+import numpy as np
 
-from torchaudio.transforms import Spectrogram
+from torch.utils.data import Dataset
 
 from torchvision.transforms import ToPILImage
 
-import numpy as np
+from torchaudio.transforms import Spectrogram
 
 
-class RRUFF(Dataset):
+class XRDRRUFF(Dataset):
     def __init__(self, root='../XRDs/icsd_Datasets/', data='icsd_171k_ps3', transform=None, num_classes=7, train=True,
                  spectrogram=False, **kwargs):
         root += data if train else 'rruff/XY_DIF_noiseAll'
@@ -45,47 +48,60 @@ class RRUFF(Dataset):
         return x, y
 
 
-class Synthetic(Dataset):
-    def __init__(self, root='../XRDs/icsd_Datasets/', data='icsd171k_mix', transform=None, num_classes=7, train=True,
-                 train_test_split=0.9, **kwargs):
+class XRDSynthetic(Dataset):
+    def __init__(self, root='../XRDs/icsd_Datasets/icsd171k_mix/', train=True, train_test_split=0.9,
+                 num_classes=7, use_cpu_memory=True, transform=None, seed=0, **kwargs):
 
-        self.feature_path = root + data + "/features.csv"
-        self.label_path = root + data + f"/labels{num_classes}.csv"
+        self.features_path = root + "features.csv"
+        self.label_path = root + f"labels{num_classes}.csv"
 
+        self.use_cpu_memory = use_cpu_memory
+
+        full_size = sum(1 for _ in open(self.features_path, 'rb'))  # Memory-efficient counting
+        train_size = round(full_size * train_test_split)
+
+        # Each worker shares an indexing scheme
+        rng = np.random.default_rng(seed)
+        train_indices = rng.choice(np.arange(full_size), size=train_size, replace=False)
+        eval_indices = np.array([idx for idx in np.arange(full_size) if idx not in train_indices])
+
+        self.indices = train_indices if train else eval_indices
         self.classes = list(range(num_classes))
 
-        with open(self.feature_path, "r") as f:
-            self.feature_lines = f.readlines()
-        with open(self.label_path, "r") as f:
-            self.label_lines = f.readlines()
-
-        self.num_datapoints = len(self.label_lines)
-
-        self.train_test_split = train_test_split
-        self.size = train_size = round(self.num_datapoints * self.train_test_split)
-        self.train = train
-        if not self.train:
-            self.size = self.num_datapoints - train_size
-
-        self.train_inds = np.random.choice(np.arange(self.num_datapoints), size=train_size, replace=False)
-        self.test_inds = np.array([x for x in np.arange(self.num_datapoints) if x not in self.train_inds])
+        # Can load slowly from disk with low memory footprint or CPU
+        if self.use_cpu_memory:
+            # Store on CPU  TODO store only the relevant indices
+            with open(self.features_path, "r") as f:
+                self.features_lines = f.readlines()
+            with open(self.label_path, "r") as f:
+                self.label_lines = f.readlines()
+        else:
+            self.features_lines = self.label_lines = None
 
         self.transform = transform
 
     def __len__(self):
-        return self.size
+        return len(self.indices)
+
+    # Get a line from a file in disk or stored on CPU
+    def get_line(self, idx, name):
+        if self.use_cpu_memory:
+            return getattr(self, name + '_lines')[idx]
+        else:
+            with open(getattr(self, name + '_path'), "r") as f:
+                for i, line in enumerate(f):
+                    if i == self.indices[idx]:
+                        return line
 
     def __getitem__(self, idx):
-        if self.train:
-            idx = self.train_inds[idx]
-        else:
-            idx = self.test_inds[idx]
-        line = self.feature_lines[idx]
-        x = list(map(float, line.strip().split(",")))
-        x = torch.FloatTensor(x)
-        x = self.transform(x)
-        line = self.label_lines[idx]
-        y = list(map(float, line.strip().split(",")))
-        y = torch.FloatTensor(y)
-        y = torch.argmax(y)
+        idx = self.indices[idx]  # todo don't need if storing rleevant indices
+
+        # Features and label
+        x = np.array(list(map(float, self.get_line(idx, 'features').strip().split(','))))
+        y = np.array(list(map(float, self.get_line(idx, 'label').strip().split(',')))).argmax()
+
+        # Data transforms
+        if self.transform is not None:
+            x = self.transform(x)
+
         return x, y

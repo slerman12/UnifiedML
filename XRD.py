@@ -6,10 +6,16 @@ import numpy as np
 
 import torch
 from torch import nn
+from torch.nn.functional import cross_entropy
 from torch.optim import SGD
 from torch.utils.data import Dataset, DataLoader
 
 from IPython.display import clear_output
+
+import Utils
+from Blocks.Actors import EnsembleGaussianActor
+from Blocks.Encoders import adapt_cnn, CNNEncoder
+from Datasets.ExperienceReplay import ExperienceReplay
 
 
 class Encoder(nn.Module):
@@ -55,7 +61,7 @@ class Encoder(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 64, kernel_size=5, stride=1),
-            nn.BatchNorm2d(64),
+            torch.nn.BatchNorm2d(64),
             nn.Dropout(0.2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
@@ -72,6 +78,7 @@ class Actor(nn.Module):
         in_channels = input_shape if isinstance(input_shape, int) else input_shape[0]
 
         self.model = nn.Sequential(
+            nn.Flatten(),
             nn.Linear(in_channels, 512),
             nn.ReLU(),
             nn.Dropout(0.2),
@@ -137,10 +144,53 @@ class XRDData(Dataset):
         return x, y
 
 
+class XRDData(Dataset):
+    def __init__(self, root='../XRDs/icsd_Datasets/icsd171k_mix/', train=True, train_eval_split=0.9,
+                 num_classes=7, seed=0, transform=None, **kwargs):
+
+        features_path = root + "features.csv"
+        label_path = root + f"labels{num_classes}.csv"
+
+        self.classes = list(range(num_classes))
+
+        # Store on CPU
+        with open(features_path, "r") as f:
+            self.features = f.readlines()
+        with open(label_path, "r") as f:
+            self.labels = f.readlines()
+            full_size = len(self.labels)
+
+        train_size = round(full_size * train_eval_split)
+
+        # Each worker shares an indexing scheme
+        rng = np.random.default_rng(seed)
+        train_indices = rng.choice(np.arange(full_size), size=train_size, replace=False)
+        eval_indices = np.array([idx for idx in np.arange(full_size) if idx not in train_indices])
+
+        self.indices = train_indices if train else eval_indices
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        idx = self.indices[idx]
+
+        x = np.array(list(map(float, self.features[idx].strip().split(','))))
+        y = np.array(list(map(float, self.labels[idx].strip().split(',')))).argmax()
+
+        if self.transform is not None:
+            x = self.transform(x)
+
+        return x, y
+
+
 if __name__ == '__main__':
-    seed = 10
-    torch.manual_seed(seed)
-    random.seed(seed)
+    # seed = 10
+    # torch.manual_seed(seed)
+    # random.seed(seed)
+    Utils.set_seeds(1)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
@@ -194,9 +244,21 @@ if __name__ == '__main__':
         nn.ReLU(),
         nn.Dropout(0.2),
         nn.Linear(256, num_classes),
+        # nn.Tanh()
     )
 
+    twoD = True
+    if twoD:
+        model = nn.Sequential(Encoder(), Actor())
+        adapt_cnn(model, (1, 1, 8500))
+        #
+        # model2.load_state_dict(model.state_dict(), strict=True)
+        # model = model2
+
     model.to(device)
+
+    encoder = CNNEncoder([1, 1, 8500], standardize=False, lr=.001, eyes=Encoder(), optim=torch.optim.SGD)
+    actor = EnsembleGaussianActor(encoder.repr_shape, 0, 0, (7,), trunk=nn.Identity, pi_head=Actor(), ensemble_size=1, optim=torch.optim.SGD, lr=.001)
 
     epochs = 50
     log_interval = 1000
@@ -209,16 +271,20 @@ if __name__ == '__main__':
 
     train_test_split = 0.9
     print("parsing train...")
-    train_dataset = XRDData(train=True, train_test_split=train_test_split)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    print("done")
+    # train_dataset = XRDData(train=True, train_eval_split=train_test_split)
+    # train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = ExperienceReplay(batch_size, 1, np.inf, {'name': 'action', 'shape': (7,)}, 'classify',
+                                    'Custom.XRDSynthetic_Dataset', True, False, False, False, False,
+                                    '.Datasets/ReplayBuffer/Classify/Custom.XRDSynthetic_Dataset',
+                                    {'name': 'observation', 'shape': (8500,)})
+    print("done, size", len(train_loader))
     print("parsing test...")
-    test_dataset = XRDData(train=False, train_test_split=train_test_split)
+    test_dataset = XRDData(train=False, train_eval_split=train_test_split)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-    print("done")
+    print("done, size", len(test_loader))
 
     optim = SGD(model.parameters(), lr=lr)
-    cost = nn.CrossEntropyLoss()
+    cost = torch.nn.CrossEntropyLoss()
     loss_stat = correct = total = 0
     start_time = time.time()
     i = 1
@@ -229,13 +295,18 @@ if __name__ == '__main__':
             torch.save(model, folder+f"model__classNum{num_classes}_epochs{epoch}.pt")
 
         # training process
-        for x, y in train_loader:
+        for _ in range(len(train_loader)):
+            x, action, reward, discount, next_obs, y, *traj, step, ids, meta = next(train_loader)
             x, y = x.to(device), y.to(device)
             x = x.float()
             x = torch.flatten(x, start_dim=1)
             x = x.unsqueeze(1)
-            y_pred = model(x)
-            loss = cost(y_pred, y)
+            if twoD:
+                x = x.unsqueeze(1)
+            y = y.long()
+            # y_pred = model(x)
+            y_pred = actor.train()(encoder.train()(x)).mean
+            loss = cross_entropy(y_pred, y)
             loss_stat += loss.item()
             correct += (torch.argmax(y_pred, dim=-1) == y).sum().item()
             total += y.shape[0]
@@ -246,9 +317,12 @@ if __name__ == '__main__':
                     print(f"Train,Epoch:{epoch},Loss:{pLoss:.5f},Acc:{correct}/{total} ({pAcc:.1f}%)", file=f)
                 print(f"Train,Epoch:{epoch},Loss:{pLoss:.5f},Acc:{correct}/{total} ({pAcc:.1f}%)")
                 loss_stat = correct = total = 0
-            optim.zero_grad()
-            loss.backward()
-            optim.step()
+
+                print(time.time() - start_time)
+            # optim.zero_grad()
+            # loss.backward()
+            # optim.step()
+            Utils.optimize(loss, actor, encoder)
             i += 1
 
         # testing process
@@ -285,4 +359,4 @@ if __name__ == '__main__':
             print(f"Loop,Epoch:{epoch},Time:{time.time()-start_time:.1f}", file=f)
         print(f"Loop,Epoch:{epoch},Time:{time.time()-start_time:.1f}")
         clear_output(wait=True)
-print("Done")
+    print("Done")

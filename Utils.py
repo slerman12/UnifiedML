@@ -6,6 +6,7 @@ import math
 import random
 import re
 import warnings
+from inspect import signature
 from pathlib import Path
 
 import hydra
@@ -102,9 +103,10 @@ def instantiate(args, i=0, **kwargs):
         args = eval(args)  # Direct code execution
 
     return None if hasattr(args, '_target_') \
-        else args(**kwargs) if isinstance(args, type) \
+        else args(**{key: kwargs[key]
+                     for key in kwargs.keys() & signature(args).parameters}) if isinstance(args, type) \
         else args[i] if isinstance(args, list) \
-        else args  # Additional useful ones  TODO null/None -> Null
+        else args  # Additional useful ones
 
 
 # Checks if args can be instantiated
@@ -125,7 +127,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Initializes model optimizer a la AdamW + Cosine Anneal Schedule default, or custom
+# Initializes model optimizer AdamW + cosine anneal schedule default, or custom
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
     # Optimizer
     optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \

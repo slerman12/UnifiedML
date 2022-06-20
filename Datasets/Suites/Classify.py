@@ -66,6 +66,9 @@ class ClassifyEnv:
         self.min, self.max = [0] * self.observation_spec().shape[0], [1] * self.observation_spec().shape[0]
         self.data_stats += [self.min, self.max]
 
+        # TODO do batches all make it into first epoch, reset iter?
+        # self._batches = iter(self.batches)
+
     @property
     def batch(self):
         try:
@@ -115,7 +118,7 @@ class ClassifyEnv:
             cnt += nb_pixels
 
         self.data_stats = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
-        open(path + f'_Normalization_{self.data_stats[0]}_{self.data_stats[1]}', 'w')  # Save norm values for future reuse
+        open(path + f'_Normalization_{self.data_stats[0]}_{self.data_stats[1]}', 'w')  # Save norm values for future reuse TODO standardization
 
     def reset_format(self, x, y):
         x, y = [np.array(b, dtype='float32') for b in (x, y)]

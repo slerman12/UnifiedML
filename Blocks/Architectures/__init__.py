@@ -15,18 +15,12 @@ from Blocks.Architectures.Vision.CNN import AvgPool
 from Blocks.Architectures.Vision.ViT import CLSPool
 from Blocks.Architectures.MultiHeadAttention import AttentionPool
 
-from torch import nn
+from torch.nn import Identity
 
 
-class Null(nn.Module):
-    def __init__(self, input_shape=None, **_):
+class Null(Identity):
+    def __init__(self, **_):
         super().__init__()
-
-        self.input_shape = input_shape
-        self.output_dim = None
 
     def repr_shape(self, c, h, w):
         return c, h, w
-
-    def forward(self, x):
-        return x

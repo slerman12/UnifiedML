@@ -21,15 +21,16 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_stats=None, standardize=True, feature_norm=False, isotropic=False,
-                 parallel=False, eyes=None, pool=None, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
-                 weight_decay=None, ema_decay=None):
+    def __init__(self, obs_shape, context_dim=0, data_stats=torch.full([4], float('nan')), standardize=True, norm=False,
+                 feature_norm=False, isotropic=False, parallel=False, eyes=None, pool=None, optim=None, scheduler=None,
+                 lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
 
         super().__init__()
 
-        self.obs_shape = copy.copy(obs_shape)
+        self.obs_shape = torch.Size(obs_shape)
         self.data_stats = data_stats
         self.standardize = ~self.data_stats.isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
+        self.normalize = norm  # Whether to [0, 1] shift-max scale
 
         # Dimensions
         obs_shape[0] += context_dim
@@ -74,8 +75,9 @@ class CNNEncoder(nn.Module):
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
 
         # Standardizes/normalizes pixels
-        mean, stddev, minim, maxim = self.data_stats
-        obs = (obs - mean) / stddev if self.standardize else 2 * (obs - minim) / (maxim - minim) - 1
+        if self.standardize or self.normalize:
+            mean, stddev, minim, maxim = self.data_stats
+            obs = (obs - mean) / stddev if self.standardize else 2 * (obs - minim) / (maxim - minim) - 1
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])

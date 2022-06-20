@@ -26,7 +26,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load,
-                 forget, path, obs_spec=None, nstep=0, discount=1, meta_shape=None, transform=None):
+                 forget, path, obs_spec=None, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -98,7 +98,7 @@ class ExperienceReplay:
         assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
                                                              f'exceeds offline replay size ({len(self)})'
 
-        capacity = capacity // self.num_workers if capacity else np.inf
+        capacity = capacity // self.num_workers if capacity != -1 and capacity != 'inf' else np.inf
 
         # Sending data to workers directly
         pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])  # TODO update & storage_pipes?

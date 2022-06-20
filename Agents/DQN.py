@@ -21,7 +21,7 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, standardize, recipes,  # Architecture
+                 obs_shape, action_shape, trunk_dim, hidden_dim, data_stats, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -49,7 +49,7 @@ class DQNAgent(torch.nn.Module):
         self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1).to(device)  # Data mean, stddev, min, max
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_stats=self.data_stats, standardize=standardize, **recipes.encoder,
+            else CNNEncoder(obs_shape, data_stats=self.data_stats, standardize=standardize, norm=norm, **recipes.encoder,
                             parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
@@ -140,11 +140,14 @@ class DQNAgent(torch.nn.Module):
 
         # "Journal teachings"
 
-        logs = {'time': time.time() - self.birthday,
-                'step': self.step, 'episode': self.episode} if self.log \
+        offline = replay.offline
+        # epoch_episode = self.epoch * offline + self.episode * (1 - offline)
+
+        logs = {'time': time.time() - self.birthday, 'step': self.step + offline, 'frame': self.frame + offline,
+                'epoch' if offline else 'episode':  self.epoch if offline else self.episode} if self.log \
             else None
 
-        if replay.offline:
+        if offline:
             self.step += 1
             self.frame += len(obs)
             self.epoch = replay.epoch
@@ -169,7 +172,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, epoch=self.epoch if replay.offline else self.episode, retain_graph=True)
+                               self.actor, epoch=self.epoch if offline else self.episode, retain_graph=True)
 
                 if self.log:
                     correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
@@ -206,12 +209,12 @@ class DQNAgent(torch.nn.Module):
 
             # Update critic
             Utils.optimize(critic_loss,
-                           self.critic, epoch=self.epoch if replay.offline else self.episode)
+                           self.critic, epoch=self.epoch if offline else self.episode)
 
         # Update encoder
         if not self.generate:
             Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder, epoch=self.epoch if replay.offline else self.episode)
+                           self.encoder, epoch=self.epoch if offline else self.episode)
 
         if self.generate or self.RL and not self.discrete:
             # "Change" / "Grow"
@@ -222,6 +225,6 @@ class DQNAgent(torch.nn.Module):
 
             # Update actor
             Utils.optimize(actor_loss,
-                           self.actor, epoch=self.epoch if replay.offline else self.episode)
+                           self.actor, epoch=self.epoch if offline else self.episode)
 
         return logs

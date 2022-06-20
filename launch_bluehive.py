@@ -127,6 +127,10 @@ sweep = [
     'task=classify/custom Dataset=\'Datasets.ReplayBuffer.Classify._RRUFF.RRUFF\' dataset.root=\'../XRDs/xrd_data/\' dataset.name=\'mix\' +dataset.data=\'icsd171k_mix\' lab=false experiment=\'mix_to_RRUFF_ResNet50\' Aug=Blocks.Architectures.Null Eyes=Blocks.Architectures.ResNet50 num_gpus=4 parallel=true logger.wandb=true',
 ]
 
+sweep = [
+    'python Run.py task=classify/custom Dataset=Datasets.ReplayBuffer.Classify._XRD.Synthetic "Pi_trunk=\'Null\'" Eyes=XRD.Encoder Pi_head=XRD.Actor Optim=torch.optim.SGD lr=0.001 batch_size=16 replay.forget=false replay.capacity=100 num_workers=1 \'aug="Null"\' logger.wandb=true experiment="Reproduced"'
+]
+
 
 # Launch on Bluehive
 try:

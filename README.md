@@ -284,7 +284,7 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
-**Important features** Many popular features are unified in this library and generalized across RL/CV/Generative domains, with more being added: 
+**Important features** Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added: 
 
 * Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
   
@@ -371,7 +371,7 @@ python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repea
 A GAN with a CNN Discriminator:
 
 ```console
-python Run.py generate=True Discriminator=CNN
+python Run.py generate=True Discriminator=Blocks.Architectures.CNN
 ```
 
 See [Custom Architectures](#custom-architectures) for more info on this syntax.
@@ -571,15 +571,17 @@ An intricate example of the expressiveness of this syntax:
 python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
-Both the uppercase and lowercase syntax support direct function calls in lieu of their usual syntax, with function calls distinguished by parentheticals.
+Both the uppercase and lowercase syntax support direct function calls in lieu of their usual syntax, with function calls distinguished by the quotes and parentheticals.
 
-The parser automatically registers the imports/class paths in ```Utils``` in both the uppercase and lowercase syntax, including modules/classes ```torch```, ```torch.nn```, and architectures/paths like ```CNN```.
+The parser automatically registers the imports/class paths in ```Utils``` in both the uppercase and lowercase syntax, including modules/classes ```torch```, ```torch.nn```, and architectures/paths in ```./Blocks/Architectures/``` like ```CNN```.
 
 </details>
 
 Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two Encoder variants in ```./Blocks/Encoders.py```.
 
-To make your own architecture compatible with this expressive command line syntax, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as exemplified by the various predefined architectures in ```./Blocks/Architectures```. 
+To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in ```./Blocks/Architectures```.
+
+[comment]: <> (TODO repr_shape)
 
 </details>
 

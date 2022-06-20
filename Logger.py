@@ -5,7 +5,6 @@
 import csv
 import datetime
 import re
-import shutil
 from pathlib import Path
 from termcolor import colored
 
@@ -145,13 +144,18 @@ class Logger:
     def log_wandb(self, logs, name):
         if self.wandb == 'uninitialized':
             import wandb
+
             wandb.init(project=self.path.replace('/', '_').strip('._'), name=f'{self.task}_{self.seed}', dir=self.path)
+
             for file in ['', '*/', '*/*/', '*/*/*/']:
                 try:
                     wandb.save(f'./Hyperparams/{file}*.yaml')
                 except Exception:
                     pass
+
             self.wandb = wandb
+
         measure = 'reward' if 'reward' in logs else 'accuracy'
         logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
+
         self.wandb.log(logs, step=int(logs['step']))  # TODO add to Vlogger (https://docs.wandb.ai/guides/track/log/media/image-logging-de-duplication)

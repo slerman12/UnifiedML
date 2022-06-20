@@ -16,10 +16,13 @@ class Environment:
         self.disable = (offline or generate) and train
         self.generate = generate
 
-        self.env = self.raw_env.make(task_name, dataset, frame_stack, action_repeat, episode_max_frames,
-                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+        self.action_repeat = action_repeat or 1
 
-        self.env.reset()
+        if not self.disable:
+            self.env = self.raw_env.make(task_name, dataset, frame_stack, action_repeat, episode_max_frames,
+                                         episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+
+            self.env.reset()
 
         self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
@@ -43,7 +46,8 @@ class Environment:
         experiences = []
         video_image = []
 
-        exp = self.exp
+        if not self.disable:
+            exp = self.exp
 
         self.episode_done = self.disable
 
@@ -77,7 +81,8 @@ class Environment:
             if agent.training:
                 agent.episode += 1
 
-            self.env.reset()
+            if not self.disable:
+                self.env.reset()
             self.last_episode_len = self.episode_frame
 
         # Log stats
@@ -87,7 +92,7 @@ class Environment:
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
                 'frame': agent.frame * self.action_repeat,
-                'epoch' if self.offline or self.generate else 'episode': agent.epoch if self.offline else agent.episode,
+                'epoch' if self.offline or self.generate else 'episode': agent.epoch if self.offline or self.generate else agent.episode,
                 'accuracy'if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),  # Accuracy is %
                 'fps': frames / (sundown - self.daybreak)} if not self.disable \
