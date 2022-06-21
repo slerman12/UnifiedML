@@ -22,6 +22,7 @@ dependencies:
     - wandb==0.12.17  # Online logs
     - imageio==2.9.0  # Video saving
     - imageio-ffmpeg==0.4.4  # Video saving
+    - moviepy
     - opt_einsum_torch==0.1.0  # TODO Can get rid of
     - einops==0.4.1  # TODO Do I need it?
 # Only for me

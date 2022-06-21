@@ -322,7 +322,8 @@ if __name__ == '__main__':
             # optim.zero_grad()
             # loss.backward()
             # optim.step()
-            Utils.optimize(loss, actor, encoder)
+            Utils.optimize(loss, actor, retain_graph=True)
+            Utils.optimize(None, encoder)
             i += 1
 
         # testing process

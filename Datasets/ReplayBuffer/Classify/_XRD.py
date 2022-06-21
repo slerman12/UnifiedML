@@ -62,15 +62,19 @@ class XRDSynthetic(Dataset):
 
         # Each worker shares an indexing scheme
         rng = np.random.default_rng(seed)
-        train_indices = rng.choice(np.arange(full_size), size=train_size, replace=False)
-        eval_indices = np.array([idx for idx in np.arange(full_size) if idx not in train_indices])
 
-        self.indices = train_indices if train else eval_indices
+        # Train indices
+        self.indices = rng.choice(np.arange(full_size), size=train_size, replace=False)
+
+        # Eval indices
+        if not train:
+            self.indices = np.array([idx for idx in np.arange(full_size) if idx not in self.indices])
+
         self.classes = list(range(num_classes))
 
         # Can load slowly from disk with low memory footprint or CPU
         if self.use_cpu_memory:
-            # Store on CPU  TODO store only the relevant indices
+            # Store on CPU
             with open(self.features_path, "r") as f:
                 self.features_lines = f.readlines()
             with open(self.label_path, "r") as f:
@@ -94,7 +98,7 @@ class XRDSynthetic(Dataset):
                         return line
 
     def __getitem__(self, idx):
-        idx = self.indices[idx]  # todo don't need if storing rleevant indices
+        idx = self.indices[idx]
 
         # Features and label
         x = np.array(list(map(float, self.get_line(idx, 'features').strip().split(','))))

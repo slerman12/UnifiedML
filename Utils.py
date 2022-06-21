@@ -127,7 +127,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Initializes model optimizer AdamW + cosine anneal schedule default, or custom
+# Initializes model optimizer. Default: AdamW + cosine annealing
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
     # Optimizer
     optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \

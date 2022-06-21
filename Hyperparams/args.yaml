@@ -130,6 +130,7 @@ logger:
   path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/
   task: ${task_name}
   seed: ${seed}
+  aggregation: mean
   wandb: false
 
 vlogger:
@@ -137,6 +138,7 @@ vlogger:
   path: ${logger.path}${task_name}_${seed}_Video_Image
   fps: 20
   reel: ${generate}
+  wandb: ${logger.wandb}
 
 plotting:
   _target_: Plot.plot

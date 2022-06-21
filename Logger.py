@@ -8,6 +8,10 @@ import re
 from pathlib import Path
 from termcolor import colored
 
+import numpy as np
+
+import torch
+
 
 def shorthand(log_name):
     return ''.join([s[0].upper() for s in re.split('_|[ ]', log_name)] if len(log_name) > 3 else log_name.upper())
@@ -27,7 +31,7 @@ def format(log, log_name):
 
 
 class Logger:
-    def __init__(self, task, seed, path='.', wandb=False):
+    def __init__(self, task, seed, path='.', aggregation='mean', wandb=False):
 
         self.path = path
         Path(self.path).mkdir(parents=True, exist_ok=True)
@@ -35,7 +39,10 @@ class Logger:
         self.seed = seed
 
         self.logs = {}
-        self.counts = {}
+
+        self.aggregation = aggregation
+        self.default_aggregations = {'step': np.median, 'frame': np.median, 'episode': np.median, 'epoch': np.median,
+                                     'time': np.mean, 'fps': np.mean}
 
         self.wandb = 'uninitialized' if wandb \
             else None
@@ -45,39 +52,36 @@ class Logger:
 
             if name not in self.logs:
                 self.logs[name] = {}
-                self.counts[name] = {}
 
             logs = self.logs[name]
-            counts = self.counts[name]
 
-            for k, l in log.items():  # TODO Aggregate per step median
-                if k in logs:
-                    logs[k] += l
-                    counts[k] += 1
-                else:
-                    logs[k] = l
-                    counts[k] = 1
+            for k, l in log.items():
+                if isinstance(l, torch.Tensor):
+                    l = l.detach().numpy()
+                logs[k] = logs[k] + [l] if k in logs else [l]
 
         if dump:
             self.dump_logs(name)
 
     def dump_logs(self, name=None):
         if name is None:
+            # Iterate through all logs
             for n in self.logs:
                 for log_name in self.logs[n]:
-                    self.logs[n][log_name] /= self.counts[n][log_name]
+                    agg = self.default_aggregations.get(log_name, np.mean if self.aggregation == 'mean' else np.median)
+                    self.logs[n][log_name] = agg(self.logs[n][log_name])
                 self._dump_logs(self.logs[n], name=n)
                 del self.logs[n]
-                del self.counts[n]
         else:
+            # Iterate through just the named log
             if name not in self.logs:
                 return
             for log_name in self.logs[name]:
-                self.logs[name][log_name] /= self.counts[name][log_name]
+                agg = self.default_aggregations.get(log_name, np.mean if self.aggregation == 'mean' else np.median)
+                self.logs[name][log_name] = agg(self.logs[name][log_name])
             self._dump_logs(self.logs[name], name=name)
             self.logs[name] = {}
             del self.logs[name]
-            del self.counts[name]
 
     def _dump_logs(self, logs, name):
         self.dump_to_console(logs, name=name)
@@ -132,15 +136,6 @@ class Logger:
         writer.writerow(logs)
         file.flush()
 
-    # TODO
-    # def log_tensorboard(self, logs, name):
-    #     if self.tensorboard_writer is None:
-    #         self.tensorboard_writer = SummaryWriter(self.path + f'/{self.task}_{self.seed}_{name}_TensorBoard.csv')
-    #
-    #     for key in logs:
-    #         if key != 'step' and key != 'episode':
-    #             self.tensorboard_writer.add_scalar(f'{key}', logs[key], logs['step'])
-
     def log_wandb(self, logs, name):
         if self.wandb == 'uninitialized':
             import wandb
@@ -158,4 +153,4 @@ class Logger:
         measure = 'reward' if 'reward' in logs else 'accuracy'
         logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
 
-        self.wandb.log(logs, step=int(logs['step']))  # TODO add to Vlogger (https://docs.wandb.ai/guides/track/log/media/image-logging-de-duplication)
+        self.wandb.log(logs, step=int(logs['step']))
