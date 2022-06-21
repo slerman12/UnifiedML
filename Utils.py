@@ -134,7 +134,7 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
             or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)  # Default
 
     # Learning rate scheduler
-    scheduler = instantiate(scheduler, optimizer=optim) or lr and lr_decay_epochs \
+    scheduler = instantiate(scheduler, optimizer=optim) or (lr and lr_decay_epochs or None) \
                 and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs)  # Default
 
     return optim, scheduler

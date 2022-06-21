@@ -72,7 +72,7 @@ def main(args):
         replay.add(experiences)
 
         if env.episode_done:
-            if args.log_per_episodes and agent.episode % args.log_per_episodes == 0:
+            if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:
@@ -82,11 +82,11 @@ def main(args):
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline
 
         # Train agent
-        if training and args.learn_per_steps and agent.step % args.learn_per_steps == 0 or env.disable or converged:
+        if training and args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged:
 
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
                 logs = agent.train().learn(replay)  # Trains the agent
-                if args.log_per_episodes and (agent.episode - 1) % args.log_per_episodes == 0:
+                if args.log_per_episodes:
                     logger.log(logs, 'Train')
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):

@@ -40,9 +40,9 @@ class Logger:
 
         self.logs = {}
 
-        self.aggregation = aggregation
-        self.default_aggregations = {'step': np.median, 'frame': np.median, 'episode': np.median, 'epoch': np.median,
-                                     'time': np.mean, 'fps': np.mean}
+        self.aggregation = aggregation  # mean, median, last, max, min, or sum
+        self.default_aggregations = {'step': np.ma.max, 'frame': np.ma.max, 'episode': np.ma.max, 'epoch': np.ma.max,
+                                     'time': np.ma.max, 'fps': np.ma.mean}
 
         self.wandb = 'uninitialized' if wandb \
             else None
@@ -68,7 +68,7 @@ class Logger:
             # Iterate through all logs
             for n in self.logs:
                 for log_name in self.logs[n]:
-                    agg = self.default_aggregations.get(log_name, np.mean if self.aggregation == 'mean' else np.median)
+                    agg = self.aggregate(log_name)
                     self.logs[n][log_name] = agg(self.logs[n][log_name])
                 self._dump_logs(self.logs[n], name=n)
                 del self.logs[n]
@@ -77,11 +77,36 @@ class Logger:
             if name not in self.logs:
                 return
             for log_name in self.logs[name]:
-                agg = self.default_aggregations.get(log_name, np.mean if self.aggregation == 'mean' else np.median)
+                agg = self.aggregate(log_name)
                 self.logs[name][log_name] = agg(self.logs[name][log_name])
             self._dump_logs(self.logs[name], name=name)
             self.logs[name] = {}
             del self.logs[name]
+
+    # Aggregate list of batches or scalars of arbitrary lengths
+    def aggregate(self, log_name):
+        def last(x):
+            x = np.array(x)
+            return x[len(x) - 1]
+
+        agg = self.default_aggregations.get(log_name,
+                                            np.ma.mean if self.aggregation == 'mean'
+                                            else np.ma.median if self.aggregation == 'median'
+                                            else last if self.aggregation == 'last'
+                                            else np.ma.max if self.aggregation == 'max'
+                                            else np.ma.min if self.aggregation == 'min'
+                                            else np.ma.sum)
+
+        def size_agnostic_agg(stats):
+            stats = [(stat,) if np.isscalar(stat) else stat for stat in stats]
+
+            masked = np.ma.empty((len(stats), max(map(len, stats))))
+            masked.mask = True
+            for m, stat in zip(masked, stats):
+                m[:len(stat)] = stat
+            return agg(masked)
+
+        return agg if agg == last else size_agnostic_agg
 
     def _dump_logs(self, logs, name):
         self.dump_to_console(logs, name=name)
@@ -156,3 +181,4 @@ class Logger:
         logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
 
         self.wandb.log(logs, step=int(logs['step']))
+

@@ -62,6 +62,8 @@ class ClassifyEnv:
             self.data_stats = [mean, stddev]
         elif train:
             self.compute_norm(path)
+        else:
+            assert False
 
         self.min, self.max = [0] * self.observation_spec().shape[0], [1] * self.observation_spec().shape[0]
         self.data_stats += [self.min, self.max]

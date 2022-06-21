@@ -21,16 +21,16 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_stats=torch.full([4], float('nan')), standardize=True, norm=False,
+    def __init__(self, obs_shape, context_dim=0, data_stats=torch.full([4], float('nan')), standardize=True, norm=True,
                  feature_norm=False, isotropic=False, parallel=False, eyes=None, pool=None, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
 
         super().__init__()
 
         self.obs_shape = torch.Size(obs_shape)
+        self.standardize = ~data_stats[:2].isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
+        self.normalize = ~data_stats[2:].isnan().any() and norm  # Whether to [0, 1] shift-max scale
         self.data_stats = data_stats
-        self.standardize = ~self.data_stats.isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
-        self.normalize = norm  # Whether to [0, 1] shift-max scale
 
         # Dimensions
         obs_shape[0] += context_dim
@@ -114,8 +114,8 @@ def adapt_cnn(block, obs_shape):
         block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
         block.padding = tuple(0 if obs < pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
 
-        # Shrink the CNN kernels accordingly
-        if not isinstance(block, nn.MaxPool2d):
+        # Contract the CNN kernels accordingly
+        if isinstance(block, nn.Conv2d):
             block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
     elif hasattr(block, 'modules'):
         for layer in block.children():
