@@ -138,7 +138,6 @@ vlogger:
   path: ${logger.path}${task_name}_${seed}_Video_Image
   fps: 20
   reel: ${generate}
-  wandb: ${logger.wandb}
 
 plotting:
   _target_: Plot.plot

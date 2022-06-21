@@ -140,7 +140,9 @@ class Logger:
         if self.wandb == 'uninitialized':
             import wandb
 
-            wandb.init(project=self.path.replace('/', '_').strip('._'), name=f'{self.task}_{self.seed}', dir=self.path)
+            experiment, agent, suite = self.path.split('/')[2:5]
+
+            wandb.init(project=experiment, name=f'{agent}_{suite}_{self.task}_{self.seed}', dir=self.path)
 
             for file in ['', '*/', '*/*/', '*/*/*/']:
                 try:
