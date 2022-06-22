@@ -78,7 +78,7 @@ class DQNAgent(torch.nn.Module):
 
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
-            obs = torch.as_tensor(obs, device=self.device)
+            obs = torch.as_tensor(obs, device=self.device).float()
 
             # EMA shadows
             encoder = self.encoder.ema if self.ema and not self.generate else self.encoder

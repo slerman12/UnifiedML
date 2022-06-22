@@ -11,10 +11,3 @@ stddev_schedule: 'linear(1.0,0.1,2000000)'
 lr: 8e-5
 trunk_dim: 100
 
-    
-hydra:
-    job:
-        env_set:
-          # Environment variables for MuJoCo
-          MKL_SERVICE_FORCE_INTEL: '1'
-          MUJOCO_GL: 'egl'

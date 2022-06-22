@@ -27,13 +27,7 @@ stddev_schedule: 'linear(1.0,0.1,{100000 if task in easy else 500000 if task in 
 {'lr: 8e-5' if 'humanoid' in task else ''}
 {'trunk_dim: 100' if 'humanoid' in task else ''}
 {'batch_size: 512' if 'walker' in task else ''}
-    
-hydra:
-    job:
-        env_set:
-          # Environment variables for MuJoCo
-          MKL_SERVICE_FORCE_INTEL: '1'
-          MUJOCO_GL: 'egl'"""
+"""
                 )
         f.close()
         out += ' "' + task.lower() + '"'

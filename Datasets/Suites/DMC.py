@@ -9,9 +9,9 @@ def make(task, dataset, frame_stack=3, action_repeat=2, episode_max_frames=False
          offline=False, train=True, seed=1, batch_size=1, num_workers=1):
     # Imports in make() to avoid glfw warning
     try:
+        os.environ['MUJOCO_GL'] = 'egl'
         from dm_control import manipulation, suite
     except ImportError:
-        del os.environ['MKL_SERVICE_FORCE_INTEL']
         del os.environ['MUJOCO_GL']
         from dm_control import manipulation, suite
 
