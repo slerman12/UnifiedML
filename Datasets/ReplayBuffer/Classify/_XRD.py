@@ -48,6 +48,7 @@ class XRDRRUFF(Dataset):
         return x, y
 
 
+# TODO list of roots, corresponding list of train-test-splits, get indices accordingly
 class XRDSynthetic(Dataset):
     def __init__(self, root='../XRDs/icsd_Datasets/icsd171k_mix/', train=True, train_test_split=0.9,
                  num_classes=7, use_cpu_memory=True, transform=None, seed=0, **kwargs):

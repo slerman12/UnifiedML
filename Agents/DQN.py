@@ -66,7 +66,7 @@ class DQNAgent(torch.nn.Module):
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                      ema_decay=ema_decay) if self.RL or self.generate else None
+                                      ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 

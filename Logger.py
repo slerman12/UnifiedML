@@ -83,7 +83,7 @@ class Logger:
             self.logs[name] = {}
             del self.logs[name]
 
-    # Aggregate list of batches or scalars of arbitrary lengths
+    # Aggregate list of scalars or batched-values of arbitrary lengths
     def aggregate(self, log_name):
         def last(x):
             x = np.array(x)
@@ -181,4 +181,3 @@ class Logger:
         logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
 
         self.wandb.log(logs, step=int(logs['step']))
-
