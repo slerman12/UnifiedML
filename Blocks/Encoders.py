@@ -112,7 +112,7 @@ def adapt_cnn(block, obs_shape):
 
         # Set them to adapt to obs shape (2D --> 1D, etc) via contracted kernels / suitable padding
         block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
-        block.padding = tuple(0 if obs < pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
+        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
 
         # Contract the CNN kernels accordingly
         if isinstance(block, nn.Conv2d):
