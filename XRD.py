@@ -252,7 +252,7 @@ class XRDData(Dataset):
 
 
 # Allows stat aggregations on batches of different lengths
-def batch_agnostic(stats, agg):
+def size_agnostic_agg(stats, agg):
     masked = np.ma.empty((len(stats), max(map(len, stats))))
     masked.mask = True
     for m, stat in zip(masked, stats):
@@ -320,7 +320,7 @@ if __name__ == '__main__':
             accuracy.append((torch.argmax(y_predicted, -1) == label).float().numpy())
 
             if i and i % log_interval == 0:
-                print(time.time() - start_time, batch_agnostic(accuracy, np.ma.mean))
+                print(time.time() - start_time, size_agnostic_agg(accuracy, np.ma.mean))
 
         accuracy = []
         for obs, label in eval_loader:
@@ -333,5 +333,5 @@ if __name__ == '__main__':
                 accuracy.append((y_predicted.argmax(-1) == label).float().numpy())
 
         print(epoch)
-        print('Eval accuracy', batch_agnostic(accuracy, np.ma.mean))
+        print('Eval accuracy', size_agnostic_agg(accuracy, np.ma.mean))
         print(time.time() - start_time)

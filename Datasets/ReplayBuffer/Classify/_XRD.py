@@ -49,6 +49,8 @@ class XRDRRUFF(Dataset):
 
 
 # TODO list of roots, corresponding list of train-test-splits, get indices accordingly
+# TODO can maybe add an epoch length duration arg to classify
+# TODO note with experience replay train-test-split remains constant despite ad-hoc seed changes
 class XRDSynthetic(Dataset):
     def __init__(self, root='../XRDs/icsd_Datasets/icsd171k_mix/', train=True, train_test_split=0.9,
                  num_classes=7, use_cpu_memory=True, transform=None, seed=0, **kwargs):

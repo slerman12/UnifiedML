@@ -86,7 +86,7 @@ class Logger:
     # Aggregate list of scalars or batched-values of arbitrary lengths
     def aggregate(self, log_name):
         def last(x):
-            x = np.array(x)
+            x = np.array(x).flat
             return x[len(x) - 1]
 
         agg = self.default_aggregations.get(log_name,
