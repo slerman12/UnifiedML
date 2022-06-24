@@ -53,7 +53,7 @@ class XRDRRUFF(Dataset):
 # TODO note with experience replay train-test-split remains constant despite ad-hoc seed changes
 class XRDSynthetic(Dataset):
     def __init__(self, root='../XRDs/icsd_Datasets/icsd171k_mix/', train=True, train_test_split=0.9,
-                 num_classes=7, use_cpu_memory=True, transform=None, seed=0, **kwargs):
+                 num_classes=7, use_cpu_memory=True, transform=None, seed=0, spectrogram=False, **kwargs):
 
         self.features_path = root + "features.csv"
         self.label_path = root + f"labels{num_classes}.csv"
@@ -85,6 +85,9 @@ class XRDSynthetic(Dataset):
         else:
             self.features_lines = self.label_lines = None
 
+        if spectrogram:
+            self.spectrogram = Spectrogram()
+
         self.transform = transform
 
     def __len__(self):
@@ -108,6 +111,64 @@ class XRDSynthetic(Dataset):
         y = np.array(list(map(float, self.get_line(idx, 'label').strip().split(',')))).argmax()
 
         # Data transforms
+        if self.transform is not None:
+            x = self.transform(x)
+
+        if hasattr(self, 'spectrogram'):
+            x = self.spectrogram(x)
+
+        return x, y
+
+
+class MultiSplitDataset(Dataset):
+    def __init__(self, roots=('../XRDs/icsd_Datasets/icsd171k_mix/',), train=True, train_eval_splits=(0.9,),
+                 num_classes=7, seed=0, transform=None, **kwargs):
+
+        if not isinstance(roots, (tuple, list)):
+            roots = (roots,)
+        if not isinstance(train_eval_splits, (tuple, list)):
+            roots = (train_eval_splits,)
+
+        assert len(roots) == len(train_eval_splits), 'must provide train test split for each root dir'
+
+        self.indices = []
+        self.features = {}
+        self.labels = {}
+
+        for i, (root, split) in enumerate(zip(roots, train_eval_splits)):
+            features_path = root + "features.csv"
+            label_path = root + f"labels{num_classes}.csv"
+
+            self.classes = list(range(num_classes))
+
+            # Store on CPU
+            with open(features_path, "r") as f:
+                self.features[i] = f.readlines()
+            with open(label_path, "r") as f:
+                self.labels[i] = f.readlines()
+                full_size = len(self.labels)
+
+            train_size = round(full_size * split)
+
+            # Each worker shares an indexing scheme
+            rng = np.random.default_rng(seed)
+            train_indices = rng.choice(np.arange(full_size), size=train_size, replace=False)
+            eval_indices = np.array([idx for idx in np.arange(full_size) if idx not in train_indices])
+
+            indices = train_indices if train else eval_indices
+            self.indices += zip([i] * len(indices), list(indices))
+
+            self.transform = transform
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        root, idx = self.indices[idx]
+
+        x = np.array(list(map(float, self.features[root][idx].strip().split(','))))
+        y = np.array(list(map(float, self.labels[root][idx].strip().split(',')))).argmax()
+
         if self.transform is not None:
             x = self.transform(x)
 

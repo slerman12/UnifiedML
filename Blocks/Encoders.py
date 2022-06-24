@@ -33,7 +33,7 @@ class CNNEncoder(nn.Module):
         self.data_stats = data_stats
 
         # Dimensions
-        obs_shape[0] += context_dim
+        obs_shape[0] += context_dim  # TODO no context dim for isotropic?
         self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
 
         # CNN

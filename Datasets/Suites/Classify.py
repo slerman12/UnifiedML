@@ -71,6 +71,9 @@ class ClassifyEnv:
         # TODO do batches all make it into first epoch, reset iter?
         # self._batches = iter(self.batches)
 
+        if offline and train:
+            self.batches = self._batches = None
+
     @property
     def batch(self):
         try:

@@ -18,10 +18,10 @@ class Environment:
 
         self.action_repeat = action_repeat or 1
 
-        if not self.disable:
-            self.env = self.raw_env.make(task_name, dataset, frame_stack, action_repeat, episode_max_frames,
-                                         episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+        self.env = self.raw_env.make(task_name, dataset, frame_stack, action_repeat, episode_max_frames,
+                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
 
+        if not self.disable:
             self.env.reset()
 
         self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0

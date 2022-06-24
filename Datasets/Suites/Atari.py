@@ -227,7 +227,7 @@ def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False
                                      'Accept the license:\n'
                                      '$ pip install autorom\n'
                                      '$ AutoROM --accept-license\n'
-                                     'Now, the ROMs:\n'
+                                     'Now, install ROMs:\n'
                                      '$ mkdir ./Datasets/Suites/Atari_ROMS\n'
                                      '$ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS\n'
                                      '$ ale-import-roms ./Datasets/Suites/Atari_ROMS\n'
