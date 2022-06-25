@@ -61,7 +61,8 @@ class DQNAgent(torch.nn.Module):
             else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.actor,
                                        ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                       ema_decay=ema_decay * ema)
+                                       ema_decay=ema_decay * ema, bound=RL and not discrete)
+        # TODO shouldn't bound classify-rl - need to use low/high in action_spec
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_shape, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,

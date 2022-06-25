@@ -19,11 +19,13 @@ import Utils
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, pi_head=None, ensemble_size=2,
                  stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
-                 weight_decay=None, ema_decay=None):
+                 weight_decay=None, ema_decay=None, bound=False):
         super().__init__()
 
         self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
         self.stddev_clip = stddev_clip  # Max cutoff threshold on standard dev
+
+        self.bound = bound  # TODO replace with action_spec.low/high
 
         action_dim = math.prod(action_shape)
 
@@ -52,15 +54,16 @@ class EnsembleGaussianActor(nn.Module):
         obs = self.trunk(obs)
 
         if self.stddev_schedule is None:
-            mean_tanh, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
+            mean, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
             stddev = torch.exp(log_stddev)
         else:
-            mean_tanh = self.Pi_head(obs).squeeze(1)
-            stddev = torch.full_like(mean_tanh,
+            mean = self.Pi_head(obs).squeeze(1)
+            stddev = torch.full_like(mean,
                                      Utils.schedule(self.stddev_schedule, step))
 
-        mean = torch.tanh(mean_tanh)
-        Pi = TruncatedNormal(mean, stddev, low=-1, high=1, stddev_clip=self.stddev_clip)
+        Pi = TruncatedNormal(torch.tanh(mean) if self.bound else mean, stddev,
+                             low=-1 if self.bound else None,
+                             high=1 if self.bound else None, stddev_clip=self.stddev_clip)
 
         return Pi
 

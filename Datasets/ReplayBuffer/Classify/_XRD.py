@@ -120,7 +120,7 @@ class XRDSynthetic(Dataset):
         return x, y
 
 
-class MultiSplitDataset(Dataset):
+class XRD(Dataset):
     def __init__(self, roots=('../XRDs/icsd_Datasets/icsd171k_mix/',), train=True, train_eval_splits=(0.9,),
                  num_classes=7, seed=0, transform=None, **kwargs):
 

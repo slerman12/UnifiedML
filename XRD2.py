@@ -137,7 +137,7 @@ def size_agnostic_agg(stats, agg):
 
 if __name__ == '__main__':
 
-    Utils.set_seeds(0)
+    Utils.set_seeds(2)
 
     twoD = False
 
@@ -184,6 +184,8 @@ if __name__ == '__main__':
     start_time = time.time()
     i = 1
     for epoch in range(1, epochs+1):
+
+        model.train()
 
         # training process
         for x, y in train_loader:
