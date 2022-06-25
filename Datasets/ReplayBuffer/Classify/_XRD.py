@@ -146,7 +146,7 @@ class XRD(Dataset):
                 self.features[i] = f.readlines()
             with open(label_path, "r") as f:
                 self.labels[i] = f.readlines()
-                full_size = len(self.labels)
+                full_size = len(self.labels[i])
 
             train_size = round(full_size * split)
 
