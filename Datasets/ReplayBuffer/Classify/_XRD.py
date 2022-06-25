@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+from collections import Iterable
+
 import numpy as np
 
 from torch.utils.data import Dataset
@@ -124,9 +126,9 @@ class XRD(Dataset):
     def __init__(self, roots=('../XRDs/icsd_Datasets/icsd171k_mix/',), train=True, train_eval_splits=(0.9,),
                  num_classes=7, seed=0, transform=None, **kwargs):
 
-        if not isinstance(roots, (tuple, list)):
+        if not isinstance(roots, Iterable):
             roots = (roots,)
-        if not isinstance(train_eval_splits, (tuple, list)):
+        if not isinstance(train_eval_splits, Iterable):
             roots = (train_eval_splits,)
 
         assert len(roots) == len(train_eval_splits), 'must provide train test split for each root dir'
