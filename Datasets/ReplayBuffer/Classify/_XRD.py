@@ -131,8 +131,6 @@ class XRD(Dataset):
         if not isinstance(train_eval_splits, Iterable):
             train_eval_splits = (train_eval_splits,)
 
-        print(roots, train_eval_splits, "priiiiiiiiiiiiii\n\n", len(roots), len(train_eval_splits))
-
         assert len(roots) == len(train_eval_splits), 'must provide train test split for each root dir'
 
         self.indices = []
