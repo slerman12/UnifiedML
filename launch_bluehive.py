@@ -145,7 +145,7 @@ sweep = [
     experiment='ResNet18_Spectrogram' 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
     +'dataset.train_eval_splits=[1, 0.5]' +dataset.spectrogram=true 
-    +dataset.num_classes=7,230""",  # Soup, 50-50, Spectrogram, ResNet18, 7/230-Way
+    +dataset.num_classes=7""",  # Soup, 50-50, Spectrogram, ResNet18, 7/230-Way
 ]
 
 
