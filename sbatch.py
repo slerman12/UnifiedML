@@ -12,6 +12,10 @@ from omegaconf import OmegaConf
 sys_args = [arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]]
 meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m']
 
+# Format path names
+# e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
 
 def getattr_recursive(__o, name):
     for key in name.split('.'):

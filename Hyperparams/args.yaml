@@ -150,6 +150,7 @@ plotting:
   write_tabular: false
   plot_bar: true
   verbose: false
+  plot_train: false
 
 # Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures or optimizers
 

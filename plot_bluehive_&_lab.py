@@ -61,6 +61,7 @@ plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet
           # 'PS1_to_RRUFF_ViT'
           ]]
 tasks =[]
+plots = [['Regularized_0.5_RRUFF', 'Zhaotong_Repro', 'Regularized_0.5_Batch_64', 'Regularized_0.5_Batch_256_ADAM']]
 
 experiments = set().union(*plots)
 
@@ -145,9 +146,11 @@ if sftp:
 # Generate each plot
 for plot_experiments in plots:
 
-    plot(path=f"./Benchmarking/{plot_group + '/' if plot_group else ''}{'_'.join(plot_experiments)}/Plots",
-         plot_experiments=plot_experiments if len(plot_experiments) else None,
-         plot_agents=agents if len(agents) else None,
-         plot_suites=suites if len(suites) else None,
-         plot_tasks=tasks if len(tasks) else None,
-         steps=steps if steps else np.inf, write_tabular=True, verbose=True)
+    for plot_train in [False, True]:
+
+        plot(path=f"./Benchmarking/{plot_group + '/' if plot_group else ''}{'_'.join(plot_experiments)}/Plots/",
+             plot_experiments=plot_experiments if len(plot_experiments) else None,
+             plot_agents=agents if len(agents) else None,
+             plot_suites=suites if len(suites) else None,
+             plot_tasks=tasks if len(tasks) else None,
+             steps=steps if steps else np.inf, write_tabular=True, verbose=True, plot_train=plot_train)

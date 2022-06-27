@@ -27,13 +27,15 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
+# Format path names
+# e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         write_tabular=False, plot_bar=True, verbose=False,
-         include_train=False):  # TODO
-    include_train = False
+         write_tabular=False, plot_bar=True, verbose=False, plot_train=False):
 
-    path = Path(path)
+    path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
 
     # Make sure non empty and lists, and gather names
@@ -86,7 +88,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Whether to include this CSV
         include = True
 
-        if not include_train and eval.lower() != 'eval':
+        if plot_train is eval.lower() == 'eval':
             include = False
 
         datums = [experiment, agent, suite.lower(), suite_task]
@@ -220,7 +222,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if 'classify' in suite.lower():
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel('Eval Accuracy')
+            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
         # Legend in subplots
         ax.legend(frameon=False).set_title(None)
@@ -294,7 +296,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         elif suite.lower() == 'classify':
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel('Eval Accuracy')
+            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
         # Legend in subplots
         ax.legend(frameon=False).set_title(None)
@@ -366,9 +368,17 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax = axs[col] if num_cols > 1 else axs
 
+            # No need to show Agent in legend if all same
+            short_palette = palette
+            if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
             hue_order = np.sort(task_data.Agent.unique())
             sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                        palette=palette
+                        palette=short_palette
                         )
 
             ax.set_title(f'{suite} (@{min_steps:.0f} Steps)')
@@ -382,7 +392,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             elif suite.lower() == 'classify':
                 ax.set_ybound(0, 1)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-                ax.set_ylabel('Eval Accuracy')
+                ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
             for p in ax.patches:
                 width = p.get_width()

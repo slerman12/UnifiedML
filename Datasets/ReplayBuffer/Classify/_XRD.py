@@ -5,10 +5,11 @@
 from collections import Iterable
 
 import numpy as np
+import torch
 
 from torch.utils.data import Dataset
 
-from torchvision.transforms import ToPILImage
+from torchvision.transforms import ToPILImage, Compose
 
 from torchaudio.transforms import Spectrogram
 
@@ -124,7 +125,7 @@ class XRDSynthetic(Dataset):
 
 class XRD(Dataset):
     def __init__(self, roots=('../XRDs/icsd_Datasets/icsd171k_mix/',), train=True, train_eval_splits=(0.9,),
-                 num_classes=7, seed=0, transform=None, **kwargs):
+                 num_classes=7, seed=0, transform=None, spectrogram=False, **kwargs):
 
         if not isinstance(roots, Iterable):
             roots = (roots,)
@@ -160,7 +161,10 @@ class XRD(Dataset):
             indices = train_indices if train else eval_indices
             self.indices += zip([i] * len(indices), list(indices))
 
-            self.transform = transform
+        self.transform = transform
+
+        if spectrogram:
+            self.spectrogram = Compose([Spectrogram(), ToPILImage()])
 
     def __len__(self):
         return len(self.indices)
@@ -168,9 +172,13 @@ class XRD(Dataset):
     def __getitem__(self, idx):
         root, idx = self.indices[idx]
 
-        x = np.array(list(map(float, self.features[root][idx].strip().split(','))))
+        x = torch.FloatTensor(list(map(float, self.features[root][idx].strip().split(','))))
         y = np.array(list(map(float, self.labels[root][idx].strip().split(',')))).argmax()
 
+        if hasattr(self, 'spectrogram'):
+            x = self.spectrogram(x)
+
+        # Data transforms
         if self.transform is not None:
             x = self.transform(x)
 

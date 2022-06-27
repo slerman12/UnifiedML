@@ -219,18 +219,10 @@ if __name__ == '__main__':
             x = x.unsqueeze(1)
             modelEval = model.eval()
             y_pred = modelEval(x).detach()
-            if epoch == epochs - 1:
-                if y_pred_all is None:
-                    y_pred_all = y_pred
-                else:
-                    y_pred_all = torch.cat([y_pred_all, y_pred], dim=0)
-                if y_test_all is None:
-                    y_test_all = y
-                else:
-                    y_test_all = torch.cat([y_test_all, y], dim=0)
 
             correct += (torch.argmax(y_pred, dim=-1) == y).sum().item()
             total += y.shape[0]
+        pAcc = 100.*correct / total
 
         print(f"Test,Epoch:{epoch},Acc:{correct}/{total} ({pAcc:.1f}%)")
 
