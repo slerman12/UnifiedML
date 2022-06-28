@@ -88,7 +88,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Whether to include this CSV
         include = True
 
-        if plot_train is eval.lower() == 'eval':
+        if plot_train is (eval.lower() == 'eval'):
             include = False
 
         datums = [experiment, agent, suite.lower(), suite_task]

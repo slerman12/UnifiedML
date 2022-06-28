@@ -104,7 +104,7 @@ agent:
   generate: ${generate}
   device: ${device}
   parallel: ${parallel}
-  log: false
+  log: ${offline}
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay

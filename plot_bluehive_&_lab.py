@@ -15,6 +15,7 @@ from Plot import plot
 
 
 sftp = True
+bluehive = False
 plot_group = 'UML_Paper'
 # steps = None
 steps = 5e5
@@ -60,8 +61,9 @@ plot_group = 'XRD'
 plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18',
           # 'PS1_to_RRUFF_ViT'
           ]]
-tasks =[]
+tasks = []
 plots = [['Regularized_0.5_RRUFF', 'Zhaotong_Repro', 'Regularized_0.5_Batch_64', 'Regularized_0.5_Batch_256_ADAM']]
+plots = [['CNN', 'ResNet18']]
 
 experiments = set().union(*plots)
 
@@ -83,49 +85,51 @@ if sftp:
 
     conda = 'source /scratch/slerman/miniconda/bin/activate agi'
 
-    # Connect VPN
-    try:
-        p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
-        p.expect('Username: ')
-        p.sendline('')
-        p.expect('Password: ')
-        p.sendline(password)
-        p.expect('Second Password: ')
-        p.sendline('push')
-        p.expect('VPN>')
-    except Exception:
-        pass
-
-    # SFTP
-
-    print(f'SFTP\'ing: {", ".join(experiments)}')
-    if len(tasks):
-        print(f'plotting for tasks: {", ".join(tasks)}')
-    if steps:
-        print(f'up to steps: {steps:.0f}')
-
     cwd = os.getcwd()
     local_path = f"./Benchmarking"
 
     Path(local_path).mkdir(parents=True, exist_ok=True)
     os.chdir(local_path)
 
-    print('\nConnecting to Bluehive', end=" ")
-    p = spawn(f'sftp {username}@bluehive.circ.rochester.edu')
-    p.expect('Password: ', timeout=None)
-    p.sendline(password)
-    p.expect('sftp> ', timeout=None)
-    print('- Connected! ✓\n')
-    p.sendline(f"lcd {local_path}")
-    p.expect('sftp> ', timeout=None)
-    p.sendline(f"cd /scratch/{username}/UnifiedML")
-    p.expect('sftp> ', timeout=None)
-    for i, experiment in enumerate(experiments):
-        print(f'{i + 1}/{len(experiments)} [bluehive] SFTP\'ing "{experiment}"')
-        p.sendline(f"get -r ./Benchmarking/{experiment}")
-        p.expect('sftp> ', timeout=None)
+    if bluehive:
+        # Connect VPN
+        try:
+            p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
+            p.expect('Username: ')
+            p.sendline('')
+            p.expect('Password: ')
+            p.sendline(password)
+            p.expect('Second Password: ')
+            p.sendline('push')
+            p.expect('VPN>')
+        except Exception:
+            pass
 
-    print('\nConnecting to lab', end=" ")
+        # SFTP
+
+        print(f'SFTP\'ing: {", ".join(experiments)}')
+        if len(tasks):
+            print(f'plotting for tasks: {", ".join(tasks)}')
+        if steps:
+            print(f'up to steps: {steps:.0f}')
+
+        print('\nConnecting to Bluehive', end=" ")
+        p = spawn(f'sftp {username}@bluehive.circ.rochester.edu')
+        p.expect('Password: ', timeout=None)
+        p.sendline(password)
+        p.expect('sftp> ', timeout=None)
+        print('- Connected! ✓\n')
+        p.sendline(f"lcd {local_path}")
+        p.expect('sftp> ', timeout=None)
+        p.sendline(f"cd /scratch/{username}/UnifiedML")
+        p.expect('sftp> ', timeout=None)
+        for i, experiment in enumerate(experiments):
+            print(f'{i + 1}/{len(experiments)} [bluehive] SFTP\'ing "{experiment}"')
+            p.sendline(f"get -r ./Benchmarking/{experiment}")
+            p.expect('sftp> ', timeout=None)
+        print()
+
+    print('Connecting to lab', end=" ")
     p = spawn(f'sftp cornea')
     p.expect('sftp> ')
     print('- Connected! ✓\n')
