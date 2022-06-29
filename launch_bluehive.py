@@ -143,8 +143,7 @@ sweep = [
     dataset.name='Soup-50-50_${dataset.num_classes}-Way' 
     experiment=CNN 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
-    save=True 
-    save_per_steps=250000
+    save_per_steps=250001
     +'dataset.train_eval_splits=[1, 0.5]' 
     +dataset.num_classes=7 
     train_steps=5e5""",
@@ -161,7 +160,7 @@ sweep = [
     experiment=CNN 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
     +'dataset.train_eval_splits=[1, 0.5]' 
-    +dataset.num_classes=7,230 
+    +dataset.num_classes=230 
     train_steps=5e5""",
 
     # Synthetic-Only, CNN, 7/230-Way
@@ -175,7 +174,7 @@ sweep = [
     experiment=CNN 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
     +'dataset.train_eval_splits=[1, 0]' 
-    +dataset.num_classes=230 
+    +dataset.num_classes=7,230 
     train_steps=5e5""",
 
     # Soup, 50-50, Spectrogram, ResNet18, 7/230-Way

@@ -157,4 +157,4 @@ for plot_experiments in plots:
              plot_agents=agents if len(agents) else None,
              plot_suites=suites if len(suites) else None,
              plot_tasks=tasks if len(tasks) else None,
-             steps=steps if steps else np.inf, write_tabular=True, verbose=True, plot_train=plot_train)
+             steps=steps if steps else np.inf, write_tabular=False, verbose=True, plot_train=plot_train)

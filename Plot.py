@@ -33,7 +33,7 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         write_tabular=False, plot_bar=True, verbose=False, plot_train=False):
+         write_tabular=False, plot_bar=True, verbose=False, plot_train=False, x_axis='Step'):
 
     path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
@@ -147,6 +147,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     universal_hue_order, handles = np.sort(df.Agent.unique()), {}
     palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
 
+    x_axis = x_axis.capitalize()
+
     # PLOTTING (tasks)
 
     # Dynamically compute num columns/rows
@@ -180,6 +182,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         suite = title.split('(')[1].split(')')[0]
         task = title.split(' (')[0]
 
+        _x_axis = x_axis if x_axis in task_data.columns else 'Step'
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         if write_tabular or plot_bar:
@@ -214,7 +217,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
         hue_order = np.sort(task_data.Agent.unique())
-        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+        sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette=short_palette
                      )
         ax.set_title(f'{title}')
@@ -267,6 +270,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if steps < np.inf:
             task_data = task_data[task_data['Step'] <= steps]
 
+        _x_axis = x_axis if x_axis in task_data.columns else 'Step'
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         # High-low-normalize
@@ -283,7 +287,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         ax = axs[col] if num_cols > 1 else axs
 
         hue_order = np.sort(task_data.Agent.unique())
-        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+        sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette=palette
                      )
         ax.set_title(f'{suite}')
@@ -340,6 +344,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         json.dump(tabular_data, f, indent=2)
         f.close()
 
+    # Consistent x axis across all tasks for bar plot
+    min_x = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
+    if len(min_x) > 1:
+        x_axis = 'step'
+        min_x = min_steps
+    else:
+        min_x = min_x[0]
+
     # Bar plot
     if plot_bar:
         bar_data = {suite_name: {'Task': [], 'Median': [], 'Agent': []} for suite_name in found_suites}
@@ -381,7 +393,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         palette=short_palette
                         )
 
-            ax.set_title(f'{suite} (@{min_steps:.0f} Steps)')
+            ax.set_title(f'{suite} (@{min_x:.0f} {x_axis}s)')
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
