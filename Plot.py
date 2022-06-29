@@ -33,7 +33,7 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         write_tabular=False, plot_bar=True, verbose=False, plot_train=False, x_axis='Step'):
+         write_tabular=False, plot_bar=True, plot_train=False, x_axis='Step', verbose=False):
 
     path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
