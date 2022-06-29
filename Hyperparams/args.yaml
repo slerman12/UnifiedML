@@ -150,6 +150,7 @@ plotting:
   write_tabular: false
   plot_bar: true
   plot_train: false
+  title: null
   x_axis: Step
   verbose: false
 

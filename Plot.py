@@ -10,6 +10,7 @@ import glob
 from pathlib import Path
 
 import hydra
+from matplotlib import ticker
 from omegaconf import OmegaConf
 
 import warnings
@@ -33,7 +34,7 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         write_tabular=False, plot_bar=True, plot_train=False, x_axis='Step', verbose=False):
+         write_tabular=False, plot_bar=True, plot_train=False, title=None, x_axis='Step', verbose=False):
 
     path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
@@ -160,6 +161,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Create subplots
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
 
+    # Title
+    if title is not None:
+        fig.suptitle(title)
+
     # Plot tasks
     for i, suite_task in enumerate(found_suite_tasks):
         task_data = df[df['Task'] == suite_task]
@@ -177,13 +182,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             else axs[row] if num_rows > 1 else axs
 
         # Format title
-        title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
+        ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
 
-        suite = title.split('(')[1].split(')')[0]
-        task = title.split(' (')[0]
+        suite = ax_title.split('(')[1].split(')')[0]
+        task = ax_title.split(' (')[0]
 
         _x_axis = x_axis if x_axis in task_data.columns else 'Step'
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
+        if _x_axis == 'Time':
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s').dt.strftime('%H:%M:%S')
 
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
@@ -220,7 +228,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette=short_palette
                      )
-        ax.set_title(f'{title}')
+        ax.set_title(f'{ax_title}')
+
+        if _x_axis == 'Time':
+            ax.set_xlabel("Time (h)")
+            # For now, group x axis into bins only for time
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
         if 'classify' in suite.lower():
             ax.set_ybound(0, 1)
@@ -256,6 +269,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Create subplots
     fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
 
+    # Title
+    if title is not None:
+        fig.suptitle(title)
+
     # Sort suites
     found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found]
 
@@ -272,6 +289,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         _x_axis = x_axis if x_axis in task_data.columns else 'Step'
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
+        if _x_axis == 'Time':
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s').dt.strftime('%H:%M:%S')
 
         # High-low-normalize
         for suite_task in task_data.Task.unique():
@@ -291,6 +311,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                      palette=palette
                      )
         ax.set_title(f'{suite}')
+
+        if _x_axis == 'Time':
+            ax.set_xlabel("Time (h)")
+            # For now, group x axis into bins only for time
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
         if suite.lower() == 'atari':
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -347,7 +372,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Consistent x axis across all tasks for bar plot
     min_x = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
     if len(min_x) > 1:
-        x_axis = 'step'
+        x_axis = 'Step'
         min_x = min_steps
     else:
         min_x = min_x[0]
@@ -375,6 +400,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Create subplots
         fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * num_cols, 3))
 
+        # Title
+        if title is not None:
+            fig.suptitle(title)
+
         for col, suite in enumerate(bar_data):
             task_data = pd.DataFrame(bar_data[suite])
 
@@ -393,7 +422,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         palette=short_palette
                         )
 
-            ax.set_title(f'{suite} (@{min_x:.0f} {x_axis}s)')
+            if x_axis.lower() == 'time':
+                time_str = pd.to_datetime(min_x, unit='s').strftime('%H:%M:%S')
+                ax.set_title(f'{suite} (@{time_str}h)')
+            else:
+                ax.set_title(f'{suite} (@{min_x:.0f} {x_axis}s)')
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))

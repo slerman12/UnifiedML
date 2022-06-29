@@ -20,6 +20,9 @@ plot_group = 'UML_Paper'
 # steps = None
 steps = 5e5
 
+title = plot_group.replace('_', ' ')
+x_axis = 'Step'
+
 plots = [
     # Generalized reference implementations: DQN, DrQV2, SPR
     ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble'],
@@ -58,12 +61,10 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
          'cifar10', 'tinyimagenet']
 
 plot_group = 'XRD'
-plots = [['PS1_to_RRUFF', 'PS1_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18', 'PS1_noise_20_to_RRUFF_ResNet18',
-          # 'PS1_to_RRUFF_ViT'
-          ]]
 tasks = []
-plots = [['Regularized_0.5_RRUFF', 'Zhaotong_Repro', 'Regularized_0.5_Batch_64', 'Regularized_0.5_Batch_256_ADAM']]
 plots = [['CNN', 'ResNet18']]
+title = 'RRUFF'
+x_axis = 'Step'
 
 experiments = set().union(*plots)
 
@@ -157,4 +158,6 @@ for plot_experiments in plots:
              plot_agents=agents if len(agents) else None,
              plot_suites=suites if len(suites) else None,
              plot_tasks=tasks if len(tasks) else None,
-             steps=steps if steps else np.inf, write_tabular=False, verbose=True, plot_train=plot_train)
+             steps=steps if steps else np.inf, write_tabular=False, plot_train=plot_train, title=title, x_axis=x_axis,
+             verbose=True,
+             )
