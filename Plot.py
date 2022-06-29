@@ -10,7 +10,6 @@ import glob
 from pathlib import Path
 
 import hydra
-from matplotlib import ticker
 from omegaconf import OmegaConf
 
 import warnings
@@ -25,6 +24,7 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
