@@ -61,7 +61,7 @@ class EnsembleGaussianActor(nn.Module):
             stddev = torch.full_like(mean,
                                      Utils.schedule(self.stddev_schedule, step))
         if verbose:
-            print(mean.mean())
+            print(mean.argmax(-1)[0])
 
         Pi = TruncatedNormal(torch.tanh(mean) if self.bound else mean, stddev,
                              low=-1 if self.bound else None,
