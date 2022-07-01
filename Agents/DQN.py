@@ -48,6 +48,7 @@ class DQNAgent(torch.nn.Module):
             action_spec.low, action_spec.high = 0, 1
 
         # TODO obs_spec
+        # self.stats = Utils.to_torch((*obs_spec.stats), device)  # Mean, stddev, low, high
         self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1).to(device)  # Mean, stddev, low, high
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
