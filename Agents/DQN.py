@@ -81,6 +81,8 @@ class DQNAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
 
+            return self.actor(self.encoder(self.aug(obs))).mean
+
             # EMA shadows
             encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
             actor = self.actor.ema if self.ema and not self.discrete else self.actor
@@ -92,8 +94,6 @@ class DQNAgent(torch.nn.Module):
             actions = None if self.discrete \
                 else actor(obs, self.step).sample(self.num_actions) if self.training \
                 else actor(obs, self.step).mean
-
-            print(actions.argmax(-1)[0])
 
             # DQN action selector is based on critic
             Pi = self.action_selector(critic(obs, actions), self.step)
