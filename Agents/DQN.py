@@ -88,12 +88,11 @@ class DQNAgent(torch.nn.Module):
 
             # "See"
             obs = encoder(obs)
+            print(obs.mean())
 
             actions = None if self.discrete \
                 else actor(obs, self.step).sample(self.num_actions) if self.training \
                 else actor(obs, self.step).mean
-
-            print(actions.argmax(-1)[0])
 
             # DQN action selector is based on critic
             Pi = self.action_selector(critic(obs, actions), self.step)

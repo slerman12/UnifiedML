@@ -152,7 +152,7 @@ class ClassifyEnv:
         if action is not None:
             assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must provide actions for obs'
 
-        # Concat a dummy batch item ('next obs')
+        # Concat a dummy batch item ('next obs') TODO why is first eval batch 0?
         x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
 
         correct = np.full_like(self.time_step.label, np.NaN) if action is None \
