@@ -60,8 +60,8 @@ def main(args):
             if args.log_video:
                 vlogger.dump_vlogs(vlogs, f'{agent.step}')
 
-        if args.plot_per_steps and agent.step > 1 and agent.step % args.plot_per_steps == 0:
-            call(args.plotting)
+        if args.plot_per_steps and agent.step % args.plot_per_steps == 0:
+            instantiate(args.plotting)  # TODO Bug on remote
 
         if converged or args.train_steps == 0:
             break

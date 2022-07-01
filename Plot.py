@@ -28,10 +28,6 @@ from matplotlib import ticker
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
-# Format path names
-# e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
-OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
-
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
          write_tabular=False, plot_bar=True, plot_train=False, title='UnifiedML', x_axis='Step', verbose=False):
@@ -469,7 +465,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         plt.close()
 
-
 # Lows and highs for normalization
 
 atari_random = {
@@ -533,23 +528,28 @@ low = {**atari_random}
 high = {**atari_human}
 
 
-@hydra.main(config_path='Hyperparams', config_name='args')
-def main(args):
-    OmegaConf.set_struct(args, False)
-    del args.plotting['_target_']
-    if 'path' not in sys_args:
-        if isinstance(args.plotting.plot_experiments, str):
-            args.plotting.plot_experiments = [args.plotting.plot_experiments]
-        args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
-    if 'steps' not in sys_args:
-        args.plotting.steps = np.inf
-    plot(**args.plotting)
-
-
 if __name__ == "__main__":
+
+    @hydra.main(config_path='Hyperparams', config_name='args')
+    def main(args):
+        OmegaConf.set_struct(args, False)
+        del args.plotting['_target_']
+        if 'path' not in sys_args:
+            if isinstance(args.plotting.plot_experiments, str):
+                args.plotting.plot_experiments = [args.plotting.plot_experiments]
+            args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
+        if 'steps' not in sys_args:
+            args.plotting.steps = np.inf
+        plot(**args.plotting)
+
+    # Format path names
+    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
     sys_args = []
     for i in range(1, len(sys.argv)):
         sys_args.append(sys.argv[i].split('=')[0].strip('"').strip("'"))
         sys.argv[i] = 'plotting.' + sys.argv[i] if sys.argv[i][0] != "'" and sys.argv[i][0] != '"' \
             else sys.argv[i][0] + 'plotting.' + sys.argv[i][1:]
+
     main()
