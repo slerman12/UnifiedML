@@ -71,6 +71,7 @@ class ClassifyEnv:
         # TODO do batches all make it into first epoch, reset iter?
         # self._batches = iter(self.batches)
 
+        # No need to waste memory
         if offline and train:
             self.batches = self._batches = None
 
@@ -149,13 +150,14 @@ class ClassifyEnv:
     # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' index-paired with (<->) 'next obs'
     def step(self, action=None):
         if action is not None:
-            assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
+            assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must provide actions for obs'
 
         # Concat a dummy batch item ('next obs')
         x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
 
         correct = np.full_like(self.time_step.label, np.NaN) if action is None \
             else (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
+        print(correct.mean())
 
         # 'reward' and 'action' paired with 'next obs'
         self.time_step.reward[1:] = correct

@@ -54,7 +54,6 @@ def main(args):
                                                     vlog=args.log_video)
 
                 logger.log(logs, 'Eval')
-                print(logs)
 
             logger.dump_logs('Eval')
 
