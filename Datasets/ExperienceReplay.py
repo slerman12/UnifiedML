@@ -97,10 +97,10 @@ class ExperienceReplay:
         pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])
 
         self.experiences = (Offline if offline else Online)(path=self.path,
-                                                            pipes=pipes,
                                                             capacity=capacity,
                                                             specs=self.specs,
                                                             fetch_per=1000,
+                                                            pipes=pipes,
                                                             save=save,
                                                             nstep=nstep,
                                                             discount=discount,
@@ -241,7 +241,7 @@ def worker_init_fn(worker_id):
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
-    def __init__(self, path, pipes, capacity, specs, fetch_per, save, offline, nstep, discount, transform):
+    def __init__(self, path, capacity, specs, fetch_per, pipes, save, offline, nstep, discount, transform):
 
         # Dataset construction via parallel workers
 
@@ -429,8 +429,9 @@ class Experiences:
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    def __init__(self, path, pipes, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, pipes, capacity, specs, fetch_per, save, False, nstep, discount, transform)
+    def __init__(self, path, capacity, specs, fetch_per, pipes, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, specs, fetch_per, pipes, save, False, nstep, discount, transform)
+        print("laaaa")
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
@@ -440,8 +441,8 @@ class Online(Experiences, IterableDataset):
 
 # Loads Experiences with a standard Dataset
 class Offline(Experiences, Dataset):
-    def __init__(self, path, pipes, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, pipes, capacity, specs, fetch_per, save, True, nstep, discount, transform)
+    def __init__(self, path, capacity, specs, fetch_per, pipes, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, specs, fetch_per, pipes, save, True, nstep, discount, transform)
 
     def __getitem__(self, idx):
         return self.fetch_sample_process(idx)  # Get single experience by index
