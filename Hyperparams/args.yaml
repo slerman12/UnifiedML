@@ -5,7 +5,7 @@ defaults:
 
 # Agent
 obs_shape: ???  # To be specified later
-action_shape: ??? # To be specified later
+action_spec: ??? # To be specified later
 data_stats: null
 standardize: true
 norm: true
@@ -26,7 +26,6 @@ generate: false
 Dataset: null
 # Replay
 obs_spec: ??? # To be specified later
-action_spec: ??? # To be specified later
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -83,7 +82,7 @@ agent:
   _target_: ${Agent}
   _recursive_: false
   obs_shape: ${obs_shape}
-  action_shape: ${action_shape}
+  action_spec: ${action_spec}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
   data_stats: ${data_stats}

@@ -19,14 +19,14 @@ class EnsembleQCritic(nn.Module):
     MLP-based Critic network, employs ensemble Q learning,
     returns a Normal distribution over the ensemble.
     """
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, q_head=None, ensemble_size=2,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, q_head=None, ensemble_size=2,
                  discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
-        self.num_actions = math.prod(action_shape) if discrete else -1  # n
-        self.action_dim = 0 if discrete else math.prod(action_shape)  # d
+        self.num_actions = action_spec.num_actions if discrete else -1  # n
+        self.action_dim = 0 if discrete else math.prod(action_spec.shape)  # d
         self.ignore_obs = ignore_obs
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
@@ -37,10 +37,7 @@ class EnsembleQCritic(nn.Module):
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
-        # c, h, w = Utils.cnn_feature_shape(*repr_shape, self.trunk)
-
-        # in_shape = action_shape if ignore_obs else [c + self.action_dim, h, w]  # TODO Only works when h=w=1
-        in_shape = action_shape if ignore_obs else [trunk_dim + self.action_dim]
+        in_shape = action_spec.shape if ignore_obs else [trunk_dim + self.action_dim]  # TODO auto in-shape
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e

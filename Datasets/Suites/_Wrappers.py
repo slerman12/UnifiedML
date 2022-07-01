@@ -352,8 +352,10 @@ class AugmentAttributesWrapper(dm_env.Environment):
 
     def simplify_spec(self, spec):
         # Return spec as a dict of basic primitives (that can be passed into Hydra)
-        keys = ['shape', 'dtype', 'name', 'num_actions']
+        keys = ['shape', 'dtype', 'name', 'num_actions', 'minimum', 'maximum']
         spec = {key: getattr(spec, key, None) for key in keys}
+        spec['low'] = int(spec.pop('minimum'))
+        spec['high'] = int(spec.pop('maximum'))
         if not isinstance(spec['dtype'], str):
             spec['dtype'] = spec['dtype'].name
         return spec

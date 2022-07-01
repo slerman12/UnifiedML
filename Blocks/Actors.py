@@ -17,7 +17,7 @@ import Utils
 
 
 class EnsembleGaussianActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_shape, trunk=None, pi_head=None, ensemble_size=2,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, pi_head=None, ensemble_size=2,
                  stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None, bound=False):
         super().__init__()
@@ -25,19 +25,19 @@ class EnsembleGaussianActor(nn.Module):
         self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
         self.stddev_clip = stddev_clip  # Max cutoff threshold on standard dev
 
-        self.bound = bound  # TODO replace with action_spec.low/high
+        self.low, self.high = action_spec.low, action_spec.high
 
-        action_dim = math.prod(action_shape)
+        action_dim = math.prod(action_spec.shape)
 
         in_dim = math.prod(repr_shape)
         out_dim = action_dim * 2 if stddev_schedule is None else action_dim
 
-        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        trunk_dim = Utils.cnn_feature_shape(*repr_shape, self.trunk)  # TODO Does recipe need outout_dim?
+        in_shape = Utils.cnn_feature_shape(*repr_shape, self.trunk)
 
-        self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=trunk_dim, output_dim=out_dim)
+        self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
         # Initialize model optimizer + EMA
@@ -61,9 +61,8 @@ class EnsembleGaussianActor(nn.Module):
             stddev = torch.full_like(mean,
                                      Utils.schedule(self.stddev_schedule, step))
 
-        Pi = TruncatedNormal(torch.tanh(mean) if self.bound else mean, stddev,
-                             low=-1 if self.bound else None,
-                             high=1 if self.bound else None, stddev_clip=self.stddev_clip)
+        Pi = TruncatedNormal(mean if self.low is None or self.high is None else torch.tanh(mean), stddev,
+                             low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
         return Pi
 
