@@ -79,7 +79,7 @@ class DQNAgent(torch.nn.Module):
 
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
-            obs = torch.as_tensor(obs, device=self.device).float()
+            obs = torch.as_tensor(obs, device=self.device, dtype=torch.float64).float()
 
             return self.actor(self.encoder(self.aug(obs))).mean
 
