@@ -52,8 +52,6 @@ class EnsembleGaussianActor(nn.Module):
 
     def forward(self, obs, step=1, verbose=False):
         obs = self.trunk(obs)
-        if verbose:
-            print(obs.mean())
 
         if self.stddev_schedule is None:
             mean, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
@@ -62,8 +60,6 @@ class EnsembleGaussianActor(nn.Module):
             mean = self.Pi_head(obs).squeeze(1)
             stddev = torch.full_like(mean,
                                      Utils.schedule(self.stddev_schedule, step))
-            if verbose:
-                print('action', mean.argmax(-1)[0])
 
         Pi = TruncatedNormal(torch.tanh(mean) if self.bound else mean, stddev,
                              low=-1 if self.bound else None,
