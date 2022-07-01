@@ -41,7 +41,7 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = num_actions  # Num actions sampled by actor
+        self.num_actions = action_shape[-1] if self.discrete else num_actions
 
         if generate:
             action_shape = obs_shape
@@ -80,7 +80,6 @@ class DQNAgent(torch.nn.Module):
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
-            print(self.device)
 
             # EMA shadows
             encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
@@ -94,6 +93,8 @@ class DQNAgent(torch.nn.Module):
                 else actor(obs, self.step).sample(self.num_actions) if self.training \
                 else actor(obs, self.step).mean
 
+            print(actions.argmax(-1)[0])
+
             # DQN action selector is based on critic
             Pi = self.action_selector(critic(obs, actions), self.step)
 
@@ -106,7 +107,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(critic.num_actions, size=action.shape) if self.discrete \
+                    action = torch.randint(self.num_actions, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
 
             return action
