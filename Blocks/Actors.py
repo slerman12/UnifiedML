@@ -50,7 +50,7 @@ class EnsembleGaussianActor(nn.Module):
     def update_ema_params(self):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
-    def forward(self, obs, step=1, verbose=False):
+    def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
         if self.stddev_schedule is None:
@@ -60,8 +60,6 @@ class EnsembleGaussianActor(nn.Module):
             mean = self.Pi_head(obs).squeeze(1)
             stddev = torch.full_like(mean,
                                      Utils.schedule(self.stddev_schedule, step))
-        if verbose:
-            print(mean.argmax(-1)[0])
 
         Pi = TruncatedNormal(torch.tanh(mean) if self.bound else mean, stddev,
                              low=-1 if self.bound else None,
