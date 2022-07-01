@@ -178,7 +178,7 @@ class ClassifyEnv:
         return specs.BoundedArray(self.observation.shape[1:], self.observation.dtype, 0, 255, 'observation')
 
     def action_spec(self):
-        return specs.BoundedArray((self.num_classes,), 'float32', 0, self.num_classes - 1, 'action')
+        return specs.BoundedArray((self.num_classes,), 'float32', -np.inf, np.inf, 'action')
 
     def __len__(self):
         return len(self.batches)
