@@ -77,6 +77,7 @@ class CNNEncoder(nn.Module):
         # Standardizes/normalizes pixels
         if self.standardize or self.normalize:
             mean, stddev, low, high = self.data_stats
+            print(mean[0], stddev[0], low[0], high[0])
             obs = (obs - mean) / stddev if self.standardize else 2 * (obs - low) / (high - low) - 1
 
         # Optionally append context to channels assuming dimensions allow
