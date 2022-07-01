@@ -28,7 +28,7 @@ learn_per_steps: 1
 learn_steps_after: 0
 seed_steps: 50
 explore_steps: 0
-log_per_episodes: 100
+log_per_episodes: 300
 offline: true
 RL: false
 task_name: {}""".format(task if task != 'Custom' else 'Custom.${format:${Dataset}}_${dataset.name}'))

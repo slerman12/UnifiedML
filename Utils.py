@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Blocks.Architectures import *
+from Blocks.Architectures import *  # For accessibility via command line syntax
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -36,7 +36,7 @@ def init(args):
     set_seeds(args.seed)
 
     # Set device
-    mps = getattr(torch.backends, 'mps', None)  # Wicked fast M1 MacBook speedup TODO check newer pytorch versions
+    mps = getattr(torch.backends, 'mps', None)  # M1 MacBook speedup
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
     # args.device = args.device or ('cuda' if torch.cuda.is_available()
@@ -109,11 +109,6 @@ def instantiate(args, i=0, **kwargs):
         else args  # Additional useful ones
 
 
-# Checks if args can be instantiated
-def can_instantiate(args):
-    return isinstance(args, (str, type, list, nn.Module)) or hasattr(args, '_target_') and args._target_
-
-
 # Initializes model weights a la orthogonal
 def weight_init(m):
     if isinstance(m, nn.Linear):
@@ -175,7 +170,7 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
                                                     padding=block.padding)
         elif isinstance(block, nn.Linear):
             channels = block.out_features  # Assumes channels-last if linear
-        elif isinstance(block, nn.Flatten) and (block.start_dim == -3 or block.start_dim == 1):  # TODO added == 1. safe?
+        elif isinstance(block, nn.Flatten) and (block.start_dim == -3 or block.start_dim == 1):
             channels, height, width = channels * height * width, 1, 1  # Placeholder height/width dims
         elif isinstance(block, nn.AdaptiveAvgPool2d):
             height, width = block.output_size
@@ -187,7 +182,7 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
         if verbose:
             print(block, (channels, height, width))
 
-    feature_shape = (channels, height, width)  # TODO should probably do (channels, width, height) universally
+    feature_shape = (channels, height, width)
 
     return feature_shape
 

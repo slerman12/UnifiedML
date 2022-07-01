@@ -26,7 +26,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load,
-                 forget, path, obs_spec=None, nstep=0, discount=1, meta_shape=(0,), transform=None):
+                 path, obs_spec=None, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -56,13 +56,6 @@ class ExperienceReplay:
             atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
 
         # Data specs
-
-        # todo obs_shape, action_shape, meta_shape, no specs
-        # self.specs = {'obs': obs_shape <or (1,)?>, 'action': action_shape, 'meta': meta_shape}
-        # self.specs.update({name: (0,) for name in ['reward', 'discount', 'label', 'step']})
-
-        if obs_spec is None:
-            obs_spec = {'name': 'observation', 'shape': (1,)}  # todo when is obs-spec none?
 
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
                                                for name in ['reward', 'discount', 'label', 'step']],
@@ -98,10 +91,10 @@ class ExperienceReplay:
         assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
                                                              f'exceeds offline replay size ({len(self)})'
 
-        capacity = capacity // self.num_workers if capacity != -1 and capacity != 'inf' else np.inf
+        capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] and not offline else np.inf
 
         # Sending data to workers directly
-        pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])  # TODO update & storage_pipes?
+        pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])
 
         self.experiences = (Offline if offline else Online)(path=self.path,
                                                             pipes=pipes,
@@ -109,7 +102,6 @@ class ExperienceReplay:
                                                             specs=self.specs,
                                                             fetch_per=1000,
                                                             save=save,
-                                                            forget=forget,
                                                             nstep=nstep,
                                                             discount=discount,
                                                             transform=transform)
@@ -249,16 +241,12 @@ def worker_init_fn(worker_id):
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
-    def __init__(self, path, pipes, capacity, specs, fetch_per, save, forget, offline, nstep, discount, transform):
+    def __init__(self, path, pipes, capacity, specs, fetch_per, save, offline, nstep, discount, transform):
 
         # Dataset construction via parallel workers
 
         self.path = path
 
-        # Multiprocessing pipes
-        self.pipes = pipes  # Receiving data directly from Replay
-
-        self.all_episodes = []
         self.episode_names = []
         self.episodes = dict()  # Episodes fetched on CPU
 
@@ -271,8 +259,10 @@ class Experiences:
         self.fetch_per = fetch_per  # How often to fetch
         self.samples_since_last_fetch = fetch_per
 
+        # Multiprocessing pipes
+        self.pipes = pipes  # Receiving data directly from Replay
+
         self.save = save
-        self.forget = forget  # Forget data after capacity limit or allow loading it from disk (not CPU)
         self.offline = offline
 
         self.nstep = nstep
@@ -295,7 +285,7 @@ class Experiences:
     def pipe(self):
         return self.pipes[self.worker_id]
 
-    def load_episode(self, episode_name, cpu=False):
+    def load_episode(self, episode_name):
         try:
             with episode_name.open('rb') as episode_file:
                 episode = np.load(episode_file)
@@ -311,9 +301,6 @@ class Experiences:
         episode['id'] = len(self.experience_indices)
         self.experience_indices += list(enumerate([episode_name] * episode_len))
 
-        if not cpu:
-            return episode
-
         self.episodes[episode_name] = episode
 
         # Deleting experiences upon overfill
@@ -322,7 +309,7 @@ class Experiences:
             early_episode = self.episodes.pop(early_episode_name)
             early_episode_len = len(early_episode['observation']) - offset
             self.deleted_indices += early_episode_len  # To derive a consistent experience index even as data deleted
-            if not self.save and self.forget:
+            if not self.save:
                 # Deletes early episode file
                 early_episode_name.unlink(missing_ok=True)
 
@@ -347,17 +334,16 @@ class Experiences:
             # if num_fetched + episode_len > self.capacity:  # Don't overfill  (This is already accounted for)
             #     break
             num_fetched += episode_len
-            if not self.load_episode(episode_name, cpu=True):
+            if not self.load_episode(episode_name):
                 break  # Resolve conflicts
 
-            self.all_episodes.append(episode_name)
             self.episode_names.append(episode_name)
             self.episode_names.sort()
 
-            if not self.save and self.forget:
+            if not self.save:
                 episode_name.unlink(missing_ok=True)  # Deletes file
 
-    # Workers can update/write-to their own data based on piped update specs
+    # Can update/write data based on piped update specs
     def worker_fetch_updates(self):
         while self.pipe.poll():
             updates, exp_ids = self.pipe.recv()
@@ -368,8 +354,9 @@ class Experiences:
                     # Get corresponding experience and episode
                     idx, episode_name = self.experience_indices[exp_id]
 
-                    # Update experience in replay  TODO what if id deleted
-                    self.episodes[episode_name][key][idx] = update.numpy()
+                    # Update experience in replay
+                    if episode_name in self.episodes:
+                        self.episodes[episode_name][key][idx] = update.numpy()
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
@@ -397,11 +384,11 @@ class Experiences:
         # Trajectory
         if self.nstep:
             traj_o = episode['observation'][idx:idx + self.nstep + 1]
-            traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
-            traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # 1 len smaller than traj_o
+            traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
+            traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
             traj_l = episode['label'][idx:idx + self.nstep + 1]
 
-            # Compute cumulative discounted reward TODO store cache
+            # Compute cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
             reward = np.dot(discounts[:-1], traj_r)
             discount = discounts[-1:]
@@ -410,7 +397,7 @@ class Experiences:
             discount = np.array([1.0])
 
         # Transform
-        if self.transform is not None:  # TODO audio
+        if self.transform is not None:
             obs = self.transform(torch.as_tensor(obs))
 
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
@@ -426,24 +413,24 @@ class Experiences:
 
         self.samples_since_last_fetch += 1
 
-        # Sample or index an experience # TODO conflicts between disc-loading experiences within same episode
+        # Sample or index an experience
         if idx is None:
-            episode_name = self.sample(self.episode_names if self.forget else self.all_episodes)
+            episode_name = self.sample(self.episode_names)
         else:
-            idx, episode_name = self.experience_indices[idx + self.deleted_indices * self.forget]
+            idx, episode_name = self.experience_indices[idx + self.deleted_indices]
 
-        episode = self.episodes[episode_name] if episode_name in self.episodes else self.load_episode(episode_name)
+        episode = self.episodes[episode_name]
 
         return self.process(episode, idx)  # Process episode into a compact experience
 
     def __len__(self):
-        return len(self.experience_indices) - self.deleted_indices * self.forget
+        return len(self.experience_indices) - self.deleted_indices
 
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    def __init__(self, path, pipes, capacity, specs, fetch_per, save, forget, nstep=0, discount=1, transform=None):
-        super().__init__(path, pipes, capacity, specs, fetch_per, save, forget, False, nstep, discount, transform)
+    def __init__(self, path, pipes, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, pipes, capacity, specs, fetch_per, save, False, nstep, discount, transform)
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
@@ -453,8 +440,8 @@ class Online(Experiences, IterableDataset):
 
 # Loads Experiences with a standard Dataset
 class Offline(Experiences, Dataset):
-    def __init__(self, path, pipes, capacity, specs, fetch_per, save, forget, nstep=0, discount=1, transform=None):
-        super().__init__(path, pipes, capacity, specs, fetch_per, save, forget, True, nstep, discount, transform)
+    def __init__(self, path, pipes, capacity, specs, fetch_per, save, nstep=0, discount=1, transform=None):
+        super().__init__(path, pipes, capacity, specs, fetch_per, save, True, nstep, discount, transform)
 
     def __getitem__(self, idx):
         return self.fetch_sample_process(idx)  # Get single experience by index

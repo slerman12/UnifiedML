@@ -122,7 +122,6 @@ replay:
   generate: ${generate}
   save: false
   load: false
-  forget: true
   path: ./Datasets/ReplayBuffer/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
 
 logger:

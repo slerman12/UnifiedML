@@ -76,7 +76,7 @@ def main(args):
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
             if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes  TODO discard ones with less than nstep, or % nstep
+                replay.add(store=True)  # Only store full episodes  TODO don't need; adaptive replay; more env space
 
         converged = agent.step >= args.train_steps
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline
@@ -93,7 +93,7 @@ def main(args):
             Utils.save(args.save_path, agent, args.agent, 'step', 'episode')
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            agent = Utils.load(args.save_path, args.device, agent, preserve=['step', 'episode'], distributed=True)
+            agent = Utils.load(args.save_path, args.device, agent, ['step', 'episode'], True)
 
 
 if __name__ == '__main__':
