@@ -53,9 +53,9 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
+            print(exp.observation)
             # Act
             action = agent.act(exp.observation)
-            print(action)
 
             exp = self.env.step(action.cpu().numpy()) if not self.generate else exp
 
