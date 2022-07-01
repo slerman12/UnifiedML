@@ -53,6 +53,7 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
+            print(exp.observation.mean())
             # Act
             action = agent.act(exp.observation)
 
