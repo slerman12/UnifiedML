@@ -50,9 +50,10 @@ class EnsembleGaussianActor(nn.Module):
     def update_ema_params(self):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
-    def forward(self, obs, step=1):
+    def forward(self, obs, step=1, verbose=False):
         obs = self.trunk(obs)
-        print(obs.mean())
+        if verbose:
+            print(obs.mean())
 
         if self.stddev_schedule is None:
             mean, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
