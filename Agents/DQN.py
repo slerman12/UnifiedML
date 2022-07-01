@@ -109,7 +109,7 @@ class DQNAgent(torch.nn.Module):
                 if self.step < self.explore_steps and not self.generate:
                     action = torch.randint(self.num_actions, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
-            else:
+            elif self.step > 1:
                 print(action)
 
             return action
