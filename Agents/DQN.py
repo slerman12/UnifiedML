@@ -109,8 +109,6 @@ class DQNAgent(torch.nn.Module):
                 if self.step < self.explore_steps and not self.generate:
                     action = torch.randint(self.num_actions, size=action.shape) if self.discrete \
                         else action.uniform_(-1, 1)
-            elif self.step > 1:
-                print(action)
 
             return action
 
@@ -146,7 +144,6 @@ class DQNAgent(torch.nn.Module):
         # "Journal teachings"
 
         offline = replay.offline
-        # epoch_episode = self.epoch * offline + self.episode * (1 - offline)
 
         logs = {'time': time.time() - self.birthday, 'step': self.step + offline, 'frame': self.frame + offline,
                 'epoch' if offline else 'episode':  self.epoch if offline else self.episode} if self.log \
