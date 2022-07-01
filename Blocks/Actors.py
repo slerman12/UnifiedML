@@ -50,7 +50,7 @@ class EnsembleGaussianActor(nn.Module):
     def update_ema_params(self):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
-    def forward(self, obs, step=1, verbose=False):
+    def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
         if self.stddev_schedule is None:
