@@ -157,7 +157,6 @@ class ClassifyEnv:
 
         correct = np.full_like(self.time_step.label, np.NaN) if action is None \
             else (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
-        print(correct.mean())
 
         # 'reward' and 'action' paired with 'next obs'
         self.time_step.reward[1:] = correct
