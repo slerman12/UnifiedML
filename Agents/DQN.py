@@ -21,7 +21,7 @@ class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_shape, action_spec, trunk_dim, hidden_dim, data_stats, standardize, norm, recipes,  # Architecture
+                 obs_spec, action_spec, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -44,16 +44,16 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = action_spec.num_actions or num_actions
 
         if generate:
-            action_spec.shape = obs_shape
+            action_spec.shape = obs_spec.shape
             action_spec.low, action_spec.high = -1, 1
 
-        # TODO obs_spec
-        # self.stats = Utils.to_torch((*obs_spec.stats), device)  # Mean, stddev, low, high
-        self.data_stats = torch.tensor(data_stats).view(4, 1, -1, 1, 1).to(device)  # Mean, stddev, low, high
+        # Data stats
+        self.low, self.high = obs_spec.low, obs_spec.high
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_shape, data_stats=self.data_stats, standardize=standardize, norm=norm, **recipes.encoder,
-                            parallel=parallel, lr=lr, lr_decay_epochs=lr_decay_epochs,
+            else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder,
+                            device=device, parallel=parallel,
+                            lr=lr, lr_decay_epochs=lr_decay_epochs,
                             weight_decay=weight_decay, ema_decay=ema_decay * ema)
 
         repr_shape = (trunk_dim, 1, 1) if generate \

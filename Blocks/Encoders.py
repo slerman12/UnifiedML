@@ -21,32 +21,37 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_shape, context_dim=0, data_stats=torch.full([4], float('nan')), standardize=True, norm=True,
-                 feature_norm=False, isotropic=False, parallel=False, eyes=None, pool=None, optim=None, scheduler=None,
+    def __init__(self, obs_spec, context_dim=0, standardize=True, norm=True, device='cuda', parallel=False,
+                 feature_norm=False, isotropic=False, eyes=None, pool=None, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
 
         super().__init__()
 
-        self.obs_shape = torch.Size(obs_shape)
-        self.standardize = ~data_stats[:2].isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
-        self.normalize = ~data_stats[2:].isnan().any() and norm  # Whether to [0, 1] shift-max scale
-        self.data_stats = data_stats
+        self.obs_shape = torch.Size(obs_spec.shape)
+        self.standardize = obs_spec.mean is not None and obs_spec.stddev is not None and standardize  # Whether to center scale (0 mean, 1 stddev)
+        self.normalize = obs_spec.low is not None and obs_spec.high is not None and norm  # Whether to [0, 1] shift-max scale
+
+        if self.standardize:
+            self.mean, self.stddev = Utils.to_torch((obs_spec.mean, obs_spec.stddev), device)
+
+        if self.normalize:
+            self.low, self.high = obs_spec.low, obs_spec.high
 
         # Dimensions
-        obs_shape[0] += context_dim  # TODO no context dim for isotropic?
-        self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
+        obs_spec.shape[0] += context_dim  # TODO no context dim for isotropic?
+        self.out_channels = obs_spec.shape[0] if isotropic else 32  # Default 32
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_shape)
-                                  or CNN(obs_shape, self.out_channels, depth=3),
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_spec.shape)
+                                  or CNN(obs_spec.shape, self.out_channels, depth=3),
                                   Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR
 
-        adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
+        adapt_cnn(self.Eyes, obs_spec.shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.feature_shape = Utils.cnn_feature_shape(*obs_shape, self.Eyes)  # Feature map shape
+        self.feature_shape = Utils.cnn_feature_shape(*obs_spec.shape, self.Eyes)  # Feature map shape
 
         self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
@@ -54,8 +59,8 @@ class CNNEncoder(nn.Module):
 
         # Isotropic
         if isotropic:
-            assert tuple(obs_shape) == self.feature_shape, \
-                f'specified to be isotropic, but in ≠ out {tuple(obs_shape)} ≠ {self.feature_shape}'
+            assert tuple(obs_spec.shape) == self.feature_shape, \
+                f'specified to be isotropic, but in ≠ out {tuple(obs_spec.shape)} ≠ {self.feature_shape}'
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -72,12 +77,13 @@ class CNNEncoder(nn.Module):
         obs_shape = obs.shape  # Preserve leading dims
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
-        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
+        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape ' \
+                                                 f'{obs_shape[1:]}, ≠ {self.obs_shape}'
 
         # Standardizes/normalizes pixels
         if self.standardize or self.normalize:
-            mean, stddev, low, high = self.data_stats
-            obs = (obs - mean) / stddev if self.standardize else 2 * (obs - low) / (high - low) - 1
+            obs = (obs - self.mean.view(1, -1, 1, 1)) / self.stddev.view(1, -1, 1, 1) if self.standardize \
+                else 2 * (obs - self.low) / (self.high - self.low) - 1
 
         # Optionally append context to channels assuming dimensions allow
         context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])

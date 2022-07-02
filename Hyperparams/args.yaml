@@ -4,9 +4,19 @@ defaults:
   - override hydra/job_logging: none
 
 # Agent
-obs_shape: ???  # To be specified later
-action_spec: ??? # To be specified later
-data_stats: null
+obs_spec:
+  - name: obs
+  - shape: ???  # To be specified later
+  - mean: ???  # To be specified later
+  - stddev: ???  # To be specified later
+  - low: ???  # To be specified later
+  - high: ???  # To be specified later
+action_spec:
+  - name: action
+  - shape: ???  # To be specified later
+  - num_actions: ???  # To be specified later
+  - low: ???  # To be specified later
+  - high: ???  # To be specified later
 standardize: true
 norm: true
 trunk_dim: 50
@@ -25,7 +35,6 @@ generate: false
 # Environment
 Dataset: null
 # Replay
-obs_spec: ??? # To be specified later
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -81,11 +90,10 @@ environment:
 agent:
   _target_: ${Agent}
   _recursive_: false
-  obs_shape: ${obs_shape}
+  obs_spec: ${obs_spec}
   action_spec: ${action_spec}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
-  data_stats: ${data_stats}
   standardize: ${standardize}
   norm: ${norm}
   recipes: ${recipes}
@@ -114,6 +122,7 @@ replay:
   action_spec: ${action_spec}
   suite: ${suite}
   task: ${task_name}
+  frame_stack: ${frame_stack}
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}

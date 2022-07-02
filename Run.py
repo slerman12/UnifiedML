@@ -24,7 +24,7 @@ def main(args):
     env = instantiate(args.environment)
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
-    for arg in ('obs_shape', 'action_spec', 'data_stats', 'discrete', 'obs_spec', 'evaluate_episodes'):
+    for arg in ('obs_spec', 'action_spec', 'discrete', 'evaluate_episodes'):
         if hasattr(generalize, arg):
             setattr(args, arg, getattr(generalize, arg))
 

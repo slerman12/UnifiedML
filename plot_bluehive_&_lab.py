@@ -65,7 +65,6 @@ tasks = []
 plots = [['CNN', 'ResNet18']]
 title = 'RRUFF'
 x_axis = 'Step'
-plots = [['Exp']]
 
 experiments = set().union(*plots)
 

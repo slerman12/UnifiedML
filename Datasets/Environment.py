@@ -16,13 +16,13 @@ class Environment:
         self.disable = (offline or generate) and train
         self.generate = generate
 
+        self.frame_stack = frame_stack
         self.action_repeat = action_repeat or 1
 
-        self.env = self.raw_env.make(task_name, dataset, frame_stack, action_repeat, episode_max_frames,
-                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+        self.env = self.raw_env.Env(task_name, seed, frame_stack)
 
         if not self.disable:
-            self.env.reset()
+            self.exp = self.env.reset()
 
         self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
@@ -46,30 +46,33 @@ class Environment:
         experiences = []
         video_image = []
 
-        if not self.disable:
-            exp = self.exp
-
         self.episode_done = self.disable
 
         step = frame = 0
         while not self.episode_done and step < steps:
+            obs = self.env.frame_stack(self.exp['obs']) if hasattr(self.env, 'frame_stack') \
+                else self.exp['obs']
+
             # Act
-            action = agent.act(exp.observation)
+            action = agent.act(obs)
 
-            exp = self.env.step(action.cpu().numpy()) if not self.generate else exp
+            for _ in range(self.action_repeat):
+                self.exp = self.env.step(action.cpu().numpy()) if not self.generate else self.exp
 
-            exp.step = agent.step
-            experiences.append(exp)
+                # Tally reward, done
+                self.episode_reward += self.exp['reward'].mean()
+                self.episode_done = self.env.episode_done or self.generate
+
+                if self.episode_done:
+                    break
+
+            self.exp['step'] = agent.step
+            experiences.append(self.exp)
 
             if vlog or self.generate:
-                image_frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
-                    else self.env.physics.render(height=256, width=256, camera_id=0) \
-                    if hasattr(self.env, 'physics') else self.env.render()
+                image_frame = action[:24].view(-1, *obs.shape[1:]) if self.generate \
+                    else self.env.render()
                 video_image.append(image_frame)
-
-            # Tally reward, done
-            self.episode_reward += exp.reward.mean()
-            self.episode_done = exp.last() or self.generate
 
             step += 1
             frame += len(action)
@@ -82,7 +85,7 @@ class Environment:
                 agent.episode += 1
 
             if not self.disable:
-                self.env.reset()
+                self.exp = self.env.reset()
             self.last_episode_len = self.episode_frame
 
         # Log stats
