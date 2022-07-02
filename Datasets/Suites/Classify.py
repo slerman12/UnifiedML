@@ -175,6 +175,7 @@ class ClassifyEnv:
     def observation_spec(self):
         if not hasattr(self, 'observation'):
             self.observation = np.array(self.batch[0])
+        # TODO self.high, self.low
         return specs.BoundedArray(self.observation.shape[1:], self.observation.dtype, 0, 1, 'observation')
 
     def action_spec(self):

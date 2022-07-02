@@ -45,7 +45,7 @@ class DQNAgent(torch.nn.Module):
 
         if generate:
             action_spec.shape = obs_shape
-            action_spec.low, action_spec.high = -1, 1
+            action_spec.low, action_spec.high = 0, 1
 
         # TODO obs_spec
         # self.stats = Utils.to_torch((*obs_spec.stats), device)  # Mean, stddev, low, high
