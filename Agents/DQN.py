@@ -45,7 +45,7 @@ class DQNAgent(torch.nn.Module):
 
         if generate:
             action_spec.shape = obs_shape
-            action_spec.low, action_spec.high = 0 - 1e-6, 1 + 1e-6
+            action_spec.low, action_spec.high = -1, 1
 
         # TODO obs_spec
         # self.stats = Utils.to_torch((*obs_spec.stats), device)  # Mean, stddev, low, high
@@ -128,7 +128,7 @@ class DQNAgent(torch.nn.Module):
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
             _, _, low, high = self.data_stats
-            obs = (obs - low) / (high - low)  # Normalize first
+            obs = (obs - low) * 2 / (high - low) - 1  # Normalize first
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 

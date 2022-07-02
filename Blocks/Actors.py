@@ -19,7 +19,7 @@ import Utils
 class EnsembleGaussianActor(nn.Module):
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, pi_head=None, ensemble_size=2,
                  stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
-                 weight_decay=None, ema_decay=None, bound=False):
+                 weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
