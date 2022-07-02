@@ -48,6 +48,6 @@ class TruncatedNormal(pyd.Normal):
 
         if self.low is not None and self.high is not None:
             # Differentiable truncation
-            return Utils.rclamp(x, self.low + self.eps, self.high - self.eps)
+            return Utils.rclamp(x, self.low + self.eps, self.high - self.eps)  # TODO maybe add eps to action_spec
 
         return x
