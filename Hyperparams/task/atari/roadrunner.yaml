@@ -5,6 +5,6 @@ suite: atari
 action_repeat: 4
 nstep: 10
 frame_stack: 3
-train_steps: 100000
+train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,20000)'
 task_name: RoadRunner

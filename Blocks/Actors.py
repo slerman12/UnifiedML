@@ -61,8 +61,10 @@ class EnsembleGaussianActor(nn.Module):
             stddev = torch.full_like(mean,
                                      Utils.schedule(self.stddev_schedule, step))
 
-        Pi = TruncatedNormal(mean if self.low is None or self.high is None else torch.tanh(mean), stddev,
-                             low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+        if self.low is not None and self.high is not None:
+            mean = (torch.tanh(mean) + self.low + 1) / (self.high - self.low) / 2
+
+        Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
         return Pi
 

@@ -65,6 +65,7 @@ tasks = []
 plots = [['CNN', 'ResNet18']]
 title = 'RRUFF'
 x_axis = 'Step'
+plots=[['Exp']]
 
 experiments = set().union(*plots)
 
@@ -142,7 +143,7 @@ if sftp:
         if experiment not in bluehive_only:
             print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
             p.sendline(f"get -r ./Benchmarking/{experiment}")
-            p.expect('sftp> ')
+            p.expect('sftp> ', timeout=1000000)
 
     print('\nPlotting results...')
 

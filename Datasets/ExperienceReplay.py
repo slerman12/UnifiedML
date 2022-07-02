@@ -431,7 +431,6 @@ class Experiences:
 class Online(Experiences, IterableDataset):
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, False, nstep, discount, transform)
-        print("laaaa")
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
