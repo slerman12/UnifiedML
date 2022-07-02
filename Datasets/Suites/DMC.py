@@ -43,8 +43,6 @@ class Env:
 
         # Import DM Control here to avoid glfw warnings
 
-        from dm_control.suite.wrappers import action_scale, pixels
-
         try:
             # Try EGL rendering (faster?)
             os.environ['MUJOCO_GL'] = 'egl'
@@ -52,6 +50,8 @@ class Env:
         except ImportError:
             del os.environ['MUJOCO_GL']  # Otherwise GLFW
             from dm_control import manipulation, suite
+
+        from dm_control.suite.wrappers import action_scale, pixels
 
         domain, task = task.split('_', 1)
 
