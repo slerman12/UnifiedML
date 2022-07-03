@@ -4,7 +4,10 @@
 # MIT_LICENSE file in the root directory of this source tree.
 from collections import deque
 
-import gym
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=UserWarning)
+    import gym
 
 import numpy as np
 
@@ -48,15 +51,17 @@ class Env:
 
         # Load task
         try:
-            self.env = gym.make(task,
-                                obs_type='grayscale',             # ram | rgb | grayscale
-                                frameskip=1,                      # Frame skip
-                                # mode=0,                         # Game mode, see Machado et al. 2018
-                                difficulty=0,                     # Game difficulty, see Machado et al. 2018
-                                repeat_action_probability=0,      # Sticky action probability
-                                full_action_space=False,          # All actions
-                                render_mode=None                  # None | human | rgb_array
-                                )
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=UserWarning)
+                self.env = gym.make(task,
+                                    obs_type='grayscale',             # ram | rgb | grayscale
+                                    frameskip=1,                      # Frame skip  # Perhaps substitute action_repeat
+                                    # mode=0,                         # Game mode, see Machado et al. 2018
+                                    difficulty=0,                     # Game difficulty, see Machado et al. 2018
+                                    repeat_action_probability=0,      # Sticky action probability
+                                    full_action_space=False,          # Use all actions
+                                    render_mode=None                  # None | human | rgb_array
+                                    )
         except gym.error.NameNotFound as e:
             # If Atari not installed
             raise gym.error.NameNotFound(str(e) + '\nYou may have not installed the Atari ROMs.\n'
