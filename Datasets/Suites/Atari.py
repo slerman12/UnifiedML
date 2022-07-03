@@ -78,6 +78,9 @@ class Env:
         # Set random seed
         self.env.seed(seed)
 
+        # Nature DQN-style pooling of last 2 frames
+        self.last_frame = None
+
         self.obs_spec = {'name': 'obs',
                          'shape': (frame_stack, screen_size, screen_size),
                          'mean': None,
@@ -100,16 +103,17 @@ class Env:
         # Step env
         obs, reward, self.episode_done, info = self.env.step(action)
 
+        # Nature DQN-style pooling of last 2 frames
+        last_frame = self.last_frame
+        self.last_frame = obs
+        obs = np.maximum(obs, last_frame)
+
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
         obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
-
-        # Nature DQN-style pooling of last 2 frames
-        if len(self.frames) > 0:
-            np.maximum(obs, self.frames[-1], out=obs)
 
         # Create experience
         exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'step': None}
@@ -131,6 +135,9 @@ class Env:
     def reset(self):
         obs = self.env.reset()
         self.episode_done = False
+
+        # Last frame
+        self.last_frame = obs
 
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
