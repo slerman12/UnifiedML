@@ -13,20 +13,20 @@ import hydra
 from omegaconf import OmegaConf
 
 import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import os
+    os.environ['NUMEXPR_MAX_THREADS'] = '8'
 
-import os
-os.environ['NUMEXPR_MAX_THREADS'] = '8'
+    import numpy as np
+    import pandas as pd
+    from pandas.core.common import SettingWithCopyWarning
 
-import numpy as np
-import pandas as pd
-from pandas.core.common import SettingWithCopyWarning
-
-import matplotlib.pyplot as plt
-from matplotlib import ticker
-from matplotlib.ticker import FuncFormatter
-import seaborn as sns
+    import matplotlib.pyplot as plt
+    from matplotlib import ticker
+    from matplotlib.ticker import FuncFormatter
+    import seaborn as sns
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,

@@ -7,7 +7,6 @@ dependencies:
   - numpy  # Array computations  # TODO Can get rid of (pytorch)?
   - pandas=1.3.0  # Dataframes, CSVs
   - seaborn=0.11.2  # Plotting
-  - scikit-image=0.19.2  # TODO Can get rid of (torchvision.resize)
   - pip:
     - torch==1.11.0  # Deep learning
     - torchvision==0.12.0  # Vision

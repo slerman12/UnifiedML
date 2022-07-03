@@ -41,7 +41,7 @@ class Env:
     Can optionally include a frame_stack method.
 
     """
-    def __init__(self, task='cheetah_run', seed=0, frame_stack=4, screen_size=84, **kwargs):
+    def __init__(self, task='pong', seed=0, frame_stack=4, screen_size=84, **kwargs):
         self.discrete = True
         self.episode_done = False
 
@@ -54,7 +54,7 @@ class Env:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=UserWarning)
                 self.env = gym.make(task,
-                                    obs_type='rgb',             # ram | rgb | grayscale
+                                    obs_type='grayscale',             # ram | rgb | grayscale
                                     frameskip=1,                      # Frame skip  # Perhaps substitute action_repeat
                                     # mode=0,                         # Game mode, see Machado et al. 2018
                                     difficulty=0,                     # Game difficulty, see Machado et al. 2018
@@ -101,15 +101,15 @@ class Env:
         obs, reward, self.episode_done, info = self.env.step(action)
 
         # Add channel dim
-        obs = torch.as_tensor(np.expand_dims(obs, axis=0))
+        obs = np.expand_dims(obs, axis=0)
         # Resize image
-        obs = resize(obs, self.obs_spec['shape'][1:]).numpy().astype(np.uint8)
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
         # Nature DQN-style pooling of last 2 frames
-        # if len(self.frames) > 0:
-        #     np.maximum(obs, self.frames[-1], out=obs)
+        if len(self.frames) > 0:
+            np.maximum(obs, self.frames[-1], out=obs)
 
         # Create experience
         exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'step': None}
@@ -133,9 +133,9 @@ class Env:
         self.episode_done = False
 
         # Add channel dim
-        obs = torch.as_tensor(np.expand_dims(obs, axis=0))
+        obs = np.expand_dims(obs, axis=0)
         # Resize image
-        obs = resize(obs, self.obs_spec['shape'][1:]).numpy().astype(np.uint8)
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
