@@ -79,7 +79,12 @@ class Env:
         self.env.seed(seed)
 
         # Nature DQN-style pooling of last 2 frames
+        self.last_2_frame_pool = True
         self.last_frame = None
+
+        # Terminal on life loss
+        self.terminal_on_life_loss = True
+        self.lives = None
 
         self.obs_spec = {'name': 'obs',
                          'shape': (frame_stack, screen_size, screen_size),
@@ -104,9 +109,17 @@ class Env:
         obs, reward, self.episode_done, info = self.env.step(action)
 
         # Nature DQN-style pooling of last 2 frames
-        last_frame = self.last_frame
-        self.last_frame = obs
-        obs = np.maximum(obs, last_frame)
+        if self.last_2_frame_pool:
+            last_frame = self.last_frame
+            self.last_frame = obs
+            obs = np.maximum(obs, last_frame)
+
+        # Terminal on life loss
+        if self.terminal_on_life_loss:
+            lives = self.env.ale.lives()
+            if lives < self.lives:
+                self.episode_done = True
+            self.lives = lives
 
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
@@ -137,7 +150,12 @@ class Env:
         self.episode_done = False
 
         # Last frame
-        self.last_frame = obs
+        if self.last_2_frame_pool:
+            self.last_frame = obs
+
+        # Lives
+        if self.terminal_on_life_loss:
+            self.lives = self.env.ale.lives()
 
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
