@@ -190,7 +190,8 @@ sweep = [
     +'dataset.train_eval_splits=[1, 0.5]' 
     +dataset.spectrogram=true 
     +dataset.num_classes=7 
-    train_steps=5e5""",
+    train_steps=5e5
+    parallel=true""",
 ]
 
 

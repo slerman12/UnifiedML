@@ -76,7 +76,7 @@ class Env:
             camera_id = dict(quadruped=2).get(domain, 0)
             render_kwargs = dict(height=84, width=84, camera_id=camera_id)
             self.env = pixels.Wrapper(self.env,
-                                      pixels_only=True,  # No proprioceptive obs (key <- 'position')
+                                      pixels_only=True,  # No proprioception (key <- 'position')
                                       render_kwargs=render_kwargs)
 
         # Channel-first
@@ -119,9 +119,9 @@ class Env:
         # Channel-first
         exp['obs'] = exp['obs'].transpose(0, 3, 1, 2)
 
-        # To numpy, float
+        # Scalars/NaN to numpy
         for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None:
+            if np.isscalar(exp[key]) or exp[key] is None or exp[key].shape == ():
                 exp[key] = np.full([1, 1], exp[key], 'float32')
 
         if time_step.step_type == StepType.LAST:
@@ -147,9 +147,9 @@ class Env:
         # Channel-first
         exp['obs'] = exp['obs'].transpose(0, 3, 1, 2)
 
-        # To numpy, float
+        # Scalars/NaN to numpy
         for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None:
+            if np.isscalar(exp[key]) or exp[key] is None or exp[key].shape == ():
                 exp[key] = np.full([1, 1], exp[key], 'float32')
 
         return exp
