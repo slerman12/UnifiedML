@@ -78,7 +78,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr='', **kw
             setattr(model, key, to_load[key])
 
     # Can also load part of a model. Useful for recipes,
-    # e.g. python Run.py Eyes=Utils.load +eyes.path=<checkpoint> +eyes.attr=encoder.Eyes
+    # e.g. python Run.py Eyes=load +eyes.path=<checkpoint> +eyes.attr=encoder.Eyes
     for key in attr.split('.'):
         if key:
             model = getattr(model, key)
