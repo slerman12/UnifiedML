@@ -16,7 +16,6 @@ class Environment:
         self.disable = (offline or generate) and train
         self.generate = generate
 
-        self.frame_stack = frame_stack or 1
         self.action_repeat = action_repeat or 1
 
         self.max_episode_steps = train and max_episode_frames and max_episode_frames // action_repeat or inf

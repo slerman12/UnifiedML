@@ -6,19 +6,6 @@ defaults:
 # Agent
 obs_spec: ???  # To be specified later
 action_spec: ???  # To be specified later
-#obs_spec:
-#  - name: obs
-#  - shape: ???  # To be specified later
-#  - mean: ???  # To be specified later
-#  - stddev: ???  # To be specified later
-#  - low: ???  # To be specified later
-#  - high: ???  # To be specified later
-#action_spec:
-#  - name: action
-#  - shape: ???  # To be specified later
-#  - num_actions: ???  # To be specified later
-#  - low: ???  # To be specified later
-#  - high: ???  # To be specified later
 standardize: true
 norm: true
 trunk_dim: 50
@@ -163,7 +150,7 @@ plotting:
   x_axis: Step
   verbose: false
 
-# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures or optimizers
+# Can optionally pass in custom architectures, optimizers, schedulers, etc.
 
 Aug: null  # Shorthand for recipes.aug._target_
 

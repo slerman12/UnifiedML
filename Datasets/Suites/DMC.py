@@ -44,7 +44,7 @@ class Env:
         # Import DM Control here to avoid glfw warnings
 
         try:
-            # Try EGL rendering (faster?)
+            # Try EGL rendering (faster)
             os.environ['MUJOCO_GL'] = 'egl'
             from dm_control import manipulation, suite
         except ImportError:
@@ -151,6 +151,9 @@ class Env:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or exp[key].shape == ():
                 exp[key] = np.full([1, 1], exp[key], 'float32')
+
+        # Clear frame stack
+        self.frames.clear()
 
         return exp
 

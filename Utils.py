@@ -56,7 +56,7 @@ def save(path, model, args, *attributes):
 
 
 # Loads model or part of model
-def load(path, device, model=None, preserve=(), distributed=False, attr='', **kwargs):
+def load(path, device='cuda', model=None, preserve=(), distributed=False, attr='', **kwargs):
     while True:
         try:
             to_load = torch.load(path, map_location=getattr(model, 'device', device))
@@ -78,7 +78,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr='', **kw
             setattr(model, key, to_load[key])
 
     # Can also load part of a model. Useful for recipes,
-    # e.g. python Run.py Eyes=load +eyes.path=<checkpoint> +eyes.attr=encoder.Eyes +eyes.device='cuda'
+    # e.g. python Run.py Eyes=load +eyes.path=<Path To Agent Checkpoint> +eyes.attr=encoder.Eyes
     for key in attr.split('.'):
         if key:
             model = getattr(model, key)

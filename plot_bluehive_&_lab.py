@@ -62,7 +62,7 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
 
 plot_group = 'XRD'
 tasks = []
-plots = [['CNN', 'ResNet18']]
+plots = [['CNN', 'ResNet18', 'CNN-Transferred']]
 title = 'RRUFF'
 x_axis = 'Step'
 
