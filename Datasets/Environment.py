@@ -9,17 +9,20 @@ from Datasets.Suites import DMC, Atari, Classify
 
 
 class Environment:
-    def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
-                 dataset, seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
+    def __init__(self, task_name, frame_stack, action_repeat, max_episode_frames=inf, truncate_episode_frames=inf,
+                 suite="DMC", offline=False, generate=False, train=True, seed=0, **kwargs):
         self.suite = suite
         self.offline = offline
         self.disable = (offline or generate) and train
         self.generate = generate
 
-        self.frame_stack = frame_stack
+        self.frame_stack = frame_stack or 1
         self.action_repeat = action_repeat or 1
 
-        self.env = self.raw_env.Env(task_name, seed, frame_stack)
+        self.max_episode_steps = train and max_episode_frames and max_episode_frames // action_repeat or inf
+        self.truncate_episode_steps = train and truncate_episode_frames and truncate_episode_frames // action_repeat or inf
+
+        self.env = self.raw_env.Env(task_name, seed, frame_stack, **kwargs)
 
         if not self.disable:
             self.exp = self.env.reset()
@@ -77,16 +80,22 @@ class Environment:
             step += 1
             frame += len(action)
 
+            self.episode_done = self.episode_done or self.episode_step + step == self.max_episode_steps
+            if self.episode_step + step == self.truncate_episode_steps:
+                break
+
         self.episode_step += step
         self.episode_frame += frame
 
-        if self.episode_done:
+        if self.episode_done or self.episode_step == self.truncate_episode_steps:
             if agent.training:
                 agent.episode += 1
 
-            if not self.disable:
+            if self.episode_done and not self.disable:
                 self.exp = self.env.reset()
             self.last_episode_len = self.episode_frame
+
+        self.episode_done = self.episode_done or self.episode_step == self.truncate_episode_steps
 
         # Log stats
         sundown = time.time()

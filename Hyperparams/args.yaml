@@ -4,19 +4,21 @@ defaults:
   - override hydra/job_logging: none
 
 # Agent
-obs_spec:
-  - name: obs
-  - shape: ???  # To be specified later
-  - mean: ???  # To be specified later
-  - stddev: ???  # To be specified later
-  - low: ???  # To be specified later
-  - high: ???  # To be specified later
-action_spec:
-  - name: action
-  - shape: ???  # To be specified later
-  - num_actions: ???  # To be specified later
-  - low: ???  # To be specified later
-  - high: ???  # To be specified later
+obs_spec: ???  # To be specified later
+action_spec: ???  # To be specified later
+#obs_spec:
+#  - name: obs
+#  - shape: ???  # To be specified later
+#  - mean: ???  # To be specified later
+#  - stddev: ???  # To be specified later
+#  - low: ???  # To be specified later
+#  - high: ???  # To be specified later
+#action_spec:
+#  - name: action
+#  - shape: ???  # To be specified later
+#  - num_actions: ???  # To be specified later
+#  - low: ???  # To be specified later
+#  - high: ???  # To be specified later
 standardize: true
 norm: true
 trunk_dim: 50
@@ -77,8 +79,8 @@ environment:
   task_name: ${task_name}
   frame_stack: ${frame_stack}
   action_repeat: ${action_repeat}
-  episode_max_frames: false
-  episode_truncate_resume_frames: 1000
+  max_episode_frames: null
+  truncate_episode_frames: 1000
   dataset: ${dataset}
   seed: ${seed}
   suite: ${suite}

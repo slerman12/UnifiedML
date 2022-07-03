@@ -154,7 +154,7 @@ class Env:
         return self.env.render('rgb_array')
 
 
-
+# TODO truncate, cut
 # def make(task, dataset, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
 #          offline=False, train=True, seed=1, batch_size=1, num_workers=1):
 #     task = f'ALE/{task}-v5'
