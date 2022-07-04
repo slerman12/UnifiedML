@@ -55,7 +55,7 @@ class Environment:
         step = frame = 0
         while not self.episode_done and step < steps:
 
-            obs = self.env.frame_stack(self.exp.obs)  # Frame stack
+            obs = self.env.frame_stack  # Frame stacked observations
 
             # Act
             action = agent.act(obs)
