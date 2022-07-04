@@ -51,7 +51,9 @@ class Env:
     Can optionally include a frame_stack method.
 
     """
-    def __init__(self, task='pong', seed=0, frame_stack=4, screen_size=84, **kwargs):
+    def __init__(self, task='pong', seed=0, frame_stack=4,
+                 screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
+                 last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.discrete = True
         self.episode_done = False
 
@@ -64,12 +66,14 @@ class Env:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=UserWarning)
                 self.env = gym.make(task,
-                                    obs_type='grayscale',             # ram | rgb | grayscale
+                                    obs_type=color,                   # ram | rgb | grayscale
                                     frameskip=1,                      # Frame skip  # Perhaps substitute action_repeat
                                     # mode=0,                         # Game mode, see Machado et al. 2018
                                     difficulty=0,                     # Game difficulty, see Machado et al. 2018
-                                    repeat_action_probability=0,      # Sticky action probability
-                                    full_action_space=False,          # Use all actions
+                                    repeat_action_probability=
+                                    sticky_action_proba,              # Sticky action probability
+                                    full_action_space=
+                                    action_space_union,               # Use all actions
                                     render_mode=None                  # None | human | rgb_array
                                     )
         except gym.error.NameNotFound as e:
@@ -89,11 +93,11 @@ class Env:
         self.env.seed(seed)
 
         # Nature DQN-style pooling of last 2 frames
-        self.last_2_frame_pool = True
+        self.last_2_frame_pool = last_2_frame_pool
         self.last_frame = None
 
         # Terminal on life loss
-        self.terminal_on_life_loss = True
+        self.terminal_on_life_loss = terminal_on_life_loss
         self.lives = None
 
         self.obs_spec = {'name': 'obs',
@@ -131,11 +135,11 @@ class Env:
                 self.episode_done = True
             self.lives = lives
 
+        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add channel dim
-        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         obs = np.expand_dims(obs, axis=0)
         # Resize image
-        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
@@ -168,11 +172,11 @@ class Env:
         if self.terminal_on_life_loss:
             self.lives = self.env.ale.lives()
 
+        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add channel dim
-        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         obs = np.expand_dims(obs, axis=0)
         # Resize image
-        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
