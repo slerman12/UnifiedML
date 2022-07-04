@@ -9,21 +9,24 @@ from Datasets.Suites import DMC, Atari, Classify
 
 
 class Environment:
-    def __init__(self, task_name, frame_stack, action_repeat, max_episode_frames=inf, truncate_episode_frames=inf,
+    def __init__(self, task_name, frame_stack, action_repeat, max_episode_steps=inf, truncate_episode_steps=inf,
                  suite="DMC", offline=False, generate=False, train=True, seed=0, **kwargs):
         self.suite = suite
         self.offline = offline
-        self.disable = (offline or generate) and train
         self.generate = generate
 
-        self.action_repeat = action_repeat or 1
-
-        self.max_episode_steps = train and max_episode_frames and max_episode_frames // action_repeat or inf
-        self.truncate_episode_steps = train and truncate_episode_frames and truncate_episode_frames // action_repeat or inf
-
-        self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)
+        # Offline and generate don't need training rollouts
+        self.disable = (offline or generate) and train
 
         if not self.disable:
+            self.action_repeat = action_repeat or 1
+
+            self.max_episode_steps = train and max_episode_steps or inf  # inf default
+            self.truncate_episode_steps = train and truncate_episode_steps or inf  # inf default
+
+            # TODO Classify needs to make training set with eval
+            self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)
+
             self.exp = self.env.reset()
 
         self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
@@ -52,12 +55,14 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
-            obs = getattr(self.env, 'frame_stack', self.exp.obs)
+            obs = getattr(self.env, 'frame_stack',
+                          self.exp.obs)
 
             # Act
             action = agent.act(obs)
 
-            self.exp = self.env.step(action.cpu().numpy()) if not self.generate else self.exp
+            if not self.generate:
+                self.exp = self.env.step(action.cpu().numpy())
 
             self.exp.step = agent.step
             experiences.append(self.exp)
@@ -70,26 +75,21 @@ class Environment:
             step += 1
             frame += len(action)
 
-            # Tally reward, done
+            # Tally reward
             self.episode_reward += self.exp.reward.mean()
-            self.episode_done = self.env.episode_done or self.generate
 
-            self.episode_done = self.episode_done or self.episode_step + step == self.max_episode_steps
-            if self.episode_step + step == self.truncate_episode_steps:
-                break
+            self.episode_done = \
+                self.env.episode_done or self.episode_step > min(self.max_episode_steps,
+                                                                 self.truncate_episode_steps) - 2 or self.generate
 
+            if self.env.episode_done or self.episode_step > self.max_episode_steps - 2:
+                self.exp = self.env.reset()
+
+        # Tally time
         self.episode_step += step
         self.episode_frame += frame
 
-        if self.episode_done or self.episode_step == self.truncate_episode_steps:
-            if agent.training:
-                agent.episode += 1
-
-            if self.episode_done and not self.disable:
-                self.exp = self.env.reset()
-            self.last_episode_len = self.episode_frame
-
-        self.episode_done = self.episode_done or self.episode_step == self.truncate_episode_steps
+        agent.episode += self.episode_done * agent.training
 
         # Log stats
         sundown = time.time()

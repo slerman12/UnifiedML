@@ -66,8 +66,6 @@ environment:
   task_name: ${task_name}
   frame_stack: ${frame_stack}
   action_repeat: ${action_repeat}
-  max_episode_frames: null
-  truncate_episode_frames: 1000
   dataset: ${dataset}
   seed: ${seed}
   suite: ${suite}

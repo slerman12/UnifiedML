@@ -211,6 +211,10 @@ class ExperienceReplay:
         self.episode_len = 0
         self.episodes_stored += 1
 
+    def clear(self):
+        self.episode = {spec['name']: [] for spec in self.specs}
+        self.episode_len = 0
+
     # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'

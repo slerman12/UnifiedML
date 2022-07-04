@@ -15,6 +15,7 @@ if __name__ == '__main__':
     
 suite: atari
 action_repeat: 4
+truncate_episode_steps: 250
 nstep: 10
 frame_stack: 3
 train_steps: 500000

@@ -75,8 +75,8 @@ def main(args):
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
-            if env.last_episode_len > args.nstep:  # TODO replay.clear() or adaptive process, can remove var in env
-                replay.add(store=True)  # Only store full episodes
+            replay.add(store=env.last_episode_len > args.nstep)  # Only store full episodes
+            replay.clear()
 
         converged = agent.step >= args.train_steps
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline
