@@ -69,14 +69,14 @@ def main(args):
         # Rollout
         experiences, logs, _ = env.rollout(agent.train(), steps=1)  # agent.train() just sets agent.training to True
 
-        replay.add(experiences)  # TODO or can check env.last_episode_len > args.nstep here
+        replay.add(experiences)
 
         if env.episode_done:
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
-            if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes  TODO don't need; adaptive replay; more env space
+            if env.last_episode_len > args.nstep:  # TODO replay.clear() or adaptive process, can remove var in env
+                replay.add(store=True)  # Only store full episodes
 
         converged = agent.step >= args.train_steps
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline

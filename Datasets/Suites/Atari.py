@@ -5,6 +5,8 @@
 from collections import deque
 
 import warnings
+from copy import deepcopy
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import gym
@@ -100,8 +102,12 @@ class Env:
         self.terminal_on_life_loss = terminal_on_life_loss
         self.lives = None
 
+        # Number of channels
+        self.color = color
+        channels = 3 if color == 'rgb' else 1
+
         self.obs_spec = {'name': 'obs',
-                         'shape': (frame_stack, screen_size, screen_size),
+                         'shape': (channels * frame_stack, screen_size, screen_size),
                          'mean': None,
                          'stddev': None,
                          'low': 0,
@@ -122,8 +128,13 @@ class Env:
         # Step env
         obs, reward, self.episode_done, info = self.env.step(action)
 
+        # bla = deepcopy(obs)
+
         # Better than obs for some reason?  TODO testing; delete
-        self.env.ale.getScreenGrayscale(obs)
+        # self.env.ale.getScreenGrayscale(obs)
+
+        # print(bla.shape, obs.shape)
+        # assert (bla == obs).all()
 
         # Nature DQN-style pooling of last 2 frames
         if self.last_2_frame_pool:
@@ -141,8 +152,12 @@ class Env:
         obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # obs = obs.astype(np.uint8)
         obs = np.asarray(obs, dtype=np.uint8)
-        # Add channel dim
-        obs = np.expand_dims(obs, axis=0)
+
+        if self.color == 'grayscale':
+            obs.shape = (1, *self.obs_spec['shape'][1:])  # Add channel dim
+        elif self.color == 'rgb':
+            obs = obs.transpose(2, 0, 1)  # Channel-first
+
         # Resize image  TODO maybe just this
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
@@ -170,7 +185,7 @@ class Env:
         self.episode_done = False
 
         # Better than obs for some reason?  TODO testing; delete
-        self.env.ale.getScreenGrayscale(obs)
+        # self.env.ale.getScreenGrayscale(obs)
 
         # Last frame
         if self.last_2_frame_pool:
@@ -183,8 +198,12 @@ class Env:
         obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # obs = obs.astype(np.uint8)
         obs = np.asarray(obs, dtype=np.uint8)
-        # Add channel dim
-        obs = np.expand_dims(obs, axis=0)
+
+        if self.color == 'grayscale':
+            obs.shape = (1, *self.obs_spec['shape'][1:])  # Add channel dim
+        elif self.color == 'rgb':
+            obs = obs.transpose(2, 0, 1)  # Channel-first
+
         # Resize image  TODO maybe just this
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
