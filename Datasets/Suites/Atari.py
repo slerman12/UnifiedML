@@ -96,6 +96,7 @@ class Env:
 
         # Nature DQN-style pooling of last 2 frames  TODO Only for frames in frame skip (action repeat)
         self.last_2_frame_pool = last_2_frame_pool  # Causing error?
+        self.frame = np.empty((screen_size, screen_size), dtype=np.uint8)
         self.last_frame = None
 
         # Terminal on life loss  TODO default false
@@ -126,12 +127,13 @@ class Env:
         action = action.squeeze(0)
 
         # Step env
-        obs, reward, self.episode_done, info = self.env.step(action)
+        _, reward, self.episode_done, info = self.env.step(action)
 
         # bla = deepcopy(obs)
 
         # Better than obs for some reason?  TODO testing; delete
-        # self.env.ale.getScreenGrayscale(obs)
+        self.env.ale.getScreenGrayscale(self.frame)
+        obs = self.frame
 
         # print(bla.shape, obs.shape)
         # assert (bla == obs).all()
@@ -181,11 +183,12 @@ class Env:
         return np.concatenate(list(self.frames), axis=1)
 
     def reset(self):
-        obs = self.env.reset()
+        _ = self.env.reset()
         self.episode_done = False
 
         # Better than obs for some reason?  TODO testing; delete
-        # self.env.ale.getScreenGrayscale(obs)
+        self.env.ale.getScreenGrayscale(self.frame)
+        obs = self.frame
 
         # Last frame
         if self.last_2_frame_pool:
