@@ -122,6 +122,7 @@ class Env:
         # Step env
         obs, reward, self.episode_done, info = self.env.step(action)
 
+        # Better than obs for some reason?  TODO testing; delete
         self.env.ale.getScreenGrayscale(obs)
 
         # Nature DQN-style pooling of last 2 frames
@@ -166,6 +167,7 @@ class Env:
         obs = self.env.reset()
         self.episode_done = False
 
+        # Better than obs for some reason?  TODO testing; delete
         self.env.ale.getScreenGrayscale(obs)
 
         # Last frame
