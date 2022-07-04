@@ -227,7 +227,7 @@ class Env:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Reset frame stack
-        self.frames.append([obs] * self.frames.maxlen)
+        self.frames.extend([obs] * self.frames.maxlen)
 
         # Return experience
         return AttrDict(exp)
