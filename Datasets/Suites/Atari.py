@@ -132,10 +132,10 @@ class Env:
             self.lives = lives
 
         # Add channel dim
+        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         obs = np.expand_dims(obs, axis=0)
         # Resize image
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
-        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
@@ -169,10 +169,10 @@ class Env:
             self.lives = self.env.ale.lives()
 
         # Add channel dim
+        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         obs = np.expand_dims(obs, axis=0)
         # Resize image
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
-        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
