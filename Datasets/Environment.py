@@ -24,7 +24,7 @@ class Environment:
             self.max_episode_steps = train and max_episode_steps or inf  # inf default
             self.truncate_episode_steps = train and truncate_episode_steps or inf  # inf default
 
-            self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)  # TODO Classify make train set with eval
+            self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)  # TODO Classify -> train
 
             self.exp = self.env.reset()
 
@@ -54,8 +54,8 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
-            obs = getattr(self.env, 'frame_stack',
-                          self.exp.obs)
+            # Frame stack
+            obs = self.env.frame_stack(self.exp.obs)
 
             # Act
             action = agent.act(obs)
@@ -88,10 +88,10 @@ class Environment:
         self.episode_step += step
         self.episode_frame += frame
 
-        agent.episode += self.episode_done * agent.training
-
         if self.episode_done:
             self.last_episode_len = self.episode_step
+
+        agent.episode += self.episode_done * agent.training
 
         # Log stats
         sundown = time.time()
@@ -100,8 +100,9 @@ class Environment:
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
                 'frame': agent.frame * self.action_repeat,
-                'epoch' if self.offline or self.generate else 'episode': agent.epoch if self.offline or self.generate else agent.episode,
-                'accuracy'if self.suite == 'classify' else 'reward':
+                'epoch' if self.offline or self.generate else 'episode':
+                    (self.offline or self.generate) and agent.epoch or agent.episode,
+                'accuracy' if self.suite == 'classify' else 'reward':
                     self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),  # Accuracy is %
                 'fps': frames / (sundown - self.daybreak)} if not self.disable \
             else None
