@@ -90,7 +90,6 @@ class Environment:
 
         agent.episode += self.episode_done * agent.training
 
-        # TODO for now
         if self.episode_done:
             self.last_episode_len = self.episode_step
 
