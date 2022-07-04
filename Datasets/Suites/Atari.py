@@ -53,7 +53,7 @@ class Env:
     """
     def __init__(self, task='pong', seed=0, frame_stack=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
-                 last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
+                 last_2_frame_pool=False, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.discrete = True
         self.episode_done = False
 
@@ -67,7 +67,7 @@ class Env:
                 warnings.simplefilter("ignore", category=UserWarning)
                 self.env = gym.make(task,
                                     obs_type=color,                   # ram | rgb | grayscale
-                                    frameskip=1,                      # Frame skip  # Perhaps substitute action_repeat
+                                    frameskip=1,                      # Frame skip  # TODO Substitute action_repeat, arg
                                     # mode=0,                         # Game mode, see Machado et al. 2018
                                     difficulty=0,                     # Game difficulty, see Machado et al. 2018
                                     repeat_action_probability=
