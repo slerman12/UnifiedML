@@ -59,11 +59,11 @@ class Env:
         self.discrete = True
         self.episode_done = False
 
-        # Make env  TODO add mario bros, pacman, king kong, etc. https://brosa.ca/blog/ale-release-v0.7
+        # Make env
 
         task = f'ALE/{task}-v5'
 
-        # Load task
+        # Load task  TODO Mario bros, pacman, king kong, etc. https://brosa.ca/blog/ale-release-v0.7
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=UserWarning)
@@ -75,7 +75,7 @@ class Env:
                                     repeat_action_probability=
                                     sticky_action_proba,              # Sticky action probability
                                     full_action_space=
-                                    action_space_union,               # Use all actions
+                                    action_space_union,               # Use all atari actions
                                     render_mode=None                  # None | human | rgb_array
                                     )
         except gym.error.NameNotFound as e:
@@ -96,7 +96,6 @@ class Env:
 
         # Nature DQN-style pooling of last 2 frames  TODO Only for frames in frame skip (action repeat)
         self.last_2_frame_pool = last_2_frame_pool  # Causing error?
-        self.frame = np.empty((210, 160), dtype=np.uint8)
         self.last_frame = None
 
         # Terminal on life loss  TODO default false
@@ -123,26 +122,18 @@ class Env:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # Remove batch dim
-        action = action.squeeze(0)
+        # Define no-op, remove batch dim
+        action = 0 if action is None \
+            else action.squeeze(0)
 
         # Step env
-        _, reward, self.episode_done, info = self.env.step(action)
-
-        # bla = deepcopy(obs)
-
-        # Better than obs for some reason?  TODO testing; delete
-        self.env.ale.getScreenGrayscale(self.frame)
-        obs = self.frame
-
-        # print(bla.shape, obs.shape)
-        # assert (bla == obs).all()
+        obs, reward, self.episode_done, info = self.env.step(action)
 
         # Nature DQN-style pooling of last 2 frames
         if self.last_2_frame_pool:
-            last_frame = deepcopy(self.last_frame)
-            self.last_frame = deepcopy(obs)
-            obs = np.maximum(self.last_frame, last_frame)
+            last_frame = self.last_frame
+            self.last_frame = obs
+            obs = np.maximum(obs, last_frame)
 
         # Terminal on life loss
         if self.terminal_on_life_loss:
@@ -151,10 +142,12 @@ class Env:
                 self.episode_done = True
             self.lives = lives
 
+        # Resize image TODO delete
         obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # obs = obs.astype(np.uint8)
         obs = np.asarray(obs, dtype=np.uint8)
 
+        # Image channels
         if self.color == 'grayscale':
             obs.shape = (1, *self.obs_spec['shape'][1:])  # Add channel dim
         elif self.color == 'rgb':
@@ -162,6 +155,7 @@ class Env:
 
         # Resize image  TODO maybe just this
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
@@ -183,25 +177,26 @@ class Env:
         return np.concatenate(list(self.frames), axis=1)
 
     def reset(self):
-        _ = self.env.reset()
+        obs = self.env.reset()
         self.episode_done = False
 
         # Better than obs for some reason?  TODO testing; delete
-        self.env.ale.getScreenGrayscale(self.frame)
-        obs = self.frame
+        # self.env.ale.getScreenGrayscale(obs)
 
         # Last frame
         if self.last_2_frame_pool:
-            self.last_frame = deepcopy(obs)
+            self.last_frame = obs
 
         # Lives
         if self.terminal_on_life_loss:
             self.lives = self.env.ale.lives()
 
+        # Resize image TODO delete
         obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # obs = obs.astype(np.uint8)
         obs = np.asarray(obs, dtype=np.uint8)
 
+        # Image channels
         if self.color == 'grayscale':
             obs.shape = (1, *self.obs_spec['shape'][1:])  # Add channel dim
         elif self.color == 'rgb':
@@ -209,6 +204,7 @@ class Env:
 
         # Resize image  TODO maybe just this
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
