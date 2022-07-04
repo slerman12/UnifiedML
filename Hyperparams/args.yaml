@@ -16,12 +16,15 @@ lr_decay_epochs: null
 weight_decay: 0
 ema_decay: 0.99
 # Domains
-discrete: ??? # To be specified later
+discrete: ???  # To be specified later
 offline: false  # Defaults to true for classify tasks
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
 # Environment
+frame_stack: 1
+truncate_episode_steps: 1000
+action_repeat: 1
 Dataset: null
 # Replay
 nstep: 10
@@ -63,16 +66,15 @@ dataset:
 environment:
   _target_: Datasets.Environment.Environment
   _recursive_: false
-  task_name: ${task_name}
-  frame_stack: ${frame_stack}
-  action_repeat: ${action_repeat}
-  dataset: ${dataset}
-  seed: ${seed}
+  env: ???  # Defaults per respective task
   suite: ${suite}
+  task: ${task_name}
+  frame_stack: ${frame_stack}
+  truncate_episode_steps: ${truncate_episode_steps}
+  action_repeat: ${action_repeat}
   offline: ${offline}
   generate: ${generate}
-  batch_size: ${batch_size}
-  num_workers: ${num_workers}
+  seed: ${seed}
 
 agent:
   _target_: ${Agent}

@@ -25,8 +25,8 @@ def main(args):
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
     for arg in ('obs_spec', 'action_spec', 'discrete', 'evaluate_episodes'):
-        if hasattr(generalize, arg):
-            setattr(args, arg, getattr(generalize, arg))
+        if hasattr(generalize.env, arg):
+            setattr(args, arg, getattr(generalize.env, arg))
 
     # Agent
     agent = Utils.load(args.save_path, args.device) if args.load \

@@ -5,43 +5,30 @@
 import time
 from math import inf
 
-from Datasets.Suites import DMC, Atari, Classify
+from hydra.utils import instantiate
 
 
 class Environment:
-    def __init__(self, task_name, frame_stack=1, action_repeat=1, max_episode_steps=inf, truncate_episode_steps=inf,
-                 suite="DMC", offline=False, generate=False, train=True, seed=0, **kwargs):
-
-        self.suite = suite
+    def __init__(self, env, suite='DMC', task='cheetah_run', frame_stack=1, truncate_episode_steps=inf, action_repeat=1,
+                 offline=False, generate=False, train=True, seed=0, **kwargs):
+        self.suite = suite.lower()
         self.offline = offline
         self.generate = generate
 
-        self.action_repeat = action_repeat or 1  # TODO don't need, in env
-
-        # Offline and generate don't use training rollouts
+        # Offline and generate don't use training rollouts!
         self.disable = (offline or generate) and train
+
+        self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf default)
+
+        if not self.disable:
+            self.env = instantiate(env, task=task, frame_stack=frame_stack, action_repeat=action_repeat,
+                                   train=train, seed=seed, **kwargs)
+            self.env.reset()
+
+        self.action_repeat = getattr(getattr(self, 'env', 1), 'action_repeat', 1)  # Optional, can skip frames
 
         self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
-
-        if not self.disable:
-            # Create environment
-            self.env = self.raw_env.Env(task_name, seed, frame_stack, self.action_repeat, **kwargs)  # TODO Classify -> train
-            self.exp = self.env.reset()  # TODO env can track current expeirence since it already does
-
-            self.truncate_episode_steps = train and truncate_episode_steps or inf  # inf default
-
-    @property
-    def raw_env(self):
-        if self.suite.lower() == "dmc":
-            return DMC
-        elif self.suite.lower() == "atari":
-            return Atari
-        elif self.suite.lower() == 'classify':
-            return Classify
-
-    def __getattr__(self, item):
-        return getattr(self.env, item)
 
     def rollout(self, agent, steps=inf, vlog=False):
         if self.daybreak is None:
@@ -54,34 +41,36 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
+            exp = self.env.exp
 
-            obs = self.env.frame_stack  # Frame stacked observations
+            # Frame-stacked obs
+            obs = getattr(self.env, 'frame_stack', lambda x: x)(exp.obs)
 
             # Act
             action = agent.act(obs)
 
             if not self.generate:
-                self.exp = self.env.step(action.cpu().numpy())
+                exp = self.env.step(action.cpu().numpy())  # Experience
 
-            self.exp.step = agent.step
-            experiences.append(self.exp)
+            exp.step = agent.step
+            experiences.append(exp)
 
             if vlog or self.generate:
-                image_frame = action[:24].view(-1, *obs.shape[1:]) if self.generate \
+                image_frame = action[:24].view(-1, *exp.obs.shape[1:]) if self.generate \
                     else self.env.render()
                 video_image.append(image_frame)
 
             step += 1
             frame += len(action)
 
-            # Tally reward
-            self.episode_reward += self.exp.reward.mean()
-
-            self.episode_done = \
-                self.env.episode_done or self.episode_step > self.truncate_episode_steps - 2 or self.generate
+            # Tally reward, done
+            self.episode_reward += exp.reward.mean()
+            self.episode_done = self.env.episode_done or self.episode_step > self.truncate_after - 2 or self.generate
 
             if self.env.episode_done:
-                self.exp = self.env.reset()
+                self.env.reset()
+
+        agent.episode += agent.training * self.episode_done  # Increment agent episode
 
         # Tally time
         self.episode_step += step
@@ -89,8 +78,6 @@ class Environment:
 
         if self.episode_done:
             self.last_episode_len = self.episode_step
-
-        agent.episode += self.episode_done * agent.training
 
         # Log stats
         sundown = time.time()

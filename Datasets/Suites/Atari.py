@@ -28,9 +28,9 @@ class AttrDict(dict):
         self.update(_dict)
 
 
-class Env:
+class Atari:
     """
-    A general-purpose environment.
+    A general-purpose environment:
 
     Must accept: (task, seed, **kwargs) as init args.
 
@@ -46,6 +46,7 @@ class Env:
     (7) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete)
+    (8) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
     numpy values which can be NaN. "obs" must include a batch dim.
@@ -119,6 +120,8 @@ class Env:
                             'low': None,
                             'high': None}
 
+        self.exp = None
+
         self.action_repeat = action_repeat
         self.frames = deque([], frame_stack or 1)
 
@@ -174,17 +177,15 @@ class Env:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
-        # Frame stack
-        self.frames.append(obs)
+        self.exp = AttrDict(exp)  # Experience
 
-        # Return experience
-        return AttrDict(exp)
+        return self.exp
 
-    @property
-    def frame_stack(self):
+    def frame_stack(self, obs):
         if self.frames.maxlen == 1:
-            return self.frames[-1]
+            return obs
 
+        self.frames.extend([obs] * (self.frames.maxlen - len(self.frames) + 1))
         return np.concatenate(list(self.frames), axis=1)
 
     def reset(self):
@@ -225,10 +226,11 @@ class Env:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Reset frame stack
-        self.frames.extend([obs] * self.frames.maxlen)
+        self.frames.clear()
 
-        # Return experience
-        return AttrDict(exp)
+        self.exp = AttrDict(exp)  # Experience
+
+        return self.exp
 
     def render(self):
         return self.env.render('rgb_array')  # rgb_array | human

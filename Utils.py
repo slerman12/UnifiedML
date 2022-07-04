@@ -18,7 +18,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Blocks.Architectures import *  # For accessibility via command line syntax
+from Blocks.Architectures import *  # For direct accessibility via command line
+from Datasets.Suites import *  # For direct accessibility via command line
 
 
 # Sets all Pytorch and Numpy random seeds
