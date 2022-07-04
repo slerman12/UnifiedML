@@ -53,11 +53,11 @@ class Env:
     """
     def __init__(self, task='pong', seed=0, frame_stack=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
-                 last_2_frame_pool=False, terminal_on_life_loss=True, **kwargs):  # Atari-specific
+                 last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.discrete = True
         self.episode_done = False
 
-        # Make env
+        # Make env  TODO add mario bros, pacman, king kong, etc. https://brosa.ca/blog/ale-release-v0.7
 
         task = f'ALE/{task}-v5'
 
@@ -92,11 +92,11 @@ class Env:
         # Set random seed
         self.env.seed(seed)
 
-        # Nature DQN-style pooling of last 2 frames
-        self.last_2_frame_pool = last_2_frame_pool
+        # Nature DQN-style pooling of last 2 frames  TODO Only for frames in frame skip (action repeat)
+        self.last_2_frame_pool = last_2_frame_pool  # Causing error?
         self.last_frame = None
 
-        # Terminal on life loss
+        # Terminal on life loss  TODO default false
         self.terminal_on_life_loss = terminal_on_life_loss
         self.lives = None
 
@@ -143,7 +143,7 @@ class Env:
         obs = np.asarray(obs, dtype=np.uint8)
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
-        # Resize image
+        # Resize image  TODO maybe just this
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
@@ -185,7 +185,7 @@ class Env:
         obs = np.asarray(obs, dtype=np.uint8)
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
-        # Resize image
+        # Resize image  TODO maybe just this
         # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
