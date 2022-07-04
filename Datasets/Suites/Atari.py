@@ -50,10 +50,10 @@ class Env:
     An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
     numpy values which can be NaN. "obs" must include a batch dim.
 
-    Can optionally include a frame_stack method.
+    Can optionally include a frame_stack, action_repeat method.
 
     """
-    def __init__(self, task='pong', seed=0, frame_stack=4,
+    def __init__(self, task='pong', seed=0, frame_stack=3, action_repeat=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
                  last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.discrete = True
@@ -119,6 +119,7 @@ class Env:
                             'low': None,
                             'high': None}
 
+        self.action_repeat = action_repeat
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
@@ -127,7 +128,12 @@ class Env:
             else action.squeeze(0)
 
         # Step env
-        obs, reward, self.episode_done, info = self.env.step(action)
+        reward = 0
+        for _ in range(self.action_repeat):
+            obs, _reward, self.episode_done, info = self.env.step(action)
+            reward += _reward
+            if self.episode_done:
+                break
 
         # Nature DQN-style pooling of last 2 frames
         if self.last_2_frame_pool:
@@ -167,12 +173,16 @@ class Env:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
+        # Frame stack
+        self.frames.append(obs)
+
         # Return experience
         return AttrDict(exp)
 
-    def frame_stack(self, obs):
-        for _ in range(self.frames.maxlen - len(self.frames) + 1):
-            self.frames.append(obs)
+    @property
+    def frame_stack(self):
+        if self.frames.maxlen == 1:
+            return self.frames[-1]
 
         return np.concatenate(list(self.frames), axis=1)
 
@@ -216,8 +226,9 @@ class Env:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
-        # Clear frame stack
+        # Reset frame stack
         self.frames.clear()
+        self.frames.extend([obs] * self.frames.maxlen)
 
         # Return experience
         return AttrDict(exp)

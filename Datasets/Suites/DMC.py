@@ -40,10 +40,10 @@ class Env:
     An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
     numpy values which can be NaN. "obs" must include a batch dim.
 
-    Can optionally include a frame_stack method.
+    Can optionally include a frame_stack, action_repeat method.
 
     """
-    def __init__(self, task='cheetah_run', seed=0, frame_stack=1, **kwargs):
+    def __init__(self, task='cheetah_run', seed=0, frame_stack=3, action_repeat=2, **kwargs):
         self.discrete = False
         self.episode_done = False
 
@@ -108,6 +108,7 @@ class Env:
                             'low': -1,
                             'high': 1}
 
+        self.action_repeat = action_repeat
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
@@ -117,10 +118,17 @@ class Env:
         action = action.squeeze(0)
 
         # Step env
+        reward = 0
+        for _ in range(self.action_repeat):
+            time_step = self.env.step(action)
+            reward += time_step.reward
+            self.episode_done = time_step.step_type == StepType.LAST
+            if self.episode_done:
+                break
         time_step = self.env.step(action)
 
         # Create experience
-        exp = {'obs': time_step.observation[self.key], 'action': action, 'reward': time_step.reward,
+        exp = {'obs': time_step.observation[self.key], 'action': action, 'reward': reward,
                'label': None, 'step': None}
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
@@ -132,14 +140,15 @@ class Env:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
-        if time_step.step_type == StepType.LAST:
-            self.episode_done = True
+        # Frame stack
+        self.frames.append(exp['obs'])
 
         return AttrDict(exp)
 
-    def frame_stack(self, obs):
-        for _ in range(self.frames.maxlen - len(self.frames) + 1):
-            self.frames.append(obs)
+    @property
+    def frame_stack(self):
+        if self.frames.maxlen == 1:
+            return self.frames[-1]
 
         return np.concatenate(list(self.frames), axis=1)
 
@@ -160,8 +169,9 @@ class Env:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
-        # Clear frame stack
+        # Reset frame stack
         self.frames.clear()
+        self.frames.extend([exp['obs']] * self.frames.maxlen)
 
         return AttrDict(exp)
 

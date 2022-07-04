@@ -21,7 +21,7 @@ class Environment:
         self.max_episode_steps = train and max_episode_frames and max_episode_frames // action_repeat or inf
         self.truncate_episode_steps = train and truncate_episode_frames and truncate_episode_frames // action_repeat or inf
 
-        self.env = self.raw_env.Env(task_name, seed, frame_stack, **kwargs)
+        self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)
 
         if not self.disable:
             self.exp = self.env.reset()
@@ -52,23 +52,14 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
-            obs = self.env.frame_stack(self.exp['obs']) if hasattr(self.env, 'frame_stack') \
-                else self.exp['obs']
+            obs = getattr(self.env, 'frame_stack', self.exp.obs)
 
             # Act
             action = agent.act(obs)
 
-            for _ in range(self.action_repeat):
-                self.exp = self.env.step(action.cpu().numpy()) if not self.generate else self.exp
+            self.exp = self.env.step(action.cpu().numpy()) if not self.generate else self.exp
 
-                # Tally reward, done
-                self.episode_reward += self.exp['reward'].mean()
-                self.episode_done = self.env.episode_done or self.generate
-
-                if self.episode_done:
-                    break
-
-            self.exp['step'] = agent.step
+            self.exp.step = agent.step
             experiences.append(self.exp)
 
             if vlog or self.generate:
@@ -78,6 +69,10 @@ class Environment:
 
             step += 1
             frame += len(action)
+
+            # Tally reward, done
+            self.episode_reward += self.exp.reward.mean()
+            self.episode_done = self.env.episode_done or self.generate
 
             self.episode_done = self.episode_done or self.episode_step + step == self.max_episode_steps
             if self.episode_step + step == self.truncate_episode_steps:
