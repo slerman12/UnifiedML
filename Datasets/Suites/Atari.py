@@ -153,7 +153,7 @@ class Env:
 
         # Scalars/NaN to numpy
         for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool or exp[key].shape == ():
+            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Return experience
@@ -195,7 +195,7 @@ class Env:
 
         # Scalars/NaN to numpy
         for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool or exp[key].shape == ():
+            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Clear frame stack
