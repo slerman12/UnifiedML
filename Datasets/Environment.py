@@ -15,7 +15,7 @@ class Environment:
         self.offline = offline
         self.generate = generate
 
-        # Offline and generate don't need training rollouts
+        # Offline and generate don't use training rollouts
         self.disable = (offline or generate) and train
 
         if not self.disable:
@@ -24,8 +24,7 @@ class Environment:
             self.max_episode_steps = train and max_episode_steps or inf  # inf default
             self.truncate_episode_steps = train and truncate_episode_steps or inf  # inf default
 
-            # TODO Classify needs to make training set with eval
-            self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)
+            self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)  # TODO Classify make train set with eval
 
             self.exp = self.env.reset()
 
@@ -90,6 +89,10 @@ class Environment:
         self.episode_frame += frame
 
         agent.episode += self.episode_done * agent.training
+
+        # TODO for now
+        if self.episode_done:
+            self.last_episode_len = self.episode_step
 
         # Log stats
         sundown = time.time()
