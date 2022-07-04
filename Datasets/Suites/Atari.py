@@ -140,9 +140,9 @@ class Env:
 
         # Nature DQN-style pooling of last 2 frames
         if self.last_2_frame_pool:
-            last_frame = self.last_frame
-            self.last_frame = obs
-            obs = np.maximum(obs, last_frame)
+            last_frame = deepcopy(self.last_frame)
+            self.last_frame = deepcopy(obs)
+            obs = np.maximum(self.last_frame, last_frame)
 
         # Terminal on life loss
         if self.terminal_on_life_loss:
@@ -192,7 +192,7 @@ class Env:
 
         # Last frame
         if self.last_2_frame_pool:
-            self.last_frame = obs
+            self.last_frame = deepcopy(obs)
 
         # Lives
         if self.terminal_on_life_loss:
