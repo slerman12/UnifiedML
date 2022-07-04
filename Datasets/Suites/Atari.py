@@ -139,7 +139,8 @@ class Env:
             self.lives = lives
 
         obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
-        obs = obs.astype(np.uint8)
+        # obs = obs.astype(np.uint8)
+        obs = np.asarray(obs, dtype=np.uint8)
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
@@ -180,7 +181,8 @@ class Env:
             self.lives = self.env.ale.lives()
 
         obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
-        obs = obs.astype(np.uint8)
+        # obs = obs.astype(np.uint8)
+        obs = np.asarray(obs, dtype=np.uint8)
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
