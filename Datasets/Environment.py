@@ -9,27 +9,27 @@ from Datasets.Suites import DMC, Atari, Classify
 
 
 class Environment:
-    def __init__(self, task_name, frame_stack, action_repeat, max_episode_steps=inf, truncate_episode_steps=inf,
+    def __init__(self, task_name, frame_stack=1, action_repeat=1, max_episode_steps=inf, truncate_episode_steps=inf,
                  suite="DMC", offline=False, generate=False, train=True, seed=0, **kwargs):
+
         self.suite = suite
         self.offline = offline
         self.generate = generate
 
+        self.action_repeat = action_repeat or 1  # TODO don't need, in env
+
         # Offline and generate don't use training rollouts
         self.disable = (offline or generate) and train
 
-        if not self.disable:
-            self.action_repeat = action_repeat or 1
-
-            self.max_episode_steps = train and max_episode_steps or inf  # inf default
-            self.truncate_episode_steps = train and truncate_episode_steps or inf  # inf default
-
-            self.env = self.raw_env.Env(task_name, seed, frame_stack, action_repeat, **kwargs)  # TODO Classify -> train
-
-            self.exp = self.env.reset()
-
         self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
+
+        if not self.disable:
+            # Create environment
+            self.env = self.raw_env.Env(task_name, seed, frame_stack, self.action_repeat, **kwargs)  # TODO Classify -> train
+            self.exp = self.env.reset()  # TODO env can track current expeirence since it already does
+
+            self.truncate_episode_steps = train and truncate_episode_steps or inf  # inf default
 
     @property
     def raw_env(self):
@@ -54,8 +54,8 @@ class Environment:
 
         step = frame = 0
         while not self.episode_done and step < steps:
-            # Frame stack
-            obs = self.env.frame_stack(self.exp.obs)
+
+            obs = self.env.frame_stack(self.exp.obs)  # Frame stack
 
             # Act
             action = agent.act(obs)
@@ -78,10 +78,9 @@ class Environment:
             self.episode_reward += self.exp.reward.mean()
 
             self.episode_done = \
-                self.env.episode_done or self.episode_step > min(self.max_episode_steps,
-                                                                 self.truncate_episode_steps) - 2 or self.generate
+                self.env.episode_done or self.episode_step > self.truncate_episode_steps - 2 or self.generate
 
-            if self.env.episode_done or self.episode_step > self.max_episode_steps - 2:
+            if self.env.episode_done:
                 self.exp = self.env.reset()
 
         # Tally time
