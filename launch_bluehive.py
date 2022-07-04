@@ -39,7 +39,7 @@ try:
 except Exception:
     pass
 
-# Define sweep
+# Define sweep  TODO evaluate_per_steps=2e4, move all this to separate file in dict with plot groups, wandb, no plot
 dmc = 'dmc/cheetah_run,dmc/quadruped_walk,dmc/reacher_easy,dmc/cup_catch,dmc/finger_spin,dmc/walker_walk'
 atari = 'atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert'
 sweep = [
