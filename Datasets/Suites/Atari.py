@@ -69,7 +69,7 @@ class Env:
                 warnings.simplefilter("ignore", category=UserWarning)
                 self.env = gym.make(task,
                                     obs_type=color,                   # ram | rgb | grayscale
-                                    frameskip=1,                      # Frame skip  # TODO Substitute action_repeat, arg
+                                    frameskip=1,                      # Frame skip  # ~action_repeat
                                     # mode=0,                         # Game mode, see Machado et al. 2018
                                     difficulty=0,                     # Game difficulty, see Machado et al. 2018
                                     repeat_action_probability=
@@ -132,13 +132,14 @@ class Env:
         for _ in range(self.action_repeat):
             obs, _reward, self.episode_done, info = self.env.step(action)
             reward += _reward
+            if self.last_2_frame_pool:
+                last_frame = self.last_frame
+                self.last_frame = obs
             if self.episode_done:
                 break
 
         # Nature DQN-style pooling of last 2 frames
         if self.last_2_frame_pool:
-            last_frame = self.last_frame
-            self.last_frame = obs
             obs = np.maximum(obs, last_frame)
 
         # Terminal on life loss
@@ -189,9 +190,6 @@ class Env:
     def reset(self):
         obs = self.env.reset()
         self.episode_done = False
-
-        # Better than obs for some reason?  TODO testing; delete
-        # self.env.ale.getScreenGrayscale(obs)
 
         # Last frame
         if self.last_2_frame_pool:
