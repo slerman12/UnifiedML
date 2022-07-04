@@ -15,7 +15,7 @@ import torch
 
 from torchvision.transforms.functional import resize
 
-from skimage.transform import resize
+# from skimage.transform import resize
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
