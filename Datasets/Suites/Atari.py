@@ -53,7 +53,7 @@ class Env:
     """
     def __init__(self, task='pong', seed=0, frame_stack=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
-                 last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
+                 last_2_frame_pool=True, terminal_on_life_loss=False, **kwargs):  # Atari-specific
         self.discrete = True
         self.episode_done = False
 
