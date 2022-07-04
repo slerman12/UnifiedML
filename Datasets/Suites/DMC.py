@@ -10,6 +10,14 @@ from dm_env import StepType
 import numpy as np
 
 
+# Access a dict with attribute or key (purely for aesthetic reasons)
+class AttrDict(dict):
+    def __init__(self, _dict):
+        super(AttrDict, self).__init__()
+        self.__dict__ = self
+        self.update(_dict)
+
+
 class Env:
     """
     A general-purpose environment.
@@ -29,7 +37,7 @@ class Env:
         - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete)
 
-    An "exp" (experience) is a dict consisting of "obs", "action", "reward", "label", "step"
+    An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
     numpy values which can be NaN. "obs" must include a batch dim.
 
     Can optionally include a frame_stack method.
@@ -127,7 +135,7 @@ class Env:
         if time_step.step_type == StepType.LAST:
             self.episode_done = True
 
-        return exp
+        return AttrDict(exp)
 
     def frame_stack(self, obs):
         for _ in range(self.frames.maxlen - len(self.frames) + 1):
@@ -155,7 +163,7 @@ class Env:
         # Clear frame stack
         self.frames.clear()
 
-        return exp
+        return AttrDict(exp)
 
     def render(self):
         return self.env.physics.render(height=256, width=256, camera_id=0)
