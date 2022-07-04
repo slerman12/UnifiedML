@@ -96,7 +96,7 @@ class Env:
 
         # Nature DQN-style pooling of last 2 frames  TODO Only for frames in frame skip (action repeat)
         self.last_2_frame_pool = last_2_frame_pool  # Causing error?
-        self.frame = np.empty((screen_size, screen_size), dtype=np.uint8)
+        self.frame = np.empty((210, 160), dtype=np.uint8)
         self.last_frame = None
 
         # Terminal on life loss  TODO default false
