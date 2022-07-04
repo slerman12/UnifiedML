@@ -15,7 +15,7 @@ import torch
 
 from torchvision.transforms.functional import resize
 
-# from skimage.transform import resize
+from skimage.transform import resize
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
@@ -135,11 +135,11 @@ class Env:
                 self.episode_done = True
             self.lives = lives
 
-        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
+        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
@@ -148,7 +148,7 @@ class Env:
 
         # Scalars/NaN to numpy
         for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or exp[key].shape == ():
+            if np.isscalar(exp[key]) or exp[key] in [None, False, True] or exp[key].shape == ():
                 exp[key] = np.full([1, 1], exp[key], 'float32')
 
         # Return experience
@@ -172,11 +172,11 @@ class Env:
         if self.terminal_on_life_loss:
             self.lives = self.env.ale.lives()
 
-        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
+        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
@@ -185,7 +185,7 @@ class Env:
 
         # Scalars/NaN to numpy
         for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or exp[key].shape == ():
+            if np.isscalar(exp[key]) or exp[key] in [None, False, True] or exp[key].shape == ():
                 exp[key] = np.full([1, 1], exp[key], 'float32')
 
         # Clear frame stack
@@ -195,4 +195,4 @@ class Env:
         return AttrDict(exp)
 
     def render(self):
-        return self.env.render('rgb_array')
+        return self.env.render('rgb_array')  # rgb_array | human

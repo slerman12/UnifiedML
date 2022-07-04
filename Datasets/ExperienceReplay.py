@@ -61,7 +61,7 @@ class ExperienceReplay:
 
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
                                                for name in ['reward', 'discount', 'label', 'step']],
-                      {'name': 'meta', 'shape': meta_shape})
+                      {'name': 'meta', 'shape': meta_shape})  # TODO Use dict; No spec names
 
         # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
 
@@ -163,7 +163,7 @@ class ExperienceReplay:
                     exp[spec['name']] = None
 
                 # Add batch dimension
-                if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None or exp[spec['name']].shape == ():
+                if np.isscalar(exp[spec['name']]) or exp[spec['name']] in [None, False, True] or exp[spec['name']].shape == ():
                     exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']], 'float32')
                 if len(exp[spec['name']].shape) == len(spec['shape']):
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
