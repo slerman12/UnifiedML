@@ -164,7 +164,7 @@ class ExperienceReplay:
 
                 # Add batch dimension
                 if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None or type(exp[spec['name']]) == bool or exp[spec['name']].shape == ():
-                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']], 'float32')
+                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']], dtype=getattr(exp[spec['name']], 'dtype', 'float32'))
                 if len(exp[spec['name']].shape) == len(spec['shape']):
                     exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
 

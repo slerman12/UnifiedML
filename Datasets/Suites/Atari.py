@@ -53,7 +53,7 @@ class Env:
     """
     def __init__(self, task='pong', seed=0, frame_stack=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
-                 last_2_frame_pool=True, terminal_on_life_loss=False, **kwargs):  # Atari-specific
+                 last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.discrete = True
         self.episode_done = False
 
@@ -154,7 +154,7 @@ class Env:
         # Scalars/NaN to numpy
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool or exp[key].shape == ():
-                exp[key] = np.full([1, 1], exp[key], 'float32')
+                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Return experience
         return AttrDict(exp)
@@ -196,7 +196,7 @@ class Env:
         # Scalars/NaN to numpy
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool or exp[key].shape == ():
-                exp[key] = np.full([1, 1], exp[key], 'float32')
+                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Clear frame stack
         self.frames.clear()
