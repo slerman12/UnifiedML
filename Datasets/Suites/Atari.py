@@ -15,6 +15,8 @@ import torch
 
 from torchvision.transforms.functional import resize
 
+from skimage.transform import resize
+
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
 class AttrDict(dict):
@@ -132,7 +134,8 @@ class Env:
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
+        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
+        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
@@ -168,7 +171,8 @@ class Env:
         # Add channel dim
         obs = np.expand_dims(obs, axis=0)
         # Resize image
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
+        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:]).numpy()
+        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # Add batch dim
         obs = np.expand_dims(obs, 0)
 
