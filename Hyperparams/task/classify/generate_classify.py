@@ -16,9 +16,8 @@ if __name__ == '__main__':
         f.write(r"""defaults:
       - _self_
     
-environment:
-    env:
-        _target_: Datasets.Suites.Classify
+env:
+    _target_: Datasets.Suites.Classify.Classify
 suite: classify
 train_steps: 200000
 stddev_schedule: 'linear(1.0,0.1,100000)'

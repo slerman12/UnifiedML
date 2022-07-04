@@ -5,7 +5,6 @@
 from collections import deque
 
 import warnings
-from copy import deepcopy
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
@@ -17,7 +16,7 @@ import torch
 
 from torchvision.transforms.functional import resize
 
-from skimage.transform import resize
+# from skimage.transform import resize
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
@@ -95,11 +94,11 @@ class Atari:
         # Set random seed
         self.env.seed(seed)
 
-        # Nature DQN-style pooling of last 2 frames  TODO Only for frames in frame skip (action repeat)
+        # Nature DQN-style pooling of last 2 frames
         self.last_2_frame_pool = last_2_frame_pool  # Causing error?
         self.last_frame = None
 
-        # Terminal on life loss  TODO default false
+        # Terminal on life loss
         self.terminal_on_life_loss = terminal_on_life_loss
         self.lives = None
 
@@ -153,9 +152,9 @@ class Atari:
             self.lives = lives
 
         # Resize image TODO delete
-        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
-        # obs = obs.astype(np.uint8)
-        obs = np.asarray(obs, dtype=np.uint8)
+        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
+        # # obs = obs.astype(np.uint8)
+        # obs = np.asarray(obs, dtype=np.uint8)
 
         # Image channels
         if self.color == 'grayscale':
@@ -164,7 +163,7 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image  TODO maybe just this
-        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
@@ -201,9 +200,9 @@ class Atari:
             self.lives = self.env.ale.lives()
 
         # Resize image TODO delete
-        obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
-        # obs = obs.astype(np.uint8)
-        obs = np.asarray(obs, dtype=np.uint8)
+        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
+        # # obs = obs.astype(np.uint8)
+        # obs = np.asarray(obs, dtype=np.uint8)
 
         # Image channels
         if self.color == 'grayscale':
@@ -212,7 +211,7 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image  TODO maybe just this
-        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)

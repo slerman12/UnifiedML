@@ -22,7 +22,10 @@ RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
 # Environment
-frame_stack: 1
+env: ???  # Defaults per respective task
+suite: ???  # Defaults per respective task  TODO move to env
+task_name: ???  # Defaults per respective task
+frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1
 Dataset: null
@@ -59,15 +62,15 @@ Agent: Agents.DQNAgent
 seed: 1
 experiment: Exp
 
-dataset:
+dataset:  # TODO maybe just pick any classify task and add Dataset= and task_name= flags to override the dataset/name
   _target_: ${Dataset}
   name: Dataset
 
 environment:
   _target_: Datasets.Environment.Environment
   _recursive_: false
-  env: ???  # Defaults per respective task
-  suite: ${suite}
+  env: ${env}
+  suite: ${suite}  # TODO Define in env, structure task as rl/atari/pong, rl/custom, classify/image/mnist, classify/image/custom, hierarchical inheritance of custom per domain (change dmc "domain" to subdomain)  (for now, just classify/custom)
   task: ${task_name}
   frame_stack: ${frame_stack}
   truncate_episode_steps: ${truncate_episode_steps}
