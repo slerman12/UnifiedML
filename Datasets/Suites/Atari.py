@@ -122,6 +122,8 @@ class Env:
         # Step env
         obs, reward, self.episode_done, info = self.env.step(action)
 
+        self.env.ale.getScreenGrayscale(obs)
+
         # Nature DQN-style pooling of last 2 frames
         if self.last_2_frame_pool:
             last_frame = self.last_frame
@@ -163,6 +165,8 @@ class Env:
     def reset(self):
         obs = self.env.reset()
         self.episode_done = False
+
+        self.env.ale.getScreenGrayscale(obs)
 
         # Last frame
         if self.last_2_frame_pool:
