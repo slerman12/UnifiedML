@@ -170,8 +170,7 @@ class Env:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
 
         # Reset frame stack
-        self.frames.clear()
-        self.frames.extend([exp['obs']] * self.frames.maxlen)
+        self.frames.append([exp['obs']] * self.frames.maxlen)
 
         return AttrDict(exp)
 
