@@ -9,7 +9,7 @@ from hydra.utils import instantiate
 
 
 class Environment:
-    def __init__(self, env, suite='DMC', task='cheetah_run', frame_stack=1, truncate_episode_steps=inf, action_repeat=1,
+    def __init__(self, env, suite='DMC', task='cheetah_run', frame_stack=1, truncate_episode_steps=1e3, action_repeat=1,
                  offline=False, generate=False, train=True, seed=0, **kwargs):
         self.suite = suite.lower()
         self.offline = offline
@@ -18,7 +18,7 @@ class Environment:
         # Offline and generate don't use training rollouts!
         self.disable = (offline or generate) and train
 
-        self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf default)
+        self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf if None)
 
         if not self.disable:
             self.env = instantiate(env, task=task, frame_stack=frame_stack, action_repeat=action_repeat,

@@ -151,7 +151,7 @@ class Atari:
                 self.episode_done = True
             self.lives = lives
 
-        # Resize image TODO delete
+        # Resize image
         # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # # obs = obs.astype(np.uint8)
         # obs = np.asarray(obs, dtype=np.uint8)
@@ -163,7 +163,7 @@ class Atari:
         elif self.color == 'rgb':
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
-        # Resize image  TODO maybe just this
+        # Resize image
         obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
@@ -200,7 +200,7 @@ class Atari:
         if self.terminal_on_life_loss:
             self.lives = self.env.ale.lives()
 
-        # Resize image TODO delete
+        # Resize image
         # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
         # # obs = obs.astype(np.uint8)
         # obs = np.asarray(obs, dtype=np.uint8)
@@ -212,7 +212,7 @@ class Atari:
         elif self.color == 'rgb':
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
-        # Resize image  TODO maybe just this
+        # Resize image
         obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
