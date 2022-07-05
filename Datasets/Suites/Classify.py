@@ -208,7 +208,7 @@ class Classify:
         low, high = np.inf, -np.inf
 
         for obs, _ in tqdm(self.batches, 'Computing mean, stddev, min, max for standardization/normalization. '
-                                       'This only has to be done once'):
+                                         'This only has to be done once'):
             b, c, h, w = obs.shape
             fst_moment = torch.empty(c) if fst_moment is None else fst_moment
             snd_moment = torch.empty(c) if snd_moment is None else snd_moment
