@@ -63,7 +63,7 @@ class Classify:
     An "evaluate_episodes" attribute divides evaluation across batches
 
     """
-    def __init__(self, dataset, task='MNIST', train=True, offline=True, batch_size=32, num_workers=1,
+    def __init__(self, dataset, task='MNIST', train=True, offline=True, generate=False, batch_size=32, num_workers=1,
                  low=None, high=None, frame_stack=None, action_repeat=None, seed=None, **kwargs):
         self.discrete = False
         self.episode_done = False
@@ -109,15 +109,23 @@ class Classify:
 
         self._batches = iter(self.batches)
 
+        # Offline and generate don't do training rollouts
+        if (offline or generate) and not train:
+            # Call training version
+            Classify(dataset, task, True, offline, generate, batch_size, num_workers, None, None, None, None, None,
+                     **kwargs)
+
         # Create replay
-        replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
-        if offline and not replay_path.exists():
-            self.create_replay(replay_path)
+        if train and (offline or generate):
+            replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
+            if offline and not replay_path.exists():
+                self.create_replay(replay_path)
 
         # Compute stats
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
         mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
-            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}')
+            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train \
+            else (None, None, low, high)
         low, high = low if low is None else low_, high_ if high is None else high
 
         self.obs_spec = {'name': 'obs',
@@ -130,6 +138,10 @@ class Classify:
         self.exp = None  # Experience
 
         self.evaluate_episodes = len(self.batches)
+
+        # Offline and generate don't do training rollouts, no need to waste memory
+        if (offline or generate) and train:
+            self.batches = self._batches = dataset = None
 
     def step(self, action):
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
