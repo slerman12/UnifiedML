@@ -41,7 +41,7 @@ def main(args):
     # Loggers
     logger = instantiate(args.logger)
 
-    vlogger = instantiate(args.vlogger)
+    vlogger = instantiate(args.vlogger) if args.log_video else None
 
     # Start
     converged = training = False

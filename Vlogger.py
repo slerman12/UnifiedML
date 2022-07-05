@@ -11,7 +11,7 @@ from torchvision.utils import save_image
 
 class Vlogger:
     def __init__(self, fps, path='.', reel=False):
-        self.save_path = Path(path.replace('Agents.', ''))
+        self.save_path = Path(path)
         self.save_path.mkdir(exist_ok=True, parents=True)
         self.fps = fps
 

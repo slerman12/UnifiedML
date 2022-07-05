@@ -128,7 +128,6 @@ class DMC:
             self.episode_done = time_step.step_type == StepType.LAST
             if self.episode_done:
                 break
-        time_step = self.env.step(action)
 
         # Create experience
         exp = {'obs': time_step.observation[self.key], 'action': action, 'reward': reward,
