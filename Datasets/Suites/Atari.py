@@ -121,7 +121,7 @@ class Atari:
 
         self.exp = None
 
-        self.action_repeat = action_repeat
+        self.action_repeat = action_repeat or 1
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
