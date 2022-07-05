@@ -17,8 +17,7 @@ if __name__ == '__main__':
         f.write(fr"""defaults:
       - _self_
  
-env:
-    _target_: Datasets.Suites.DMC.DMC
+Env: Datasets.Suites.DMC.DMC
 suite: dmc
 action_repeat: 2
 frame_stack: 3

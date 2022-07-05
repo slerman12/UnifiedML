@@ -158,6 +158,7 @@ class Atari:
 
         # Image channels
         if self.color == 'grayscale':
+            # obs.shape = (1, *obs.shape[1:])  # Add channel dim
             obs.shape = (1, *obs.shape)  # Add channel dim
         elif self.color == 'rgb':
             obs = obs.transpose(2, 0, 1)  # Channel-first
@@ -206,6 +207,7 @@ class Atari:
 
         # Image channels
         if self.color == 'grayscale':
+            # obs.shape = (1, *obs.shape[1:])  # Add channel dim
             obs.shape = (1, *obs.shape)  # Add channel dim
         elif self.color == 'rgb':
             obs = obs.transpose(2, 0, 1)  # Channel-first

@@ -16,8 +16,7 @@ if __name__ == '__main__':
         f.write(r"""defaults:
       - _self_
     
-env:
-    _target_: Datasets.Suites.Classify.Classify
+Env: Datasets.Suites.Classify.Classify
 suite: classify
 train_steps: 200000
 stddev_schedule: 'linear(1.0,0.1,100000)'
@@ -33,7 +32,7 @@ explore_steps: 0
 log_per_episodes: 300
 offline: true
 RL: false
-task_name: {}""".format(task if task != 'Custom' else 'Custom.${format:${Dataset}}_${dataset.name}'))
+{}""".format(f'task_name: {task}' if task != 'Custom' else ''))
         f.close()
         out += ' "' + task.lower() + '"'
     print(out)
