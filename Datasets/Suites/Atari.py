@@ -12,7 +12,7 @@ with warnings.catch_warnings():
 
 import numpy as np
 
-import torch
+from torch import as_tensor
 
 from torchvision.transforms.functional import resize
 
@@ -159,7 +159,7 @@ class Atari:
 
         # Resize image
         # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        obs = resize(as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
@@ -203,7 +203,7 @@ class Atari:
 
         # Resize image
         # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        obs = resize(as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
