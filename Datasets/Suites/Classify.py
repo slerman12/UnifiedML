@@ -60,7 +60,7 @@ class Classify:
     - include a "classes" (num classes) attribute
     - output (obs, label) pairs
 
-    An "evaluate_episodes" attribute divides evaluation across batches
+    An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
 
     """
     def __init__(self, dataset, task='MNIST', train=True, offline=True, generate=False, batch_size=32, num_workers=1,
@@ -68,6 +68,7 @@ class Classify:
         self.discrete = False
         self.episode_done = False
 
+        # Don't need once moved to replay (see below)
         dataset_ = dataset
 
         # Make env
@@ -193,15 +194,11 @@ class Classify:
             obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
             label = np.expand_dims(label, 1)
 
-            episode = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
-
             batch_size = obs.shape[0]
 
-            # To numpy, add batch dimension
-            for key in episode:
-                if episode[key] is None:
-                    episode[key] = np.array([[np.NaN]], 'float32')
-                    episode[key] = np.repeat(episode[key], batch_size, axis=0)
+            dummy = np.full((batch_size, 0), np.NaN)
+
+            episode = {'obs': obs, 'action': dummy, 'reward': dummy, 'label': label, 'step': dummy}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
             episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'
