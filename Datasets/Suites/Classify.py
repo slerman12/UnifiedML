@@ -69,7 +69,7 @@ class Classify:
         self.episode_done = False
 
         dataset_ = dataset
-pre
+
         # Make env
 
         # with warnings.catch_warnings():
