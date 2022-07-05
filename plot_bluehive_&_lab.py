@@ -66,6 +66,12 @@ plots = [['CNN', 'ResNet18', 'CNN-Transferred']]
 title = 'RRUFF'
 x_axis = 'Step'
 
+plot_group = 'Atari_Tests'
+tasks = []
+plots = [['skimage', 'no-skimage']]
+title = 'Atari Tests'
+x_axis = 'Step'
+
 experiments = set().union(*plots)
 
 

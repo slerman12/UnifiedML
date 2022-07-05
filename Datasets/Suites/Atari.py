@@ -12,11 +12,11 @@ with warnings.catch_warnings():
 
 import numpy as np
 
-# import torch
+import torch
 
-# from torchvision.transforms.functional import resize
+from torchvision.transforms.functional import resize
 
-from skimage.transform import resize
+# from skimage.transform import resize
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
@@ -63,7 +63,7 @@ class Atari:
 
         task = f'ALE/{task}-v5'
 
-        # Load task  TODO Mario bros, pacman, king kong, etc. https://brosa.ca/blog/ale-release-v0.7
+        # Load task  TODO Mario Bros, Pacman, King Kong, etc. https://brosa.ca/blog/ale-release-v0.7
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=UserWarning)
@@ -158,8 +158,8 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
-        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
+        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
@@ -202,8 +202,8 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
-        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
+        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
