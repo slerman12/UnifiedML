@@ -69,7 +69,7 @@ class Classify:
         self.episode_done = False
 
         dataset_ = dataset
-
+pre
         # Make env
 
         # with warnings.catch_warnings():
@@ -111,9 +111,11 @@ class Classify:
 
         self._batches = iter(self.batches)
 
-        # Offline and generate don't do training rollouts
+        """MOVE TO REPLAY"""
+
+        # Offline and generate don't use training rollouts
         if (offline or generate) and not train:
-            # But need to create training replay, compute stats
+            # But still need to create training replay & compute stats
             Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, None,
                      **kwargs)
 
@@ -126,11 +128,16 @@ class Classify:
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
         # Compute stats
-        mean = stddev = None, None
-        if train:
-            mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
-                else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}')
-            low, high = low if low is None else low_, high_ if high is None else high
+        mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
+            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else 0
+        low, high = low if low is None else low_, high_ if high is None else high
+
+        # No need
+        if (offline or generate) and train:
+            self.batches = self._batches = dataset = None
+            return
+
+        """---------------------"""
 
         self.obs_spec = {'name': 'obs',
                          'shape': tuple(next(iter(self.batches))[0].shape[1:]),
@@ -142,10 +149,6 @@ class Classify:
         self.exp = None  # Experience
 
         self.evaluate_episodes = len(self.batches)
-
-        # No need to waste memory
-        if (offline or generate) and train:
-            self.batches = self._batches = dataset = None
 
     def step(self, action):
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
