@@ -128,7 +128,7 @@ class Classify:
         self.exp = None  # Experience
 
     def step(self, action):
-        # Concat a dummy episode item ('next obs'), batch=episode
+        # Concat a dummy episode item ('next obs') since batch=episode
         obs, label = [np.concatenate([b, b[:1]], 0) for b in (self.exp.obs, self.exp.label)]
 
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
