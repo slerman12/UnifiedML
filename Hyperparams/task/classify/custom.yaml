@@ -2,7 +2,16 @@ defaults:
       - _self_
     
 Env: Datasets.Suites.Classify.Classify
+Dataset: null
+environment:
+    dataset: ${dataset}
+    low: null
+    high: null
+    batch_size: ${batch_size}
+    num_workers: ${num_workers}
+    offline: ${offline}
 suite: classify
+task_name: ${format:${Dataset}}
 train_steps: 200000
 stddev_schedule: 'linear(1.0,0.1,100000)'
 frame_stack: null
@@ -15,5 +24,5 @@ learn_steps_after: 0
 seed_steps: 50
 explore_steps: 0
 log_per_episodes: 300
-offline: true
 RL: false
+offline: true

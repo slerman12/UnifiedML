@@ -3,10 +3,10 @@ defaults:
     
 Env: Datasets.Suites.Atari.Atari
 suite: atari
+task_name: Freeway
 action_repeat: 4
 truncate_episode_steps: 250
 nstep: 10
 frame_stack: 3
 train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,20000)'
-task_name: Freeway

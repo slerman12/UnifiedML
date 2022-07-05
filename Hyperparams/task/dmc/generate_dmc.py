@@ -19,10 +19,10 @@ if __name__ == '__main__':
  
 Env: Datasets.Suites.DMC.DMC
 suite: dmc
+task_name: {task}
 action_repeat: 2
 frame_stack: 3
 nstep: {1 if 'walker' in task else 3}
-task_name: {task}
 train_steps: {500000 if task in easy else 1500000 if task in medium else 15000000}
 stddev_schedule: 'linear(1.0,0.1,{100000 if task in easy else 500000 if task in medium else 2000000})'
 {'lr: 8e-5' if 'humanoid' in task else ''}

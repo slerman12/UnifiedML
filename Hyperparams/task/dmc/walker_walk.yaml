@@ -3,10 +3,10 @@ defaults:
  
 Env: Datasets.Suites.DMC.DMC
 suite: dmc
+task_name: walker_walk
 action_repeat: 2
 frame_stack: 3
 nstep: 1
-task_name: walker_walk
 train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,100000)'
 

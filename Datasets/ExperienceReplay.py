@@ -57,6 +57,7 @@ class ExperienceReplay:
 
         # Data specs
 
+        frame_stack = frame_stack or 1
         obs_spec.shape[0] //= frame_stack
 
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}

@@ -3,10 +3,10 @@ defaults:
  
 Env: Datasets.Suites.DMC.DMC
 suite: dmc
+task_name: humanoid_run
 action_repeat: 2
 frame_stack: 3
 nstep: 3
-task_name: humanoid_run
 train_steps: 15000000
 stddev_schedule: 'linear(1.0,0.1,2000000)'
 lr: 8e-5

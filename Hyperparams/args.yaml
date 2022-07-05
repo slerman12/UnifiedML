@@ -26,15 +26,15 @@ Env: ???  # Defaults per respective task
 env:
   _target_: ${Env}
   _recursive_: false
+Dataset: null  # Defaults per respective Classify task
+dataset:
+  _target_: ${Dataset}
+  _recursive_: false
 suite: ???  # Defaults per respective task
 task_name: ???  # Defaults per respective task
 frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1
-Dataset: ???  # Defaults per respective Classify task
-dataset:
-  _target_: ${Dataset}
-  _recursive_: false
 # Replay
 nstep: 10
 batch_size: 256
@@ -80,7 +80,6 @@ environment:
   offline: ${offline}
   generate: ${generate}
   seed: ${seed}
-  dataset: ${dataset}
 
 agent:
   _target_: ${Agent}
@@ -110,6 +109,7 @@ agent:
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay
+  _recursive_: false
   batch_size: ${batch_size}
   num_workers: ${num_workers}
   capacity: 1000000
