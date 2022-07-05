@@ -23,7 +23,7 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 
 import matplotlib.pyplot as plt
-from matplotlib import ticker
+from matplotlib import ticker, dates
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
@@ -186,7 +186,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         if _x_axis == 'Time':
-            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s').dt.strftime('%H:%M:%S')
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
 
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
@@ -227,6 +227,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         if _x_axis == 'Time':
             ax.set_xlabel("Time (h)")
+            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
             # For now, group x axis into bins only for time
             ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
