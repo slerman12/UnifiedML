@@ -18,16 +18,16 @@ def shorthand(log_name):
 
 
 def format(log, log_name):
-    l = shorthand(log_name)
+    k = shorthand(log_name)
 
     if 'time' in log_name.lower():
         log = str(datetime.timedelta(seconds=int(log)))
-        return f'{l}: {log}'
+        return f'{k}: {log}'
     elif float(log).is_integer():
         log = int(log)
-        return f'{l}: {log}'
+        return f'{k}: {log}'
     else:
-        return f'{l}: {log:.04f}'
+        return f'{k}: {log:.04f}'
 
 
 class Logger:
@@ -55,10 +55,10 @@ class Logger:
 
             logs = self.logs[name]
 
-            for k, l in log.items():
-                if isinstance(l, torch.Tensor):
-                    l = l.detach().numpy()
-                logs[k] = logs[k] + [l] if k in logs else [l]
+            for log_name, item in log.items():
+                if isinstance(item, torch.Tensor):
+                    item = item.detach().numpy()
+                logs[log_name] = logs[log_name] + [item] if log_name in logs else [item]
 
         if dump:
             self.dump_logs(name)
@@ -66,12 +66,12 @@ class Logger:
     def dump_logs(self, name=None):
         if name is None:
             # Iterate through all logs
-            for n in self.logs:
-                for log_name in self.logs[n]:
+            for name in self.logs:
+                for log_name in self.logs[name]:
                     agg = self.aggregate(log_name)
-                    self.logs[n][log_name] = agg(self.logs[n][log_name])
-                self._dump_logs(self.logs[n], name=n)
-                del self.logs[n]
+                    self.logs[name][log_name] = agg(self.logs[name][log_name])
+                self._dump_logs(self.logs[name], name=name)
+                del self.logs[name]
         else:
             # Iterate through just the named log
             if name not in self.logs:
@@ -85,9 +85,9 @@ class Logger:
 
     # Aggregate list of scalars or batched-values of arbitrary lengths
     def aggregate(self, log_name):
-        def last(x):
-            x = np.array(x).flat
-            return x[len(x) - 1]
+        def last(data):
+            data = np.array(data).flat
+            return data[len(data) - 1]
 
         agg = self.default_aggregations.get(log_name,
                                             np.ma.mean if self.aggregation == 'mean'

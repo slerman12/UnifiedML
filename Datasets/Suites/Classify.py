@@ -60,6 +60,8 @@ class Classify:
     - include a "classes" (num classes) attribute
     - output (obs, label) pairs
 
+    An "evaluate_episodes" attribute divides evaluation across batches
+
     """
     def __init__(self, dataset, task='MNIST', train=True, offline=True, batch_size=32, num_workers=1,
                  low=None, high=None, frame_stack=None, action_repeat=None, seed=None, **kwargs):
@@ -126,6 +128,8 @@ class Classify:
                          'high': high}
 
         self.exp = None  # Experience
+
+        self.evaluate_episodes = len(self.batches)
 
     def step(self, action):
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
