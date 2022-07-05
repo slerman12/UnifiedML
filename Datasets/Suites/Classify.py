@@ -68,6 +68,8 @@ class Classify:
         self.discrete = False
         self.episode_done = False
 
+        dataset_ = dataset
+
         # Make env
 
         # with warnings.catch_warnings():
@@ -76,8 +78,8 @@ class Classify:
         # Different datasets have different specs
         root_specs = [dict(root=f'./Datasets/ReplayBuffer/Classify/{task}_%s' %
                                 ('Train' if train else 'Eval')), {}]
-        train_specs = [dict(version='2021_' + 'train' if train else 'valid'),
-                       dict(train=train), {}]
+        train_specs = [dict(train=train),
+                       dict(version='2021_' + 'train' if train else 'valid'), {}]
         download_specs = [dict(download=True), {}]
         transform_specs = [dict(transform=Transform()), {}]
 
@@ -111,22 +113,24 @@ class Classify:
 
         # Offline and generate don't do training rollouts
         if (offline or generate) and not train:
-            # Call training version
-            Classify(dataset, task, True, offline, generate, batch_size, num_workers, None, None, None, None, None,
+            # But need to create training replay, compute stats
+            Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, None,
                      **kwargs)
 
+        replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
+
         # Create replay
-        if train and (offline or generate):
-            replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
-            if offline and not replay_path.exists():
-                self.create_replay(replay_path)
+        if train and (offline or generate) and not replay_path.exists():
+            self.create_replay(replay_path)  # TODO Conflict-handling in distributed
+
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
         # Compute stats
-        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
-        mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
-            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train \
-            else (None, None, low, high)
-        low, high = low if low is None else low_, high_ if high is None else high
+        mean = stddev = None, None
+        if train:
+            mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
+                else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}')
+            low, high = low if low is None else low_, high_ if high is None else high
 
         self.obs_spec = {'name': 'obs',
                          'shape': tuple(next(iter(self.batches))[0].shape[1:]),
@@ -139,7 +143,7 @@ class Classify:
 
         self.evaluate_episodes = len(self.batches)
 
-        # Offline and generate don't do training rollouts, no need to waste memory
+        # No need to waste memory
         if (offline or generate) and train:
             self.batches = self._batches = dataset = None
 
@@ -188,8 +192,16 @@ class Classify:
 
             episode = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
 
+            batch_size = obs.shape[0]
+
+            # To numpy, add batch dimension
+            for key in episode:
+                if episode[key] is None:
+                    episode[key] = np.array([[np.NaN]], 'float32')
+                    episode[key] = np.repeat(episode[key], batch_size, axis=0)
+
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            episode_name = f'{timestamp}_{episode_ind}_{obs.shape[0]}.npz'
+            episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'
 
             with io.BytesIO() as buffer:
                 np.savez_compressed(buffer, **episode)
