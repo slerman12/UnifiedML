@@ -158,8 +158,8 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
+        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
@@ -202,8 +202,8 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
+        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
+        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
