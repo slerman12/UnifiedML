@@ -388,7 +388,6 @@ class Experiences:
 
         # Present
         obs = frame_stack(episode['obs'], idx)
-        action = episode['action'][idx + 1]
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
 
@@ -400,6 +399,7 @@ class Experiences:
         # Future
         if self.nstep:
             # Transition
+            action = episode['action'][idx + 1]
             next_obs = frame_stack(episode['obs'], idx + self.nstep)
 
             # Trajectory
@@ -413,7 +413,9 @@ class Experiences:
             reward = np.dot(discounts[:-1], traj_r)
             discount = discounts[-1:]
         else:
-            next_obs = traj_o = traj_a = traj_r = traj_l = reward = np.full((0,), np.NaN)
+            action, reward = episode['action'][idx], episode['reward'][idx]
+
+            next_obs = traj_o = traj_a = traj_r = traj_l = np.full((0,), np.NaN)
             discount = np.array([1.0])
 
         # Transform

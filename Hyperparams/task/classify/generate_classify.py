@@ -30,8 +30,6 @@ environment:
     high: {'null' if task == 'Custom' else 1}
     batch_size: ${{batch_size}}
     num_workers: ${{num_workers}}
-    offline: ${{offline}}
-    generate: ${{generate}}
 suite: classify
 task_name: {'${format:${Dataset}}' if task == 'Custom' else task}
 train_steps: 200000

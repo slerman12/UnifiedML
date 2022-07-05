@@ -22,7 +22,7 @@ class Environment:
 
         if not self.disable:
             self.env = instantiate(env, task=task, frame_stack=frame_stack, action_repeat=action_repeat,
-                                   train=train, seed=seed, **kwargs)
+                                   offline=offline, generate=generate, train=train, seed=seed, **kwargs)
             self.env.reset()
 
         self.action_repeat = getattr(getattr(self, 'env', 1), 'action_repeat', 1)  # Optional, can skip frames

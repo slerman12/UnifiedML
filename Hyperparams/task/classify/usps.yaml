@@ -9,7 +9,6 @@ environment:
     high: 1
     batch_size: ${batch_size}
     num_workers: ${num_workers}
-    offline: ${offline}
 suite: classify
 task_name: USPS
 train_steps: 200000

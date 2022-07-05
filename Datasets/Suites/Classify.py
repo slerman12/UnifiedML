@@ -155,7 +155,7 @@ class Classify:
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
         self.exp.reward = correct
-        self.exp.action = action
+        self.exp.action = action  # Maybe store argmax
 
         self.episode_done = True
 
@@ -197,8 +197,9 @@ class Classify:
             batch_size = obs.shape[0]
 
             dummy = np.full((batch_size, 0), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape']), np.NaN)
 
-            episode = {'obs': obs, 'action': dummy, 'reward': dummy, 'label': label, 'step': dummy}
+            episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
             episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'
