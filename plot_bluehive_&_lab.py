@@ -70,7 +70,7 @@ plot_group = 'Tests'
 tasks = ['cheetah_run', 'pong']
 plots = [['skimage', 'no-skimage', 'Reference', 'Exp']]
 title = 'Tests'
-x_axis = 'time'
+x_axis = 'step'
 
 experiments = set().union(*plots)
 
