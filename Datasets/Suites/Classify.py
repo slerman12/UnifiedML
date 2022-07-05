@@ -223,7 +223,7 @@ class Classify:
             low, high = min(obs.min(), low), max(obs.max(), high)
 
         mean, stddev = fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()
-        open(path + f'_Stats_{mean}_{stddev}_{low}_{high}', 'w')  # Save norm values for future reuse
+        open(path + f'_Stats_{mean}_{stddev}_{low}_{high}', 'w')  # Save stat values for future reuse
 
         return mean, stddev, low.item(), high.item()
 
