@@ -12,11 +12,11 @@ with warnings.catch_warnings():
 
 import numpy as np
 
-import torch
+# import torch
 
-from torchvision.transforms.functional import resize
+# from torchvision.transforms.functional import resize
 
-# from skimage.transform import resize
+from skimage.transform import resize
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
@@ -151,20 +151,15 @@ class Atari:
                 self.episode_done = True
             self.lives = lives
 
-        # Resize image
-        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
-        # # obs = obs.astype(np.uint8)
-        # obs = np.asarray(obs, dtype=np.uint8)
-
         # Image channels
         if self.color == 'grayscale':
-            # obs.shape = (1, *obs.shape[1:])  # Add channel dim
             obs.shape = (1, *obs.shape)  # Add channel dim
         elif self.color == 'rgb':
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
+        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
@@ -200,20 +195,15 @@ class Atari:
         if self.terminal_on_life_loss:
             self.lives = self.env.ale.lives()
 
-        # Resize image
-        # obs = resize(obs, self.obs_spec['shape'][1:], preserve_range=True)
-        # # obs = obs.astype(np.uint8)
-        # obs = np.asarray(obs, dtype=np.uint8)
-
         # Image channels
         if self.color == 'grayscale':
-            # obs.shape = (1, *obs.shape[1:])  # Add channel dim
             obs.shape = (1, *obs.shape)  # Add channel dim
         elif self.color == 'rgb':
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
+        obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)
+        # obs = resize(torch.as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()  # Via torchvision
 
         # Add batch dim
         obs = np.expand_dims(obs, 0)
