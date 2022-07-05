@@ -415,7 +415,7 @@ class Experiences:
         else:
             action, reward = episode['action'][idx], episode['reward'][idx]
 
-            next_obs = traj_o = traj_a = traj_r = traj_l = np.full((0,), np.NaN)
+            next_obs = traj_o = traj_a = traj_r = traj_l = np.full((1,), np.NaN)
             discount = np.array([1.0])
 
         # Transform

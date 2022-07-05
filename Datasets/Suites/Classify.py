@@ -170,6 +170,11 @@ class Classify:
         # Create experience
         exp = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
 
+        # Scalars/NaN to numpy
+        for key in exp:
+            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
+                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+
         self.exp = AttrDict(exp)  # Experience
 
         return self.exp
@@ -196,7 +201,7 @@ class Classify:
 
             batch_size = obs.shape[0]
 
-            dummy = np.full((batch_size, 0), np.NaN)
+            dummy = np.full((batch_size, 1), np.NaN)
             missing = np.full((batch_size, *self.action_spec['shape']), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
