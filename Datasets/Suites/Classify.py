@@ -130,15 +130,9 @@ class Classify:
     def step(self, action):
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
-        # Concat a dummy episode item ('next obs') since batch=episode
-        obs, label = [np.concatenate([b, b[:1]], 0) for b in (self.exp.obs, self.exp.label)]
+        self.exp.reward = correct
+        self.exp.action = action
 
-        # 'reward' and 'action' paired with 'next obs'
-        self.exp.reward[1:] = correct
-        self.exp.reward[0] = correct.mean()  # Dummy
-        self.exp.action[1:] = action
-
-        self.exp.update({'obs': obs, 'label': label})
         self.episode_done = True
 
         return self.exp
@@ -147,16 +141,10 @@ class Classify:
         obs, label = [np.array(b, dtype='float32') for b in self.sample()]
         label = np.expand_dims(label, 1)
 
-        batch_size = obs.shape[0]
-
-        dummy_action = np.full([batch_size + 1, self.action_spec['shape'][0]], np.NaN, 'float32')
-        dummy_reward = np.full([batch_size + 1, 1], np.NaN, 'float32')
-
         self.episode_done = False
 
         # Create experience
-        exp = {'obs': obs, 'action': dummy_action, 'reward': dummy_reward,
-               'label': label, 'step': None}
+        exp = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -182,19 +170,10 @@ class Classify:
             obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
             label = np.expand_dims(label, 1)
 
-            batch_size = obs.shape[0]
-
-            # Concat a dummy batch item
-            obs, label = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (obs, label)]
-
-            dummy_action = np.full([batch_size + 1, self.action_spec['shape'][0]], np.NaN, 'float32')
-            dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
-
-            episode = {'obs': obs, 'action': dummy_action, 'reward': dummy_reward,
-                       'label': label, 'step': dummy_step}
+            episode = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            episode_name = f'{timestamp}_{episode_ind}_{batch_size + 1}.npz'
+            episode_name = f'{timestamp}_{episode_ind}_{obs.shape[0]}.npz'
 
             with io.BytesIO() as buffer:
                 np.savez_compressed(buffer, **episode)

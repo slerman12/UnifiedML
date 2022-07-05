@@ -87,7 +87,7 @@ class ExperienceReplay:
 
         # Parallelized experience loading, either online or offline
 
-        self.nstep = nstep
+        self.nstep = nstep * int(not (suite == 'classify' or generate))  # No nstep for classify, generate
 
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
@@ -373,7 +373,7 @@ class Experiences:
 
     # N-step cumulative discounted rewards
     def process(self, episode, idx=None):
-        offset = self.nstep or 1
+        offset = self.nstep or 0
         episode_len = len(episode['obs']) - offset
         if idx is None:
             idx = np.random.randint(episode_len)
@@ -386,10 +386,9 @@ class Experiences:
             frames = frames.reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
             return frames
 
-        # Transition
+        # Present
         obs = frame_stack(episode['obs'], idx)
         action = episode['action'][idx + 1]
-        next_obs = frame_stack(episode['obs'], idx + self.nstep)
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
 
@@ -398,19 +397,23 @@ class Experiences:
 
         meta = episode['meta'][idx]  # Agent-writable Metadata
 
-        # Trajectory
+        # Future
         if self.nstep:
+            # Transition
+            next_obs = frame_stack(episode['obs'], idx + self.nstep)
+
+            # Trajectory
             traj_o = episode['obs'][idx:idx + self.nstep + 1]  # TODO Frame-stack
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
             traj_l = episode['label'][idx:idx + self.nstep + 1]
 
-            # Compute cumulative discounted reward
+            # Cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
             reward = np.dot(discounts[:-1], traj_r)
             discount = discounts[-1:]
         else:
-            traj_o = traj_a = traj_r = traj_l = reward = np.array([np.NaN])
+            next_obs = traj_o = traj_a = traj_r = traj_l = reward = np.full((0,), np.NaN)
             discount = np.array([1.0])
 
         # Transform
