@@ -122,19 +122,19 @@ class Classify:
 
         """MOVE TO REPLAY"""
 
+        replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
+
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+
         # Offline and generate don't use training rollouts
-        if (offline or generate) and not train:
+        if (offline or generate) and not train and (not replay_path.exists() or not len(stats_path)):
             # But still need to create training replay & compute stats
             Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, None,
                      **kwargs)
 
-        replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
-
         # Create replay
         if train and (offline or generate) and not replay_path.exists():
             self.create_replay(replay_path)  # TODO Conflict-handling in distributed & mark success in case of terminate
-
-        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
         # Compute stats
         mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
