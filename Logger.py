@@ -31,12 +31,13 @@ def format(log, log_name):
 
 
 class Logger:
-    def __init__(self, task, seed, path='.', aggregation='mean', wandb=False):
+    def __init__(self, task, seed, generate=False, path='.', aggregation='mean', wandb=False):
 
         self.path = path
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.task = task
         self.seed = seed
+        self.generate = generate
 
         self.logs = {}
 
@@ -144,6 +145,9 @@ class Logger:
 
         assert 'step' in logs
 
+        if self.generate:
+            name = 'Generate_' + name
+
         file_name = Path(self.path) / f'{self.task}_{self.seed}_{name}.csv'
 
         write_header = True
@@ -167,6 +171,9 @@ class Logger:
 
             experiment, agent, suite = self.path.split('/')[2:5]
 
+            if self.generate:
+                agent = 'Generate_' + agent
+
             wandb.init(project=experiment, name=f'{agent}_{suite}_{self.task}_{self.seed}', dir=self.path)
 
             for file in ['', '*/', '*/*/', '*/*/*/']:
@@ -178,6 +185,7 @@ class Logger:
             self.wandb = wandb
 
         measure = 'reward' if 'reward' in logs else 'accuracy'
-        logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
+        if measure in logs:
+            logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
 
         self.wandb.log(logs, step=int(logs['step']))

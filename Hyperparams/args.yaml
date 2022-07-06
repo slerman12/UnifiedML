@@ -132,6 +132,7 @@ logger:
   path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/
   task: ${task_name}
   seed: ${seed}
+  generate: ${generate}
   aggregation: mean
   wandb: false
 
