@@ -130,8 +130,8 @@ class Classify:
         if (offline or generate) and not train and (not replay_path.exists() or not len(stats_path)):
 
             # But still need to create training replay & compute stats
-            Classify(dataset_, task, True, offline, generate, batch_size, num_workers,
-                     None, None, None, None, seed, **kwargs)
+            Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
+                     **kwargs)
 
         # Create replay
         if train and (offline or generate) and not replay_path.exists():
