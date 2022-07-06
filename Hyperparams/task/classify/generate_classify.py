@@ -12,7 +12,7 @@ names = [
 ]
 
 paths = ['null' if task == 'Custom'
-         else f'Datasets.ReplayBuffer.Classify._{task}.{task}' if task not in torchvision.datasets.__all__
+         else f'Datasets.Suites._{task}.{task}' if task not in torchvision.datasets.__all__
          else f'torchvision.datasets.{task}' for task in names]
 
 if __name__ == '__main__':

@@ -163,8 +163,9 @@ Aug: null  # Shorthand for recipes.aug._target_
 
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 Pool: null  # Shorthand for recipes.encoder.pool._target_
-Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
-Q_trunk: null  # Shorthand for recipes.critic.trunk._target_
+Trunk: null  # Shorthand for both trunks' _target_, does not have lowercase counterpart
+Pi_trunk: ${Trunk}  # Shorthand for recipes.actor.trunk._target_
+Q_trunk: ${Trunk}  # Shorthand for recipes.critic.trunk._target_
 Generator: null  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_
 Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
 Predictor: ${Generator}  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_

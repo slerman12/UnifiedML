@@ -136,27 +136,27 @@ sweep = [
     # Soup, 50-50, CNN, 7-Way
     """python Run.py 
     task=classify/custom 
-    Dataset=Datasets.ReplayBuffer.Classify._XRD.XRD pi_trunk=Identity 
-    Eyes=XRD.Encoder 
-    Pi_head=XRD.Actor 
-    aug=Identity 
-    dataset.name='Soup-50-50_${dataset.num_classes}-Way' 
-    experiment=CNN 
-    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
-    save_per_steps=250001
-    +'dataset.train_eval_splits=[1, 0.5]' 
-    +dataset.num_classes=7 
-    train_steps=5e5""",
-
-    # Soup, 50-50, CNN, 230-Way
-    """python Run.py 
-    task=classify/custom 
-    Dataset=Datasets.ReplayBuffer.Classify._XRD.XRD 
+    Dataset=Datasets.Suites._XRD.XRD 
     pi_trunk=Identity 
     Eyes=XRD.Encoder 
     Pi_head=XRD.Actor 
     aug=Identity 
-    dataset.name='Soup-50-50_${dataset.num_classes}-Way' 
+    task_name='Soup-50-50_7-Way' 
+    experiment=CNN 
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
+    +'dataset.train_eval_splits=[1, 0.5]' 
+    train_steps=5e5 
+    save=true""",
+
+    # Soup, 50-50, CNN, 230-Way
+    """python Run.py 
+    task=classify/custom 
+    Dataset=Datasets.Suites._XRD.XRD 
+    pi_trunk=Identity 
+    Eyes=XRD.Encoder 
+    Pi_head=XRD.Actor 
+    aug=Identity 
+    task_name='Soup-50-50_230-Way' 
     experiment=CNN 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
     +'dataset.train_eval_splits=[1, 0.5]' 
@@ -165,12 +165,12 @@ sweep = [
 
     # Synthetic-Only, CNN, 7/230-Way
     """python Run.py 
-    task=classify/custom Dataset=Datasets.ReplayBuffer.Classify._XRD.XRD 
+    task=classify/custom Dataset=Datasets.Suites._XRD.XRD 
     pi_trunk=Identity 
     Eyes=XRD.Encoder 
     Pi_head=XRD.Actor 
     aug=Identity 
-    dataset.name='Synthetic_${dataset.num_classes}-Way' 
+    task_name='Synthetic_${dataset.num_classes}-Way' 
     experiment=CNN 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
     +'dataset.train_eval_splits=[1, 0]' 
@@ -179,17 +179,17 @@ sweep = [
 
     # Soup, 50-50, Spectrogram, ResNet18, 7/230-Way
     """python Run.py 
-    task=classify/custom Dataset=Datasets.ReplayBuffer.Classify._XRD.XRD 
+    task=classify/custom 
+    Dataset=Datasets.Suites._XRD.XRD 
     pi_trunk=Identity 
     Eyes=ResNet18 
     Pi_head=XRD.Actor 
     aug=Identity 
-    dataset.name='Soup-50-50_Spectrogram_${dataset.num_classes}-Way' 
+    task_name='Soup-50-50_Spectrogram_7-Way' 
     experiment='ResNet18' 
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]' 
     +'dataset.train_eval_splits=[1, 0.5]' 
     +dataset.spectrogram=true 
-    +dataset.num_classes=7 
     train_steps=5e5
     parallel=true""",
 ]

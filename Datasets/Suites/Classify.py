@@ -10,7 +10,10 @@ import json
 import random
 import warnings
 from pathlib import Path
+
 from tqdm import tqdm
+
+from PIL.Image import Image
 
 import numpy as np
 
@@ -112,6 +115,11 @@ class Classify:
 
         self._batches = iter(self.batches)
 
+        obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
+        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape
+
+        self.obs_spec = {'shape': obs_shape}
+
         """MOVE TO REPLAY"""
 
         # Offline and generate don't use training rollouts
@@ -124,7 +132,7 @@ class Classify:
 
         # Create replay
         if train and (offline or generate) and not replay_path.exists():
-            self.create_replay(replay_path)  # TODO Conflict-handling in distributed
+            self.create_replay(replay_path)  # TODO Conflict-handling in distributed & mark success in case of terminate
 
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
@@ -141,7 +149,7 @@ class Classify:
         """---------------------"""
 
         self.obs_spec = {'name': 'obs',
-                         'shape': tuple(next(iter(self.batches))[0].shape[1:]),
+                         'shape': obs_shape,
                          'mean': mean,
                          'stddev': stddev,
                          'low': low,
@@ -155,7 +163,7 @@ class Classify:
         correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
 
         self.exp.reward = correct
-        self.exp.action = action  # Maybe store argmax
+        self.exp.action = action  # Note: can store argmax instead
 
         self.episode_done = True
 
@@ -164,6 +172,10 @@ class Classify:
     def reset(self):
         obs, label = [np.array(b, dtype='float32') for b in self.sample()]
         label = np.expand_dims(label, 1)
+
+        batch_size = obs.shape[0]
+
+        obs.shape = (batch_size, *self.obs_spec['shape'])
 
         self.episode_done = False
 
@@ -201,6 +213,8 @@ class Classify:
 
             batch_size = obs.shape[0]
 
+            obs.shape = (batch_size, *self.obs_spec['shape'])
+
             dummy = np.full((batch_size, 1), np.NaN)
             missing = np.full((batch_size, *self.action_spec['shape']), np.NaN)
 
@@ -220,9 +234,12 @@ class Classify:
         fst_moment, snd_moment = None, None
         low, high = np.inf, -np.inf
 
-        for obs, _ in tqdm(self.batches, 'Computing mean, stddev, min, max for standardization/normalization. '
+        for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
                                          'This only has to be done once'):
-            b, c, h, w = obs.shape
+
+            b = obs.shape[0]
+            _, c, h, w = (b, *self.obs_spec['shape'])
+            obs = obs.view(b, c, h, w)
             fst_moment = torch.empty(c) if fst_moment is None else fst_moment
             snd_moment = torch.empty(c) if snd_moment is None else snd_moment
             nb_pixels = b * h * w
@@ -243,7 +260,7 @@ class Classify:
 
 class Transform:
     def __call__(self, sample):
-        return F.to_tensor(sample)
+        return F.to_tensor(sample) if isinstance(sample, Image) else sample
 
 
 def worker_init_fn(worker_id):
