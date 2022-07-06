@@ -29,8 +29,8 @@ class DMC:
     (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
-    (4) "discrete" boolean attribute
-    (5) "episode_done" boolean attribute
+    (4) "discrete" attribute
+    (5) "episode_done" attribute
     (6) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (7) "action-spec" attribute which includes:
