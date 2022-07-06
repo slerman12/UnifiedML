@@ -91,7 +91,7 @@ class Classify:
                 specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
                 specs.update(kwargs)
                 dataset = instantiate(dataset, **specs)
-            except TypeError:
+            except (TypeError, ValueError):
                 continue
             break
 
