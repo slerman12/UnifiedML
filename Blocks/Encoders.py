@@ -28,14 +28,15 @@ class CNNEncoder(nn.Module):
         super().__init__()
 
         self.obs_shape = torch.Size(obs_spec.shape)
-        self.standardize = obs_spec.mean is not None and obs_spec.stddev is not None and standardize  # Whether to center scale (0 mean, 1 stddev)
-        self.normalize = obs_spec.low is not None and obs_spec.high is not None and norm  # Whether to [0, 1] shift-max scale
+
+        self.standardize = \
+            standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
+        self.normalize = norm and None not in [obs_spec.low, obs_spec.high]  # Whether to [0, 1] shift-max scale
 
         if self.standardize:
             self.mean, self.stddev = Utils.to_torch((obs_spec.mean, obs_spec.stddev), device)
 
-        if self.normalize:
-            self.low, self.high = obs_spec.low, obs_spec.high
+        self.low, self.high = obs_spec.low, obs_spec.high
 
         # Dimensions
         obs_spec.shape[0] += context_dim  # TODO no context dim for isotropic?
