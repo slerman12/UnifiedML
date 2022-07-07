@@ -97,6 +97,11 @@ class CNNEncoder(nn.Module):
         assert feature_shape == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
                                                     f'{self.feature_shape}≠{feature_shape}'
 
+        # OR
+        # h = h.view(*h.shape, *[(1,) * (3 - len(h.shape[-4:][1:]))])  # Add spatial dims just in case
+        # assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape '\
+        #                                                   f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
+
         if pool:
             h = self.pool(h)
             assert h.shape[-1] == math.prod(self.repr_shape) or tuple(h.shape[-3:]) == self.repr_shape, \
