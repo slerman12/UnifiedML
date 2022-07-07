@@ -94,11 +94,12 @@ class CNNEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
+        feature_shape = list(self.feature_shape)
         for _ in range(len(self.feature_shape) - len(h.shape[-4:][1:])):
-            self.feature_shape.remove(1)  # Feature shape w/o 1s
+            feature_shape.remove(1)  # Feature shape w/o 1s
 
-        assert tuple(h.shape[-4:][1:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
-                                                              f'{self.feature_shape}≠{tuple(h.shape[-4:][1:])}'
+        assert list(h.shape[-4:][1:]) == feature_shape, f'pre-computed feature_shape does not match feature shape ' \
+                                                        f'{feature_shape}≠{list(h.shape[-4:][1:])}'
 
         # assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
         #                                                   f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
