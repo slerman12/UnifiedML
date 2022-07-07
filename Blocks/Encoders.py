@@ -21,9 +21,9 @@ class CNNEncoder(nn.Module):
     Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_spec, context_dim=0, standardize=True, norm=True, device='cuda', parallel=False,
-                 feature_norm=False, isotropic=False, eyes=None, pool=None, optim=None, scheduler=None,
-                 lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
+    def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False,
+                 device='cuda', parallel=False, eyes=None, pool=None, isotropic=False,
+                 optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
 
         super().__init__()
 
@@ -44,8 +44,7 @@ class CNNEncoder(nn.Module):
 
         # CNN
         self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_spec.shape)
-                                  or CNN(obs_spec.shape, self.out_channels, depth=3),
-                                  Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR
+                                  or CNN(obs_spec.shape, self.out_channels, depth=3))
 
         adapt_cnn(self.Eyes, obs_spec.shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
@@ -57,6 +56,8 @@ class CNNEncoder(nn.Module):
         self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
+
+        self.repr_spec = obs_spec.__class__({'obs_shape': self.repr_shape})
 
         # Isotropic
         if isotropic:

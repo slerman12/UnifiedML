@@ -137,6 +137,8 @@ class Classify:
         if train and (offline or generate) and not replay_path.exists():
             self.create_replay(replay_path)  # TODO Conflict-handling in distributed & mark success in case of terminate
 
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+
         # Compute stats
         mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
             else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else 0
