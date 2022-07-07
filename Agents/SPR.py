@@ -69,12 +69,12 @@ class SPRAgent(torch.nn.Module):
         if not generate:
             resnet = MiniResNet((self.in_channels, *obs_spec.obs_shape[1:]), 3, 1, [64, self.encoder.out_channels], [1])
 
-            self.dynamics = CNNEncoder(self.encoder.repr_spec, self.action_dim,
+            self.dynamics = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}), self.action_dim,
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)), isotropic=True,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
-            self.projector = CNNEncoder(self.encoder.repr_spec,
+            self.projector = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}),
                                         eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),
                                                                  torch.nn.LayerNorm(hidden_dim),
                                                                  torch.nn.Tanh(),
@@ -82,7 +82,7 @@ class SPRAgent(torch.nn.Module):
                                         lr=lr, lr_decay_epochs=lr_decay_epochs,
                                         weight_decay=weight_decay, ema_decay=ema_decay)
 
-            self.predictor = CNNEncoder(self.encoder.repr_spec,
+            self.predictor = CNNEncoder(obs_spec.__class__({'obs_shape': (hidden_dim, 1, 1)}),
                                         eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),
                                                                  torch.nn.LayerNorm(hidden_dim),
                                                                  torch.nn.Tanh(),

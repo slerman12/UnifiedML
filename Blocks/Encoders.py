@@ -56,8 +56,6 @@ class CNNEncoder(nn.Module):
 
         self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
 
-        self.repr_spec = obs_spec.__class__({'obs_shape': self.repr_shape})
-
         # Isotropic
         if isotropic:
             assert tuple(obs_spec.shape) == self.feature_shape, \
