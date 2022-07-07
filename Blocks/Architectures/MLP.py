@@ -35,7 +35,7 @@ class MLP(nn.Module):
 
     def repr_shape(self, *_):
         if self.flatten:
-            return self.output_dim, 1, 1
+            return self.output_dim, 1, 1  # Dummy 1s
         return *_[:-1], self.output_dim
 
     def forward(self, *x):
