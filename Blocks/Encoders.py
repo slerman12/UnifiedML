@@ -95,6 +95,7 @@ class CNNEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
+        # TODO remove
         pre_computed = tuple(filter((1).__ne__, self.feature_shape))  # Feature shape w/o 1s
         returned = tuple(filter((1).__ne__, h.shape[-min(len(h.shape) - 1, 3):]))  # Last 3 non-batch-dims w/o 1s
 
