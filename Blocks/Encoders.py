@@ -94,12 +94,14 @@ class CNNEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
-        # TODO remove
-        pre_computed = tuple(filter((1).__ne__, self.feature_shape))  # Feature shape w/o 1s
-        returned = tuple(filter((1).__ne__, h.shape[-min(len(h.shape) - 1, 3):]))  # Last 3 non-batch-dims w/o 1s
+        for _ in range(len(self.feature_shape) - len(h.shape[-4:][1:])):
+            self.feature_shape.remove(1)  # Feature shape w/o 1s
 
-        assert pre_computed == returned, f'pre-computed feature_shape does not match feature shape ' \
-                                         f'{pre_computed}≠{returned}'
+        assert tuple(h.shape[-4:][1:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
+                                                              f'{self.feature_shape}≠{tuple(h.shape[-4:][1:])}'
+
+        # assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
+        #                                                   f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
 
         if pool:
             h = self.pool(h)
