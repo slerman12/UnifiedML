@@ -8,7 +8,6 @@ import copy
 import torch
 from torch import nn
 
-from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.CNN import CNN
 
 import Utils
@@ -134,57 +133,3 @@ def adapt_cnn(block, obs_shape):
             # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
             obs_shape = Utils.cnn_feature_shape(*obs_shape[-3:], layer)
-
-
-class MLPEncoder(nn.Module):
-    """MLP encoder:
-    With LayerNorm
-    Can also l2-normalize penultimate layer (https://openreview.net/pdf?id=9xhgmsNVHu)"""
-
-    def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, layer_norm_dim=None,
-                 non_linearity=nn.ReLU(inplace=True), dropout=0, binary=False, l2_norm=False,
-                 parallel=False, optim=None, scheduler=None, lr=0, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
-        super().__init__()
-
-        self.trunk = nn.Identity() if layer_norm_dim is None \
-            else nn.Sequential(nn.Linear(input_dim, layer_norm_dim),
-                               nn.LayerNorm(layer_norm_dim),
-                               nn.Tanh())
-
-        # Dimensions
-        in_features = layer_norm_dim or input_dim
-
-        # MLP
-        self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, dropout, binary, l2_norm)
-
-        if parallel:
-            self.MLP = nn.DataParallel(self.MLP)  # Parallel on visible GPUs
-
-        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
-
-        self.repr_shape, self.repr_dim = (output_dim,), output_dim
-
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
-        # Optimizer
-        if lr or Utils.can_instantiate(optim):
-            self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
-                         or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # Learning rate scheduler
-        if lr_decay_epochs or Utils.can_instantiate(scheduler):
-            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
-                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
-
-        # EMA
-        if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
-
-    def update_ema_params(self):
-        assert hasattr(self, 'ema_decay')
-        Utils.param_copy(self, self.ema, self.ema_decay)
-
-    def forward(self, x, *context):
-        h = torch.cat([x, *context], -1)
-
-        h = self.trunk(h)
-        return self.MLP(h)
