@@ -92,12 +92,10 @@ class CNNEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
-        feature_shape = h.shape
-        for _ in range(3 - len(h.shape[-4:][1:])):
-            feature_shape.append(1)
+        feature_shape = tuple(h.shape[-4:][1:] + (1,) * (3 - len(h.shape[-4:][1:])))  # Add spatial dims
 
-        assert tuple(feature_shape) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
-                                                           f'{self.feature_shape}≠{tuple(feature_shape)}'
+        assert feature_shape == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
+                                                    f'{self.feature_shape}≠{feature_shape}'
 
         if pool:
             h = self.pool(h)
