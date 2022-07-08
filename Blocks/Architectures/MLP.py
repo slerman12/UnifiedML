@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
-from collections import Iterable
 
 import torch
 from torch import nn
@@ -12,34 +11,40 @@ import Utils
 
 
 class MLP(nn.Module):
-    def __init__(self, input_shape=128, output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
-                 dropout=0, binary=False, l2_norm=False):
+    """
+    MLP Architecture generalized to broadcast various input shapes
+    """
+    def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(True),
+                 dropout=0, binary=False):
         super().__init__()
 
-        # input_dim, flatten_dim = (math.prod(input_shape), -len(input_shape)) if isinstance(input_shape, Iterable) \
-        #     else (input_shape, -1)
-        input_dim = math.prod(input_shape) if isinstance(input_shape, Iterable) else input_shape
+        self.input_shape = (input_shape,) if isinstance(input_shape, int) \
+            else input_shape
+        self.input_dim = math.prod(self.input_shape)  # If not already flattened/1D, will try to auto-flatten
 
         self.output_dim = output_dim
 
-        self.MLP = nn.Sequential(*[nn.Sequential(
-            # Optional L2 norm of penultimate
-            # (See: https://openreview.net/pdf?id=9xhgmsNVHu)
-            # Similarly, Efficient-Zero initializes 2nd-to-last layer as all 0s  TODO
-            Utils.L2Norm() if l2_norm and i == depth else nn.Identity(),
-            nn.Linear(input_dim if i == 0 else hidden_dim,
-                      hidden_dim if i < depth else output_dim),
-            non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),
-            nn.Dropout(dropout) if i < depth else nn.Identity()
-        )
-            for i in range(depth + 1)]
-        )
+        self.MLP = nn.Sequential(*[
+            nn.Sequential(
+                nn.Linear(self.input_dim if i == 0 else hidden_dim,
+                          hidden_dim if i < depth else output_dim),  # Linear
+                non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
+                nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
+            for i in range(depth + 1)])
 
-        self.apply(Utils.weight_init)  # Note could I adapt/broadcast architectures this way? todo
+        # Initialize weights
+        self.apply(Utils.weight_init)
 
-    def repr_shape(self, *_):
-        return self.output_dim, *_[1:]  # TODO, should be o, 1, 1
-        # return self.output_dim, 1, 1
+    def repr_shape(self, c, w, h):
+        flatten = -1 if h == self.input_dim \
+            else -len(self.input_shape)  # Auto-flatten if needed
 
-    def forward(self, *x):
-        return self.MLP(torch.cat(x, -1))
+        return *(c, w, h)[:flatten], self.output_dim, *(1,) * -(flatten + 1)
+
+    def forward(self, *obs):
+        obs = torch.cat(obs, -1)  # Assumes inputs can be concatenated along last dim
+
+        flatten = -1 if obs.shape[-1] == self.input_dim \
+            else -len(self.input_shape)
+
+        return self.MLP(obs.flatten(flatten))  # Auto-flatten if needed

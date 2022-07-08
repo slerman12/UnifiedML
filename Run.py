@@ -24,9 +24,9 @@ def main(args):
     env = instantiate(args.environment)
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
-    for arg in ('obs_shape', 'action_spec', 'data_stats', 'discrete', 'obs_spec', 'evaluate_episodes'):
-        if hasattr(generalize, arg):
-            setattr(args, arg, getattr(generalize, arg))
+    for arg in ('obs_spec', 'action_spec', 'discrete', 'evaluate_episodes'):
+        if hasattr(generalize.env, arg):
+            setattr(args, arg, getattr(generalize.env, arg))
 
     # Agent
     agent = Utils.load(args.save_path, args.device) if args.load \
@@ -41,7 +41,7 @@ def main(args):
     # Loggers
     logger = instantiate(args.logger)
 
-    vlogger = instantiate(args.vlogger)
+    vlogger = instantiate(args.vlogger) if args.log_video else None
 
     # Start
     converged = training = False
@@ -75,8 +75,8 @@ def main(args):
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
-            if env.last_episode_len > args.nstep:
-                replay.add(store=True)  # Only store full episodes  TODO don't need; adaptive replay; more env space
+            replay.add(store=env.last_episode_len > args.nstep)  # Only store full episodes
+            replay.clear()
 
         converged = agent.step >= args.train_steps
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline

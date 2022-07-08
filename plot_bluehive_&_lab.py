@@ -62,10 +62,15 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
 
 plot_group = 'XRD'
 tasks = []
-plots = [['CNN', 'ResNet18']]
+plots = [['CNN', 'ResNet18', 'CNN-Transferred']]
 title = 'RRUFF'
 x_axis = 'Step'
-plots = [['Exp']]
+
+plot_group = 'Tests'
+tasks = ['cheetah_run', 'pong']
+plots = [['skimage', 'no-skimage', 'Reference', 'Exp']]
+title = 'Tests'
+x_axis = 'step'
 
 experiments = set().union(*plots)
 

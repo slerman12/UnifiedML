@@ -13,13 +13,16 @@ if __name__ == '__main__':
         f.write(r"""defaults:
       - _self_
     
+Env: Datasets.Suites.Atari.Atari
 suite: atari
+task_name: {}
 action_repeat: 4
+truncate_episode_steps: 250
 nstep: 10
 frame_stack: 3
 train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,20000)'
-task_name: {}""".format(task))
+""".format(task))
         f.close()
         out += ' "' + task.lower() + '"'
     print(out)

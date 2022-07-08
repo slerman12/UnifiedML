@@ -26,7 +26,7 @@ from torchvision.transforms import transforms
 
 class ExperienceReplay:
     def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load,
-                 path, obs_spec=None, nstep=0, discount=1, meta_shape=(0,), transform=None):
+                 path, obs_spec=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -57,9 +57,12 @@ class ExperienceReplay:
 
         # Data specs
 
+        frame_stack = frame_stack or 1
+        obs_spec.shape[0] //= frame_stack
+
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
                                                for name in ['reward', 'discount', 'label', 'step']],
-                      {'name': 'meta', 'shape': meta_shape})
+                      {'name': 'meta', 'shape': meta_shape})  # TODO Use dict; No spec names
 
         # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
 
@@ -84,7 +87,7 @@ class ExperienceReplay:
 
         # Parallelized experience loading, either online or offline
 
-        self.nstep = nstep
+        self.nstep = nstep * int(not (suite == 'classify' or generate))  # No nstep for classify, generate
 
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
@@ -102,6 +105,7 @@ class ExperienceReplay:
                                                             fetch_per=1000,
                                                             pipes=pipes,
                                                             save=save,
+                                                            frame_stack=frame_stack,
                                                             nstep=nstep,
                                                             discount=discount,
                                                             transform=transform)
@@ -156,23 +160,23 @@ class ExperienceReplay:
         for exp in experiences:
             for spec in self.specs:
                 # Missing data
-                if not hasattr(exp, spec['name']):
-                    setattr(exp, spec['name'], None)
+                if spec['name'] not in exp:
+                    exp[spec['name']] = None
 
                 # Add batch dimension
-                if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None:
-                    exp[spec['name']] = np.full((1,) + tuple(spec['shape']), exp[spec['name']], 'float32')
-                if len(exp[spec['name']].shape) == len(spec['shape']):
-                    exp[spec['name']] = np.expand_dims(exp[spec['name']], 0)
+                if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None or type(exp[spec['name']]) == bool:
+                    exp[spec['name']] = np.full((1, *spec['shape']), exp[spec['name']], dtype=getattr(exp[spec['name']], 'dtype', 'float32'))
+                elif exp[spec['name']].shape in [(), (1,), spec['shape']]:
+                    exp[spec['name']].shape = (1, *spec['shape'])
 
                 # Expands attributes that are unique per batch (such as 'step')
-                batch_size = getattr(exp, 'observation', getattr(exp, 'action')).shape[0]
+                batch_size = exp.get('obs', exp['action']).shape[0]
                 if 1 == exp[spec['name']].shape[0] < batch_size:
                     exp[spec['name']] = np.repeat(exp[spec['name']], batch_size, axis=0)
 
                 # Validate consistency
-                assert spec['shape'] == exp[spec['name']].shape[1:], \
-                    f'Unexpected {spec["name"]} shape: {spec["shape"]} vs. {exp[spec["name"]].shape}'
+                assert spec['shape'] == exp[spec["name"]].shape[1:], \
+                    f'Unexpected shape for "{spec["name"]}": {spec["shape"]} vs. {exp[spec["name"]].shape[1:]}'
 
                 # Add the experience
                 self.episode[spec['name']].append(exp[spec['name']])
@@ -191,7 +195,7 @@ class ExperienceReplay:
             # Concatenate into one big episode batch
             self.episode[spec['name']] = np.concatenate(self.episode[spec['name']], axis=0)
 
-        self.episode_len = len(self.episode['observation'])
+        self.episode_len = len(self.episode['obs'])
 
         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
         num_episodes = len(self)
@@ -207,6 +211,10 @@ class ExperienceReplay:
         self.episode = {spec['name']: [] for spec in self.specs}
         self.episode_len = 0
         self.episodes_stored += 1
+
+    def clear(self):
+        self.episode = {spec['name']: [] for spec in self.specs}
+        self.episode_len = 0
 
     # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
@@ -241,7 +249,7 @@ def worker_init_fn(worker_id):
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
 class Experiences:
-    def __init__(self, path, capacity, specs, fetch_per, pipes, save, offline, nstep, discount, transform):
+    def __init__(self, path, capacity, specs, fetch_per, pipes, save, offline, frame_stack, nstep, discount, transform):
 
         # Dataset construction via parallel workers
 
@@ -265,6 +273,7 @@ class Experiences:
         self.save = save
         self.offline = offline
 
+        self.frame_stack = frame_stack
         self.nstep = nstep
         self.discount = discount
 
@@ -294,7 +303,7 @@ class Experiences:
             return False
 
         offset = self.nstep or 1
-        episode_len = len(episode['observation']) - offset
+        episode_len = len(episode['obs']) - offset
         episode = {spec['name']: episode.get(spec['name'], np.full((episode_len + 1, *spec['shape']), np.NaN))
                    for spec in self.specs}
 
@@ -307,7 +316,7 @@ class Experiences:
         while episode_len + len(self) - self.deleted_indices > self.capacity:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
-            early_episode_len = len(early_episode['observation']) - offset
+            early_episode_len = len(early_episode['obs']) - offset
             self.deleted_indices += early_episode_len  # To derive a consistent experience index even as data deleted
             if not self.save:
                 # Deletes early episode file
@@ -364,15 +373,21 @@ class Experiences:
 
     # N-step cumulative discounted rewards
     def process(self, episode, idx=None):
-        offset = self.nstep or 1
-        episode_len = len(episode['observation']) - offset
+        offset = self.nstep or 0
+        episode_len = len(episode['obs']) - offset
         if idx is None:
             idx = np.random.randint(episode_len)
 
-        # Transition
-        obs = episode['observation'][idx]
-        action = episode['action'][idx + 1]
-        next_obs = episode['observation'][idx + self.nstep]
+        # Frame stack
+        def frame_stack(traj_o, idx):
+            frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
+            for _ in range(self.frame_stack - idx - 1):
+                frames = np.concatenate([traj_o[:1], frames], 0)
+            frames = frames.reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
+            return frames
+
+        # Present
+        obs = frame_stack(episode['obs'], idx)
         label = episode['label'][idx].squeeze()
         step = episode['step'][idx]
 
@@ -381,19 +396,26 @@ class Experiences:
 
         meta = episode['meta'][idx]  # Agent-writable Metadata
 
-        # Trajectory
+        # Future
         if self.nstep:
-            traj_o = episode['observation'][idx:idx + self.nstep + 1]
+            # Transition
+            action = episode['action'][idx + 1]
+            next_obs = frame_stack(episode['obs'], idx + self.nstep)
+
+            # Trajectory
+            traj_o = episode['obs'][idx:idx + self.nstep + 1]  # TODO Frame-stack
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
             traj_l = episode['label'][idx:idx + self.nstep + 1]
 
-            # Compute cumulative discounted reward
+            # Cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
             reward = np.dot(discounts[:-1], traj_r)
             discount = discounts[-1:]
         else:
-            traj_o = traj_a = traj_r = traj_l = reward = np.array([np.NaN])
+            action, reward = episode['action'][idx], episode['reward'][idx]
+
+            next_obs = traj_o = traj_a = traj_r = traj_l = np.full((0,), np.NaN)
             discount = np.array([1.0])
 
         # Transform
@@ -429,8 +451,8 @@ class Experiences:
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    def __init__(self, path, capacity, specs, fetch_per, pipes, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, capacity, specs, fetch_per, pipes, save, False, nstep, discount, transform)
+    def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, specs, fetch_per, pipes, save, False, frame_stack, nstep, discount, transform)
 
     def __iter__(self):
         # Keep fetching, sampling, and building batches
@@ -440,8 +462,8 @@ class Online(Experiences, IterableDataset):
 
 # Loads Experiences with a standard Dataset
 class Offline(Experiences, Dataset):
-    def __init__(self, path, capacity, specs, fetch_per, pipes, save, nstep=0, discount=1, transform=None):
-        super().__init__(path, capacity, specs, fetch_per, pipes, save, True, nstep, discount, transform)
+    def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
+        super().__init__(path, capacity, specs, fetch_per, pipes, save, True, frame_stack, nstep, discount, transform)
 
     def __getitem__(self, idx):
         return self.fetch_sample_process(idx)  # Get single experience by index

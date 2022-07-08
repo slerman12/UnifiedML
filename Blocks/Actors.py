@@ -22,10 +22,10 @@ class EnsembleGaussianActor(nn.Module):
                  weight_decay=None, ema_decay=None):
         super().__init__()
 
+        self.low, self.high = action_spec.low, action_spec.high
+
         self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
         self.stddev_clip = stddev_clip  # Max cutoff threshold on standard dev
-
-        self.low, self.high = action_spec.low, action_spec.high
 
         action_dim = math.prod(action_spec.shape)
 
@@ -64,24 +64,24 @@ class EnsembleGaussianActor(nn.Module):
         if self.low is not None and self.high is not None:
             mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low
 
-        Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+        Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high,
+                             stddev_clip=self.stddev_clip)
 
         return Pi
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
-    """Categorically samples over continuous or discrete actions based on critic Q-values"""
+    """Aggregates over continuous or discrete actions based on critic Q-values """
     def __init__(self, entropy_schedule=1):
         super().__init__()
 
         self.entropy_schedule = entropy_schedule
 
     def forward(self, Q, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
-        # Sample q or mean
-        q = Q.rsample() if sample_q else Q.mean if hasattr(Q, 'mean') else Q.best
+        q = Q.rsample() if sample_q \
+            else Q.mean if hasattr(Q, 'mean') else Q.best  # Sample q or mean
 
-        # Exploit Q value vs. explore Q uncertainty, e.g., UCB exploration
-        # Standard deviation of Q ensemble might be a good heuristic for uncertainty for exploration
+        # Exploit via Q-value vs. explore via Q-stddev (EXPERIMENTAL!), off by default
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
 

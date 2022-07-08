@@ -8,7 +8,7 @@ import Utils
 
 
 def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discount=1,
-                       one_hot=False, priority_temp=0, logs=None, reduction='mean'):
+                       one_hot=False, logs=None):
     Pi = actor(obs, step)
 
     action = Pi.rsample(num_actions)
@@ -21,13 +21,14 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
 
     q = reward + q * discount
 
+    # REMOVED
     # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf
-    q *= torch.sigmoid(-Q.stddev * priority_temp) + 0.5
+    # q *= torch.sigmoid(-Q.stddev * priority_temp) + 0.5
 
-    policy_loss = -q
+    policy_loss = -q.mean()
 
-    if reduction == 'mean':
-        policy_loss = -q.mean()
+    # if reduction == 'mean':
+    #     policy_loss = -q.mean()
 
     if logs is not None:
         logs['policy_loss'] = policy_loss.mean().item()

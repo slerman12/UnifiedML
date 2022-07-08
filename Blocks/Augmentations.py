@@ -12,20 +12,21 @@ class RandomShiftsAug(nn.Module):
         super().__init__()
         self.pad = pad
 
-    def forward(self, x):
+    def forward(self, obs):
         # Operates on last 3 dims of x, preserves leading dims
-        shape = x.shape
-        x = x.view(-1, *shape[-3:])
-        n, c, h, w = x.size()
-        assert h == w, f'height≠width {h}≠{w}'
+        shape = obs.shape
+        assert len(shape) > 3, f'obs shape {tuple(shape)} not supported by this augmentation, try \'aug=Identity\''
+        obs = obs.view(-1, *shape[-3:])
+        n, c, h, w = obs.size()
+        assert h == w, f'height≠width ({h}≠{w}), obs shape not supported by this augmentation, try \'aug=Identity\''
         padding = tuple([self.pad] * 4)
-        x = F.pad(x, padding, 'replicate')
+        obs = F.pad(obs, padding, 'replicate')
         eps = 1.0 / (h + 2 * self.pad)
         arange = torch.linspace(-1.0 + eps,
                                 1.0 - eps,
                                 h + 2 * self.pad,
-                                device=x.device,
-                                dtype=x.dtype)[:h]
+                                device=obs.device,
+                                dtype=obs.dtype)[:h]
         arange = arange.unsqueeze(0).repeat(h, 1).unsqueeze(2)
         base_grid = torch.cat([arange, arange.transpose(1, 0)], dim=2)
         base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
@@ -33,12 +34,12 @@ class RandomShiftsAug(nn.Module):
         shift = torch.randint(0,
                               2 * self.pad + 1,
                               size=(n, 1, 1, 2),
-                              device=x.device,
-                              dtype=x.dtype)
+                              device=obs.device,
+                              dtype=obs.dtype)
         shift *= 2.0 / (h + 2 * self.pad)
 
         grid = base_grid + shift
-        output = F.grid_sample(x,
+        output = F.grid_sample(obs,
                                grid,
                                padding_mode='zeros',
                                align_corners=False)
@@ -46,11 +47,12 @@ class RandomShiftsAug(nn.Module):
 
 
 class IntensityAug(nn.Module):
-    def __init__(self, scale=0.1):
+    def __init__(self, scale=0.1, noise=2):
         super().__init__()
-        self.scale = scale
+        self.scale, self.noise = scale, noise
 
-    def forward(self, x):
+    def forward(self, obs):
+        axes = (1,) * len(obs.shape[2:])  # Spatial axes, useful for dynamic input shapes
         noise = 1.0 + (self.scale * torch.randn(
-            (x.shape[0], 1, 1, 1), device=x.device).clamp_(-2.0, 2.0))
-        return x * noise
+            (obs.shape[0], 1, *axes), device=obs.device).clamp_(-self.noise, self.noise))  # Random noise
+        return obs * noise

@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Blocks.Architectures import *  # For accessibility via command line syntax
+from Blocks.Architectures import *  # For direct accessibility via command line
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -56,8 +56,7 @@ def save(path, model, args, *attributes):
 
 
 # Loads model or part of model
-def load(path, device, model=None, preserve=(), distributed=False, attr='', **kwargs):
-    print(device, path, getattr(model, 'device', device))
+def load(path, device='cuda', model=None, preserve=(), distributed=False, attr='', **kwargs):
     while True:
         try:
             to_load = torch.load(path, map_location=getattr(model, 'device', device))
@@ -79,7 +78,7 @@ def load(path, device, model=None, preserve=(), distributed=False, attr='', **kw
             setattr(model, key, to_load[key])
 
     # Can also load part of a model. Useful for recipes,
-    # e.g. python Run.py Eyes=load +eyes.path=<checkpoint> +eyes.attr=encoder.Eyes +eyes.device='cuda'
+    # e.g. python Run.py Eyes=load +eyes.path=<Path To Agent Checkpoint> +eyes.attr=encoder.Eyes
     for key in attr.split('.'):
         if key:
             model = getattr(model, key)
@@ -91,12 +90,15 @@ def instantiate(args, i=0, **kwargs):
     if hasattr(args, '_target_') and args._target_:
         try:
             return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
-        except ImportError:
+        except ImportError as e:
             if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                 args = args._target_
             else:
                 args._target_ = 'Utils.' + args._target_  # Portal into Utils
-                return hydra.utils.instantiate(args, **kwargs)
+                try:
+                    return hydra.utils.instantiate(args, **kwargs)
+                except ImportError:
+                    raise e  # Original error if all that doesn't work
 
     if isinstance(args, str):
         for key in kwargs:

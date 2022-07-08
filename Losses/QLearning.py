@@ -9,9 +9,9 @@ import Utils
 
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step,
-                      num_actions=1, one_hot=False, one_hot_next=False, priority_temp=0, logs=None, reduction='mean'):
+                      num_actions=1, one_hot=False, one_hot_next=False, logs=None):
     # Non-NaN next_obs
-    has_future = ~torch.isnan(next_obs.flatten(1).sum(1))
+    has_future = ~torch.isnan(next_obs.flatten(1)[:, :1]).squeeze(1) * bool(next_obs.size(1))
     next_obs = next_obs[has_future]
 
     # One-hot encoding in case discrete actions need to be treated as continuous or vice versa
@@ -53,20 +53,21 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     Q = critic(obs, action)
 
     # Temporal difference (TD) error (via MSE, but could also use Huber)
-    td_error = F.mse_loss(Q.Qs, target_q.expand_as(Q.Qs), reduction='none')
+    q_loss = F.mse_loss(Q.Qs, target_q.expand_as(Q.Qs))
 
+    # REMOVED
     # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf
-    q_loss = td_error * torch.sigmoid(-Q.stddev * priority_temp) + 0.5
+    # q_loss = td_error * torch.sigmoid(-Q.stddev * priority_temp) + 0.5
 
-    if reduction == 'mean':
-        q_loss = q_loss.mean()
+    # if reduction == 'mean':
+    #     q_loss = q_loss.mean()
 
     if logs is not None:
         logs['q_mean'] = Q.mean.mean().item()
         logs['q_stddev'] = Q.stddev.mean().item()
         logs.update({f'q{i}': q.median().item() for i, q in enumerate(Q.Qs)})
         logs['target_q'] = target_q.mean().item()
-        logs['temporal_difference_error'] = td_error.mean().item()
-        logs['q_loss'] = q_loss.mean().item()
+        logs['temporal_difference_error'] = q_loss.mean().item()
+        # logs['q_loss'] = q_loss.mean().item()
 
     return q_loss

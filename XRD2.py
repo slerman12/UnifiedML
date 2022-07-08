@@ -2,21 +2,14 @@ import time
 
 from IPython.display import clear_output
 
-from omegaconf import OmegaConf
-
 import numpy as np
 
 import torch
 from torch import nn
-from torch.nn.functional import cross_entropy
 from torch.optim import SGD
 from torch.utils.data import Dataset, DataLoader
 
-from Agents import DQNAgent
-from Blocks.Actors import EnsembleGaussianActor
-from Blocks.Encoders import adapt_cnn, CNNEncoder
-from Datasets.Environment import Environment
-from Datasets.ExperienceReplay import ExperienceReplay
+from Blocks.Encoders import adapt_cnn
 
 import Utils
 

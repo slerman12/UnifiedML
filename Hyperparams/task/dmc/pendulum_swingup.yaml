@@ -1,11 +1,12 @@
 defaults:
       - _self_
-    
+ 
+Env: Datasets.Suites.DMC.DMC
 suite: dmc
+task_name: pendulum_swingup
 action_repeat: 2
 frame_stack: 3
 nstep: 3
-task_name: pendulum_swingup
 train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,100000)'
 

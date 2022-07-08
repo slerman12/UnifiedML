@@ -13,7 +13,6 @@ import hydra
 from omegaconf import OmegaConf
 
 import warnings
-
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import os
@@ -24,7 +23,7 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 
 import matplotlib.pyplot as plt
-from matplotlib import ticker
+from matplotlib import ticker, dates
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
@@ -85,7 +84,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Whether to include this CSV
         include = True
 
-        if plot_train is (eval.lower() == 'eval'):
+        if (plot_train is (eval.lower() == 'eval')) or eval.lower() == 'seed':
             include = False
 
         datums = [experiment, agent, suite.lower(), suite_task]
@@ -107,7 +106,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if length == 0:
             continue
 
-        # Min number of steps
+        # TODO assumes all step brackets are shared
+        # Min number of steps  TODO per suite, task
         min_steps = min(min_steps, length)
 
         found_suite_task = suite_task + ' (' + suite + ')'
@@ -187,7 +187,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         if _x_axis == 'Time':
-            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s').dt.strftime('%H:%M:%S')
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
 
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
@@ -228,6 +228,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         if _x_axis == 'Time':
             ax.set_xlabel("Time (h)")
+            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
             # For now, group x axis into bins only for time
             ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
@@ -287,7 +288,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
         if _x_axis == 'Time':
-            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s').dt.strftime('%H:%M:%S')
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
 
         # High-low-normalize
         for suite_task in task_data.Task.unique():
@@ -310,6 +311,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         if _x_axis == 'Time':
             ax.set_xlabel("Time (h)")
+            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
             # For now, group x axis into bins only for time
             ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
@@ -365,13 +367,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         json.dump(tabular_data, f, indent=2)
         f.close()
 
-    # Consistent x axis across all tasks for bar plot
-    min_x = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
-    if len(min_x) > 1:
+    # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
+    min_time = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
+    if len(min_time) > 1:
         x_axis = 'Step'
-        min_x = min_steps
+        min_time = min_steps
     else:
-        min_x = min_x[0]
+        min_time = min_time[0]
 
     # Bar plot
     if plot_bar:
@@ -419,10 +421,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         )
 
             if x_axis.lower() == 'time':
-                time_str = pd.to_datetime(min_x, unit='s').strftime('%H:%M:%S')
+                time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
                 ax.set_title(f'{suite} (@{time_str}h)')
             else:
-                ax.set_title(f'{suite} (@{min_x:.0f} {x_axis}s)')
+                ax.set_title(f'{suite} (@{min_time:.0f} {x_axis}s)')
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -461,7 +463,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         #                          borderaxespad=0, frameon=False).set_title('Agent')
 
         plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Bar.png'))  # TODO add step count to name if provided as arg
+        plt.savefig(path / (plot_name + 'Bar.png'))
 
         plt.close()
 

@@ -18,25 +18,26 @@ def shorthand(log_name):
 
 
 def format(log, log_name):
-    l = shorthand(log_name)
+    k = shorthand(log_name)
 
     if 'time' in log_name.lower():
         log = str(datetime.timedelta(seconds=int(log)))
-        return f'{l}: {log}'
+        return f'{k}: {log}'
     elif float(log).is_integer():
         log = int(log)
-        return f'{l}: {log}'
+        return f'{k}: {log}'
     else:
-        return f'{l}: {log:.04f}'
+        return f'{k}: {log:.04f}'
 
 
 class Logger:
-    def __init__(self, task, seed, path='.', aggregation='mean', wandb=False):
+    def __init__(self, task, seed, generate=False, path='.', aggregation='mean', wandb=False):
 
         self.path = path
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.task = task
         self.seed = seed
+        self.generate = generate
 
         self.logs = {}
 
@@ -55,10 +56,10 @@ class Logger:
 
             logs = self.logs[name]
 
-            for k, l in log.items():
-                if isinstance(l, torch.Tensor):
-                    l = l.detach().numpy()
-                logs[k] = logs[k] + [l] if k in logs else [l]
+            for log_name, item in log.items():
+                if isinstance(item, torch.Tensor):
+                    item = item.detach().numpy()
+                logs[log_name] = logs[log_name] + [item] if log_name in logs else [item]
 
         if dump:
             self.dump_logs(name)
@@ -66,12 +67,12 @@ class Logger:
     def dump_logs(self, name=None):
         if name is None:
             # Iterate through all logs
-            for n in self.logs:
-                for log_name in self.logs[n]:
+            for name in self.logs:
+                for log_name in self.logs[name]:
                     agg = self.aggregate(log_name)
-                    self.logs[n][log_name] = agg(self.logs[n][log_name])
-                self._dump_logs(self.logs[n], name=n)
-                del self.logs[n]
+                    self.logs[name][log_name] = agg(self.logs[name][log_name])
+                self._dump_logs(self.logs[name], name=name)
+                del self.logs[name]
         else:
             # Iterate through just the named log
             if name not in self.logs:
@@ -85,9 +86,9 @@ class Logger:
 
     # Aggregate list of scalars or batched-values of arbitrary lengths
     def aggregate(self, log_name):
-        def last(x):
-            x = np.array(x).flat
-            return x[len(x) - 1]
+        def last(data):
+            data = np.array(data).flat
+            return data[len(data) - 1]
 
         agg = self.default_aggregations.get(log_name,
                                             np.ma.mean if self.aggregation == 'mean'
@@ -144,6 +145,9 @@ class Logger:
 
         assert 'step' in logs
 
+        if self.generate:
+            name = 'Generate_' + name
+
         file_name = Path(self.path) / f'{self.task}_{self.seed}_{name}.csv'
 
         write_header = True
@@ -167,6 +171,9 @@ class Logger:
 
             experiment, agent, suite = self.path.split('/')[2:5]
 
+            if self.generate:
+                agent = 'Generate_' + agent
+
             wandb.init(project=experiment, name=f'{agent}_{suite}_{self.task}_{self.seed}', dir=self.path)
 
             for file in ['', '*/', '*/*/', '*/*/*/']:
@@ -178,6 +185,7 @@ class Logger:
             self.wandb = wandb
 
         measure = 'reward' if 'reward' in logs else 'accuracy'
-        logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
+        if measure in logs:
+            logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
 
         self.wandb.log(logs, step=int(logs['step']))

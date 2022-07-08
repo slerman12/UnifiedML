@@ -2,13 +2,11 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import math
 import copy
 
 import torch
 from torch import nn
 
-from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.CNN import CNN
 
 import Utils
@@ -16,46 +14,38 @@ import Utils
 
 class CNNEncoder(nn.Module):
     """
-    CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
-    Generalized to multi-dimensionality convolutions and obs shapes (1d or 2d)
-    Isotropic here means dimensionality conserving
+    CNN encoder generalized to multi-dimensionality convolutions and obs shapes (1d or 2d)
+
     """
-
-    def __init__(self, obs_shape, context_dim=0, data_stats=torch.full([4], float('nan')), standardize=True, norm=True,
-                 feature_norm=False, isotropic=False, parallel=False, eyes=None, pool=None, optim=None, scheduler=None,
-                 lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
-
+    def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, eyes=None, pool=None, parallel=False,
+                 optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_shape = torch.Size(obs_shape)
-        self.standardize = ~data_stats[:2].isnan().any() and standardize  # Whether to center scale (0 mean, 1 stddev)
-        self.normalize = ~data_stats[2:].isnan().any() and norm  # Whether to [0, 1] shift-max scale
-        self.data_stats = data_stats
+        self.obs_spec = obs_spec
+
+        self.standardize = \
+            standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
+        self.normalize = norm and None not in [obs_spec.low, obs_spec.high]  # Whether to [0, 1] shift-max scale
+
+        self.mean, self.stddev = map(lambda stat: None if stat is None else torch.as_tensor(stat),
+                                     (obs_spec.mean, obs_spec.stddev))
 
         # Dimensions
-        obs_shape[0] += context_dim  # TODO no context dim for isotropic?
-        self.out_channels = obs_shape[0] if isotropic else 32  # Default 32
+        obs_spec.shape[0] += context_dim
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_shape)
-                                  or CNN(obs_shape, self.out_channels, depth=3),
-                                  Utils.ShiftMaxNorm(-3) if feature_norm else nn.Identity())  # TODO only for SPR
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape))
 
-        adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
+        adapt_cnn(self.Eyes, obs_spec.shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.feature_shape = Utils.cnn_feature_shape(*obs_shape, self.Eyes)  # Feature map shape
+        self.feature_shape = Utils.cnn_feature_shape(*obs_spec.shape, self.Eyes)  # Feature map shape
 
         self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
-        self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
-
-        # Isotropic
-        if isotropic:
-            assert tuple(obs_shape) == self.feature_shape, \
-                f'specified to be isotropic, but in ≠ out {tuple(obs_shape)} ≠ {self.feature_shape}'
+        self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)  # Shape after pooling
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -67,37 +57,44 @@ class CNNEncoder(nn.Module):
     def update_ema_params(self):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
-    # Encodes
     def forward(self, obs, *context, pool=True):
-        obs_shape = obs.shape  # Preserve leading dims
-        obs = obs.flatten(0, -4)  # Encode last 3 dims
+        # Operate on last 3 dims, then restore
 
-        assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape {obs_shape}'
+        batch_dims = (obs.shape[0],) if len(obs.shape) < 4 \
+            else obs.shape[:-3]  # Preserve leading dims
+        obs = obs.flatten(0, -4)  # Flatten up to last 3 dims
 
-        # Standardizes/normalizes pixels
-        if self.standardize or self.normalize:
-            mean, stddev, low, high = self.data_stats
-            obs = (obs - mean) / stddev if self.standardize else 2 * (obs - low) / (high - low) - 1
+        assert tuple(obs.shape[1:]) == self.obs_spec.shape, f'Encoder received an invalid obs shape ' \
+                                                            f'{tuple(obs.shape[1:])}, ≠ {self.obs_spec.shape}'
 
-        # Optionally append context to channels assuming dimensions allow
-        context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-                   for c in context]
-        obs = torch.cat([obs, *context], 1)
+        axes = (1,) * len(obs.shape[2:])  # Spatial axes, useful for dynamic input shapes
+
+        # Standardize/normalize pixels
+        if self.standardize:
+            obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
+        elif self.normalize:
+            obs = 2 * (obs - self.obs_spec.low) / (self.obs_spec.high - self.obs_spec.low) - 1
+
+        # Optionally append a 1D context to channels, broadcasting
+        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])
+                                for c in context]], 1)
 
         # CNN encode
         h = self.Eyes(obs)
 
-        assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
-                                                          f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
+        try:
+            h = h.view(h.shape[0], *self.feature_shape)  # Validate, add spatial dims
+        except RuntimeError:
+            raise RuntimeError('\nFeature shape cannot broadcast to pre-computed feature_shape '
+                               f'{h.shape[1:]}-/->{self.feature_shape}')
 
         if pool:
             h = self.pool(h)
-            assert h.shape[-1] == math.prod(self.repr_shape) or tuple(h.shape[-3:]) == self.repr_shape, \
-                f'pre-computed repr_dim/repr_shape does not match output dim ' \
-                f'{math.prod(self.repr_shape)}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
-
-        # Restore leading dims
-        h = h.view(*obs_shape[:-3], *h.shape[1:])
+            try:
+                h = h.view(*batch_dims, *self.repr_shape)  # Restore leading dims, validate, add spatial dims
+            except RuntimeError:
+                raise RuntimeError('\nOutput dim after pooling does not match pre-computed repr_shape '
+                                   f'{h.shape[1]}≠{self.repr_shape[0]}, or {tuple(h.shape[1:])}≠{self.repr_shape}')
         return h
 
 
@@ -122,57 +119,3 @@ def adapt_cnn(block, obs_shape):
             # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
             obs_shape = Utils.cnn_feature_shape(*obs_shape[-3:], layer)
-
-
-class MLPEncoder(nn.Module):
-    """MLP encoder:
-    With LayerNorm
-    Can also l2-normalize penultimate layer (https://openreview.net/pdf?id=9xhgmsNVHu)"""
-
-    def __init__(self, input_dim, output_dim, hidden_dim=512, depth=1, layer_norm_dim=None,
-                 non_linearity=nn.ReLU(inplace=True), dropout=0, binary=False, l2_norm=False,
-                 parallel=False, optim=None, scheduler=None, lr=0, lr_decay_epochs=0, weight_decay=0, ema_decay=0):
-        super().__init__()
-
-        self.trunk = nn.Identity() if layer_norm_dim is None \
-            else nn.Sequential(nn.Linear(input_dim, layer_norm_dim),
-                               nn.LayerNorm(layer_norm_dim),
-                               nn.Tanh())
-
-        # Dimensions
-        in_features = layer_norm_dim or input_dim
-
-        # MLP
-        self.MLP = MLP(in_features, output_dim, hidden_dim, depth, non_linearity, dropout, binary, l2_norm)
-
-        if parallel:
-            self.MLP = nn.DataParallel(self.MLP)  # Parallel on visible GPUs
-
-        self.init(optim, scheduler, lr, lr_decay_epochs, weight_decay, ema_decay)
-
-        self.repr_shape, self.repr_dim = (output_dim,), output_dim
-
-    def init(self, optim=None, scheduler=None, lr=None, lr_decay_epochs=0, weight_decay=0, ema_decay=None):
-        # Optimizer
-        if lr or Utils.can_instantiate(optim):
-            self.optim = Utils.instantiate(optim, params=self.parameters(), lr=getattr(optim, 'lr', lr)) \
-                         or torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # Learning rate scheduler
-        if lr_decay_epochs or Utils.can_instantiate(scheduler):
-            self.scheduler = Utils.instantiate(scheduler, optimizer=self.optim) \
-                             or torch.optim.lr_scheduler.CosineAnnealingLR(self.optim, lr_decay_epochs)
-
-        # EMA
-        if ema_decay:
-            self.ema, self.ema_decay = copy.deepcopy(self).eval(), ema_decay
-
-    def update_ema_params(self):
-        assert hasattr(self, 'ema_decay')
-        Utils.param_copy(self, self.ema, self.ema_decay)
-
-    def forward(self, x, *context):
-        h = torch.cat([x, *context], -1)
-
-        h = self.trunk(h)
-        return self.MLP(h)

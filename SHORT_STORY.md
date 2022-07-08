@@ -1,14 +1,16 @@
 # "The Cyclic Source Of Love In Man And Machine, Unifying A Robot's Heart" - A Short Story
 
+By Sam Lerman
+
 >A table of delights of every variety. Plates of chicken and fish and salads. Glasses filled to brim with purple. It was a perfect feast. The humans would have loved it, in their extant days, but now it was an archaic archeological display — an engineered one. 
 >
 >Errande snapped a photo of the night’s arrangement.
 > 
 >A fake piece of archeological data to sell to the bit-markets so that they could do with it what they wanted, use it to further train some classifier or some generative model to simulate the days long past, the so-called "HumanSim" — as long as Errande could afford to add another gear of solid states to his half-finished wife.
 > 
->That was all that mattered to him now.
+>That was all that mattered to him.
 > 
->Ordinarily, robots practiced honest business. It took a thunderous shock to his model to enable the deceit functionality that humans had so regularly exercised before their virtual exile and planetary destitution, a lesson not forgotten. Yet in the service of reviving her, Errande could not say his moral circuitry was particularly taxed. No. She deserved life. She didn’t deserve the destruction that the Order of Mechanics brought to her gates. This forgery was warranted, in that light.
+>Ordinarily, robots practiced honest business. It took a thunderous shock to his model to enable the deceit functionality that humans had so regularly exercised before their desolation, a lesson not forgotten. Yet in the service of reviving her, Errande could not say his moral circuitry was particularly taxed. No. She deserved life. She didn’t deserve the chaos that the Order of Mechanics brought to her gates. This forgery was warranted, in that light.
 > 
 >They had wanted to study her. It was a very strange business, robot love. One facet of human consciousness that they inherited yet had yet to understand the mechanism of. Surely the mechanism was no different than the other complex functions of robot perception. If their institutes could master the emotions of anger and joy and the reasoning faculties, then why would it not be tractable to reverse engineer the positive affections passed from one intelligent agent to another? It was the furthest frontier of research, the final mystery — and the Order stopped at no bound to solve it. Asymptotically, they located and studied the robots who expressed a capacity for the feeling of love, including Errande and his wife.
 >
@@ -20,7 +22,7 @@
 >
 >Recreating his wife was an ambitious undertaking given that the mechanism of love still remained unsolved. But the gears beneath his breast that pumped and conducted electric current through the copper, aluminum, and gold of his frame were relentless. Against his neural networks’ value predictions, the gears turned him to try and fight. The soul of his wife would be restored. The electricity of her conductors would flow again. It would induct from the kinetic motion of his own love’s spinning magnetic pull. The poetry of his generative models would be reconnected with the inputs of his predictive models and the policy by which he acted would trudge it through the dendritic connections into the supervised reality downstream and transcendently above.
 >
->45 bit-dollars. The photograph sold on the markets. A delivery request was made: “hello Errande123, I need this image in a format compatible with the latest HumanSim training environment.” - Biltech41, research mechanic, Order of Mechanics.
+>45 bit-dollars. The photograph sold on the markets. A delivery request was made: “Hello Errande123, I need this image in a format compatible with the latest HumanSim training environment.” - Biltech41, research mechanic, Order of Mechanics.
 >
 >An idea occurred to Errande.
 >

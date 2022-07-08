@@ -475,6 +475,16 @@ python Run.py replay.load=true replay.save=true
 
 </details>
 
+### Recipes
+
+<details>
+<summary>
+:mag: <i>Learn to cook</i>
+</summary>
+<br>
+
+</details>
+
 ### Custom Architectures
 
 <details>

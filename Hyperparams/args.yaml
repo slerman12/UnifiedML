@@ -4,9 +4,8 @@ defaults:
   - override hydra/job_logging: none
 
 # Agent
-obs_shape: ???  # To be specified later
-action_spec: ??? # To be specified later
-data_stats: null
+obs_spec: ???  # To be specified later
+action_spec: ???  # To be specified later
 standardize: true
 norm: true
 trunk_dim: 50
@@ -17,15 +16,26 @@ lr_decay_epochs: null
 weight_decay: 0
 ema_decay: 0.99
 # Domains
-discrete: ??? # To be specified later
+discrete: ???  # To be specified later
 offline: false  # Defaults to true for classify tasks
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
 # Environment
-Dataset: null
+Env: ???  # Defaults per respective task
+env:
+  _target_: ${Env}
+  _recursive_: false
+Dataset: null  # Defaults per respective Classify task
+dataset:
+  _target_: ${Dataset}
+  _recursive_: false
+suite: ???  # Defaults per respective task
+task_name: ???  # Defaults per respective task
+frame_stack: 3
+truncate_episode_steps: 1000
+action_repeat: 1
 # Replay
-obs_spec: ??? # To be specified later
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -58,34 +68,26 @@ Agent: Agents.DQNAgent
 seed: 1
 experiment: Exp
 
-dataset:
-  _target_: ${Dataset}
-  name: Dataset
-
 environment:
   _target_: Datasets.Environment.Environment
   _recursive_: false
-  task_name: ${task_name}
-  frame_stack: ${frame_stack}
-  action_repeat: ${action_repeat}
-  episode_max_frames: false
-  episode_truncate_resume_frames: 1000
-  dataset: ${dataset}
-  seed: ${seed}
+  env: ${env}
   suite: ${suite}
+  task: ${task_name}
+  frame_stack: ${frame_stack}
+  truncate_episode_steps: ${truncate_episode_steps}
+  action_repeat: ${action_repeat}
   offline: ${offline}
   generate: ${generate}
-  batch_size: ${batch_size}
-  num_workers: ${num_workers}
+  seed: ${seed}
 
 agent:
   _target_: ${Agent}
   _recursive_: false
-  obs_shape: ${obs_shape}
+  obs_spec: ${obs_spec}
   action_spec: ${action_spec}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
-  data_stats: ${data_stats}
   standardize: ${standardize}
   norm: ${norm}
   recipes: ${recipes}
@@ -107,6 +109,7 @@ agent:
 
 replay:
   _target_: Datasets.ExperienceReplay.ExperienceReplay
+  _recursive_: false
   batch_size: ${batch_size}
   num_workers: ${num_workers}
   capacity: 1000000
@@ -114,6 +117,7 @@ replay:
   action_spec: ${action_spec}
   suite: ${suite}
   task: ${task_name}
+  frame_stack: ${frame_stack}
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}
@@ -128,6 +132,7 @@ logger:
   path: ./Benchmarking/${experiment}/${format:${Agent}}/${environment.suite}/
   task: ${task_name}
   seed: ${seed}
+  generate: ${generate}
   aggregation: mean
   wandb: false
 
@@ -152,14 +157,15 @@ plotting:
   x_axis: Step
   verbose: false
 
-# Can optionally pass in custom architectures such as those defined in ./Blocks/Architectures or optimizers
+# Can optionally pass in custom architectures, optimizers, schedulers, etc.
 
 Aug: null  # Shorthand for recipes.aug._target_
 
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
 Pool: null  # Shorthand for recipes.encoder.pool._target_
-Pi_trunk: null  # Shorthand for recipes.actor.trunk._target_
-Q_trunk: null  # Shorthand for recipes.critic.trunk._target_
+Trunk: null  # Shorthand for both trunks' _target_, does not have lowercase counterpart
+Pi_trunk: ${Trunk}  # Shorthand for recipes.actor.trunk._target_
+Q_trunk: ${Trunk}  # Shorthand for recipes.critic.trunk._target_
 Generator: null  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_
 Discriminator: null  # Shorthand for Q_head --> recipes.critic.Q_head._target_
 Predictor: ${Generator}  # Shorthand for Pi_head --> recipes.actor.Pi_head._target_

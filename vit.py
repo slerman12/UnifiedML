@@ -16,13 +16,10 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
-from Blocks.Augmentations import RandomShiftsAug
-from Blocks.Architectures.LermanBlocks import ViRP
 from Blocks.Architectures.Vision.ViT import ViT, CLSPool
-from Blocks.Architectures import MLP
 
 import Utils
-from Datasets.ExperienceReplay import ExperienceReplay
+from Datasets import ExperienceReplay
 
 try:
     _, term_width = os.popen('stty size', 'r').read().split()
@@ -266,7 +263,7 @@ wandb.init(project="cifar10-challange",
 wandb.config.update(args)
 
 if args.aug:
-    import albumentations
+    pass
 bs = int(args.bs)
 imsize = int(args.size)
 
