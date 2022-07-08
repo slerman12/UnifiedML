@@ -11,7 +11,7 @@ import Utils
 def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step,
                       num_actions=1, one_hot=False, one_hot_next=False, logs=None):
     # Non-NaN next_obs
-    has_future = ~torch.isnan(next_obs.flatten(1).sum(1)) * bool(next_obs.size(1))
+    has_future = ~torch.isnan(next_obs.flatten(1)[:, :1]).squeeze(1) * bool(next_obs.size(1))
     next_obs = next_obs[has_future]
 
     # One-hot encoding in case discrete actions need to be treated as continuous or vice versa
