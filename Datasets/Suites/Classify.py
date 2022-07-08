@@ -116,7 +116,7 @@ class Classify:
         self._batches = iter(self.batches)
 
         obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
-        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape
+        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape  # 3D
 
         self.obs_spec = {'shape': obs_shape}
 

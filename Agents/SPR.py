@@ -69,8 +69,8 @@ class SPRAgent(torch.nn.Module):
         if not generate:
             resnet = MiniResNet((self.in_channels, *obs_spec.obs_shape[1:]), 3, 1, [64, self.encoder.out_channels], [1])
 
-            self.dynamics = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}), self.action_dim,
-                                       eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)), isotropic=True,
+            self.dynamics = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}), action_spec.shape,
+                                       eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors

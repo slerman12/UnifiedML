@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import math
 import copy
 
 import torch
@@ -17,13 +16,10 @@ class CNNEncoder(nn.Module):
     """
     CNN encoder, e.g., DrQV2 (https://arxiv.org/abs/2107.09645).
     Generalized to multi-dimensionality convolutions and obs shapes (1d or 2d)
-    Isotropic here means dimensionality conserving
     """
 
-    def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False,
-                 device='cuda', parallel=False, eyes=None, pool=None, isotropic=False,
+    def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, eyes=None, device='cuda', parallel=False,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
-
         super().__init__()
 
         self.obs_shape = torch.Size(obs_spec.shape)
@@ -38,12 +34,10 @@ class CNNEncoder(nn.Module):
         self.low, self.high = obs_spec.low, obs_spec.high
 
         # Dimensions
-        obs_spec.shape[0] += context_dim  # TODO no context dim for isotropic?
-        self.out_channels = obs_spec.shape[0] if isotropic else 32  # Default 32
+        obs_spec.shape[0] += context_dim
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_spec.shape)
-                                  or CNN(obs_spec.shape, self.out_channels, depth=3))
+        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape))
 
         adapt_cnn(self.Eyes, obs_spec.shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
@@ -51,15 +45,6 @@ class CNNEncoder(nn.Module):
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.feature_shape = Utils.cnn_feature_shape(*obs_spec.shape, self.Eyes)  # Feature map shape
-
-        self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
-
-        self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)
-
-        # Isotropic
-        if isotropic:
-            assert tuple(obs_spec.shape) == self.feature_shape, \
-                f'specified to be isotropic, but in ≠ out {tuple(obs_spec.shape)} ≠ {self.feature_shape}'
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -72,44 +57,33 @@ class CNNEncoder(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     # Encodes
-    def forward(self, obs, *context, pool=True):
+    def forward(self, obs, *context):
         obs_shape = obs.shape  # Preserve leading dims
         obs = obs.flatten(0, -4)  # Encode last 3 dims
 
         assert obs_shape[-3:] == self.obs_shape, f'encoder received an invalid obs shape ' \
                                                  f'{obs_shape[1:]}, ≠ {self.obs_shape}'
 
+        axes = (1,) * len(obs.shape[2:])  # Spatial axes, useful for dynamic input shapes
+
         # Standardizes/normalizes pixels
         if self.standardize or self.normalize:
-            obs = (obs - self.mean.view(1, -1, 1, 1)) / self.stddev.view(1, -1, 1, 1) if self.standardize \
+            obs = (obs - self.mean.view(1, -1, *axes)) / self.stddev.view(1, -1, *axes) if self.standardize \
                 else 2 * (obs - self.low) / (self.high - self.low) - 1
 
-        # Optionally append context to channels assuming dimensions allow
-        context = [c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *self.obs_shape[1:])
-                   for c in context]
-        obs = torch.cat([obs, *context], 1)
+        # Optionally append 1D context to channels, broadcasting
+        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])
+                                for c in context]], 1)
 
         # CNN encode
         h = self.Eyes(obs)
 
-        feature_shape = tuple(h.shape[-4:][1:] + (1,) * (3 - len(h.shape[-4:][1:])))  # Add spatial dims
-
-        assert feature_shape == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
-                                                    f'{self.feature_shape}≠{feature_shape}'
-
-        # OR
-        # h = h.view(*[h.shape + (1,) * (3 - len(h.shape[-4:][1:]))])  # Add spatial dims just in case
-        # assert tuple(h.shape[-3:]) == self.feature_shape, f'pre-computed feature_shape does not match feature shape '\
-        #                                                   f'{self.feature_shape}≠{tuple(h.shape[-3:])}'
-
-        if pool:
-            h = self.pool(h)
-            assert h.shape[-1] == math.prod(self.repr_shape) or tuple(h.shape[-3:]) == self.repr_shape, \
-                f'pre-computed repr_dim/repr_shape does not match output dim ' \
-                f'{math.prod(self.repr_shape)}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
-
-        # Restore leading dims
-        h = h.view(*obs_shape[:-3], *h.shape[1:])
+        try:
+            # Restores leading dims, validates, adds spatial dims
+            h = h.view(*obs_shape[:-3], *self.feature_shape)
+        except RuntimeError:
+            raise RuntimeError('\nfeature shape does not broadcast to pre-computed feature_shape '
+                               f'{h.shape[1:]}≠{self.feature_shape}')
         return h
 
 
