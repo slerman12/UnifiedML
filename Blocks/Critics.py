@@ -37,7 +37,7 @@ class EnsembleQCritic(nn.Module):
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
-        in_shape = action_spec.shape if ignore_obs else [trunk_dim + self.action_dim]  # TODO auto in-shape
+        in_shape = action_spec.shape if ignore_obs else [trunk_dim + self.action_dim]  # TODO Auto in-shape
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e

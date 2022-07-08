@@ -11,32 +11,39 @@ import Utils
 
 
 class MLP(nn.Module):
+    """
+    MLP Architecture generalized to broadcast various input shapes
+    """
     def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(True),
-                 dropout=0, binary=False, flatten=False):
+                 dropout=0, binary=False):
         super().__init__()
 
-        self.input_dim = input_shape if isinstance(input_shape, int) \
-            else math.prod(input_shape)  # Assumes last-dim of any shape, or input flattened/1D
+        self.input_shape = (input_shape,) if isinstance(input_shape, int) \
+            else input_shape
+        self.input_dim = math.prod(self.input_shape)  # If not already flattened/1D, will try to auto-flatten
 
         self.output_dim = output_dim
 
         self.MLP = nn.Sequential(*[
             nn.Sequential(
-                nn.Linear(self.input_dim if i == 0 else hidden_dim,
+                nn.Linear(self.input_dim if i == 0 else hidden_dim,  # Linear
                           hidden_dim if i < depth else output_dim),
-                non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),
-                nn.Dropout(dropout) if i < depth else nn.Identity())
+                non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
+                nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
             for i in range(depth + 1)])
 
-        self.flatten = flatten  # Flattens (should be set to True if input not flattened to 1D but proprioceptive)
+        self.apply(Utils.weight_init)  # initialize weights
 
-        self.apply(Utils.weight_init)
+    def repr_shape(self, c, w, h):
+        flatten = -1 if h == self.input_dim \
+            else -len(self.input_shape)  # Auto-flatten if needed
 
-    def repr_shape(self, *_):
-        if self.flatten:
-            return self.output_dim, 1, 1  # Dummy 1s
-        return *_[:-1], self.output_dim
+        return *(c, w, h)[:flatten], self.output_dim, *(1,) * -(flatten + 1)
 
-    def forward(self, obs, *context):
-        # Assumes context can be concatenated along last dim
-        return self.MLP(torch.cat([obs, *context], -1).flatten(1 if self.flatten else -1))
+    def forward(self, *obs):
+        obs = torch.cat(obs, -1)  # Assumes inputs can be concatenated along last dim
+
+        flatten = -1 if obs.shape[-1] == self.input_dim \
+            else -len(self.input_shape)
+
+        return self.MLP(obs.flatten(flatten))  # Automatically flattens if needed
