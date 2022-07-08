@@ -32,7 +32,7 @@ class MLP(nn.Module):
                 nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
             for i in range(depth + 1)])
 
-        self.apply(Utils.weight_init)  # initialize weights
+        self.apply(Utils.weight_init)  # Initialize weights
 
     def repr_shape(self, c, w, h):
         flatten = -1 if h == self.input_dim \
