@@ -47,6 +47,7 @@ class MLP(nn.Module):
                 break
 
         # Give each obs a uniform batch dim, flatten, and concatenate
+        # If flatten is False, will operate on last axis only
         obs = torch.cat([(obs.expand(*batch_dims, *obs.shape) if len(obs.shape) < len(batch_dims) + 1
                           else obs).flatten(1 if self.flatten else -1) for obs in x], -1)
 
