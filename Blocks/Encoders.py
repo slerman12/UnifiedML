@@ -28,7 +28,8 @@ class CNNEncoder(nn.Module):
             standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
         self.normalize = norm and None not in [obs_spec.low, obs_spec.high]  # Whether to [0, 1] shift-max scale
 
-        self.mean, self.stddev = map(torch.as_tensor, (obs_spec.mean, obs_spec.stddev))
+        self.mean, self.stddev = map(lambda stat: None if stat is None else torch.as_tensor(stat),
+                                     (obs_spec.mean, obs_spec.stddev))
 
         # Dimensions
         obs_spec.shape[0] += context_dim
@@ -99,7 +100,6 @@ class CNNEncoder(nn.Module):
 
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
-    # CNN blocks
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
         # Represent hyper-params as tuples
         if not isinstance(block.kernel_size, tuple):
@@ -114,10 +114,8 @@ def adapt_cnn(block, obs_shape):
         # Contract the CNN kernels accordingly
         if isinstance(block, nn.Conv2d):
             block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
-    # Recursive
     elif hasattr(block, 'modules'):
         for layer in block.children():
             # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
-            # Next layer's shape
             obs_shape = Utils.cnn_feature_shape(*obs_shape[-3:], layer)

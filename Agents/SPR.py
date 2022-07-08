@@ -50,10 +50,9 @@ class SPRAgent(torch.nn.Module):
         self.trajectories = True  # Tells replay to output trajectories
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder,
-                            device=device, parallel=parallel,
-                            lr=lr, lr_decay_epochs=lr_decay_epochs,
-                            weight_decay=weight_decay, ema_decay=ema_decay * ema)
+            else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
+                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                            ema_decay=ema_decay * ema)
 
         repr_shape = (trunk_dim, 1, 1) if generate \
             else self.encoder.repr_shape
@@ -79,8 +78,8 @@ class SPRAgent(torch.nn.Module):
                                                                  torch.nn.LayerNorm(hidden_dim),
                                                                  torch.nn.Tanh(),
                                                                  MLP(hidden_dim, hidden_dim, hidden_dim, 2)),
-                                        lr=lr, lr_decay_epochs=lr_decay_epochs,
-                                        weight_decay=weight_decay, ema_decay=ema_decay)
+                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                        ema_decay=ema_decay)
 
             self.predictor = CNNEncoder(obs_spec.__class__({'obs_shape': (hidden_dim, 1, 1)}),
                                         eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),

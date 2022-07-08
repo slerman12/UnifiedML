@@ -16,8 +16,7 @@ class MLP(nn.Module):
         super().__init__()
 
         self.input_dim = input_shape if isinstance(input_shape, int) \
-            else math.prod(input_shape) if flatten \
-            else input_shape[-1]
+            else math.prod(input_shape)  # Assumes input flattened, 1D
 
         self.output_dim = output_dim
 
@@ -29,7 +28,7 @@ class MLP(nn.Module):
                 nn.Dropout(dropout) if i < depth else nn.Identity())
             for i in range(depth + 1)])
 
-        self.flatten = flatten  # Proprioceptive
+        self.flatten = flatten  # Flattens (should be set to True if input not flattened to 1D but proprioceptive)
 
         self.apply(Utils.weight_init)
 
@@ -38,21 +37,6 @@ class MLP(nn.Module):
             return self.output_dim, 1, 1  # Dummy 1s
         return *_[:-1], self.output_dim
 
-    def forward(self, *x):
-        # Computes batch dims
-        batch_dims = (1,)
-        for obs in x:
-            if len(obs.shape) > 1:
-                batch_dims = obs.shape[0:1 if self.flatten else -1]
-                break
-
-        # Give each obs a uniform batch dim, flatten, and concatenate
-        # If flatten is False, will operate on last axis only
-        obs = torch.cat([(obs.expand(*batch_dims, *obs.shape) if len(obs.shape) < len(batch_dims) + 1
-                          else obs).flatten(1 if self.flatten else -1) for obs in x], -1)
-
-        assert obs.shape[-1] == self.input_dim, f'MLP input dim {self.input_dim} does not match provided ' \
-                                                f'input dim {obs.shape[-1]} of observation(s) ' \
-                                                f'with shape(s): {" ".join([obs.shape for obs in x])}'
-
-        return self.MLP(obs)
+    def forward(self, obs, *context):
+        # Assumes context can be concatenated along last dim
+        return self.MLP(torch.cat([obs, *context], -1).flatten(1 if self.flatten else -1))
