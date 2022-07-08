@@ -90,12 +90,15 @@ def instantiate(args, i=0, **kwargs):
     if hasattr(args, '_target_') and args._target_:
         try:
             return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
-        except ImportError:
+        except ImportError as e:
             if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                 args = args._target_
             else:
                 args._target_ = 'Utils.' + args._target_  # Portal into Utils
-                return hydra.utils.instantiate(args, **kwargs)
+                try:
+                    return hydra.utils.instantiate(args, **kwargs)
+                except ImportError:
+                    raise e  # Original error if all that doesn't work
 
     if isinstance(args, str):
         for key in kwargs:
