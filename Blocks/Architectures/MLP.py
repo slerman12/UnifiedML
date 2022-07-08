@@ -16,7 +16,7 @@ class MLP(nn.Module):
         super().__init__()
 
         self.input_dim = input_shape if isinstance(input_shape, int) \
-            else math.prod(input_shape)  # Assumes input flattened, 1D
+            else math.prod(input_shape)  # Assumes last-dim of any shape, or input flattened/1D
 
         self.output_dim = output_dim
 
