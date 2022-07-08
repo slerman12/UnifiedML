@@ -26,13 +26,14 @@ class MLP(nn.Module):
 
         self.MLP = nn.Sequential(*[
             nn.Sequential(
-                nn.Linear(self.input_dim if i == 0 else hidden_dim,  # Linear
-                          hidden_dim if i < depth else output_dim),
+                nn.Linear(self.input_dim if i == 0 else hidden_dim,
+                          hidden_dim if i < depth else output_dim),  # Linear
                 non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
                 nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
             for i in range(depth + 1)])
 
-        self.apply(Utils.weight_init)  # Initialize weights
+        # Initialize weights
+        self.apply(Utils.weight_init)
 
     def repr_shape(self, c, w, h):
         flatten = -1 if h == self.input_dim \
@@ -46,4 +47,4 @@ class MLP(nn.Module):
         flatten = -1 if obs.shape[-1] == self.input_dim \
             else -len(self.input_shape)
 
-        return self.MLP(obs.flatten(flatten))  # Automatically flattens if needed
+        return self.MLP(obs.flatten(flatten))  # Auto-flatten if needed
