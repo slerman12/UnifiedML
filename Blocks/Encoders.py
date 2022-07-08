@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
 import copy
 
 import torch
@@ -64,7 +65,7 @@ class CNNEncoder(nn.Module):
         obs_shape = obs.shape  # Preserve leading dims
         obs = obs.flatten(0, -4)  # Flatten up to last 3 dims
 
-        assert tuple(obs_shape[-3:]) == self.obs_spec.shape, f'encoder received an invalid obs shape ' \
+        assert tuple(obs_shape[-3:]) == self.obs_spec.shape, f'Encoder received an invalid obs shape ' \
                                                              f'{tuple(obs_shape[1:])}, ≠ {self.obs_spec.shape}'
 
         axes = (1,) * len(obs.shape[2:])  # Spatial axes, useful for dynamic input shapes
@@ -82,19 +83,20 @@ class CNNEncoder(nn.Module):
         # CNN encode
         h = self.Eyes(obs)
 
-        try:
-            h = h.view(h.shape[0], *self.feature_shape)  # Validate, add spatial dims
-        except RuntimeError:
-            raise RuntimeError('\nfeature shape cannot broadcast to pre-computed feature_shape '
-                               f'{h.shape[1:]}-/->{self.feature_shape}')
+        feature_shape = tuple(h.shape[-4:][1:] + (1,) * (3 - len(h.shape[-4:][1:])))  # Add spatial dims
+
+        assert feature_shape == self.feature_shape, f'pre-computed feature_shape does not match feature shape ' \
+                                                    f'{self.feature_shape}≠{feature_shape}'
 
         if pool:
             h = self.pool(h)
-            try:
-                h = h.view(*obs_shape[:-3], *self.repr_shape)  # Restore leading dims, validate, add spatial dims
-            except RuntimeError:
-                raise RuntimeError('\noutput after pooling cannot broadcast to pre-computed repr_shape '
-                                   f'{h.shape[1:]}-/->{self.repr_shape}')
+            assert h.shape[-1] == math.prod(self.repr_shape) or tuple(h.shape[-3:]) == self.repr_shape, \
+                f'pre-computed repr_dim/repr_shape does not match output dim ' \
+                f'{math.prod(self.repr_shape)}≠{h.shape[-1]}, {self.repr_shape}≠{tuple(h.shape[-3:])}'
+
+        # Restore leading dims
+        h = h.view(*obs_shape[:-3], *h.shape[1:])
+
         return h
 
 
