@@ -75,8 +75,6 @@ class CNNEncoder(nn.Module):
         elif self.normalize:
             obs = 2 * (obs - self.obs_spec.low) / (self.obs_spec.high - self.obs_spec.low) - 1
 
-        obs = obs.view(obs.shape[0], *(1,) * (4 - len(obs.shape)) + obs.shape[1:])  # 3D
-
         # Optionally append a 1D context to channels, broadcasting
         obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])
                                 for c in context]], 1)
