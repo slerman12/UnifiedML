@@ -53,16 +53,16 @@ class EnsembleGaussianActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
+        mean = self.Pi_head(obs).squeeze(1).flatten(1)
+
         if self.stddev_schedule is None:
-            mean, log_stddev = self.Pi_head(obs).squeeze(1).chunk(2, dim=-1)
+            mean, log_stddev = mean.chunk(2, dim=-1)
             stddev = torch.exp(log_stddev)
         else:
-            mean = self.Pi_head(obs).squeeze(1)
-            stddev = torch.full_like(mean,
-                                     Utils.schedule(self.stddev_schedule, step))
+            stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))
 
         if self.low is not None and self.high is not None:
-            mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low
+            mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize
 
         Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high,
                              stddev_clip=self.stddev_clip)

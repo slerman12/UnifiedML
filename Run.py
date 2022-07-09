@@ -90,10 +90,10 @@ def main(args):
                     logger.log(logs, 'Train')
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):
-            Utils.save(args.save_path, agent, args.agent, 'step', 'episode')
+            Utils.save(args.save_path, agent)
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            agent = Utils.load(args.save_path, args.device, agent, ['step', 'episode'], True)
+            agent = Utils.load(args.save_path, args.device, agent, ['frame', 'step', 'episode', 'epoch'], True)
 
 
 if __name__ == '__main__':

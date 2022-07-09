@@ -49,39 +49,32 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 # Saves model + args + attributes
-def save(path, model, args, *attributes):
+def save(path, model):
     Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    torch.save({'state_dict': model.state_dict(), 'args': args,
-                **{attr: getattr(model, attr) for attr in attributes}}, path)
+    torch.save(model, path)
+    print(f'Model successfully saved to {path}')
 
 
 # Loads model or part of model
-def load(path, device='cuda', model=None, preserve=(), distributed=False, attr='', **kwargs):
+def load(path, device='cuda', agent=None, preserve=(), distributed=False, attr='', **kwargs):
     while True:
         try:
-            to_load = torch.load(path, map_location=getattr(model, 'device', device))
+            model = torch.load(path, map_location=device)
             break
         except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
             if not distributed:
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
-    if model is None:
-        model = hydra.utils.instantiate(to_load['args']).to(device)
-
-    # Load model's params
-    model.load_state_dict(to_load['state_dict'], strict=False)
-
-    # Load saved attributes as well
-    for key in to_load:
-        if hasattr(model, key) and key not in ['state_dict', 'args', *preserve]:
-            setattr(model, key, to_load[key])
+    for key, value in preserve:
+        setattr(model, key, getattr(agent, 'value'))
 
     # Can also load part of a model. Useful for recipes,
-    # e.g. python Run.py Eyes=load +eyes.path=<Path To Agent Checkpoint> +eyes.attr=encoder.Eyes
+    # e.g. python Run.py Eyes=load +eyes.path=<Path To Agent Checkpoint> +eyes.attr=encoder.Eyes +eyes.device=<device>
     for key in attr.split('.'):
         if key:
             model = getattr(model, key)
+    print(f'Successfully loaded {attr if attr else "agent"} from {path}')
     return model
 
 
@@ -127,13 +120,16 @@ def weight_init(m):
 
 # Initializes model optimizer. Default: AdamW + cosine annealing
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
+    params = list(params)
+    has_params = len(params) > 0
+
     # Optimizer
-    optim = instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) \
-            or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)  # Default
+    optim = has_params and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr))
+                            or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
 
     # Learning rate scheduler
-    scheduler = instantiate(scheduler, optimizer=optim) or (lr and lr_decay_epochs or None) \
-                and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs)  # Default
+    scheduler = has_params and (instantiate(scheduler, optimizer=optim) or (lr and lr_decay_epochs or None)
+                                and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
 
     return optim, scheduler
 
@@ -305,6 +301,10 @@ def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
 
+# Pytorch incorrect (in this case) warning suppression
+warnings.filterwarnings("ignore", message='.* skipping the first value of the learning rate schedule')
+
+
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers
 def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, epoch=0, ema=True):
     # Clear grads
@@ -319,10 +319,8 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
     # Optimize
     if step_optim:
         for model in models:
-            model.optim.step()
-
             # Step scheduler
-            if model.scheduler is not None and epoch > model.scheduler.last_epoch:
+            if model.scheduler and epoch > model.scheduler.last_epoch:
                 model.scheduler.step()
                 model.scheduler.last_epoch = epoch
 
@@ -330,8 +328,11 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
             if ema and hasattr(model, 'ema'):
                 model.update_ema_params()
 
-            if loss is None and clear_grads:
-                model.optim.zero_grad(set_to_none=True)
+            if model.optim:
+                model.optim.step()
+
+                if loss is None and clear_grads:
+                    model.optim.zero_grad(set_to_none=True)
 
 
 # Increment/decrement a value in proportion to a step count and a string-formatted schedule

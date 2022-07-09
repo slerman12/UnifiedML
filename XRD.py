@@ -11,9 +11,11 @@ from torch.utils.data import Dataset
 from torchaudio.transforms import Spectrogram
 from torchvision.transforms import Compose, ToPILImage
 
+import Utils
+
 
 class CNN(nn.Module):
-    def __init__(self, input_shape=(1,)):
+    def __init__(self, input_shape=(1, 1, 1), output_dim=7):
         super().__init__()
 
         in_channels = input_shape if isinstance(input_shape, int) else \
@@ -33,26 +35,17 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.Dropout(0.3),
                 nn.AvgPool2d(3),
+                nn.Flatten()
             )
 
-    def forward(self, obs):
-        return self.CNN(obs)
+        input_dim, _, _ = Utils.cnn_feature_shape(*input_shape, self.CNN)
 
-
-class Predictor(nn.Module):
-    def __init__(self, input_shape=(1024,), output_dim=7):
-        super().__init__()
-
-        input_dim = input_shape if isinstance(input_shape, int) \
-            else math.prod(input_shape)
-
-        self.MLP = nn.Sequential(nn.Flatten(),
-                                 nn.Linear(input_dim, 2300), nn.ReLU(), nn.Dropout(0.5),
-                                 nn.Linear(2300, 1150), nn.ReLU(), nn.Dropout(0.5),
-                                 nn.Linear(1150, output_dim))
+        self.predictor = nn.Sequential(nn.Linear(input_dim, 2300), nn.ReLU(), nn.Dropout(0.5),
+                                       nn.Linear(2300, 1150), nn.ReLU(), nn.Dropout(0.5),
+                                       nn.Linear(1150, output_dim))
 
     def forward(self, obs):
-        return self.MLP(obs)
+        return self.predictor(self.CNN(obs))
 
 
 class MLP(nn.Module):
@@ -83,7 +76,7 @@ class XRD(Dataset):
         if not isinstance(train_eval_splits, Iterable):
             train_eval_splits = (train_eval_splits,)
 
-        assert len(roots) == len(train_eval_splits), 'must provide train test split for each root dir'
+        assert len(roots) == len(train_eval_splits), 'Must provide train test split for each root dir'
 
         self.indices = []
         self.features = {}

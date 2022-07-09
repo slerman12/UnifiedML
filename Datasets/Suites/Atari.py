@@ -16,8 +16,6 @@ from torch import as_tensor
 
 from torchvision.transforms.functional import resize
 
-# from skimage.transform import resize
-
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
 class AttrDict(dict):
@@ -158,7 +156,6 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
         obs = resize(as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
@@ -202,7 +199,6 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
         obs = resize(as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
