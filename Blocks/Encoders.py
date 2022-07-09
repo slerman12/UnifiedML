@@ -21,7 +21,7 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_spec = obs_spec
+        self.obs_spec = copy.deepcopy(obs_spec)
 
         self.standardize = \
             standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
@@ -34,7 +34,7 @@ class CNNEncoder(nn.Module):
         obs_spec.shape[0] += context_dim
 
         # CNN
-        self.Eyes = nn.Sequential(Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape))
+        self.Eyes = Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape)
 
         adapt_cnn(self.Eyes, obs_spec.shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
@@ -74,6 +74,8 @@ class CNNEncoder(nn.Module):
             obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
         elif self.normalize:
             obs = 2 * (obs - self.obs_spec.low) / (self.obs_spec.high - self.obs_spec.low) - 1
+
+        obs = obs.view(obs.shape[0], *(1,) * (4 - len(obs.shape)) + obs.shape[1:])  # 3D
 
         # Optionally append a 1D context to channels, broadcasting
         obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])

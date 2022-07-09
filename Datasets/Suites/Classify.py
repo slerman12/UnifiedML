@@ -8,7 +8,6 @@ import io
 import itertools
 import json
 import random
-import warnings
 from pathlib import Path
 
 from tqdm import tqdm
@@ -74,11 +73,6 @@ class Classify:
         # Don't need once moved to replay (see below)
         dataset_ = dataset
 
-        # Make env
-
-        # with warnings.catch_warnings():
-        #     warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-
         # Different datasets have different specs
         root_specs = [dict(root=f'./Datasets/ReplayBuffer/Classify/{task}_%s' %
                                 ('Train' if train else 'Eval')), {}]
@@ -115,11 +109,6 @@ class Classify:
 
         self._batches = iter(self.batches)
 
-        obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
-        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape  # 3D
-
-        self.obs_spec = {'shape': obs_shape}
-
         """MOVE TO REPLAY"""
 
         replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
@@ -152,7 +141,7 @@ class Classify:
         """---------------------"""
 
         self.obs_spec = {'name': 'obs',
-                         'shape': obs_shape,
+                         'shape': tuple(next(iter(self.batches))[0].shape[1:]),
                          'mean': mean,
                          'stddev': stddev,
                          'low': low,
@@ -175,10 +164,6 @@ class Classify:
     def reset(self):
         obs, label = [np.array(b, dtype='float32') for b in self.sample()]
         label = np.expand_dims(label, 1)
-
-        batch_size = obs.shape[0]
-
-        obs.shape = (batch_size, *self.obs_spec['shape'])
 
         self.episode_done = False
 
@@ -216,8 +201,6 @@ class Classify:
 
             batch_size = obs.shape[0]
 
-            obs.shape = (batch_size, *self.obs_spec['shape'])
-
             dummy = np.full((batch_size, 1), np.NaN)
             missing = np.full((batch_size, *self.action_spec['shape']), np.NaN)
 
@@ -240,8 +223,7 @@ class Classify:
         for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
                                          'This only has to be done once'):
 
-            b = obs.shape[0]
-            _, c, h, w = (b, *self.obs_spec['shape'])
+            b, c, h, w = obs.shape
             obs = obs.view(b, c, h, w)
             fst_moment = torch.empty(c) if fst_moment is None else fst_moment
             snd_moment = torch.empty(c) if snd_moment is None else snd_moment
