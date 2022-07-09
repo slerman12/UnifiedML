@@ -66,8 +66,10 @@ def load(path, device='cuda', agent=None, preserve=(), distributed=False, attr='
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
-    for key, value in preserve:
-        setattr(model, key, getattr(agent, 'value'))
+    # Load saved attributes as well
+    for key in preserve:
+        if hasattr(agent, 'key'):
+            setattr(model, key, getattr(agent, key))
 
     # Can also load part of a model. Useful for recipes,
     # e.g. python Run.py Eyes=load +eyes.path=<Path To Agent Checkpoint> +eyes.attr=encoder.Eyes +eyes.device=<device>
