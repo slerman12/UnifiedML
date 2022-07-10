@@ -53,8 +53,9 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 # Saves model + args + attributes
 def save(path, model, args, *attributes):
     root, name = path.rsplit('/', 1)
-    Path(path.rsplit('/', 1)[0]).mkdir(exist_ok=True, parents=True)
-    save_args(args, Path(root), name)
+    Path(root).mkdir(exist_ok=True, parents=True)
+    save_args(args, Path(root), name)  # Saves args / recipe
+
     torch.save({'state_dict': model.state_dict(), **{attr: getattr(model, attr)
                                                      for attr in attributes}}, path)  # Saves params + attributes
     print(f'Model successfully saved to {path}')
@@ -364,23 +365,13 @@ def schedule(schedule, step):
 
 
 # Saves args
-def save_args(model, args, path, attributes=(), root_path=None, name='', attr=None):
-    if root_path is None:
-        root, name = path.rsplit('/', 1)
-        root_path = Path(root)
-        root_path.mkdir(exist_ok=True, parents=True)
-
+def save_args(args, root_path, name, attr=None):
+    if attr is None:
         # Save recipes
-        save_args(None, args.recipes, '', (), root_path, name, '')
+        save_args(args.recipes, root_path, name, '')
 
         # Save args
         torch.save(args, root_path / f'{name}.args')
-
-        # Saves params + attributes
-        torch.save({'state_dict': model.state_dict(),
-                    **{attr: getattr(model, attr) for attr in attributes}}, path)
-
-        print(f'Model successfully saved to {path}')
     # Special case when 'load' in recipe
     else:
         # If sub-part loaded via recipes (e.g. Eyes=load ...), saves original recipe (Eyes=...)
