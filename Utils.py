@@ -94,13 +94,10 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
-    model = instantiate(to_load['args']).to(device)
+    model = instantiate(args or to_load['args']).to(device)  # By default load params with passed-in model args
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
-
-    if args is not None:
-        args.update(to_load['args'])
 
     # Load saved attributes as well
     for key in to_load:
