@@ -21,7 +21,7 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_spec = copy.deepcopy(obs_spec)
+        self.obs_spec = copy.copy(obs_spec)
 
         self.standardize = \
             standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
