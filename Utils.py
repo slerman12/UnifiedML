@@ -52,11 +52,9 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 # Saves model + args + attributes
 def save(path, model, args, *attributes):
-    root, name = path.replace('.pt', '').rsplit('/', 1)
-    root_path = Path(root)
-    root_path.mkdir(exist_ok=True, parents=True)
-
-    save_args(args, root_path, name)
+    root, name = path.rsplit('/', 1)
+    Path(path.rsplit('/', 1)[0]).mkdir(exist_ok=True, parents=True)
+    save_args(args, Path(root), name)
     torch.save({'state_dict': model.state_dict(), **{attr: getattr(model, attr)
                                                      for attr in attributes}}, path)  # Saves params + attributes
     print(f'Model successfully saved to {path}')
@@ -365,36 +363,48 @@ def schedule(schedule, step):
             return (1.0 - mix) * start + mix * stop
 
 
-# Saves args s.t. if sub-part loaded via recipes (e.g. Eyes=load ...), saves original recipe (Eyes=...)
-def save_args(args, root_path, name, attr=None):
-    if attr is None:
-        # Save recipes and args
-        save_args(args.recipes, root_path, name, '')
+# Saves args
+def save_args(model, args, path, attributes=(), root_path=None, name='', attr=None):
+    if root_path is None:
+        root, name = path.rsplit('/', 1)
+        root_path = Path(root)
+        root_path.mkdir(exist_ok=True, parents=True)
+
+        # Save recipes
+        save_args(None, args.recipes, '', (), root_path, name, '')
+
+        # Save args
         torch.save(args, root_path / f'{name}.args')
-        return
 
+        # Saves params + attributes
+        torch.save({'state_dict': model.state_dict(),
+                    **{attr: getattr(model, attr) for attr in attributes}}, path)
+
+        print(f'Model successfully saved to {path}')
     # Special case when 'load' in recipe
-    for key, recipe in args.items():
-        _target_ = getattr(recipe, '_target_', recipe)
-        attrs = f'{attr}.{key}'.strip('.')  # The recipe's attributes e.g. encoder.eyes
+    else:
+        # If sub-part loaded via recipes (e.g. Eyes=load ...), saves original recipe (Eyes=...)
+        for key, recipe in args.items():
+            _target_ = getattr(recipe, '_target_', recipe)
+            attrs = f'{attr}.{key}'.strip('.')  # The recipe's attributes e.g. encoder.eyes
 
-        # Recursion to sub-recipes
-        if isinstance(_target_, DictConfig):
-            save_args(_target_, root_path, name, attrs)
-        # Any recipe that calls 'load'
-        elif _target_ and ('load(' in _target_ or _target_[:4] == 'load' or _target_[:9] == 'Utils.load'):
-            # Interpolate a load path
-            load_path = getattr(recipe, 'path',
-                                _target_.split('load(')[-1].split('path=')[-1].split(')')[0].split(',')[0])
+            # Recursion to sub-recipes
+            if isinstance(_target_, DictConfig):
+                save_args(_target_, root_path, name, attrs)
+            # Any recipe that calls 'load'
+            elif _target_ and ('load(' in _target_ or _target_[:4] == 'load' or _target_[:9] == 'Utils.load'):
+                # Interpolate a load path
+                load_path = getattr(recipe, 'path',
+                                    _target_.split('load(')[-1].split('path=')[-1].split(')')[0].split(',')[0])
 
-            load_root, load_name = load_path.replace('.pt', '').rsplit('/', 1)
-            sub_parts_path = Path(load_root) / 'sub_parts'
-            sub_parts_path.mkdir(exist_ok=True)
+                load_root, load_name = load_path.replace('.pt', '').rsplit('/', 1)
+                sub_parts_path = Path(load_root) / 'sub_parts'
+                sub_parts_path.mkdir(exist_ok=True)
 
-            # If not already cached
-            if not (sub_parts_path / f'{load_name}_{attrs}.args').exists():
-                # Save a copy of the dependency args
-                shutil.copy(f'{load_root}/{load_name}.args', sub_parts_path / f'{load_name}_{attrs}.args')
-        else:
-            # No need to independently save others
-            Path(root_path / f'sub_parts/{name}_{attrs}.args').unlink(missing_ok=True)
+                # If not already cached
+                if not (sub_parts_path / f'{load_name}_{attrs}.args').exists():
+                    # Save a copy of the dependency args
+                    shutil.copy(f'{load_root}/{load_name}.args', sub_parts_path / f'{load_name}_{attrs}.args')
+            else:
+                # No need to independently save others
+                Path(root_path / f'sub_parts/{name}_{attrs}.args').unlink(missing_ok=True)
