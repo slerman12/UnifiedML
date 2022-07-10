@@ -54,7 +54,7 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 def save(path, model, args, *attributes):
     root, name = path.rsplit('/', 1)
     Path(root).mkdir(exist_ok=True, parents=True)
-    save_args(args, Path(root), name)  # Saves args / recipe
+    save_args(args, Path(root), name.replace('.pt', ''))  # Saves args / recipe
 
     torch.save({'state_dict': model.state_dict(), **{attr: getattr(model, attr)
                                                      for attr in attributes}}, path)  # Saves params + attributes
@@ -69,14 +69,17 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
         try:
             to_load = torch.load(path, map_location=device)
             arg_path = (glob.glob(f'{root}/sub_parts/{name}_{attr}.args') or (f'{root}/{name}.args',))[0]
-            to_load.update({'args': torch.load(arg_path)})
+            if args is None:
+                args = torch.load(arg_path)
+            else:
+                args.update(torch.load(arg_path))
             break
         except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
             if not distributed:
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
-    model = instantiate(args or to_load['args']).to(device)  # New or original args
+    model = instantiate(args).to(device)  # New or original args
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
@@ -394,7 +397,7 @@ def save_args(args, root_path, name, attr=None):
 
                 # If not already cached
                 if not (sub_parts_path / f'{load_name}_{attrs}.args').exists():
-                    # Save a copy of the dependency args
+                    # Save a copy of the dependency args,  Note: does not update with kwargs
                     shutil.copy(f'{load_root}/{load_name}.args', sub_parts_path / f'{load_name}_{attrs}.args')
             else:
                 # No need to independently save others
