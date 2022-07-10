@@ -53,7 +53,7 @@ class EnsembleGaussianActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        mean = self.Pi_head(obs).squeeze(1).flatten(1)
+        mean = self.Pi_head(obs).flatten(2).squeeze(1)
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)

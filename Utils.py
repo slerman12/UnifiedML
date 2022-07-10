@@ -5,12 +5,14 @@
 import math
 import random
 import re
+import shutil
 import warnings
 from inspect import signature
 from pathlib import Path
+import glob
 
 import hydra
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 
 import numpy as np
 
@@ -49,27 +51,61 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 # Saves model + args + attributes
-def save(path, model):
-    Path('/'.join(path.split('/')[:-1])).mkdir(exist_ok=True, parents=True)
-    torch.save(model, path)
+def save(path, model, args, *attributes):
+    root, name = path.replace('.pt', '').rsplit('/', 1)
+    Path(root).mkdir(exist_ok=True, parents=True)
+
+    # Accounts for recursive saves/loads of model sub-parts, even across experiments (unless experiment deleted)
+    def save_sub_part(recipe, attr=''):
+        for key, recipe in recipe.items():
+            target = getattr(recipe, '_target_', recipe)
+            attrs = f'{attr}.{key}'.strip('.')
+            if isinstance(target, DictConfig):
+                save_sub_part(target, attrs)
+            elif target and ('load(' in target or target[:4] == 'load' or target[:9] == 'Utils.load'):
+                load_path = getattr(recipe, 'path',
+                                    target.split('load(')[-1].split('path=')[-1].split(')')[0].split(',')[0])
+                load_root, load_name = load_path.replace('.pt', '').rsplit('/', 1) if load_path else (root, name)
+                Path(f'{load_root}/sub_parts/').mkdir(exist_ok=True)
+                if not Path(f'{load_root}/sub_parts/{load_name}_{attrs}.args').exists():
+                    shutil.copy(f'{load_root}/{load_name}.args', f'{load_root}/sub_parts/{load_name}_{attrs}.args')
+            else:
+                Path(f'{root}/sub_parts/{name}_{attrs}.args').unlink(missing_ok=True)
+
+    save_sub_part(args.recipes)
+    torch.save(args, path.replace('.pt', '') + '.args')
+    torch.save({'state_dict': model.state_dict(),  # Saves params, not model!
+                **{attr: getattr(model, attr) for attr in attributes}}, path)
     print(f'Model successfully saved to {path}')
 
 
 # Loads model or part of model
-def load(path, device='cuda', agent=None, preserve=(), distributed=False, attr='', **kwargs):
+def load(path, device='cuda', args=None, preserve=(), distributed=False, attr='', **kwargs):
+    root, name = path.replace('.pt', '').rsplit('/', 1)
+
     while True:
         try:
-            model = torch.load(path, map_location=device)
+            to_load = torch.load(path, map_location=device)
+            arg_path = (glob.glob(f'{root}/sub_parts/{name}_{attr}.args') or (f'{root}/{name}.args',))[0]
+            to_load.update({'args': torch.load(arg_path)})
             break
         except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
             if not distributed:
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
+    model = instantiate(to_load['args']).to(device)
+
+    # Load model's params
+    model.load_state_dict(to_load['state_dict'], strict=False)
+
+    if args is not None:
+        args.update(to_load['args'])
+
     # Load saved attributes as well
-    for key in preserve:
-        if hasattr(agent, 'key'):
-            setattr(model, key, getattr(agent, key))
+    for key in to_load:
+        if hasattr(model, key) and key not in ['state_dict', 'args', *preserve]:
+            setattr(model, key, to_load[key])
 
     # Can also load part of a model. Useful for recipes,
     # e.g. python Run.py Eyes=load +eyes.path=<Path To Agent Checkpoint> +eyes.attr=encoder.Eyes +eyes.device=<device>
