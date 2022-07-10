@@ -94,14 +94,14 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
-    model = instantiate(args or to_load['args']).to(device)  # By default load params with passed-in model args
+    model = instantiate(args or to_load['args']).to(device)  # By default use passed-in args
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
 
     # Load saved attributes as well
     for key in to_load:
-        if hasattr(model, key) and key not in ['state_dict', 'args', *preserve]:
+        if hasattr(model, key) and key not in ['state_dict', *preserve]:
             setattr(model, key, to_load[key])
 
     # Can also load part of a model. Useful for recipes,
