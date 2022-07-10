@@ -51,7 +51,7 @@ ema: false
 # Saving
 save: true
 save_per_steps: 0
-save_path: ./Checkpoints/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Agent.pt
+save_path: ./Checkpoints/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}.pt
 load: false
 load_per_steps: 0
 # Logging

@@ -69,17 +69,16 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
         try:
             to_load = torch.load(path, map_location=device)
             arg_path = (glob.glob(f'{root}/sub_parts/{name}_{attr}.args') or (f'{root}/{name}.args',))[0]
-            if args is None:
-                args = torch.load(arg_path)
-            else:
-                args.update(torch.load(arg_path))
+            to_load.update({'args': torch.load(arg_path)})
             break
         except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
             if not distributed:
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
-    model = instantiate(args).to(device)  # New or original args
+    (args or {}).update(to_load['args'])  # Original args
+
+    model = instantiate(to_load['args']).to(device)
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
