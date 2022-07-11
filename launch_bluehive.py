@@ -66,29 +66,29 @@ sweep = [
 ]
 sweep = [
     #      'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-#          'Eyes=Blocks.Architectures.ResNet18 '
-#          'transform="{RandomHorizontalFlip:{}}" experiment="No-Contrastive-Pure-RL" '
-#          'Agent=Agents.ExperimentAgent '
-#          'parallel=true num_workers=20 num_gpus=4 mem=100 '
-#          'plot_per_steps=0 supervise=false lab=true',
-         'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive-Pure-RL" '
-         'Agent=Agents.ExperimentAgent +agent.half=true '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
-         'plot_per_steps=0 supervise=false lab=true',
-         'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="Third-Label-Pure-RL" '
-         'Agent=Agents.ExperimentAgent +agent.third=true '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
-         'plot_per_steps=0 supervise=false lab=true'
-         'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
-         'Eyes=Blocks.Architectures.ResNet18 '
-         'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive" '
-         'Agent=Agents.ExperimentAgent +agent.half=true '
-         'parallel=true num_workers=20 num_gpus=4 mem=100 '
-         'plot_per_steps=0 lab=true',
+    #          'Eyes=Blocks.Architectures.ResNet18 '
+    #          'transform="{RandomHorizontalFlip:{}}" experiment="No-Contrastive-Pure-RL" '
+    #          'Agent=Agents.ExperimentAgent '
+    #          'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    #          'plot_per_steps=0 supervise=false lab=true',
+    'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    'Eyes=Blocks.Architectures.ResNet18 '
+    'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive-Pure-RL" '
+    'Agent=Agents.ExperimentAgent +agent.half=true '
+    'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    'plot_per_steps=0 supervise=false lab=true',
+    'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    'Eyes=Blocks.Architectures.ResNet18 '
+    'transform="{RandomHorizontalFlip:{}}" experiment="Third-Label-Pure-RL" '
+    'Agent=Agents.ExperimentAgent +agent.third=true '
+    'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    'plot_per_steps=0 supervise=false lab=true'
+    'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
+    'Eyes=Blocks.Architectures.ResNet18 '
+    'transform="{RandomHorizontalFlip:{}}" experiment="Half-Half-Contrastive" '
+    'Agent=Agents.ExperimentAgent +agent.half=true '
+    'parallel=true num_workers=20 num_gpus=4 mem=100 '
+    'plot_per_steps=0 lab=true',
     'task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 '
     'Eyes=Blocks.Architectures.ResNet18 '
     'transform="{RandomHorizontalFlip:{}}" experiment="Third-Label" '
@@ -130,21 +130,24 @@ sweep = [
 sweep = [
     'python Run.py task=classify/custom Dataset=Datasets.ReplayBuffer.Classify._XRD.Synthetic "Pi_trunk=\'Null\'" Eyes=XRD.Encoder Pi_head=XRD.Actor Optim=torch.optim.SGD lr=0.001 batch_size=16 replay.forget=false replay.capacity=100 num_workers=1 \'aug="Null"\' logger.wandb=true experiment="Reproduced"'
 ]
+# noinspection PyRedeclaration
 
 # XRD
+
 sweep = [
     # Soup, 50-50, CNN, 7/230-Way, noise 0/2
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.CNN
     Predictor=XRD.Predictor
-    batch_size=256, 32
+    batch_size=256,32
     standardize=false
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    "experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'"
+    "experiment='CNN_optim_ADAM_batch_size_${batch_size}'"
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7,230
@@ -156,6 +159,7 @@ sweep = [
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.CNN
     Predictor=XRD.Predictor
@@ -177,6 +181,7 @@ sweep = [
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.MLP
     Predictor=Identity
@@ -196,6 +201,7 @@ sweep = [
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.MLP
     Predictor=Identity
@@ -217,6 +223,7 @@ sweep = [
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.CNN
     Predictor=XRD.Predictor
@@ -236,6 +243,7 @@ sweep = [
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.CNN
     Predictor=XRD.Predictor
@@ -251,11 +259,11 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-
     # Soup, 50-50, ResNet18, 7-Way, noise 0
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=ResNet18
     Predictor=XRD.Predictor
@@ -275,6 +283,7 @@ sweep = [
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
+    Aug=Identity
     Trunk=Identity
     Eyes=XRD.CNN
     Predictor=XRD.Predictor

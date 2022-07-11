@@ -133,7 +133,7 @@ class Classify:
             Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
                      **kwargs)
 
-        # Create replay
+        # Create replay  TODO - check if len of buffer = batches, else recreate, check if norm exists, else conflict
         if train and (offline or generate) and not replay_path.exists():
             self.create_replay(replay_path)  # TODO Conflict-handling in distributed & mark success in case of terminate
 

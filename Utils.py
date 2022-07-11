@@ -94,7 +94,7 @@ def save(path, model, args, *attributes):
 #                     # Save a copy of the dependency args
 #                     shutil.copy(f'{load_root}/{load_name}.args', sub_parts_path / f'{load_name}_{attrs}.args')
 #             else:
-#                 # No need to independently save others - [might be important to others]
+#                 # No need to independently save others - [might be important to others but maybe necessary for update]
 #                 Path(root_path / f'sub_parts/{name}_{attrs}.args').unlink(missing_ok=True)
 
 
@@ -364,7 +364,8 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
     # Clear grads
     if clear_grads and loss is not None:
         for model in models:
-            model.optim.zero_grad(set_to_none=True)
+            if model.optim:
+                model.optim.zero_grad(set_to_none=True)
 
     # Backward
     if backward and loss is not None:
