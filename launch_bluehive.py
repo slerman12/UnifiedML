@@ -133,36 +133,162 @@ sweep = [
 
 # XRD
 sweep = [
-    # Soup, 50-50, CNN/MLP/ResNet18, 7-Way, noise 0/2  TODO no standardize/normalize
+    # Soup, 50-50, CNN, 7/230-Way, noise 0/2
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
     Trunk=Identity
-    Eyes=XRD.CNN,XRD.MLP,ResNet18
+    Eyes=XRD.CNN
     Predictor=XRD.Predictor
+    batch_size=256, 32
+    standardize=false
+    norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='${format:${Eyes}}_noise_${aug.noise}'
+    "experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'"
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7,230
     train_steps=5e5
     save=true
-    Aug=Blocks.Augmentations.IntensityAug
-    +aug.noise=0,2""",
+    logger.wandb=true""",
 
-    # Synthetic-Only, CNN, 7/230-Way
+    # Soup, 50-50, CNN, 7-Way, noise 0, SGD, LR 1e-3, Batch Size 32
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
     Trunk=Identity
-    Eyes=XRD.CNN,XRD.MLP
+    Eyes=XRD.CNN
     Predictor=XRD.Predictor
-    task_name='Synthetic_${dataset.num_classes}-Way' 
-    experiment='${format:${Eyes}}'
+    batch_size=32
+    Optim=SGD
+    lr=1e-3
+    standardize=false
+    norm=false
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    "experiment='${format:${Eyes}}_optim_SGD_batch_size_${batch_size}_lr_1e-3'"
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    +dataset.num_classes=7,230 
-    train_steps=5e5"""
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Soup, 50-50, MLP, 7/230-Way, noise 0
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Trunk=Identity
+    Eyes=XRD.MLP
+    Predictor=Identity
+    batch_size=32,256
+    standardize=false
+    norm=false
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    "experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'"
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7,230
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Soup, 50-50, MLP, 7-Way, SGD, LR 1e-3, Batch Size 32
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Trunk=Identity
+    Eyes=XRD.MLP
+    Predictor=Identity
+    batch_size=32
+    standardize=false
+    norm=false
+    lr=1e-3
+    Optim=SGD
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    experiment='${format:${Eyes}}_optim_SGD_batch_size_${batch_size}_lr_1e-3'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Soup, 50-50, CNN, 7-Way, noise 0, norm
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Trunk=Identity
+    Eyes=XRD.CNN
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=false
+    norm=true
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}_norm'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Soup, 50-50, CNN, 7-Way, noise 0, standardized
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Trunk=Identity
+    Eyes=XRD.CNN
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=true
+    norm=false
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}_standardized'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+
+    # Soup, 50-50, ResNet18, 7-Way, noise 0
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Trunk=Identity
+    Eyes=ResNet18
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=false
+    norm=false
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Synthetic-Only, CNN, 7-Way
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Trunk=Identity
+    Eyes=XRD.CNN
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=false
+    norm=false
+    task_name='Synthetic_${dataset.num_classes}-Way'
+    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
 ]
 
 
