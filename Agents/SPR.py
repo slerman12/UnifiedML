@@ -8,6 +8,7 @@ import torch
 from torch.nn.functional import cross_entropy
 
 from Blocks.Architectures import MLP
+from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
@@ -69,11 +70,16 @@ class SPRAgent(torch.nn.Module):
 
         # Dynamics
         if not generate:
-            resnet = MiniResNet(input_shape=repr_shape, stride=1, dims=(64, repr_shape[0]), depths=(1,))
+            shape = [s + self.num_actions if i == 0 else s for i, s in enumerate(repr_shape)]
+            resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, repr_shape[0]), depths=(1,))
             obs_spec['obs_shape'] = repr_shape
+            # print('k')
+            # cnn = CNN(shape, repr_shape[0], stride=1, padding=1)
+            # print(cnn)
 
             self.dynamics = CNNEncoder(obs_spec, self.num_actions,
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
+                                       # eyes=cnn,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
