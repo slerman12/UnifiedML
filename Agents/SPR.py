@@ -55,8 +55,7 @@ class SPRAgent(torch.nn.Module):
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
-                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                            ema_decay=ema_decay * ema)
+                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
 
         repr_shape = (trunk_dim, 1, 1) if generate \
             else self.encoder.repr_shape
@@ -70,27 +69,29 @@ class SPRAgent(torch.nn.Module):
 
         # Dynamics
         if not generate:
-            shape = [s + self.num_actions if i == 0 else s for i, s in enumerate(repr_shape)]
-            resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, repr_shape[0]), depths=(1,))
-            obs_spec['obs_shape'] = repr_shape
-            # print('k')
-            # cnn = CNN(shape, repr_shape[0], stride=1, padding=1)
-            # print(cnn)
+            shape = [s + self.num_actions if i == 0 else s for i, s in enumerate(self.encoder.feature_shape)]
+
+            # resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
+            resnet = CNN(input_shape=shape, out_channels=self.encoder.feature_shape[0], depth=0, stride=1, padding=1)
+
+            obs_spec['shape'] = self.encoder.feature_shape
 
             self.dynamics = CNNEncoder(obs_spec, self.num_actions,
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
-                                       # eyes=cnn,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
+
+            obs_spec['shape'] = self.encoder.feature_shape
 
             # Self supervisors
             self.projector = CNNEncoder(obs_spec,
-                                        eyes=MLP(self.encoder.repr_shape, hidden_dim, hidden_dim, 2),
+                                        eyes=MLP(self.encoder.feature_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                         ema_decay=ema_decay)
-            obs_spec['obs_shape'] = [hidden_dim, 1, 1]
+
+            obs_spec['shape'] = self.projector.repr_shape
 
             self.predictor = CNNEncoder(obs_spec,
-                                        eyes=MLP(self.encoder.repr_shape, hidden_dim, hidden_dim, 2),
+                                        eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,

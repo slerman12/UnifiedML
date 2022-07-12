@@ -21,7 +21,7 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_spec = copy.copy(obs_spec)
+        self.obs_spec = copy.copy(obs_spec)  # TODO allow shape instead of spec?
 
         self.context_dim = context_dim
 
@@ -32,8 +32,11 @@ class CNNEncoder(nn.Module):
         self.mean, self.stddev = map(lambda stat: None if stat is None else torch.as_tensor(stat),
                                      (obs_spec.mean, obs_spec.stddev))
 
+        self.axes = (1,) * (3 - len(obs_spec.shape))  # Spatial axes, useful for dynamic input shapes
+        obs_spec.shape = obs_spec.shape + self.axes
+
         # Dimensions
-        obs_spec.shape[0] += context_dim
+        obs_spec.shape[0] += context_dim  # TODO don't overwrite original obs spec
 
         # CNN
         self.Eyes = Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape)
@@ -60,25 +63,25 @@ class CNNEncoder(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, *context, pool=True):
+        obs = obs.view(*obs.shape, *self.axes)  # Spatial axes, useful for dynamic input shapes
+
+        # TODO not checking for when axes added - original obs spec has no axes; maybe don't add axes
+        assert tuple(obs.shape[-3:]) == self.obs_spec.shape, f'Encoder received an invalid obs shape ' \
+                                                             f'{tuple(obs.shape[-3:])}, ≠ {self.obs_spec.shape}'
+
         # Operate on last 3 dims, then restore
 
-        batch_dims = (obs.shape[0],) if len(obs.shape) < 4 \
-            else obs.shape[:-3]  # Preserve leading dims
+        batch_dims = obs.shape[:-3]  # Preserve leading dims
         obs = obs.flatten(0, -4)  # Flatten up to last 3 dims
-
-        assert tuple(obs.shape[1:]) == self.obs_spec.shape, f'Encoder received an invalid obs shape ' \
-                                                            f'{tuple(obs.shape[1:])}, ≠ {self.obs_spec.shape}'
-
-        axes = (1,) * len(obs.shape[2:])  # Spatial axes, useful for dynamic input shapes
 
         # Standardize/normalize pixels
         if self.standardize:
-            obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
+            obs = (obs - self.mean.to(obs.device).view(1, -1, 1, 1)) / self.stddev.to(obs.device).view(1, -1, 1, 1)
         elif self.normalize:
             obs = 2 * (obs - self.obs_spec.low) / (self.obs_spec.high - self.obs_spec.low) - 1
 
         # Optionally append a 1D context to channels, broadcasting
-        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])
+        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *obs.shape[2:])
                                 for c in context]], 1)
 
         # CNN encode
@@ -93,10 +96,12 @@ class CNNEncoder(nn.Module):
         if pool:
             h = self.pool(h)
             try:
-                h = h.view(*batch_dims, *self.repr_shape)  # Restore leading dims, validate, add spatial dims
+                h = h.view(-1, *self.repr_shape)  # Validate, add spatial dims
             except RuntimeError:
                 raise RuntimeError('\nOutput dim after pooling does not match pre-computed repr_shape '
                                    f'{h.shape[1]}≠{self.repr_shape[0]}, or {tuple(h.shape[1:])}≠{self.repr_shape}')
+
+        h = h.view(*batch_dims, *h.shape[1:])  # Restore leading dims
         return h
 
 

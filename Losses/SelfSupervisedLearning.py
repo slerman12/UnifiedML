@@ -14,7 +14,7 @@ def bootstrapYourOwnLatent(obs, positive, encoder, projector, predictor, logs=No
     Self-supervision via EMA
     """
     with torch.no_grad():
-        positive = encoder.ema(positive)
+        positive = encoder.ema(positive, pool=False)
         positive = projector.ema(positive)
 
     # Assumes obs already encoded
@@ -45,7 +45,7 @@ def dynamicsLearning(obs, traj_o, traj_a, traj_r,
     forecast = [dynamics(obs, traj_a[:, 0], pool=False)]
     for k in range(1, depth):
         forecast.append(dynamics(forecast[-1], traj_a[:, k], pool=False))
-    forecast = torch.stack(forecast, 1).flatten(-3)
+    forecast = torch.stack(forecast, 1)
 
     # Self supervision
     dynamics_loss = 0
