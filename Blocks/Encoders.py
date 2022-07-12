@@ -23,6 +23,8 @@ class CNNEncoder(nn.Module):
 
         self.obs_spec = copy.copy(obs_spec)
 
+        self.context_dim = context_dim
+
         self.standardize = \
             standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
         self.normalize = norm and None not in [obs_spec.low, obs_spec.high]  # Whether to [0, 1] shift-max scale

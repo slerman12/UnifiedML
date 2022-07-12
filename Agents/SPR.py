@@ -45,6 +45,7 @@ class SPRAgent(torch.nn.Module):
         self.ema = ema
 
         self.num_actions = action_spec.num_actions or 1
+
         self.depth = depth
 
         # Image augmentation
@@ -68,26 +69,22 @@ class SPRAgent(torch.nn.Module):
 
         # Dynamics
         if not generate:
-            resnet = MiniResNet((self.in_channels, *obs_spec.obs_shape[1:]), 3, 1, [64, self.encoder.out_channels], [1])
+            resnet = MiniResNet(input_shape=repr_shape, stride=1, dims=(64, repr_shape[0]), depths=(1,))
+            obs_spec['obs_shape'] = repr_shape
 
-            self.dynamics = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}), action_spec.shape,
+            self.dynamics = CNNEncoder(obs_spec, self.num_actions,
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
-            self.projector = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}),
-                                        eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),
-                                                                 torch.nn.LayerNorm(hidden_dim),
-                                                                 torch.nn.Tanh(),
-                                                                 MLP(hidden_dim, hidden_dim, hidden_dim, 2)),
+            self.projector = CNNEncoder(obs_spec,
+                                        eyes=MLP(self.encoder.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                         ema_decay=ema_decay)
+            obs_spec['obs_shape'] = [hidden_dim, 1, 1]
 
-            self.predictor = CNNEncoder(obs_spec.__class__({'obs_shape': (hidden_dim, 1, 1)}),
-                                        eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),
-                                                                 torch.nn.LayerNorm(hidden_dim),
-                                                                 torch.nn.Tanh(),
-                                                                 MLP(hidden_dim, hidden_dim, hidden_dim, 2)),
+            self.predictor = CNNEncoder(obs_spec,
+                                        eyes=MLP(self.encoder.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
@@ -136,10 +133,7 @@ class SPRAgent(torch.nn.Module):
         batch = replay.sample(True)
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
-        frames, traj_a, traj_r, traj_l = traj
-
-        # Frame-stack trajectories
-        traj_o = Utils.frame_stack(frames, replay.frame_stack, frames.shape[1] - replay.nstep, -1)
+        traj_o, traj_a, traj_r, traj_l = traj
 
         # "Envision" / "Perceive"
 

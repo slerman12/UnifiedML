@@ -35,7 +35,7 @@ def dynamicsLearning(obs, traj_o, traj_a, traj_r,
 
     # If single dim, assumes actions are discrete, converts to one-hot
     if traj_a.shape[-1] == 1:
-        traj_a = Utils.one_hot(traj_a, num_classes=dynamics.in_channels - obs.shape[-3])
+        traj_a = Utils.one_hot(traj_a, num_classes=dynamics.context_dim)
 
     # Differentiably convert continuous to one-hot
     if one_hot:

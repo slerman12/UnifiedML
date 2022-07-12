@@ -134,8 +134,7 @@ class ExperienceReplay:
             self.epoch += 1
             self._replay = None
             sample = next(self.replay)
-        return sample if trajectories \
-            else [*sample[:6], *sample[10:]]  # Include/exclude full trajectories
+        return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude full trajectories
 
     # Allows iteration via next (e.g. batch = next(replay) )
     def __next__(self):
@@ -406,8 +405,8 @@ class Experiences:
             next_obs = frame_stack(episode['obs'], idx + self.nstep)
 
             # Trajectory
-            traj_o = episode['obs'][max(idx - self.frame_stack + 1, 0):idx + self.nstep + 1]
-            traj_o = np.concatenate([episode['obs'][:1]] * (self.frame_stack - idx - 1) + [traj_o])  # For frame_stack
+            traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
+                                     for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
             traj_l = episode['label'][idx:idx + self.nstep + 1]

@@ -12,7 +12,7 @@ import Utils
 
 class MLP(nn.Module):
     """
-    MLP Architecture generalized to broadcast various input shapes
+    MLP Architecture generalized to broadcast input shapes
     """
     def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(True),
                  dropout=0, binary=False):
