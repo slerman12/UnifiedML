@@ -135,7 +135,7 @@ sweep = [
 # XRD
 
 sweep = [
-    # Soup, 50-50, CNN, 7/230-Way, noise 0/2
+    # Soup, 50-50, CNN, 7/230-Way, noise 0/2 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -147,7 +147,7 @@ sweep = [
     standardize=false
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    "experiment='CNN_optim_ADAM_batch_size_${batch_size}'"
+    experiment='CNN_optim_ADAM_batch_size_${batch_size}'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7,230
@@ -169,7 +169,7 @@ sweep = [
     standardize=false
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    "experiment='${format:${Eyes}}_optim_SGD_batch_size_${batch_size}_lr_1e-3'"
+    experiment='CNN_optim_SGD_batch_size_${batch_size}_lr_1e-3'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7
@@ -177,7 +177,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, MLP, 7/230-Way, noise 0
+    # Soup, 50-50, MLP, 7/230-Way, noise 0 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -189,7 +189,7 @@ sweep = [
     standardize=false
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    "experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'"
+    experiment='MLP_optim_ADAM_batch_size_${batch_size}'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7,230
@@ -211,7 +211,7 @@ sweep = [
     lr=1e-3
     Optim=SGD
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='${format:${Eyes}}_optim_SGD_batch_size_${batch_size}_lr_1e-3'
+    experiment='MLP_optim_SGD_batch_size_${batch_size}_lr_1e-3'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7
@@ -231,7 +231,7 @@ sweep = [
     standardize=false
     norm=true
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}_norm'
+    experiment='CNN'_optim_ADAM_batch_size_${batch_size}_norm'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7
@@ -251,7 +251,7 @@ sweep = [
     standardize=true
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}_standardized'
+    experiment='CNN_optim_ADAM_batch_size_${batch_size}_standardized'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7
@@ -271,7 +271,7 @@ sweep = [
     standardize=false
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'
+    experiment='ResNet18'_optim_ADAM_batch_size_${batch_size}'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7
@@ -291,7 +291,7 @@ sweep = [
     standardize=false
     norm=false
     task_name='Synthetic_${dataset.num_classes}-Way'
-    experiment='${format:${Eyes}}_optim_ADAM_batch_size_${batch_size}'
+    experiment='CNN_optim_ADAM_batch_size_${batch_size}'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7

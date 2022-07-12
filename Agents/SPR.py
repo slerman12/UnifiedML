@@ -47,7 +47,9 @@ class SPRAgent(torch.nn.Module):
         self.num_actions = action_spec.num_actions or 1
         self.depth = depth
 
-        self.trajectories = True  # Tells replay to output trajectories
+        # Image augmentation
+        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
+                                                      else RandomShiftsAug(pad=4))
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
@@ -95,10 +97,6 @@ class SPRAgent(torch.nn.Module):
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
-        # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
-                                                      else RandomShiftsAug(pad=4))
-
         # Birth
 
     def act(self, obs):
@@ -135,10 +133,13 @@ class SPRAgent(torch.nn.Module):
     def learn(self, replay):
         # "Recollect"
 
-        batch = next(replay)
+        batch = replay.sample(True)
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
-        traj_o, traj_a, traj_r, traj_l = traj
+        frames, traj_a, traj_r, traj_l = traj
+
+        # Frame-stack trajectories
+        traj_o = Utils.frame_stack(frames, replay.frame_stack, frames.shape[1] - replay.nstep, -1)
 
         # "Envision" / "Perceive"
 
@@ -153,7 +154,7 @@ class SPRAgent(torch.nn.Module):
 
         # Encode
         features = self.encoder(obs, pool=False)
-        obs = self.encoder.pool(obs)
+        obs = self.encoder.pool(features)
 
         # Augment and encode future
         if replay.nstep > 0 and not self.generate:

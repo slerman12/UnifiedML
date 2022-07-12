@@ -355,6 +355,29 @@ def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
 
+# Stack batches of frame trajectories along channel axis
+# def frame_stack(frames, stack_size=1, start=None, end=None):
+#     if start is None:
+#         start = stack_size
+#
+#     if end is None:
+#         end = start + 1
+#
+#     if end < 0:
+#         end = frames.shape[1] + end
+#
+#     if end == start + 1:
+#         obs = frames[:, max([0, end - stack_size]):end]  # Temporal axis
+#         for _ in range(stack_size - end):
+#             obs = np.concatenate([frames[:, 0], obs], 1)  # Temporal axis
+#         obs = frames.reshape(obs.shape[0], -1, obs.shape[3:])  # Channel axis
+#     else:
+#         obs = np.concatenate([frames[:, max([0, start - i]):max([1, end - i])]  # Temporal axis
+#                               for i in range(stack_size - 1, -1, -1)], axis=2)  # Channel axis
+#
+#     return obs
+
+
 # Pytorch incorrect (in this case) warning suppression
 warnings.filterwarnings("ignore", message='.* skipping the first value of the learning rate schedule')
 

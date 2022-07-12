@@ -116,7 +116,7 @@ class DQNAgent(torch.nn.Module):
         # "Recollect"
 
         batch = next(replay)
-        obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
+        obs, action, reward, discount, next_obs, label, step, ids, meta = Utils.to_torch(
             batch, self.device)
 
         # "Envision" / "Perceive"
