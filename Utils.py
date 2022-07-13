@@ -216,7 +216,7 @@ def cnn_layer_feature_shape(in_height, in_width=None, kernel_size=1, stride=1, p
 
 # Compute the output shape of a whole CNN
 def cnn_feature_shape(chw, *blocks, verbose=False):
-    channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[1] if len(chw) > 2 else None
+    channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
     for block in blocks:
         if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d)):
             channels = block.out_channels if hasattr(block, 'out_channels') else channels
@@ -232,11 +232,11 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
             height, width = block.output_size
         elif hasattr(block, 'repr_shape'):
             chw = block.repr_shape(channels, height, width)
-            channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[1] if len(chw) > 2 else None
+            channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
         elif hasattr(block, 'modules'):
             for layer in block.children():
                 chw = cnn_feature_shape([channels, height, width], layer, verbose=verbose)
-                channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[1] if len(chw) > 2 else None
+                channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
         if verbose:
             print(block, (channels, height, width))
 

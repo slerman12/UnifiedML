@@ -37,7 +37,6 @@ class CNNEncoder(nn.Module):
 
         # CNN
         self.Eyes = Utils.instantiate(eyes, input_shape=obs_shape) or CNN(obs_shape)
-        print(obs_shape)
 
         adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
@@ -128,6 +127,4 @@ def adapt_cnn(block, obs_shape):
         for layer in block.children():
             # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
-            print(layer)
             obs_shape = Utils.cnn_feature_shape(obs_shape[-3:], layer)  # How did this work with broken stride?
-            print(obs_shape)
