@@ -173,40 +173,40 @@ def weight_init(m):
 
 
 # Initializes model optimizer. Default: AdamW + cosine annealing
-def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
-    params = list(params)
-    has_params = len(params) > 0
-
-    # Optimizer
-    optim = has_params and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr))
-                            or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
-
-    # Learning rate scheduler
-    scheduler = has_params and (instantiate(scheduler, optimizer=optim) or (lr and lr_decay_epochs or None)
-                                and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
-
-    return optim, scheduler
-
-
-# Initializes model optimizer. Default: AdamW + cosine annealing
 # def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
 #     params = list(params)
+#     has_params = len(params) > 0
 #
 #     # Optimizer
-#     optim = len(params) > 0 and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) or lr
-#                                  and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
+#     optim = has_params and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr))
+#                             or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
 #
 #     # Learning rate scheduler
-#     scheduler = optim and (instantiate(scheduler, optimizer=optim) or lr_decay_epochs
-#                            and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
+#     scheduler = has_params and (instantiate(scheduler, optimizer=optim) or (lr and lr_decay_epochs or None)
+#                                 and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
 #
 #     return optim, scheduler
 
 
+# Initializes model optimizer. Default: AdamW + cosine annealing
+def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
+    params = list(params)
+
+    # Optimizer
+    optim = len(params) > 0 and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) or lr
+                                 and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
+
+    # Learning rate scheduler
+    scheduler = optim and (instantiate(scheduler, optimizer=optim) or lr_decay_epochs
+                           and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
+
+    return optim, scheduler
+
+
 # Copies parameters from one model to another, optionally EMA weighing
-def param_copy(model, target, ema_decay=0):
+def param_copy(source, target, ema_decay=0):
     with torch.no_grad():
-        for target_param, model_param in zip(target.state_dict().values(), model.state_dict().values()):
+        for target_param, model_param in zip(target.state_dict().values(), source.state_dict().values()):
             target_param.copy_(ema_decay * target_param + (1 - ema_decay) * model_param)
 
 
@@ -424,7 +424,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
 
             # Update ema target
             if ema and hasattr(model, 'ema'):
-                model.update_ema_params()
+                param_copy(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
                 model.optim.step()

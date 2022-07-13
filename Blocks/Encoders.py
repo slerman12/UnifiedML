@@ -20,7 +20,8 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        # Stats
+        self.obs_shape = getattr(obs_spec, 'shape', obs_spec)  # Allow spec or shape
+
         for key in ('mean', 'stddev', 'low', 'high'):
             setattr(self, key, None if getattr(obs_spec, key, None) is None else torch.as_tensor(obs_spec[key]))
 
@@ -29,7 +30,7 @@ class CNNEncoder(nn.Module):
         self.normalize = norm and None not in [self.low, self.high]  # Whether to [0, 1] shift-max scale
 
         # Dimensions
-        self.obs_shape, obs_shape = map(list, [getattr(obs_spec, 'shape', obs_spec)] * 2)  # Allow spec or shape
+        obs_shape = list(self.obs_shape)
 
         obs_shape[0] += context_dim
 
@@ -53,9 +54,6 @@ class CNNEncoder(nn.Module):
         if ema_decay:
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).eval()
-
-    def update_ema_params(self):
-        Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, *context, pool=True):
         # Operate on non-batch dims, then restore

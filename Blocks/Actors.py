@@ -47,9 +47,6 @@ class EnsembleGaussianActor(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).eval()
 
-    def update_ema_params(self):
-        Utils.param_copy(self, self.ema, self.ema_decay)
-
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
@@ -71,7 +68,9 @@ class EnsembleGaussianActor(nn.Module):
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
-    """Aggregates over continuous or discrete actions based on critic Q-values """
+    """
+    Aggregates over continuous or discrete actions based on critic Q-values
+    """
     def __init__(self, entropy_schedule=1):
         super().__init__()
 
@@ -82,6 +81,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
             else Q.mean if hasattr(Q, 'mean') else Q.best  # Sample q or mean
 
         # Exploit via Q-value vs. explore via Q-stddev (EXPERIMENTAL!), off by default
+        # Uncertainty as exploration heuristic
         u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
 
