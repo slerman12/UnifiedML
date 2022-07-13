@@ -21,7 +21,7 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_spec = copy.copy(obs_spec)  # TODO allow shape instead of spec?
+        self.obs_spec, obs_spec = map(copy.copy, [obs_spec] * 2)  # TODO allow shape instead of spec?
 
         self.context_dim = context_dim
 
@@ -36,7 +36,7 @@ class CNNEncoder(nn.Module):
         obs_spec.shape = obs_spec.shape + self.axes
 
         # Dimensions
-        obs_spec.shape[0] += context_dim  # TODO don't overwrite original obs spec
+        obs_spec.shape[0] += context_dim
 
         # CNN
         self.Eyes = Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape)

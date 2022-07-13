@@ -80,8 +80,6 @@ class SPRAgent(torch.nn.Module):
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
-            obs_spec['shape'] = self.encoder.feature_shape
-
             # Self supervisors
             self.projector = CNNEncoder(obs_spec,
                                         eyes=MLP(self.encoder.feature_shape, hidden_dim, hidden_dim, 2),
