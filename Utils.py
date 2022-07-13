@@ -204,7 +204,7 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
 
 
 # Copies parameters from one model to another, optionally EMA weighing
-def param_copy(source, target, ema_decay=0):
+def update_ema_target(source, target, ema_decay=0):
     with torch.no_grad():
         for target_param, model_param in zip(target.state_dict().values(), source.state_dict().values()):
             target_param.copy_(ema_decay * target_param + (1 - ema_decay) * model_param)
@@ -422,12 +422,12 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 model.scheduler.step()
                 model.scheduler.last_epoch = epoch
 
-            # Update ema target
+            # Update EMA target
             if ema and hasattr(model, 'ema'):
-                param_copy(source=model, target=model.ema, ema_decay=model.ema_decay)
+                update_ema_target(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
-                model.optim.step()
+                model.optim.step()  # Step optimizer
 
                 if loss is None and clear_grads:
                     model.optim.zero_grad(set_to_none=True)
