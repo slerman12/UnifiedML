@@ -135,7 +135,7 @@ sweep = [
 # XRD
 
 sweep = [
-    # Soup, 50-50, CNN, 7/230-Way, noise 0/2 - Launched ✓ (Cornea)
+    # Soup, 50-50, CNN, 7/230-Way, noise 0 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -155,7 +155,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, CNN, 7-Way, noise 0, SGD, LR 1e-3, Batch Size 32
+    # Soup, 50-50, CNN, 7-Way, noise 0, SGD, LR 1e-3, Batch Size 256
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -163,7 +163,7 @@ sweep = [
     Trunk=Identity
     Eyes=XRD.CNN
     Predictor=XRD.Predictor
-    batch_size=32
+    batch_size=256
     Optim=SGD
     lr=1e-3
     standardize=false
@@ -197,7 +197,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, MLP, 7-Way, SGD, LR 1e-3, Batch Size 32
+    # Soup, 50-50, MLP, 7-Way, SGD, LR 1e-3, Batch Size 256
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -205,7 +205,7 @@ sweep = [
     Trunk=Identity
     Eyes=XRD.MLP
     Predictor=Identity
-    batch_size=32
+    batch_size=256
     standardize=false
     norm=false
     lr=1e-3
@@ -259,6 +259,27 @@ sweep = [
     save=true
     logger.wandb=true""",
 
+    # Soup, 50-50, CNN, 7-Way, noise 2
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Aug=Blocks.Augmentations.IntensityAug
+    +aug.noise=2
+    Trunk=Identity
+    Eyes=XRD.CNN
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=false
+    norm=false
+    task_name='Soup-50-50_${dataset.num_classes}-Way'
+    experiment='CNN'_optim_ADAM_batch_size_${batch_size}_noise_2'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
     # Soup, 50-50, ResNet18, 7-Way, noise 0
     """python Run.py
     task=classify/custom
@@ -279,7 +300,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Synthetic-Only, CNN, 7-Way
+    # Synthetic-Only, CNN, 7-Way, noise 0
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD

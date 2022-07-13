@@ -661,6 +661,12 @@ python Run.py logger.wandb=true
 
 You can connect it to your WandB account by first running ```wandb login``` in your Conda environment.
 
+You can also plot experiments according to regex expressions. For example, to plot all experiments that start with "Neural_", you can run:
+
+```console
+python Run.py plot_experiments="['Neural_.*']"
+```
+
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
