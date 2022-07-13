@@ -73,6 +73,7 @@ class CNNEncoder(nn.Module):
         except RuntimeError:
             raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
                                f'{tuple(obs.shape)}, ≠ {self.obs_shape}')
+        print(self.low.device, obs.device)
 
         # Standardize/normalize pixels
         if self.standardize:
