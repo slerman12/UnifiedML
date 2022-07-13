@@ -8,7 +8,6 @@ import torch
 from torch.nn.functional import cross_entropy
 
 from Blocks.Architectures import MLP
-from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
@@ -49,6 +48,13 @@ class SPRAgent(torch.nn.Module):
 
         self.depth = depth
 
+        if generate:
+            action_spec.shape = obs_spec.shape
+            action_spec.low, action_spec.high = -1, 1
+
+        # Data stats
+        self.low, self.high = obs_spec.low, obs_spec.high
+
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
                                                       else RandomShiftsAug(pad=4))
@@ -69,12 +75,14 @@ class SPRAgent(torch.nn.Module):
 
         # Dynamics
         if not generate:
-            shape = [s + self.num_actions if i == 0 else s for i, s in enumerate(self.encoder.feature_shape)]
+            self.action_dim = self.num_actions if discrete else action_spec.shape[0]  # One-hot if discrete
+
+            shape = list(self.encoder.feature_shape)
+            shape[0] += self.action_dim  # Predicting from obs and action
 
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
-            # resnet = CNN(input_shape=shape, out_channels=self.encoder.feature_shape[0], depth=0, stride=1, padding=1)
 
-            self.dynamics = CNNEncoder(self.encoder.feature_shape, self.num_actions,
+            self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
@@ -147,9 +155,11 @@ class SPRAgent(torch.nn.Module):
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 
-        # Encode
-        features = self.encoder(obs, pool=False)
-        obs = self.encoder.pool(features)
+            obs = self.encoder(obs)
+        else:
+            # Encode
+            features = self.encoder(obs, pool=False)
+            obs = self.encoder.pool(features)
 
         # Augment and encode future
         if replay.nstep > 0 and not self.generate:
@@ -228,13 +238,16 @@ class SPRAgent(torch.nn.Module):
             # Dynamics loss
             dynamics_loss = 0 if replay.nstep == 0 or self.generate \
                 else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
-                                                             self.encoder, self.dynamics, self.projector, self.predictor,
-                                                             depth=min(replay.nstep, self.depth), logs=logs)
+                                                             self.encoder, self.dynamics, self.projector,
+                                                             self.predictor, depth=min(replay.nstep, self.depth),
+                                                             action_dim=self.action_dim, logs=logs)
+
+            models = () if self.generate else (self.dynamics, self.projector, self.predictor)
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss,
-                           self.critic,
-                           self.dynamics, self.projector, self.predictor, epoch=self.epoch if offline else self.episode)
+                           self.critic, *models,
+                           epoch=self.epoch if offline else self.episode)
 
         # Update encoder
         if not self.generate:

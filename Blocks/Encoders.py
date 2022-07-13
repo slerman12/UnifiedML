@@ -14,27 +14,24 @@ import Utils
 
 class CNNEncoder(nn.Module):
     """
-    CNN encoder generalized to multi-dimensionality convolutions and obs shapes (1d or 2d)
-
+    CNN encoder generalized to proprioceptive recipes and multi-dimensionality convolutions (1d or 2d)
     """
     def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, eyes=None, pool=None, parallel=False,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_spec = obs_spec
-        self.obs_shape = getattr(obs_spec, 'shape', obs_spec)  # Allow spec or shape
-
-        self.mean, self.stddev, self.low, self.high = [stat if stat is None else torch.as_tensor(stat) for stat in
-                                                       [getattr(obs_spec, key, None) for key in ('mean', 'stddev',
-                                                                                                 'low', 'high')]]
+        # Stats
+        for key in ('mean', 'stddev', 'low', 'high'):
+            setattr(self, key, None if getattr(obs_spec, key, None) is None else torch.as_tensor(obs_spec[key]))
 
         self.standardize = \
             standardize and None not in [self.mean, self.stddev]  # Whether to center-scale (0 mean, 1 stddev)
         self.normalize = norm and None not in [self.low, self.high]  # Whether to [0, 1] shift-max scale
 
         # Dimensions
-        self.context_dim = context_dim
-        obs_shape = tuple(size + self.context_dim if i == 0 else size for i, size in enumerate(self.obs_shape))
+        self.obs_shape, obs_shape = map(list, [getattr(obs_spec, 'shape', obs_spec)] * 2)  # Allow spec or shape
+
+        obs_shape[0] += context_dim
 
         # CNN
         self.Eyes = Utils.instantiate(eyes, input_shape=obs_shape) or CNN(obs_shape)
@@ -78,7 +75,6 @@ class CNNEncoder(nn.Module):
         if self.standardize:
             obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
         elif self.normalize:
-            print(self.low.device, obs.device)
             obs = 2 * (obs - self.low) / (self.high - self.low) - 1
 
         # Optionally append a 1D context to channels, broadcasting
@@ -129,4 +125,4 @@ def adapt_cnn(block, obs_shape):
         for layer in block.children():
             # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
-            obs_shape = Utils.cnn_feature_shape(obs_shape[-3:], layer)  # How did this work with broken stride?
+            obs_shape = Utils.cnn_feature_shape(obs_shape[-3:], layer)
