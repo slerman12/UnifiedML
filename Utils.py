@@ -196,8 +196,8 @@ def param_copy(model, target, ema_decay=0):
 
 
 # Compute the output shape of a CNN layer
-def cnn_layer_feature_shape(in_height, in_width=None, kernel_size=1, stride=1, padding=0, dilation=1):
-    in_width = in_width or 1
+def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, padding=0, dilation=1):
+    assert in_height and in_width, f'Height and width must be positive integers, got {in_height}, {in_width}'
     if padding == 'same':
         return in_height, in_width
     if type(kernel_size) is not tuple:
