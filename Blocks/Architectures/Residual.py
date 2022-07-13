@@ -20,6 +20,6 @@ class Residual(nn.Module):
         return y + x
 
     def repr_shape(self, channels, height, width):
-        return Utils.cnn_feature_shape(channels, height, width, self.model)
+        return Utils.cnn_feature_shape([channels, height, width], self.model)
 
 

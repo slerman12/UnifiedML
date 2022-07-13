@@ -323,7 +323,7 @@ net = ViT(
     emb_dropout=0.1
 ).to(device)
 # aug = RandomShiftsAug(4)
-c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
+c, h, w = Utils.cnn_feature_shape((3, 32, 32), net)
 # net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
 net = nn.Sequential(net, CLSPool(), nn.LayerNorm(c), nn.Linear(c, 10)).to(device)
 # net = ViRP(

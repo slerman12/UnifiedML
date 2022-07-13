@@ -31,7 +31,7 @@ class Conv2dLocal(nn.Conv2d):
                                     (1, in_channels), groups=patches)  # over width-disjoint patches
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, super())
+        return Utils.cnn_feature_shape([c, h, w], super())
 
     def forward(self, x):
         lead_shape = x.shape[:-3]

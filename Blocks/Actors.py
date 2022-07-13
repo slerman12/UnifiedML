@@ -35,7 +35,7 @@ class EnsembleGaussianActor(nn.Module):
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        in_shape = Utils.cnn_feature_shape(*repr_shape, self.trunk)
+        in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
 
         self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(trunk_dim, out_dim, hidden_dim, 2) for i in range(ensemble_size)])

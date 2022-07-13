@@ -21,36 +21,34 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.obs_spec, obs_spec = map(copy.copy, [obs_spec] * 2)  # TODO allow shape instead of spec?
-
+        self.obs_shape = getattr(obs_spec, 'shape', obs_spec)  # Allow spec or shape
         self.context_dim = context_dim
 
         self.standardize = \
             standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
         self.normalize = norm and None not in [obs_spec.low, obs_spec.high]  # Whether to [0, 1] shift-max scale
 
-        self.mean, self.stddev = map(lambda stat: None if stat is None else torch.as_tensor(stat),
-                                     (obs_spec.mean, obs_spec.stddev))
-
-        self.axes = (1,) * (3 - len(obs_spec.shape))  # Spatial axes, useful for dynamic input shapes
-        obs_spec.shape = obs_spec.shape + self.axes
+        self.mean, self.stddev, self.low, self.high = map(lambda stat: None if stat is None else torch.as_tensor(stat),
+                                                          (obs_spec.mean, obs_spec.stddev, obs_spec.low, obs_spec.high))
 
         # Dimensions
-        obs_spec.shape[0] += context_dim
+        obs_shape = copy.copy(self.obs_shape)
+        obs_shape[0] += self.context_dim
 
         # CNN
-        self.Eyes = Utils.instantiate(eyes, input_shape=obs_spec.shape) or CNN(obs_spec.shape)
+        self.Eyes = Utils.instantiate(eyes, input_shape=obs_shape) or CNN(obs_shape)
+        print(obs_shape)
 
-        adapt_cnn(self.Eyes, obs_spec.shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
+        adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
-        self.feature_shape = Utils.cnn_feature_shape(*obs_spec.shape, self.Eyes)  # Feature map shape
+        self.feature_shape = Utils.cnn_feature_shape(obs_shape, self.Eyes)  # Feature map shape
 
         self.pool = Utils.instantiate(pool, input_shape=self.feature_shape) or nn.Flatten()
 
-        self.repr_shape = Utils.cnn_feature_shape(*self.feature_shape, self.pool)  # Shape after pooling
+        self.repr_shape = Utils.cnn_feature_shape(self.feature_shape, self.pool)  # Shape after pooling
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -63,40 +61,42 @@ class CNNEncoder(nn.Module):
         Utils.param_copy(self, self.ema, self.ema_decay)
 
     def forward(self, obs, *context, pool=True):
-        obs = obs.view(*obs.shape, *self.axes)  # Spatial axes, useful for dynamic input shapes
+        # Operate on non-batch dims, then restore
 
-        # TODO not checking for when axes added - original obs spec has no axes; maybe don't add axes
-        assert tuple(obs.shape[-3:]) == self.obs_spec.shape, f'Encoder received an invalid obs shape ' \
-                                                             f'{tuple(obs.shape[-3:])}, ≠ {self.obs_spec.shape}'
+        dims = len(self.obs_shape)
 
-        # Operate on last 3 dims, then restore
+        batch_dims = obs.shape[:-dims]  # Preserve leading dims
+        axes = (1,) * (dims - 1)  # Spatial axes, useful for dynamic input shapes
 
-        batch_dims = obs.shape[:-3]  # Preserve leading dims
-        obs = obs.flatten(0, -4)  # Flatten up to last 3 dims
+        try:
+            obs = obs.reshape(-1, *self.obs_shape)  # Validate shape, collapse batch dims
+        except RuntimeError:
+            raise RuntimeError('\nObs shape cannot broadcast to pre-defined obs shape '
+                               f'{tuple(obs.shape)}, ≠ {self.obs_shape}')
 
         # Standardize/normalize pixels
         if self.standardize:
-            obs = (obs - self.mean.to(obs.device).view(1, -1, 1, 1)) / self.stddev.to(obs.device).view(1, -1, 1, 1)
+            obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
         elif self.normalize:
-            obs = 2 * (obs - self.obs_spec.low) / (self.obs_spec.high - self.obs_spec.low) - 1
+            obs = 2 * (obs - self.low) / (self.high - self.low) - 1
 
         # Optionally append a 1D context to channels, broadcasting
-        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], 1, 1).expand(-1, -1, *obs.shape[2:])
+        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])
                                 for c in context]], 1)
 
         # CNN encode
         h = self.Eyes(obs)
 
         try:
-            h = h.view(h.shape[0], *self.feature_shape)  # Validate, add spatial dims
+            h = h.view(h.shape[0], *self.feature_shape)  # Validate shape
         except RuntimeError:
             raise RuntimeError('\nFeature shape cannot broadcast to pre-computed feature_shape '
-                               f'{h.shape[1:]}-/->{self.feature_shape}')
+                               f'{tuple(h.shape[1:])}≠{self.feature_shape}')
 
         if pool:
             h = self.pool(h)
             try:
-                h = h.view(-1, *self.repr_shape)  # Validate, add spatial dims
+                h = h.view(h.shape[0], *self.repr_shape)  # Validate shape
             except RuntimeError:
                 raise RuntimeError('\nOutput dim after pooling does not match pre-computed repr_shape '
                                    f'{h.shape[1]}≠{self.repr_shape[0]}, or {tuple(h.shape[1:])}≠{self.repr_shape}')
@@ -107,6 +107,9 @@ class CNNEncoder(nn.Module):
 
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
+    axes = (1,) * (3 - len(obs_shape))  # Spatial axes for dynamic input dims  TODO maybe add channel axis 1st if 1D
+    obs_shape = tuple(obs_shape) + axes  # TODO Does the CNN broadcast?
+
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
         # Represent hyper-params as tuples
         if not isinstance(block.kernel_size, tuple):
@@ -125,4 +128,6 @@ def adapt_cnn(block, obs_shape):
         for layer in block.children():
             # Iterate through all layers
             adapt_cnn(layer, obs_shape[-3:])
-            obs_shape = Utils.cnn_feature_shape(*obs_shape[-3:], layer)
+            print(layer)
+            obs_shape = Utils.cnn_feature_shape(obs_shape[-3:], layer)  # How did this work with broken stride?
+            print(obs_shape)

@@ -303,7 +303,7 @@ class AttentionPool(nn.Module):
                                   AvgPool())
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.pool)
+        return Utils.cnn_feature_shape([c, h, w], self.pool)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

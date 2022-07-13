@@ -31,7 +31,7 @@ class CNN(nn.Module):
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
 
-        c, h, w = Utils.cnn_feature_shape(*self.input_shape, self.trunk, self.CNN)
+        c, h, w = Utils.cnn_feature_shape(self.input_shape, self.trunk, self.CNN)
         self.feature_shape = c * h * w
 
         # TODO Instead of projecting, use automatic feature computation in blocks
@@ -42,7 +42,7 @@ class CNN(nn.Module):
         self.apply(Utils.weight_init)
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.project)
+        return Utils.cnn_feature_shape([c, h, w], self.trunk, self.CNN, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

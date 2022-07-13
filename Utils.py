@@ -196,7 +196,8 @@ def param_copy(model, target, ema_decay=0):
 
 
 # Compute the output shape of a CNN layer
-def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, padding=0, dilation=1):
+def cnn_layer_feature_shape(in_height, in_width=None, kernel_size=1, stride=1, padding=0, dilation=1):
+    in_width = in_width or 1
     if padding == 'same':
         return in_height, in_width
     if type(kernel_size) is not tuple:
@@ -207,13 +208,15 @@ def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, paddin
         padding = (padding, padding)
     if type(dilation) is not tuple:
         dilation = (dilation, dilation)
+    # stride = tuple(size if size < hw + 1 else 1 for size, hw in zip(stride, (in_height, in_width)))
     out_height = math.floor(((in_height + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
     out_width = math.floor(((in_width + (2 * padding[1]) - (dilation[1] * (kernel_size[1] - 1)) - 1) / stride[1]) + 1)
     return out_height, out_width
 
 
 # Compute the output shape of a whole CNN
-def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
+def cnn_feature_shape(chw, *blocks, verbose=False):
+    channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[1] if len(chw) > 2 else None
     for block in blocks:
         if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d)):
             channels = block.out_channels if hasattr(block, 'out_channels') else channels
@@ -224,18 +227,20 @@ def cnn_feature_shape(channels, height, width, *blocks, verbose=False):
         elif isinstance(block, nn.Linear):
             channels = block.out_features  # Assumes channels-last if linear
         elif isinstance(block, nn.Flatten) and (block.start_dim == -3 or block.start_dim == 1):
-            channels, height, width = channels * height * width, 1, 1  # Placeholder height/width dims
+            channels, height, width = channels * (height or 1) * (width or 1), None, None  # Placeholder height/width
         elif isinstance(block, nn.AdaptiveAvgPool2d):
             height, width = block.output_size
         elif hasattr(block, 'repr_shape'):
-            channels, height, width = block.repr_shape(channels, height, width)
+            chw = block.repr_shape(channels, height, width)
+            channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[1] if len(chw) > 2 else None
         elif hasattr(block, 'modules'):
             for layer in block.children():
-                channels, height, width = cnn_feature_shape(channels, height, width, layer, verbose=verbose)
+                chw = cnn_feature_shape([channels, height, width], layer, verbose=verbose)
+                channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[1] if len(chw) > 2 else None
         if verbose:
             print(block, (channels, height, width))
 
-    feature_shape = (channels, height, width)
+    feature_shape = tuple(size for size in (channels, height, width) if size is not None)
 
     return feature_shape
 
