@@ -73,12 +73,12 @@ class CNNEncoder(nn.Module):
         except RuntimeError:
             raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
                                f'{tuple(obs.shape)}, ≠ {self.obs_shape}')
-        print(self.low.device, obs.device)
 
         # Standardize/normalize pixels
         if self.standardize:
             obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
         elif self.normalize:
+            print(self.low.device, obs.device)
             obs = 2 * (obs - self.low) / (self.high - self.low) - 1
 
         # Optionally append a 1D context to channels, broadcasting
