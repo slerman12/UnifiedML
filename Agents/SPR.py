@@ -63,7 +63,7 @@ class SPRAgent(torch.nn.Module):
             else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                             lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        repr_shape = (trunk_dim, 1, 1) if generate \
+        repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
 
         # Continuous actions
