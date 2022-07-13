@@ -21,19 +21,20 @@ class CNNEncoder(nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
+        self.obs_spec = obs_spec
         self.obs_shape = getattr(obs_spec, 'shape', obs_spec)  # Allow spec or shape
-        self.context_dim = context_dim
+
+        self.mean, self.stddev, self.low, self.high = [stat if stat is None else torch.as_tensor(stat) for stat in
+                                                       [getattr(obs_spec, key, None) for key in ('mean', 'stddev',
+                                                                                                 'low', 'high')]]
 
         self.standardize = \
-            standardize and None not in [obs_spec.mean, obs_spec.stddev]  # Whether to center-scale (0 mean, 1 stddev)
-        self.normalize = norm and None not in [obs_spec.low, obs_spec.high]  # Whether to [0, 1] shift-max scale
-
-        self.mean, self.stddev, self.low, self.high = map(lambda stat: None if stat is None else torch.as_tensor(stat),
-                                                          (obs_spec.mean, obs_spec.stddev, obs_spec.low, obs_spec.high))
+            standardize and None not in [self.mean, self.stddev]  # Whether to center-scale (0 mean, 1 stddev)
+        self.normalize = norm and None not in [self.low, self.high]  # Whether to [0, 1] shift-max scale
 
         # Dimensions
-        obs_shape = copy.copy(self.obs_shape)
-        obs_shape[0] += self.context_dim
+        self.context_dim = context_dim
+        obs_shape = tuple(size + self.context_dim if i == 0 else size for i, size in enumerate(self.obs_shape))
 
         # CNN
         self.Eyes = Utils.instantiate(eyes, input_shape=obs_shape) or CNN(obs_shape)
@@ -70,7 +71,7 @@ class CNNEncoder(nn.Module):
         try:
             obs = obs.reshape(-1, *self.obs_shape)  # Validate shape, collapse batch dims
         except RuntimeError:
-            raise RuntimeError('\nObs shape cannot broadcast to pre-defined obs shape '
+            raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
                                f'{tuple(obs.shape)}, ≠ {self.obs_shape}')
 
         # Standardize/normalize pixels
@@ -97,8 +98,8 @@ class CNNEncoder(nn.Module):
             try:
                 h = h.view(h.shape[0], *self.repr_shape)  # Validate shape
             except RuntimeError:
-                raise RuntimeError('\nOutput dim after pooling does not match pre-computed repr_shape '
-                                   f'{h.shape[1]}≠{self.repr_shape[0]}, or {tuple(h.shape[1:])}≠{self.repr_shape}')
+                raise RuntimeError('\nOutput shape after pooling does not match pre-computed repr_shape '
+                                   f'{tuple(h.shape[1:])}≠{self.repr_shape}')
 
         h = h.view(*batch_dims, *h.shape[1:])  # Restore leading dims
         return h

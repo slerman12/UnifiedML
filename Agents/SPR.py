@@ -71,24 +71,20 @@ class SPRAgent(torch.nn.Module):
         if not generate:
             shape = [s + self.num_actions if i == 0 else s for i, s in enumerate(self.encoder.feature_shape)]
 
-            # resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
-            resnet = CNN(input_shape=shape, out_channels=self.encoder.feature_shape[0], depth=0, stride=1, padding=1)
+            resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
+            # resnet = CNN(input_shape=shape, out_channels=self.encoder.feature_shape[0], depth=0, stride=1, padding=1)
 
-            obs_spec['shape'] = self.encoder.feature_shape
-
-            self.dynamics = CNNEncoder(obs_spec, self.num_actions,
+            self.dynamics = CNNEncoder(self.encoder.feature_shape, self.num_actions,
                                        eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
-            self.projector = CNNEncoder(obs_spec,
+            self.projector = CNNEncoder(self.encoder.feature_shape,
                                         eyes=MLP(self.encoder.feature_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                         ema_decay=ema_decay)
 
-            obs_spec['shape'] = self.projector.repr_shape
-
-            self.predictor = CNNEncoder(obs_spec,
+            self.predictor = CNNEncoder(self.projector.repr_shape,
                                         eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 

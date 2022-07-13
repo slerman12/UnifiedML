@@ -188,6 +188,21 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
     return optim, scheduler
 
 
+# Initializes model optimizer. Default: AdamW + cosine annealing
+# def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
+#     params = list(params)
+#
+#     # Optimizer
+#     optim = len(params) > 0 and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) or lr
+#                                  and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
+#
+#     # Learning rate scheduler
+#     scheduler = optim and (instantiate(scheduler, optimizer=optim) or lr_decay_epochs
+#                            and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
+#
+#     return optim, scheduler
+
+
 # Copies parameters from one model to another, optionally EMA weighing
 def param_copy(model, target, ema_decay=0):
     with torch.no_grad():
@@ -208,7 +223,6 @@ def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, paddin
         padding = (padding, padding)
     if type(dilation) is not tuple:
         dilation = (dilation, dilation)
-    # stride = tuple(size if size < hw + 1 else 1 for size, hw in zip(stride, (in_height, in_width)))
     out_height = math.floor(((in_height + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
     out_width = math.floor(((in_width + (2 * padding[1]) - (dilation[1] * (kernel_size[1] - 1)) - 1) / stride[1]) + 1)
     return out_height, out_width
