@@ -645,11 +645,11 @@ The ```experiment=``` flag can help differentiate a distinct experiment; you can
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags, and saved to:
+A unique experiment, distinguished by the ```experiment=``` flag, is plotted to:
 
 ```./Benchmarking/<experiment>/```
 
-Specified plots are generated in a unified figure under the corresponding ```<experiment>``` name.
+Specified experiments are plotted in a unified figure under the corresponding ```<experiment>``` name.
 
 Alternatively, you can call ```Plot.py``` directly
 
@@ -659,19 +659,19 @@ python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 
 Here, the ```<experiment>``` name will be the concatenated union of all experiment names listed.
 
-And/or use [WandB](https://wandb.ai/):
-
-```console
-python Run.py logger.wandb=true
-```
-
-You can connect it to your WandB account by first running ```wandb login``` in your Conda environment.
-
 Plotting also accepts regex expressions. For example, to plot all experiments with "Neural_", you can run:
 
 ```console
 python Plot.py plot_experiments="['.*Neural_.*']"
 ```
+
+Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
+
+```console
+python Run.py logger.wandb=true
+```
+
+You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
