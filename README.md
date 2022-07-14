@@ -647,13 +647,17 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeO
 
 A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags, and saved to:
 
-```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>```
+```./Benchmarking/<experiment>/```
+
+Specified plots are generated in a unified figure under the corresponding ```<experiment>``` name.
 
 Alternatively, you can call ```Plot.py``` directly
 
 ```console
 python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
+
+Here, the ```<experiment>``` name will be the concatenated union of all experiment names listed.
 
 And/or use [WandB](https://wandb.ai/):
 
@@ -663,10 +667,10 @@ python Run.py logger.wandb=true
 
 You can connect it to your WandB account by first running ```wandb login``` in your Conda environment.
 
-You can also plot experiments according to regex expressions. For example, to plot all experiments that start with "Neural_", you can run:
+Plotting also accepts regex expressions. For example, to plot all experiments with "Neural_", you can run:
 
 ```console
-python Run.py plot_experiments="['Neural_.*']"
+python Plot.py plot_experiments="['.*Neural_.*']"
 ```
 
 To do a hyperparameter sweep, just use the ```-m``` flag.
