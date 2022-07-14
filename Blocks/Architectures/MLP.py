@@ -39,7 +39,7 @@ class MLP(nn.Module):
         flatten = -1 if h == self.input_dim \
             else -len(self.input_shape)  # Auto-flatten if needed
 
-        return *[size for size in (c, w, h) if size is not None][:flatten], self.output_dim
+        return *[size for size in (c, w, h) if size][:flatten], self.output_dim
 
     def forward(self, *obs):
         obs = torch.cat(obs, -1)  # Assumes inputs can be concatenated along last dim

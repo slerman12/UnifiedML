@@ -643,7 +643,7 @@ Plots automatically save to ```./Benchmarking/<experiment>/```
 
 :chart_with_upwards_trend: :bar_chart:
 
-The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
+The ```experiment=``` flag can help differentiate a distinct experiment. Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
