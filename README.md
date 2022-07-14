@@ -639,7 +639,9 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
-Plots automatically save to ```./Benchmarking/<experiment>/``` :chart: :bar_chart:
+Plots automatically save to ```./Benchmarking/<experiment>/``` 
+
+:chart_with_upwards_trend: :bar_chart:
 
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally plot multiple experiments with ```plotting.plot_experiments=```.
 
