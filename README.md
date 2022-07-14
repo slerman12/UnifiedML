@@ -649,13 +649,11 @@ python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeO
 
 Specified experiments are plotted in a unified figure under the corresponding ```<experiment>``` name.
 
-Alternatively, you can call ```Plot.py``` directly
+Alternatively, you can call ```Plot.py``` directly. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names listed.
 
 ```console
 python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
-
-Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names listed.
 
 Plotting also accepts regex expressions. For example, to plot all experiments with ```Neural_```, just run:
 
