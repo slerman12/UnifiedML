@@ -126,7 +126,7 @@ if sftp:
         p.expect('sftp> ', timeout=None)
         for i, experiment in enumerate(experiments):
             print(f'{i + 1}/{len(experiments)} [bluehive] SFTP\'ing "{experiment}"')
-            p.sendline(f"get -r ./Benchmarking/{experiment}")
+            p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
             p.expect('sftp> ', timeout=None)
         print()
 
@@ -141,7 +141,7 @@ if sftp:
     for i, experiment in enumerate(experiments):
         if experiment not in bluehive_only:
             print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
-            p.sendline(f"get -r ./Benchmarking/{experiment}")
+            p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
             p.expect('sftp> ', timeout=None)
 
     print('\nPlotting results...')
@@ -149,9 +149,11 @@ if sftp:
     os.chdir(cwd)
 
 # Generate each plot
-for plot_experiments in plots:
+for plot_train in [False, True]:
 
-    for plot_train in [False, True]:
+    print(f'\n Plotting {"train" if plot_train else "eval"}...')
+
+    for plot_experiments in plots:
 
         plot(path=f"./Benchmarking/{plot_group + '/' if plot_group else ''}{'_'.join(plot_experiments)}/Plots/",
              plot_experiments=plot_experiments if len(plot_experiments) else None,

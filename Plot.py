@@ -290,6 +290,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if _x_axis == 'Time':
             task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
 
+        # No need to show Agent in legend if all same
+        short_palette = palette
+        if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
         # High-low-normalize
         for suite_task in task_data.Task.unique():
             for t in low:
@@ -305,7 +313,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         hue_order = np.sort(task_data.Agent.unique())
         sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                     palette=palette
+                     palette=short_palette
                      )
         ax.set_title(f'{suite}')
 

@@ -203,11 +203,11 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
     return optim, scheduler
 
 
-# Copies parameters from one model to another, optionally EMA weighing
+# Copies parameters from a source model to a target model, optionally EMA weighing
 def update_ema_target(source, target, ema_decay=0):
     with torch.no_grad():
-        for target_param, model_param in zip(target.state_dict().values(), source.state_dict().values()):
-            target_param.copy_(ema_decay * target_param + (1 - ema_decay) * model_param)
+        for params, target_params in zip(source.state_dict().values(), target.state_dict().values()):
+            target_params.copy_((1 - ema_decay) * params + ema_decay * target_params)
 
 
 # Compute the output shape of a CNN layer

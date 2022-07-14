@@ -645,7 +645,11 @@ The ```experiment=``` flag can help differentiate a distinct experiment; you can
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
+A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags, and saved according to the:
+
+```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>```
+
+directory naming structure.
 
 Alternatively, you can call ```Plot.py``` directly
 
