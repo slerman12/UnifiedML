@@ -649,11 +649,13 @@ The ```experiment=``` flag can help differentiate a distinct experiment; you can
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-Alternatively, you can call ```Plot.py``` directly. The ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names listed.
+Alternatively, you can call ```Plot.py``` directly.
 
 ```console
 python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
+
+The ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names listed.
 
 Plotting also accepts regex expressions. For example, to plot all experiments with ```Neural_```, just run:
 
