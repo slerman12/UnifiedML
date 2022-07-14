@@ -648,13 +648,13 @@ Plots automatically save to ```./Benchmarking/<experiment>/```
 The ```experiment=``` flag can help differentiate a distinct experiment. Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
-python Run.py experiment=Exp1 plotting.plot_experiments="['Exp1', 'Exp2']"
+python Run.py experiment=Exp2 plotting.plot_experiments="['Exp', 'Exp2']"
 ```
 
 Alternatively, you can call ```Plot.py``` directly
 
 ```console
-python Plot.py plot_experiments="['Exp1', 'Exp2']"
+python Plot.py plot_experiments="['Exp', 'Exp2']"
 ```
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names.
