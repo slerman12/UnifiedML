@@ -641,13 +641,13 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 
 Plots automatically save to ```./Benchmarking/<experiment>/```.
 
-The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
+The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally plot multiple experiments with ```plotting.plot_experiments=```.
 
 ```console
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-Specified experiments are plotted in a unified figure under the corresponding ```<experiment>``` name.
+These are plotted in a unified figure under the corresponding ```<experiment>``` name.
 
 Alternatively, you can call ```Plot.py``` directly. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names listed.
 
