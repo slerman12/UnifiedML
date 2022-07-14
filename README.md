@@ -649,7 +649,7 @@ The ```experiment=``` flag can help differentiate a distinct experiment; you can
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-Alternatively, you can call ```Plot.py``` directly.
+Alternatively, you can call ```Plot.py``` directly
 
 ```console
 python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
