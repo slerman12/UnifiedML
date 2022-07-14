@@ -639,13 +639,13 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
+Plots automatically save to ```./Benchmarking/<experiment>/```.
+
 The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
 
 ```console
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
-
-A unique experiment, distinguished by the ```experiment=``` flag, is plotted to ```./Benchmarking/<experiment>/```.
 
 Specified experiments are plotted in a unified figure under the corresponding ```<experiment>``` name.
 
@@ -655,7 +655,7 @@ Alternatively, you can call ```Plot.py``` directly
 python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-Here, the ```<experiment>``` directory name will be the concatenated union of all experiment names listed.
+Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names listed.
 
 Plotting also accepts regex expressions. For example, to plot all experiments with ```Neural_```, just run:
 
