@@ -657,7 +657,7 @@ python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 
 Here, the ```<experiment>``` name will be the concatenated union of all experiment names listed.
 
-Plotting also accepts regex expressions. For example, to plot all experiments with *"Neural_"*, you can run:
+Plotting also accepts regex expressions. For example, to plot all experiments with ```Neural_```, you can run:
 
 ```console
 python Plot.py plot_experiments="['.*Neural_.*']"
