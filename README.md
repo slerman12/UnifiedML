@@ -244,6 +244,8 @@ Save videos with ```log_video=true```.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
+More in-depth logs can be toggled with ```agent.log=true```.
+
 </details>
 
 ### Classification 
@@ -254,17 +256,17 @@ Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from
 </summary>
 <br>
 
-Vanilla CNN on MNIST:
+CNN on MNIST:
 
 ```console
 python Run.py task=classify/mnist 
 ```
 
-In addition to Eval accuracies, more in-depth Train accuracies can always be toggled with ```agent.log=true```.
+Since this is *Unified*ML, there are a few noteworthy variations.
 
 **Variations**
 
-*Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
+```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
 With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
 
@@ -646,21 +648,21 @@ Plots automatically save to ```./Benchmarking/<experiment>/```
 The ```experiment=``` flag can help differentiate a distinct experiment. Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
-python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
+python Run.py experiment=Exp1 plotting.plot_experiments="['Exp1', 'Exp2']"
 ```
 
 Alternatively, you can call ```Plot.py``` directly
 
 ```console
-python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
+python Plot.py plot_experiments="['Exp1', 'Exp2']"
 ```
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names.
 
-Plotting also accepts regex expressions. For example, to plot all experiments with ```Neural_```:
+Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp```:
 
 ```console
-python Plot.py plot_experiments="['.*Neural_.*']"
+python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
 Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:

@@ -7,7 +7,7 @@ defaults:
 obs_spec: ???  # To be specified later
 action_spec: ???  # To be specified later
 standardize: true
-norm: true
+norm: true  # False if standardize=true
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
