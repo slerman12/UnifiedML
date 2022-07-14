@@ -641,11 +641,11 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
+Plots automatically save to ```./Benchmarking/<experiment>/```, the default experiment is ```experiment=Exp```.
+
 ```console
 python Run.py
 ```
-
-Plots automatically save to ```./Benchmarking/<experiment>/```, the default experiment is ```experiment=Exp```. 
 
 :chart_with_upwards_trend: :bar_chart:
 
