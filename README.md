@@ -645,9 +645,7 @@ The ```experiment=``` flag can help differentiate a distinct experiment; you can
 python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
 ```
 
-A unique experiment, distinguished by the ```experiment=``` flag, is plotted to:
-
-```./Benchmarking/<experiment>/```
+A unique experiment, distinguished by the ```experiment=``` flag, is plotted to ```./Benchmarking/<experiment>/```.
 
 Specified experiments are plotted in a unified figure under the corresponding ```<experiment>``` name.
 
@@ -659,7 +657,7 @@ python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
 
 Here, the ```<experiment>``` name will be the concatenated union of all experiment names listed.
 
-Plotting also accepts regex expressions. For example, to plot all experiments with "Neural_", you can run:
+Plotting also accepts regex expressions. For example, to plot all experiments with *"Neural_"*, you can run:
 
 ```console
 python Plot.py plot_experiments="['.*Neural_.*']"
