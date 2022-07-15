@@ -41,7 +41,7 @@ def init(args):
     mps = getattr(torch.backends, 'mps', None)  # M1 MacBook speedup
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
-    print(args.device)
+    print('Device:', args.device)
     # args.device = args.device or ('cuda' if torch.cuda.is_available()
     #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
