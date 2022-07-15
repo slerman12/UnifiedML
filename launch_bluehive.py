@@ -155,7 +155,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, CNN, 7-Way, noise 0, SGD, LR 1e-3, Batch Size 256
+    # Soup, 50-50, CNN, 7-Way, noise 0, SGD, LR 1e-3, Batch Size 256 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -197,7 +197,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, MLP, 7-Way, SGD, LR 1e-3, Batch Size 256
+    # Soup, 50-50, MLP, 7-Way, SGD, LR 1e-3, Batch Size 256 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD

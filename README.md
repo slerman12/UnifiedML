@@ -356,24 +356,35 @@ Is true by default for classification, where replays are automatically downloade
 
 Via the ```generate=true``` flag:
 ```console
-python Run.py task=classify/mnist generate=true Aug=Blocks.Architectures.Null
+python Run.py task=classify/mnist generate=true
 ```
 
-```Aug=Blocks.Architectures.Null``` disables the image augmentation, since training is slower with it on the default settings.
+<p align="left">
+<img src="https://i.imgur.com/N1st6uO.png" width="320">
+<br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
+</p>
 
-Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
+Defaults can be easily mixed and matched with custom architectures as elaborated in [Custom Architectures](#custom-architectures). For example,
+
+```console
+python Run.py task=classify/mnist generate=true Discriminator=ResNet18 Aug=Identity
+```
+
+substitutes the discriminator with a Resnet18 architecture. ```Aug=Idnetity``` replaces the image augmentation with the identity function, thereby disabling it, since training goes a bit slower with it.
+
+Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. It can be applied to any task or dataset, including [Custom Datasets](#custom-dataset).
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
-Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
+Can even work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```console
-python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 'aug="Null"'
+python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 Aug=Identity
 ```
 
-A GAN with a CNN Discriminator:
+A GAN applied to RL with a CNN Discriminator:
 
 ```console
-python Run.py generate=True Discriminator=Blocks.Architectures.CNN
+python Run.py generate=True Discriminator=CNN
 ```
 
 See [Custom Architectures](#custom-architectures) for more info on this syntax.

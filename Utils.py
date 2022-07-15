@@ -17,6 +17,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.optim import *
+from torch.optim.lr_scheduler import *
 
 from Blocks.Architectures import *  # For direct accessibility via command line
 
@@ -194,11 +196,11 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
 
     # Optimizer
     optim = len(params) > 0 and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) or lr
-                                 and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
+                                 and AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
 
     # Learning rate scheduler
     scheduler = optim and (instantiate(scheduler, optimizer=optim) or lr_decay_epochs
-                           and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
+                           and CosineAnnealingLR(optim, lr_decay_epochs))  # Default
 
     return optim, scheduler
 
