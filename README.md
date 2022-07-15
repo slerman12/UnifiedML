@@ -132,9 +132,7 @@ If you are using a GPU with CUDA 11+, you may have to separately run:
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 ```
 
-for CUDA 11.3
-
-Or
+for CUDA 11.3. Or
 
 ```console
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
