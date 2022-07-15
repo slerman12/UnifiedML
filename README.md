@@ -660,7 +660,7 @@ python Run.py
 
 :chart_with_upwards_trend: :bar_chart: in ```./Benchmarking/Exp/```
 
-The ```experiment=``` flag can help differentiate a distinct experiment. Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
+Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
 python Run.py experiment=Exp2 plotting.plot_experiments="['Exp', 'Exp2']"
