@@ -126,7 +126,7 @@ All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/mi
 conda env create --name ML --file=Conda.yml
 ```
 
-For CUDA 11+, you [may](https://pytorch.org/get-started/locally/) need:
+For CUDA 11+, you may need:
 
 ```console
 # 11.3
@@ -255,7 +255,7 @@ Save videos with ```log_video=true```.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
-More in-depth logs can be toggled with ```agent.log=true```.
+[comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
 
 [comment]: <> (Options like ```nstep=```, ```action_repeat=```, ```frame_stack=``` let you customize the training further, as well as plenty of [other hyperparams]&#40;Hyperparams/args.yaml&#41;.)
 
