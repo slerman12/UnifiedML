@@ -79,7 +79,7 @@ class Atari:
         except gym.error.NameNotFound as e:
             # If Atari not installed
             raise gym.error.NameNotFound(str(e) + '\nYou may have not installed the Atari ROMs.\n'
-                                                  'Try the following to install them, as in the README.\n'
+                                                  'Try the following to install them, as instructed in the README.\n'
                                                   'Accept the license:\n'
                                                   '$ pip install autorom\n'
                                                   '$ AutoROM --accept-license\n'

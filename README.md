@@ -126,6 +126,24 @@ All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/mi
 conda env create --name ML --file=Conda.yml
 ```
 
+If you are using a GPU with CUDA 11+, you may have to separately run:
+
+```console
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+```
+
+for CUDA 11.3
+
+Or
+
+```console
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+```
+
+for CUDA 11.6.
+
+As per the [Pytorch installation instructions](https://pytorch.org/get-started/locally/).
+
 ## 3. Activate Your Conda Env.
 
 ```console
