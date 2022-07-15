@@ -364,30 +364,38 @@ python Run.py task=classify/mnist generate=true
 <br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
 </p>
 
-Defaults can be easily mixed and matched with custom architectures as elaborated in [Custom Architectures](#custom-architectures). For example,
+Defaults can be easily modified with custom architectures or datasets as elaborated in [Custom Architectures](#custom-architectures) and [Custom Datasets](#custom-dataset). Let's try the above with a CNN Discriminator:
 
 ```console
-python Run.py task=classify/mnist generate=true Discriminator=ResNet18 Aug=Identity
+python Run.py task=classify/mnist generate=true Discriminator=CNN
 ```
 
-substitutes the discriminator with a Resnet18 architecture. ```Aug=Idnetity``` replaces the image augmentation with the identity function, thereby disabling it, since training goes a bit slower with it.
+Or a ResNet18:
 
-Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. It can be applied to any task or dataset, including [Custom Datasets](#custom-dataset).
+```console
+python Run.py task=classify/mnist generate=true Discriminator=Resnet18
+```
+
+Or let's speed up training by turning off the default image augmentations, which is overkill for this simple case:
+
+```console
+python Run.py task=classify/mnist generate=true Aug=Identity
+```
+
+```Aug=Idnetity``` substitutes the default random cropping image-augmentation with the Identity function, thereby disabling it.
+
+Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. 
+
+As long as dataset or replay is available, ```generate=true``` will work for any defined task.
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
 Can even work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```console
-python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 Aug=Identity
+python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1
 ```
 
-A GAN applied to RL with a CNN Discriminator:
-
-```console
-python Run.py generate=True Discriminator=CNN
-```
-
-See [Custom Architectures](#custom-architectures) for more info on this syntax.
+Make sure you have [saved a replay](#saving) before doing this.
 
 </details>
 
