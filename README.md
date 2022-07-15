@@ -364,7 +364,9 @@ python Run.py task=classify/mnist generate=true
 <br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
 </p>
 
-Defaults can be easily modified with custom architectures or datasets as elaborated in [Custom Architectures](#custom-architectures) and [Custom Datasets](#custom-dataset). Let's try the above with a CNN Discriminator:
+Will save to ```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>_Video_Image/```.
+
+Defaults can be easily modified with custom architectures or even datasets as elaborated in [Custom Architectures](#custom-architectures) and [Custom Datasets](#custom-dataset). Let's try the above with a CNN Discriminator:
 
 ```console
 python Run.py task=classify/mnist generate=true Discriminator=CNN
@@ -376,20 +378,20 @@ Or a ResNet18:
 python Run.py task=classify/mnist generate=true Discriminator=Resnet18
 ```
 
-Or let's speed up training by turning off the default image augmentations, which is overkill for this simple case:
+Or let's speed up training by turning off the default image augmentations, which is overkill anyway for this simple case:
 
 ```console
 python Run.py task=classify/mnist generate=true Aug=Identity
 ```
 
-```Aug=Idnetity``` substitutes the default random cropping image-augmentation with the Identity function, thereby disabling it.
+```Aug=Identity``` substitutes the default random cropping image-augmentation with the Identity function, thereby disabling it.
 
 Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. 
 
-As long as dataset or replay is available, ```generate=true``` will work for any defined task.
+As long as a dataset is available or a replay has been saved, ```generate=true``` will work for any defined task.
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
-Can even work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
+Can even work with RL tasks (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
 
 ```console
 python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1
