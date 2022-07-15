@@ -49,7 +49,7 @@ def main(args):
         # Evaluate
         if args.evaluate_per_steps and agent.step % args.evaluate_per_steps == 0:
 
-            for ep in range(args.evaluate_episodes):
+            for ep in range(args.generate or args.evaluate_episodes):
                 _, logs, vlogs = generalize.rollout(agent.eval(),  # agent.eval() just sets agent.training to False
                                                     vlog=args.log_video)
 
