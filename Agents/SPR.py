@@ -34,7 +34,7 @@ class SPRAgent(torch.nn.Module):
 
         self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
-        self.RL = RL or not supervise
+        self.RL = RL
         self.generate = generate  # And generative modeling, too
         self.device = device
         self.log = log

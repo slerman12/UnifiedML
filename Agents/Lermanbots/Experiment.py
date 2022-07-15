@@ -30,7 +30,7 @@ class ExperimentAgent(torch.nn.Module):
 
         self.discrete = discrete and not generate
         self.supervise = supervise
-        self.RL = RL or not supervise
+        self.RL = RL
         self.generate = generate
         self.device = device
         self.log = log
