@@ -135,7 +135,7 @@ pip3 install torch torchvision torchaudio --extra-index-url https://download.pyt
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 ```
 
-as per the [Pytorch installation instructions](https://pytorch.org/get-started/locally/).
+[comment]: <> (as per the [Pytorch installation instructions]&#40;https://pytorch.org/get-started/locally/&#41;.)
 
 ## 3. Activate Your Conda Env.
 
