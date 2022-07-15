@@ -261,10 +261,7 @@ CNN on MNIST:
 ```console
 python Run.py task=classify/mnist 
 ```
-
-Since this is *Unified*ML, there are a few noteworthy variations.
-
-**Variations**
+[comment]: <> (Since this is *Unified*ML, there are a few noteworthy variations.)
 
 ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
@@ -649,6 +646,8 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 :mag: <i>Click to read/parse</i>
 </summary>
 <br>
+
+For the best tutorial on custom datasets, see our full [end-to-end example]() of Crystalographic-Structure Classification, in which we reproduce our [full paper on classifying crystal structures from xray diffraction patterns]() in just a single 142-line file. The custom dataset used in this case is Crystals, their space groups, and corresponding xray patterns, will be downloaded automatically.
 
 </details>
 
