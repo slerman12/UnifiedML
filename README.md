@@ -126,7 +126,7 @@ All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/mi
 conda env create --name ML --file=Conda.yml
 ```
 
-If you are using a GPU with CUDA 11+, you may have to separately run:
+For CUDA 11+, you may have to separately run:
 
 ```console
 # For CUDA 11.3
