@@ -126,7 +126,11 @@ All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/mi
 conda env create --name ML --file=Conda.yml
 ```
 
-For CUDA 11+, also try:
+[comment]: <> (For GPU support, you may have to [pip install Pytorch]&#40;&#41; depending on your CUDA version.)
+
+For GPU support, you may need to pip-install Pytorch with CUDA from https://pytorch.org/get-started/locally/, depending on your CUDA version.
+
+[comment]: <> (For CUDA 11+, also try:)
 
 ```console
 # 11.3
