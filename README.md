@@ -126,9 +126,12 @@ All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/mi
 conda env create --name ML --file=Conda.yml
 ```
 
-For CUDA 11+, you [may need](https://pytorch.org/get-started/locally/):
+For CUDA 11+, you [may](https://pytorch.org/get-started/locally/) need:
 
 ```console
+# 11.3
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+# 11.6
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 ```
 
