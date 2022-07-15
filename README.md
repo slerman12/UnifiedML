@@ -267,6 +267,8 @@ python Run.py task=classify/mnist
 
 **Variations**
 
+Since this is *Unified*ML, there are a couple noteworthy variations.
+
 1. With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
 
 2. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
