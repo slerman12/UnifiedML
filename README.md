@@ -141,7 +141,8 @@ For GPU support, you may need to pip-install Pytorch with CUDA from https://pyto
 [comment]: <> (# 11.6)
 
 [comment]: <> (pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116)
-```
+
+[comment]: <> (```)
 
 [comment]: <> (See [here]&#40;https://pytorch.org/get-started/locally/&#41;.)
 
