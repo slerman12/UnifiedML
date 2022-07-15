@@ -660,8 +660,6 @@ python Run.py
 
 :chart_with_upwards_trend: :bar_chart: in ```./Benchmarking/Exp/```
 
-They will save to the respective experiment by default.
-
 The ```experiment=``` flag can help differentiate a distinct experiment. Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
