@@ -364,7 +364,7 @@ python Run.py task=classify/mnist generate=true
 <br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
 </p>
 
-Will save to ```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>_Video_Image/```.
+Saves to ```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>_Video_Image/```.
 
 Defaults can be easily modified with custom architectures or even datasets as elaborated in [Custom Architectures](#custom-architectures) and [Custom Datasets](#custom-dataset). Let's try the above with a CNN Discriminator:
 
