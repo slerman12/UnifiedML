@@ -265,9 +265,11 @@ python Run.py task=classify/mnist
 
 *Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
-With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
+**Variation**
 
-Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
+1. With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
+
+2. Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
 
 [comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. $reward = -error$.)
 
@@ -283,7 +285,9 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
-**Important features** Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added: 
+**Important features** 
+
+Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added: 
 
 * Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
   
