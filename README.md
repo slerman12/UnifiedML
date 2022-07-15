@@ -388,7 +388,7 @@ python Run.py task=classify/mnist generate=true Aug=Identity
 
 Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. 
 
-As long as a dataset is available or a replay has been saved, ```generate=true``` will work for any defined task.
+As long as a dataset is available or a replay has been saved, ```generate=true``` will work for any defined task, making it a powerful hyper-parameter that can work regardless of domain.
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
 Can even work with RL tasks (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
