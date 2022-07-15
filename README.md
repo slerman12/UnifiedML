@@ -263,7 +263,7 @@ python Run.py task=classify/mnist
 ```
 [comment]: <> (Since this is *Unified*ML, there are a few noteworthy variations.)
 
-```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
+*Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
 With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
 
