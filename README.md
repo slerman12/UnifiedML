@@ -271,7 +271,7 @@ Since this is *Unified*ML, there are a couple noteworthy variations.
 
 1. With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
 
-2. Alternatively, and interestingly, ```supervise=false``` and ```RL=true``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
+2. Alternatively, and interestingly, ```supervise=false RL=true``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
 
 Classify environments are actually great testbeds for certain RL problems since they give near-instant and unambiguous performance feedback.
 
@@ -315,7 +315,7 @@ python Run.py task=classify/cifar10 ema=true weight_decay=0.01 transform="{Rando
 
 The above returns a $93$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
-And if you set ```supervise=false``` and ```RL=true```, we get a $94$%... vis-à-vis pure-RL. 
+And if you set ```supervise=false RL=true```, we get a $94$%... vis-à-vis pure-RL. 
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
