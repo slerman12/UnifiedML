@@ -37,7 +37,7 @@ class Attention(nn.Module):
         self.query_key_dim = query_key_dim or self.input_dim
         self.value_dim = value_dim or self.input_dim
 
-        self.num_heads = num_heads or math.gcd(8, value_dim)
+        self.num_heads = num_heads or math.gcd(8, self.value_dim)
 
         assert self.value_dim % self.num_heads == 0, \
             f'Value dim={self.value_dim} must be divisible by heads={self.num_heads}'
@@ -71,7 +71,7 @@ class Attention(nn.Module):
 
         # Permute as channels-last
         if self.channels_first:
-            input = input.permute(0, *range(2, len(input.shape), 1))
+            input, context = input.permute(0, *range(2, len(input.shape), 1))
             context = context.permute(0, *range(2, len(input.shape), 1))
 
         # Preserve batch/spatial dims

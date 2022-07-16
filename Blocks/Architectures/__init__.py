@@ -6,21 +6,17 @@ from Blocks.Architectures.MLP import MLP
 
 from Blocks.Architectures.Vision.CNN import CNN
 
-from Blocks.Architectures.Vision.ResNet import MiniResNet, ResNet18, ResNet50
-from Blocks.Architectures.Vision.ResNet import MiniResNet as ResNet
+from Blocks.Architectures.Vision.ResNet import MiniResNet, MiniResNet as ResNet, ResNet18, ResNet50
 from Blocks.Architectures.Vision.ConvMixer import ConvMixer
 from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt, ConvNeXtTiny
 
-from Blocks.Architectures.Vision.ViT import ViT
-
 from Blocks.Architectures.MultiHeadAttention import Attention, ReLA, CrossAttention, SelfAttention
 
-from Blocks.Architectures.Transformer import AttentionBlock, CrossAttentionBlock, SelfAttentionBlock, Transformer
+from Blocks.Architectures.Transformer import Transformer, AttentionBlock, CrossAttentionBlock, SelfAttentionBlock
+
+from Blocks.Architectures.Vision.ViT import ViT
 
 from Blocks.Architectures.Perceiver import Perceiver
 
-from Blocks.Architectures.AttentionPool import AttentionPool
 from Blocks.Architectures.Vision.CNN import AvgPool
 from Blocks.Architectures.Vision.ViT import CLSPool
-
-from Blocks.Architectures.LermanBlocks.ViPer import ViPer  # Vision-Perceiver

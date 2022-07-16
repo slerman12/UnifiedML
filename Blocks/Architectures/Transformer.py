@@ -1,46 +1,82 @@
-class CrossAttentionBlock(nn.Module):
-    """A Transformer pre-norm block, but for arbitrary context
-    (https://arxiv.org/pdf/2002.04745.pdf)"""
-    def __init__(self, dim=32, heads=None, context_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0,
-                 talk_h=False, rela=False):
+import math
+
+from einops import rearrange, repeat
+
+import torch
+from torch import nn
+
+import Utils
+
+from Blocks.Architectures.MLP import MLP
+from Blocks.Architectures.MultiHeadAttention import CrossAttention
+from Blocks.Architectures.Vision.CNN import AvgPool
+
+
+class AttentionBlock(nn.Module):
+    """
+    A Transformer pre-norm block (https://arxiv.org/pdf/2002.04745.pdf)
+    Generalized to cross-attend from inputs to contexts, broadcasting various shapes, with support for "talking heads"
+    and ReLA". For consistency with Vision models, assumes channels-first!
+    """
+    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
+                 mlp_hidden_dim=None, dropout=0, talking_heads=False, rela=False, channels_first=True):
         super().__init__()
 
-        v_dim = dim if v_dim is None else v_dim
-        hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
+        self.LayerNormPre = nn.LayerNorm(self.attend.input_dim)
 
-        self.heads = math.gcd(8, v_dim) if heads is None else heads
+        # Multi-Head Dot-Product Attention (MHDPA) from inputs to context
+        self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads, rela,
+                                     channels_first)
 
-        self.v_dim = v_dim
+        # "Rectified-Linear Attention (ReLA)" (https://arxiv.org/abs/2104.07012)
+        if rela:
+            self.LayerNormReLA = nn.LayerNorm(self.attend.value_dim)
 
-        self.attn = Attention(dim, self.heads, context_dim, qk_dim, v_dim, talk_h, rela)
-        self.LN_ReLA = nn.LayerNorm(v_dim) if rela \
-            else nn.Identity()
-        self.project = nn.Identity() if heads == 1 \
-            else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
-        self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
+        if self.attend.num_heads > 1:
+            self.map_heads = nn.Sequential(nn.Linear(self.attend.value_dim, self.attend.input_dim),
+                                           nn.Dropout(dropout))
 
-        self.LN_pre = nn.LayerNorm(dim)
-        self.LN_mid = nn.LayerNorm(dim)
+        self.LayerNormPost = nn.LayerNorm(self.attend.input_dim)
 
-    def repr_shape(self, c, h, w):
-        return self.v_dim, h, w  # Assumes channels last
+        # Dimensions
+        self.mlp_hidden_dim = mlp_hidden_dim or self.attend.value_dim * 4
 
-    def forward(self, x, context=None):
-        pre_norm = self.LN_pre(x)
+        self.MLP = nn.Sequential(MLP(self.attend.input_dim, self.attend.input_dim, self.mlp_hidden_dim,
+                                     depth=1, non_linearity=nn.GELU(), dropout=dropout), nn.Dropout(dropout))
+
+    def repr_shape(self, *_):
+        # Conserves spatial dimensions, maps channel dim to value-dim
+        return (self.attend.value_dim, *_[1:]) if self.channels_first \
+            else (*_[:-1], self.attend.value_dim)
+
+    def forward(self, input, context=None):
+        pre_norm = self.LayerNormPre(input)
 
         if context is None:
             context = pre_norm
 
-        attn = self.project(self.LN_ReLA(self.attn(pre_norm, context))) + x
-        out = self.mlp(self.LN_mid(attn)) + attn
+        attention = self.attend(pre_norm, context)
 
-        return out
+        if hasattr(self, 'LayerNormReLA'):
+            attention = self.LayerNormReLA(attention)
+
+        if hasattr(self, 'map_heads'):
+            attention = self.map_heads(attention)
+
+        residual = attention + input
+        output = self.MLP(self.LayerNormPost(residual)) + residual
+
+        return output
 
 
-class SelfAttentionBlock(CrossAttentionBlock):
-    """A.K.A. a Transformer pre-norm block"""
-    def forward(self, x, *_):
-        return super().forward(x)
+class CrossAttentionBlock(AttentionBlock):
+    """Cross-Attention Block, same as the Attention Block"""
+
+
+class SelfAttentionBlock(AttentionBlock):
+    """A.K.A. a Transformer pre-norm block except input=context"""
+    def forward(self, input, *_):
+        return super().forward(input)
 
 
 def fourier_encode(x, max_freq, num_bands=4, base=2):
@@ -67,7 +103,7 @@ def fourier_pos(batch_size, axis, max_freq, num_freq_bands, freq_base, device):
     return enc_pos
 
 
-class AttentionPool(nn.Module):
+class Transformer(nn.Module):
     """A.K.A. a Transformer"""
     def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, input_shape=None):
         super().__init__()

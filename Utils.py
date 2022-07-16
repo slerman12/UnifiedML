@@ -345,7 +345,7 @@ class ShiftMaxNorm(nn.Module):
 # Swaps image dims between channel-last and channel-first format
 class ChannelSwap(nn.Module):
     def forward(self, x):
-        return x.transpose(1, -1)
+        return x.transpose(-1, -3)
 
 
 ChSwap = ChannelSwap()  # Convenient helper
