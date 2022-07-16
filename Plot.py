@@ -51,9 +51,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Style
 
     # RdYlBu, Set1, Set2, Set3, gist_stern, icefire, tab10_r, Dark2
-    possible_palletes = ['Accent', 'RdYlBu', 'Set1', 'Set2', 'Set3', 'gist_stern', 'icefire', 'tab10_r', 'Dark2']
-    # Note: finite number of color palletes: could error out if try to plot a billion tasks in one figure
-    palette_colors = sum([sns.color_palette(pallette) for pallette in possible_palletes], [])
+    possible_palettes = ['Accent', 'RdYlBu', 'Set1', 'Set2', 'Set3', 'gist_stern', 'icefire', 'tab10_r', 'Dark2']
+    # Note: finite number of color palettes: could error out if try to plot a billion tasks in one figure
+    palette_colors = sum([sns.color_palette(palette) for palette in possible_palettes], [])
 
     sns.set_theme(font_scale=0.7,
                   rc={
