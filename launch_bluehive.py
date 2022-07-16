@@ -341,6 +341,50 @@ sweep = [
     train_steps=5e5
     save=true
     logger.wandb=true""",
+
+    # Synthetic-Only, CNN, 7-Way, noise 0 - # TODO Launched ✓ (Macula)
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Aug=Identity
+    Trunk=Identity
+    Eyes=XRD.CNN
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=false
+    norm=false
+    Optim=SGD
+    lr=1e-3
+    task_name='Synthetic_${dataset.num_classes}-Way'
+    experiment='CNN_optim_SGD_batch_size_${batch_size}_lr_1e-3'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Synthetic-Only, MLP, 7-Way, noise 0 - # TODO Launched ✓ (Macula)
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Aug=Identity
+    Trunk=Identity
+    Eyes=Identity
+    Predictor=XRD.MLP
+    batch_size=256
+    standardize=false
+    norm=false
+    Optim=SGD
+    lr=1e-3
+    task_name='Synthetic_${dataset.num_classes}-Way'
+    experiment='MLP_optim_SGD_batch_size_${batch_size}_lr_1e-3'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
 ]
 
 

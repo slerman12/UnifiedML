@@ -13,19 +13,14 @@ from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt, ConvNeXtTiny
 
 from Blocks.Architectures.Vision.ViT import ViT
 
-from Blocks.Architectures.MultiHeadAttention import AttentionPool, AttentionPool as Transformer
+from Blocks.Architectures.MultiHeadAttention import Attention, ReLA, CrossAttention, SelfAttention
 
-from Blocks.Architectures.LermanBlocks.ViPer import ViPer  # Perceiver
+from Blocks.Architectures.Transformer import AttentionBlock, CrossAttentionBlock, SelfAttentionBlock, Transformer
 
+from Blocks.Architectures.Perceiver import Perceiver
+
+from Blocks.Architectures.AttentionPool import AttentionPool
 from Blocks.Architectures.Vision.CNN import AvgPool
 from Blocks.Architectures.Vision.ViT import CLSPool
 
-from torch.nn import Identity
-
-
-class Null(Identity):
-    def __init__(self, **_):
-        super().__init__()
-
-    def repr_shape(self, c, h, w):
-        return c, h, w
+from Blocks.Architectures.LermanBlocks.ViPer import ViPer  # Vision-Perceiver

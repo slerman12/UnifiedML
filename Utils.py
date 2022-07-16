@@ -16,6 +16,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+from torch.nn import Identity  # For direct accessibility via command line
 import torch.nn.functional as F
 from torch.optim import *
 from torch.optim.lr_scheduler import *
