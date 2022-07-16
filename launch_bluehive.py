@@ -219,7 +219,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, CNN, 7-Way, noise 0, norm
+    # Soup, 50-50, CNN, 7/230-Way, noise 0, norm - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -231,15 +231,15 @@ sweep = [
     standardize=false
     norm=true
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='CNN'_optim_ADAM_batch_size_${batch_size}_norm'
+    experiment='CNN_optim_ADAM_batch_size_${batch_size}_norm'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    +dataset.num_classes=7
+    +dataset.num_classes=7,230
     train_steps=5e5
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, CNN, 7-Way, noise 0, standardized
+    # Soup, 50-50, CNN, 7/230-Way, noise 0, standardized - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -254,12 +254,12 @@ sweep = [
     experiment='CNN_optim_ADAM_batch_size_${batch_size}_standardized'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    +dataset.num_classes=7
+    +dataset.num_classes=7,230
     train_steps=5e5
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, CNN, 7-Way, noise 2
+    # Soup, 50-50, CNN, 7-Way, noise 2 - Launched ✓ (Macula)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -272,7 +272,7 @@ sweep = [
     standardize=false
     norm=false
     task_name='Soup-50-50_${dataset.num_classes}-Way'
-    experiment='CNN'_optim_ADAM_batch_size_${batch_size}_noise_2'
+    experiment='CNN_optim_ADAM_batch_size_${batch_size}_noise_2'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
     +dataset.num_classes=7
@@ -280,7 +280,9 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, ResNet18, 7-Way, noise 0
+    # Soup, 50-50, ResNet18, 7-Way, noise 0 - Launched X (Macula) - Too big!
+    # 1800-resolution input intractable, even on 8 parallelized A6000s apparently?
+    # Or 2D->1D conversion attempts to allocate memory for 2d initially?
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -300,7 +302,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Synthetic-Only, CNN, 7-Way, noise 0
+    # Synthetic-Only, CNN, 7-Way, noise 0 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -314,7 +316,27 @@ sweep = [
     task_name='Synthetic_${dataset.num_classes}-Way'
     experiment='CNN_optim_ADAM_batch_size_${batch_size}'
     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
+    +'dataset.train_eval_splits=[1, 0]'
+    +dataset.num_classes=7
+    train_steps=5e5
+    save=true
+    logger.wandb=true""",
+
+    # Synthetic-Only, MLP, 7-Way, noise 0 - Launched ✓ (Macula)
+    """python Run.py
+    task=classify/custom
+    Dataset=XRD.XRD
+    Aug=Identity
+    Trunk=Identity
+    Eyes=Identity
+    Predictor=XRD.MLP
+    batch_size=256
+    standardize=false
+    norm=false
+    task_name='Synthetic_${dataset.num_classes}-Way'
+    experiment='MLP_optim_ADAM_batch_size_${batch_size}'
+    '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0]'
     +dataset.num_classes=7
     train_steps=5e5
     save=true
