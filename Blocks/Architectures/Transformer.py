@@ -22,11 +22,16 @@ class AttentionBlock(nn.Module):
                  mlp_hidden_dim=None, dropout=0, talking_heads=False, rela=False, channels_first=True):
         super().__init__()
 
-        self.LayerNormPre = nn.LayerNorm(self.attend.input_dim)
+        self.channels_first = channels_first
+
+        # Dimensions
+        self.mlp_hidden_dim = mlp_hidden_dim or self.attend.value_dim * 4
 
         # Multi-Head Dot-Product Attention (MHDPA) from inputs to context
         self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads, rela,
-                                     channels_first)
+                                     channels_first=False)
+
+        self.LayerNormPre = nn.LayerNorm(self.attend.input_dim)  # Applied before the above attention
 
         # "Rectified-Linear Attention (ReLA)" (https://arxiv.org/abs/2104.07012)
         if rela:
@@ -38,9 +43,6 @@ class AttentionBlock(nn.Module):
 
         self.LayerNormPost = nn.LayerNorm(self.attend.input_dim)
 
-        # Dimensions
-        self.mlp_hidden_dim = mlp_hidden_dim or self.attend.value_dim * 4
-
         self.MLP = nn.Sequential(MLP(self.attend.input_dim, self.attend.input_dim, self.mlp_hidden_dim,
                                      depth=1, non_linearity=nn.GELU(), dropout=dropout), nn.Dropout(dropout))
 
@@ -50,6 +52,13 @@ class AttentionBlock(nn.Module):
             else (*_[:-1], self.attend.value_dim)
 
     def forward(self, input, context=None):
+        # To channels-last
+        if self.channels_first:
+            input = Utils.ChSwap(input, False)
+
+            if context is not None:
+                context = Utils.ChSwap(context, False)
+
         pre_norm = self.LayerNormPre(input)
 
         if context is None:
@@ -66,7 +75,8 @@ class AttentionBlock(nn.Module):
         residual = attention + input
         output = self.MLP(self.LayerNormPost(residual)) + residual
 
-        return output
+        return Utils.ChSwap(output, False) if self.channels_first \
+            else output
 
 
 class CrossAttentionBlock(AttentionBlock):
