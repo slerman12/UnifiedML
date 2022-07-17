@@ -141,13 +141,19 @@ def instantiate(args, i=0, **kwargs):
     if hasattr(args, '_target_') and args._target_:
         try:
             return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
+        except TypeError as e:
+            kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
+            if not kwarg:
+                raise e  # Original error
+            del kwargs[kwarg.group(1)]
+            return instantiate(args, i, **kwargs)  # Signature matching
         except ImportError as e:
             if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                 args = args._target_
             else:
                 args._target_ = 'Utils.' + args._target_  # Portal into Utils
                 try:
-                    return hydra.utils.instantiate(args, **kwargs)
+                    return instantiate(args, i, **kwargs)
                 except ImportError:
                     raise e  # Original error if all that doesn't work
 
@@ -340,6 +346,25 @@ class ShiftMaxNorm(nn.Module):
         y = y - y.min(-1, keepdim=True)[0]
         y = y / y.max(-1, keepdim=True)[0]
         return y.view(*x.shape)
+
+
+# Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, MLP]"
+class Sequential(nn.Module):
+    def __init__(self, _targets_, i=0, **kwargs):
+        super().__init__()
+
+        modules = nn.ModuleList()
+
+        for _target_ in _targets_:
+            modules.append(instantiate(OmegaConf.create({'_target_': _target_}), i, **kwargs))
+
+            if 'input_shape' in kwargs:
+                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])
+
+        self.Sequence = nn.Sequential(*modules)
+
+    def forward(self, obs):
+        return self.Sequence(obs)
 
 
 # Swaps image dims between channel-last and channel-first format
