@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch.nn import init
 
-from Blocks.Architectures.MultiHeadAttention import CrossAttentionBlock
+from Blocks.Architectures.Transformer import CrossAttentionBlock
 
 
 class Perceiver(nn.Module):

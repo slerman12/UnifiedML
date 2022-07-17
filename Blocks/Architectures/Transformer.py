@@ -25,6 +25,9 @@ class AttentionBlock(nn.Module):
 
         self.channels_first = channels_first
 
+        if channels_first:
+            input_shape = list(reversed(input_shape))  # Assumes invariance to spatial dimensions
+
         # Multi-Head Dot-Product Attention (MHDPA) from inputs to context
         self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads, rela,
                                      channels_first=False)
@@ -89,7 +92,7 @@ class SelfAttentionBlock(AttentionBlock):
 
 
 class LearnableFourierPositionalEncodings(nn.Module):
-    def __init__(self, input_shape=(32,), fourier_dim=8, hidden_dim=8, output_dim=8, channels_first=True):
+    def __init__(self, input_shape=(32,), fourier_dim=None, hidden_dim=None, output_dim=None, channels_first=True):
         """
         Learnable Fourier Features (https://arxiv.org/pdf/2106.02795.pdf)
         Generalized to adapt to arbitrary spatial dimensions. For consistency with Vision models,
@@ -104,14 +107,23 @@ class LearnableFourierPositionalEncodings(nn.Module):
         self.input_dim = input_shape if isinstance(input_shape, int) \
             else input_shape[0] if channels_first else input_shape[-1]
 
-        self.scale = 1 / math.sqrt(fourier_dim)
+        self.fourier_dim = fourier_dim or self.input_dim
+        self.hidden_dim = hidden_dim or self.input_dim
+        self.output_dim = output_dim or self.input_dim
+
+        self.scale = 1 / math.sqrt(self.fourier_dim)
 
         # Projections
-        self.Linear = nn.Linear(self.input_dim, fourier_dim // 2, bias=False)
-        self.MLP = MLP(fourier_dim, output_dim, hidden_dim, 1, nn.GELU())
+        self.Linear = nn.Linear(self.input_dim, self.fourier_dim // 2, bias=False)
+        self.MLP = MLP(self.fourier_dim, self.output_dim, self.hidden_dim, 1, nn.GELU())
 
         # Initialize weights
         nn.init.normal_(self.Linear.weight.data)
+
+    def repr_shape(self, *_):
+        # Conserves spatial dimensions
+        return (self.output_dim, *_[1:]) if self.channels_first \
+            else (*_[:-1], self.output_dim)
 
     def forward(self, input):
         # Permute as channels-last
@@ -128,15 +140,14 @@ class LearnableFourierPositionalEncodings(nn.Module):
         features = self.Linear(input)
 
         cosines, sines = torch.cos(features), torch.sin(features)
+        cosines *= self.scale
+        sines *= self.scale
 
-        # Fourier features
-        fourier_features = self.scale * torch.cat([cosines, sines], dim=-1)
+        # Fourier features via MLP
+        fourier_features = self.MLP(cosines, sines)
 
-        # MLP
-        output = self.MLP(fourier_features)
-
-        # Restores original leading dims
-        output = output.view(*lead_dims, -1)
+        # Restores original dims
+        output = fourier_features.view(*lead_dims, -1)
 
         return Utils.ChSwap(output, False) if self.channels_first \
             else output
@@ -173,17 +184,17 @@ class Transformer(nn.Module):
     def __init__(self, input_shape=(32,), num_heads=None, depth=1, channels_first=True):
         super().__init__()
 
-        # Dimensions
-        self.input_shape = input_shape
-
         positional_encodings = LearnableFourierPositionalEncodings(channels_first=channels_first)
 
-        self.transformer = nn.Sequential(positional_encodings, *[SelfAttentionBlock(input_shape, num_heads,
+        self.shape = Utils.cnn_feature_shape(input_shape, positional_encodings)
+
+        self.transformer = nn.Sequential(positional_encodings, *[SelfAttentionBlock(self.shape, num_heads,
                                                                                     channels_first=channels_first)
                                                                  for _ in range(depth)])
 
-    def repr_shape(self, _):
-        return _  # Isotropic, conserves dimensions
+    def repr_shape(self, *_):
+        # Conserves spatial dimensions
+        return self.shape
 
     def forward(self, obs):
         return self.transformer(obs)
