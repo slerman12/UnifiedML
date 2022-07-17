@@ -1,6 +1,8 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
 import math
-
-from einops import rearrange, repeat
 
 import torch
 from torch import nn
@@ -23,9 +25,6 @@ class AttentionBlock(nn.Module):
 
         self.channels_first = channels_first
 
-        # Dimensions
-        self.mlp_hidden_dim = mlp_hidden_dim or self.attend.value_dim * 4
-
         # Multi-Head Dot-Product Attention (MHDPA) from inputs to context
         self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads, rela,
                                      channels_first=False)
@@ -41,6 +40,8 @@ class AttentionBlock(nn.Module):
                                            nn.Dropout(dropout))
 
         self.LayerNormPost = nn.LayerNorm(self.attend.input_dim)
+
+        self.mlp_hidden_dim = mlp_hidden_dim or self.attend.value_dim * 4  # MLP dimension
 
         self.MLP = nn.Sequential(MLP(self.attend.input_dim, self.attend.input_dim, self.mlp_hidden_dim,
                                      depth=1, non_linearity=nn.GELU(), dropout=dropout), nn.Dropout(dropout))
@@ -87,42 +88,58 @@ class SelfAttentionBlock(AttentionBlock):
         return super().forward(input)
 
 
-class LearnableFourierPositionalEncoding(nn.Module):
-    def __init__(self, G: int, M: int, F_dim: int, H_dim: int, D: int, gamma: float):
+class LearnableFourierPositionalEncodings(nn.Module):
+    def __init__(self, input_shape=(32,), fourier_dim=8, hidden_dim=8, output_dim=8, channels_first=True):
         """
-        Learnable Fourier Features from https://arxiv.org/pdf/2106.02795.pdf
-        Code from https://github.com/willGuimont/learnable_fourier_positional_encoding/
+        Learnable Fourier Features (https://arxiv.org/pdf/2106.02795.pdf)
+        Generalized to adapt to arbitrary spatial dimensions. For consistency with Vision models,
+        assumes channels-first!
         """
         super().__init__()
 
-        self.G, self.M, self.F_dim, self.H_dim, self.D, self.gamma = G, M, F_dim, H_dim, D, gamma
+        # Dimensions
 
-        self.Wr = nn.Linear(self.M, self.F_dim // 2, bias=False)
+        self.channels_first = channels_first
 
-        self.mlp = nn.Sequential(
-            nn.Linear(self.F_dim, self.H_dim, bias=True),
-            nn.GELU(),
-            nn.Linear(self.H_dim, self.D // self.G)
-        )
+        self.input_dim = input_shape if isinstance(input_shape, int) \
+            else input_shape[0] if channels_first else input_shape[-1]
 
-        nn.init.normal_(self.Wr.weight.data, mean=0, std=self.gamma ** -2)  # Initialize weights
+        self.scale = 1 / math.sqrt(fourier_dim)
 
-    def forward(self, x):
-        N, G, M = x.shape
+        # Projections
+        self.Linear = nn.Linear(self.input_dim, fourier_dim // 2, bias=False)
+        self.MLP = MLP(fourier_dim, output_dim, hidden_dim, 1, nn.GELU())
 
-        # Compute Fourier features
-        projected = self.Wr(x)
-        cosines = torch.cos(projected)
-        sines = torch.sin(projected)
-        F = 1 / math.sqrt(self.F_dim) * torch.cat([cosines, sines], dim=-1)
+        # Initialize weights
+        nn.init.normal_(self.Linear.weight.data)
 
-        # Compute projected Fourier features
-        Y = self.mlp(F)
+    def forward(self, input):
+        # Permute as channels-last
+        if self.channels_first:
+            input = Utils.ChSwap(input, False)
 
-        # Reshape to x shape
-        PEx = Y.reshape((N, self.D))
+        # Preserve batch/spatial dims
+        lead_dims = input.shape[:-1]
 
-        return PEx
+        # Flatten intermediary spatial dims
+        input = input.flatten(1, -2)
+
+        # Linear-project features
+        features = self.Linear(input)
+
+        cosines, sines = torch.cos(features), torch.sin(features)
+
+        # Fourier features
+        fourier_features = self.scale * torch.cat([cosines, sines], dim=-1)
+
+        # MLP
+        output = self.MLP(fourier_features)
+
+        # Restores original leading dims
+        output = output.view(*lead_dims, -1)
+
+        return Utils.ChSwap(output, False) if self.channels_first \
+            else output
 
 
 # def fourier_encode(x, max_freq, num_bands=4, base=2):
@@ -159,7 +176,7 @@ class Transformer(nn.Module):
         # Dimensions
         self.input_shape = input_shape
 
-        positional_encodings = LearnableFourierPositionalEncoding()
+        positional_encodings = LearnableFourierPositionalEncodings(channels_first=channels_first)
 
         self.transformer = nn.Sequential(positional_encodings, *[SelfAttentionBlock(input_shape, num_heads,
                                                                                     channels_first=channels_first)
@@ -168,26 +185,5 @@ class Transformer(nn.Module):
     def repr_shape(self, _):
         return _  # Isotropic, conserves dimensions
 
-    def forward(self, *obs):
-        # Shape broadcasting ...
-
-        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        obs = torch.cat(
-            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
-             for context in obs if context.nelement() > 0], dim=-3)
-
-        # Conserve leading dims
-        lead_shape = obs.shape[:-3]
-
-        # Operate on last 3 dims
-        obs = obs.view(-1, *obs.shape[-3:])
-
-        # Encode & attend
-
-        output = self.transformer(obs)
-
-        # Restore leading dims
-        return output.view(*lead_shape, *obs.shape[1:])
+    def forward(self, obs):
+        return self.transformer(obs)

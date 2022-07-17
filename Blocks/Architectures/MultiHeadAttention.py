@@ -281,14 +281,12 @@ class CrossAttention(Attention):
 
 class SelfAttention(Attention):
     """Self-attention, just cross-attention except context = input"""
-
     def forward(self, input, *_):
         return super().forward(input)
 
 
 class ReLA(Attention):
     """ReLA: Rectified linear attention (https://arxiv.org/abs/2104.07012)"""
-
     def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
                  talking_heads=False, channels_first=True):
         super().__init__(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads,

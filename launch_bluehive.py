@@ -280,9 +280,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Soup, 50-50, ResNet18, 7-Way, noise 0 - Launched X (Macula) - Too big!
-    # 1800-resolution input intractable, even on 8 parallelized A6000s apparently?
-    # Or 2D->1D conversion attempts to allocate memory for 2d initially?
+    # Soup, 50-50, ResNet18, 7-Way, noise 0 - Launched X (Macula) - Too slow!
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -342,7 +340,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Synthetic-Only, CNN, 7-Way, noise 0 - # TODO Launched ✓ (Macula)
+    # Synthetic-Only, CNN, 7-Way, noise 0
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
@@ -364,7 +362,7 @@ sweep = [
     save=true
     logger.wandb=true""",
 
-    # Synthetic-Only, MLP, 7-Way, noise 0 - # TODO Launched ✓ (Macula)
+    # Synthetic-Only, MLP, 7-Way, noise 0 - Launched ✓ (Cornea)
     """python Run.py
     task=classify/custom
     Dataset=XRD.XRD
