@@ -89,54 +89,39 @@ class SelfAttentionBlock(AttentionBlock):
 
 class LearnableFourierPositionalEncoding(nn.Module):
     def __init__(self, G: int, M: int, F_dim: int, H_dim: int, D: int, gamma: float):
-        """Borrowed from https://github.com/willGuimont/learnable_fourier_positional_encoding/
-        Learnable Fourier Features from https://arxiv.org/pdf/2106.02795.pdf (Algorithm 1)
-
-        Implementation of Algorithm 1: Compute the Fourier feature positional encoding of a multi-dimensional position
-        Computes the positional encoding of a tensor of shape [N, G, M]
-
-        :param G: positional groups (positions in different groups are independent)
-        :param M: each point has a M-dimensional positional values
-        :param F_dim: depth of the Fourier feature dimension
-        :param H_dim: hidden layer dimension
-        :param D: positional encoding dimension
-        :param gamma: parameter to initialize Wr"""
+        """
+        Learnable Fourier Features from https://arxiv.org/pdf/2106.02795.pdf
+        Code from https://github.com/willGuimont/learnable_fourier_positional_encoding/
+        """
         super().__init__()
 
-        self.G, self.M, self.F_dim, self.H_dim, self.D, self.gamma \
-            = map(torch.as_tensor, [G, M, F_dim, H_dim, D, gamma])
+        self.G, self.M, self.F_dim, self.H_dim, self.D, self.gamma = G, M, F_dim, H_dim, D, gamma
 
-        # Projection matrix on learned lines (used in eq. 2)
         self.Wr = nn.Linear(self.M, self.F_dim // 2, bias=False)
 
-        # MLP (GeLU(F @ W1 + B1) @ W2 + B2 (eq. 6)
         self.mlp = nn.Sequential(
             nn.Linear(self.F_dim, self.H_dim, bias=True),
             nn.GELU(),
             nn.Linear(self.H_dim, self.D // self.G)
         )
 
-        # Initialize weights
-        nn.init.normal_(self.Wr.weight.data, mean=0, std=self.gamma ** -2)
+        nn.init.normal_(self.Wr.weight.data, mean=0, std=self.gamma ** -2)  # Initialize weights
 
     def forward(self, x):
-        """
-        Produce positional encodings from x
-        :param x: tensor of shape [N, G, M] that represents N positions where each position is in the shape of [G, M],
-                  where G is the positional group and each group has M-dimensional positional values.
-                  Positions in different positional groups are independent
-        :return: positional encoding for X
-        """
         N, G, M = x.shape
-        # Step 1. Compute Fourier features (eq. 2)
+
+        # Compute Fourier features
         projected = self.Wr(x)
         cosines = torch.cos(projected)
         sines = torch.sin(projected)
-        F = 1 / torch.sqrt(self.F_dim) * torch.cat([cosines, sines], dim=-1)
-        # Step 2. Compute projected Fourier features (eq. 6)
+        F = 1 / math.sqrt(self.F_dim) * torch.cat([cosines, sines], dim=-1)
+
+        # Compute projected Fourier features
         Y = self.mlp(F)
-        # Step 3. Reshape to x's shape
+
+        # Reshape to x shape
         PEx = Y.reshape((N, self.D))
+
         return PEx
 
 
@@ -166,7 +151,7 @@ class LearnableFourierPositionalEncoding(nn.Module):
 
 class Transformer(nn.Module):
     """A Transformer
-    For consistency with Vision models, assumes channels-first
+    For consistency with Vision models, assumes channels-first!
     Generalized to arbitrary spatial dimensions"""
     def __init__(self, input_shape=(32,), num_heads=None, depth=1, channels_first=True):
         super().__init__()
@@ -193,6 +178,7 @@ class Transformer(nn.Module):
                                                                                   % math.prod(self.input_shape[1:]) == 0
             else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
              for context in obs if context.nelement() > 0], dim=-3)
+
         # Conserve leading dims
         lead_shape = obs.shape[:-3]
 

@@ -29,8 +29,8 @@ class Attention(nn.Module):
         self.channels_first = channels_first
 
         # Dimensions
-        self.input_dim = input_shape[0] if channels_first \
-            else input_shape[-1]
+        self.input_dim = input_shape if isinstance(input_shape, int) \
+            else input_shape[0] if channels_first else input_shape[-1]
 
         # Defaults
         self.context_dim = context_dim or self.input_dim
@@ -71,8 +71,7 @@ class Attention(nn.Module):
 
         # Permute as channels-last
         if self.channels_first:
-            input, context = input.permute(0, *range(2, len(input.shape), 1))
-            context = context.permute(0, *range(2, len(input.shape), 1))
+            input, context = [Utils.ChSwap(x, False) for x in [input, context]]
 
         # Preserve batch/spatial dims
         lead_dims = input.shape[:-1]
@@ -121,7 +120,7 @@ class Attention(nn.Module):
 
         # Convert to channels-first
         if self.channels_first:
-            output = output.permute(0, -1, *range(len(output.shape) - 1))
+            output = Utils.ChSwap(output, False)
 
         return output
 
@@ -272,17 +271,12 @@ class Attention(nn.Module):
 #             else output
 
 
-class ReLA(Attention):
-    """ReLA: Rectified linear attention (https://arxiv.org/abs/2104.07012)"""
-
-    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
-                 talking_heads=False, channels_first=True):
-        super().__init__(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads,
-                         True, channels_first)
+class MHDPA(Attention):
+    """Pseudonym"""
 
 
 class CrossAttention(Attention):
-    """Cross-attention, same as Attention"""
+    """Cross-attention, pseudonym, same as Attention"""
 
 
 class SelfAttention(Attention):
@@ -290,3 +284,12 @@ class SelfAttention(Attention):
 
     def forward(self, input, *_):
         return super().forward(input)
+
+
+class ReLA(Attention):
+    """ReLA: Rectified linear attention (https://arxiv.org/abs/2104.07012)"""
+
+    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
+                 talking_heads=False, channels_first=True):
+        super().__init__(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads,
+                         True, channels_first)

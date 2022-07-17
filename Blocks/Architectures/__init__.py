@@ -10,9 +10,9 @@ from Blocks.Architectures.Vision.ResNet import MiniResNet, MiniResNet as ResNet,
 from Blocks.Architectures.Vision.ConvMixer import ConvMixer
 from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt, ConvNeXtTiny
 
-from Blocks.Architectures.MultiHeadAttention import Attention, ReLA, CrossAttention, SelfAttention
+from Blocks.Architectures.MultiHeadAttention import Attention, MHDPA, CrossAttention, SelfAttention, ReLA
 
-from Blocks.Architectures.Transformer import Transformer, AttentionBlock, CrossAttentionBlock, SelfAttentionBlock
+from Blocks.Architectures.Transformer import AttentionBlock, CrossAttentionBlock, SelfAttentionBlock, Transformer
 
 from Blocks.Architectures.Vision.ViT import ViT
 
