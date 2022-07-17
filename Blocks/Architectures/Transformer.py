@@ -209,13 +209,13 @@ class LearnableFourierPositionalEncodings(nn.Module):
 #         pass
 
 
-class PositionalEncoding(nn.Module):
+class PositionalEncodings(nn.Module):
     """
     Sine-cosine positional encodings
     Generalized to adapt to arbitrary spatial dimensions. For consistency with Vision models,
-    assumes channels-first!
+    assumes channels-first! Automatically adds when encoding size is same as input, otherwise concatenates.
     """
-    def __init__(self, input_shape=(7, 32, 32), dropout=0.1, max_axes=None, channels_first=True):
+    def __init__(self, input_shape=(7, 32, 32), dropout=0.1, size=None, max_spatial_lens=None, channels_first=True):
         super().__init__()
 
         # Dimensions
@@ -225,17 +225,20 @@ class PositionalEncoding(nn.Module):
         self.input_dim = input_shape[0] if channels_first else input_shape[-1]
 
         # Max spatial lengths (for variable sequences)
-        if max_axes is None:
-            max_axes = input_shape[1:] if channels_first else input_shape[:-1]
+        if max_spatial_lens is None:
+            max_spatial_lens = input_shape[1:] if channels_first else input_shape[:-1]
 
-        positions = map(torch.arange, max_axes)
-        div_term = torch.exp(torch.arange(0, self.input_dim, 2) * (-math.log(10000.0) / self.input_dim))
+        self.size = max(size or self.input_dim, len(max_spatial_lens))
 
-        positional_encodings = torch.zeros(*max_axes, max(self.input_dim, len(max_axes)))
+        div_term = torch.exp(torch.arange(0, self.size, 2) * (-math.log(10000.0) / self.size))
+
+        positions = map(torch.arange, max_spatial_lens)
+
+        positional_encodings = torch.zeros(*max_spatial_lens, self.size)
 
         for i, position in enumerate(positions):
-            positional_encodings[..., 0::len(max_axes)] = torch.sin(position.unsqueeze(1) * div_term)
-            positional_encodings[..., i::len(max_axes)] = torch.cos(position.unsqueeze(1) * div_term)
+            positional_encodings[..., 0::len(max_spatial_lens)] = torch.sin(position.unsqueeze(1) * div_term)
+            positional_encodings[..., i::len(max_spatial_lens)] = torch.cos(position.unsqueeze(1) * div_term)
 
         self.register_buffer('positional_encodings', positional_encodings)
 
@@ -243,20 +246,19 @@ class PositionalEncoding(nn.Module):
 
     def repr_shape(self, *_):
         # Conserves shape when additive (if spatial axes ≤ input dim), else concatenates
-        return _ if self.positional_encodings.shape[-1] == self.input_dim \
-            else (self.positional_encodings.shape[-1] + self.input_dim, *_[1:]) if self.channels_first \
-            else (*_[:-1], self.positional_encodings.shape[-1] + self.input_dim)
+        return _ if self.input_dim == self.size \
+            else (self.input_dim + self.size, *_[1:]) if self.channels_first else (*_[:-1], self.input_dim + self.size)
 
     def forward(self, input):
         # Permute as channels-last
         if self.channels_first:
             input = Utils.ChSwap(input, False)
 
-        # Additive
-        if self.positional_encodings.shape[-1] == self.input_dim:
-            encodings = self.dropout(input + self.positional_encodings[list(map(slice, input.shape[1:-1]))])
-        else:  # Concatenate
-            encodings = torch.cat([input, self.positional_encodings[list(map(slice, input.shape[1:-1]))]], -1)
+        positions = self.positional_encodings[list(map(slice, input.shape[1:-1]))]
+
+        # Add or concatenate
+        encodings = self.dropout(input + positions) if self.input_dim == self.size \
+            else torch.cat([input, positions.expand(input.shape[0], *positions.shape)], -1)
 
         # To channels-first if needed
         return Utils.ChSwap(encodings, False) if self.channels_first \
@@ -270,7 +272,8 @@ class Transformer(nn.Module):
     def __init__(self, input_shape=(32,), num_heads=None, depth=1, channels_first=True):
         super().__init__()
 
-        positional_encodings = LearnableFourierPositionalEncodings(input_shape, channels_first=channels_first)
+        # positional_encodings = LearnableFourierPositionalEncodings(input_shape, channels_first=channels_first)
+        positional_encodings = PositionalEncodings(input_shape, channels_first=channels_first)
 
         self.shape = Utils.cnn_feature_shape(input_shape, positional_encodings)
 
