@@ -107,15 +107,17 @@ class LearnableFourierPositionalEncodings(nn.Module):
         self.input_dim = input_shape if isinstance(input_shape, int) \
             else input_shape[0] if channels_first else input_shape[-1]
 
-        self.fourier_dim = fourier_dim or self.input_dim
+        fourier_dims = fourier_dim or self.input_dim
+        self.fourier_dim = -(-fourier_dims // 2)  # Round up
+
         self.hidden_dim = hidden_dim or self.input_dim
         self.output_dim = output_dim or self.input_dim
 
         self.scale = 1 / math.sqrt(self.fourier_dim)
 
         # Projections
-        self.Linear = nn.Linear(self.input_dim, self.fourier_dim // 2, bias=False)
-        self.MLP = MLP(self.fourier_dim, self.output_dim, self.hidden_dim, 1, nn.GELU())
+        self.Linear = nn.Linear(self.input_dim, self.fourier_dim, bias=False)
+        self.MLP = MLP(self.fourier_dim * 2, self.output_dim, self.hidden_dim, 1, nn.GELU())
 
         # Initialize weights
         nn.init.normal_(self.Linear.weight.data)
@@ -184,7 +186,7 @@ class Transformer(nn.Module):
     def __init__(self, input_shape=(32,), num_heads=None, depth=1, channels_first=True):
         super().__init__()
 
-        positional_encodings = LearnableFourierPositionalEncodings(channels_first=channels_first)
+        positional_encodings = LearnableFourierPositionalEncodings(input_shape, channels_first=channels_first)
 
         self.shape = Utils.cnn_feature_shape(input_shape, positional_encodings)
 
@@ -193,7 +195,6 @@ class Transformer(nn.Module):
                                                                  for _ in range(depth)])
 
     def repr_shape(self, *_):
-        # Conserves spatial dimensions
         return self.shape
 
     def forward(self, obs):

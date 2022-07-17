@@ -348,7 +348,22 @@ class ChannelSwap(nn.Module):
         return x.transpose(-1, -3 if spatial2d else 1)  # Assumes 2D, otherwise Nd
 
 
-ChSwap = ChannelSwap()  # Convenient helper
+# Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
+class AddChannelDim(nn.Module):
+    def forward(self, x):
+        return x.unsqueeze(1)
+
+
+# Adds a spatial dimension to a 1D input, treating 1D as channels (channels-first)
+class AddSpatialDim(nn.Module):
+    def forward(self, x):
+        return x.unsqueeze(-1)
+
+
+# Convenient helpers
+ChSwap = ChannelSwap()
+AddChDim = AddChannelDim()
+AddSpDim = AddSpatialDim()
 
 
 # Context manager that temporarily switches on eval() mode for specified models; then resets them
