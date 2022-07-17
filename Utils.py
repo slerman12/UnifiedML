@@ -141,12 +141,6 @@ def instantiate(args, i=0, **kwargs):
     if hasattr(args, '_target_') and args._target_:
         try:
             return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
-        except TypeError as e:
-            kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
-            if not kwarg:
-                raise e  # Original error
-            del kwargs[kwarg.group(1)]
-            return instantiate(args, i, **kwargs)  # Signature matching
         except ImportError as e:
             if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                 args = args._target_
@@ -156,6 +150,12 @@ def instantiate(args, i=0, **kwargs):
                     return instantiate(args, i, **kwargs)
                 except ImportError:
                     raise e  # Original error if all that doesn't work
+        except TypeError as e:
+            kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
+            if kwarg:
+                del kwargs[kwarg.group(1)]
+                return instantiate(args, i, **kwargs)  # Signature matching
+            raise e  # Original error
 
     if isinstance(args, str):
         for key in kwargs:
