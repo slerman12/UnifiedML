@@ -269,11 +269,14 @@ class Transformer(nn.Module):
     """A Transformer
     For consistency with Vision models, assumes channels-first!
     Generalized to arbitrary spatial dimensions"""
-    def __init__(self, input_shape=(32,), num_heads=None, depth=1, channels_first=True):
+    def __init__(self, input_shape=(32,), num_heads=None, depth=1, channels_first=True,
+                 learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
 
-        # positional_encodings = LearnableFourierPositionalEncodings(input_shape, channels_first=channels_first)
-        positional_encodings = PositionalEncodings(input_shape, channels_first=channels_first)
+        positional_encodings = LearnableFourierPositionalEncodings if learnable_positional_encodings \
+            else PositionalEncodings if positional_encodings else nn.Identity()
+
+        positional_encodings = positional_encodings(input_shape, channels_first=channels_first)
 
         self.shape = Utils.cnn_feature_shape(input_shape, positional_encodings)
 
