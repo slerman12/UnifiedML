@@ -226,13 +226,15 @@ def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, paddin
     if padding == 'same':
         return in_height, in_width
     if type(kernel_size) is not tuple:
-        kernel_size = (kernel_size, kernel_size)
+        kernel_size = [kernel_size, kernel_size]
     if type(stride) is not tuple:
-        stride = (stride, stride)
+        stride = [stride, stride]
     if type(padding) is not tuple:
-        padding = (padding, padding)
+        padding = [padding, padding]
     if type(dilation) is not tuple:
-        dilation = (dilation, dilation)
+        dilation = [dilation, dilation]
+    kernel_size = [min(size, kernel_size[i]) for i, size in enumerate([in_height, in_width])]  # Assumes adaptive
+    padding = [min(size, padding[i]) for i, size in enumerate([in_height, in_width])]  # Assumes adaptive
     out_height = math.floor(((in_height + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
     out_width = math.floor(((in_width + (2 * padding[1]) - (dilation[1] * (kernel_size[1] - 1)) - 1) / stride[1]) + 1)
     return out_height, out_width
@@ -359,7 +361,7 @@ class Sequential(nn.Module):
             modules.append(instantiate(OmegaConf.create({'_target_': _target_}), i, **kwargs))
 
             if 'input_shape' in kwargs:
-                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])  # TODO Adaptive Eyes bug
+                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])
 
         self.Sequence = nn.Sequential(*modules)
 

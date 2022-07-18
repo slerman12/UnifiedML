@@ -47,7 +47,7 @@ class AttentionBlock(nn.Module):
         self.mlp_hidden_dim = mlp_hidden_dim or self.attend.value_dim * 4  # MLP dimension
 
         self.MLP = nn.Sequential(MLP(self.attend.input_dim, self.attend.input_dim, self.mlp_hidden_dim,
-                                     depth=1, non_linearity=nn.GELU(), dropout=dropout), nn.Dropout(dropout))
+                                     depth=1, activation=nn.GELU(), dropout=dropout), nn.Dropout(dropout))
 
     def repr_shape(self, *_):
         # Isotropic, conserves dimensions

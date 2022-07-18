@@ -49,9 +49,9 @@ class AGIGradient(nn.Module):
             classify = True
             label_dim = 1 if classify else out_dim
 
-            self.nerves = MLP(in_dim + label_dim, feature_dim, feature_dim, depth // 3, non_linearity=nn.GELU()).to(device)
+            self.nerves = MLP(in_dim + label_dim, feature_dim, feature_dim, depth // 3, activation=nn.GELU()).to(device)
             self.hippocampus = nn.LSTM(feature_dim, memory_dim, depth // 3, batch_first=True).to(device)
-            self.crown = MLP(in_dim + memory_dim, out_dim, memory_dim // 2, depth // 3, non_linearity=nn.GELU()).to(device)
+            self.crown = MLP(in_dim + memory_dim, out_dim, memory_dim // 2, depth // 3, activation=nn.GELU()).to(device)
 
             self.num_dists = num_dists
 
