@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import *
 from torch.optim.lr_scheduler import *
-from torch.nn import Identity  # For direct accessibility via command line
+from torch.nn import Identity, Flatten  # For direct accessibility via command line
 
 from Blocks.Architectures import *  # For direct accessibility via command line
 
@@ -399,10 +399,8 @@ class AddSpatialDim(nn.Module):
         return x.unsqueeze(-1)
 
 
-# Convenient helpers
+# Convenient helper
 ChSwap = ChannelSwap()
-AddChDim = AddChannelDim()
-AddSpDim = AddSpatialDim()
 
 
 # Context manager that temporarily switches on eval() mode for specified models; then resets them
