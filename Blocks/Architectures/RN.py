@@ -31,6 +31,7 @@ class RN(nn.Module):
             input_shape = (input_shape,)
 
         shape = Utils.cnn_feature_shape(input_shape, self.positional_encodings)
+
         self.input_dim = shape[0] if channels_first else shape[-1]
 
         # Defaults
@@ -60,12 +61,13 @@ class RN(nn.Module):
         input = input.flatten(1, -2)
         context = context.flatten(1, -2)
 
-        # Validate shapes
         assert input.shape[-1] == self.input_dim, f'Unexpected input shape {input.shape[-1]}≠{self.input_dim}'
         assert context.shape[-1] == self.context_dim, f'Unexpected context shape {context.shape[-1]}≠{self.context_dim}'
 
         input = input.unsqueeze(1).expand(-1, context.shape[1], -1, -1)
+
         context = context.unsqueeze(2).expand(-1, -1, input.shape[2], -1)
+
         pairs = torch.cat([input, context], -1)
 
         relations = self.inner(pairs)
@@ -73,12 +75,6 @@ class RN(nn.Module):
         outer = self.outer(mid)
 
         try:
-            output = outer.view(len(input), self.output_dim)  # Validate shape
+            return outer.view(len(input), self.output_dim)  # Validate shape
         except RuntimeError:
-            raise RuntimeError(f'\nUnexpected output shape {tuple(output.shape)}, ≠{(len(input), self.output_dim)}')
-
-        # Convert to channels-first
-        if self.channels_first:
-            output = Utils.ChSwap(output, False)
-
-        return output
+            raise RuntimeError(f'\nUnexpected output shape {tuple(outer.shape)}, ≠{(len(input), self.output_dim)}')
