@@ -20,7 +20,10 @@ from Blocks.Architectures.Vision.ViT import ViT
 
 from Blocks.Architectures.Perceiver import Perceiver
 
-from Blocks.Architectures.RN import RN
+from Blocks.Architectures.RN import RN, RN as RelationNetwork
 
 from Blocks.Architectures.Vision.CNN import AvgPool
 from Blocks.Architectures.Vision.ViT import CLSPool
+
+
+

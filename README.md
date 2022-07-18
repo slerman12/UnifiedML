@@ -553,6 +553,10 @@ python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap,
 python Run.py task=classify/mnist Pool=RN
 ```
 
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[RN, AvgPool]"
+```
+
 </details>
 
 ### Custom Architectures

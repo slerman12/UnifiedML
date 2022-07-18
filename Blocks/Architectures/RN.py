@@ -2,20 +2,22 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import torch
+import math
+
 from torch import nn
 
 import Utils
-from Blocks.Architectures import MLP
+
+from Blocks.Architectures.MLP import MLP
 from Blocks.Architectures.Transformer import PositionalEncodings, LearnableFourierPositionalEncodings
 
 
 class RN(nn.Module):
-    """Relation Network (https://arxiv.org/abs/1706.01427), generalized to arbitrary spatial dims.
+    """Relation Network (https://arxiv.org/abs/1706.01427)
+    Adapts to arbitrary spatial dims. Un-pooled by default (no "outer" MLP), outputs a feature map.
     Supports positional encodings. For consistency with Vision models, assumes channels-first!"""
-    def __init__(self, input_shape=(32,), context_dim=None, inner_depth=3, outer_depth=2, hidden_dim=None,
-                 output_dim=None, mid_nonlinearity=nn.Identity(), dropout=0, channels_first=True,
-                 learnable_positional_encodings=False, positional_encodings=True):
+    def __init__(self, input_shape=(32,), context_dim=None, depth=1, hidden_dim=None, output_dim=None, dropout=0,
+                 channels_first=True, learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
 
         positional_encodings = LearnableFourierPositionalEncodings if learnable_positional_encodings \
@@ -39,42 +41,40 @@ class RN(nn.Module):
         self.hidden_dim = hidden_dim or self.input_dim * 4
         self.output_dim = output_dim or self.input_dim
 
-        self.inner = nn.Sequential(
-            MLP(self.input_dim + self.context_dim, self.hidden_dim, self.hidden_dim, inner_depth), nn.Dropout(dropout))
-        self.mid_nonlinearity = mid_nonlinearity
-        self.outer = MLP(self.hidden_dim, self.output_dim, self.hidden_dim, outer_depth)
+        self.inner = MLP(self.input_dim + self.context_dim, self.output_dim, self.hidden_dim, depth)
 
-    def repr_shape(self, *_):
-        return self.output_dim,
+        self.dropout = nn.Dropout(dropout)
+
+    def repr_shape(self, *_):  # Conserves spatial dimensions, maps channel dim to output-dim
+        return (self.output_dim, *_[1:]) if self.channels_first else (*_[:-1], self.output_dim)
 
     def forward(self, input, context=None):
         input = self.positional_encodings(input)
 
         if context is None:
-            context = input  # Self-attention
+            context = input  # Self-relation
 
         # Permute as channels-last
         if self.channels_first:
             input, context = [Utils.ChSwap(x, False) for x in [input, context]]
 
-        # Flatten intermediary spatial dims
-        input = input.flatten(1, -2)
-        context = context.flatten(1, -2)
-
         assert input.shape[-1] == self.input_dim, f'Unexpected input shape {input.shape[-1]}≠{self.input_dim}'
         assert context.shape[-1] == self.context_dim, f'Unexpected context shape {context.shape[-1]}≠{self.context_dim}'
 
-        input = input.unsqueeze(1).expand(-1, context.shape[1], -1, -1)
+        # Preserve batch/spatial dims
+        lead_dims = input.shape[:-1]
 
-        context = context.unsqueeze(2).expand(-1, -1, input.shape[2], -1)
+        # Flatten intermediary spatial dims, expand input & context pairwise
+        input = input.flatten(1, -2).unsqueeze(1).expand(-1, math.prod(context.shape[1:-1]), -1, -1)
+        context = context.flatten(1, -2).unsqueeze(2).expand(-1, -1, input.shape[2], -1)
 
-        pairs = torch.cat([input, context], -1)
+        relations = self.dropout(self.inner(input, context)).sum(1)  # Pool over contexts
 
-        relations = self.inner(pairs)
-        mid = self.mid_nonlinearity(relations.sum(1).sum(1))
-        outer = self.outer(mid)
+        # Restores original leading dims
+        output = relations.view(*lead_dims, -1)
 
-        try:
-            return outer.view(len(input), self.output_dim)  # Validate shape
-        except RuntimeError:
-            raise RuntimeError(f'\nUnexpected output shape {tuple(outer.shape)}, ≠{(len(input), self.output_dim)}')
+        # Convert to channels-first
+        if self.channels_first:
+            output = Utils.ChSwap(output, False)
+
+        return output

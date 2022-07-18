@@ -71,11 +71,10 @@ class AvgPool(nn.Module):
     def __init__(self, **_):
         super().__init__()
 
-    def repr_shape(self, c, *_):
-        return c,
+    def repr_shape(self, dim, *_):
+        return dim,
 
-    def forward(self, x):
-        if len(x.shape) < 4:
-            x.unsqueeze(2)  # Add 2nd spatial dim if 1D
-
-        return F.adaptive_avg_pool2d(x, (1, 1)).flatten(-3)
+    def forward(self, input):
+        for _ in input.shape[2:]:
+            input = input.mean(-1)
+        return input
