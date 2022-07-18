@@ -16,10 +16,10 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-from torch.nn import Identity  # For direct accessibility via command line
 import torch.nn.functional as F
 from torch.optim import *
 from torch.optim.lr_scheduler import *
+from torch.nn import Identity  # For direct accessibility via command line
 
 from Blocks.Architectures import *  # For direct accessibility via command line
 
@@ -153,7 +153,7 @@ def instantiate(args, i=0, **kwargs):
         except TypeError as e:
             kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
             if kwarg:
-                del kwargs[kwarg.group(1)]
+                kwargs = {key: kwargs[key] for key in kwargs if key != kwarg.group(1)}
                 return instantiate(args, i, **kwargs)  # Signature matching
             raise e  # Original error
 
@@ -282,11 +282,11 @@ class Ensemble(nn.Module):
                            self.dim)
 
 
-# Replaces tensor's batch items with Normal-sampled random latent
+# Replaces tensor's batch items with Normal-sampled random latent TODO Pass as Eyes for generate, repr_shape, ->./Blocks
 class Rand(nn.Module):
     def __init__(self, size=1, uniform=False):
         super().__init__()
-        self.size = size
+        self.size = size  # TODO input_shape
         self.uniform = uniform
 
     def forward(self, x):
@@ -359,7 +359,7 @@ class Sequential(nn.Module):
             modules.append(instantiate(OmegaConf.create({'_target_': _target_}), i, **kwargs))
 
             if 'input_shape' in kwargs:
-                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])
+                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])  # TODO Adaptive Eyes bug
 
         self.Sequence = nn.Sequential(*modules)
 

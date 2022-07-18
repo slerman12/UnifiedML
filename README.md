@@ -537,6 +537,10 @@ python Run.py replay.load=true replay.save=true
 python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify/mnist
 ```
 
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[Transformer, AvgPool]" +pool.positional_encodings=false
+```
+
 </details>
 
 ### Custom Architectures

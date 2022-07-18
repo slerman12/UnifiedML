@@ -218,28 +218,22 @@ class PositionalEncodings(nn.Module):
     def __init__(self, input_shape=(7, 32, 32), dropout=0.1, size=None, max_spatial_lens=None, channels_first=True):
         super().__init__()
 
-        # Dimensions
-
         self.channels_first = channels_first
 
-        self.input_dim = input_shape[0] if channels_first else input_shape[-1]
-
-        # Max spatial lengths (for variable sequences)
+        # Max spatial lengths (for variable-len sequences)
         if max_spatial_lens is None:
             max_spatial_lens = input_shape[-1:None:-1][:-1] if channels_first else input_shape[:-1]
 
+        # Dimensions
+        self.input_dim = input_shape[0] if channels_first else input_shape[-1]
         self.size = max(size or self.input_dim, len(max_spatial_lens) * 2)
 
         div_term = torch.exp(torch.arange(0, self.size, len(max_spatial_lens) * 2) * (-math.log(10000.0) / self.size))
 
         positions = torch.stack(torch.meshgrid(*map(torch.arange, max_spatial_lens), indexing='ij'), -1)
-
-        print(positions.shape, div_term.shape)
         positions = positions.unsqueeze(-1).float().matmul(div_term.unsqueeze(-2)).flatten(-2)
-        print(positions.shape)
 
         positional_encodings = torch.zeros(*max_spatial_lens, self.size)
-        print(positional_encodings.shape)
         positional_encodings[..., 0::2] = torch.sin(positions)
         positional_encodings[..., 1::2] = torch.cos(positions)
 
@@ -248,7 +242,7 @@ class PositionalEncodings(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def repr_shape(self, *_):
-        # Conserves shape when additive (if spatial axes ≤ input dim), else concatenates
+        # Conserves shape when additive (if spatial axes * 2 ≤ input dim), else concatenates
         return _ if self.input_dim == self.size \
             else (self.input_dim + self.size, *_[1:]) if self.channels_first else (*_[:-1], self.input_dim + self.size)
 
@@ -277,7 +271,7 @@ class Transformer(nn.Module):
         super().__init__()
 
         positional_encodings = LearnableFourierPositionalEncodings if learnable_positional_encodings \
-            else PositionalEncodings if positional_encodings else nn.Identity()
+            else PositionalEncodings if positional_encodings else nn.Identity
 
         positional_encodings = positional_encodings(input_shape, channels_first=channels_first)
 

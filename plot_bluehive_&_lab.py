@@ -62,7 +62,7 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
 
 plot_group = 'XRD'
 tasks = []
-plots = [['CNN_optim_.*', 'MLP_optim_.*', 'ResNet18_optim_.*']]  # Regex!
+plots = [['CNN_optim_ADAM.*', 'MLP_optim_ADAM.*']]  # Regex!
 title = 'RRUFF'
 x_axis = 'Step'
 
