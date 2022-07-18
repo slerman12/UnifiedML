@@ -545,6 +545,10 @@ python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[Transformer,
 python Run.py task=classify/mnist Pool=Residual +pool.model=Transformer +pool.depth=2
 ```
 
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap, Residual]" +'pool.model="MLP(kwargs.input_shape[-1])"' +'pool.down_sample="MLP(input_shape=kwargs.input_shape[-1], output_dim=kwargs.output_shape[-1])"'
+```
+
 </details>
 
 ### Custom Architectures

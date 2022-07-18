@@ -16,10 +16,15 @@ class Residual(nn.Module):
     def __init__(self, model, down_sample=None, **kwargs):
         super().__init__()
 
-        self.model = Utils.instantiate(OmegaConf.create({'_target_': model, **kwargs})) if isinstance(model, str) \
+        self.model = Utils.instantiate(OmegaConf.create({'_target_': model}), **kwargs) if isinstance(model, str) \
             else model
 
-        self.down_sample = down_sample  # No command-line instantiation for down-sample
+        if 'input_shape' in kwargs:
+            kwargs['output_shape'] = self.repr_shape(*kwargs['input_shape'])
+
+        self.down_sample = Utils.instantiate(OmegaConf.create({'_target_': down_sample}),
+                                             **kwargs) if isinstance(down_sample, str) \
+            else down_sample
 
     def repr_shape(self, channels, height, width):
         return Utils.cnn_feature_shape([channels, height, width], self.model)

@@ -363,24 +363,36 @@ class Sequential(nn.Module):
 
         self.Sequence = nn.Sequential(*modules)
 
+    def repr_shape(self, *_):
+        return cnn_feature_shape(_, self.Sequence)
+
     def forward(self, obs):
         return self.Sequence(obs)
 
 
 # Swaps image dims between channel-last and channel-first format
 class ChannelSwap(nn.Module):
+    def repr_shape(self, *_):
+        return _[-1], *_[1:-1], _[0]
+
     def forward(self, x, spatial2d=True):
         return x.transpose(-1, -3 if spatial2d else 1)  # Assumes 2D, otherwise Nd
 
 
 # Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
 class AddChannelDim(nn.Module):
+    def repr_shape(self, *_):
+        return 1, *_
+
     def forward(self, x):
         return x.unsqueeze(1)
 
 
 # Adds a spatial dimension to a 1D input, treating 1D as channels (channels-first)
 class AddSpatialDim(nn.Module):
+    def repr_shape(self, *_):
+        return *_, 1
+
     def forward(self, x):
         return x.unsqueeze(-1)
 
