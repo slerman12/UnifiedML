@@ -424,7 +424,7 @@ Can even work with RL tasks (due to frame stack, the generated images are techni
 python Run.py task=atari/breakout generate=true
 ```
 
-Make sure you have [saved a replay](#saving) before doing this.
+Make sure you have [saved a replay](#saving) that can be loaded before doing this.
 
 </details>
 
@@ -532,6 +532,10 @@ python Run.py replay.load=true replay.save=true
 :mag: <i>Learn to cook</i>
 </summary>
 <br>
+
+```console
+python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify/mnist
+```
 
 </details>
 
@@ -679,7 +683,7 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
-For the best tutorial on custom datasets, see our full [end-to-end example]() of Crystalographic-Structure Classification, in which we reproduce our [full paper on classifying crystal structures from xray diffraction patterns]() in just a single 142-line file. The custom dataset used in this case is Crystals, their space groups, and corresponding xray patterns, will be downloaded automatically.
+For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And_Space_Group Classification, in which we reproduce our [full paper on classifying crystal structures and space groups from xray diffraction patterns]() in just a single <blank>-line file. The custom dataset used in this case is Crystals, their space groups, and corresponding xray patterns, will be downloaded automatically.
 
 </details>
 

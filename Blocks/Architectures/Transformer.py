@@ -213,7 +213,7 @@ class PositionalEncodings(nn.Module):
     """
     Sine-cosine positional encodings
     Generalized to adapt to arbitrary spatial dimensions. For consistency with Vision models,
-    assumes channels-first! Automatically adds when encoding size is same as input, otherwise concatenates.
+    assumes channels-first! Automatically additive when encoding size is same as input, otherwise concatenates.
     """
     def __init__(self, input_shape=(7, 32, 32), dropout=0.1, size=None, max_spatial_lens=None, channels_first=True):
         super().__init__()
@@ -226,19 +226,22 @@ class PositionalEncodings(nn.Module):
 
         # Max spatial lengths (for variable sequences)
         if max_spatial_lens is None:
-            max_spatial_lens = input_shape[1:] if channels_first else input_shape[:-1]
+            max_spatial_lens = input_shape[-1:None:-1][:-1] if channels_first else input_shape[:-1]
 
-        self.size = max(size or self.input_dim, len(max_spatial_lens))
+        self.size = max(size or self.input_dim, len(max_spatial_lens) * 2)
 
-        div_term = torch.exp(torch.arange(0, self.size, 2) * (-math.log(10000.0) / self.size))
+        div_term = torch.exp(torch.arange(0, self.size, len(max_spatial_lens) * 2) * (-math.log(10000.0) / self.size))
 
-        positions = map(torch.arange, max_spatial_lens)
+        positions = torch.stack(torch.meshgrid(*map(torch.arange, max_spatial_lens), indexing='ij'), -1)
+
+        print(positions.shape, div_term.shape)
+        positions = positions.unsqueeze(-1).float().matmul(div_term.unsqueeze(-2)).flatten(-2)
+        print(positions.shape)
 
         positional_encodings = torch.zeros(*max_spatial_lens, self.size)
-
-        for i, position in enumerate(positions):
-            positional_encodings[..., 0::len(max_spatial_lens)] = torch.sin(position.unsqueeze(1) * div_term)
-            positional_encodings[..., i::len(max_spatial_lens)] = torch.cos(position.unsqueeze(1) * div_term)
+        print(positional_encodings.shape)
+        positional_encodings[..., 0::2] = torch.sin(positions)
+        positional_encodings[..., 1::2] = torch.cos(positions)
 
         self.register_buffer('positional_encodings', positional_encodings)
 

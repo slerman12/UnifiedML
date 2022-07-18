@@ -348,7 +348,7 @@ class ShiftMaxNorm(nn.Module):
         return y.view(*x.shape)
 
 
-# Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, MLP]"
+# Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
 class Sequential(nn.Module):
     def __init__(self, _targets_, i=0, **kwargs):
         super().__init__()
