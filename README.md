@@ -541,6 +541,10 @@ python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify
 python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[Transformer, AvgPool]" +pool.positional_encodings=false
 ```
 
+```console
+python Run.py task=classify/mnist Pool=Residual +pool.model=Transformer +pool.depth=2
+```
+
 </details>
 
 ### Custom Architectures
