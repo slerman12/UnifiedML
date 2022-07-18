@@ -26,8 +26,8 @@ class Residual(nn.Module):
                                              **kwargs) if isinstance(down_sample, str) \
             else down_sample
 
-    def repr_shape(self, channels, height, width):
-        return Utils.cnn_feature_shape([channels, height, width], self.model)
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.model)
 
     def forward(self, input):
         output = self.model(input)
