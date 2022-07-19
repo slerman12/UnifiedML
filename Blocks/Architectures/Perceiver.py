@@ -15,7 +15,7 @@ from Blocks.Architectures.Transformer import AttentionBlock, LearnableFourierPos
 
 
 class Perceiver(nn.Module):
-    """Perceiver (https://arxiv.org/abs/2103.03206)
+    """Perceiver (https://arxiv.org/abs/2103.03206) (https://arxiv.org/abs/2107.14795)
     Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O w.r.t. state dict.
     For consistency with Vision models, assumes channels-first!"""
     def __init__(self, input_shape=(32,), num_tokens=32, num_heads=None, token_dim=None, output_dim=None,
