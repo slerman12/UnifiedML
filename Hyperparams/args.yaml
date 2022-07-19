@@ -184,18 +184,18 @@ pool:
   _target_: ${Pool}
 pi_trunk:
   _target_: ${Pi_trunk}
-generator:
+generator:  # Shorthand for pi_head
   _target_: ${Pi_head}
-predictor:
-  _default_: ${generator}  # Shorthand for generator
+predictor:  # Shorthand for pi_head
+  _default_: ${generator}
 pi_head:
-  _default_: ${predictor}  # Shorthand for predictor
+  _default_: ${predictor}
 q_trunk:
   _target_: ${Q_trunk}
-discriminator:
+discriminator:  # Shorthand for q_head
   _target_: ${Q_head}
 q_head:
-  _default_: ${discriminator}  # Shorthand for discriminator
+  _default_: ${discriminator}
 optim:
   _target_: ${Optim}
 scheduler:
