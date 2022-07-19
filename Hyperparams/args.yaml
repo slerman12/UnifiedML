@@ -187,15 +187,15 @@ pi_trunk:
 generator:
   _target_: ${Pi_head}
 predictor:
-  _default_: ${generator}
+  _default_: ${generator}  # Shorthand for generator
 pi_head:
-  _default_: ${predictor}
+  _default_: ${predictor}  # Shorthand for predictor
 q_trunk:
   _target_: ${Q_trunk}
 discriminator:
   _target_: ${Q_head}
 q_head:
-  _default_: ${discriminator}
+  _default_: ${discriminator}  # Shorthand for discriminator
 optim:
   _target_: ${Optim}
 scheduler:

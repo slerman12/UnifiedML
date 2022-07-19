@@ -557,6 +557,14 @@ python Run.py task=classify/mnist Pool=RN
 python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[RN, AvgPool]"
 ```
 
+```console
+python Run.py task=classify/mnist Eyes=Perceiver +eyes.depths="[3, 3, 2]"  +eyes.num_tokens=128
+```
+
+```console
+python Run.py task=classify/mnist Predictor=Perceiver +predictor.token_dim=32
+```
+
 </details>
 
 ### Custom Architectures
