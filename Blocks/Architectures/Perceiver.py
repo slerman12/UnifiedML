@@ -9,9 +9,9 @@ import torch
 from torch import nn
 
 import Utils
+
 from Blocks.Architectures import MLP
-from Blocks.Architectures.Transformer import CrossAttentionBlock, PositionalEncodings, \
-    LearnableFourierPositionalEncodings
+from Blocks.Architectures.Transformer import AttentionBlock, LearnableFourierPositionalEncodings, PositionalEncodings
 
 
 class Perceiver(nn.Module):
@@ -65,25 +65,26 @@ class Perceiver(nn.Module):
 
         # Perceiver attention layers
 
-        self.cross_attention = nn.ModuleList(sum([[CrossAttentionBlock(self.token_dim, num_heads, self.input_dim,
-                                                                       channels_first=channels_first)] * recurs
+        self.cross_attention = nn.ModuleList(sum([[AttentionBlock(self.token_dim, num_heads, self.input_dim,
+                                                                  channels_first=channels_first)] * recurs
                                                   for i, recurs in enumerate(recursions)], []))
 
-        self.self_attentions = nn.ModuleList(sum([[nn.Sequential(*[CrossAttentionBlock(self.token_dim, num_heads,
-                                                                                       channels_first=channels_first)
+        self.self_attentions = nn.ModuleList(sum([[nn.Sequential(*[AttentionBlock(self.token_dim, num_heads,
+                                                                                  channels_first=channels_first)
                                                                    for _ in range(depth - 1)])] * recurs
                                                   for recurs, depth in zip(recursions, depths)], []))
 
         # Output tokens
 
         if self.output_dim is not None:
-            outputs = torch.zeros(1, self.token_dim, self.output_dim) if self.channels_first \
-                else torch.zeros(1, self.output_dim, self.token_dim)
+            outputs = torch.randn(1, self.token_dim, self.output_dim) if self.channels_first \
+                else torch.randn(1, self.output_dim, self.token_dim)
 
-            self.outputs = PositionalEncodings(outputs.shape[1:], 0, channels_first=channels_first)(outputs)
+            self.outputs = LearnableFourierPositionalEncodings(outputs.shape[1:],
+                                                               channels_first=channels_first)(outputs)
 
-            self.output_attention = CrossAttentionBlock(self.token_dim, num_heads, self.token_dim,
-                                                        channels_first=channels_first)
+            self.output_attention = AttentionBlock(self.token_dim, num_heads, self.token_dim,
+                                                   channels_first=channels_first)
 
             self.MLP = MLP(self.token_dim, 1, self.token_dim, activation=nn.GELU())
 

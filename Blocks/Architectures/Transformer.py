@@ -137,12 +137,6 @@ class LearnableFourierPositionalEncodings(nn.Module):
         if self.channels_first:
             input = Utils.ChSwap(input, False)
 
-        # Preserve batch/spatial dims
-        lead_dims = input.shape[:-1]
-
-        # Flatten intermediary spatial dims
-        input = input.flatten(1, -2)
-
         # Linear-project features
         features = self.Linear(input)
 
@@ -153,11 +147,11 @@ class LearnableFourierPositionalEncodings(nn.Module):
         # Fourier features via MLP
         fourier_features = self.MLP(cosines, sines)
 
-        # Restores original dims
-        output = fourier_features.view(*lead_dims, -1)
+        # To channels-first if needed
+        output = Utils.ChSwap(fourier_features, False) if self.channels_first \
+            else fourier_features
 
-        return Utils.ChSwap(output, False) if self.channels_first \
-            else output
+        return output
 
 
 # def fourier_pos(batch_size, axes, max_freq, num_freq_bands=4):
