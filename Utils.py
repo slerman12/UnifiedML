@@ -138,7 +138,7 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
 
 # Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
-    while '_default_' in args:  # Allow inheritance between shorthands (github.com/facebookresearch/hydra/issues/2305)
+    while hasattr(args, '_default_'):  # Allow inheritance between shorthands
         args.update({key: value for key, value in args.pop('_default_').items() if key not in args})
 
     if hasattr(args, '_target_') and args._target_:
