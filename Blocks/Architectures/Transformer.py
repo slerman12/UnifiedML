@@ -19,17 +19,20 @@ class AttentionBlock(nn.Module):
     Generalized to cross-attend from inputs to contexts, broadcasting various shapes, with support for "talking heads"
     and "ReLA". For consistency with Vision models, assumes channels-first!
     """
-    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
-                 mlp_hidden_dim=None, dropout=0, talking_heads=False, rela=False, channels_first=True):
+    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, mlp_hidden_dim=None,
+                 dropout=0, talking_heads=False, rela=False, channels_first=True):
         super().__init__()
 
         self.channels_first = channels_first
+
+        if isinstance(input_shape, int):
+            input_shape = (input_shape,)
 
         if channels_first:
             input_shape = list(reversed(input_shape))  # Assumes invariance to spatial dimensions
 
         # Multi-Head Dot-Product Attention (MHDPA) from inputs to context
-        self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads, rela,
+        self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, None, talking_heads, rela,
                                      channels_first=False)
 
         self.LayerNormPre = nn.LayerNorm(self.attend.input_dim)  # Applied before the above attention
@@ -235,7 +238,7 @@ class PositionalEncodings(nn.Module):
 
         positional_encodings = torch.zeros(*max_spatial_lens, self.size)
         positional_encodings[..., 0::2] = torch.sin(positions)
-        positional_encodings[..., 1::2] = torch.cos(positions)
+        positional_encodings[..., 1::2] = torch.cos(positions[..., :-(self.size % 2) or None])  # Odds
 
         self.register_buffer('positional_encodings', positional_encodings, persistent=False)
 

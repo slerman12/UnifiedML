@@ -38,7 +38,7 @@ class Perceiver(nn.Module):
         self.num_tokens = num_tokens
 
         depths = [3] if depths is None else depths
-        recursions = [1 for _ in depths] if recursions is None else recursions
+        recursions = [1] * len(depths) if recursions is None else recursions
 
         assert len(depths) == len(recursions), f'Recursion must be specified for each depth: {recursions}, {depths}'
         assert self.token_dim == self.input_dim or recursions[0] == 1, \
@@ -56,12 +56,11 @@ class Perceiver(nn.Module):
 
         # Perceiver attention layers
 
-        self.cross_attention = nn.ModuleList(sum([[CrossAttentionBlock(self.token_dim if i == 0 else self.input_dim,
-                                                                       num_heads, self.input_dim,
+        self.cross_attention = nn.ModuleList(sum([[CrossAttentionBlock(self.token_dim, num_heads, self.input_dim,
                                                                        channels_first=channels_first)] * recurs
                                                   for i, recurs in enumerate(recursions)], []))
 
-        self.self_attentions = nn.ModuleList(sum([[nn.Sequential(*[CrossAttentionBlock(self.input_dim, num_heads,
+        self.self_attentions = nn.ModuleList(sum([[nn.Sequential(*[CrossAttentionBlock(self.token_dim, num_heads,
                                                                                        channels_first=channels_first)
                                                                    for _ in range(depth - 1)])] * recurs
                                                   for recurs, depth in zip(recursions, depths)], []))
@@ -87,7 +86,7 @@ class Perceiver(nn.Module):
         return (self.output_dim,) if self.output_dim else (self.token_dim, self.num_tokens) if self.channels_first \
             else (self.num_tokens, self.token_dim)
 
-    def forward(self, input):
+    def forward(self, input):  # TODO multiple inputs concat
         input = self.positional_encodings(input)
         output = self.tokens
 

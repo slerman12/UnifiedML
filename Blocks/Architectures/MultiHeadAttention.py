@@ -37,10 +37,10 @@ class Attention(nn.Module):
         self.query_key_dim = query_key_dim or self.input_dim
         self.value_dim = value_dim or self.input_dim
 
-        self.num_heads = num_heads or math.gcd(8, self.value_dim)
+        self.num_heads = num_heads or math.gcd(math.gcd(16, self.value_dim), self.query_key_dim)
 
-        assert self.value_dim % self.num_heads == 0, \
-            f'Value dim={self.value_dim} must be divisible by heads={self.num_heads}'
+        assert self.value_dim % self.num_heads == self.query_key_dim % self.num_heads == 0, \
+            f'Value dim={self.value_dim}, QueryKey dim={self.query_key_dim} must be divisible by heads={self.num_heads}'
 
         # Linear QKV-projections
         self.to_query = nn.Linear(self.input_dim, self.query_key_dim, bias=False)
@@ -73,8 +73,8 @@ class Attention(nn.Module):
         if self.channels_first:
             input, context = [Utils.ChSwap(x, False) for x in [input, context]]
 
-        # Preserve batch/spatial dims
-        lead_dims = input.shape[:-1]
+        # Preserve spatial dims
+        spatial_dims = input.shape[1:-1]
 
         # Flatten intermediary spatial dims
         input = input.flatten(1, -2)
@@ -116,7 +116,7 @@ class Attention(nn.Module):
         output = rearrange(attention, 'b h n d -> b n (h d)')
 
         # Restores original leading dims
-        output = output.view(*lead_dims, -1)
+        output = output.view(output.shape[0], *spatial_dims, -1)
 
         # Convert to channels-first
         if self.channels_first:
