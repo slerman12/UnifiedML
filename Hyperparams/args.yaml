@@ -186,13 +186,16 @@ pi_trunk:
   _target_: ${Pi_trunk}
 generator:
   _target_: ${Pi_head}
-predictor: ${generator}
-pi_head: ${predictor}
+predictor:
+  _default_: ${generator}
+pi_head:
+  _default_: ${predictor}
 q_trunk:
   _target_: ${Q_trunk}
 discriminator:
   _target_: ${Q_head}
-q_head: ${discriminator}
+q_head:
+  _default_: ${discriminator}
 optim:
   _target_: ${Optim}
 scheduler:

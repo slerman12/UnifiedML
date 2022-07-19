@@ -35,12 +35,13 @@ class Perceiver(nn.Module):
 
         self.channels_first = channels_first
 
+        self.num_tokens = num_tokens
+        self.output_dim = output_dim
+
         shape = Utils.cnn_feature_shape(input_shape, self.positional_encodings)
 
         self.input_dim = shape if isinstance(shape, int) else shape[0] if channels_first else shape[-1]
         self.token_dim = token_dim or self.input_dim
-        self.output_dim = output_dim
-        self.num_tokens = num_tokens
 
         depths = [3] if depths is None else depths
         recursions = [1] * len(depths) if recursions is None else recursions
