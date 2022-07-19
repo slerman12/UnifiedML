@@ -21,6 +21,11 @@ class Perceiver(nn.Module):
                  learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
 
+        # Adapt to proprioceptive
+        input_shape = (1,) * channels_first + ((input_shape,) if isinstance(input_shape, int)
+                                               else tuple(input_shape)) + (1,) * (not channels_first) \
+            if len(input_shape) < 2 else input_shape
+
         positional_encodings = LearnableFourierPositionalEncodings if learnable_positional_encodings \
             else PositionalEncodings if positional_encodings else nn.Identity
 
@@ -76,7 +81,7 @@ class Perceiver(nn.Module):
             if learnable_tokens:
                 self.outputs = nn.Parameter(self.outputs)
 
-            self.output_attention = CrossAttentionBlock(self.output_dim, num_heads, self.token_dim,
+            self.output_attention = CrossAttentionBlock(self.token_dim, num_heads, self.token_dim,
                                                         channels_first=channels_first)
 
             self.MLP = MLP(self.token_dim, 1, self.token_dim, activation=nn.GELU())
@@ -87,6 +92,10 @@ class Perceiver(nn.Module):
             else (self.num_tokens, self.token_dim)
 
     def forward(self, input):  # TODO multiple inputs concat
+        # Adapt to proprioceptive
+        if len(input.shape) < 3:
+            input = input.unsqueeze(1 if self.channels_first else -1)
+
         input = self.positional_encodings(input)
         output = self.tokens
 

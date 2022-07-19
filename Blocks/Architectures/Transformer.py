@@ -64,6 +64,8 @@ class AttentionBlock(nn.Module):
             if context is not None:
                 context = Utils.ChSwap(context, False)
 
+        # print(input.shape)
+
         pre_norm = self.LayerNormPre(input)
 
         if context is None:
