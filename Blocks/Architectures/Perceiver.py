@@ -16,9 +16,9 @@ from Blocks.Architectures.Transformer import AttentionBlock, LearnableFourierPos
 
 class Perceiver(nn.Module):
     """Perceiver (https://arxiv.org/abs/2103.03206) (https://arxiv.org/abs/2107.14795)
-    Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O w.r.t. state dict.
+    Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O for state dict.
     For consistency with Vision models, assumes channels-first!"""
-    def __init__(self, input_shape=(32,), num_tokens=32, num_heads=None, token_dim=None, output_dim=None,
+    def __init__(self, input_shape=(64,), num_tokens=64, num_heads=None, token_dim=None, output_dim=None,
                  depths=None, recursions=None, learnable_tokens=True, channels_first=True,
                  learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
@@ -45,8 +45,8 @@ class Perceiver(nn.Module):
         self.input_dim = shape if isinstance(shape, int) else shape[0] if channels_first else shape[-1]
         self.token_dim = token_dim or self.input_dim
 
-        depths = [3] if depths is None else depths
-        recursions = [1] * len(depths) if recursions is None else recursions
+        depths = [depths] if isinstance(depths, int) else depths if depths else [3]
+        recursions = [recursions] if isinstance(recursions, int) else recursions if recursions else [1] * len(depths)
 
         assert len(depths) == len(recursions), f'Recursion must be specified for each depth: {recursions}, {depths}'
         assert self.token_dim == self.input_dim or recursions[0] == 1, \

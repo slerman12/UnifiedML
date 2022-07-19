@@ -154,58 +154,82 @@ class LearnableFourierPositionalEncodings(nn.Module):
         return output
 
 
-# def fourier_pos(batch_size, axes, max_freq, num_freq_bands=4):
-#     # Calculate fourier encoded positions in the range of [-1, 1], for all axes
-#     axis_pos = list(map(lambda axis: torch.linspace(-1., 1., steps=axis, device=device), axes))
-#     pos = torch.stack(torch.meshgrid(*axis_pos, indexing='ij'), dim=-1)
-#
-#     x = pos.unsqueeze(-1)
-#     device, dtype, orig_x = x.device, x.dtype, x
-#
-#     # scales = torch.logspace(0., log(max_freq / 2) / log(base), num_bands, base=base, device=device, dtype=dtype)
-#     scales = torch.linspace(1., max_freq / 2, num_freq_bands, device=device, dtype=dtype)
-#     scales = scales[(*((None,) * (len(x.shape) - 1)), ...)]
-#
-#     x = x * scales * math.pi
-#     x = torch.cat([x.sin(), x.cos()], dim=-1)
-#
-#     x = torch.cat((x, orig_x), dim=-1)
-#
-#     enc_pos = x.flatten(-2).expand(batch_size, *x.shape[1:])
-#     return enc_pos
-#
-#
 # class FourierPositionalEncodings(nn.Module):
-#     def __init__(self, input_shape=(32,)):
+#     """
+#     Fourier positional encodings
+#     Generalized to adapt to arbitrary spatial dimensions. For consistency with Vision models,
+#     assumes channels-first! Automatically additive when encoding size is same as input, otherwise concatenates.
+#     """
+#     def __init__(self, input_shape=(7, 32, 32), dropout=0.1, size=None, max_spatial_lens=None, channels_first=True):
 #         super().__init__()
 #
-#         channels = int(np.ceil(channels / 4) * 2)
+#         self.channels_first = channels_first
 #
-#         inv_freq = 1.0 / (10000 ** (torch.arange(0, channels, 2).float() / channels))
+#         # Max spatial lengths (for variable-len sequences)
+#         if max_spatial_lens is None:
+#             max_spatial_lens = input_shape[-1:None:-1][:-1] if channels_first else input_shape[:-1]
 #
-#         self.cached_penc = None
-#         batch_size, x, y, orig_ch = input.shape
+#         # Dimensions
+#         self.input_dim = input_shape[0] if channels_first else input_shape[-1]
+#         self.size = max(size or self.input_dim, len(max_spatial_lens) * 2)
 #
-#         # Ranges
-#         pos_x = torch.arange(x, device=input.device).type(self.inv_freq.type())
-#         pos_y = torch.arange(y, device=input.device).type(self.inv_freq.type())
+#         # calculate fourier encoded positions
+#         # in the range of [-1, 1], for all axis
 #
-#         # Grid (ranges x freq)
-#         sin_inp_x = torch.einsum("i,j->ij", pos_x, self.inv_freq)
-#         sin_inp_y = torch.einsum("i,j->ij", pos_y, self.inv_freq)
+#         x = pos.unsqueeze(-1)
+#         device, dtype, orig_x = x.device, x.dtype, x
 #
-#         # Sin and cos concat
-#         emb_x = torch.cat([sin_inp_x.sin(), sin_inp_x.cos()], -1).unsqueeze(1)
+#         # div_term = torch.exp(torch.arange(0, self.size, len(max_spatial_lens) * 2) * (-math.log(10000.0) / self.size))
 #
-#         # Sin and cos concat
-#         emb_y = torch.cat([sin_inp_y.sin(), sin_inp_y.cos()], -1)
+#         scales = torch.logspace(1., math.log(self.max_freq / 2) / math.log(self.freq_base), self.num_freq_bands,
+#                                 base=self.freq_base, device=device, dtype=dtype)
+#         scales = scales[(*((None,) * (len(x.shape) - 1)), Ellipsis)]
 #
-#         # Concat
-#         emb = torch.cat([emb_x, emb_y], -1)
+#         #
+#         # positions = torch.stack(torch.meshgrid(*map(torch.arange, max_spatial_lens), indexing='ij'), -1)
+#         # positions = positions.unsqueeze(-1).float().matmul(div_term.unsqueeze(-2)).flatten(-2)
+#
+#         axis_pos = list(map(lambda size: torch.linspace(-1., 1., steps=size, device=device), axis))
+#         pos = torch.stack(torch.meshgrid(*axis_pos), dim=-1)
+#
+#         #
+#         # positional_encodings = torch.zeros(*max_spatial_lens, self.size)
+#         # positional_encodings[..., 0::2] = torch.sin(positions)
+#         # positional_encodings[..., 1::2] = torch.cos(positions[..., :-(self.size % 2) or None])  # Odds
+#         #
+#         # self.register_buffer('positional_encodings', positional_encodings, persistent=False)
+#         #
+#         # self.dropout = nn.Dropout(p=dropout)
+#
+#         x = x * scales * math.pi
+#         x = torch.cat([x.sin(), x.cos()], dim=-1)
+#         enc_pos = torch.cat((x, orig_x), dim=-1)
+#
+#         enc_pos = rearrange(enc_pos, '... n d -> ... (n d)')
+#         enc_pos = repeat(enc_pos, '... -> b ...', b=b)
+#
+#         data = torch.cat((data, enc_pos), dim=-1)
+#
+#     def repr_shape(self, *_):
+#         pass
+#         # Conserves shape when additive (if spatial axes * 2 ≤ input dim), else concatenates
+#         # return _ if self.input_dim == self.size \
+#         #     else (self.input_dim + self.size, *_[1:]) if self.channels_first else (*_[:-1], self.input_dim + self.size)
 #
 #     def forward(self, input):
-#         # Apply per batch
-#         pass
+#         # Permute as channels-last
+#         if self.channels_first:
+#             input = Utils.ChSwap(input, False)
+#
+#         # positions = self.positional_encodings[list(map(slice, input.shape[1:-1]))]
+#         #
+#         # # Add or concatenate
+#         # encodings = self.dropout(input + positions) if self.input_dim == self.size \
+#         #     else torch.cat([input, positions.expand(input.shape[0], *positions.shape)], -1)
+#
+#         # To channels-first if needed
+#         # return Utils.ChSwap(encodings, False) if self.channels_first \
+#         #     else encodings
 
 
 class PositionalEncodings(nn.Module):
