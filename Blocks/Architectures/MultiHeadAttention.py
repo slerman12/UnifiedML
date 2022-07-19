@@ -98,8 +98,8 @@ class Attention(nn.Module):
         self.saved_attention_weights = torch.einsum('b h i d, b h j d -> b h i j', query, key)
 
         # Normalize
-        self.saved_attention_weights \
-            = self.saved_attention_weights - self.saved_attention_weights.amax(dim=-1, keepdim=True).detach()
+        # if not hasattr(self, 'rela'):
+        #     self.saved_attention_weights -= self.saved_attention_weights.amax(-1, keepdim=True).detach()
 
         # Softmax
         attention_weights = self.rela(self.saved_attention_weights) if hasattr(self, 'rela') \

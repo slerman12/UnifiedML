@@ -90,12 +90,12 @@ class ViRP(ViT):
         if perceiver:
             self.attn = Perceiver(out_channels, heads, tokens, token_dim, fix_token=True)
 
-            self.attn.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, k_dim, out_channels)]) +
-                                             sum([[block(token_dim if i == 0 else out_channels, heads,
+            self.attn.cross_attention = nn.ModuleList(([Relation(token_dim, 1, out_channels, k_dim, out_channels)]) +
+                                                      sum([[block(token_dim if i == 0 else out_channels, heads,
                                                          k_dim=k_dim, v_dim=v_dim, hidden_dim=hidden_dim,
                                                          dropout=dropout, **kwargs)] * recurs
                                                   for i, recurs in enumerate(recursions)], []))
-            self.attn.attn = attn
+            self.attn.self_attentions = attn
         else:
             self.attn = nn.Sequential(attn[1])
 

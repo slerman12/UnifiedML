@@ -378,7 +378,7 @@ class ChannelSwap(nn.Module):
         return _[-1], *_[1:-1], _[0]
 
     def forward(self, x, spatial2d=True):
-        return x.transpose(-1, -3 if spatial2d else 1)  # Assumes 2D, otherwise Nd
+        return x.transpose(-1, -3 if spatial2d and len(x.shape) > 3 else 1)  # Assumes 2D, otherwise Nd
 
 
 # Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
