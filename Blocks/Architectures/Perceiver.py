@@ -20,7 +20,7 @@ class Perceiver(nn.Module):
     For consistency with Vision models, assumes channels-first!"""
     def __init__(self, input_shape=(64,), num_tokens=64, num_heads=None, token_dim=None, output_dim=None,
                  depths=None, recursions=None, learnable_tokens=True, max_spatial_lens=None, channels_first=True,
-                 learnable_positional_encodings=False, positional_encodings=True, max_output_dim=None):
+                 learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
 
         # Adapt to proprioceptive
@@ -40,7 +40,7 @@ class Perceiver(nn.Module):
         self.channels_first = channels_first
 
         self.num_tokens = num_tokens
-        self.output_dim = max_output_dim or output_dim
+        self.output_dim = output_dim
 
         shape = Utils.cnn_feature_shape(input_shape, self.positional_encodings)
 
@@ -89,7 +89,7 @@ class Perceiver(nn.Module):
 
     def repr_shape(self, *_):
         # Passed-in output dim, or same shape as tokens
-        return (-1,) if self.output_dim else (self.token_dim, self.num_tokens) if self.channels_first \
+        return (self.output_dim,) if self.output_dim else (self.token_dim, self.num_tokens) if self.channels_first \
             else (self.num_tokens, self.token_dim)
 
     def forward(self, input, output_dim=None):
@@ -109,6 +109,6 @@ class Perceiver(nn.Module):
             if self.channels_first:
                 output = Utils.ChSwap(output)
 
-            output = self.MLP(self.output_attention(self.outputs[:, :output_dim], output)).squeeze(-1)
+            output = self.MLP(self.output_attention(self.outputs, output)).squeeze(-1)
 
         return output
