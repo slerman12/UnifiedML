@@ -16,11 +16,11 @@ from Blocks.Architectures.Transformer import AttentionBlock, LearnableFourierPos
 
 class Perceiver(nn.Module):
     """Perceiver (https://arxiv.org/abs/2103.03206) (https://arxiv.org/abs/2107.14795)
-    Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O for state dict.
+    Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O w.r.t. state dict.
     For consistency with Vision models, assumes channels-first!"""
     def __init__(self, input_shape=(64,), num_tokens=64, num_heads=None, token_dim=None, output_dim=None,
-                 depths=None, recursions=None, learnable_tokens=True, channels_first=True,
-                 learnable_positional_encodings=False, positional_encodings=True):
+                 depths=None, recursions=None, learnable_tokens=True, max_spatial_lens=None, channels_first=True,
+                 learnable_positional_encodings=False, positional_encodings=True, max_output_dim=None):
         super().__init__()
 
         # Adapt to proprioceptive
@@ -28,17 +28,19 @@ class Perceiver(nn.Module):
                                                else tuple(input_shape)) + (1,) * (not channels_first) \
             if len(input_shape) < 2 else input_shape
 
-        positional_encodings = LearnableFourierPositionalEncodings if learnable_positional_encodings \
-            else PositionalEncodings if positional_encodings else nn.Identity
-
-        self.positional_encodings = positional_encodings(input_shape, channels_first=channels_first)
+        # Variable-len inputs via positional encodings
+        self.positional_encodings \
+            = LearnableFourierPositionalEncodings(input_shape,
+                                                  channels_first=channels_first) if learnable_positional_encodings \
+            else PositionalEncodings(input_shape, max_spatial_lens=max_spatial_lens,
+                                     channels_first=channels_first) if positional_encodings else nn.Identity()
 
         # Dimensions
 
         self.channels_first = channels_first
 
         self.num_tokens = num_tokens
-        self.output_dim = output_dim
+        self.output_dim = max_output_dim or output_dim
 
         shape = Utils.cnn_feature_shape(input_shape, self.positional_encodings)
 
@@ -77,23 +79,20 @@ class Perceiver(nn.Module):
         # Output tokens
 
         if self.output_dim is not None:
-            outputs = torch.randn(1, self.token_dim, self.output_dim) if self.channels_first \
-                else torch.randn(1, self.output_dim, self.token_dim)
+            outputs = torch.randn(1, self.output_dim, self.token_dim)  # Max output dim
 
-            self.outputs = LearnableFourierPositionalEncodings(outputs.shape[1:],
-                                                               channels_first=channels_first)(outputs)
+            self.outputs = LearnableFourierPositionalEncodings(outputs.shape[1:], channels_first=False)(outputs)
 
-            self.output_attention = AttentionBlock(self.token_dim, num_heads, self.token_dim,
-                                                   channels_first=channels_first)
+            self.output_attention = AttentionBlock(self.token_dim, num_heads, self.token_dim, channels_first=False)
 
             self.MLP = MLP(self.token_dim, 1, self.token_dim, activation=nn.GELU())
 
     def repr_shape(self, *_):
         # Passed-in output dim, or same shape as tokens
-        return (self.output_dim,) if self.output_dim else (self.token_dim, self.num_tokens) if self.channels_first \
+        return (-1,) if self.output_dim else (self.token_dim, self.num_tokens) if self.channels_first \
             else (self.num_tokens, self.token_dim)
 
-    def forward(self, input):
+    def forward(self, input, output_dim=None):
         # Adapt to proprioceptive
         if len(input.shape) < 3:
             input = input.unsqueeze(1 if self.channels_first else -1)
@@ -104,14 +103,12 @@ class Perceiver(nn.Module):
         for cross_attention, self_attentions in zip(self.cross_attention, self.self_attentions):
             output = self_attentions(cross_attention(output, input))
 
-        # Adaptive output dim
+        # Dimensionality-adaptive output
 
         if self.output_dim:
-            output = self.output_attention(self.outputs, output)
-
             if self.channels_first:
                 output = Utils.ChSwap(output)
 
-            output = self.MLP(output).squeeze(-1)
+            output = self.MLP(self.output_attention(self.outputs[:, :output_dim], output)).squeeze(-1)
 
         return output

@@ -58,10 +58,14 @@ class Attention(nn.Module):
 
 class PosAttention(nn.Module):
     """Weighs the x solely based on their positions! This is how MLP weights weigh anyway + a non-linearity
-    Can be useful as a lightweight perceiver, although for subsequent layers can just use fixed weights,
+    Can be useful as a lightweight perceiver, although for subsequent layers can just use fixed weights and ReLU,
     like cortical columns, an Ultra-Lightweight Perceiver; separates positional encodings from computation/reasoning
 
-    Among my BioNets? e.g. BioPerceiver"""
+    Among my BioNets? e.g. BioPerceiver
+
+    More Bio-Plausible, instead of pos, have a BioNeuron encoding span time (reference frame)
+
+    But cross attention from pos to input not bio-plausible?"""
     def __init__(self, pos_dim, x_dim, num_latents, latent_dim=64, dropout=0):
         super().__init__()
         num_heads = out_dim = latent_dim

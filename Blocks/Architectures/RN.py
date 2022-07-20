@@ -14,7 +14,7 @@ from Blocks.Architectures.Transformer import PositionalEncodings, LearnableFouri
 
 class RN(nn.Module):
     """Relation Network (https://arxiv.org/abs/1706.01427)
-    Adapts to arbitrary spatial dims. Un-pooled by default (no "outer" MLP), outputs a feature map.
+    Adapts to arbitrary spatial dims. Un-pooled by default except over contexts (no "outer" MLP), outputs a feature map.
     Supports positional encodings. For consistency with Vision models, assumes channels-first!"""
     def __init__(self, input_shape=(32,), context_dim=None, depth=1, hidden_dim=None, output_dim=None, dropout=0,
                  channels_first=True, learnable_positional_encodings=False, positional_encodings=True):
