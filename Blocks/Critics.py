@@ -26,7 +26,7 @@ class EnsembleQCritic(nn.Module):
 
         self.discrete = discrete
         self.num_actions = action_spec.num_actions if discrete else -1  # n
-        self.action_dim = 0 if discrete else math.prod(action_spec.shape)  # d
+        self.action_dim = 0 if discrete else math.prod(action_spec.shape)  # d  TODO for actor as well
         self.ignore_obs = ignore_obs
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
@@ -62,23 +62,23 @@ class EnsembleQCritic(nn.Module):
 
         if self.discrete:
             # All actions' Q-values
-            Qs = self.Q_head(h, context)  # [e, b, n]
+            Qs = self.Q_head(h, context)  # [e, b, n]   TODO (maybe [e, b, nd] -->) [e, b, n, d] --> mean --> [e, b, n]
 
             if action is None:
-                action = torch.arange(self.num_actions, device=obs.device).expand_as(Qs[0])  # [b, n]
+                action = torch.arange(self.num_actions, device=obs.device).expand_as(Qs[0])  # [b, n]  TODO [b, n, d]
             else:
                 # Q values for a discrete action
-                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
+                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]  TODO [e, b, n']  (n' = any number of actions) maybeX
         else:
             assert action is not None and \
                    action.shape[-1] == self.action_dim, f'action with dim={self.action_dim} needed for continuous space'
 
-            action = action.reshape(batch_size, -1, self.action_dim)  # [b, n, d]
+            action = action.reshape(batch_size, -1, self.action_dim)  # [b, n, d]  TODO Note: [b, n', d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
 
             # Q-values for continuous action(s)
-            Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n]
+            Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n]  TODO Note: [e, b, n']
 
         # Dist
         stddev, mean = torch.std_mean(Qs, dim=0)

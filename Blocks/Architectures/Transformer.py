@@ -243,6 +243,9 @@ class PositionalEncodings(nn.Module):
 
         self.channels_first = channels_first
 
+        if isinstance(input_shape, int):
+            input_shape = (input_shape,)
+
         # Max spatial lengths (for variable-len sequences)
         if max_spatial_lens is None:
             max_spatial_lens = input_shape[-1:None:-1][:-1] if channels_first else input_shape[:-1]

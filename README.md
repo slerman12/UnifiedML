@@ -570,6 +570,10 @@ python Run.py task=classify/mnist Predictor=Perceiver train_steps=2
 python Run.py task=dmc/cheetah_run Predictor=load +predictor.path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt +predictor.attr=actor.Pi_head +predictor.device=cpu save=false
 ```
 
+```console
+python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.depths=10
+```
+
 </details>
 
 ### Custom Architectures
