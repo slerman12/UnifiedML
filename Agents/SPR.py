@@ -83,17 +83,17 @@ class SPRAgent(torch.nn.Module):
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
 
             self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,
-                                       eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
+                                       Eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
             self.projector = CNNEncoder(self.encoder.feature_shape,
-                                        eyes=MLP(self.encoder.feature_shape, hidden_dim, hidden_dim, 2),
+                                        Eyes=MLP(self.encoder.feature_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                         ema_decay=ema_decay)
 
             self.predictor = CNNEncoder(self.projector.repr_shape,
-                                        eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
+                                        Eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,

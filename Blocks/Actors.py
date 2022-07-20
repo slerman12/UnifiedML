@@ -17,7 +17,7 @@ import Utils
 
 
 class EnsembleGaussianActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, pi_head=None, ensemble_size=2,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
                  stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
         super().__init__()
@@ -37,7 +37,7 @@ class EnsembleGaussianActor(nn.Module):
 
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
 
-        self.Pi_head = Utils.Ensemble([Utils.instantiate(pi_head, i, input_shape=in_shape, output_dim=out_dim)
+        self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
         # Initialize model optimizer + EMA

@@ -205,18 +205,18 @@ scheduler:
 recipes:
   aug: ${aug}
   encoder:
-    eyes: ${eyes}
+    Eyes: ${eyes}
     pool: ${pool}
     optim: ${optim}
     scheduler: ${scheduler}
   actor:
     trunk: ${pi_trunk}
-    pi_head: ${pi_head}
+    Pi_head: ${pi_head}
     optim: ${optim}
     scheduler: ${scheduler}
   critic:
     trunk: ${q_trunk}
-    q_head: ${q_head}
+    Q_head: ${q_head}
     optim: ${optim}
     scheduler: ${scheduler}
 

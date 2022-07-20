@@ -19,7 +19,7 @@ class Perceiver(nn.Module):
     Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O w.r.t. state dict.
     For consistency with Vision models, assumes channels-first!"""
     def __init__(self, input_shape=(64,), num_tokens=64, num_heads=None, token_dim=None, output_dim=None,
-                 depths=None, recursions=None, learnable_tokens=True, max_spatial_lens=None, channels_first=True,
+                 depths=None, recursions=None, learnable_tokens=True, channels_first=True,
                  learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
 
@@ -28,12 +28,12 @@ class Perceiver(nn.Module):
                                                else tuple(input_shape)) + (1,) * (not channels_first) \
             if len(input_shape) < 2 else input_shape
 
-        # Variable-len inputs via positional encodings
-        self.positional_encodings \
-            = LearnableFourierPositionalEncodings(input_shape,
-                                                  channels_first=channels_first) if learnable_positional_encodings \
-            else PositionalEncodings(input_shape, max_spatial_lens=max_spatial_lens,
-                                     channels_first=channels_first) if positional_encodings else nn.Identity()
+        # Adapt to variable-len input
+
+        positional_encodings = LearnableFourierPositionalEncodings if learnable_positional_encodings \
+            else PositionalEncodings if positional_encodings else nn.Identity
+
+        self.positional_encodings = positional_encodings(input_shape, channels_first=channels_first)
 
         # Dimensions
 
@@ -79,9 +79,9 @@ class Perceiver(nn.Module):
         # Output tokens
 
         if self.output_dim is not None:
-            outputs = torch.randn(1, self.output_dim, self.token_dim)  # Max output dim
+            self.outputs = torch.randn(1, self.output_dim, self.token_dim)  # Max output dim
 
-            self.outputs = LearnableFourierPositionalEncodings(outputs.shape[1:], channels_first=False)(outputs)
+            self.to_outputs = LearnableFourierPositionalEncodings(self.outputs.shape[1:], channels_first=False)
 
             self.output_attention = AttentionBlock(self.token_dim, num_heads, self.token_dim, channels_first=False)
 
@@ -109,6 +109,6 @@ class Perceiver(nn.Module):
             if self.channels_first:
                 output = Utils.ChSwap(output)
 
-            output = self.MLP(self.output_attention(self.outputs, output)).squeeze(-1)
+            output = self.MLP(self.output_attention(self.to_outputs(self.outputs), output)).squeeze(-1)
 
         return output

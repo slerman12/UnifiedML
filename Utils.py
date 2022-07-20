@@ -117,6 +117,10 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
                 raise RuntimeError(e)
             warnings.warn(f'Load conflict, resolving...')  # For distributed training
 
+    # Overriding original args where specified
+    for key, value in kwargs.items():
+        OmegaConf.update(args.recipes if attr else args, attr + f'._override_.{key}' if attr else key, value)
+
     model = instantiate(args).to(device)
 
     # Load model's params
@@ -138,6 +142,9 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
 
 # Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
+    if hasattr(args, '_override_'):
+        kwargs.update(args.pop('_override_'))  # For loading old models with new, overridden args
+
     while hasattr(args, '_default_'):  # Allow inheritance between shorthands
         args.update({key: value for key, value in args.pop('_default_').items() if key not in args})
 

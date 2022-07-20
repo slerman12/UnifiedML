@@ -16,7 +16,7 @@ class CNNEncoder(nn.Module):
     """
     CNN encoder generalized to work with proprioceptive recipes and multi-dimensionality convolutions (1d or 2d)
     """
-    def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, eyes=None, pool=None, parallel=False,
+    def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, Eyes=None, pool=None, parallel=False,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
@@ -35,7 +35,7 @@ class CNNEncoder(nn.Module):
         obs_shape[0] += context_dim
 
         # CNN
-        self.Eyes = Utils.instantiate(eyes, input_shape=obs_shape) or CNN(obs_shape)
+        self.Eyes = Utils.instantiate(Eyes, input_shape=obs_shape) or CNN(obs_shape)
 
         adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
