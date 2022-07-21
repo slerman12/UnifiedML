@@ -10,14 +10,6 @@ from dm_env import StepType
 import numpy as np
 
 
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super(AttrDict, self).__init__()
-        self.__dict__ = self
-        self.update(_dict)
-
-
 class DMC:
     """
     A general-purpose environment:
@@ -29,23 +21,23 @@ class DMC:
     (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
-    (4) "discrete" attribute
-    (5) "episode_done" attribute
-    (6) "obs_spec" attribute which includes:
+    (4) "episode_done" attribute
+    (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
-    (7) "action-spec" attribute which includes:
+    (6) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
-          "low", "high" (these last 2 should be None if discrete, can be None if not discrete)
-    (8) "exp" attribute containing the latest exp
+          "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
+    (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
     numpy values which can be NaN. "obs" must include a batch dim.
+
+    Recommended: include conversions/support for both discrete + continuous actions
 
     Can optionally include a frame_stack, action_repeat method.
 
     """
     def __init__(self, task='cheetah_run', seed=0, frame_stack=3, action_repeat=2, **kwargs):
-        self.discrete = False
         self.episode_done = False
 
         # Make env
@@ -105,9 +97,10 @@ class DMC:
 
         self.action_spec = {'name': 'action',
                             'shape': self.env.action_spec().shape,
-                            'num_actions': None,
+                            'num_actions': None,  # Should be None for continuous
                             'low': -1,
-                            'high': 1}
+                            'high': 1,
+                            'discrete': False}
 
         self.exp = None  # Experience
 
@@ -179,3 +172,11 @@ class DMC:
 
     def render(self):
         return self.env.physics.render(height=256, width=256, camera_id=0)
+
+
+# Access a dict with attribute or key (purely for aesthetic reasons)
+class AttrDict(dict):
+    def __init__(self, _dict):
+        super(AttrDict, self).__init__()
+        self.__dict__ = self
+        self.update(_dict)

@@ -25,8 +25,8 @@ class EnsembleQCritic(nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.num_actions = action_spec.num_actions if discrete else -1  # n
-        self.action_dim = 0 if discrete else math.prod(action_spec.shape)  # d  TODO for actor as well
+        self.num_actions = action_spec.num_actions if discrete else -1  # n, or undefined n'
+        self.action_dim = math.prod(action_spec.shape)  # d
         self.ignore_obs = ignore_obs
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
@@ -37,10 +37,19 @@ class EnsembleQCritic(nn.Module):
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
-        in_shape = action_spec.shape if ignore_obs else [trunk_dim + self.action_dim]  # TODO Auto in-shape
+        in_shape = action_spec.shape if ignore_obs else [trunk_dim + self.action_dim * (not discrete)]
 
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e
+
+        # Discrete actions are known a priori
+        if discrete:
+            action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim)  # [n^d, d]
+
+            if action_spec.low or action_spec.high:
+                action = action / self.num_actions * (action_spec.high - action_spec.low) + action_spec.low  # Normalize
+
+            self.register_buffer('action', action.view(-1, self.action_dim))
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -62,23 +71,25 @@ class EnsembleQCritic(nn.Module):
 
         if self.discrete:
             # All actions' Q-values
-            Qs = self.Q_head(h, context)  # [e, b, n]   TODO (maybe [e, b, nd] -->) [e, b, n, d] --> mean --> [e, b, n]
+            Qs = Utils.batched_cartesian_prod(
+                self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim]
+                                                  ).unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
 
             if action is None:
-                action = torch.arange(self.num_actions, device=obs.device).expand_as(Qs[0])  # [b, n]  TODO [b, n, d]
+                action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
             else:
                 # Q values for a discrete action
-                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]  TODO [e, b, n']  (n' = any number of actions) maybeX
+                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
         else:
             assert action is not None and \
                    action.shape[-1] == self.action_dim, f'action with dim={self.action_dim} needed for continuous space'
 
-            action = action.reshape(batch_size, -1, self.action_dim)  # [b, n, d]  TODO Note: [b, n', d]
+            action = action.reshape(batch_size, -1, self.action_dim)  # [b, n', d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
 
             # Q-values for continuous action(s)
-            Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n]  TODO Note: [e, b, n']
+            Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n']
 
         # Dist
         stddev, mean = torch.std_mean(Qs, dim=0)

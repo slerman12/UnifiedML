@@ -17,14 +17,6 @@ from torch import as_tensor
 from torchvision.transforms.functional import resize
 
 
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super(AttrDict, self).__init__()
-        self.__dict__ = self
-        self.update(_dict)
-
-
 class Atari:
     """
     A general-purpose environment:
@@ -36,17 +28,18 @@ class Atari:
     (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
-    (4) "discrete" attribute
-    (5) "episode_done" attribute
-    (6) "obs_spec" attribute which includes:
+    (4) "episode_done" attribute
+    (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
-    (7) "action-spec" attribute which includes:
+    (6) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
-          "low", "high" (these last 2 should be None if discrete, can be None if not discrete)
-    (8) "exp" attribute containing the latest exp
+          "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
+    (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
     numpy values which can be NaN. "obs" must include a batch dim.
+
+    Recommended: include conversions/support for both discrete + continuous actions
 
     Can optionally include a frame_stack, action_repeat method.
 
@@ -54,7 +47,6 @@ class Atari:
     def __init__(self, task='pong', seed=0, frame_stack=3, action_repeat=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
                  last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
-        self.discrete = True
         self.episode_done = False
 
         # Make env
@@ -114,8 +106,9 @@ class Atari:
         self.action_spec = {'name': 'action',
                             'shape': (1,),
                             'num_actions': self.env.action_space.n,
-                            'low': None,
-                            'high': None}
+                            'low': None,  # Should be None for discrete
+                            'high': None,  # Should be None for discrete
+                            'discrete': True}
 
         self.exp = None
 
@@ -123,9 +116,12 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # Define no-op, remove batch dim
-        action = 0 if action is None \
-            else action.squeeze(0)
+        # Remove batch dim(s)
+        action = action.squeeze()
+
+        # Adapt to discrete!
+        if len(action.shape) > 0:
+            action = action.argmax()
 
         # Step env
         reward = 0
@@ -221,3 +217,11 @@ class Atari:
 
     def render(self):
         return self.env.render('rgb_array')  # rgb_array | human
+
+
+# Access a dict with attribute or key (purely for aesthetic reasons)
+class AttrDict(dict):
+    def __init__(self, _dict):
+        super(AttrDict, self).__init__()
+        self.__dict__ = self
+        self.update(_dict)

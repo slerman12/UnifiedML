@@ -43,6 +43,9 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = action_spec.num_actions or num_actions
 
+        if self.discrete:
+            action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
+
         if generate:
             action_spec.shape = obs_spec.shape
             action_spec.low, action_spec.high = -1, 1

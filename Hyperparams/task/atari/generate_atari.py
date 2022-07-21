@@ -16,6 +16,7 @@ if __name__ == '__main__':
 Env: Datasets.Suites.Atari.Atari
 suite: atari
 task_name: {}
+discrete: true
 action_repeat: 4
 truncate_episode_steps: 250
 nstep: 10

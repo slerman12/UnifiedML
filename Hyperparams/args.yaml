@@ -16,22 +16,23 @@ lr_decay_epochs: null
 weight_decay: 0
 ema_decay: 0.99
 # Domains
-discrete: ???  # To be specified later
+discrete: ???  # To be specified later, defaults per respective task
 offline: false  # Defaults to true for classify tasks
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
 # Environment
-Env: ???  # Defaults per respective task
+Env: ???  # To be specified later, defaults per respective task
 env:
   _target_: ${Env}
   _recursive_: false
+  discrete: ${discrete}
 Dataset: null  # Defaults per respective Classify task
 dataset:
   _target_: ${Dataset}
   _recursive_: false
-suite: ???  # Defaults per respective task
-task_name: ???  # Defaults per respective task
+suite: ???  # To be specified later, defaults per respective task
+task_name: ???  # To be specified later, defaults per respective task
 frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1

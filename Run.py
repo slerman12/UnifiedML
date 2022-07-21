@@ -24,7 +24,7 @@ def main(args):
     env = instantiate(args.environment)
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
-    for arg in ('obs_spec', 'action_spec', 'discrete', 'evaluate_episodes'):
+    for arg in ('obs_spec', 'action_spec', 'evaluate_episodes'):
         if hasattr(generalize.env, arg):
             setattr(args, arg, getattr(generalize.env, arg))
 
@@ -85,7 +85,7 @@ def main(args):
         if training and args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged:
 
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
-                logs = agent.train().learn(replay)  # Trains the agent
+                logs = agent.learn(replay)  # Learn
                 if args.log_per_episodes:
                     logger.log(logs, 'Train')
 
