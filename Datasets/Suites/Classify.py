@@ -99,6 +99,13 @@ class Classify:
                             'high': None,
                             'discrete': False}
 
+        # self.action_spec = {'name': 'action',
+        #                     'shape': (1,),
+        #                     'num_actions': len(dataset.classes),  # Dataset must include a "classes" attr
+        #                     'low': None,
+        #                     'high': None,
+        #                     'discrete': True}
+
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   shuffle=train,

@@ -203,7 +203,7 @@ scheduler:
   _target_: ${Scheduler}
 
 # Recipes
-recipes:
+_recipes:
   aug: ${aug}
   encoder:
     Eyes: ${eyes}
@@ -220,6 +220,8 @@ recipes:
     Q_head: ${q_head}
     optim: ${optim}
     scheduler: ${scheduler}
+
+recipes: ${allow_objects:${_recipes}}
 
 hydra:
   output_subdir: ${logger.path}${task_name}_${seed}_Hydra

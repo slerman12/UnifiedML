@@ -63,12 +63,16 @@ class DQNAgent(torch.nn.Module):
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
 
-        # Continuous actions
-        self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                       ema_decay=ema_decay * ema)
+        self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                                           ensemble_size=num_critics if self.discrete else 1,
+                                           stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                           lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                           ema_decay=ema_decay * ema)
+
+        # Critic <- Actor
+        if self.discrete:
+            recipes.critic.trunk = self.actor.trunk
+            recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
@@ -100,7 +104,7 @@ class DQNAgent(torch.nn.Module):
                 else actor(obs, self.step).mean
 
             if self.num_actions > 1:
-                Pi = self.action_selector(critic(obs, action), self.step)  # DQN action selector is based on critic
+                Pi = self.action_selector(critic(obs, action), self.step)
 
                 action = Pi.sample() if self.training \
                     else Pi.best

@@ -51,6 +51,8 @@ def init(args):
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
+OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
+
 
 # Saves model + args + attributes
 def save(path, model, args, *attributes):
@@ -175,7 +177,7 @@ def instantiate(args, i=0, **kwargs):
     return None if hasattr(args, '_target_') \
         else args(**{key: kwargs[key]
                      for key in kwargs.keys() & signature(args).parameters}) if isinstance(args, type) \
-        else args[i] if isinstance(args, list) \
+        else args[i] if isinstance(args, (list, nn.ModuleList)) \
         else args  # Additional useful ones
 
 

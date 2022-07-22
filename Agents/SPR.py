@@ -28,7 +28,7 @@ class SPRAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 depth=5  # SPR
+                 num_actions=1, depth=5  # SPR
                  ):
         super().__init__()
 
@@ -44,7 +44,12 @@ class SPRAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = action_spec.num_actions or 1
+        self.num_actions = action_spec.num_actions or num_actions
+
+        if self.discrete:
+            assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
+                                         'specify "+agent.num_actions=" flag >1'
+            action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
 
         self.depth = depth
 
@@ -95,6 +100,11 @@ class SPRAgent(torch.nn.Module):
             self.predictor = CNNEncoder(self.projector.repr_shape,
                                         Eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
+
+        # Critic <- Actor
+        if self.discrete:
+            recipes.critic.trunk = self.actor.trunk
+            recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       ensemble_size=2, discrete=self.discrete, ignore_obs=generate,

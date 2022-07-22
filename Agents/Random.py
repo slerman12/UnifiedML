@@ -17,6 +17,7 @@ class RandomAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
+                 num_actions=1
                  ):
         super().__init__()
 
