@@ -342,7 +342,7 @@ def gather_indices(item, ind, dim=-1):
 
 
 # (Multi-dim) cartesian product
-def batched_cartesian_prod(items: (list, tuple), dim=-1):
+def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
     """
     # Get all combinations of tensors starting at "dim", keeping all dims before "dim" independent (as batches)
 
@@ -350,17 +350,20 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1):
     # a specified "dim" (can vary in size across tensors, e.g. D1, D2, ..., DN)
     # and tail dims (O1 x O2 x ... x OT), returns:
     # --> cartesian prod, batches independent:
-    # --> B1 x B2 x ... x BN x D1 * D2 * ... * DN x O1 X O2 x ... x OT x N
+    # --> B1 x B2 x ... x BL x D1 * D2 * ... * DN x O1 X O2 x ... x OT x N
+    # If not collapse_dims:
+    # --> B1 x B2 x ... x BL x D1 x D2 x ... x DN x O1 X O2 x ... x OT x N
 
-    Consistent with torch.cartesian_prod except generalized to multi-dim and batches. Assumes a batch dimension!
+    Consistent with torch.cartesian_prod except generalized to multi-dim and batches.
     """
 
-    lead_dims = items[0].shape[:dim]
-    tail_dims = items[0].shape[dim + 1:] if dim + 1 else []
+    lead_dims = items[0].shape[:dim]  # B1, B2, ..., BL
+    dims = [item.shape[dim] for item in items]  # D1, D2, ..., DN
+    tail_dims = items[0].shape[dim + 1:] if dim + 1 else []  # O1, O2, ..., OT
 
     return torch.stack([item.view(-1, *(1,) * i, item.shape[dim], *(1,) * (len(items) - i - 1), *tail_dims).expand(
-        -1, *[x.shape[dim] for x in items[:i]], item.shape[dim], *[x.shape[dim ] for x in items[i + 1:]], *tail_dims)
-        for i, item in enumerate(items)], -1).view(*lead_dims, -1, *tail_dims, len(items))
+        -1, *dims[:i], item.shape[dim], *dims[i + 1:], *tail_dims)
+        for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *tail_dims, len(items))
 
 
 # Basic L2 normalization
