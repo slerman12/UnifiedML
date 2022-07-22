@@ -27,10 +27,10 @@ class EnsembleGaussianActor(nn.Module):
         self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
         self.stddev_clip = stddev_clip  # Max cutoff threshold on standard dev
 
-        action_dim = math.prod(action_spec.shape) * (action_spec.num_actions or 1)
+        action_dim = math.prod(action_spec.shape)  # d
 
         in_dim = math.prod(repr_shape)
-        out_dim = action_dim * 2 if stddev_schedule is None else action_dim
+        out_dim = (action_spec.num_actions or 1) * action_dim * (1 if stddev_schedule else 2)
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())

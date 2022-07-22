@@ -44,6 +44,8 @@ class DQNAgent(torch.nn.Module):
         self.num_actions = action_spec.num_actions or num_actions
 
         if self.discrete:
+            assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
+                                         'specify "+agent.num_actions=" flag >1'
             action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
 
         if generate:
