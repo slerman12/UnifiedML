@@ -36,8 +36,8 @@ class Atari:
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
     (7) "exp" attribute containing the latest exp
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
-    numpy values which can be NaN. "obs" must include a batch dim.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
+    numpy values which can be NaN. Must include a batch dim.
 
     Recommended: include conversions/support for both discrete + continuous actions
 
@@ -108,7 +108,7 @@ class Atari:
                             'num_actions': self.env.action_space.n,
                             'low': None,  # Should be None for discrete
                             'high': None,  # Should be None for discrete
-                            'discrete': True}
+                            'discrete': True}  # TODO Remove?
 
         self.exp = None
 
@@ -120,13 +120,13 @@ class Atari:
         action = action.squeeze()
 
         # Adapt to discrete!
-        if len(action.shape) > 0:
-            action = action.argmax()
+        _action = action.argmax() if len(action.shape) > 0 \
+            else action  # TODO Adapt function
 
         # Step env
         reward = 0
         for _ in range(self.action_repeat):
-            obs, _reward, self.episode_done, info = self.env.step(action)
+            obs, _reward, self.episode_done, info = self.env.step(_action)
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame
@@ -164,6 +164,8 @@ class Atari:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -207,6 +209,8 @@ class Atari:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         # Reset frame stack
         self.frames.clear()

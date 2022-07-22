@@ -168,8 +168,8 @@ class ExperienceReplay:
                 # Add batch dimension
                 if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None or type(exp[spec['name']]) == bool:
                     exp[spec['name']] = np.full((1, *spec['shape']), exp[spec['name']], dtype=getattr(exp[spec['name']], 'dtype', 'float32'))
-                elif exp[spec['name']].shape in [(), (1,), spec['shape']]:
-                    exp[spec['name']].shape = (1, *spec['shape'])
+                # elif len(exp[spec['name']].shape) in [0, 1, len(spec['shape'])]:
+                #     exp[spec['name']].shape = (1, *spec['shape'])
 
                 # Expands attributes that are unique per batch (such as 'step')
                 batch_size = exp.get('obs', exp['action']).shape[0]
@@ -177,8 +177,8 @@ class ExperienceReplay:
                     exp[spec['name']] = np.repeat(exp[spec['name']], batch_size, axis=0)
 
                 # Validate consistency
-                assert spec['shape'] == exp[spec["name"]].shape[1:], \
-                    f'Unexpected shape for "{spec["name"]}": {spec["shape"]} vs. {exp[spec["name"]].shape[1:]}'
+                # assert spec['shape'] == exp[spec["name"]].shape[1:], \
+                #     f'Unexpected shape for "{spec["name"]}": {spec["shape"]} vs. {exp[spec["name"]].shape[1:]}'
 
                 # Add the experience
                 self.episode[spec['name']].append(exp[spec['name']])

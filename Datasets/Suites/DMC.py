@@ -29,8 +29,8 @@ class DMC:
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
     (7) "exp" attribute containing the latest exp
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
-    numpy values which can be NaN. "obs" must include a batch dim.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
+    numpy values which can be NaN. Must include a batch dim.
 
     Recommended: include conversions/support for both discrete + continuous actions
 
@@ -134,6 +134,8 @@ class DMC:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -162,6 +164,8 @@ class DMC:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         # Reset frame stack
         self.frames.clear()

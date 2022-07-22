@@ -26,13 +26,13 @@ class EnsembleQCritic(nn.Module):
 
         self.discrete = discrete
         self.num_actions = action_spec.num_actions if discrete else -1  # n, or undefined n'
-        self.action_dim = math.prod(action_spec.shape)  # d
+        self.action_dim = math.prod(action_spec.shape) * (action_spec.num_actions if action_spec.discrete else 1)  # d
         self.ignore_obs = ignore_obs
 
         assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
 
         in_dim = math.prod(repr_shape)
-        out_dim = self.num_actions if discrete else 1
+        out_dim = self.num_actions * self.action_dim if discrete else 1
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
@@ -70,7 +70,8 @@ class EnsembleQCritic(nn.Module):
         # Ensemble
 
         if self.discrete:
-            # All actions' Q-values
+            # TODO Either sample num actions Qs/actions, or use all num_actions Qs/samples: max num_actions
+            # All actions' Q-values  TODO Too expensive! Leave nxd; row-wise sample/argmax Creator; index into n x d
             Qs = Utils.batched_cartesian_prod(
                 self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim]
                                                   ).unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
@@ -78,8 +79,12 @@ class EnsembleQCritic(nn.Module):
             if action is None:
                 action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
             else:
+                # if self.low and self.high:
+                #    action = (action - self.low) / (self.high - self.low) * self.num_actions
+                action = (action - -1) / (1 - (-1)) * self.num_actions
+
                 # Q values for a discrete action
-                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
+                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]  TODO Un-normalize for "continuous --> discrete" !
         else:
             assert action is not None and \
                    action.shape[-1] == self.action_dim, f'action with dim={self.action_dim} needed for continuous space'
