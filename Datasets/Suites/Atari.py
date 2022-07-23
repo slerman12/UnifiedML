@@ -39,7 +39,7 @@ class Atari:
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
     numpy values which can be NaN. Must include a batch dim.
 
-    Recommended: include conversions/support for both discrete + continuous actions
+    Recommended: Discrete environments should have a conversion strategy for continuous actions (e.g. argmax)
 
     Can optionally include a frame_stack, action_repeat method.
 
@@ -116,17 +116,12 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # Remove batch dim(s)
-        action = action.squeeze()
-
-        # Adapt to discrete!
-        _action = action.argmax() if len(action.shape) > 0 \
-            else action  # TODO Adapt function
+        _action = self.adapt_to_discrete(action)  # Adapt to discrete!
 
         # Step env
         reward = 0
         for _ in range(self.action_repeat):
-            obs, _reward, self.episode_done, info = self.env.step(_action)
+            obs, _reward, self.episode_done, info = self.env.step(_action.squeeze())  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame
@@ -221,6 +216,21 @@ class Atari:
 
     def render(self):
         return self.env.render('rgb_array')  # rgb_array | human
+
+    def adapt_to_discrete(self, action):
+        action_dim = self.action_spec['shape'][-1]
+
+        try:
+            action = action.reshape(len(action), action_dim)  # Assumes a batch dim
+        except ValueError:
+            try:
+                action = action.reshape(len(action), -1, action_dim)  # Assumes a batch dim
+            except:
+                raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
+                                   f'to expected batch-action shape {(-1, action_dim)}')
+            action = action.argmax(1)
+
+        return action.squeeze(1)
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)

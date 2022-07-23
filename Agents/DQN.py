@@ -103,6 +103,13 @@ class DQNAgent(torch.nn.Module):
                 else actor(obs, self.step).sample(self.num_actions) if self.training \
                 else actor(obs, self.step).mean
 
+            # Qs = critic(obs, action) if self.num_actions > 1 \
+            #     else None
+            # Pi = self.action_selector(action, self.step, Qs)  # DQN action selector is based on critic
+            #
+            # action = Pi.sample() if self.training \
+            #     else Pi.best
+
             if self.num_actions > 1:
                 Pi = self.action_selector(critic(obs, action), self.step)
 
@@ -171,6 +178,7 @@ class DQNAgent(torch.nn.Module):
 
             # Inference
             y_predicted = self.actor(obs[instruction], self.step).mean
+            # y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
 
@@ -206,6 +214,7 @@ class DQNAgent(torch.nn.Module):
             if self.generate:
                 half = len(obs) // 2
                 generated_image = self.actor(obs[:half], self.step).mean
+                # generated_image = self.actor(obs[:half], self.step).mean[:, 0]  # TODO Don't collapse n'-dim in Pi
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate
 

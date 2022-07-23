@@ -32,7 +32,7 @@ class DMC:
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
     numpy values which can be NaN. Must include a batch dim.
 
-    Recommended: include conversions/support for both discrete + continuous actions
+    Recommended: Discrete environments should have a conversion strategy for continuous actions (e.g. argmax)
 
     Can optionally include a frame_stack, action_repeat method.
 

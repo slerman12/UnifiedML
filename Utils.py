@@ -16,7 +16,6 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.optim import *
 from torch.optim.lr_scheduler import *
 from torch.nn import Identity, Flatten  # For direct accessibility via command line
@@ -51,6 +50,7 @@ def init(args):
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
+# Allow recipes config to accept objects
 OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
 
 
@@ -195,22 +195,6 @@ def weight_init(m):
 
 
 # Initializes model optimizer. Default: AdamW + cosine annealing
-# def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
-#     params = list(params)
-#     has_params = len(params) > 0
-#
-#     # Optimizer
-#     optim = has_params and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr))
-#                             or lr and torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
-#
-#     # Learning rate scheduler
-#     scheduler = has_params and (instantiate(scheduler, optimizer=optim) or (lr and lr_decay_epochs or None)
-#                                 and torch.optim.lr_scheduler.CosineAnnealingLR(optim, lr_decay_epochs))  # Default
-#
-#     return optim, scheduler
-
-
-# Initializes model optimizer. Default: AdamW + cosine annealing
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
     params = list(params)
 
@@ -347,11 +331,11 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
     # Get all combinations of tensors starting at "dim", keeping all dims before "dim" independent (as batches)
 
     # Given N tensors with leading dims (B1 x B2 x ... x BL),
-    # a specified "dim" (can vary in size across tensors, e.g. D1, D2, ..., DN)
+    # a specified "dim" (can vary in size across tensors, e.g. D1, D2, ..., DN), "dim" = L + 1
     # and tail dims (O1 x O2 x ... x OT), returns:
     # --> cartesian prod, batches independent:
     # --> B1 x B2 x ... x BL x D1 * D2 * ... * DN x O1 X O2 x ... x OT x N
-    # If not collapse_dims:
+    # Or if not collapse_dims:
     # --> B1 x B2 x ... x BL x D1 x D2 x ... x DN x O1 X O2 x ... x OT x N
 
     Consistent with torch.cartesian_prod except generalized to multi-dim and batches.
@@ -364,30 +348,6 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
     return torch.stack([item.view(-1, *(1,) * i, item.shape[dim], *(1,) * (len(items) - i - 1), *tail_dims).expand(
         -1, *dims[:i], item.shape[dim], *dims[i + 1:], *tail_dims)
         for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *tail_dims, len(items))
-
-
-# Basic L2 normalization
-class L2Norm(nn.Module):
-    def __init__(self, eps=1e-12):
-        super().__init__()
-        self.eps = eps
-
-    def forward(self, x):
-        return F.normalize(x, dim=-1, eps=self.eps)
-
-
-# Min-max normalizes to [0, 1]
-# "Re-normalization", as in SPR (https://arxiv.org/abs/2007.05929), or at least in their code
-class ShiftMaxNorm(nn.Module):
-    def __init__(self, start_dim=-1):
-        super().__init__()
-        self.start_dim = start_dim
-
-    def forward(self, x):
-        y = x.flatten(self.start_dim)
-        y = y - y.min(-1, keepdim=True)[0]
-        y = y / y.max(-1, keepdim=True)[0]
-        return y.view(*x.shape)
 
 
 # Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
@@ -412,15 +372,6 @@ class Sequential(nn.Module):
         return self.Sequence(obs)
 
 
-# Swaps image dims between channel-last and channel-first format
-class ChannelSwap(nn.Module):
-    def repr_shape(self, *_):
-        return _[-1], *_[1:-1], _[0]
-
-    def forward(self, x, spatial2d=True):
-        return x.transpose(-1, -3 if spatial2d and len(x.shape) > 3 else 1)  # Assumes 2D, otherwise Nd
-
-
 # Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
 class AddChannelDim(nn.Module):
     def repr_shape(self, *_):
@@ -439,8 +390,30 @@ class AddSpatialDim(nn.Module):
         return x.unsqueeze(-1)
 
 
+# Swaps image dims between channel-last and channel-first format
+class ChannelSwap(nn.Module):
+    def repr_shape(self, *_):
+        return _[-1], *_[1:-1], _[0]
+
+    def forward(self, x, spatial2d=True):
+        return x.transpose(-1, -3 if spatial2d and len(x.shape) > 3 else 1)  # Assumes 2D, otherwise Nd
+
+
 # Convenient helper
 ChSwap = ChannelSwap()
+
+
+# Shifts to positive, normalizes to [0, 1]
+class Norm(nn.Module):
+    def __init__(self, start_dim=-1):
+        super().__init__()
+        self.start_dim = start_dim
+
+    def forward(self, x):
+        y = x.flatten(self.start_dim)
+        y = y - y.min(-1, keepdim=True)[0]
+        y = y / y.max(-1, keepdim=True)[0]
+        return y.view(*x.shape)
 
 
 # Context manager that temporarily switches on eval() mode for specified models; then resets them

@@ -47,7 +47,7 @@ class Classify:
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
     numpy values which can be NaN. Must include a batch dim.
 
-    Recommended: include conversions/support for both discrete + continuous actions
+    Recommended: Discrete environments should have a conversion strategy for continuous actions (e.g. argmax)
 
     ---
 
@@ -92,19 +92,19 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
-        self.action_spec = {'name': 'action',
-                            'shape': (len(dataset.classes),),  # Dataset must include a "classes" attr
-                            'num_actions': None,  # Should be None for continuous TODO switch shape and num, discrete
-                            'low': None,
-                            'high': None,
-                            'discrete': False}
-
         # self.action_spec = {'name': 'action',
-        #                     'shape': (1,),
-        #                     'num_actions': len(dataset.classes),  # Dataset must include a "classes" attr
+        #                     'shape': (len(dataset.classes),),  # Dataset must include a "classes" attr
+        #                     'num_actions': None,  # Should be None for continuous TODO switch shape and num, discrete
         #                     'low': None,
         #                     'high': None,
-        #                     'discrete': True}
+        #                     'discrete': False}
+
+        self.action_spec = {'name': 'action',
+                            'shape': (1,),
+                            'num_actions': len(dataset.classes),  # Dataset must include a "classes" attr
+                            'low': None,
+                            'high': None,
+                            'discrete': True}  # TODO num_critics=1 default for Classify, num-critics global agent arg
 
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
@@ -163,7 +163,10 @@ class Classify:
         self.evaluate_episodes = len(self.batches)
 
     def step(self, action):
-        correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
+        # Adapt to discrete!
+        action = self.adapt_to_discrete(action)
+
+        correct = (self.exp.label == np.expand_dims(action, 1)).astype('float32')
 
         self.exp.reward = correct
         self.exp.action = action  # Note: can store argmax instead
@@ -261,6 +264,21 @@ class Classify:
         open(path + f'_Stats_{mean}_{stddev}_{low}_{high}', 'w')  # Save stat values for future reuse
 
         return mean, stddev, low.item(), high.item()
+
+    def adapt_to_discrete(self, action):
+        action_dim = self.action_spec['shape'][-1]
+
+        try:
+            action = action.reshape(len(action), action_dim)  # Assumes a batch dim
+        except ValueError:
+            try:
+                action = action.reshape(len(action), -1, action_dim)  # Assumes a batch dim
+            except:
+                raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
+                                   f'to expected batch-action shape {(-1, action_dim)}')
+            action = action.argmax(1)
+
+        return action.squeeze(1)
 
 
 class Transform:
