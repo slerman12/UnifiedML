@@ -50,7 +50,7 @@ class EnsembleQCritic(nn.Module):
             action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim)  # [n^d, d]
 
             if self.low or self.high:
-                action = action / self.num_actions * (self.high - self.low) + self.low  # Normalize
+                action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
 
             self.register_buffer('action', action.view(-1, self.action_dim))
 
@@ -74,21 +74,22 @@ class EnsembleQCritic(nn.Module):
 
         if self.discrete:
             # All actions' Q-values
-            Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
+            correlated_Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
 
-            # TODO Either sample num actions Qs/actions, or use all num_actions Qs/samples: max num_actions
-            #  Too expensive! Leave nxd; row-wise sample/argmax Creator; index into n x d
-            Qs = Utils.batched_cartesian_prod(Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
+            Qs = Utils.batched_cartesian_prod(correlated_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
 
             if action is None:
                 action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
             else:
                 # Un-normalize to indices
                 if self.low and self.high:
-                    action = (action - self.low) / (self.high - self.low) * self.num_actions
+                    action = (action - self.low) / (self.high - self.low) * (self.num_actions - 1)
 
                 # Q values for a discrete action
-                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
+                Qs = Utils.gather_indices(correlated_Qs, action, -2).mean(-1)  # [e, b, 1]
+
+                if self.low or self.high:
+                    action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
         else:
             assert action is not None and action.shape[-1] == self.num_actions * self.action_dim, \
                 f'action with dim={self.num_actions * self.action_dim} needed for continuous space'

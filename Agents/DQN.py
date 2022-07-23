@@ -64,15 +64,20 @@ class DQNAgent(torch.nn.Module):
             else self.encoder.repr_shape
 
         self.actor = EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                           ensemble_size=num_critics if self.discrete else 1,
+                                           ensemble_size=num_critics if self.discrete and self.RL else 1,  # Num actors
                                            stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                            ema_decay=ema_decay * ema)
 
         # Critic <- Actor
+        # (Technically, the actor doesn't need to be the critic; they could both update the encoder.
+        # Any number of the critics can be shared with any equal number of the actors)
         if self.discrete:
             recipes.critic.trunk = self.actor.trunk
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
+
+            if not self.RL:
+                num_critics = 1  # Num actors
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,

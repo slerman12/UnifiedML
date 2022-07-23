@@ -320,7 +320,7 @@ def gather_indices(item, ind, dim=-1):
     ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
     if dim < len(item.shape) - 1 and dim != -1:
         trail_shape = item.shape[dim + 1:]
-        ind = ind.reshape(ind.shape + (1,)*len(trail_shape))
+        ind = ind.reshape(ind.shape + (1,) * len(trail_shape))
         ind = ind.expand(*ind.shape[:dim + 1], *trail_shape)
     return torch.gather(item, dim, ind)
 
@@ -332,7 +332,7 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
 
     # Given N tensors with leading dims (B1 x B2 x ... x BL),
     # a specified "dim" (can vary in size across tensors, e.g. D1, D2, ..., DN), "dim" = L + 1
-    # and tail dims (O1 x O2 x ... x OT), returns:
+    # and trail dims (O1 x O2 x ... x OT), returns:
     # --> cartesian prod, batches independent:
     # --> B1 x B2 x ... x BL x D1 * D2 * ... * DN x O1 X O2 x ... x OT x N
     # Or if not collapse_dims:
@@ -343,11 +343,11 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
 
     lead_dims = items[0].shape[:dim]  # B1, B2, ..., BL
     dims = [item.shape[dim] for item in items]  # D1, D2, ..., DN
-    tail_dims = items[0].shape[dim + 1:] if dim + 1 else []  # O1, O2, ..., OT
+    trail_dims = items[0].shape[dim + 1:] if dim + 1 else []  # O1, O2, ..., OT
 
-    return torch.stack([item.view(-1, *(1,) * i, item.shape[dim], *(1,) * (len(items) - i - 1), *tail_dims).expand(
-        -1, *dims[:i], item.shape[dim], *dims[i + 1:], *tail_dims)
-        for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *tail_dims, len(items))
+    return torch.stack([item.view(-1, *(1,) * i, item.shape[dim], *(1,) * (len(items) - i - 1), *trail_dims).expand(
+        -1, *dims[:i], item.shape[dim], *dims[i + 1:], *trail_dims)
+        for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *trail_dims, len(items))
 
 
 # Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
