@@ -81,15 +81,13 @@ class EnsembleQCritic(nn.Module):
             if action is None:
                 action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
             else:
-                # Un-normalize to indices
-                if self.low and self.high:
-                    action = (action - self.low) / (self.high - self.low) * (self.num_actions - 1)
+                # Un-normalize -> indices
+                _action \
+                    = (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low and self.high \
+                    else action  # [b, n', d]
 
                 # Q values for a discrete action
-                Qs = Utils.gather_indices(correlated_Qs, action, -2).mean(-1)  # [e, b, 1]
-
-                if self.low or self.high:
-                    action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
+                Qs = Utils.gather_indices(correlated_Qs, _action, -2).mean(-1)  # [e, b, 1]
         else:
             assert action is not None and action.shape[-1] == self.num_actions * self.action_dim, \
                 f'action with dim={self.num_actions * self.action_dim} needed for continuous space'
