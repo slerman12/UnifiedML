@@ -99,7 +99,7 @@ class Logger:
                                             else np.ma.sum)
 
         def size_agnostic_agg(stats):
-            stats = [(stat,) if np.isscalar(stat) else stat for stat in stats]
+            stats = [(stat,) if np.isscalar(stat) else stat.flatten() for stat in stats]
 
             masked = np.ma.empty((len(stats), max(map(len, stats))))
             masked.mask = True

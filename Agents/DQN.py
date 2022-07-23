@@ -186,6 +186,11 @@ class DQNAgent(torch.nn.Module):
             # y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
+            correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+            accuracy = correct.mean()
+
+            if self.log:
+                logs.update({'accuracy': accuracy})
 
             # Supervised learning
             if self.supervise:
@@ -197,10 +202,7 @@ class DQNAgent(torch.nn.Module):
                                self.actor, epoch=self.epoch if offline else self.episode, retain_graph=True)
 
                 if self.log:
-                    correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
-
-                    logs.update({'supervised_loss': supervised_loss.item(),
-                                 'accuracy': correct.mean().item()})
+                    logs.update({'supervised_loss': supervised_loss})
 
             # (Auxiliary) reinforcement
             if self.RL:
@@ -210,6 +212,9 @@ class DQNAgent(torch.nn.Module):
                 action[instruction] = y_predicted.detach()
                 reward[instruction] = -mistake[:, None].detach()  # reward = -error
                 next_obs[instruction] = float('nan')
+
+                if self.log:
+                    logs.update({'reward': reward})
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:

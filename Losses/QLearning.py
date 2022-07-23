@@ -63,11 +63,11 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     #     q_loss = q_loss.mean()
 
     if logs is not None:
-        logs['q_mean'] = Q.mean.mean().item()
-        logs['q_stddev'] = Q.stddev.mean().item()
-        logs.update({f'q{i}': q.median().item() for i, q in enumerate(Q.Qs)})
-        logs['target_q'] = target_q.mean().item()
-        logs['temporal_difference_error'] = q_loss.mean().item()
-        # logs['q_loss'] = q_loss.mean().item()
+        logs['q_mean'] = Q.mean.mean()
+        logs['q_stddev'] = Q.stddev.mean()
+        logs.update({f'q{i}': q.median() for i, q in enumerate(Q.Qs)})
+        logs['target_q'] = target_q.mean()
+        logs['temporal_difference_error'] = q_loss.mean()
+        # logs['q_loss'] = q_loss.mean()
 
     return q_loss
