@@ -4,16 +4,14 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import torch
 
-import Utils
-
 
 def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discount=1,
                        one_hot=False, logs=None):
     Pi = actor(obs, step)
 
     action = Pi.rsample(num_actions)
-    if one_hot:
-        action = Utils.rone_hot(action, null_value=-1)
+    # if one_hot:
+    #     action = Utils.rone_hot(action, null_value=-1)
 
     Q = critic(obs, action)
 
