@@ -316,13 +316,34 @@ def rclamp(x, min, max):
 
 
 # (Multi-dim) indexing
-def gather_indices(item, ind, dim=-1):
-    ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
-    if dim < len(item.shape) - 1 and dim != -1:
-        trail_shape = item.shape[dim + 1:]
-        ind = ind.reshape(ind.shape + (1,) * len(trail_shape))
-        ind = ind.expand(*ind.shape[:dim + 1], *trail_shape)
+def gather_indices(item, ind, dim=-1, ind_dim=-1):
+    """
+    Generalizes torch.gather indexing to multi-dim indexing.
+
+    Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on "ind_dim".
+    The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
+
+    item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j] for any i ≤ N + 1, j ≤ M + 1
+    --> [0, ..., N, "ind_dim", N + 2, ..., M]
+    """
+
+    ind_shape = ind.shape[ind_dim:]
+    trail_shape = item.shape[dim:][len(ind_shape):]
+
+    ind = ind.long().expand(*item.shape[:dim], *ind_shape)  # Assumes ind.shape[ind_dim] is desired num indices
+    ind = ind.reshape(ind.shape + (1,) * len(trail_shape)).expand(*ind.shape, *trail_shape)
+
     return torch.gather(item, dim, ind)
+
+
+# (Multi-dim) indexing
+# def gather_indices(item, ind, dim=-1):
+#     ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
+#     if dim < len(item.shape) - 1 and dim != -1:
+#         trail_shape = item.shape[dim + 1:]
+#         ind = ind.reshape(ind.shape + (1,) * len(trail_shape))
+#         ind = ind.expand(*ind.shape[:dim + 1], *trail_shape)
+#     return torch.gather(item, dim, ind)
 
 
 # (Multi-dim) cartesian product

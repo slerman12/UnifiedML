@@ -127,7 +127,7 @@ class DQNAgent(torch.nn.Module):
 
                 # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.num_actions, size=action.shape) if self.discrete \
+                    action = critic.normalize(torch.randint(self.num_actions, size=action.shape)) if self.discrete \
                         else action.uniform_(-1, 1)
 
             return action

@@ -46,7 +46,7 @@ class EnsembleQCritic(nn.Module):
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e
 
         # Discrete actions are known a priori
-        if discrete:
+        if discrete and action_spec.discrete:
             action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim)  # [n^d, d]
 
             if self.low or self.high:
@@ -76,15 +76,26 @@ class EnsembleQCritic(nn.Module):
             # All actions' Q-values
             correlated_Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
 
-            Qs = Utils.batched_cartesian_prod(correlated_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
+            if hasattr(self, 'action'):
+                Qs = Utils.batched_cartesian_prod(correlated_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
 
             if action is None:
-                action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
+                if hasattr(self, 'action'):  # All possible actions
+                    action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
+                else:  # An efficiently-sampled subset of actions
+                    action = torch.distributions.Categorical(logits=correlated_Qs.min(0)[0].transpose(-1, -2)).sample(
+                        [self.num_actions]).transpose(0, 1)  # [b, n', d]
+
+                    # Q values for sampled discrete actions
+                    Qs = Utils.gather_indices(correlated_Qs, action, -2, -2).mean(-1)  # [e, b, n']
+
+                    if self.low or self.high:
+                        action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
             else:
                 # Un-normalize -> indices
                 _action \
                     = (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low and self.high \
-                    else action  # [b, n', d]
+                    else action  # [b, d]
 
                 # Q values for a discrete action
                 Qs = Utils.gather_indices(correlated_Qs, _action, -2).mean(-1)  # [e, b, 1]
@@ -103,6 +114,11 @@ class EnsembleQCritic(nn.Module):
         stddev, mean = torch.std_mean(Qs, dim=0)
         Q = Normal(mean, stddev.nan_to_num() + 1e-8)
         Q.__dict__.update({'Qs': Qs,
-                           'action': action})
+                           'action': action})  # Maybe just normalize here or remove altogether and normalize in Creator
 
         return Q
+
+    def normalize(self, action):
+        if self.low or self.high:
+            action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
+        return action
