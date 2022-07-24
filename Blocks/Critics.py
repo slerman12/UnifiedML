@@ -47,12 +47,9 @@ class EnsembleQCritic(nn.Module):
 
         # Discrete actions are known a priori
         if discrete and action_spec.discrete:
-            action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim)  # [n^d, d]
+            action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim).view(-1, self.action_dim)
 
-            if self.low or self.high:
-                action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
-
-            self.register_buffer('action', action.view(-1, self.action_dim))
+            self.register_buffer('action', self.normalize(action))  # [n^d, d]
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -74,31 +71,23 @@ class EnsembleQCritic(nn.Module):
 
         if self.discrete:
             # All actions' Q-values
-            correlated_Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
+            All_Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
 
             if hasattr(self, 'action'):
-                Qs = Utils.batched_cartesian_prod(correlated_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
+                # All actions' Q-values
+                Qs = Utils.batched_cartesian_prod(All_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
 
-            if action is None:
-                if hasattr(self, 'action'):  # All possible actions
+                if action is None:
                     action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
-                else:  # An efficiently-sampled subset of actions
-                    action = torch.distributions.Categorical(logits=correlated_Qs.min(0)[0].transpose(-1, -2)).sample(
-                        [self.num_actions]).transpose(0, 1)  # [b, n', d]
-
-                    # Q values for sampled discrete actions
-                    Qs = Utils.gather_indices(correlated_Qs, action, -2, -2).mean(-1)  # [e, b, n']
-
-                    if self.low or self.high:
-                        action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
             else:
-                # Un-normalize -> indices
-                _action \
-                    = (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low and self.high \
-                    else action  # [b, d]
+                if action is None:
+                    # Sample a subset of the action space
+                    action = self.normalize(torch.distributions.Categorical(logits=All_Qs.min(0)[0].transpose(-2, -1))
+                                            .sample([self.num_actions])
+                                            .transpose(0, 1))  # [b, n', d]
 
-                # Q values for a discrete action
-                Qs = Utils.gather_indices(correlated_Qs, _action, -2).mean(-1)  # [e, b, 1]
+                # Q values for discrete action(s)
+                Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [e, b, 1]
         else:
             assert action is not None and action.shape[-1] == self.num_actions * self.action_dim, \
                 f'action with dim={self.num_actions * self.action_dim} needed for continuous space'
@@ -114,11 +103,16 @@ class EnsembleQCritic(nn.Module):
         stddev, mean = torch.std_mean(Qs, dim=0)
         Q = Normal(mean, stddev.nan_to_num() + 1e-8)
         Q.__dict__.update({'Qs': Qs,
-                           'action': action})  # Maybe just normalize here or remove altogether and normalize in Creator
+                           'action': action})
 
         return Q
 
     def normalize(self, action):
-        if self.low or self.high:
-            action = action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize
-        return action
+        return action / (self.num_actions - 1) * (self.high - self.low) + self.low if self.low or self.high \
+            else action  # Normalize -> [low, high]
+
+    def to_indices(self, action):
+        action = action.view(len(action), -1, self.action_dim)  # [b, n', d]
+
+        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
+            else action  # Inverse of normalize -> indices
