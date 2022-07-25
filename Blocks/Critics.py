@@ -15,10 +15,6 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    """
-    MLP-based Critic network, employs ensemble Q learning,
-    returns a Normal distribution over the ensemble.
-    """
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Q_head=None, ensemble_size=2,
                  discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
@@ -27,11 +23,9 @@ class EnsembleQCritic(nn.Module):
         self.discrete = discrete
         self.num_actions = action_spec.num_actions or 1  # n, or undefined n'
         self.action_dim = math.prod(action_spec.shape)  # d
-        self.ignore_obs = ignore_obs
+        self.ignore_obs = ignore_obs and not discrete  # Discrete critic always requires observation
 
         self.low, self.high = action_spec.low, action_spec.high
-
-        assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
 
         in_dim = math.prod(repr_shape)
         out_dim = self.num_actions * self.action_dim if discrete else 1
@@ -74,10 +68,11 @@ class EnsembleQCritic(nn.Module):
             All_Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
 
             if hasattr(self, 'action'):
-                # All actions' Q-values
+                # All independent-actions' Q-values
                 Qs = Utils.batched_cartesian_prod(All_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
 
                 if action is None:
+                    # All actions
                     action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
             else:
                 if action is None:
@@ -102,8 +97,6 @@ class EnsembleQCritic(nn.Module):
         # Dist
         stddev, mean = torch.std_mean(Qs, dim=0)
         Q = Normal(mean, stddev.nan_to_num() + 1e-8)
-        Q.__dict__.update({'Qs': Qs,
-                           'action': action})
 
         return Q
 

@@ -15,7 +15,7 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
 
     Q = critic(obs, action)
 
-    q = torch.min(Q.Qs, 0)[0]
+    q = torch.min(Q.mean, 0)[0]
 
     q = reward + q * discount
 

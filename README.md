@@ -105,6 +105,8 @@ Yes.
 
 All agents support discrete and continuous control, classification, and generative modeling.
 
+[comment]: <> (All agents and even tasks support discrete and continuous control, online and offline RL, imitation learning, classification, regression, and generative modeling.)
+
 See example scripts of various configurations [below](#mag-sample-scripts).
 
 # :wrench: Setting Up
@@ -380,6 +382,32 @@ Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only do
 Is true by default for classification, where replays are automatically downloaded.
 
 </details>
+
+[comment]: <> (### Imitation Learning)
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary>)
+
+[comment]: <> (:mag: <i>Click to recall</i>)
+
+[comment]: <> (</summary>)
+
+[comment]: <> (<br>)
+
+[comment]: <> (The conversion to imitation is really simple. The action gets set as the label and is either argmaxed or one-hotted depending on whether the environment is discrete or continuous, or whether classifying &#40;overriding with ```classify=true```&#41; or doing regression &#40;```classify=false```&#41;.)
+
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py task=atari/breakout imitate=true)
+
+[comment]: <> (```)
+
+[comment]: <> (Assumes a replay [is saved]&#40;#saving&#41; to load and imitate based on.)
+
+[comment]: <> (Implicitly treats ```replay.load=true``` and ```replay.save=true```. The load path can of course be configured &#40;```replay.path```&#41;.)
+
+[comment]: <> (</details>)
 
 ### Generative Modeling
 

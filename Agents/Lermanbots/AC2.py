@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -54,10 +54,10 @@ class AC2Agent(torch.nn.Module):
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
-                                       ensemble_size=num_actors,
-                                       stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
+            else EnsembleActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.actor,
+                               ensemble_size=num_actors,
+                               stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                               lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,

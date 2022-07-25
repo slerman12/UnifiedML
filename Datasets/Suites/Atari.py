@@ -230,7 +230,7 @@ class Atari:
                                    f'to expected batch-action shape {(-1, action_dim)}')
             action = action.argmax(1)
 
-        return action.squeeze(1)
+        return action.squeeze(1) % self.action_spec['high']
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)

@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
@@ -24,11 +24,11 @@ class SPRAgent(torch.nn.Module):
     """Self-Predictive Representations (https://arxiv.org/abs/2007.05929)
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_spec, action_spec, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
+                 obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_actions=1, depth=5  # SPR
+                 depth=5  # SPR
                  ):
         super().__init__()
 
@@ -73,10 +73,10 @@ class SPRAgent(torch.nn.Module):
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                       ema_decay=ema_decay * ema)
+            else EnsembleActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                               ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                               lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                               ema_decay=ema_decay * ema)
 
         # Dynamics
         if not generate:

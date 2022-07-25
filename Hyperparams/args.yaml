@@ -6,6 +6,7 @@ defaults:
 # Agent
 obs_spec: ???  # To be specified later
 action_spec: ???  # To be specified later
+num_actions: 0
 standardize: true
 norm: true  # False if standardize=true
 trunk_dim: 50
@@ -87,6 +88,7 @@ agent:
   _recursive_: false
   obs_spec: ${obs_spec}
   action_spec: ${action_spec}
+  num_actions: ${num_actions}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
   standardize: ${standardize}
