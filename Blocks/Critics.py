@@ -68,12 +68,10 @@ class EnsembleQCritic(nn.Module):
                 else self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
 
             if action is None:
-                if hasattr(self, 'action'):
-                    # All actions
-                    action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d, d]
-                else:
-                    # Sample a subset of the action space
-                    action = Pi.sample(self.num_actions)  # [b, n', d]
+                # All actions, or sample a subset of the action space
+                action = getattr(self, 'action',  # [n^d, d]
+                                 Pi.sample(self.num_actions)  # [b, n', d]
+                                 .expand(batch_size, -1, self.action_dim))  # [b, n^d, d] or [b, n', d]
 
             # Q values for discrete action(s)
             Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [e, b, 1]
