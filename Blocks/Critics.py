@@ -67,12 +67,12 @@ class EnsembleQCritic(nn.Module):
             All_Qs = getattr(Pi, 'All_Qs',
                              self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim]))  # [b, e, n, d]
 
-            # Given action, or all actions, or sample a subset of the action space
-            action = action or getattr(self, 'action',  Pi.sample(self.num_actions)
-                                       .expand(batch_size, -1, self.action_dim))  # [b, n^d, d] or [b, n', d]
+            # Index All_Qs based on: (1) given action, (2) all actions, or (3) sample a subset of the action space
+            ind = self.to_indices(action or getattr(self, 'action',  Pi.sample(self.num_actions)
+                                                    .expand(batch_size, -1, self.action_dim)))  # [b, n^d or n', d]
 
             # Q values for discrete action(s)
-            Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, 1]
+            Qs = Utils.gather_indices(All_Qs, ind, -2, -2).mean(-1)  # [b, e, 1]
         else:
             assert action is not None, f'action needed by continuous action-space Critic.'
 
