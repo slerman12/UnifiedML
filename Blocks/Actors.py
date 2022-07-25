@@ -52,24 +52,24 @@ class EnsembleActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        mean = self.Pi_head(obs).flatten(2).squeeze(1)  # [e, b, n * d]
+        mean = self.Pi_head(obs).flatten(2).squeeze(1)  # [b, e, n * d]
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)
-            stddev = torch.exp(log_stddev)  # [e, b, n * d]
+            stddev = torch.exp(log_stddev)  # [b, e, n * d]
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))
 
         if self.discrete:
             # All actions' Q-values
-            Qs = mean.unflatten(-1, (self.num_actions, self.action_dim))  # [e, b, n, d]
+            All_Qs = mean.transpose(0, 1).unflatten(-1, (self.num_actions, self.action_dim))  # [e, b, n, d]
 
-            q, ind = Qs.min(0)  # Min-reduced ensemble [b, n, d]
+            Pi = NormalizedCategorical(logits=All_Qs.transpose(0, 1), low=self.low, high=self.high, temp=stddev, dim=-2)
 
-            Pi = NormalizedCategorical(logits=q, low=self.low, high=self.high, temp=stddev[ind], dim=-2)
+            setattr(Pi, 'All_Qs', All_Qs)  # [e, b, n, d]
         else:
             if self.low is not None and self.high is not None:
-                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [e, b, n * d]
+                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n * d]
 
             Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high,
                                  stddev_clip=self.stddev_clip)

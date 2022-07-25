@@ -63,8 +63,13 @@ class NormalizedCategorical(Categorical):
     temperature-weigh the probability distribution. Consistent with torch.distributions.Categorical
     """
     def __init__(self, probs=None, logits=None, low=None, high=None, temp=1, dim=-1):
+        if probs is not None:
+            probs = probs.transpose(-1, dim)
 
-        super().__init__(probs.transpose(-1, dim), logits.transpose(-1, dim) / temp)
+        if logits is not None:
+            logits = logits.transpose(-1, dim)
+
+        super().__init__(probs, logits / temp)
 
         self.low, self.high = low, high  # Range to normalize to
         self.dim = dim

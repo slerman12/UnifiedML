@@ -36,6 +36,7 @@ class EnsembleQCritic(nn.Module):
         in_shape = action_spec.shape if ignore_obs else [trunk_dim + (0 if discrete
                                                                       else self.num_actions * self.action_dim)]
 
+        # Ensemble
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e
 
@@ -52,47 +53,39 @@ class EnsembleQCritic(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).eval()
 
-    def forward(self, obs, action=None, context=None):
+    def forward(self, obs, action=None, Pi=None):
         batch_size = obs.shape[0]
 
         h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
 
-        if context is None:
-            context = torch.empty(0, device=h.device)
-
-        # Ensemble
-
         if self.discrete:
             # All actions' Q-values
-            All_Qs = self.Q_head(h, context).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
+            All_Qs = Pi.All_Qs if Pi \
+                else self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
 
-            if hasattr(self, 'action'):
-                # All independent-actions' Q-values
-                Qs = Utils.batched_cartesian_prod(All_Qs.unbind(-1)).mean(-1).flatten(2)  # [e, b, n^d]
-
-                if action is None:
+            if action is None:
+                if hasattr(self, 'action'):
                     # All actions
-                    action = self.action.expand(*Qs[0].shape, self.action_dim)  # [b, n^d, d]
-            else:
-                if action is None:
-                    # Sample a subset of the action space
-                    action = self.normalize(torch.distributions.Categorical(logits=All_Qs.min(0)[0].transpose(-2, -1))
-                                            .sample([self.num_actions])
-                                            .transpose(0, 1))  # [b, n', d]
+                    action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d, d]
+                else:
+                    assert Pi, 'Continuous action-space environment: action or policy dist Pi is needed for Critic.'
 
-                # Q values for discrete action(s)
-                Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [e, b, 1]
+                    # Sample a subset of the action space
+                    action = Pi.sample(self.num_actions)  # [b, n', d]
+
+            # Q values for discrete action(s)
+            Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [e, b, 1]
         else:
-            assert action is not None and action.shape[-1] == self.num_actions * self.action_dim, \
-                f'action with dim={self.num_actions * self.action_dim} needed for continuous space'
+            assert action is not None, \
+                f'action needed by continuous action-space Critic.'
 
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
 
             # Q-values for continuous action(s)
-            Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n']
+            Qs = self.Q_head(h, action).squeeze(-1)  # [e, b, n']
 
         # Dist
         stddev, mean = torch.std_mean(Qs, dim=0)
