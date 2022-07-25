@@ -38,7 +38,7 @@ class EnsembleQCritic(nn.Module):
 
         # Ensemble
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
-                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)  # e
+                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
         # Discrete actions are known a priori
         if discrete and action_spec.discrete:
@@ -60,31 +60,28 @@ class EnsembleQCritic(nn.Module):
             else self.trunk(obs)
 
         if self.discrete:
-            assert Pi or hasattr(self, 'action') or action is not None, \
-                'Continuous action-space environment: action or policy dist Pi is needed for Critic.'
+            assert getattr(self, 'action', action is not None or Pi), \
+                'Continuous Env: action or sampling policy needed by discrete Critic.'
 
             # All actions' Q-values
-            All_Qs = Pi.All_Qs if Pi \
-                else self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
+            All_Qs = getattr(Pi, 'All_Qs',
+                             self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim]))  # [b, e, n, d]
 
-            if action is None:
-                # All actions, or sample a subset of the action space
-                action = getattr(self, 'action',  # [n^d, d]
-                                 Pi.sample(self.num_actions)  # [b, n', d]
-                                 .expand(batch_size, -1, self.action_dim))  # [b, n^d, d] or [b, n', d]
+            # Given action, or all actions, or sample a subset of the action space
+            action = action or getattr(self, 'action',  Pi.sample(self.num_actions)
+                                       .expand(batch_size, -1, self.action_dim))  # [b, n^d, d] or [b, n', d]
 
             # Q values for discrete action(s)
-            Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [e, b, 1]
+            Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, 1]
         else:
-            assert action is not None, \
-                f'action needed by continuous action-space Critic.'
+            assert action is not None, f'action needed by continuous action-space Critic.'
 
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
 
             # Q-values for continuous action(s)
-            Qs = self.Q_head(h, action).squeeze(-1)  # [e, b, n']
+            Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
 
         # Dist
         stddev, mean = torch.std_mean(Qs, dim=0)

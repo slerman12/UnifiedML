@@ -14,8 +14,7 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
     #     action = Utils.rone_hot(action, null_value=-1)
 
     Q = critic(obs, action)
-
-    q = torch.min(Q.mean, 0)[0]
+    q, _ = Q.mean.min(1)
 
     q = reward + q * discount
 
@@ -29,9 +28,9 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
     #     policy_loss = -q.mean()
 
     if logs is not None:
-        logs['policy_loss'] = policy_loss.mean()
-        logs['DPG_q_stddev'] = Q.stddev.mean()
-        logs['Pi_prob'] = Pi.log_prob(action).exp().mean()
-        logs['DPG_q_mean'] = q.mean()
+        logs['policy_loss'] = policy_loss
+        logs['DPG_q_stddev'] = Q.stddev
+        logs['Pi_prob'] = Pi.log_prob(action).exp()
+        logs['DPG_q_mean'] = q
 
     return policy_loss

@@ -43,7 +43,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
             # Q-values per action
             next_Q = critic.ema(next_obs, next_action)
-            next_q = torch.min(next_Q.mean, 0)[0]  # Min-reduced ensemble
+            next_q, _ = next_Q.mean.min(1)  # Min-reduced ensemble
 
             # Weigh each action's Q-value by its probability
             next_v = torch.zeros_like(discount)
@@ -65,11 +65,10 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     #     q_loss = q_loss.mean()
 
     if logs is not None:
-        logs['q_mean'] = Q.mean.mean()
-        logs['q_stddev'] = Q.stddev.mean()
-        logs.update({f'q{i}': q.median() for i, q in enumerate(Q.Qs)})
-        logs['target_q'] = target_q.mean()
-        logs['temporal_difference_error'] = q_loss.mean()
+        logs['temporal_difference_error'] = q_loss
+        logs['q_stddev'] = Q.stddev
+        logs.update({f'q{i}': Q.mean[:, i] for i in range(Q.mean.shape[1])})
+        logs['target_q'] = target_q
         # logs['q_loss'] = q_loss.mean()
 
     return q_loss

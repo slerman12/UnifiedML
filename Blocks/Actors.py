@@ -40,7 +40,7 @@ class EnsembleActor(nn.Module):
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
 
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
-                                       or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)], 0)
+                                       or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -52,7 +52,7 @@ class EnsembleActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        mean = self.Pi_head(obs).flatten(2).squeeze(1)  # [e, b, n * d]
+        mean = self.Pi_head(obs).flatten(2).squeeze(1)  # [b, e, n * d]
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)
@@ -62,18 +62,14 @@ class EnsembleActor(nn.Module):
 
         if self.discrete:
             # All actions' Q-values
-            All_Qs = mean.unflatten(-1, (self.num_actions, self.action_dim))  # [e, b, n, d]
+            All_Qs = mean.unflatten(-1, (self.num_actions, self.action_dim))  # [b, e, n, d]
 
-            logits, stddev = All_Qs.transpose(0, 1), stddev.transpose(0, 1)  # [b, e, n, d]
+            Pi = NormalizedCategorical(logits=All_Qs.min(1)[0], low=self.low, high=self.high, temp=stddev, dim=-2)
 
-            Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
-
-            setattr(Pi, 'All_Qs', All_Qs)  # [e, b, n, d]
+            setattr(Pi, 'All_Qs', All_Qs)
         else:
             if self.low is not None and self.high is not None:
                 mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n * d]
-
-            mean, stddev = mean.transpose(0, 1), stddev.transpose(0, 1)  # [b, e, n, d]
 
             Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high,
                                  stddev_clip=self.stddev_clip)
