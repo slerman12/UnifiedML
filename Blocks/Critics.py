@@ -60,6 +60,9 @@ class EnsembleQCritic(nn.Module):
             else self.trunk(obs)
 
         if self.discrete:
+            assert Pi or hasattr(self, 'action') or action is not None, \
+                'Continuous action-space environment: action or policy dist Pi is needed for Critic.'
+
             # All actions' Q-values
             All_Qs = Pi.All_Qs if Pi \
                 else self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [e, b, n, d]
@@ -69,8 +72,6 @@ class EnsembleQCritic(nn.Module):
                     # All actions
                     action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d, d]
                 else:
-                    assert Pi, 'Continuous action-space environment: action or policy dist Pi is needed for Critic.'
-
                     # Sample a subset of the action space
                     action = Pi.sample(self.num_actions)  # [b, n', d]
 
