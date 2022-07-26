@@ -22,13 +22,26 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
         # Current reward
         target_q = reward
 
+        # Future action and Q-values
+        next_action = All_Next_Qs = None
+
         # Discounted future reward
         if has_future.any():
             # Get actions for next_obs
-            # Discrete critic uses all actions, no need to sample
-            # Sample continuous actions
-            next_action = None if critic.discrete \
-                else actor(next_obs, step).rsample(num_actions)
+
+            next_Pi = actor(next_obs, step)
+
+            # Discrete Critic knows all actions for discrete Envs a priori, no need to sample
+            all_actions_known = hasattr(critic, 'action')
+
+            if not all_actions_known:
+                # Sample actions
+                next_action = next_Pi.rsample(num_actions)
+
+            # Discrete Actor policy knows all Q-values
+            if actor.discrete:
+                # All next actions' Q-values
+                All_Next_Qs = next_Pi.All_Qs
 
             # if critic.discrete:
             #     next_action, next_action_log_probs = None, 0  # Discrete critic uses all actions, no need to sample
@@ -42,7 +55,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             #     next_action_log_probs = next_Pi.log_prob(next_action).sum(-1, keepdim=True).flatten(1)
 
             # Q-values per action
-            next_Q = critic.ema(next_obs, next_action)
+            next_Q = critic.ema(next_obs, next_action, All_Next_Qs)
             next_q, _ = next_Q.mean.min(1)  # Min-reduced ensemble
 
             # Weigh each action's Q-value by its probability
@@ -66,9 +79,9 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
     if logs is not None:
         logs['temporal_difference_error'] = q_loss
-        logs['q_stddev'] = Q.stddev
-        logs.update({f'q{i}': Q.mean[:, i] for i in range(Q.mean.shape[1])})
-        logs['target_q'] = target_q
+        logs['q_stddev'] = Q.stddev.mean()
+        logs.update({f'q{i}': Q.mean[:, i].median() for i in range(Q.mean.shape[1])})
+        logs['target_q'] = target_q.mean()
         # logs['q_loss'] = q_loss.mean()
 
     return q_loss

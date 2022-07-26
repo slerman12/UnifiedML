@@ -102,8 +102,8 @@ class Classify:
         self.action_spec = {'name': 'action',
                             'shape': (1,),
                             'num_actions': len(dataset.classes),  # Dataset must include a "classes" attr
-                            'low': None,
-                            'high': None,
+                            'low': 0,
+                            'high': len(dataset.classes) - 1,
                             'discrete': True}  # TODO num_critics=1 default for Classify, num-critics global agent arg
 
         self.batches = DataLoader(dataset=dataset,
@@ -266,19 +266,25 @@ class Classify:
         return mean, stddev, low.item(), high.item()
 
     def adapt_to_discrete(self, action):
-        action_dim = self.action_spec['shape'][-1]
+        shape = self.action_spec['shape']
 
         try:
-            action = action.reshape(len(action), action_dim)  # Assumes a batch dim
+            action = action.reshape(len(action), *shape)  # Assumes a batch dim
         except ValueError:
             try:
-                action = action.reshape(len(action), -1, action_dim)  # Assumes a batch dim
+                action = action.reshape(len(action), -1, *shape)  # Assumes a batch dim
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
-                                   f'to expected batch-action shape {(-1, action_dim)}')
+                                   f'to expected batch-action shape {(-1, *shape)}')
             action = action.argmax(1)
 
-        return action.squeeze(1)
+        action = action % self.action_spec['high']
+
+        if np.issubdtype(int, action.dtype):
+            return action
+
+        # Round
+        return np.round(action * self.action_spec['num_actions']).astype(int) / self.action_spec['num_actions']
 
 
 class Transform:

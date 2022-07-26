@@ -109,34 +109,30 @@ class DQNAgent(torch.nn.Module):
             actor = self.actor.ema if self.ema and not self.discrete else self.actor
             critic = self.critic.ema if self.ema else self.critic
 
-            # "See"
+            # See
             obs = encoder(obs)
 
-            action = None if self.discrete \
-                else actor(obs, self.step).sample(self.num_actions) if self.training \
-                else actor(obs, self.step).mean
+            Pi = actor(obs, self.step)
 
-            Q = critic(obs, action) if self.num_actions > 1 \
-                else None
-            Pi = self.action_selector(action, self.step, Q)  # DQN action selector is based on critic
-
-            action = Pi.sample() if self.training \
-                else Pi.best
-
-            # if self.num_actions > 1:
-            #     Pi = self.action_selector(critic(obs, action), self.step)
-            #
-            #     action = Pi.sample() if self.training \
-            #         else Pi.best
+            # Act
+            action = Pi.sample(self.num_actions) if self.training \
+                else Pi.best if self.discrete \
+                else Pi.mean
 
             if self.training:
                 self.step += 1
                 self.frame += len(obs)
 
-                # Explore phase
+                # Select among candidate actions based on Q-value
+                if self.num_actions > 1:
+                    All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy knows all Q-values
+
+                    action = self.action_selector(critic(obs, action, All_Qs), self.step).best
+
+                # "Explore phase"
+
                 if self.step < self.explore_steps and not self.generate:
-                    action = critic.normalize(torch.randint(self.num_actions, size=action.shape)) if self.discrete \
-                        else action.uniform_(-1, 1)
+                    action = action.uniform_(actor.low, actor.high)  # Env automatically rounds if discrete
 
             return action
 

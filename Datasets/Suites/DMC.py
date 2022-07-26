@@ -110,8 +110,8 @@ class DMC:
     def step(self, action):
         # To float
         action = action.astype(np.float32)
-        # Remove batch dim
-        action = action.squeeze(0)
+        # Remove batch dim, adapt shape
+        action.shape = self.action_spec['shape']
 
         # Step env
         reward = 0

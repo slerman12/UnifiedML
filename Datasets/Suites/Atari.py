@@ -106,8 +106,8 @@ class Atari:
         self.action_spec = {'name': 'action',
                             'shape': (1,),
                             'num_actions': self.env.action_space.n,
-                            'low': None,  # Should be None for discrete
-                            'high': None,  # Should be None for discrete
+                            'low': 0,  # Should be None for discrete
+                            'high': self.env.action_space.n - 1,  # Should be None for discrete
                             'discrete': True}  # TODO Remove?
 
         self.exp = None
@@ -117,6 +117,7 @@ class Atari:
 
     def step(self, action):
         _action = self.adapt_to_discrete(action)  # Adapt to discrete!
+        _action.shape = self.action_spec['shape']
 
         # Step env
         reward = 0
@@ -218,19 +219,25 @@ class Atari:
         return self.env.render('rgb_array')  # rgb_array | human
 
     def adapt_to_discrete(self, action):
-        action_dim = self.action_spec['shape'][-1]
+        shape = self.action_spec['shape']
 
         try:
-            action = action.reshape(len(action), action_dim)  # Assumes a batch dim
+            action = action.reshape(len(action), *shape)  # Assumes a batch dim
         except ValueError:
             try:
-                action = action.reshape(len(action), -1, action_dim)  # Assumes a batch dim
+                action = action.reshape(len(action), -1, *shape)  # Assumes a batch dim
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
-                                   f'to expected batch-action shape {(-1, action_dim)}')
+                                   f'to expected batch-action shape {(-1, *shape)}')
             action = action.argmax(1)
 
-        return action.squeeze(1) % self.action_spec['high']
+        action = action % self.action_spec['high']
+
+        if np.issubdtype(int, action.dtype):
+            return action
+
+        # Round
+        return np.round(action * self.action_spec['num_actions']).astype(int) / self.action_spec['num_actions']
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)

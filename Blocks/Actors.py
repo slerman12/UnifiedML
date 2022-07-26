@@ -66,7 +66,7 @@ class EnsembleActor(nn.Module):
 
             Pi = NormalizedCategorical(logits=All_Qs.min(1)[0], low=self.low, high=self.high, temp=stddev, dim=-2)
 
-            setattr(Pi, 'All_Qs', All_Qs)
+            setattr(Pi, 'All_Qs', All_Qs)  # [b, e, n, d]
         else:
             if self.low is not None and self.high is not None:
                 mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n * d]

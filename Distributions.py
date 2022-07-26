@@ -76,7 +76,10 @@ class NormalizedCategorical(Categorical):
 
         self.best = None
 
-    def sample(self, sample_shape=torch.Size(), batch_first=True):
+    def rsample(self, sample_shape=1, batch_first=True):
+        self.sample(sample_shape, batch_first)  # Note: not differentiable
+
+    def sample(self, sample_shape=1, batch_first=True):
         if isinstance(sample_shape, int):
             sample_shape = (sample_shape,)
 

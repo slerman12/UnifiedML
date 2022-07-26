@@ -53,26 +53,25 @@ class EnsembleQCritic(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).eval()
 
-    def forward(self, obs, action=None, Pi=None):
+    def forward(self, obs, action=None, All_Qs=None):
         batch_size = obs.shape[0]
 
         h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
 
         if self.discrete:
-            assert getattr(self, 'action', action is not None or Pi), \
-                'Continuous Env: action or sampling policy needed by discrete Critic.'
+            assert hasattr(self, 'action') or action is not None, 'Continuous Env: action needed by discrete Critic.'
 
-            # All actions' Q-values
-            All_Qs = getattr(Pi, 'All_Qs',
-                             self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim]))  # [b, e, n, d]
+            if action is None:
+                # All actions
+                action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d or n', d]
 
-            # Index All_Qs based on: (1) given action, (2) all actions, or (3) sample a subset of the action space
-            ind = self.to_indices(action or getattr(self, 'action',  Pi.sample(self.num_actions)
-                                                    .expand(batch_size, -1, self.action_dim)))  # [b, n^d or n', d]
+            if All_Qs is None:
+                # All actions' Q-values
+                All_Qs = self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [b, e, n, d]
 
             # Q values for discrete action(s)
-            Qs = Utils.gather_indices(All_Qs, ind, -2, -2).mean(-1)  # [b, e, 1]
+            Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, 1]
         else:
             assert action is not None, f'action needed by continuous action-space Critic.'
 
