@@ -121,14 +121,14 @@ class DQNAgent(torch.nn.Module):
                 else Pi.mean
 
             if self.training:
-                self.step += 1
-                self.frame += len(obs)
-
                 # Select among candidate actions based on Q-value
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy knows all Q-values
 
                     action = self.action_selector(critic(obs, action, All_Qs), self.step).best
+
+                self.step += 1
+                self.frame += len(obs)
 
                 # "Explore phase"
 
@@ -198,14 +198,14 @@ class DQNAgent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            Pi = self.actor(obs[instruction], self.step)
+            Pi = self.actor(obs[instruction])
 
-            y_predicted = Pi.logits if self.discrete else Pi.mean
+            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)
 
             # Inference
             # y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
-            mistake = cross_entropy(y_predicted.mean(1), label[instruction].long(), reduction='none')
+            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
             # mistake = cross_entropy if self.classify else mse(y_predicted, label[instruction].long(), reduction='none')
             # if self.classify:
             correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()

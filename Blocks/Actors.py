@@ -29,7 +29,8 @@ class EnsembleActor(nn.Module):
         self.num_actions = action_spec.num_actions or 1  # n, or undefined n'
         self.action_dim = math.prod(action_spec.shape)  # d
 
-        self.low, self.high = action_spec.low, action_spec.high
+        self.low, self.high = (None, None) if action_spec.discrete and not discrete \
+            else (action_spec.low, action_spec.high)
 
         in_dim = math.prod(repr_shape)
         out_dim = self.num_actions * self.action_dim * (1 if stddev_schedule else 2)
@@ -52,7 +53,7 @@ class EnsembleActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        mean = self.Pi_head(obs).flatten(2).squeeze(1)  # [b, e, n * d]
+        mean = self.Pi_head(obs).flatten(2)  # [b, e, n * d]
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)

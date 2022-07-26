@@ -278,13 +278,13 @@ class Classify:
                                    f'to expected batch-action shape {(-1, *shape)}')
             action = action.argmax(1)
 
-        action = action % self.action_spec['high']
+        return action
 
         if np.issubdtype(int, action.dtype):
             return action
 
-        # Round
-        return np.round(action * self.action_spec['num_actions']).astype(int) / self.action_spec['num_actions']
+        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.num_actions
+        return np.round(action * self.action_spec['num_actions']) / self.action_spec['num_actions']
 
 
 class Transform:
