@@ -7,7 +7,6 @@ import copy
 
 import torch
 from torch import nn
-from torch.distributions import Normal
 
 from Blocks.Architectures.MLP import MLP
 
@@ -15,6 +14,8 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
+    """Ensemble Q-learning, generalized to any-size ensemble and discrete or continuous action spaces. Uniquely,
+    returns a Gaussian distribution Q over the ensemble."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Q_head=None,
                  ensemble_size=2, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
@@ -25,8 +26,7 @@ class EnsembleQCritic(nn.Module):
         self.action_dim = math.prod(action_spec.shape)  # d
         self.ignore_obs = ignore_obs and not discrete  # Discrete critic always requires observation
 
-        self.low, self.high = (None, None) if action_spec.discrete and not discrete \
-            else (action_spec.low, action_spec.high)
+        self.low, self.high = (action_spec.low, action_spec.high) if discrete else (None,) * 2
 
         in_dim = math.prod(repr_shape)
         out_dim = self.num_actions * self.action_dim if discrete else 1
@@ -34,8 +34,8 @@ class EnsembleQCritic(nn.Module):
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore_obs
 
-        in_shape = action_spec.shape if ignore_obs else [trunk_dim + (0 if discrete
-                                                                      else self.num_actions * self.action_dim)]
+        in_shape = action_spec.shape if self.ignore_obs else [trunk_dim + (0 if discrete
+                                                                           else self.num_actions * self.action_dim)]
 
         # Ensemble
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
@@ -63,16 +63,16 @@ class EnsembleQCritic(nn.Module):
         if self.discrete:
             assert hasattr(self, 'action') or action is not None, 'Continuous Env: action needed by discrete Critic.'
 
-            if action is None:
-                # All actions
-                action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d or n', d]
-
             if All_Qs is None:
                 # All actions' Q-values
                 All_Qs = self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [b, e, n, d]
 
+            if action is None:
+                # All actions
+                action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d or n', d]
+
             # Q values for discrete action(s)
-            Qs = Utils.gather_indices(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, 1]
+            Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n']
         else:
             assert action is not None, f'action needed by continuous action-space Critic.'
 
@@ -84,8 +84,8 @@ class EnsembleQCritic(nn.Module):
             Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
 
         # Dist
-        stddev, mean = torch.std_mean(Qs, dim=0)
-        Q = Normal(mean, stddev.nan_to_num() + 1e-8)
+        stddev, mean = torch.std_mean(Qs, dim=1)
+        Q = torch.distributions.Normal(mean, stddev.nan_to_num() + 1e-8)
 
         return Q
 
@@ -94,7 +94,7 @@ class EnsembleQCritic(nn.Module):
             else action  # Normalize -> [low, high]
 
     def to_indices(self, action):
-        action = action.view(len(action), -1, self.action_dim)  # [b, n', d]
+        action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
 
         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
             else action  # Inverse of normalize -> indices

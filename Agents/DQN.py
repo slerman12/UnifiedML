@@ -194,21 +194,21 @@ class DQNAgent(torch.nn.Module):
         # "Acquire Wisdom"
 
         # Classification
-        if instruction.any():
+        if instruction.all():
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            Pi = self.actor(obs[instruction])
+            Pi = self.actor(obs)
 
-            y_predicted = (Pi.All_Qs.squeeze(-1) if self.discrete else Pi.mean).mean(1)
+            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)
 
             # Inference
             # y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
-            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
+            mistake = cross_entropy(y_predicted.squeeze(-1), label.long(), reduction='none')
             # mistake = cross_entropy if self.classify else mse(y_predicted, label[instruction].long(), reduction='none')
             # if self.classify:
-            correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+            correct = (torch.argmax(y_predicted.squeeze(), 1) == label).float()
             accuracy = correct.mean()
 
             if self.log:
@@ -228,12 +228,12 @@ class DQNAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                half = len(instruction) // 2
-                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
-                                               label[instruction][:half].long(), reduction='none')
-                action[instruction] = y_predicted.detach()
-                reward[instruction] = -mistake[:, None].detach()  # reward = -error
-                next_obs[instruction] = float('nan')
+                half = len(obs) // 2
+                mistake[:half] = cross_entropy(y_predicted[:half].squeeze().uniform_(-1, 1),
+                                               label[:half].long(), reduction='none')
+                action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
+                reward = -mistake[:, None].detach()  # reward = -error
+                next_obs[:] = float('nan')
 
                 if self.log:
                     logs.update({'reward': reward})

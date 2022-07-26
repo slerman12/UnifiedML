@@ -316,22 +316,51 @@ def rclamp(x, min, max):
 
 
 # (Multi-dim) indexing
-def gather_indices(item, ind, dim=-1, ind_dim=-1):
+# def gather(item, ind, dim=-1, ind_dim=-1):
+#     """
+#     Generalizes torch.gather indexing to multi-dim indexing.
+#
+#     Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on "ind_dim".
+#     The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
+#
+#     Relative coordinates, assume "dim" = "ind_dim":
+#     item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j] for any i ≤ N + 1, j ≤ M + 1
+#     --> [0, ..., N, "ind_dim", N + 2, ..., M]
+#     """
+#     num = ind.shape[ind_dim]
+#
+#     ind_lead_shape = ind.shape[:ind_dim]  # [i, ..., N]
+#     lead_shape = item.shape[:dim][:len(ind_lead_shape)]  # [0, ..., i - 1]
+#
+#     ind_tail_shape = ind.shape[ind_dim:]  # ["ind_dim", ..., j]
+#     tail_shape = item.shape[dim:][len(ind_tail_shape):]  # [j + 1, ..., M]
+#
+#     print(ind.shape, item.shape, num, lead_shape, ind_lead_shape, ind_tail_shape, tail_shape)
+#
+#     ind = ind.long().view((1,) * len(lead_shape), *ind_lead_shape, *ind_tail_shape, (1,) * len(tail_shape))
+#     ind = ind.expand(*item.shape[:dim], num, *item.shape[dim + 1:])  # Assumes ind.shape[ind_dim] is desired num indices
+#
+#     return torch.gather(item, dim, ind)
+
+
+# (Multi-dim) indexing
+def gather(item, ind, dim=-1, ind_dim=-1):
     """
     Generalizes torch.gather indexing to multi-dim indexing.
 
     Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on "ind_dim".
     The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
 
+    Relative coordinates, assume "dim" = "ind_dim":
     item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j] for any i ≤ N + 1, j ≤ M + 1
     --> [0, ..., N, "ind_dim", N + 2, ..., M]
     """
 
-    ind_shape = ind.shape[ind_dim:]
-    tail_shape = item.shape[dim:][len(ind_shape):]
+    ind_shape = ind.shape[ind_dim:]  # ["ind_dim", ..., j]
+    tail_shape = item.shape[dim:][len(ind_shape):]  # [j + 1, ..., M]
 
     ind = ind.long().expand(*item.shape[:dim], *ind_shape)  # Assumes ind.shape[ind_dim] is desired num indices
-    ind = ind.reshape(ind.shape + (1,) * len(tail_shape)).expand(*ind.shape, *tail_shape)
+    ind = ind.reshape(ind.shape + (1,) * len(tail_shape)).expand(*ind.shape, *tail_shape)  # [0, ..., "ind_dim", ... M]
 
     return torch.gather(item, dim, ind)
 

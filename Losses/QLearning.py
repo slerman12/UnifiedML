@@ -28,20 +28,16 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
         # Discounted future reward
         if has_future.any():
             # Get actions for next_obs
-
             next_Pi = actor(next_obs, step)
 
             # Discrete Critic knows all actions for discrete Envs a priori, no need to sample
             all_actions_known = hasattr(critic, 'action')
 
             if not all_actions_known:
-                # Sample actions
-                next_action = next_Pi.rsample(num_actions)
+                next_action = next_Pi.rsample(num_actions)  # Sample actions
 
-            # Discrete Actor policy knows all Q-values
             if actor.discrete:
-                # All next actions' Q-values
-                All_Next_Qs = next_Pi.All_Qs
+                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy knows all Q-values already
 
             # if critic.discrete:
             #     next_action, next_action_log_probs = None, 0  # Discrete critic uses all actions, no need to sample
@@ -56,7 +52,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
             # Q-values per action
             next_Q = critic.ema(next_obs, next_action, All_Next_Qs)
-            next_q, _ = next_Q.mean.min(1)  # Min-reduced ensemble
+            next_q = next_Q.mean.min(1)[0]  # Min-reduced ensemble
 
             # Weigh each action's Q-value by its probability
             next_v = torch.zeros_like(discount)

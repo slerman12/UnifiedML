@@ -199,7 +199,7 @@ class Relation(nn.Module):
                 attn = torch.matmul(weights, v)
 
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
-        rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
+        rtn = Utils.gather(v, rtn, dim=-2)  # [b, h, i, d]
 
         if self.training:
             rtn = attn - (attn - rtn).detach()

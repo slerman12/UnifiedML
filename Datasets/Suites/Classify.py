@@ -224,7 +224,7 @@ class Classify:
             obs.shape = (batch_size, *self.obs_spec['shape'])
 
             dummy = np.full((batch_size, 1), np.NaN)
-            missing = np.full((batch_size, *self.action_spec['shape']), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['num_actions'],)), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 

@@ -59,8 +59,8 @@ class TruncatedNormal(Normal):
 
 class NormalizedCategorical(Categorical):
     """
-    A Categorical dist generalized to low-high normalize sampled discrete indices, sample along a chosen dimension, and
-    temperature-weigh the probability distribution. Consistent with torch.distributions.Categorical
+    A Categorical that normalizes samples, allows sampling along specific "dim"s, and can temperature-weigh the softmax.
+    Consistent with torch.distributions.Categorical
     """
     def __init__(self, probs=None, logits=None, low=None, high=None, temp=1, dim=-1):
         if probs is not None:

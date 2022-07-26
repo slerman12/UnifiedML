@@ -7,7 +7,6 @@ import copy
 
 import torch
 from torch import nn
-from torch.distributions import Categorical
 
 from Distributions import TruncatedNormal, NormalizedCategorical
 
@@ -17,6 +16,7 @@ import Utils
 
 
 class EnsembleActor(nn.Module):
+    """Ensemble Pi of Gaussian or Categorical policies, generalized to discrete or continuous action spaces."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Pi_head=None,
                  ensemble_size=2, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
@@ -27,18 +27,17 @@ class EnsembleActor(nn.Module):
 
         self.discrete = discrete
         self.num_actions = action_spec.num_actions or 1  # n, or undefined n'
-        self.action_dim = math.prod(action_spec.shape)  # d
+        self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
-        self.low, self.high = (None, None) if action_spec.discrete and not discrete \
-            else (action_spec.low, action_spec.high)
+        self.low, self.high = (action_spec.low, action_spec.high) if discrete and not action_spec.discrete else (0, 0)
 
         in_dim = math.prod(repr_shape)
-        out_dim = self.num_actions * self.action_dim * (1 if stddev_schedule else 2)
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
+        out_dim = self.num_actions * self.action_dim
 
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
@@ -53,27 +52,27 @@ class EnsembleActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        mean = self.Pi_head(obs).flatten(2)  # [b, e, n * d]
+        mean = self.Pi_head(obs).unflatten(-1, (self.num_actions, self.action_dim))  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
-            mean, log_stddev = mean.chunk(2, dim=-1)
-            stddev = torch.exp(log_stddev)  # [e, b, n * d]
+            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
+            stddev = torch.exp(log_stddev)  # [b, e, n, d]
         else:
-            stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))
+            stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
         if self.discrete:
+            logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
+            stddev = Utils.gather(stddev, ind.transpose(1, 2), 1, 1)  # Min-reduced ensemble [b, n, d]
+
+            Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
+
             # All actions' Q-values
-            All_Qs = mean.unflatten(-1, (self.num_actions, self.action_dim))  # [b, e, n, d]
-
-            Pi = NormalizedCategorical(logits=All_Qs.min(1)[0], low=self.low, high=self.high, temp=stddev, dim=-2)
-
-            setattr(Pi, 'All_Qs', All_Qs)  # [b, e, n, d]
+            setattr(Pi, 'All_Qs', mean)  # [b, e, n, d]
         else:
-            if self.low is not None and self.high is not None:
-                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n * d]
+            if self.low or self.high:
+                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
 
-            Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high,
-                                 stddev_clip=self.stddev_clip)
+            Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
         return Pi
 
@@ -99,16 +98,16 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         # Entropy of action selection
         entropy_temp = Utils.schedule(self.entropy_schedule, step)
 
-        Psi = Categorical(logits=u_logits / entropy_temp + action_log_prob)
+        Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp + action_log_prob)
 
         best_u, best_ind = torch.max(u, -1)
-        best_action = Utils.gather_indices(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
+        best_action = Utils.gather(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
 
         def action_sampler(sample_shape=torch.Size()):
             i = sample(sample_shape)
-            return Utils.gather_indices(Q.action if action is None else action, i.unsqueeze(-1), 1).squeeze(1)
+            return Utils.gather(Q.action if action is None else action, i.unsqueeze(-1), 1).squeeze(1)
 
         Psi.__dict__.update({'best': best_action,
                              'best_u': best_u,
