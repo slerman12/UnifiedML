@@ -30,7 +30,7 @@ class DQNAgent(torch.nn.Module):
                  ):
         super().__init__()
 
-        self.discrete = discrete  # Continuous supported!
+        self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
         # self.classify = action_spec.discrete  # Including classification and regression...
         self.RL = RL
@@ -247,10 +247,10 @@ class DQNAgent(torch.nn.Module):
                 half = len(obs) // 2
 
                 Pi = self.actor(obs[:half], self.step)
-                generated_image = Pi.best[:, 0] if self.discrete else Pi.mean[:, 0]
+                generated_image = Pi.best if self.discrete else Pi.mean
                 # generated_image = self.actor(obs[:half], self.step).mean[:, 0]  # TODO Don't collapse n'-dim in Pi
 
-                action[:half], reward[:half] = generated_image, 0  # Discriminate
+                action[:half], reward[:half] = generated_image[:, 0], 0  # Discriminate
 
             # "Discern"
 
