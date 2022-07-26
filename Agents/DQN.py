@@ -44,19 +44,18 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = num_actions or action_spec.num_actions
+        self.num_actions = num_actions or action_spec.num_actions or 1
 
         if self.discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
                                          'specify "+agent.num_actions=" flag >1'
             action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
 
+        # RL -> generate conversion
         if generate:
-            action_spec.num_actions = 1
             action_spec.shape = obs_spec.shape
-            action_spec.low, action_spec.high = -1, 1
-
-            recipes.encoder.Eyes = Utils.Rand(trunk_dim)
+            action_spec.low, action_spec.high, action_spec.num_actions = -1, 1, 1
+            recipes.encoder.Eyes = Utils.Rand(trunk_dim)  # Generate gets random noise as input instead of Eyes
 
             # if self.discrete:
             #     action_spec.num_actions = 255  # TODO If obs_spec.discrete else num_actions or 10; Need to sample Actor!
