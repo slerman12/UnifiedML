@@ -56,6 +56,8 @@ class DQNAgent(torch.nn.Module):
             action_spec.shape = obs_spec.shape
             action_spec.low, action_spec.high = -1, 1
 
+            recipes.encoder.Eyes = Utils.Rand(trunk_dim)
+
             # if self.discrete:
             #     action_spec.num_actions = 255  # TODO If obs_spec.discrete else num_actions or 10; Need to sample Actor!
             #     action_spec.discrete = False
@@ -63,10 +65,9 @@ class DQNAgent(torch.nn.Module):
         # Data stats
         self.low, self.high = obs_spec.low, obs_spec.high
 
-        self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
-                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                            ema_decay=ema_decay * ema)
+        self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
+                                  lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                  ema_decay=ema_decay * ema)
 
         repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
@@ -104,17 +105,17 @@ class DQNAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
 
-            # EMA shadows
-            encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
-            actor = self.actor.ema if self.ema and not self.discrete else self.actor
+            # Exponential moving average (EMA) shadows
+            encoder = self.encoder.ema if self.ema else self.encoder
+            actor = self.actor.ema if self.ema else self.actor
             critic = self.critic.ema if self.ema else self.critic
 
             # See
             obs = encoder(obs)
 
+            # Act
             Pi = actor(obs, self.step)
 
-            # Act
             action = Pi.sample(self.num_actions) if self.training \
                 else Pi.best if self.discrete \
                 else Pi.mean
