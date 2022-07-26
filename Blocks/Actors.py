@@ -29,7 +29,7 @@ class EnsembleActor(nn.Module):
         self.num_actions = action_spec.num_actions or 1  # n, or undefined n'
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
-        self.low, self.high = (action_spec.low, action_spec.high) if discrete and not action_spec.discrete else (0, 0)
+        self.low, self.high = (action_spec.low, action_spec.high) if discrete or not action_spec.discrete else (0, 0)
 
         in_dim = math.prod(repr_shape)
 

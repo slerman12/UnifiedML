@@ -28,5 +28,7 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
 
     if logs is not None:
         logs['policy_loss'] = policy_loss
+        logs['policy_prob'] = Pi.log_prob(action).exp().mean()
+        logs['policy_q_stddev'] = Q.stddev.mean()
 
     return policy_loss

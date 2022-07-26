@@ -37,7 +37,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
                 next_action = next_Pi.rsample(num_actions)  # Sample actions
 
             if actor.discrete:
-                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy knows all Q-values already
+                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
 
             # if critic.discrete:
             #     next_action, next_action_log_probs = None, 0  # Discrete critic uses all actions, no need to sample

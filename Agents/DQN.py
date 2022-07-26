@@ -61,8 +61,8 @@ class DQNAgent(torch.nn.Module):
             #     action_spec.num_actions = 255  # TODO If obs_spec.discrete else num_actions or 10; Need to sample Actor!
             #     action_spec.discrete = False
 
-        # Data stats
-        self.low, self.high = obs_spec.low, obs_spec.high
+            # Data stats
+            standardize = norm = False
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
@@ -122,7 +122,7 @@ class DQNAgent(torch.nn.Module):
             if self.training:
                 # Select among candidate actions based on Q-value
                 if self.num_actions > 1:
-                    All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy knows all Q-values
+                    All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
                     action = self.action_selector(critic(obs, action, All_Qs), self.step).best
 
@@ -132,7 +132,7 @@ class DQNAgent(torch.nn.Module):
                 # "Explore phase"
 
                 if self.step < self.explore_steps and not self.generate:
-                    action = action.uniform_(actor.low, actor.high)  # Env automatically rounds if discrete
+                    action = action.uniform_(actor.low, actor.high)  # Env will automatically round if discrete
 
             return action
 
@@ -162,7 +162,7 @@ class DQNAgent(torch.nn.Module):
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            obs = (obs - self.low) * 2 / (self.high - self.low) - 1  # Normalize first
+            obs = (obs - self.encoder.low) * 2 / (self.encoder.high - self.encoder.low) - 1  # Normalize first
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 
@@ -193,7 +193,7 @@ class DQNAgent(torch.nn.Module):
         # "Acquire Wisdom"
 
         # Classification
-        if instruction.all():
+        if instruction.any():
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
