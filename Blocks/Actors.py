@@ -17,8 +17,8 @@ import Utils
 
 
 class EnsembleActor(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
-                 discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Pi_head=None,
+                 ensemble_size=2, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 

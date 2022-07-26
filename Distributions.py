@@ -74,7 +74,7 @@ class NormalizedCategorical(Categorical):
         self.low, self.high = low, high  # Range to normalize to
         self.dim = dim
 
-        self.best = None
+        self.best = self.normalize(logits.argmax(-1, keepdim=True).transpose(-1, self.dim))
 
     def rsample(self, sample_shape=1, batch_first=True):
         self.sample(sample_shape, batch_first)  # Note: not differentiable
@@ -89,8 +89,6 @@ class NormalizedCategorical(Categorical):
             sample = sample.transpose(0, len(sample_shape))  # Batch dim first
 
         sample = sample.transpose(-1, self.dim)
-
-        self.best = sample.argmax(-2, keepdim=True)
 
         return self.normalize(sample)
 

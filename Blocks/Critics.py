@@ -15,8 +15,8 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Q_head=None, ensemble_size=2,
-                 discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Q_head=None,
+                 ensemble_size=2, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
         super().__init__()
 
@@ -25,7 +25,8 @@ class EnsembleQCritic(nn.Module):
         self.action_dim = math.prod(action_spec.shape)  # d
         self.ignore_obs = ignore_obs and not discrete  # Discrete critic always requires observation
 
-        self.low, self.high = action_spec.low, action_spec.high
+        self.low, self.high = (None, None) if action_spec.discrete and not discrete \
+            else (action_spec.low, action_spec.high)
 
         in_dim = math.prod(repr_shape)
         out_dim = self.num_actions * self.action_dim if discrete else 1

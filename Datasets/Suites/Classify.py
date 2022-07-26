@@ -166,7 +166,7 @@ class Classify:
         # Adapt to discrete!
         action = self.adapt_to_discrete(action)
 
-        correct = (self.exp.label == np.expand_dims(action, 1)).astype('float32')
+        correct = (self.exp.label == action).astype('float32')
 
         self.exp.reward = correct
         self.exp.action = action  # Note: can store argmax instead
@@ -279,6 +279,9 @@ class Classify:
             action = action.argmax(1)
 
         return action
+
+        # TODO Account for self.low, self.high range (shift, modulo, shift)
+        action = action % self.action_spec['high']
 
         if np.issubdtype(int, action.dtype):
             return action
