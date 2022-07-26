@@ -52,7 +52,7 @@ class DQNAgent(torch.nn.Module):
             action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
 
         if generate:
-            # action_spec.num_actions = None
+            action_spec.num_actions = 1
             action_spec.shape = obs_spec.shape
             action_spec.low, action_spec.high = -1, 1
 
@@ -250,7 +250,7 @@ class DQNAgent(torch.nn.Module):
                 generated_image = Pi.best if self.discrete else Pi.mean
                 # generated_image = self.actor(obs[:half], self.step).mean[:, 0]  # TODO Don't collapse n'-dim in Pi
 
-                action[:half], reward[:half] = generated_image[:, 0], 0  # Discriminate
+                action[:half], reward[:half] = generated_image.flatten(1), 0  # Discriminate
 
             # "Discern"
 

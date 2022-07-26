@@ -290,6 +290,9 @@ class Rand(nn.Module):
         self.size = size  # TODO input_shape
         self.uniform = uniform
 
+    def repr_shape(self, *_):
+        return self.size,
+
     def forward(self, x):
         x = torch.randn((x.shape[0], self.size), device=x.device)
         return x.uniform_() if self.uniform else x

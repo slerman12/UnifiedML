@@ -75,7 +75,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
     if logs is not None:
         logs['temporal_difference_error'] = q_loss
-        logs['q_stddev'] = Q.stddev.mean()
         logs.update({f'q{i}': Q.mean[:, i].median() for i in range(Q.mean.shape[1])})
         logs['target_q'] = target_q.mean()
         # logs['q_loss'] = q_loss.mean()
