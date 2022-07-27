@@ -6,6 +6,7 @@ import time
 from math import inf
 
 from Utils import instantiate, to_torch
+# from hydra.utils import instantiate
 
 
 class Environment:
@@ -52,7 +53,7 @@ class Environment:
             if not self.generate:
                 exp = self.env.step(create(action, agent, self.env))  # Experience
 
-            exp.update({'action': action, 'step': agent.step})  # Save Agent's action, step
+            exp.update({'action': action.cpu().numpy(), 'step': agent.step})  # Save Agent's action, step
             experiences.append(exp)
 
             if vlog or self.generate:
