@@ -122,7 +122,7 @@ class Atari:
         # Step env
         reward = 0
         for _ in range(self.action_repeat):
-            obs, _reward, self.episode_done, info = self.env.step(_action.squeeze())  # Atari requires scalar int action
+            obs, _reward, self.episode_done, info = self.env.step(int(_action))  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame

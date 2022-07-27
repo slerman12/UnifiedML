@@ -62,8 +62,7 @@ class EnsembleActor(nn.Module):
 
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(stddev, ind.transpose(1, 2), 1, 1)  # Min-reduced ensemble [b, n, d]
-            print(logits.shape, stddev.shape, ind.shape)
+            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble [b, n, d]
 
             Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
 
@@ -100,10 +99,12 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         # Entropy of action selection
         entropy_temp = Utils.schedule(self.entropy_schedule, step)
 
-        Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp + action_log_prob)
+        # Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp + action_log_prob)
+        Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp)
 
         best_u, best_ind = torch.max(u, -1)
-        best_action = Utils.gather(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
+        # best_action = Utils.gather(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
+        best_action = Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         sample = Psi.sample
 

@@ -62,14 +62,16 @@ class NormalizedCategorical(Categorical):
     A Categorical that normalizes samples, allows sampling along specific "dim"s, and can temperature-weigh the softmax.
     Consistent with torch.distributions.Categorical
     """
-    def __init__(self, probs=None, logits=None, low=None, high=None, temp=1, dim=-1):
+    def __init__(self, probs=None, logits=None, low=None, high=None, temp=torch.ones(()), dim=-1):
         if probs is not None:
-            probs = probs.transpose(-1, dim)
+            probs = probs.movedim(dim, -1)
 
         if logits is not None:
-            logits = logits.transpose(-1, dim)
+            temp = temp.expand_as(logits).movedim(dim, -1)
 
-        super().__init__(probs, logits / temp)
+            logits = logits.movedim(dim, -1) / temp
+
+        super().__init__(probs, logits)
 
         self.low, self.high = low, high  # Range to normalize to
         self.dim = dim
@@ -77,7 +79,9 @@ class NormalizedCategorical(Categorical):
         self.best = self.normalize(logits.argmax(-1, keepdim=True).transpose(-1, self.dim))
 
     def rsample(self, sample_shape=1, batch_first=True):
-        self.sample(sample_shape, batch_first)  # Note: not differentiable
+        sample = self.sample(sample_shape, batch_first)  # Note: not differentiable
+
+        return sample
 
     def sample(self, sample_shape=1, batch_first=True):
         if isinstance(sample_shape, int):
@@ -87,8 +91,6 @@ class NormalizedCategorical(Categorical):
 
         if batch_first:
             sample = sample.transpose(0, len(sample_shape))  # Batch dim first
-
-        sample = sample.transpose(-1, self.dim)
 
         return self.normalize(sample)
 
