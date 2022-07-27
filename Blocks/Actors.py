@@ -86,9 +86,10 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
         self.entropy_schedule = entropy_schedule
 
-    def forward(self, Q, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
-        q = Q.rsample() if sample_q \
-            else Q.mean if hasattr(Q, 'mean') else Q.best  # Sample q or mean
+    def forward(self, Qs, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
+        # q = Q.rsample() if sample_q \
+        #     else Q.mean if hasattr(Q, 'mean') else Q.best  # Sample q or mean
+        q = Qs.mean(1)
 
         # Exploit via Q-value vs. explore via Q-stddev (EXPERIMENTAL!), off by default
         # Uncertainty as exploration heuristic
@@ -114,9 +115,9 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
                              'sample_ind': sample,
                              'sample': lambda x=torch.Size(): action_sampler(x).detach(),
                              'rsample': action_sampler,
-                             'Q': Q,
+                             'Qs': Qs,
                              'q': q,
-                             'action': Q.action if action is None else action,
+                             'action': action,
                              'u': u})
         return Psi
 

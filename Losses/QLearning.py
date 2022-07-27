@@ -52,7 +52,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
             # Q-values per action
             next_Qs = critic.ema(next_obs, next_action, All_Next_Qs)
-            next_q = next_Qs.mean.min(1)[0]  # Min-reduced ensemble
+            next_q = next_Qs.min(1)[0]  # Min-reduced ensemble
 
             # Weigh each action's Q-value by its probability
             next_v = torch.zeros_like(discount)
@@ -64,7 +64,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     Qs = critic(obs, action)  # Q-ensemble
 
     # Temporal difference (TD) error (via MSE, but could also use Huber)
-    q_loss = F.mse_loss(Qs, target_Q.expand_as(Qs))
+    q_loss = F.mse_loss(Qs, target_Q.unsqueeze(1).expand_as(Qs))
 
     # REMOVED
     # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf

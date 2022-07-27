@@ -124,7 +124,7 @@ class DQNAgent(torch.nn.Module):
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                    action = self.action_selector(critic(obs, action, All_Qs), self.step).best
+                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action=action).best  # TODO
 
                 self.step += 1
                 self.frame += len(obs)
