@@ -63,6 +63,7 @@ class EnsembleActor(nn.Module):
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(stddev, ind.transpose(1, 2), 1, 1)  # Min-reduced ensemble [b, n, d]
+            print(logits.shape, stddev.shape, ind.shape)
 
             Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
 
@@ -93,7 +94,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
         # Exploit via Q-value vs. explore via Q-stddev (EXPERIMENTAL!), off by default
         # Uncertainty as exploration heuristic
-        u = exploit_temp * q + (1 - exploit_temp) * Q.stddev
+        u = exploit_temp * q + (1 - exploit_temp) * Qs.std(1)
         u_logits = u - u.max(dim=-1, keepdim=True)[0]
 
         # Entropy of action selection
