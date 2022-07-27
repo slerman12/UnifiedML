@@ -62,7 +62,7 @@ class DPGAgent(torch.nn.Module):
                                    lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
-                                      ensemble_size=2, ignore_obs=generate,
+                                      ensemble_size=2, generate=generate,
                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)

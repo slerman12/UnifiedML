@@ -44,25 +44,42 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
+        # RL -> generate conversion
+        if generate:
+            # action_spec.num_actions = obs_spec.discrete_bins if discrete else 1
+            action_spec.num_actions = 1
+
+            action_spec.shape, action_spec.discrete = obs_spec.shape, False  # 1 imagining in the shape of obs
+
+            action_spec.low, action_spec.high = -1, 1  # 1 imagining in range [-1, 1]
+            standardize, norm = False, True
+
+            # Disable Encoder/obs as input
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate doesn't use an Encoder
+            recipes.critic.trunk = Utils.Rand(size=0)  # Discriminator only observes action, no obs
+            recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random noise as input
+
         self.num_actions = num_actions or action_spec.num_actions or 1
 
         if self.discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
                                          'try the "num_actions=" flag (>1)'
+
             action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
 
-        # RL -> generate conversion
-        if generate:
-            action_spec.shape, action_spec.discrete = obs_spec.shape, False
-            action_spec.low, action_spec.high, action_spec.num_actions = -1, 1, 1
-            recipes.encoder.Eyes = Utils.Rand(trunk_dim)  # Generate gets random noise as input instead of Eyes
+        # # Continuous -> discrete conversion
+        # if discrete:
+        #     assert self.num_actions > 1, 'Num actions cannot be 1 when calling ' \
+        #                                  'continuous env as discrete or ' \
+        #                                  'when calling generate as discrete. ' \
+        #                                  'Try the "num_actions=" flag (>1).'
+        #
+        #     action_spec.num_actions = self.num_actions  # Continuous env has no discrete bins by default, must specify
 
-            # if self.discrete:
-            #     action_spec.num_actions = 255  # TODO If obs_spec.discrete else num_actions or 10; Need to sample Actor!
-            #     action_spec.discrete = False
+            # action_spec.num_actions = self.num_actions  # Continuous envs don't have discrete bins, so must specify
 
-            # Data stats
-            standardize = norm = False
+            # assert self.num_actions > 1, 'Continuous env has no discrete bins by default. Num actions cannot be ' \
+            #                              '1 when calling continuous env as discrete, try the "num_actions=" flag (>1)'
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
@@ -72,14 +89,12 @@ class DQNAgent(torch.nn.Module):
             else self.encoder.repr_shape
 
         self.actor = EnsembleActor(repr_shape, trunk_dim, hidden_dim, action_spec, self.discrete, **recipes.actor,
-                                   ensemble_size=num_critics if self.discrete and self.RL else 1,
+                                   ensemble_size=num_critics if self.discrete and self.RL else 1,  # TODO Move discrete here when gan can discrete
                                    stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                    lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                    ema_decay=ema_decay * ema)
 
         # Critic <- Actor
-        # (Technically, the actor doesn't need to be the critic; they could both update the encoder.
-        # Any number of the critics can be shared with any equal number of the actors)
         if self.discrete:
             recipes.critic.trunk = self.actor.trunk
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
@@ -88,9 +103,9 @@ class DQNAgent(torch.nn.Module):
                 num_critics = 1  # Num actors
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, self.discrete, **recipes.critic,
-                                      ensemble_size=num_critics, ignore_obs=generate,
-                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                      ema_decay=ema_decay)
+                                      ensemble_size=num_critics,
+                                      lr=lr, lr_decay_epochs=lr_decay_epochs,
+                                      weight_decay=weight_decay, ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
@@ -146,8 +161,20 @@ class DQNAgent(torch.nn.Module):
 
         # "Envision" / "Perceive"
 
-        # Augment
+        # Augment and encode
         obs = self.aug(obs)
+        obs = self.encoder(obs)
+
+        # Augment and encode future
+        if replay.nstep > 0 and not self.generate:
+            with torch.no_grad():
+                next_obs = self.aug(next_obs)
+                next_obs = self.encoder(next_obs)
+
+        # Actor-Critic -> Generator-Discriminator conversion
+        if self.generate:
+            action, reward[:] = obs, 1
+            next_obs[:] = label[:] = float('nan')
 
         # Classification conversion  Can it be set in replay? Should replay have a to(device) method, no to_torch here
         # But then envs should probably convert to numpy/cpu too, not in env? Collate speicifc device? DataParallel
@@ -159,21 +186,6 @@ class DQNAgent(torch.nn.Module):
         #     label = Utils.one_hot(action, self.num_actions) if self.discrete and not self.classify \
         #         else action if self.discrete or not self.classify \
         #         else action.argmax(-1)
-
-        # Actor-Critic -> Generator-Discriminator conversion
-        if self.generate:
-            obs = (obs - self.encoder.low) * 2 / (self.encoder.high - self.encoder.low) - 1  # Normalize first
-            action, reward[:] = obs.flatten(-3), 1
-            next_obs[:] = label[:] = float('nan')
-
-        # Encode
-        obs = self.encoder(obs)
-
-        # Augment and encode future
-        if replay.nstep > 0 and not self.generate:
-            with torch.no_grad():
-                next_obs = self.aug(next_obs)
-                next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
