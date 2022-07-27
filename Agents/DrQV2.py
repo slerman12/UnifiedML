@@ -73,7 +73,7 @@ class DrQV2Agent(torch.nn.Module):
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=2, discrete=self.discrete, generate=generate,
+                                      ensemble_size=2, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
 

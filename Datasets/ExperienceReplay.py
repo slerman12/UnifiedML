@@ -392,7 +392,7 @@ class Experiences:
 
         # Present
         obs = frame_stack(episode['obs'], idx)
-        label = episode['label'][idx].squeeze()
+        label = episode['label'][idx]
         step = episode['step'][idx]
 
         exp_id, worker_id = episode['id'] + idx, self.worker_id

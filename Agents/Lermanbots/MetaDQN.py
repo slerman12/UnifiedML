@@ -70,7 +70,7 @@ class MetaDQNAgent(torch.nn.Module):
                                ema_decay=ema_decay * ema, optim=torch.optim.SGD)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.critic,
-                                      ensemble_size=num_critics, discrete=self.discrete, generate=generate,
+                                      ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay, optim=torch.optim.SGD)
 

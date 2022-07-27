@@ -30,7 +30,7 @@ class DQNAgent(torch.nn.Module):
                  ):
         super().__init__()
 
-        self.discrete = discrete and not generate  # Continuous supported!
+        self.discrete = discrete  # Continuous supported!
         self.supervise = supervise  # And classification...
         # self.classify = action_spec.discrete  # Including classification and regression...
         self.RL = RL
@@ -46,35 +46,36 @@ class DQNAgent(torch.nn.Module):
 
         # RL -> generate conversion
         if generate:
+            self.RL = True
+
             # action_spec.num_actions = obs_spec.discrete_bins if discrete else 1
-            action_spec.num_actions = 1
+            # action_spec.num_actions = 255 if discrete else None  TODO action_spec = obs_spec, that's it
 
-            action_spec.shape, action_spec.discrete = obs_spec.shape, False  # 1 imagining in the shape of obs
+            # Action <- Imagined Obs
+            action_spec.num_actions = None
+            action_spec.shape = obs_spec.shape  # Action Shape <- Obs Shape
+            action_spec.low, action_spec.high, action_spec.discrete = -1, 1, False  # Action in range [-1, 1]
 
-            action_spec.low, action_spec.high = -1, 1  # 1 imagining in range [-1, 1]
-            standardize, norm = False, True
+            standardize, norm = False, True  # Obs in range [-1, 1]
 
-            # Disable Encoder/obs as input
-            recipes.encoder.Eyes = torch.nn.Identity()  # Generate doesn't use an Encoder
-            recipes.critic.trunk = Utils.Rand(size=0)  # Discriminator only observes action, no obs
-            recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random noise as input
+            # "Imagine" an observation randomly
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for Eyes to see
+            recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
         self.num_actions = num_actions or action_spec.num_actions or 1
 
-        if self.discrete:
-            assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
-                                         'try the "num_actions=" flag (>1)'
-
-            action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
+        # if self.discrete:
+        #     assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
+        #                                  'try the "num_actions=" flag (>1)'
+        #
+        #     action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
 
         # # Continuous -> discrete conversion
-        # if discrete:
-        #     assert self.num_actions > 1, 'Num actions cannot be 1 when calling ' \
-        #                                  'continuous env as discrete or ' \
-        #                                  'when calling generate as discrete. ' \
-        #                                  'Try the "num_actions=" flag (>1).'
-        #
-        #     action_spec.num_actions = self.num_actions  # Continuous env has no discrete bins by default, must specify
+        if discrete:
+            assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
+                                         'divvy up the action space into discrete bins, or specify "discrete=false".'
+
+            action_spec.num_actions = self.num_actions  # Continuous env has no discrete bins by default, must specify
 
             # action_spec.num_actions = self.num_actions  # Continuous envs don't have discrete bins, so must specify
 
@@ -85,27 +86,24 @@ class DQNAgent(torch.nn.Module):
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                   ema_decay=ema_decay * ema)
 
-        repr_shape = (trunk_dim,) if generate \
-            else self.encoder.repr_shape
-
-        self.actor = EnsembleActor(repr_shape, trunk_dim, hidden_dim, action_spec, self.discrete, **recipes.actor,
-                                   ensemble_size=num_critics if self.discrete and self.RL else 1,  # TODO Move discrete here when gan can discrete
+        self.actor = EnsembleActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                                   ensemble_size=num_critics if discrete and RL else 1, discrete=discrete,
                                    stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                    lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                    ema_decay=ema_decay * ema)
 
         # Critic <- Actor
-        if self.discrete:
+        if discrete:
             recipes.critic.trunk = self.actor.trunk
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
-            if not self.RL:
+            if not RL:
                 num_critics = 1  # Num actors
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, self.discrete, **recipes.critic,
-                                      ensemble_size=num_critics,
-                                      lr=lr, lr_decay_epochs=lr_decay_epochs,
-                                      weight_decay=weight_decay, ema_decay=ema_decay)
+        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
+                                      ensemble_size=num_critics, discrete=discrete, ignore_obs=generate,
+                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                      ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
@@ -216,10 +214,10 @@ class DQNAgent(torch.nn.Module):
             # Inference
             # y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
 
-            mistake = cross_entropy(y_predicted.squeeze(-1), label.long(), reduction='none')
+            mistake = cross_entropy(y_predicted, label.long(), reduction='none')
             # mistake = cross_entropy if self.classify else mse(y_predicted, label[instruction].long(), reduction='none')
             # if self.classify:
-            correct = (torch.argmax(y_predicted.squeeze(), 1) == label).float()
+            correct = (y_predicted.argmax(1) == label).float()
             accuracy = correct.mean()
 
             if self.log:
@@ -240,17 +238,17 @@ class DQNAgent(torch.nn.Module):
             # (Auxiliary) reinforcement
             if self.RL:
                 half = len(obs) // 2
-                mistake[:half] = cross_entropy(y_predicted[:half].squeeze().uniform_(-1, 1),
+                mistake[:half] = cross_entropy(y_predicted[:half].uniform_(-1, 1),
                                                label[:half].long(), reduction='none')
                 action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
-                reward = -mistake[:, None].detach()  # reward = -error
+                reward = -mistake.detach()  # reward = -error
                 next_obs[:] = float('nan')
 
                 if self.log:
                     logs.update({'reward': reward})
 
         # Reinforcement learning / generative modeling
-        if self.RL or self.generate:
+        if self.RL:
             # "Imagine"
 
             # Generative modeling
@@ -275,11 +273,10 @@ class DQNAgent(torch.nn.Module):
                            self.critic, epoch=self.epoch if offline else self.episode)
 
         # Update encoder
-        if not self.generate:
-            Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder, epoch=self.epoch if offline else self.episode)
+        Utils.optimize(None,  # Using gradients from previous losses
+                       self.encoder, epoch=self.epoch if offline else self.episode)
 
-        if self.generate or self.RL and not self.discrete:
+        if self.RL and not self.discrete:
             # "Change" / "Grow"
 
             # Actor loss

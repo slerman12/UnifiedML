@@ -58,7 +58,7 @@ class AC2V2Agent(torch.nn.Module):
                                    lr=lr, weight_decay=weight_decay, ema_decay=ema_decay if ema else None)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, recipes.critic,
-                                      ensemble_size=num_critics, discrete=self.discrete, generate=generate,
+                                      ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,
                                       lr=lr, weight_decay=weight_decay, ema_decay=ema_decay)
 
         if self.discrete:

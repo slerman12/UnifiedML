@@ -293,8 +293,8 @@ class Rand(nn.Module):
     def repr_shape(self, *_):
         return self.size,
 
-    def forward(self, x):
-        x = torch.randn((x.shape[0], self.size), device=x.device)
+    def forward(self, *x):
+        x = torch.randn((x[0].shape[0], self.size), device=x[0].device)
         return x.uniform_() if self.uniform else x
 
 
@@ -555,6 +555,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                     model.optim.zero_grad(set_to_none=True)
 
 
+# TODO Can make differentiable; pass in value to scale
 # Increment/decrement a value in proportion to a step count and a string-formatted schedule
 def schedule(schedule, step):
     try:

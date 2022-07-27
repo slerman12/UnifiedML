@@ -17,19 +17,19 @@ import Utils
 
 class EnsembleActor(nn.Module):
     """Ensemble Pi of Gaussian or Categorical policies, generalized to discrete or continuous action spaces."""
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Pi_head=None,
-                 ensemble_size=2, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
+                 discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
-
-        self.stddev_schedule = stddev_schedule  # Standard dev for action sampling
-        self.stddev_clip = stddev_clip  # Max cutoff threshold on standard dev
 
         self.discrete = discrete
         self.num_actions = action_spec.num_actions or 1  # n, or undefined n'
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
         self.low, self.high = (action_spec.low, action_spec.high) if discrete or not action_spec.discrete else (0, 0)
+
+        # Standard dev value, max cutoff clip for action sampling
+        self.stddev_schedule, self.stddev_clip = stddev_schedule, stddev_clip
 
         in_dim = math.prod(repr_shape)
 
@@ -39,6 +39,7 @@ class EnsembleActor(nn.Module):
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
         out_dim = self.num_actions * self.action_dim
 
+        # Ensemble
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
@@ -56,7 +57,7 @@ class EnsembleActor(nn.Module):
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
-            stddev = torch.exp(log_stddev)  # [b, e, n, d]
+            stddev = log_stddev.exp()  # [b, e, n, d]
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 

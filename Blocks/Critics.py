@@ -14,27 +14,31 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    """Ensemble Q-learning, generalized to any-size ensemble and discrete or continuous action spaces."""
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Q_head=None,
-                 generate=False, ensemble_size=2, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+    """Ensemble Q-learning, generalized to any-size ensembles and discrete or continuous action spaces."""
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Q_head=None, ensemble_size=2,
+                 discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
-        self.generate = generate
         self.num_actions = action_spec.num_actions or 1  # n, or undefined n'
         self.action_dim = math.prod(action_spec.shape)  # d
 
         self.low, self.high = (action_spec.low, action_spec.high) if discrete else (None,) * 2
 
+        # Discrete critic always requires observation
+        self.ignore_obs = ignore_obs and not discrete
+
         in_dim = math.prod(repr_shape)
 
-        if not generate:
-            self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
-                nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
+            nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore obs!
 
-        in_shape = action_spec.shape if generate else [trunk_dim + (0 if discrete
-                                                                    else self.num_actions * self.action_dim)]
+        in_dim = math.prod(Utils.cnn_feature_shape(repr_shape, self.trunk))  # Will be trunk_dim if possible
+
+        # Continuous Critic gets (obs, action) as input
+        in_shape = action_spec.shape if ignore_obs else [in_dim + (0 if discrete
+                                                                   else self.num_actions * self.action_dim)]
         out_dim = self.num_actions * self.action_dim if discrete else 1
 
         # Ensemble
@@ -55,9 +59,9 @@ class EnsembleQCritic(nn.Module):
             self.ema = copy.deepcopy(self).eval()
 
     def forward(self, obs, action=None, All_Qs=None):
-        batch_size = len(obs)
+        batch_size = obs.shape[0]
 
-        h = action if self.generate \
+        h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
 
         if self.discrete:
@@ -71,10 +75,8 @@ class EnsembleQCritic(nn.Module):
                 # All actions
                 action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d or n', d]
 
-            ind = self.to_indices(action)
-
             # Q values for discrete action(s)
-            Qs = Utils.gather(All_Qs, ind, -2, -2).mean(-1)  # [b, e, n']
+            Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n']
         else:
             assert action is not None, f'action needed by continuous action-space Critic.'
 
