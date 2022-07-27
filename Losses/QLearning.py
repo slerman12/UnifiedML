@@ -20,7 +20,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
     # Compute Bellman target
     with torch.no_grad():
         # Current reward
-        target_q = reward
+        target_Q = reward
 
         # Future action and Q-values
         next_action = All_Next_Qs = None
@@ -51,20 +51,20 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             #     next_action_log_probs = next_Pi.log_prob(next_action).sum(-1, keepdim=True).flatten(1)
 
             # Q-values per action
-            next_Q = critic.ema(next_obs, next_action, All_Next_Qs)
-            next_q = next_Q.mean.min(1)[0]  # Min-reduced ensemble
+            next_Qs = critic.ema(next_obs, next_action, All_Next_Qs)
+            next_q = next_Qs.mean.min(1)[0]  # Min-reduced ensemble
 
             # Weigh each action's Q-value by its probability
             next_v = torch.zeros_like(discount)
             next_probs = torch.softmax(next_q - next_q.max(-1, keepdim=True)[0], -1)
             next_v[has_future] = torch.sum(next_q * next_probs, -1, keepdim=True)
 
-            target_q += discount * next_v
+            target_Q += discount * next_v
 
-    Q = critic(obs, action)
+    Qs = critic(obs, action)  # Q-ensemble
 
     # Temporal difference (TD) error (via MSE, but could also use Huber)
-    q_loss = F.mse_loss(Q.mean, target_q.expand_as(Q.mean))
+    q_loss = F.mse_loss(Qs, target_Q.expand_as(Qs))
 
     # REMOVED
     # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf
@@ -75,8 +75,8 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
 
     if logs is not None:
         logs['temporal_difference_error'] = q_loss
-        logs.update({f'q{i}': Q.mean[:, i].median() for i in range(Q.mean.shape[1])})
-        logs['target_q'] = target_q.mean()
+        logs.update({f'q{i}': Qs[:, i].median() for i in range(Qs.shape[1])})
+        logs['target_q'] = target_Q.mean()
         # logs['q_loss'] = q_loss.mean()
 
     return q_loss

@@ -132,7 +132,7 @@ class DQNAgent(torch.nn.Module):
                 # "Explore phase"
 
                 if self.step < self.explore_steps and not self.generate:
-                    action = action.uniform_(actor.low, actor.high)  # Env will automatically round if discrete
+                    action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
             return action
 

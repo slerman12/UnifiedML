@@ -14,8 +14,7 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    """Ensemble Q-learning, generalized to any-size ensemble and discrete or continuous action spaces. Uniquely,
-    returns a Gaussian distribution Q over the ensemble."""
+    """Ensemble Q-learning, generalized to any-size ensemble and discrete or continuous action spaces."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, discrete, trunk=None, Q_head=None,
                  ensemble_size=2, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
@@ -58,7 +57,7 @@ class EnsembleQCritic(nn.Module):
         batch_size = obs.shape[0]
 
         h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
-            else self.trunk(obs)
+            else self.trunk(obs)  # TODO Could set Generative trunk as Rand, and Eyes/pool as Identity?
 
         if self.discrete:
             assert hasattr(self, 'action') or action is not None, 'Continuous Env: action needed by discrete Critic.'
@@ -83,11 +82,13 @@ class EnsembleQCritic(nn.Module):
             # Q-values for continuous action(s)
             Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
 
-        # Dist
-        stddev, mean = torch.std_mean(Qs, dim=1)
-        Q = torch.distributions.Normal(mean, stddev.nan_to_num() + 1e-8)
+        # # Uniquely, returns a Gaussian distribution over the Ensemble
+        # stddev, mean = torch.std_mean(Qs, dim=1)
+        # Q = torch.distributions.Normal(mean, stddev.nan_to_num() + 1e-8)
+        #
+        # setattr(Q, 'Qs', Qs)  TODO Then can include this
 
-        return Q
+        return Qs
 
     def normalize(self, action):
         return action / (self.num_actions - 1) * (self.high - self.low) + self.low if self.low or self.high \

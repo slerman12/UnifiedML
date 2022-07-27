@@ -12,10 +12,11 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
     # if one_hot:
     #     action = Utils.rone_hot(action, null_value=-1)
 
-    Q = critic(obs, action)
-    q, _ = Q.mean.min(1)
+    Qs = critic(obs, action)
+    q = Qs.min(1)[0]
 
-    q = reward + q * discount
+    # q = reward + q * discount
+    # q *= discount
 
     # REMOVED
     # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf
@@ -29,6 +30,6 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discou
     if logs is not None:
         logs['policy_loss'] = policy_loss
         logs['policy_prob'] = Pi.log_prob(action).exp().mean()
-        logs['policy_q_stddev'] = Q.stddev.mean()
+        # logs['policy_q_stddev'] = Qs.std(1)
 
     return policy_loss
