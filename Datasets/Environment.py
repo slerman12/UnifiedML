@@ -5,7 +5,7 @@
 import time
 from math import inf
 
-from hydra.utils import instantiate
+from Utils import instantiate, to_torch
 
 
 class Environment:
@@ -50,9 +50,9 @@ class Environment:
             action = agent.act(obs)
 
             if not self.generate:
-                exp = self.env.step(action.cpu().numpy())  # Experience
+                exp = self.env.step(create(action, agent, self.env))  # Experience
 
-            exp.step = agent.step
+            exp.update({'action': action, 'step': agent.step})  # Save Agent's action, step
             experiences.append(exp)
 
             if vlog or self.generate:
@@ -98,3 +98,14 @@ class Environment:
             self.daybreak = sundown
 
         return experiences, logs, video_image
+
+
+# Creator Part II
+def create(action, agent, env):
+    if agent.discrete or not (env.action_spec['discrete'] or agent.training):
+        return action  # Discrete -> Discrete, Discrete -> Continuous, or Continuous -> Continuous
+
+    Qs = action.flatten(-2)
+    actions = to_torch(([range(Qs.shape[-1])],), device=Qs.device)[0]
+
+    return getattr(agent, 'creator', agent.action_selector)(actions, agent.step, Qs).sample()  # Continuous -> Discrete

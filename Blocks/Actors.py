@@ -6,7 +6,7 @@ import math
 import copy
 
 import torch
-from torch import nn
+from torch import nn, as_tensor
 
 from Distributions import TruncatedNormal, NormalizedCategorical
 
@@ -39,7 +39,6 @@ class EnsembleActor(nn.Module):
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
         out_dim = self.num_actions * self.action_dim
 
-        # Ensemble
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
@@ -64,6 +63,7 @@ class EnsembleActor(nn.Module):
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble [b, n, d]
+            # temp, logits = torch.std_mean(mean, dim=1)  # Ensemble-based exploration [b, n, d]
 
             Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
 
@@ -87,7 +87,8 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
     def forward(self, action, step, Qs):
         # Q-values per action
-        q = Qs.mean(1)  # Mean-reduced ensemble
+        q = Qs if len(Qs.shape) < 3 \
+            else Qs.mean(1)  # Mean-reduced ensemble
 
         # Normalize
         q -= q.max(-1, keepdim=True)[0]
@@ -96,7 +97,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         temp = Utils.schedule(self.temp_schedule, step)
 
         # Categorical dist
-        Psi = torch.distributions.Categorical(logits=q / temp)
+        Psi = torch.distributions.Categorical(logits=q / temp)  # TODO Ensemble-based exploration
 
         # Highest Q-value
         _, best_ind = q.max(-1)
