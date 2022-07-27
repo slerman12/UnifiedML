@@ -79,50 +79,83 @@ class EnsembleActor(nn.Module):
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
-    """
-    Aggregates over continuous or discrete actions based on critic Q-values
-    """
-    def __init__(self, entropy_schedule=1):
+    """Selects over actions based on Q-values."""
+    def __init__(self, temp_schedule=1):
         super().__init__()
 
-        self.entropy_schedule = entropy_schedule
+        self.temp_schedule = temp_schedule
 
-    def forward(self, Qs, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
-        # q = Q.rsample() if sample_q \
-        #     else Q.mean if hasattr(Q, 'mean') else Q.best  # Sample q or mean
-        q = Qs.mean(1)
+    def forward(self, action, step, Qs):
+        # Q-values per action
+        q = Qs.mean(1)  # Mean-reduced ensemble
 
-        # Exploit via Q-value vs. explore via Q-stddev (EXPERIMENTAL!), off by default
-        # Uncertainty as exploration heuristic
-        u = exploit_temp * q + (1 - exploit_temp) * Qs.std(1)
-        u_logits = u - u.max(dim=-1, keepdim=True)[0]
+        # Normalize
+        q -= q.max(-1, keepdim=True)[0]
 
-        # Entropy of action selection
-        entropy_temp = Utils.schedule(self.entropy_schedule, step)
+        # Softmax temperature
+        temp = Utils.schedule(self.temp_schedule, step)
 
-        # Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp + action_log_prob)
-        Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp)
+        # Categorical dist
+        Psi = torch.distributions.Categorical(logits=q / temp)
 
-        best_u, best_ind = torch.max(u, -1)
-        # best_action = Utils.gather(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
-        best_action = Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1)
+        # Highest Q-value
+        _, best_ind = q.max(-1)
 
-        sample = Psi.sample
+        # Action corresponding to highest Q-value
+        setattr(Psi, 'best', Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1))
 
-        def action_sampler(sample_shape=torch.Size()):
-            i = sample(sample_shape)
-            return Utils.gather(Q.action if action is None else action, i.unsqueeze(-1), 1).squeeze(1)
+        # Action sampling
+        sampler = Psi.sample
+        Psi.sample = lambda: Utils.gather(action, sampler().unsqueeze(-1), 1).squeeze(1)
 
-        Psi.__dict__.update({'best': best_action,
-                             'best_u': best_u,
-                             'sample_ind': sample,
-                             'sample': lambda x=torch.Size(): action_sampler(x).detach(),
-                             'rsample': action_sampler,
-                             'Qs': Qs,
-                             'q': q,
-                             'action': action,
-                             'u': u})
         return Psi
+
+
+# class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
+#     """
+#     Aggregates over continuous or discrete actions based on critic Q-values
+#     """
+#     def __init__(self, entropy_schedule=1):
+#         super().__init__()
+#
+#         self.entropy_schedule = entropy_schedule
+#
+#     def forward(self, Qs, step=None, exploit_temp=1, sample_q=False, action=None, action_log_prob=0):
+#         # q = Q.rsample() if sample_q \
+#         #     else Q.mean if hasattr(Q, 'mean') else Q.best  # Sample q or mean
+#         q = Qs.mean(1)
+#
+#         # Exploit via Q-value vs. explore via Q-stddev (EXPERIMENTAL!), off by default
+#         # Uncertainty as exploration heuristic
+#         u = exploit_temp * q + (1 - exploit_temp) * Qs.std(1)
+#         u_logits = u - u.max(dim=-1, keepdim=True)[0]
+#
+#         # Entropy of action selection
+#         entropy_temp = Utils.schedule(self.entropy_schedule, step)
+#
+#         # Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp + action_log_prob)
+#         Psi = torch.distributions.Categorical(logits=u_logits / entropy_temp)
+#
+#         best_u, best_ind = torch.max(u, -1)
+#         # best_action = Utils.gather(Q.action if action is None else action, best_ind.unsqueeze(-1), 1).squeeze(1)
+#         best_action = Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1)
+#
+#         sample = Psi.sample
+#
+#         def action_sampler(sample_shape=torch.Size()):
+#             i = sample(sample_shape)
+#             return Utils.gather(Q.action if action is None else action, i.unsqueeze(-1), 1).squeeze(1)
+#
+#         Psi.__dict__.update({'best': best_action,
+#                              'best_u': best_u,
+#                              'sample_ind': sample,
+#                              'sample': lambda x=torch.Size(): action_sampler(x).detach(),
+#                              'rsample': action_sampler,
+#                              'Qs': Qs,
+#                              'q': q,
+#                              'action': action,
+#                              'u': u})
+#         return Psi
 
 
 # class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"

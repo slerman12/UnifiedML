@@ -44,14 +44,14 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        # RL -> generate conversion
+        # RL -> generate conversion TODO default discrete envs to discrete=${not:${generate}}
         if generate:
             self.RL = True
 
             # action_spec.num_actions = obs_spec.discrete_bins if discrete else 1
             # action_spec.num_actions = 255 if discrete else None  TODO action_spec = obs_spec, that's it
 
-            # Action <- Imagined Obs
+            # Action = Imagined Obs
             action_spec.num_actions = None
             action_spec.shape = obs_spec.shape  # Action Shape <- Obs Shape
             action_spec.low, action_spec.high, action_spec.discrete = -1, 1, False  # Action in range [-1, 1]
@@ -73,7 +73,7 @@ class DQNAgent(torch.nn.Module):
         # # Continuous -> discrete conversion
         if discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
-                                         'divvy up the action space into discrete bins, or specify "discrete=false".'
+                                         'divide the action space into discrete bins, or specify "discrete=false".'
 
             action_spec.num_actions = self.num_actions  # Continuous env has no discrete bins by default, must specify
 
@@ -137,7 +137,7 @@ class DQNAgent(torch.nn.Module):
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action=action).best  # TODO
+                    action = self.action_selector(action, self.step, critic(obs, action, All_Qs)).best  # TODO
 
                 self.step += 1
                 self.frame += len(obs)
