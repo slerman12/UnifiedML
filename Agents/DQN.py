@@ -53,7 +53,7 @@ class DQNAgent(torch.nn.Module):
 
         # RL -> generate conversion
         if generate:
-            action_spec.shape = obs_spec.shape
+            action_spec.shape, action_spec.discrete = obs_spec.shape, False
             action_spec.low, action_spec.high, action_spec.num_actions = -1, 1, 1
             recipes.encoder.Eyes = Utils.Rand(trunk_dim)  # Generate gets random noise as input instead of Eyes
 
