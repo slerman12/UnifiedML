@@ -44,6 +44,10 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
+        # Image augmentation
+        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
+                                                      else RandomShiftsAug(pad=4))
+
         # RL -> generate conversion TODO default discrete envs to discrete=${not:${generate}}
         if generate:
             self.RL = True
@@ -58,8 +62,8 @@ class DQNAgent(torch.nn.Module):
 
             standardize, norm = False, True  # Obs in range [-1, 1]
 
-            # "Imagine" an observation randomly
-            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for Eyes to see
+            # "Imagine" a random observation
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
         self.num_actions = num_actions or action_spec.num_actions or 1
@@ -73,7 +77,7 @@ class DQNAgent(torch.nn.Module):
         # # Continuous -> discrete conversion
         if discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
-                                         'divide the action space into discrete bins, or specify "discrete=false".'
+                                         'divide each action dimension into discrete bins, or specify "discrete=false".'
 
             action_spec.num_actions = self.num_actions  # Continuous env has no discrete bins by default, must specify
 
@@ -107,10 +111,6 @@ class DQNAgent(torch.nn.Module):
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
 
-        # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
-                                                      else RandomShiftsAug(pad=4))
-
         # Birth
 
     def act(self, obs):
@@ -137,14 +137,13 @@ class DQNAgent(torch.nn.Module):
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                    action = self.action_selector(action, self.step, critic(obs, action, All_Qs)).best  # TODO
+                    action = self.action_selector(action, self.step, critic(obs, action, All_Qs)).best
 
                 self.step += 1
                 self.frame += len(obs)
 
-                # "Explore phase"
-
                 if self.step < self.explore_steps and not self.generate:
+                    # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
             return action

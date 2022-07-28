@@ -6,7 +6,7 @@ import math
 import copy
 
 import torch
-from torch import nn, as_tensor
+from torch import nn
 
 from Distributions import TruncatedNormal, NormalizedCategorical
 
