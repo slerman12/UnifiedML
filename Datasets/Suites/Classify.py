@@ -163,6 +163,8 @@ class Classify:
         self.evaluate_episodes = len(self.batches)
 
     def step(self, action):
+        # To CPU/Numpy
+        action = action.cpu().numpy()
         # Adapt to discrete!
         action = self.adapt_to_discrete(action)
 

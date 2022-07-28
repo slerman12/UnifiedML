@@ -116,14 +116,17 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
+        # To CPU/Numpy
+        action = action.cpu().numpy()
+
         # Adapt to discrete!
-        _action = self.adapt_to_discrete(action)
-        _action.shape = self.action_spec['shape']
+        action = self.adapt_to_discrete(action)
+        action.shape = self.action_spec['shape']
 
         # Step env
         reward = 0
         for _ in range(self.action_repeat):
-            obs, _reward, self.episode_done, info = self.env.step(int(_action))  # Atari requires scalar int action
+            obs, _reward, self.episode_done, info = self.env.step(int(action))  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame
