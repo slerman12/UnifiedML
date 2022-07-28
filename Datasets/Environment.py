@@ -51,7 +51,7 @@ class Environment:
             action = agent.act(obs)
 
             if not self.generate:
-                exp = self.env.step(create(action, agent, self.env))  # Experience
+                exp = self.env.step(action)  # Experience
 
             exp.update({'action': action.cpu().numpy(), 'step': agent.step})  # Save Agent's action, step
             experiences.append(exp)
@@ -101,7 +101,7 @@ class Environment:
         return experiences, logs, video_image
 
 
-# Creator Part II
+# Creator - environment
 def create(action, agent, env):
     if agent.discrete or not (env.action_spec['discrete'] or agent.training):
         return action  # Discrete -> Discrete, Discrete -> Continuous, or Continuous -> Continuous

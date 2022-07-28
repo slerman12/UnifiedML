@@ -35,7 +35,7 @@ class DQNAgent(torch.nn.Module):
         # self.classify = action_spec.discrete  # Including classification and regression...
         self.RL = RL
         # self.imitate = imitate
-        self.generate = generate  # And generative modeling, too  # TODO Can be discrete, don't ignore obs, num_acts=255
+        self.generate = generate  # And generative modeling, too
         self.device = device
         self.log = log
         self.birthday = time.time()

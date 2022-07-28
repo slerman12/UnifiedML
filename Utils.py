@@ -283,11 +283,12 @@ class Ensemble(nn.Module):
         return len(self.ensemble)
 
 
-# Replaces tensor's batch items with Normal-sampled random latent TODO Pass as Eyes for generate, repr_shape, ->./Blocks
+# Replaces tensor's batch items with Normal-sampled random latent
 class Rand(nn.Module):
     def __init__(self, size=1, uniform=False):
         super().__init__()
-        self.size = size  # TODO input_shape
+
+        self.size = size
         self.uniform = uniform
 
     def repr_shape(self, *_):
@@ -295,7 +296,11 @@ class Rand(nn.Module):
 
     def forward(self, *x):
         x = torch.randn((x[0].shape[0], self.size), device=x[0].device)
-        return x.uniform_() if self.uniform else x
+
+        if self.uniform:
+            x.uniform_()
+
+        return x
 
 
 # (Multi-dim) one-hot encoding
@@ -355,7 +360,7 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
 
     Relative coordinates, assume "dim" = "ind_dim":
-    item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j] for any i ≤ N + 1, j ≤ M + 1
+    item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j], i ≤ N + 1, j ≤ M + 1
     --> [0, ..., N, "ind_dim", N + 2, ..., M]
     """
 
