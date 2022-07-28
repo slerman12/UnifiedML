@@ -5,8 +5,8 @@
 import time
 from math import inf
 
-from Utils import instantiate, to_torch
-# from hydra.utils import instantiate
+# from Utils import instantiate, to_torch
+from hydra.utils import instantiate
 
 
 class Environment:
@@ -51,9 +51,9 @@ class Environment:
             action = agent.act(obs)
 
             if not self.generate:
-                exp = self.env.step(action)  # Experience
+                exp = self.env.step(action.cpu().numpy())  # Experience  TODO, agent.stddev?, no cpu in suite
 
-            exp.update({'action': action.cpu().numpy(), 'step': agent.step})  # Save Agent's action, step
+            exp.step = agent.step  # TODO then don't need this, can do exp.action = action?
             experiences.append(exp)
 
             if vlog or self.generate:
@@ -102,11 +102,20 @@ class Environment:
 
 
 # Creator - environment
-def create(action, agent, env):
-    if agent.discrete or not (env.action_spec['discrete'] or agent.training):
-        return action  # Discrete -> Discrete, Discrete -> Continuous, or Continuous -> Continuous
+# def create(action, agent, env):
+#     if agent.discrete or not (env.action_spec['discrete'] or agent.training):
+#         return action  # Discrete -> Discrete, Discrete -> Continuous, or Continuous -> Continuous
+#
+#     Qs = action.flatten(-2)
+#     print(Qs.shape)
+#     actions = to_torch(([range(Qs.shape[-1])],), device=Qs.device)[0]
+#
+#     return getattr(agent, 'creator', agent.action_selector)(actions, agent.step, Qs).sample()  # Continuous -> Discrete
 
-    Qs = action.flatten(-2)
-    actions = to_torch(([range(Qs.shape[-1])],), device=Qs.device)[0]
 
-    return getattr(agent, 'creator', agent.action_selector)(actions, agent.step, Qs).sample()  # Continuous -> Discrete
+# Creator - environment  TODO move to creator? No cretaor, suite, takes step as arg, samples or argmaxes!
+# def create(Qs, step, action=None): # Qs first
+#     Qs = Qs.flatten(2)
+#
+#     if action is None:
+#         action = to_torch(([range(Qs.shape[-1])],), device=Qs.device)[0]

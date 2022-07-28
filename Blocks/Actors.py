@@ -39,6 +39,7 @@ class EnsembleActor(nn.Module):
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
         out_dim = self.num_actions * self.action_dim
 
+        # Ensemble
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
                                        or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
 
@@ -87,8 +88,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
     def forward(self, action, step, Qs):
         # Q-values per action
-        q = Qs if len(Qs.shape) < 3 \
-            else Qs.mean(1)  # Mean-reduced ensemble
+        q = Qs.mean(1)  # Mean-reduced ensemble
 
         # Normalize
         q -= q.max(-1, keepdim=True)[0]

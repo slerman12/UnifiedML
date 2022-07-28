@@ -6,6 +6,8 @@ from collections import deque
 
 import warnings
 
+import torch
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import gym
@@ -44,10 +46,11 @@ class Atari:
     Can optionally include a frame_stack, action_repeat method.
 
     """
-    def __init__(self, task='pong', seed=0, frame_stack=3, action_repeat=4,
+    def __init__(self, task='pong', train=True, seed=0, frame_stack=3, action_repeat=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
                  last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.episode_done = False
+        self.train = train
 
         # Make env
 
@@ -116,17 +119,14 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # To CPU/Numpy
-        action = action.cpu().numpy()
-
         # Adapt to discrete!
-        action = self.adapt_to_discrete(action)
-        action.shape = self.action_spec['shape']
+        _action = self.adapt_to_discrete(action)
+        _action.shape = self.action_spec['shape']
 
         # Step env
         reward = 0
         for _ in range(self.action_repeat):
-            obs, _reward, self.episode_done, info = self.env.step(int(action))  # Atari requires scalar int action
+            obs, _reward, self.episode_done, info = self.env.step(int(_action))  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame
@@ -233,7 +233,11 @@ class Atari:
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
                                    f'to expected batch-action shape {(-1, *shape)}')
-            action = action.argmax(1)
+
+            # Argmax
+            # Sample or argmax
+            action = torch.distributions.Categorical(logits=torch.from_numpy(action.squeeze())).sample().cpu().numpy() if self.train \
+                else action.argmax(1)
 
         return action
 
