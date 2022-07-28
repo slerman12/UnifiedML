@@ -5,7 +5,6 @@
 import time
 from math import inf
 
-# from Utils import instantiate, to_torch
 from hydra.utils import instantiate
 
 
@@ -51,9 +50,9 @@ class Environment:
             action = agent.act(obs)
 
             if not self.generate:
-                exp = self.env.step(action.cpu().numpy())  # Experience  TODO, agent.stddev?, no cpu in suite
+                exp = self.env.step(create(action, agent, self.env))  # Experience
 
-            exp.step = agent.step  # TODO then don't need this, can do exp.action = action?
+            exp.step = agent.step
             experiences.append(exp)
 
             if vlog or self.generate:
@@ -101,21 +100,8 @@ class Environment:
         return experiences, logs, video_image
 
 
-# Creator - environment
-# def create(action, agent, env):
-#     if agent.discrete or not (env.action_spec['discrete'] or agent.training):
-#         return action  # Discrete -> Discrete, Discrete -> Continuous, or Continuous -> Continuous
-#
-#     Qs = action.flatten(-2)
-#     print(Qs.shape)
-#     actions = to_torch(([range(Qs.shape[-1])],), device=Qs.device)[0]
-#
-#     return getattr(agent, 'creator', agent.action_selector)(actions, agent.step, Qs).sample()  # Continuous -> Discrete
-
-
-# Creator - environment  TODO move to creator? No cretaor, suite, takes step as arg, samples or argmaxes!
-# def create(Qs, step, action=None): # Qs first
-#     Qs = Qs.flatten(2)
-#
-#     if action is None:
-#         action = to_torch(([range(Qs.shape[-1])],), device=Qs.device)[0]
+# Converts Continuous to Discrete if necessary (see Paper section  <link>)
+def create(action, agent, env):
+    return action if agent.discrete or not (env.action_spec['discrete'] or agent.training) \
+        else getattr(agent, 'creator',  # Creator goes under many different names
+                     agent.action_selector)(action.unsqueeze(1), agent.step).sample()  # Continuous -> Discrete

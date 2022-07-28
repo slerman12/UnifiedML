@@ -46,11 +46,10 @@ class Atari:
     Can optionally include a frame_stack, action_repeat method.
 
     """
-    def __init__(self, task='pong', train=True, seed=0, frame_stack=3, action_repeat=4,
+    def __init__(self, task='pong', seed=0, frame_stack=3, action_repeat=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
                  last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
         self.episode_done = False
-        self.train = train
 
         # Make env
 
@@ -119,6 +118,8 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
+        # To CPU/Numpy
+        action = action.cpu().numpy()
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
         _action.shape = self.action_spec['shape']
@@ -233,11 +234,7 @@ class Atari:
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
                                    f'to expected batch-action shape {(-1, *shape)}')
-
-            # Argmax
-            # Sample or argmax
-            action = torch.distributions.Categorical(logits=torch.from_numpy(action.squeeze())).sample().cpu().numpy() if self.train \
-                else action.argmax(1)
+            action = action.argmax(1)
 
         return action
 

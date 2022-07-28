@@ -163,6 +163,8 @@ class Classify:
         self.evaluate_episodes = len(self.batches)
 
     def step(self, action):
+        # To CPU/Numpy
+        action = action.cpu().numpy()
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
 
@@ -276,8 +278,6 @@ class Classify:
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
                                    f'to expected batch-action shape {(-1, *shape)}')
-
-            # Sample or argmax
             action = action.argmax(1)
 
         return action

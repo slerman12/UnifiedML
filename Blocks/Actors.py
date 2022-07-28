@@ -86,7 +86,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
 
         self.temp_schedule = temp_schedule
 
-    def forward(self, action, step, Qs):
+    def forward(self, Qs, step=None, action=None):
         # Q-values per action
         q = Qs.mean(1)  # Mean-reduced ensemble
 
@@ -94,7 +94,7 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         q -= q.max(-1, keepdim=True)[0]
 
         # Softmax temperature
-        temp = Utils.schedule(self.temp_schedule, step)
+        temp = Utils.schedule(self.temp_schedule, step) if step else 1
 
         # Categorical dist
         Psi = torch.distributions.Categorical(logits=q / temp)  # TODO Ensemble-based exploration
@@ -103,11 +103,11 @@ class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
         _, best_ind = q.max(-1)
 
         # Action corresponding to highest Q-value
-        setattr(Psi, 'best', Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1))
+        setattr(Psi, 'best', best_ind if action is None else Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1))
 
         # Action sampling
         sampler = Psi.sample
-        Psi.sample = lambda: Utils.gather(action, sampler().unsqueeze(-1), 1).squeeze(1)
+        Psi.sample = sampler if action is None else lambda: Utils.gather(action, sampler().unsqueeze(-1), 1).squeeze(1)
 
         return Psi
 
