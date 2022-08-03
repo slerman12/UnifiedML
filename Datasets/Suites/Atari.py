@@ -118,8 +118,6 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # To CPU/Numpy
-        action = action.cpu().numpy()
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
         _action.shape = self.action_spec['shape']

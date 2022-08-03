@@ -63,7 +63,7 @@ class EnsembleActor(nn.Module):
 
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble [b, n, d]
+            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble st. dev [b, n, d]
             # temp, logits = torch.std_mean(mean, dim=1)  # Ensemble-based exploration [b, n, d]
 
             Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)

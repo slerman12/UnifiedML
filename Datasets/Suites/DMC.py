@@ -108,8 +108,6 @@ class DMC:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # To CPU/Numpy
-        action = action.cpu().numpy()
         # To float
         action = action.astype(np.float32)
         # Remove batch dim, adapt shape

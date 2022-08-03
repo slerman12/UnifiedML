@@ -14,7 +14,7 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    """Ensemble Q-learning, generalized to any-size ensembles and discrete or continuous action spaces."""
+    """Ensemble Q-learning, generalized to discrete or continuous action spaces."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Q_head=None, ensemble_size=2,
                  discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
@@ -28,24 +28,25 @@ class EnsembleQCritic(nn.Module):
 
         # Discrete critic always requires observation
         self.ignore_obs = ignore_obs and not discrete
+        # assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
 
         in_dim = math.prod(repr_shape)
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore obs!
 
-        in_dim = math.prod(Utils.cnn_feature_shape(repr_shape, self.trunk))  # Will be trunk_dim if possible
+        in_dim = math.prod(Utils.cnn_feature_shape(repr_shape, self.trunk))  # Will be trunk_dim if possible TODO need?
 
-        # Continuous Critic gets (obs, action) as input
+        # Continuous action-space Critic gets (obs, action) as input TODO Note: not the most adaptive
         in_shape = action_spec.shape if ignore_obs else [in_dim + (0 if discrete
                                                                    else self.num_actions * self.action_dim)]
-        out_dim = self.num_actions * self.action_dim if discrete else 1
+        out_dim = self.num_actions * self.action_dim if discrete else 1  # TODO Perhaps just move up under in_dim
 
         # Ensemble
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
                                       MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
-        # Discrete actions are known a priori
+        # Discrete actions are known a priori  TODO maybe comment out - assume d = 1
         if discrete and action_spec.discrete:
             action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim).view(-1, self.action_dim)
 
@@ -65,7 +66,7 @@ class EnsembleQCritic(nn.Module):
             else self.trunk(obs)
 
         if self.discrete:
-            assert hasattr(self, 'action') or action is not None, 'Continuous Env: action needed by discrete Critic.'
+            assert hasattr(self, 'action') or action is not None, 'Continuous Env: action is needed by discrete Critic.'
 
             if All_Qs is None:
                 # All actions' Q-values
@@ -78,7 +79,7 @@ class EnsembleQCritic(nn.Module):
             # Q values for discrete action(s)
             Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n']
         else:
-            assert action is not None, f'action needed by continuous action-space Critic.'
+            assert action is not None, f'action is needed by continuous action-space Critic.'
 
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 

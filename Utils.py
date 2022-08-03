@@ -50,11 +50,11 @@ def init(args):
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
-# Allow recipes config to accept objects
+# Allow recipes config to accept objects as args
 OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
 
 
-# Saves model + args + attributes
+# Saves model + args + selected attributes
 def save(path, model, args, *attributes):
     root, name = path.rsplit('/', 1)
     Path(root).mkdir(exist_ok=True, parents=True)
@@ -560,7 +560,6 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                     model.optim.zero_grad(set_to_none=True)
 
 
-# TODO Can make differentiable; pass in value to scale
 # Increment/decrement a value in proportion to a step count and a string-formatted schedule
 def schedule(schedule, step):
     try:
