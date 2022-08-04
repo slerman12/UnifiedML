@@ -18,8 +18,8 @@ import torch
 import torch.nn as nn
 from torch.optim import *
 from torch.optim.lr_scheduler import *
-from torch.nn import Identity, Flatten  # For direct accessibility via command line
 
+from torch.nn import Identity, Flatten  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 
 
@@ -47,7 +47,7 @@ def init(args):
 
 
 # Format path names
-# e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+# e.g. "Checkpoints/Agents.DQNAgent" -> "Checkpoints/DQNAgent"
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 # Allow recipes config to accept objects as args
@@ -430,22 +430,22 @@ class Sequential(nn.Module):
         return self.Sequence(obs)
 
 
-# Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
-class AddChannelDim(nn.Module):
-    def repr_shape(self, *_):
-        return 1, *_
-
-    def forward(self, x):
-        return x.unsqueeze(1)
-
-
-# Adds a spatial dimension to a 1D input, treating 1D as channels (channels-first)
-class AddSpatialDim(nn.Module):
-    def repr_shape(self, *_):
-        return *_, 1
-
-    def forward(self, x):
-        return x.unsqueeze(-1)
+# # Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
+# class AddChannelDim(nn.Module):
+#     def repr_shape(self, *_):
+#         return 1, *_
+#
+#     def forward(self, x):
+#         return x.unsqueeze(1)
+#
+#
+# # Adds a spatial dimension to a 1D input, treating 1D as channels (channels-first)
+# class AddSpatialDim(nn.Module):
+#     def repr_shape(self, *_):
+#         return *_, 1
+#
+#     def forward(self, x):
+#         return x.unsqueeze(-1)
 
 
 # Swaps image dims between channel-last and channel-first format

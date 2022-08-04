@@ -35,7 +35,7 @@ class DQNAgent(torch.nn.Module):
         # self.classify = action_spec.discrete  # Including classification and regression...
         self.RL = RL
         # self.imitate = imitate
-        self.generate = generate  # And generative modeling, too
+        self.generate = generate  # And generative modeling, too  TODO continuous only
         self.device = device
         self.log = log
         self.birthday = time.time()
@@ -51,18 +51,18 @@ class DQNAgent(torch.nn.Module):
         # RL -> generate conversion TODO default discrete envs to discrete=${not:${generate}}
         if generate:
             self.RL = True
+            self.discrete = discrete = action_spec.discrete = False
 
             # action_spec.num_actions = obs_spec.discrete_bins if discrete else 1
             # action_spec.num_actions = 255 if discrete else None  TODO action_spec = obs_spec, that's it
 
-            # Action = Imagined Obs
-            action_spec.num_actions = None
+            # Action = Imagined Obs  TODO action_spec.num_actions should be called .discrete_bins, add to obs_spec
             action_spec.shape = obs_spec.shape  # Action Shape <- Obs Shape
-            action_spec.low, action_spec.high, action_spec.discrete = -1, 1, False  # Action in range [-1, 1]
+            action_spec.num_actions = None  # No discretization
+            action_spec.low, action_spec.high = -1, 1  # Generate Action in continuous range [-1, 1]
 
-            standardize, norm = False, True  # Obs in range [-1, 1]
+            standardize, norm = False, True  # Normalize Obs to range [-1, 1]
 
-            # "Imagine" a random observation
             recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
@@ -76,6 +76,7 @@ class DQNAgent(torch.nn.Module):
 
         # # Continuous -> discrete conversion
         if discrete:
+            # TODO move assert to critic?
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'
 
@@ -101,8 +102,8 @@ class DQNAgent(torch.nn.Module):
             recipes.critic.trunk = self.actor.trunk
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
-            if not RL:
-                num_critics = 1  # Num actors
+            # if not RL:
+            #     num_critics = 1  # Num actors
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       ensemble_size=num_critics, discrete=discrete, ignore_obs=generate,

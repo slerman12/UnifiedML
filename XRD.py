@@ -115,9 +115,6 @@ class XRD(Dataset):
         self.labels = {}
 
         for i, (root, split) in enumerate(zip(roots, train_eval_splits)):
-            # if not os.path.exists(root):
-
-
             features_path = root + "features.csv"
             label_path = root + f"labels{num_classes}.csv"
 
