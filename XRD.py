@@ -1,6 +1,6 @@
 import math
-import os
 import random
+import os
 from collections.abc import Iterable
 
 import numpy as np
@@ -98,11 +98,11 @@ class MLP(nn.Module):
         return self.MLP(obs)
 
 
-# CPU-memory
 class XRD(Dataset):
     def __init__(self, roots=('../XRDs/icsd_Datasets/icsd171k_mix/',), train=True, train_eval_splits=(0.9,),
                  num_classes=7, seed=0, transform=None, spectrogram=False, **kwargs):
 
+        # Paths to data, train-test splits for each
         if not isinstance(roots, Iterable):
             roots = (roots,)
         if not isinstance(train_eval_splits, Iterable):
@@ -114,6 +114,7 @@ class XRD(Dataset):
         self.features = {}
         self.labels = {}
 
+        # Iterate through each path and split, build train and eval
         for i, (root, split) in enumerate(zip(roots, train_eval_splits)):
             features_path = root + "features.csv"
             label_path = root + f"labels{num_classes}.csv"
@@ -143,6 +144,7 @@ class XRD(Dataset):
             indices = train_indices if train else eval_indices
             self.indices += zip([i] * len(indices), list(indices))
 
+        # Augmentations
         self.transform = transform
 
         if spectrogram:
