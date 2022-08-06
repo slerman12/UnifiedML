@@ -30,10 +30,10 @@ class DQNAgent(torch.nn.Module):
                  ):
         super().__init__()
 
-        self.discrete = discrete  # Continuous supported!
+        self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
         # self.classify = action_spec.discrete  # Including classification and regression...
-        self.RL = RL
+        self.RL = RL or generate
         # self.imitate = imitate
         self.generate = generate  # And generative modeling, too  TODO continuous only
         self.device = device
@@ -50,21 +50,24 @@ class DQNAgent(torch.nn.Module):
 
         # RL -> generate conversion TODO default discrete envs to discrete=${not:${generate}}
         if generate:
-            self.RL = True
+            self.RL = RL = True
             self.discrete = discrete = action_spec.discrete = False
+
+            standardize, norm = False, True  # Normalize Obs to range [-1, 1]
+
+            # Action = Imagined Obs
+            action_spec.update({'shape': obs_spec.shape, 'num_actions': None, 'low': -1, 'high': 1})
+
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
+            recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
             # action_spec.num_actions = obs_spec.discrete_bins if discrete else 1
             # action_spec.num_actions = 255 if discrete else None  TODO action_spec = obs_spec, that's it
 
             # Action = Imagined Obs  TODO action_spec.num_actions should be called .discrete_bins, add to obs_spec
-            action_spec.shape = obs_spec.shape  # Action Shape <- Obs Shape
-            action_spec.num_actions = None  # No discretization
-            action_spec.low, action_spec.high = -1, 1  # Generate Action in continuous range [-1, 1]
-
-            standardize, norm = False, True  # Normalize Obs to range [-1, 1]
-
-            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
-            recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
+            # action_spec.shape = obs_spec.shape  # Action Shape <- Obs Shape
+            # action_spec.num_actions = None  # No discretization
+            # action_spec.low, action_spec.high = -1, 1  # Generate Action in continuous range [-1, 1]
 
         self.num_actions = num_actions or action_spec.num_actions or 1
 

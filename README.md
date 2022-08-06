@@ -130,9 +130,9 @@ conda env create --name ML --file=Conda.yml
 
 [comment]: <> (For GPU support, you may have to [pip install Pytorch]&#40;&#41; depending on your CUDA version.)
 
-Depending on your CUDA version, you may need to additionally install Pytorch with CUDA via pip from here: https://pytorch.org/get-started/locally/.
+Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from here: https://pytorch.org/get-started/locally/.
 
-*e.g.*
+As such:
 
 ```console
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
@@ -305,7 +305,7 @@ Since this is *Unified*ML, there are a couple noteworthy variations.
 
 2. Alternatively, and interestingly, ```supervise=false RL=true``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
 
-Classify environments are actually great testbeds for certain RL problems since they give near-instant and unambiguous performance feedback.
+Classify environments are actually great testbeds for certain RL problems since they give near-instant and clear performance feedback.
 
 [comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. $reward = -error$.)
 
