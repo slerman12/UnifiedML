@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleActor, CategoricalCriticActor
+from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
@@ -73,10 +73,10 @@ class SPRAgent(torch.nn.Module):
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                               ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                               lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                               ema_decay=ema_decay * ema)
+            else EnsemblePiActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                                 ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                 lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                 ema_decay=ema_decay * ema)
 
         # Dynamics
         if not generate:

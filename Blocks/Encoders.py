@@ -102,8 +102,8 @@ class CNNEncoder(nn.Module):
 
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
-    axes = (1,) * (3 - len(obs_shape))  # Spatial axes for dynamic input dims  TODO maybe add channel axis 1st if 1D
-    obs_shape = tuple(obs_shape) + axes  # TODO Does the CNN broadcast?
+    axes = (1,) * (3 - len(obs_shape))  # Spatial axes for dynamic input dims
+    obs_shape = tuple(obs_shape) + axes
 
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
         # Represent hyper-params as tuples

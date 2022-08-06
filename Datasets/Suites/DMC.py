@@ -25,7 +25,7 @@ class DMC:
     (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
-        - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
+        - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
     (7) "exp" attribute containing the latest exp
 
@@ -97,7 +97,7 @@ class DMC:
 
         self.action_spec = {'name': 'action',
                             'shape': self.env.action_spec().shape,
-                            'num_actions': None,  # Should be None for continuous
+                            'discrete_bins': None,  # Should be None for continuous
                             'low': -1,
                             'high': 1,
                             'discrete': False}

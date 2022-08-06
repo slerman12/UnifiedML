@@ -6,8 +6,6 @@ from collections import deque
 
 import warnings
 
-import torch
-
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import gym
@@ -34,7 +32,7 @@ class Atari:
     (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
-        - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
+        - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
     (7) "exp" attribute containing the latest exp
 
@@ -107,10 +105,10 @@ class Atari:
 
         self.action_spec = {'name': 'action',
                             'shape': (1,),
-                            'num_actions': self.env.action_space.n,
+                            'discrete_bins': self.env.action_space.n,
                             'low': 0,  # Should be None for discrete
-                            'high': self.env.action_space.n - 1,  # Should be None for discrete
-                            'discrete': True}  # TODO Remove?
+                            'high': self.env.action_space.n - 1,
+                            'discrete': True}  # Should be None for discrete
 
         self.exp = None
 
@@ -239,8 +237,8 @@ class Atari:
         if np.issubdtype(int, action.dtype):
             return action
 
-        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.num_actions
-        return np.round(action * self.action_spec['num_actions']) / self.action_spec['num_actions']
+        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.discrete_bins
+        return np.round(action * self.action_spec['discrete_bins']) / self.action_spec['discrete_bins']
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)

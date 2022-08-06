@@ -6,13 +6,12 @@ import time
 
 import torch
 from torch.nn.functional import cross_entropy
-# from torch.nn.functional import cross_entropy, mse_loss as mse
 
 import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleActor, CategoricalCriticActor
+from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
@@ -32,10 +31,8 @@ class DQNAgent(torch.nn.Module):
 
         self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
-        # self.classify = action_spec.discrete  # Including classification and regression...
         self.RL = RL or generate
-        # self.imitate = imitate
-        self.generate = generate  # And generative modeling, too  TODO continuous only
+        self.generate = generate  # And generative modeling, too
         self.device = device
         self.log = log
         self.birthday = time.time()
@@ -48,68 +45,46 @@ class DQNAgent(torch.nn.Module):
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
                                                       else RandomShiftsAug(pad=4))
 
-        # RL -> generate conversion TODO default discrete envs to discrete=${not:${generate}}
-        if generate:
-            self.RL = RL = True
-            self.discrete = discrete = action_spec.discrete = False
-
-            standardize, norm = False, True  # Normalize Obs to range [-1, 1]
+        # RL -> generate conversion
+        if self.generate:
+            standardize = False
+            norm = True  # Normalize Obs to range [-1, 1]
 
             # Action = Imagined Obs
-            action_spec.update({'shape': obs_spec.shape, 'num_actions': None, 'low': -1, 'high': 1})
+            action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
+                                'low': -1, 'high': 1, 'discrete': False})
 
+            # Remove encoder, replace trunk with random noise
             recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
-            # action_spec.num_actions = obs_spec.discrete_bins if discrete else 1
-            # action_spec.num_actions = 255 if discrete else None  TODO action_spec = obs_spec, that's it
-
-            # Action = Imagined Obs  TODO action_spec.num_actions should be called .discrete_bins, add to obs_spec
-            # action_spec.shape = obs_spec.shape  # Action Shape <- Obs Shape
-            # action_spec.num_actions = None  # No discretization
-            # action_spec.low, action_spec.high = -1, 1  # Generate Action in continuous range [-1, 1]
-
-        self.num_actions = num_actions or action_spec.num_actions or 1
-
-        # if self.discrete:
-        #     assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
-        #                                  'try the "num_actions=" flag (>1)'
-        #
-        #     action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
+        self.num_actions = num_actions or action_spec.discrete_bins or 1
 
         # # Continuous -> discrete conversion
-        if discrete:
-            # TODO move assert to critic?
+        if self.discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'
 
-            action_spec.num_actions = self.num_actions  # Continuous env has no discrete bins by default, must specify
-
-            # action_spec.num_actions = self.num_actions  # Continuous envs don't have discrete bins, so must specify
-
-            # assert self.num_actions > 1, 'Continuous env has no discrete bins by default. Num actions cannot be ' \
-            #                              '1 when calling continuous env as discrete, try the "num_actions=" flag (>1)'
+            action_spec.discrete_bins = self.num_actions  # Continuous env has no discrete bins by default, must specify
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                   ema_decay=ema_decay * ema)
 
-        self.actor = EnsembleActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                   ensemble_size=num_critics if discrete and RL else 1, discrete=discrete,
-                                   stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                   ema_decay=ema_decay * ema)
+        self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                                     ensemble_size=num_critics if self.discrete and self.RL else 1,
+                                     discrete=self.discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                     lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                     ema_decay=ema_decay * ema)
 
-        # Critic <- Actor
-        if discrete:
+        # When discrete, Critic <- Actor
+        if self.discrete:
             recipes.critic.trunk = self.actor.trunk
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
-            # if not RL:
-            #     num_critics = 1  # Num actors
-
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=num_critics, discrete=discrete, ignore_obs=generate,
+                                      ensemble_size=num_critics if self.RL else 1,
+                                      discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
 
@@ -162,31 +137,20 @@ class DQNAgent(torch.nn.Module):
 
         # "Envision" / "Perceive"
 
-        # Augment and encode
+        # Augment, encode present
         obs = self.aug(obs)
         obs = self.encoder(obs)
 
-        # Augment and encode future
         if replay.nstep > 0 and not self.generate:
             with torch.no_grad():
+                # Augment, encode future
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            action, reward[:] = obs, 1
+            action, reward[:] = obs, 1  # "Real"
             next_obs[:] = label[:] = float('nan')
-
-        # Classification conversion  Can it be set in replay? Should replay have a to(device) method, no to_torch here
-        # But then envs should probably convert to numpy/cpu too, not in env? Collate speicifc device? DataParallel
-        # if self.classify:
-        #     label = label.long()
-
-        # RL -> Imitation Learning conversion
-        # if self.imitate:
-        #     label = Utils.one_hot(action, self.num_actions) if self.discrete and not self.classify \
-        #         else action if self.discrete or not self.classify \
-        #         else action.argmax(-1)
 
         # "Journal teachings"
 
@@ -212,14 +176,9 @@ class DQNAgent(torch.nn.Module):
             # Inference
             Pi = self.actor(obs)
 
-            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)
-
-            # Inference
-            # y_predicted = self.actor(obs[instruction], self.step).mean[:, 0]
+            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
             mistake = cross_entropy(y_predicted, label.long(), reduction='none')
-            # mistake = cross_entropy if self.classify else mse(y_predicted, label[instruction].long(), reduction='none')
-            # if self.classify:
             correct = (y_predicted.argmax(1) == label).float()
             accuracy = correct.mean()
 
@@ -258,11 +217,10 @@ class DQNAgent(torch.nn.Module):
             if self.generate:
                 half = len(obs) // 2
 
-                Pi = self.actor(obs[:half], self.step)
-                generated_image = Pi.best if self.discrete else Pi.mean
-                # generated_image = self.actor(obs[:half], self.step).mean[:, 0]  # TODO Don't collapse n'-dim in Pi
+                Pi = self.actor(obs[:half])
+                generated_image = Pi.mean.flatten(1)
 
-                action[:half], reward[:half] = generated_image.flatten(1), 0  # Discriminate
+                action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
 
             # "Discern"
 

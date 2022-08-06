@@ -8,7 +8,6 @@ import io
 import itertools
 import json
 import random
-import warnings
 from pathlib import Path
 
 from tqdm import tqdm
@@ -40,7 +39,7 @@ class Classify:
     (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
-        - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
+        - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
           "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
     (7) "exp" attribute containing the latest exp
 
@@ -68,9 +67,6 @@ class Classify:
 
         # Make env
 
-        # with warnings.catch_warnings():
-        #     warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-
         # Different datasets have different specs
         root_specs = [dict(root=f'./Datasets/ReplayBuffer/Classify/{task}_%s' %
                                 ('Train' if train else 'Eval')), {}]
@@ -92,19 +88,12 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
-        # self.action_spec = {'name': 'action',
-        #                     'shape': (len(dataset.classes),),  # Dataset must include a "classes" attr
-        #                     'num_actions': None,  # Should be None for continuous TODO switch shape and num, discrete
-        #                     'low': None,
-        #                     'high': None,
-        #                     'discrete': False}
-
         self.action_spec = {'name': 'action',
                             'shape': (1,),
-                            'num_actions': len(dataset.classes),  # Dataset must include a "classes" attr
+                            'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
                             'low': 0,
                             'high': len(dataset.classes) - 1,
-                            'discrete': True}  # TODO num_critics=1 default for Classify, num-critics global agent arg
+                            'discrete': True}
 
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
@@ -133,9 +122,9 @@ class Classify:
             Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
                      **kwargs)
 
-        # Create replay  TODO - check if len of buffer = batches, else recreate, check if norm exists, else conflict
+        # Create replay
         if train and (offline or generate) and not replay_path.exists():
-            self.create_replay(replay_path)  # TODO Conflict-handling in distributed & mark success in case of terminate
+            self.create_replay(replay_path)
 
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
@@ -224,7 +213,7 @@ class Classify:
             obs.shape = (batch_size, *self.obs_spec['shape'])
 
             dummy = np.full((batch_size, 1), np.NaN)
-            missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['num_actions'],)), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['discrete_bins'],)), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 
@@ -286,8 +275,8 @@ class Classify:
         if np.issubdtype(int, action.dtype):
             return action
 
-        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.num_actions
-        return np.round(action * self.action_spec['num_actions']) / self.action_spec['num_actions']
+        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.discrete_bins
+        return np.round(action * self.action_spec['discrete_bins']) / self.action_spec['discrete_bins']
 
 
 class Transform:

@@ -39,11 +39,10 @@ def init(args):
 
     # Set device
     mps = getattr(torch.backends, 'mps', None)  # M1 MacBook speedup
+
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
     print('Device:', args.device)
-    # args.device = args.device or ('cuda' if torch.cuda.is_available()
-    #                               else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
 
 # Format path names
@@ -63,45 +62,6 @@ def save(path, model, args, *attributes):
     torch.save({'state_dict': model.state_dict(), **{attr: getattr(model, attr)
                                                      for attr in attributes}}, path)  # Save params + attributes
     print(f'Model successfully saved to {path}')
-
-
-# Saves args, accounting for special case when 'load' in recipe
-# def save_args(args, root_path, name, attr=None):
-#     if attr is None:
-#         save_args(args.recipes, root_path, name, '')
-#         torch.save(args, root_path / f'{name}.args')
-#     # Accounts for loading from one's own self or recursions between cross-experiment loads
-#     else:
-#         # If sub-part loaded via recipes (e.g. Eyes=load ...), saves original recipe (Eyes=...)
-#         for key, recipe in args.items():
-#             _target_ = getattr(recipe, '_target_', recipe)
-#             attrs = f'{attr}.{key}'.strip('.')  # The recipe's attributes e.g. encoder.eyes
-#
-#             # Recursion to sub-recipes
-#             if isinstance(_target_, DictConfig):
-#                 save_args(_target_, root_path, name, attrs)
-#             # Any recipe that calls 'load'
-#             elif _target_ and ('load(' in _target_ or _target_[:4] == 'load' or _target_[:9] == 'Utils.load'):
-#                 # Interpolate a load path
-#                 load_path = getattr(recipe, 'path',
-#                                     _target_.split('load(')[-1].split('path=')[-1].split(')')[0].split(',')[0])
-#
-#                 load_root, load_name = load_path.replace('.pt', '').rsplit('/', 1)
-#
-#                 # Can add:
-#                 # if load_root == root_path and not (sub_parts_path / f'{load_name}_{attrs}.args').exists()
-#                       # ... and delete below - but still important if loading from others
-#
-#                 sub_parts_path = Path(load_root) / 'sub_parts'
-#                 sub_parts_path.mkdir(exist_ok=True)
-#
-#                 # If not already cached
-#                 if not (sub_parts_path / f'{load_name}_{attrs}.args').exists():
-#                     # Save a copy of the dependency args
-#                     shutil.copy(f'{load_root}/{load_name}.args', sub_parts_path / f'{load_name}_{attrs}.args')
-#             else:
-#                 # No need to independently save others - [might be important to others but maybe necessary for update]
-#                 Path(root_path / f'sub_parts/{name}_{attrs}.args').unlink(missing_ok=True)
 
 
 # Loads model or part of model
@@ -324,34 +284,6 @@ def rclamp(x, min, max):
 
 
 # (Multi-dim) indexing
-# def gather(item, ind, dim=-1, ind_dim=-1):
-#     """
-#     Generalizes torch.gather indexing to multi-dim indexing.
-#
-#     Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on "ind_dim".
-#     The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
-#
-#     Relative coordinates, assume "dim" = "ind_dim":
-#     item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j] for any i ≤ N + 1, j ≤ M + 1
-#     --> [0, ..., N, "ind_dim", N + 2, ..., M]
-#     """
-#     num = ind.shape[ind_dim]
-#
-#     ind_lead_shape = ind.shape[:ind_dim]  # [i, ..., N]
-#     lead_shape = item.shape[:dim][:len(ind_lead_shape)]  # [0, ..., i - 1]
-#
-#     ind_tail_shape = ind.shape[ind_dim:]  # ["ind_dim", ..., j]
-#     tail_shape = item.shape[dim:][len(ind_tail_shape):]  # [j + 1, ..., M]
-#
-#     print(ind.shape, item.shape, num, lead_shape, ind_lead_shape, ind_tail_shape, tail_shape)
-#
-#     ind = ind.long().view((1,) * len(lead_shape), *ind_lead_shape, *ind_tail_shape, (1,) * len(tail_shape))
-#     ind = ind.expand(*item.shape[:dim], num, *item.shape[dim + 1:])  # Assumes ind.shape[ind_dim] is desired num indices
-#
-#     return torch.gather(item, dim, ind)
-
-
-# (Multi-dim) indexing
 def gather(item, ind, dim=-1, ind_dim=-1):
     """
     Generalizes torch.gather indexing to multi-dim indexing.
@@ -371,16 +303,6 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     ind = ind.reshape(ind.shape + (1,) * len(tail_shape)).expand(*ind.shape, *tail_shape)  # [0, ..., "ind_dim", ... M]
 
     return torch.gather(item, dim, ind)
-
-
-# (Multi-dim) indexing
-# def gather_indices(item, ind, dim=-1):
-#     ind = ind.long().expand(*item.shape[:dim], ind.shape[-1])  # Assumes ind.shape[-1] is desired num indices
-#     if dim < len(item.shape) - 1 and dim != -1:
-#         trail_shape = item.shape[dim + 1:]
-#         ind = ind.reshape(ind.shape + (1,) * len(trail_shape))
-#         ind = ind.expand(*ind.shape[:dim + 1], *trail_shape)
-#     return torch.gather(item, dim, ind)
 
 
 # (Multi-dim) cartesian product
@@ -428,24 +350,6 @@ class Sequential(nn.Module):
 
     def forward(self, obs):
         return self.Sequence(obs)
-
-
-# # Adds a channel dimension to a 1D input, treating 1D as spatial (channels-first)
-# class AddChannelDim(nn.Module):
-#     def repr_shape(self, *_):
-#         return 1, *_
-#
-#     def forward(self, x):
-#         return x.unsqueeze(1)
-#
-#
-# # Adds a spatial dimension to a 1D input, treating 1D as channels (channels-first)
-# class AddSpatialDim(nn.Module):
-#     def repr_shape(self, *_):
-#         return *_, 1
-#
-#     def forward(self, x):
-#         return x.unsqueeze(-1)
 
 
 # Swaps image dims between channel-last and channel-first format
@@ -500,29 +404,6 @@ class act_mode:
 def to_torch(xs, device=None):
     return tuple(None if x is None
                  else torch.as_tensor(x, device=device).float() for x in xs)
-
-
-# Stack batches of frame trajectories along channel axis
-# def frame_stack(frames, stack_size=1, start=None, end=None):
-#     if start is None:
-#         start = stack_size
-#
-#     if end is None:
-#         end = start + 1
-#
-#     if end < 0:
-#         end = frames.shape[1] + end
-#
-#     if end == start + 1:
-#         obs = frames[:, max([0, end - stack_size]):end]  # Temporal axis
-#         for _ in range(stack_size - end):
-#             obs = np.concatenate([frames[:, 0], obs], 1)  # Temporal axis
-#         obs = frames.reshape(obs.shape[0], -1, obs.shape[3:])  # Channel axis
-#     else:
-#         obs = np.concatenate([frames[:, max([0, start - i]):max([1, end - i])]  # Temporal axis
-#                               for i in range(stack_size - 1, -1, -1)], axis=2)  # Channel axis
-#
-#     return obs
 
 
 # Pytorch incorrect (in this case) warning suppression
