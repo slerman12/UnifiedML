@@ -47,12 +47,12 @@ class Environment:
             obs = getattr(self.env, 'frame_stack', lambda x: x)(exp.obs)
 
             # Act
-            action, store = agent.act(obs)
+            action = agent.act(obs)
 
             if not self.generate:
                 exp = self.env.step(action.cpu().numpy())  # Experience
 
-            exp.update(store)
+            exp.step = agent.step
             experiences.append(exp)
 
             if vlog or self.generate:
