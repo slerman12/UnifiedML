@@ -117,7 +117,7 @@ class Atari:
 
     def step(self, action, agent):
         # Adapt to discrete!
-        _action = self.adapt_to_discrete(action, agent).cpu().numpy()
+        _action = self.adapt_to_discrete(action, agent)
         _action.shape = self.action_spec['shape']
 
         # Step env
@@ -235,7 +235,7 @@ class Atari:
             action = Psi.sample() if agent.training \
                 else Psi.best
 
-        return action
+        return action.cpu().numpy()
 
         if np.issubdtype(int, action.dtype):
             return action

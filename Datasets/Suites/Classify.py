@@ -153,7 +153,7 @@ class Classify:
 
     def step(self, action, agent):
         # Adapt to discrete!
-        _action = self.adapt_to_discrete(action).cpu().numpy()
+        _action = self.adapt_to_discrete(action)
 
         correct = (self.exp.label == _action).astype('float32')
 
@@ -267,7 +267,7 @@ class Classify:
                                    f'to expected batch-action shape {(-1, *shape)}')
             action = action.argmax(1)
 
-        return action
+        return action.cpu().numpy()
 
         # TODO Account for self.low, self.high range (shift, modulo, shift)
         action = action % self.action_spec['high']
