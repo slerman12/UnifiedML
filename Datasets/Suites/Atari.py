@@ -117,7 +117,7 @@ class Atari:
 
     def step(self, action, agent):
         # Adapt to discrete!
-        _action = self.adapt_to_discrete(action, agent.action_selector, agent.step, agent.training).cpu().numpy()
+        _action = self.adapt_to_discrete(action, agent).cpu().numpy()
         _action.shape = self.action_spec['shape']
 
         # Step env
@@ -219,7 +219,7 @@ class Atari:
     def render(self):
         return self.env.render('rgb_array')  # rgb_array | human
 
-    def adapt_to_discrete(self, action, action_selector, step, training):
+    def adapt_to_discrete(self, action, agent):
         shape = self.action_spec['shape']
 
         try:
@@ -230,9 +230,9 @@ class Atari:
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
                                    f'to expected batch-action shape {(-1, *shape)}')
-            Psi = action_selector(action.unsqueeze(1).squeeze(-1), step)
+            Psi = agent.action_selector(action.unsqueeze(1).squeeze(-1), agent.step)
 
-            action = Psi.sample() if training \
+            action = Psi.sample() if agent.training \
                 else Psi.best
 
         return action
