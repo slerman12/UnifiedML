@@ -125,7 +125,9 @@ class DQNAgent(torch.nn.Module):
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
-            return action
+            store = dict(step=self.step, action=action)
+
+            return action, store
 
     # "Dream"
     def learn(self, replay):
