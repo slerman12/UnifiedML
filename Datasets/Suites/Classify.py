@@ -32,7 +32,7 @@ class Classify:
 
     Must have:
 
-    (1) a "step" function, (action, agent) -> exp
+    (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
     (4) "episode_done" attribute
@@ -151,7 +151,7 @@ class Classify:
 
         self.evaluate_episodes = len(self.batches)
 
-    def step(self, action, agent):
+    def step(self, action):
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
 
@@ -267,7 +267,7 @@ class Classify:
                                    f'to expected batch-action shape {(-1, *shape)}')
             action = action.argmax(1)
 
-        return action.cpu().numpy()
+        return action
 
         # TODO Account for self.low, self.high range (shift, modulo, shift)
         action = action % self.action_spec['high']

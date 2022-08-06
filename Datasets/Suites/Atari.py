@@ -25,7 +25,7 @@ class Atari:
 
     Must have:
 
-    (1) a "step" function, (action, agent) -> exp
+    (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
     (4) "episode_done" attribute
@@ -115,9 +115,9 @@ class Atari:
         self.action_repeat = action_repeat or 1
         self.frames = deque([], frame_stack or 1)
 
-    def step(self, action, agent):
+    def step(self, action):
         # Adapt to discrete!
-        _action = self.adapt_to_discrete(action, agent)
+        _action = self.adapt_to_discrete(action)
         _action.shape = self.action_spec['shape']
 
         # Step env
@@ -219,7 +219,7 @@ class Atari:
     def render(self):
         return self.env.render('rgb_array')  # rgb_array | human
 
-    def adapt_to_discrete(self, action, agent):
+    def adapt_to_discrete(self, action):
         shape = self.action_spec['shape']
 
         try:
@@ -230,12 +230,9 @@ class Atari:
             except:
                 raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
                                    f'to expected batch-action shape {(-1, *shape)}')
-            Psi = agent.action_selector(action.unsqueeze(1).squeeze(-1), agent.step)
+            action = action.argmax(1)
 
-            action = Psi.sample() if agent.training \
-                else Psi.best
-
-        return action.cpu().numpy()
+        return action
 
         if np.issubdtype(int, action.dtype):
             return action

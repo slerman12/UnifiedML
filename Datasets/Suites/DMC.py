@@ -18,7 +18,7 @@ class DMC:
 
     Must have:
 
-    (1) a "step" function, (action, agent) -> exp
+    (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
     (4) "episode_done" attribute
@@ -107,9 +107,7 @@ class DMC:
         self.action_repeat = action_repeat
         self.frames = deque([], frame_stack or 1)
 
-    def step(self, action, agent):
-        # To CPU, numpy
-        action = action.cpu().numpy()
+    def step(self, action):
         # To float
         action = action.astype(np.float32)
         # Remove batch dim, adapt shape
