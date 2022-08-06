@@ -1,6 +1,7 @@
 import math
+import os
 import random
-from collections import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -10,6 +11,30 @@ from torch.utils.data import Dataset
 
 from torchaudio.transforms import Spectrogram
 from torchvision.transforms import Compose, ToPILImage
+
+
+class NoPoolCNN(nn.Module):
+    def __init__(self, input_shape=(1,)):
+        super().__init__()
+
+        in_channels = input_shape if isinstance(input_shape, int) else \
+            input_shape[0]
+
+        self.CNN = \
+            nn.Sequential(
+                nn.Conv2d(in_channels, 80, 100, 5),
+                nn.ReLU(),
+                nn.Dropout(0.3),
+                nn.Conv2d(80, 80, 50, 5),
+                nn.ReLU(),
+                nn.Dropout(0.3),
+                nn.Conv2d(80, 80, 25, 2),
+                nn.ReLU(),
+                nn.Dropout(0.3),
+            )
+
+    def forward(self, obs):
+        return self.CNN(obs)
 
 
 class CNN(nn.Module):
@@ -83,13 +108,16 @@ class XRD(Dataset):
         if not isinstance(train_eval_splits, Iterable):
             train_eval_splits = (train_eval_splits,)
 
-        assert len(roots) == len(train_eval_splits), 'must provide train test split for each root dir'
+        assert len(roots) == len(train_eval_splits), 'Must provide train test split for each root dir'
 
         self.indices = []
         self.features = {}
         self.labels = {}
 
         for i, (root, split) in enumerate(zip(roots, train_eval_splits)):
+            if not os.path.exists(root):
+                pass  # <Download from Hugging Face>
+
             features_path = root + "features.csv"
             label_path = root + f"labels{num_classes}.csv"
 

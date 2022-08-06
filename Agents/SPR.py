@@ -14,7 +14,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
@@ -24,7 +24,7 @@ class SPRAgent(torch.nn.Module):
     """Self-Predictive Representations (https://arxiv.org/abs/2007.05929)
     Generalized to continuous action spaces, classification, and generative modeling"""
     def __init__(self,
-                 obs_spec, action_spec, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
+                 obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -44,49 +44,67 @@ class SPRAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = action_spec.num_actions or 1
+        self.num_actions = action_spec.num_actions or num_actions
+
+        if self.discrete:
+            assert self.num_actions > 1, 'Num actions cannot be 1 when calling continuous env as discrete, ' \
+                                         'specify "+agent.num_actions=" flag >1'
+            action_spec.num_actions = self.num_actions  # Continuous -> discrete conversion
+
         self.depth = depth
 
-        self.trajectories = True  # Tells replay to output trajectories
+        if generate:
+            action_spec.shape = obs_spec.shape
+            action_spec.low, action_spec.high = -1, 1
+
+        # Data stats
+        self.low, self.high = obs_spec.low, obs_spec.high
+
+        # Image augmentation
+        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
+                                                      else RandomShiftsAug(pad=4))
 
         self.encoder = Utils.Rand(trunk_dim) if generate \
             else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
-                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                            ema_decay=ema_decay * ema)
+                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
 
-        repr_shape = (trunk_dim, 1, 1) if generate \
+        repr_shape = (trunk_dim,) if generate \
             else self.encoder.repr_shape
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                       ema_decay=ema_decay * ema)
+            else EnsembleActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                               ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                               lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                               ema_decay=ema_decay * ema)
 
         # Dynamics
         if not generate:
-            resnet = MiniResNet((self.in_channels, *obs_spec.obs_shape[1:]), 3, 1, [64, self.encoder.out_channels], [1])
+            self.action_dim = self.num_actions if discrete else action_spec.shape[0]  # One-hot if discrete
 
-            self.dynamics = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}), action_spec.shape,
-                                       eyes=torch.nn.Sequential(resnet, Utils.ShiftMaxNorm(-3)),
+            shape = list(self.encoder.feature_shape)
+            shape[0] += self.action_dim  # Predicting from obs and action
+
+            resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
+
+            self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,
+                                       Eyes=torch.nn.Sequential(resnet, Utils.Norm(-3)),
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
-            self.projector = CNNEncoder(obs_spec.__class__({'obs_shape': repr_shape}),
-                                        eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),
-                                                                 torch.nn.LayerNorm(hidden_dim),
-                                                                 torch.nn.Tanh(),
-                                                                 MLP(hidden_dim, hidden_dim, hidden_dim, 2)),
+            self.projector = CNNEncoder(self.encoder.feature_shape,
+                                        Eyes=MLP(self.encoder.feature_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                         ema_decay=ema_decay)
 
-            self.predictor = CNNEncoder(obs_spec.__class__({'obs_shape': (hidden_dim, 1, 1)}),
-                                        eyes=torch.nn.Sequential(torch.nn.Linear(self.encoder.repr_dim, hidden_dim),
-                                                                 torch.nn.LayerNorm(hidden_dim),
-                                                                 torch.nn.Tanh(),
-                                                                 MLP(hidden_dim, hidden_dim, hidden_dim, 2)),
+            self.predictor = CNNEncoder(self.projector.repr_shape,
+                                        Eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
+
+        # Critic <- Actor
+        if self.discrete:
+            recipes.critic.trunk = self.actor.trunk
+            recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       ensemble_size=2, discrete=self.discrete, ignore_obs=generate,
@@ -94,10 +112,6 @@ class SPRAgent(torch.nn.Module):
                                       ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
-
-        # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
-                                                      else RandomShiftsAug(pad=4))
 
         # Birth
 
@@ -135,7 +149,7 @@ class SPRAgent(torch.nn.Module):
     def learn(self, replay):
         # "Recollect"
 
-        batch = next(replay)
+        batch = replay.sample(True)
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
         traj_o, traj_a, traj_r, traj_l = traj
@@ -151,9 +165,11 @@ class SPRAgent(torch.nn.Module):
             action, reward[:] = obs.flatten(-3), 1
             next_obs[:] = label[:] = float('nan')
 
-        # Encode
-        features = self.encoder(obs, pool=False)
-        obs = self.encoder.pool(obs)
+            obs = self.encoder(obs)
+        else:
+            # Encode
+            features = self.encoder(obs, pool=False)
+            obs = self.encoder.pool(features)
 
         # Augment and encode future
         if replay.nstep > 0 and not self.generate:
@@ -186,6 +202,11 @@ class SPRAgent(torch.nn.Module):
             y_predicted = self.actor(obs[instruction], self.step).mean
 
             mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
+            correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
+            accuracy = correct.mean().item()
+
+            if self.log:
+                logs.update({'accuracy': accuracy})
 
             # Supervised learning
             if self.supervise:
@@ -197,10 +218,7 @@ class SPRAgent(torch.nn.Module):
                                self.actor, epoch=self.epoch if offline else self.episode, retain_graph=True)
 
                 if self.log:
-                    correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
-
-                    logs.update({'supervised_loss': supervised_loss.item(),
-                                 'accuracy': correct.mean().item()})
+                    logs.update({'supervised_loss': supervised_loss.item()})
 
             # (Auxiliary) reinforcement
             if self.RL:
@@ -210,6 +228,9 @@ class SPRAgent(torch.nn.Module):
                 action[instruction] = y_predicted.detach()
                 reward[instruction] = -mistake[:, None].detach()  # reward = -error
                 next_obs[instruction] = float('nan')
+
+                if self.log:
+                    logs.update({'reward': reward})
 
         # Reinforcement learning / generative modeling
         if self.RL or self.generate:
@@ -232,13 +253,16 @@ class SPRAgent(torch.nn.Module):
             # Dynamics loss
             dynamics_loss = 0 if replay.nstep == 0 or self.generate \
                 else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
-                                                             self.encoder, self.dynamics, self.projector, self.predictor,
-                                                             depth=min(replay.nstep, self.depth), logs=logs)
+                                                             self.encoder, self.dynamics, self.projector,
+                                                             self.predictor, depth=min(replay.nstep, self.depth),
+                                                             action_dim=self.action_dim, logs=logs)
+
+            models = () if self.generate else (self.dynamics, self.projector, self.predictor)
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss,
-                           self.critic,
-                           self.dynamics, self.projector, self.predictor, epoch=self.epoch if offline else self.episode)
+                           self.critic, *models,
+                           epoch=self.epoch if offline else self.episode)
 
         # Update encoder
         if not self.generate:

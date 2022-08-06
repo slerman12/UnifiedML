@@ -12,9 +12,9 @@ import Utils
 
 class MLP(nn.Module):
     """
-    MLP Architecture generalized to broadcast various input shapes
+    MLP Architecture generalized to broadcast input shapes
     """
-    def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(True),
+    def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, activation=nn.ReLU(inplace=True),
                  dropout=0, binary=False):
         super().__init__()
 
@@ -28,18 +28,18 @@ class MLP(nn.Module):
             nn.Sequential(
                 nn.Linear(self.input_dim if i == 0 else hidden_dim,
                           hidden_dim if i < depth else output_dim),  # Linear
-                non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
+                activation if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
                 nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
             for i in range(depth + 1)])
 
         # Initialize weights
         self.apply(Utils.weight_init)
 
-    def repr_shape(self, c, w, h):
-        flatten = -1 if h == self.input_dim \
+    def repr_shape(self, *_):
+        flatten = -1 if _[-1] == self.input_dim \
             else -len(self.input_shape)  # Auto-flatten if needed
 
-        return *(c, w, h)[:flatten], self.output_dim, *(1,) * -(flatten + 1)
+        return *[size for size in _ if size][:flatten], self.output_dim
 
     def forward(self, *obs):
         obs = torch.cat(obs, -1)  # Assumes inputs can be concatenated along last dim

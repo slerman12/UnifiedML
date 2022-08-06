@@ -12,7 +12,7 @@ import Utils
 
 from Blocks.Augmentations import IntensityAug, RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsembleGaussianActor, CategoricalCriticActor
+from Blocks.Actors import EnsembleActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Learner import F_ckGradientDescent
@@ -64,10 +64,10 @@ class MetaDQNAgent(torch.nn.Module):
 
         # Continuous actions
         self.actor = None if self.discrete \
-            else EnsembleGaussianActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.actor,
-                                       ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
-                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                       ema_decay=ema_decay * ema, optim=torch.optim.SGD)
+            else EnsembleActor(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.actor,
+                               ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                               lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                               ema_decay=ema_decay * ema, optim=torch.optim.SGD)
 
         self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, self.action_dim, **recipes.critic,
                                       ensemble_size=num_critics, discrete=self.discrete, ignore_obs=generate,

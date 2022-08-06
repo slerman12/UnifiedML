@@ -3,323 +3,291 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
-from functools import partial
 
-from einops import rearrange, repeat
-from opt_einsum_torch import EinsumPlanner
+from einops import rearrange
 
 import torch
 from torch import nn
-from torch.utils.checkpoint import checkpoint
-
-from Blocks.Architectures.MLP import MLP
-from Blocks.Architectures.Vision.CNN import AvgPool
 
 import Utils
 
 
-class CrossAttention(nn.Module):
-    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, talk_h=False, rela=False):
+class Attention(nn.Module):
+    """
+    Multi-head dot-product attention (MHDPA) from inputs to contexts (Cross-Attention)
+    (https://arxiv.org/abs/1706.03762?context=cs)
+
+    All you need
+
+    Generalized to many-dimensionality input shapes, and includes options for "talking heads" and "ReLA".
+    For consistency with Vision models, defaults to channels-first! Assumes input & context have batch + spatial dim(s).
+    """
+    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
+                 talking_heads=False, rela=False, channels_first=True):
         super().__init__()
 
-        self.dim = dim
+        self.channels_first = channels_first
 
-        s_dim = dim if s_dim is None else s_dim
-        qk_dim = dim if qk_dim is None else qk_dim
-        v_dim = dim if v_dim is None else v_dim
+        # Dimensions
+        self.input_dim = input_shape if isinstance(input_shape, int) \
+            else input_shape[0] if channels_first else input_shape[-1]
 
-        heads = math.gcd(8, v_dim) if heads is None \
-            else heads
+        # Defaults
+        self.context_dim = context_dim or self.input_dim
+        self.query_key_dim = query_key_dim or self.input_dim
+        self.value_dim = value_dim or self.input_dim
 
-        self.qk_dim = qk_dim
-        self.v_dim = v_dim
-        self.heads = heads
+        self.num_heads = num_heads or math.gcd(math.gcd(16, self.value_dim), self.query_key_dim)
 
-        assert v_dim % heads == 0, f'value dim={dim} is not divisible by heads={heads}'
+        assert self.value_dim % self.num_heads == self.query_key_dim % self.num_heads == 0, \
+            f'Value dim={self.value_dim}, QueryKey dim={self.query_key_dim} must be divisible by heads={self.num_heads}'
 
-        self.to_q = nn.Linear(dim, qk_dim, bias=False)
-        self.to_kv = nn.Linear(s_dim, qk_dim + v_dim, bias=False)
+        # Linear QKV-projections
+        self.to_query = nn.Linear(self.input_dim, self.query_key_dim, bias=False)
+        self.to_key_value = nn.Linear(self.context_dim, self.query_key_dim + self.value_dim, bias=False)
+
+        # Can access attention weights
+        self.saved_attention_weights = None
+
+        # Additional options
 
         # "Talking heads" (https://arxiv.org/abs/2003.02436)
-        self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(heads, heads, bias=False),
-                                    nn.LayerNorm(heads), Utils.ChSwap) if talk_h else nn.Identity()
+        if talking_heads:
+            self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(self.num_heads, self.num_heads, bias=False),
+                                        nn.LayerNorm(self.num_heads), Utils.ChSwap)
 
-        self.relu = nn.ReLU(inplace=True) if rela else None
+        # "Rectified-Linear Attention (ReLA)" (https://arxiv.org/abs/2104.07012)
+        if rela:
+            self.rela = nn.ReLU(inplace=True)
 
-    def forward(self, x, s=None):
-        # Conserves shape
-        shape = x.shape
-        assert shape[-1] == self.dim, f'input dim ≠ pre-specified {shape[-1]}≠{self.dim}'
+    def repr_shape(self, *_):
+        # Conserves spatial dimensions, maps channel dim to value-dim
+        return (self.value_dim, *_[1:]) if self.channels_first \
+            else (*_[:-1], self.value_dim)
 
-        if s is None:
-            s = x
+    def forward(self, input, context=None):
+        if context is None:
+            context = input  # Self-attention
 
-        tokens = len(x.shape) == 2  # Tokens distinguished by having axes=2
-        if not tokens:
-            x = x.flatten(1, -2)
-        s = s.flatten(1, -2)
+        # Permute as channels-last
+        if self.channels_first:
+            input, context = [Utils.ChSwap(x, False) for x in [input, context]]
 
-        q = x if tokens else self.to_q(x)
-        k, v = self.to_kv(s).tensor_split([self.qk_dim], dim=-1)
+        # Preserve spatial dims
+        spatial_dims = input.shape[1:-1]
 
-        multi_head_tokens = q.shape[-1] == k.shape[-1] and tokens
+        # Flatten intermediary spatial dims
+        input = input.flatten(1, -2)
+        context = context.flatten(1, -2)
 
-        assert q.shape[-1] == k.shape[-1] / self.heads or not tokens, \
-            f'Tokens, keys cannot be broadcast {q.shape[-1]}, {k.shape[-1]}'
+        # Validate shapes
+        assert input.shape[-1] == self.input_dim, f'Unexpected input shape {input.shape[-1]}≠{self.input_dim}'
+        assert context.shape[-1] == self.context_dim, f'Unexpected context shape {context.shape[-1]}≠{self.context_dim}'
 
-        if multi_head_tokens or not tokens:
-            pattern = 'n (h d) -> h n d' if tokens \
-                else 'b n (h d) -> b h n d'
-            q = rearrange(q, pattern, h=self.heads)
+        query = self.to_query(input)
+        key, value = self.to_key_value(context).tensor_split((self.query_key_dim,), -1)  # Split into KV
 
-        k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), (k, v))
+        # Heads-first
+        query, key, value \
+            = [rearrange(qkv, 'b n (h d) -> b h n d', h=self.num_heads) for qkv in (query, key, value)]
 
-        # Memory limit toggle, e.g., =0.5
-        mem_limit = False
-        einsum = EinsumPlanner(q.device, cuda_mem_limit=mem_limit).einsum if 0 < mem_limit < 1 \
-            else torch.einsum
+        # Scale (Q / sqrt(d))
+        query *= query.shape[-1] ** -0.5
 
-        scale = q.shape[-1] ** -0.5
-        q = q * scale
+        # Multiply (W = Q * K)
+        self.saved_attention_weights = torch.einsum('b h i d, b h j d -> b h i j', query, key)
 
-        pattern = 'h i d, b h j d -> b h i j' if multi_head_tokens \
-            else 'i d, b h j d -> b h i j' if tokens \
-            else 'b h i d, b h j d -> b h i j'
+        # Normalize
+        # if not hasattr(self, 'rela'):
+        #     self.saved_attention_weights -= self.saved_attention_weights.amax(-1, keepdim=True).detach()
 
-        # Memory efficient toggle
-        mem_efficient = False
-        if mem_efficient:
-            attn, weights = mem_efficient_attend(q, k, v, pattern=pattern)
-        else:
-            self.weights = einsum(pattern, q, k)
-            # self.dots = self.dots - self.dots.amax(dim=-1, keepdim=True).detach()
+        # Softmax
+        attention_weights = self.rela(self.saved_attention_weights) if hasattr(self, 'rela') \
+            else self.saved_attention_weights.softmax(dim=-1)
 
-            weights = self.weights.softmax(dim=-1) if self.relu is None \
-                else self.relu(self.weights)
+        # "Talking heads"
+        if hasattr(self, 'talk_h'):
+            attention_weights = self.talk_h(attention_weights)
 
-            if 0 < mem_limit < 1:
-                weights = weights.to(q.device)
+        # Attend (W * V)
+        attention = torch.matmul(attention_weights, value)
 
-            # "Talking heads"
-            weights = self.talk_h(weights)
-
-            # attn = torch.einsum('b h i j, b h j d -> b h i d', weights, v)
-            attn = torch.matmul(weights, v)
-
-        out = rearrange(attn, 'b h n d -> b n (h d)')
+        # Heads-last-concatenated
+        output = rearrange(attention, 'b h n d -> b n (h d)')
 
         # Restores original leading dims
-        if not tokens:
-            out = out.view(*shape[:-1], -1)
-
-        if 0 < mem_limit < 1:
-            out = out.to(q.device)
-
-        return out
-
-
-class ReLA(CrossAttention):
-    """ReLA: Rectified linear attention"""
-    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None):
-        super().__init__(dim, heads, s_dim, qk_dim, v_dim, False, True)
-
-
-# Memory-efficient attention https://arxiv.org/abs/2112.05682
-# https://github.com/lucidrains/memory-efficient-attention-pytorch
-def mem_efficient_attend(q, k, v, q_bucket_size=512, k_bucket_size=1024, eps=1e-8,
-                         pattern='b h i d, b h j d -> b h i j'):
-    def chunk(q, k, v):
-        weight = torch.einsum(pattern, q, k)
-
-        weight_max = weight.amax(dim=-1, keepdim=True).detach()
-        weight = weight - weight_max
-
-        exp_weight = weight.exp()
-        weighted_value = torch.einsum('b h i j, b h j d -> b h i d', exp_weight, v)
-
-        return exp_weight.sum(dim=-1), weighted_value, rearrange(weight_max, '... 1 -> ...')
-
-    chunk = partial(checkpoint, chunk)
-
-    # Chunk all the inputs
-
-    q_chunks = q.split(q_bucket_size, dim=-2)
-    k_chunks = k.split(k_bucket_size, dim=-2)
-    v_chunks = v.split(k_bucket_size, dim=-2)
-
-    # Loop through all chunks and accumulate
-
-    out = []
-    weights = []
-    for q_index, q_chunk in enumerate(q_chunks):
-        exp_weights = []
-        weighted_values = []
-        weight_maxes = []
-
-        for k_index, (k_chunk, v_chunk) in enumerate(zip(k_chunks, v_chunks)):
-
-            exp_weight_chunk, weighted_value_chunk, weight_max_chunk = \
-                chunk(q_chunk, k_chunk, v_chunk)
-
-            exp_weights.append(exp_weight_chunk)
-            weighted_values.append(weighted_value_chunk)
-            weight_maxes.append(weight_max_chunk)
-
-        weight_maxes = torch.stack(weight_maxes, dim=-1)
-
-        weighted_values = torch.stack(weighted_values, dim=-1)
-        exp_weights = torch.stack(exp_weights, dim=-1)
-
-        global_max = weight_maxes.amax(dim=-1, keepdim=True)
-        renorm_factor = (weight_maxes - global_max).exp().detach()
-
-        exp_weights = exp_weights * renorm_factor
-        weighted_values = weighted_values * rearrange(renorm_factor, '... c -> ... 1 c')
-
-        all_values = weighted_values.sum(dim=-1)
-        all_weights = exp_weights.sum(dim=-1)
-
-        normalized_values = all_values / (rearrange(all_weights, '... -> ... 1') + eps)
-        out.append(normalized_values)
-        weights.append(exp_weights)
-
-    out = torch.cat(out, dim=-2)
-    weights = torch.cat(weights, dim=-3)
-
-    return out, weights
-
-
-# A minimalist implementation using only Pytorch natives
-class CrossAttend(nn.Module):
-    def __init__(self, dim=32, heads=8, s_dim=None, v_dim=None, *_):
-        super().__init__()
-
-        self.attn = nn.MultiheadAttention(dim, heads, kdim=s_dim, vdim=v_dim, batch_first=True)
-
-    def forward(self, x, s):
-        # Conserves shape
-        mid_shape = x.shape[1:-1]
-
-        x = x.flatten(1, -2)
-        s = s.flatten(1, -2)
-
-        attn, self.weights = self.attn(x, s, s)
-
-        # Restores original shape
-        return attn.view(-1, *mid_shape, attn.shape[-1])
-
-
-class SelfAttention(CrossAttention):
-    def forward(self, x, *_):
-        return super().forward(x)
-
-
-class CrossAttentionBlock(nn.Module):
-    def __init__(self, dim=32, heads=None, s_dim=None, qk_dim=None, v_dim=None, hidden_dim=None, dropout=0,
-                 talk_h=False, rela=False):
-        super().__init__()
-
-        v_dim = dim if v_dim is None else v_dim
-        hidden_dim = v_dim * 4 if hidden_dim is None else hidden_dim
-
-        self.heads = math.gcd(8, v_dim) if heads is None else heads
-
-        self.v_dim = v_dim
-
-        self.attn = CrossAttention(dim, self.heads, s_dim, qk_dim, v_dim, talk_h, rela)
-        self.LN_ReLA = nn.LayerNorm(v_dim) if rela \
-            else nn.Identity()
-        self.project = nn.Identity() if heads == 1 \
-            else nn.Sequential(nn.Linear(v_dim, dim), nn.Dropout(dropout))
-        self.mlp = nn.Sequential(MLP(dim, dim, hidden_dim, 1, nn.GELU(), dropout), nn.Dropout(dropout))
-
-        self.LN_pre = nn.LayerNorm(dim)
-        self.LN_mid = nn.LayerNorm(dim)
-
-    def repr_shape(self, c, h, w):
-        return self.v_dim, h, w  # Assumes channels last
-
-    def forward(self, x, context=None):
-        pre_norm = self.LN_pre(x)
-
-        if context is None:
-            context = pre_norm
-
-        attn = self.project(self.LN_ReLA(self.attn(pre_norm, context))) + x
-        out = self.mlp(self.LN_mid(attn)) + attn
-
-        return out
-
-
-class SelfAttentionBlock(CrossAttentionBlock):
-    def forward(self, x, *_):
-        return super().forward(x)
-
-
-def fourier_encode(x, max_freq, num_bands=4, base=2):
-    x = x.unsqueeze(-1)
-    device, dtype, orig_x = x.device, x.dtype, x
-
-    # scales = torch.logspace(0., log(max_freq / 2) / log(base), num_bands, base=base, device=device, dtype=dtype)
-    scales = torch.linspace(1., max_freq / 2, num_bands, device=device, dtype=dtype)
-    scales = scales[(*((None,) * (len(x.shape) - 1)), Ellipsis)]
-
-    x = x * scales * math.pi
-    x = torch.cat([x.sin(), x.cos()], dim=-1)
-    x = torch.cat((x, orig_x), dim=-1)
-    return x
-
-
-def fourier_pos(batch_size, axis, max_freq, num_freq_bands, freq_base, device):
-    # calculate fourier encoded positions in the range of [-1, 1], for all axis
-    axis_pos = list(map(lambda size: torch.linspace(-1., 1., steps=size, device=device), axis))
-    pos = torch.stack(torch.meshgrid(*axis_pos, indexing='ij'), dim=-1)
-    enc_pos = fourier_encode(pos, max_freq, num_freq_bands, base=freq_base)
-    enc_pos = rearrange(enc_pos, '... n d -> ... (n d)')
-    enc_pos = repeat(enc_pos, '... -> b ...', b=batch_size)
-    return enc_pos
-
-
-class AttentionPool(nn.Module):
-    def __init__(self, channels_in=32, heads=None, output_dim=None, depth=1, input_shape=None):
-        super().__init__()
-
-        self.input_shape = input_shape
-
-        if input_shape is not None:
-            channels_in = input_shape[-3]
-
-        if output_dim is None:
-            output_dim = channels_in
-
-        if heads is None:
-            heads = math.gcd(output_dim, 8)  # Approx 8
-
-        self.pool = nn.Sequential(Utils.ChSwap,
-                                  # "Transformer"
-                                  *[SelfAttentionBlock(dim=channels_in, heads=heads) for _ in range(depth)],
-                                  nn.Linear(channels_in, output_dim),
-                                  Utils.ChSwap,
-                                  AvgPool())
-
-    def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.pool)
-
-    def forward(self, *x):
-        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        x = torch.cat(
-            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
-             for context in x if context.nelement() > 0], dim=-3)
-        # Conserve leading dims
-        lead_shape = x.shape[:-3]
-        # Operate on last 3 dims
-        x = x.view(-1, *x.shape[-3:])
-
-        x = self.pool(x)
-
-        # Restore leading dims
-        out = x.view(*lead_shape, *x.shape[1:])
-        return out
+        output = output.view(output.shape[0], *spatial_dims, -1)
+
+        # Convert to channels-first
+        if self.channels_first:
+            output = Utils.ChSwap(output, False)
+
+        return output
+
+
+# class Attention(nn.Module):
+#     """
+#     Multi-head dot-product attention (MHDPA) from inputs to contexts (Cross-Attention)
+#     (https://arxiv.org/abs/1706.03762?context=cs)
+#
+#     All you need
+#
+#     Generalized to arbitrary input shapes, and includes options for "talking heads" and "ReLA".
+#     For consistency with Vision models, defaults to channels-first!
+#     """
+#
+#     def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
+#                  talking_heads=False, rela=False, channels_first=True):
+#         super().__init__()
+#
+#         self.channels_first = channels_first
+#
+#         # Dimensions
+#         self.input_dim = input_shape[0] if channels_first \
+#             else input_shape[-1]
+#
+#         # Defaults
+#         self.context_dim = context_dim or self.input_dim
+#         self.query_key_dim = query_key_dim or self.input_dim
+#         self.value_dim = value_dim or self.input_dim
+#
+#         self.num_heads = num_heads or math.gcd(8, value_dim)
+#
+#         assert self.value_dim % self.num_heads == 0, \
+#             f'Value dim={self.value_dim} must be divisible by heads={self.num_heads}'
+#
+#         # Linear QKV-projections  TODO pass in and call Utils.instantiate - may not need projection, e.g. Identity
+#         self.to_query = nn.Linear(self.input_dim, self.query_key_dim, bias=False)
+#         self.to_key_value = nn.Linear(self.context_dim, self.query_key_dim + self.value_dim, bias=False)
+#
+#         # Can access attention weights
+#         self.saved_attention_weights = None
+#
+#         # Additional options
+#
+#         # "Talking heads" (https://arxiv.org/abs/2003.02436)
+#         if talking_heads:
+#             self.talk_h = nn.Sequential(Utils.ChSwap, nn.Linear(self.num_heads, self.num_heads, bias=False),
+#                                         nn.LayerNorm(self.num_heads), Utils.ChSwap)
+#
+#         # "Rectified-Linear Attention (ReLA)" (https://arxiv.org/abs/2104.07012)
+#         if rela:
+#             self.rela = nn.ReLU(inplace=True)
+#
+#     def repr_shape(self, *_):
+#         # Conserves spatial dimensions, maps channel dim to value-dim
+#         return (self.value_dim, *_[1:]) if self.channels_first \
+#             else (*_[:-1], self.value_dim)
+#
+#     def forward(self, input, context=None):
+#         if context is None:
+#             context = input  # Self-attention
+#
+#         """
+#         Adapt to:
+#         1. no batch dim, no spatial dim, only channel dim
+#         2. no batch dim, spatial dim, channel dim
+#         3. batch dim, no spatial dim, channel dim
+#         4. batch dim, spatial dims, channel dim
+#         Can assume at least context or input has batch dim
+#         If both 2d, assume both b x c
+#         """
+#
+#         if len(input.shape) == len(context.shape) == 2:
+#             input_axes = context_axes = 'b'  # Output: b x d
+#         elif len(input.shape) == 1:
+#             input_axes, context_axes = '', 'b' if len(context.shape) == 2 else 'b j'  # Output: b x d
+#         elif len(context.shape) == 1:
+#             input_axes, context_axes = 'b' if len(input.shape) == 2 else 'b i', ''  # Output: b x d or b x i x d
+#         elif len(input.shape) == 2:
+#             input_axes, context_axes = 'b' if input.shape[0] == context.shape[0] else 'n', 'b j'  # Output: b x d
+#         elif len(context.shape) == 2:
+#             input_axes, context_axes = 'b i', 'b ' if input.shape[0] == context.shape[0] else 'j'  # Output: b x i x d
+#         else:
+#             input_axes, context_axes = 'b i', 'b j'  # Output: b x i x d, standard case
+#
+#         input_has_batch_and_spatial_dims = input_axes == 'b i'
+#         context_has_batch_and_spatial_dims = context_axes == 'b j'
+#
+#         # Permute as channels-last
+#         if self.channels_first:
+#             input, context = map(Utils.ChSwap, [input, context])
+#
+#         # Preserve leading dims
+#         lead_dims = input.shape[:-1]
+#
+#         # Flatten intermediary spatial dims
+#         if input_has_batch_and_spatial_dims:
+#             input = input.flatten(1, -2)
+#         if context_has_batch_and_spatial_dims:
+#             context = context.flatten(1, -2)
+#
+#         # Validate shapes
+#         assert input.shape[-1] == self.input_dim, f'Unexpected input shape {input.shape[-1]}≠{self.input_dim}'
+#         assert context.shape[-1] == self.context_dim, f'Unexpected context shape {context.shape[-1]}≠{self.context_dim}'
+#
+#         query = self.to_query(input)
+#         key, value = self.to_key_value(context).tensor_split((self.query_key_dim,), -1)  # Split into KV
+#
+#         get_pattern = lambda axes, dim: dim if dim in axes else ''
+#         input_b, context_b = get_pattern(input_axes, 'b'), get_pattern(context_axes, 'b')
+#         i, j = get_pattern(input_axes, 'i'), get_pattern(context_axes, 'j')
+#
+#         # Heads-first  TODO input/context may not need heads separated
+#         query = rearrange(query, f'{input_axes} (h c) -> {input_b} h {i} c', h=self.num_heads)
+#         key, value = [rearrange(proj, f'{context_axes} (h c) -> {context_b} h {j} c', h=self.num_heads)
+#                       for proj in (key, value)]
+#
+#         # Scale (Q / sqrt(d))
+#         query *= query.shape[-1] ** -0.5
+#
+#         # Multiply (W = Q * K)
+#         self.saved_attention_weights = torch.einsum(f'{input_b} h {i} c, {context_b} h {j} c -> b h {i} {j}',
+#                                                     query, key)
+#
+#         # Normalize
+#         self.saved_attention_weights \
+#             = self.saved_attention_weights - self.saved_attention_weights.amax(dim=-1, keepdim=True).detach()
+#
+#         # Softmax
+#         attention_weights = self.rela(self.saved_attention_weights) if hasattr(self, 'rela') \
+#             else self.saved_attention_weights.softmax(dim=-1)
+#
+#         # "Talking heads"
+#         if hasattr(self, 'talk_h'):
+#             attention_weights = self.talk_h(attention_weights)
+#
+#         # Attend (W * V)
+#         attention = torch.matmul(attention_weights, value)
+#
+#         # Heads-last-concatenated
+#         output = rearrange(attention, 'b h n d -> b n (h d)')
+#
+#         # Restores original leading dims
+#         output = output.view(*lead_dims, -1)
+#
+#         # Convert to channels-first if needed
+#         return Utils.ChSwap(output) if self.channels_first \
+#             else output
+
+
+class MHDPA(Attention):
+    """Pseudonym"""
+
+
+class CrossAttention(Attention):
+    """Cross-attention, pseudonym, same as Attention"""
+
+
+class SelfAttention(Attention):
+    """Self-attention, just cross-attention except context = input"""
+    def forward(self, input, *_):
+        return super().forward(input)
+
+
+class ReLA(Attention):
+    """ReLA: Rectified linear attention (https://arxiv.org/abs/2104.07012)"""
+    def __init__(self, input_shape=(32,), num_heads=None, context_dim=None, query_key_dim=None, value_dim=None,
+                 talking_heads=False, channels_first=True):
+        super().__init__(input_shape, num_heads, context_dim, query_key_dim, value_dim, talking_heads,
+                         True, channels_first)

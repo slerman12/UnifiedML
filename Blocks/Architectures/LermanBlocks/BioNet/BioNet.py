@@ -32,7 +32,7 @@ class BioNetV1(nn.Module):
                                MLP(out_channels, output_dim, 1024))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
+        return Utils.cnn_feature_shape([c, h, w], self.dorsal_stream, self.projection)
 
     def forward(self, input):
         ventral = self.ventral_stream.trunk(input)
@@ -178,7 +178,7 @@ class BioNetV2(nn.Module):
                                MLP(out_channels, output_dim, 1024))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
+        return Utils.cnn_feature_shape([c, h, w], self.dorsal_stream, self.projection)
 
     def forward(self, input):
         ventral = self.ventral_stream.trunk(input)
@@ -217,7 +217,7 @@ class BioNet(nn.Module):
 
         dims = self.ventral_stream.dims[1:]
 
-        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, s_dim=dim)
+        self.cross_talk = nn.ModuleList([CrossAttentionBlock(dim=dim, heads=heads, context_dim=dim)
                                          for dim in dims])
 
         # self.repr = nn.Sequential(Utils.ChannelSwap(),
@@ -233,7 +233,7 @@ class BioNet(nn.Module):
                                nn.Linear(1024, output_dim))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.dorsal_stream, self.projection)
+        return Utils.cnn_feature_shape([c, h, w], self.dorsal_stream, self.projection)
 
     def forward(self, input):
         ventral = self.ventral_stream.trunk(input)

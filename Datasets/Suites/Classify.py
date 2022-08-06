@@ -1,4 +1,4 @@
-# Copyright (c) Sam Lerman. All Rights Reserved.
+# Copyright (c) AGI.__init__. All Rights Reserved.
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
@@ -25,14 +25,6 @@ from torchvision.transforms import functional as F
 from Utils import instantiate
 
 
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super(AttrDict, self).__init__()
-        self.__dict__ = self
-        self.update(_dict)
-
-
 class Classify:
     """
     A general-purpose environment:
@@ -44,17 +36,18 @@ class Classify:
     (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
-    (4) "discrete" attribute
-    (5) "episode_done" attribute
-    (6) "obs_spec" attribute which includes:
+    (4) "episode_done" attribute
+    (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
-    (7) "action-spec" attribute which includes:
+    (6) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
-          "low", "high" (these last 2 should be None if discrete, can be None if not discrete)
-    (8) "exp" attribute containing the latest exp
+          "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
+    (7) "exp" attribute containing the latest exp
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
-    numpy values which can be NaN. "obs" must include a batch dim.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
+    numpy values which can be NaN. Must include a batch dim.
+
+    Recommended: Discrete environments should have a conversion strategy for continuous actions (e.g. argmax)
 
     ---
 
@@ -68,7 +61,6 @@ class Classify:
     """
     def __init__(self, dataset, task='MNIST', train=True, offline=True, generate=False, batch_size=32, num_workers=1,
                  low=None, high=None, frame_stack=None, action_repeat=None, seed=None, **kwargs):
-        self.discrete = False
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
@@ -100,11 +92,19 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
+        # self.action_spec = {'name': 'action',
+        #                     'shape': (len(dataset.classes),),  # Dataset must include a "classes" attr
+        #                     'num_actions': None,  # Should be None for continuous TODO switch shape and num, discrete
+        #                     'low': None,
+        #                     'high': None,
+        #                     'discrete': False}
+
         self.action_spec = {'name': 'action',
-                            'shape': (len(dataset.classes),),  # Dataset must include a "classes" attr
-                            'num_actions': None,
-                            'low': None,
-                            'high': None}
+                            'shape': (1,),
+                            'num_actions': len(dataset.classes),  # Dataset must include a "classes" attr
+                            'low': 0,
+                            'high': len(dataset.classes) - 1,
+                            'discrete': True}  # TODO num_critics=1 default for Classify, num-critics global agent arg
 
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
@@ -133,7 +133,7 @@ class Classify:
             Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
                      **kwargs)
 
-        # Create replay
+        # Create replay  TODO - check if len of buffer = batches, else recreate, check if norm exists, else conflict
         if train and (offline or generate) and not replay_path.exists():
             self.create_replay(replay_path)  # TODO Conflict-handling in distributed & mark success in case of terminate
 
@@ -163,7 +163,10 @@ class Classify:
         self.evaluate_episodes = len(self.batches)
 
     def step(self, action):
-        correct = (self.exp.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
+        # Adapt to discrete!
+        _action = self.adapt_to_discrete(action)
+
+        correct = (self.exp.label == _action).astype('float32')
 
         self.exp.reward = correct
         self.exp.action = action  # Note: can store argmax instead
@@ -189,6 +192,8 @@ class Classify:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -219,7 +224,7 @@ class Classify:
             obs.shape = (batch_size, *self.obs_spec['shape'])
 
             dummy = np.full((batch_size, 1), np.NaN)
-            missing = np.full((batch_size, *self.action_spec['shape']), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['num_actions'],)), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 
@@ -260,6 +265,30 @@ class Classify:
 
         return mean, stddev, low.item(), high.item()
 
+    def adapt_to_discrete(self, action):
+        shape = self.action_spec['shape']
+
+        try:
+            action = action.reshape(len(action), *shape)  # Assumes a batch dim
+        except ValueError:
+            try:
+                action = action.reshape(len(action), -1, *shape)  # Assumes a batch dim
+            except:
+                raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
+                                   f'to expected batch-action shape {(-1, *shape)}')
+            action = action.argmax(1)
+
+        return action
+
+        # TODO Account for self.low, self.high range (shift, modulo, shift)
+        action = action % self.action_spec['high']
+
+        if np.issubdtype(int, action.dtype):
+            return action
+
+        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.num_actions
+        return np.round(action * self.action_spec['num_actions']) / self.action_spec['num_actions']
+
 
 class Transform:
     def __call__(self, sample):
@@ -270,4 +299,12 @@ def worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
+
+
+# Access a dict with attribute or key (purely for aesthetic reasons)
+class AttrDict(dict):
+    def __init__(self, _dict):
+        super(AttrDict, self).__init__()
+        self.__dict__ = self
+        self.update(_dict)
 

@@ -57,8 +57,8 @@ class ExperienceReplay:
 
         # Data specs
 
-        frame_stack = frame_stack or 1
-        obs_spec.shape[0] //= frame_stack
+        self.frame_stack = frame_stack or 1
+        obs_spec.shape[0] //= self.frame_stack
 
         self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
                                                for name in ['reward', 'discount', 'label', 'step']],
@@ -105,8 +105,8 @@ class ExperienceReplay:
                                                             fetch_per=1000,
                                                             pipes=pipes,
                                                             save=save,
-                                                            frame_stack=frame_stack,
-                                                            nstep=nstep,
+                                                            frame_stack=self.frame_stack,
+                                                            nstep=self.nstep,
                                                             discount=discount,
                                                             transform=transform)
 
@@ -121,22 +121,26 @@ class ExperienceReplay:
                                                    pin_memory=True,
                                                    worker_init_fn=worker_init_fn,
                                                    persistent_workers=True)
+
         # Replay
 
         self._replay = None
 
-    # Returns a batch of experiences
-    def sample(self):
-        return next(self)  # Can iterate via next
+        self.device, self.discrete = 'cpu', action_spec.discrete
 
-    # Allows iteration
-    def __next__(self):
+    # Samples a batch of experiences
+    def sample(self, trajectories=False):
         try:
-            return next(self.replay)
+            sample = next(self.replay)
         except StopIteration:
             self.epoch += 1
             self._replay = None
-            return next(self)
+            sample = next(self.replay)
+        return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude full trajectories
+
+    # Allows iteration via next (e.g. batch = next(replay) )
+    def __next__(self):
+        return self.sample()
 
     # Allows iteration
     def __iter__(self):
@@ -146,7 +150,7 @@ class ExperienceReplay:
     @property
     def replay(self):
         if self._replay is None:
-            self._replay = iter(self.batches)
+            self._replay = iter(self.batches)  # Recreates the iterator when exhausted
         return self._replay
 
     # Tracks single episode "trace" in memory buffer
@@ -166,8 +170,8 @@ class ExperienceReplay:
                 # Add batch dimension
                 if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None or type(exp[spec['name']]) == bool:
                     exp[spec['name']] = np.full((1, *spec['shape']), exp[spec['name']], dtype=getattr(exp[spec['name']], 'dtype', 'float32'))
-                elif exp[spec['name']].shape in [(), (1,), spec['shape']]:
-                    exp[spec['name']].shape = (1, *spec['shape'])
+                # elif len(exp[spec['name']].shape) in [0, 1, len(spec['shape'])]:
+                #     exp[spec['name']].shape = (1, *spec['shape'])
 
                 # Expands attributes that are unique per batch (such as 'step')
                 batch_size = exp.get('obs', exp['action']).shape[0]
@@ -175,8 +179,8 @@ class ExperienceReplay:
                     exp[spec['name']] = np.repeat(exp[spec['name']], batch_size, axis=0)
 
                 # Validate consistency
-                assert spec['shape'] == exp[spec["name"]].shape[1:], \
-                    f'Unexpected shape for "{spec["name"]}": {spec["shape"]} vs. {exp[spec["name"]].shape[1:]}'
+                # assert spec['shape'] == exp[spec["name"]].shape[1:], \
+                #     f'Unexpected shape for "{spec["name"]}": {spec["shape"]} vs. {exp[spec["name"]].shape[1:]}'
 
                 # Add the experience
                 self.episode[spec['name']].append(exp[spec['name']])
@@ -388,7 +392,7 @@ class Experiences:
 
         # Present
         obs = frame_stack(episode['obs'], idx)
-        label = episode['label'][idx].squeeze()
+        label = episode['label'][idx]
         step = episode['step'][idx]
 
         exp_id, worker_id = episode['id'] + idx, self.worker_id
@@ -403,9 +407,10 @@ class Experiences:
             next_obs = frame_stack(episode['obs'], idx + self.nstep)
 
             # Trajectory
-            traj_o = episode['obs'][idx:idx + self.nstep + 1]  # TODO Frame-stack
-            traj_a = episode['action'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
-            traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]  # -1 len of traj_o
+            traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
+                                     for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
+            traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
+            traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
             traj_l = episode['label'][idx:idx + self.nstep + 1]
 
             # Cumulative discounted reward

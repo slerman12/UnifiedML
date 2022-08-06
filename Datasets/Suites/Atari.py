@@ -6,6 +6,8 @@ from collections import deque
 
 import warnings
 
+import torch
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import gym
@@ -15,16 +17,6 @@ import numpy as np
 from torch import as_tensor
 
 from torchvision.transforms.functional import resize
-
-# from skimage.transform import resize
-
-
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super(AttrDict, self).__init__()
-        self.__dict__ = self
-        self.update(_dict)
 
 
 class Atari:
@@ -38,17 +30,18 @@ class Atari:
     (1) a "step" function, action -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
-    (4) "discrete" attribute
-    (5) "episode_done" attribute
-    (6) "obs_spec" attribute which includes:
+    (4) "episode_done" attribute
+    (5) "obs_spec" attribute which includes:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
-    (7) "action-spec" attribute which includes:
+    (6) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "num_actions" (should be None if not discrete),
-          "low", "high" (these last 2 should be None if discrete, can be None if not discrete)
-    (8) "exp" attribute containing the latest exp
+          "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
+    (7) "exp" attribute containing the latest exp
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action", "reward", "label", "step"
-    numpy values which can be NaN. "obs" must include a batch dim.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
+    numpy values which can be NaN. Must include a batch dim.
+
+    Recommended: Discrete environments should have a conversion strategy for continuous actions (e.g. argmax)
 
     Can optionally include a frame_stack, action_repeat method.
 
@@ -56,7 +49,6 @@ class Atari:
     def __init__(self, task='pong', seed=0, frame_stack=3, action_repeat=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
                  last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
-        self.discrete = True
         self.episode_done = False
 
         # Make env
@@ -81,7 +73,7 @@ class Atari:
         except gym.error.NameNotFound as e:
             # If Atari not installed
             raise gym.error.NameNotFound(str(e) + '\nYou may have not installed the Atari ROMs.\n'
-                                                  'Try the following to install them, as in the README.\n'
+                                                  'Try the following to install them, as instructed in the README.\n'
                                                   'Accept the license:\n'
                                                   '$ pip install autorom\n'
                                                   '$ AutoROM --accept-license\n'
@@ -116,8 +108,9 @@ class Atari:
         self.action_spec = {'name': 'action',
                             'shape': (1,),
                             'num_actions': self.env.action_space.n,
-                            'low': None,
-                            'high': None}
+                            'low': 0,  # Should be None for discrete
+                            'high': self.env.action_space.n - 1,  # Should be None for discrete
+                            'discrete': True}  # TODO Remove?
 
         self.exp = None
 
@@ -125,14 +118,14 @@ class Atari:
         self.frames = deque([], frame_stack or 1)
 
     def step(self, action):
-        # Define no-op, remove batch dim
-        action = 0 if action is None \
-            else action.squeeze(0)
+        # Adapt to discrete!
+        _action = self.adapt_to_discrete(action)
+        _action.shape = self.action_spec['shape']
 
         # Step env
         reward = 0
         for _ in range(self.action_repeat):
-            obs, _reward, self.episode_done, info = self.env.step(action)
+            obs, _reward, self.episode_done, info = self.env.step(int(_action))  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame
@@ -158,7 +151,6 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
         obs = resize(as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
@@ -171,6 +163,8 @@ class Atari:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -202,7 +196,6 @@ class Atari:
             obs = obs.transpose(2, 0, 1)  # Channel-first
 
         # Resize image
-        # obs = resize(obs, (1, *self.obs_spec['shape'][1:]), preserve_range=True).astype(np.uint8)  # Via skimage
         obs = resize(as_tensor(obs), self.obs_spec['shape'][1:], antialias=True).numpy()
 
         # Add batch dim
@@ -215,6 +208,8 @@ class Atari:
         for key in exp:
             if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
                 exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         # Reset frame stack
         self.frames.clear()
@@ -225,3 +220,32 @@ class Atari:
 
     def render(self):
         return self.env.render('rgb_array')  # rgb_array | human
+
+    def adapt_to_discrete(self, action):
+        shape = self.action_spec['shape']
+
+        try:
+            action = action.reshape(len(action), *shape)  # Assumes a batch dim
+        except ValueError:
+            try:
+                action = action.reshape(len(action), -1, *shape)  # Assumes a batch dim
+            except:
+                raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
+                                   f'to expected batch-action shape {(-1, *shape)}')
+            action = action.argmax(1)
+
+        return action
+
+        if np.issubdtype(int, action.dtype):
+            return action
+
+        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.num_actions
+        return np.round(action * self.action_spec['num_actions']) / self.action_spec['num_actions']
+
+
+# Access a dict with attribute or key (purely for aesthetic reasons)
+class AttrDict(dict):
+    def __init__(self, _dict):
+        super(AttrDict, self).__init__()
+        self.__dict__ = self
+        self.update(_dict)

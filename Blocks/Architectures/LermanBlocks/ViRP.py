@@ -13,7 +13,7 @@ from torch import nn
 import Utils
 
 from Blocks.Architectures import MLP, ViT
-from Blocks.Architectures.MultiHeadAttention import ReLA, mem_efficient_attend, SelfAttentionBlock, SelfAttention
+from Blocks.Architectures.MultiHeadAttention import ReLA, SelfAttentionBlock, SelfAttention
 from Blocks.Architectures.Perceiver import Perceiver
 from Blocks.Architectures.RN import RN
 
@@ -90,12 +90,12 @@ class ViRP(ViT):
         if perceiver:
             self.attn = Perceiver(out_channels, heads, tokens, token_dim, fix_token=True)
 
-            self.attn.reattn = nn.ModuleList(([Relation(token_dim, 1, out_channels, k_dim, out_channels)]) +
-                                             sum([[block(token_dim if i == 0 else out_channels, heads,
+            self.attn.cross_attention = nn.ModuleList(([Relation(token_dim, 1, out_channels, k_dim, out_channels)]) +
+                                                      sum([[block(token_dim if i == 0 else out_channels, heads,
                                                          k_dim=k_dim, v_dim=v_dim, hidden_dim=hidden_dim,
                                                          dropout=dropout, **kwargs)] * recurs
                                                   for i, recurs in enumerate(recursions)], []))
-            self.attn.attn = attn
+            self.attn.self_attentions = attn
         else:
             self.attn = nn.Sequential(attn[1])
 
@@ -199,7 +199,7 @@ class Relation(nn.Module):
                 attn = torch.matmul(weights, v)
 
         rtn = torch.argmax(weights, dim=-1)  # [b, h, i]
-        rtn = Utils.gather_indices(v, rtn, dim=-2)  # [b, h, i, d]
+        rtn = Utils.gather(v, rtn, dim=-2)  # [b, h, i, d]
 
         if self.training:
             rtn = attn - (attn - rtn).detach()
@@ -539,18 +539,18 @@ class RelativeBlock(IndependentHeadsBlock):
 
 # Re-param
 class RelationAttentionBlock(SelfAttentionBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
-        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout)
+    def __init__(self, dim=32, heads=1, context_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, context_dim, k_dim, v_dim, hidden_dim, dropout)
 
-        self.attn = Relation(dim, self.heads, s_dim, k_dim, self.v_dim)
+        self.attn = Relation(dim, self.heads, context_dim, k_dim, self.v_dim)
 
 
 # Re-param
 class RelationReLABlock(SelfAttentionBlock):
-    def __init__(self, dim=32, heads=1, s_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
-        super().__init__(dim, heads, s_dim, k_dim, v_dim, hidden_dim, dropout, rela=True)
+    def __init__(self, dim=32, heads=1, context_dim=None, k_dim=None, v_dim=None, hidden_dim=None, dropout=0):
+        super().__init__(dim, heads, context_dim, k_dim, v_dim, hidden_dim, dropout, rela=True)
 
-        self.attn = Relation(dim, self.heads, s_dim, k_dim, self.v_dim, rela=True)
+        self.attn = Relation(dim, self.heads, context_dim, k_dim, self.v_dim, rela=True)
 
 
 # Re-param

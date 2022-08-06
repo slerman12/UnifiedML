@@ -105,6 +105,8 @@ Yes.
 
 All agents support discrete and continuous control, classification, and generative modeling.
 
+[comment]: <> (All agents and even tasks support discrete and continuous control, online and offline RL, imitation learning, classification, regression, and generative modeling.)
+
 See example scripts of various configurations [below](#mag-sample-scripts).
 
 # :wrench: Setting Up
@@ -125,6 +127,34 @@ All dependencies can be installed via [Conda](https://docs.conda.io/en/latest/mi
 ```console
 conda env create --name ML --file=Conda.yml
 ```
+
+[comment]: <> (For GPU support, you may have to [pip install Pytorch]&#40;&#41; depending on your CUDA version.)
+
+Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from here: https://pytorch.org/get-started/locally/.
+
+As such:
+
+```console
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+```
+
+[comment]: <> (For CUDA 11+, also try:)
+
+[comment]: <> (```console)
+
+[comment]: <> (# 11.3)
+
+[comment]: <> (pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113)
+
+[comment]: <> (# 11.6)
+
+[comment]: <> (pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116)
+
+[comment]: <> (```)
+
+[comment]: <> (See [here]&#40;https://pytorch.org/get-started/locally/&#41;.)
+
+[comment]: <> (as per the [Pytorch installation instructions]&#40;https://pytorch.org/get-started/locally/&#41;.)
 
 ## 3. Activate Your Conda Env.
 
@@ -244,6 +274,10 @@ Save videos with ```log_video=true```.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
+[comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
+
+[comment]: <> (Options like ```nstep=```, ```action_repeat=```, ```frame_stack=``` let you customize the training further, as well as plenty of [other hyperparams]&#40;Hyperparams/args.yaml&#41;.)
+
 </details>
 
 ### Classification 
@@ -254,21 +288,24 @@ Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from
 </summary>
 <br>
 
-Vanilla CNN on MNIST:
+CNN on MNIST:
 
 ```console
 python Run.py task=classify/mnist 
 ```
-
-In addition to Eval accuracies, more in-depth Train accuracies can always be toggled with ```agent.log=true```.
-
-**Variations**
+[comment]: <> (Since this is *Unified*ML, there are a few noteworthy variations.)
 
 *Note:* ```RL=false``` is the default for ```classify``` tasks. Keeps training at **standard** supervised-only classification.
 
-With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
+**Variations**
 
-Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
+Since this is *Unified*ML, there are a couple noteworthy variations.
+
+1. With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
+
+2. Alternatively, and interestingly, ```supervise=false RL=true``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
+
+Classify environments are actually great testbeds for certain RL problems since they give near-instant and clear performance feedback.
 
 [comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. $reward = -error$.)
 
@@ -284,7 +321,9 @@ Alternatively, and interestingly, ```supervise=false``` will *only* supervise vi
 
 [comment]: <> (The latent optimization could also be done over a learned parameter space as in POPLIN &#40;Wang and Ba, 2019&#41;, which lifts the domain of the optimization problem eq. &#40;1&#41; from Y to the parameter space of a fully-amortized neural network. This leverages the insight that the parameter space of over-parameterized neural networks can induce easier non-convex optimization problems than in the original space, which is also studied in Hoyer et al. &#40;2019&#41;.)
 
-**Important features** Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added: 
+**Important features** 
+
+Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added: 
 
 * Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
   
@@ -308,7 +347,7 @@ python Run.py task=classify/cifar10 ema=true weight_decay=0.01 transform="{Rando
 
 The above returns a $93$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
-And if you set ```supervise=false```, we get a $94$%... vis-à-vis pure-RL. 
+And if you set ```supervise=false RL=true```, we get a $94$%... vis-à-vis pure-RL. 
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -344,6 +383,32 @@ Is true by default for classification, where replays are automatically downloade
 
 </details>
 
+[comment]: <> (### Imitation Learning)
+
+[comment]: <> (<details>)
+
+[comment]: <> (<summary>)
+
+[comment]: <> (:mag: <i>Click to recall</i>)
+
+[comment]: <> (</summary>)
+
+[comment]: <> (<br>)
+
+[comment]: <> (The conversion to imitation is really simple. The action gets set as the label and is either argmaxed or one-hotted depending on whether the environment is discrete or continuous, or whether classifying &#40;overriding with ```classify=true```&#41; or doing regression &#40;```classify=false```&#41;.)
+
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py task=atari/breakout imitate=true)
+
+[comment]: <> (```)
+
+[comment]: <> (Assumes a replay [is saved]&#40;#saving&#41; to load and imitate based on.)
+
+[comment]: <> (Implicitly treats ```replay.load=true``` and ```replay.save=true```. The load path can of course be configured &#40;```replay.path```&#41;.)
+
+[comment]: <> (</details>)
+
 ### Generative Modeling
 
 <details>
@@ -354,27 +419,48 @@ Is true by default for classification, where replays are automatically downloade
 
 Via the ```generate=true``` flag:
 ```console
-python Run.py task=classify/mnist generate=true Aug=Blocks.Architectures.Null
+python Run.py task=classify/mnist generate=true
 ```
 
-```Aug=Blocks.Architectures.Null``` disables the image augmentation, since training is slower with it on the default settings.
+<p align="left">
+<img src="https://i.imgur.com/N1st6uO.png" width="320">
+<br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
+</p>
 
-Implicitly treats as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded.
+Saves to ```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>_Video_Image/```.
+
+Defaults can be easily modified with custom architectures or even datasets as elaborated in [Custom Architectures](#custom-architectures) and [Custom Datasets](#custom-dataset). Let's try the above with a CNN Discriminator:
+
+```console
+python Run.py task=classify/mnist generate=true Discriminator=CNN +agent.num_critics=1
+```
+
+```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. see [paper]() or [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification between Critic and Discriminator. Not all Agents support custom critic ensembling, and those will default to 2.
+
+Or a ResNet18:
+
+```console
+python Run.py task=classify/mnist generate=true Discriminator=Resnet18
+```
+
+Or let's speed up training by turning off the default image augmentation, which is overkill anyway for this simple case:
+
+```console
+python Run.py task=classify/mnist generate=true Aug=Identity +agent.num_critics=1
+```
+
+```Aug=Identity``` substitutes the default random cropping image-augmentation with the Identity function, thereby disabling it.
+
+Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. As long as a dataset is available or a replay has been saved, ```generate=true``` will work for any defined task, making it a powerful hyper-parameter that can just work.
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
-Can also work with RL (due to frame stack, the generated images are technically multi-frame videos), but make sure to change some of the default settings to speed up training, as per below:
+Can even work with RL tasks (due to frame stack, the generated images are technically multi-frame videos).
 
 ```console
-python Run.py task=atari/breakout generate=true evaluate_episodes=1 action_repeat=1 'aug="Null"'
+python Run.py task=atari/breakout generate=true
 ```
 
-A GAN with a CNN Discriminator:
-
-```console
-python Run.py generate=True Discriminator=Blocks.Architectures.CNN
-```
-
-See [Custom Architectures](#custom-architectures) for more info on this syntax.
+Make sure you have [saved a replay](#saving) that can be loaded before doing this.
 
 </details>
 
@@ -482,6 +568,47 @@ python Run.py replay.load=true replay.save=true
 :mag: <i>Learn to cook</i>
 </summary>
 <br>
+
+```console
+python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify/mnist
+```
+
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[Transformer, AvgPool]" +pool.positional_encodings=false
+```
+
+```console
+python Run.py task=classify/mnist Pool=Residual +pool.model=Transformer +pool.depth=2
+```
+
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap, Residual]" +'pool.model="MLP(kwargs.input_shape[-1])"' +'pool.down_sample="MLP(input_shape=kwargs.input_shape[-1], output_dim=kwargs.output_shape[-1])"'
+```
+
+```console
+python Run.py task=classify/mnist Pool=RN
+```
+
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[RN, AvgPool]"
+```
+
+```console
+python Run.py task=classify/mnist Eyes=Perceiver +eyes.depths="[3, 3, 2]"  +eyes.num_tokens=128
+```
+
+```console
+python Run.py task=classify/mnist Predictor=Perceiver +predictor.token_dim=32
+```
+
+```console
+python Run.py task=classify/mnist Predictor=Perceiver train_steps=2
+python Run.py task=dmc/cheetah_run Predictor=load +predictor.path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt +predictor.attr=actor.Pi_head +predictor.device=cpu save=false
+```
+
+```console
+python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.depths=10
+```
 
 </details>
 
@@ -629,6 +756,8 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
+For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And_Space_Group Classification, in which we reproduce our [full paper on classifying crystal structures and space groups from xray diffraction patterns]() in just a single <blank>-line file. The custom dataset used in this case is Crystals, their space groups, and corresponding xray patterns, will be downloaded automatically.
+
 </details>
 
 ### Experiment naming, plotting
@@ -639,27 +768,41 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
-The ```experiment=``` flag can help differentiate a distinct experiment; you can optionally control which experiment data is automatically plotted with ```plotting.plot_experiments=```.
+Plots automatically save to ```./Benchmarking/<experiment>/```, the default experiment is ```experiment=Exp```.
 
 ```console
-python Run.py experiment=ExpName1 plotting.plot_experiments="['ExpName1', 'SomeOtherExp']"
+python Run.py
 ```
 
-A unique experiment for benchmarking and saving purposes, is distinguished by: ```experiment=```, ```Agent=```, ```task=```, and ```seed=``` flags.
+:chart_with_upwards_trend: :bar_chart: in ```./Benchmarking/Exp/```
+
+Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
+
+```console
+python Run.py experiment=Exp2 plotting.plot_experiments="['Exp', 'Exp2']"
+```
 
 Alternatively, you can call ```Plot.py``` directly
 
 ```console
-python Plot.py plot_experiments="['ExpName1', 'SomeOtherExp']"
+python Plot.py plot_experiments="['Exp', 'Exp2']"
 ```
 
-And/or use [WandB](https://wandb.ai/):
+to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
+
+Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp``` in the name:
+
+```console
+python Plot.py plot_experiments="['.*Exp.*']"
+```
+
+Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
 ```console
 python Run.py logger.wandb=true
 ```
 
-You can connect it to your WandB account by first running ```wandb login``` in your Conda environment.
+You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console

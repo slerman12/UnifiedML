@@ -4,6 +4,7 @@ defaults:
 Env: Datasets.Suites.DMC.DMC
 suite: dmc
 task_name: reacher_easy
+discrete: false
 action_repeat: 2
 frame_stack: 3
 nstep: 3

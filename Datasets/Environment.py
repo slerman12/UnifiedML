@@ -98,3 +98,10 @@ class Environment:
             self.daybreak = sundown
 
         return experiences, logs, video_image
+
+
+# Converts Continuous to Discrete if necessary (see Paper section  <link>)
+# def create(action, agent, env):
+#     return action if agent.discrete or not (env.action_spec['discrete'] or agent.training) \
+#         else getattr(agent, 'creator',  # Creator goes under many different names
+#                      agent.action_selector)(action.unsqueeze(1), agent.step).sample()  # Continuous -> Discrete

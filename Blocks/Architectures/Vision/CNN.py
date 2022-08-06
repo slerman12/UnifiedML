@@ -31,8 +31,9 @@ class CNN(nn.Module):
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
 
-        c, h, w = Utils.cnn_feature_shape(*self.input_shape, self.trunk, self.CNN)
-        self.feature_shape = c * h * w
+        if output_dim is not None:
+            c, h, w = Utils.cnn_feature_shape(self.input_shape, self.trunk, self.CNN)
+            self.feature_shape = c * h * w
 
         # TODO Instead of projecting, use automatic feature computation in blocks
         # TODO flatten works better than pool I think? eitehr ay, linear before relu, then linear -> in other archs
@@ -42,7 +43,7 @@ class CNN(nn.Module):
         self.apply(Utils.weight_init)
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.project)
+        return Utils.cnn_feature_shape([c, h, w], self.trunk, self.CNN, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
@@ -70,8 +71,10 @@ class AvgPool(nn.Module):
     def __init__(self, **_):
         super().__init__()
 
-    def repr_shape(self, c, h, w):
-        return c, 1, 1
+    def repr_shape(self, dim, *_):
+        return dim,
 
-    def forward(self, x):
-        return F.adaptive_avg_pool2d(x, (1, 1)).flatten(-3)
+    def forward(self, input):
+        for _ in input.shape[2:]:
+            input = input.mean(-1)
+        return input

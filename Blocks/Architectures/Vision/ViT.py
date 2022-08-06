@@ -10,7 +10,7 @@ from torch import nn
 from einops import repeat, rearrange
 from einops.layers.torch import Rearrange
 
-from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
+from Blocks.Architectures.Transformer import SelfAttentionBlock
 from Blocks.Architectures.Vision.CNN import AvgPool
 
 

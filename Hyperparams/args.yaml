@@ -6,8 +6,9 @@ defaults:
 # Agent
 obs_spec: ???  # To be specified later
 action_spec: ???  # To be specified later
+num_actions: 0
 standardize: true
-norm: true
+norm: true  # False if standardizing
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
@@ -16,22 +17,23 @@ lr_decay_epochs: null
 weight_decay: 0
 ema_decay: 0.99
 # Domains
-discrete: ???  # To be specified later
+discrete: ???  # To be specified later, defaults per respective task
 offline: false  # Defaults to true for classify tasks
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
 # Environment
-Env: ???  # Defaults per respective task
+Env: ???  # To be specified later, defaults per respective task
 env:
   _target_: ${Env}
   _recursive_: false
+  discrete: ${discrete}
 Dataset: null  # Defaults per respective Classify task
 dataset:
   _target_: ${Dataset}
   _recursive_: false
-suite: ???  # Defaults per respective task
-task_name: ???  # Defaults per respective task
+suite: ???  # To be specified later, defaults per respective task
+task_name: ???  # To be specified later, defaults per respective task
 frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1
@@ -51,7 +53,7 @@ ema: false
 # Saving
 save: true
 save_per_steps: 0
-save_path: ./Checkpoints/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Agent.pt
+save_path: ./Checkpoints/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}.pt
 load: false
 load_per_steps: 0
 # Logging
@@ -86,6 +88,7 @@ agent:
   _recursive_: false
   obs_spec: ${obs_spec}
   action_spec: ${action_spec}
+  num_actions: ${num_actions}
   trunk_dim: ${trunk_dim}
   hidden_dim: ${hidden_dim}
   standardize: ${standardize}
@@ -184,38 +187,43 @@ pool:
   _target_: ${Pool}
 pi_trunk:
   _target_: ${Pi_trunk}
-generator:
+generator:  # Shorthand for pi_head
   _target_: ${Pi_head}
-predictor: ${generator}
-pi_head: ${predictor}
+predictor:  # Shorthand for pi_head
+  _default_: ${generator}
+pi_head:
+  _default_: ${predictor}
 q_trunk:
   _target_: ${Q_trunk}
-discriminator:
+discriminator:  # Shorthand for q_head
   _target_: ${Q_head}
-q_head: ${discriminator}
+q_head:
+  _default_: ${discriminator}
 optim:
   _target_: ${Optim}
 scheduler:
   _target_: ${Scheduler}
 
 # Recipes
-recipes:
+_recipes:
   aug: ${aug}
   encoder:
-    eyes: ${eyes}
+    Eyes: ${eyes}
     pool: ${pool}
     optim: ${optim}
     scheduler: ${scheduler}
   actor:
     trunk: ${pi_trunk}
-    pi_head: ${pi_head}
+    Pi_head: ${pi_head}
     optim: ${optim}
     scheduler: ${scheduler}
   critic:
     trunk: ${q_trunk}
-    q_head: ${q_head}
+    Q_head: ${q_head}
     optim: ${optim}
     scheduler: ${scheduler}
+
+recipes: ${allow_objects:${_recipes}}
 
 hydra:
   output_subdir: ${logger.path}${task_name}_${seed}_Hydra

@@ -39,7 +39,7 @@ class ConvMixer(nn.Module):
             else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ConvMixer, self.project)
+        return Utils.cnn_feature_shape([c, h, w], self.trunk, self.ConvMixer, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

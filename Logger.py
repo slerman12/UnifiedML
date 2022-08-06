@@ -58,7 +58,7 @@ class Logger:
 
             for log_name, item in log.items():
                 if isinstance(item, torch.Tensor):
-                    item = item.detach().numpy()
+                    item = item.detach().cpu().numpy()
                 logs[log_name] = logs[log_name] + [item] if log_name in logs else [item]
 
         if dump:
@@ -99,7 +99,7 @@ class Logger:
                                             else np.ma.sum)
 
         def size_agnostic_agg(stats):
-            stats = [(stat,) if np.isscalar(stat) else stat for stat in stats]
+            stats = [(stat,) if np.isscalar(stat) else stat.flatten() for stat in stats]
 
             masked = np.ma.empty((len(stats), max(map(len, stats))))
             masked.mask = True

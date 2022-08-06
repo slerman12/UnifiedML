@@ -20,6 +20,7 @@ if __name__ == '__main__':
 Env: Datasets.Suites.DMC.DMC
 suite: dmc
 task_name: {task}
+discrete: false
 action_repeat: 2
 frame_stack: 3
 nstep: {1 if 'walker' in task else 3}
