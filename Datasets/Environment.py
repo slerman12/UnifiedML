@@ -50,7 +50,7 @@ class Environment:
             action = agent.act(obs)
 
             if not self.generate:
-                exp = self.env.step(action.cpu().numpy())  # Experience
+                exp = self.env.step(action, agent)  # Experience
 
             exp.step = agent.step
             experiences.append(exp)

@@ -32,7 +32,7 @@ class Classify:
 
     Must have:
 
-    (1) a "step" function, action -> exp
+    (1) a "step" function, (action, agent) -> exp
     (2) "reset" function, -> exp
     (3) "render" function, -> image
     (4) "episode_done" attribute
@@ -151,9 +151,9 @@ class Classify:
 
         self.evaluate_episodes = len(self.batches)
 
-    def step(self, action):
+    def step(self, action, agent):
         # Adapt to discrete!
-        _action = self.adapt_to_discrete(action)
+        _action = self.adapt_to_discrete(action).cpu().numpy()
 
         correct = (self.exp.label == _action).astype('float32')
 
@@ -259,7 +259,7 @@ class Classify:
 
         try:
             action = action.reshape(len(action), *shape)  # Assumes a batch dim
-        except ValueError:
+        except (ValueError, RuntimeError):
             try:
                 action = action.reshape(len(action), -1, *shape)  # Assumes a batch dim
             except:
