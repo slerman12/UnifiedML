@@ -41,7 +41,7 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = num_actions
+        self.num_actions = 1 if self.discrete else num_actions
 
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
