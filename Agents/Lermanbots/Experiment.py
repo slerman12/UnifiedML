@@ -18,8 +18,7 @@ from Losses import QLearning, PolicyLearning
 
 
 class ExperimentAgent(torch.nn.Module):
-    """An Agent for evaluating computer vision + RL experiments
-    python Run.py -m Agent=Agents.ExperimentAgent task=classify/mnist,classify/cifar10,classify/tinyimagenet RL=true supervise=false,true discrete=true,false +agent.half=true,false experiment='Classify + RL_Supervise-${supervise}_Discrete-${discrete}_Contrastive-${agent.half}' logger.wandb=true"""
+    """An Agent for evaluating computer vision + RL experiments"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization

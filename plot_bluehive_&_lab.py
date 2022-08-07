@@ -50,21 +50,28 @@ bluehive_only = ["Half-Half-Contrastive", "Third-Label",
                  'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
                  'Critic-Ensemble', 'Reference']
 
-agents = []
-
-suites = []
-
 tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
          'pong', 'breakout', 'boxing',
          # 'krull', 'seaquest', 'qbert',
          # 'mspacman', 'jamesbond', 'frostbite', 'demonattack', 'battlezone', 'alien', 'hero'
          'cifar10', 'tinyimagenet']
 
-plot_group = 'XRD'
+plots = [
+    # Classify + RL
+    ['Classify + RL.*'],
+]
+
 tasks = []
-plots = [['CNN_optim_.*', 'MLP_optim_.*', 'ResNet18_optim_.*']]  # Regex!
-title = 'RRUFF'
-x_axis = 'Step'
+
+agents = []
+
+suites = []
+
+# plot_group = 'XRD'
+# tasks = []
+# plots = [['CNN_optim_.*', 'MLP_optim_.*', 'ResNet18_optim_.*']]  # Regex!
+# title = 'RRUFF'
+# x_axis = 'Step'
 
 experiments = set().union(*plots)
 
