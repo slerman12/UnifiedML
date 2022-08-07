@@ -62,10 +62,10 @@ class DQNAgent(torch.nn.Module):
 
         # # Continuous -> discrete conversion
         if self.discrete and not action_spec.discrete:
-            assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
-                                         'divide each action dimension into discrete bins, or specify "discrete=false".'
+            assert num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
+                                    'divide each action dimension into discrete bins, or specify "discrete=false".'
 
-            action_spec.discrete_bins = self.num_actions  # Continuous env has no discrete bins by default, must specify
+            action_spec.discrete_bins = num_actions  # Continuous env has no discrete bins by default, must specify
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
