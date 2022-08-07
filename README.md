@@ -268,6 +268,8 @@ python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
+[comment]: <> (When in doubt, go with ```Agents.AC2Agent```. It's pretty much the best of all worlds.)
+
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
