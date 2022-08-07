@@ -24,7 +24,7 @@ class ExperimentAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 half=False, third=False  # Experiment
+                 half=False, third=False, sample=False  # Experiment
                  ):
         super().__init__()
 
@@ -43,6 +43,7 @@ class ExperimentAgent(torch.nn.Module):
         self.num_actions = num_actions
 
         self.half, self.third = half, third  # Contrastive and ground truth RL examples
+        self.sample = sample  # Whether to sample inferences variationally as per usual in RL
 
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
@@ -177,7 +178,13 @@ class ExperimentAgent(torch.nn.Module):
             # Inference
             Pi = self.actor(obs)
 
-            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
+            All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
+
+            if self.sample and self.RL and not self.discrete:
+                action = Pi.rsample(self.num_actions)  # Variational inference
+                y_predicted = self.action_selector(self.critic(obs, action, All_Qs), self.step, action).best.mean(1)
+            else:
+                y_predicted = (All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
             mistake = cross_entropy(y_predicted, label.long(), reduction='none')
             correct = (y_predicted.argmax(1) == label).float()

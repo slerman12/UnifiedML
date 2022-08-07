@@ -143,8 +143,22 @@ sweep = [
     supervise=false,true 
     discrete=true,false 
     +agent.half=true,false 
-    experiment='Classify + RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
-    logger.wandb=true"""
+    experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
+    logger.wandb=true
+    parallel=true""",
+
+    # Classify + RL: Variational Inference
+    """python Run.py
+    Agent=Agents.ExperimentAgent 
+    task=classify/mnist,classify/cifar10,classify/tinyimagenet 
+    RL=true 
+    supervise=false,true 
+    discrete=false 
+    +agent.half=true,false 
+    +agent.sample=true
+    experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
+    logger.wandb=true
+    parallel=true"""
 ]
 
 # XRD

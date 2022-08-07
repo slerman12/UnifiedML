@@ -58,7 +58,7 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
 
 plots = [
     # Classify + RL
-    ['Classify + RL.*'],
+    ['Classify+RL.*'],
 ]
 
 tasks = []
