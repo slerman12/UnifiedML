@@ -20,7 +20,7 @@ from Losses import QLearning, PolicyLearning
 class ExperimentAgent(torch.nn.Module):
     """An Agent for evaluating computer vision + RL experiments"""
     def __init__(self,
-                 obs_spec, action_spec, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
+                 obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
@@ -30,7 +30,7 @@ class ExperimentAgent(torch.nn.Module):
 
         self.discrete = discrete and not generate
         self.supervise = supervise
-        self.RL = RL
+        self.RL = RL or generate
         self.generate = generate
         self.device = device
         self.log = log
@@ -40,40 +40,56 @@ class ExperimentAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = action_spec.num_actions or 1
+        self.num_actions = num_actions
 
         self.half, self.third = half, third  # Contrastive and ground truth RL examples
 
-        if generate:
-            action_spec.shape = obs_spec.shape
-            action_spec.low, action_spec.high = -1, 1
+        # Image augmentation
+        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
+                                                      else RandomShiftsAug(pad=4))
 
-        # Data stats
-        self.low, self.high = obs_spec.low, obs_spec.high
+        # RL -> generate conversion
+        if self.generate:
+            standardize = False
+            norm = True  # Normalize Obs to range [-1, 1]
 
-        self.encoder = Utils.Rand(trunk_dim) if generate \
-            else CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
-                            lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                            ema_decay=ema_decay * ema)
+            # Action = Imagined Obs
+            action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
+                                'low': -1, 'high': 1, 'discrete': False})
 
-        repr_shape = (trunk_dim,) if generate \
-            else self.encoder.repr_shape
+            # Remove encoder, replace trunk with random noise
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
+            recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
-        self.actor = EnsemblePiActor(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+        # # Continuous -> discrete conversion
+        if self.discrete and not action_spec.discrete:
+            assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
+                                         'divide each action dimension into discrete bins, or specify "discrete=false".'
+
+            action_spec.discrete_bins = self.num_actions  # Continuous env has no discrete bins by default, must specify
+
+        self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
+                                  lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                  ema_decay=ema_decay * ema)
+
+        self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
+                                     ensemble_size=2 if self.discrete and self.RL else 1,
+                                     discrete=self.discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                      ema_decay=ema_decay * ema)
 
-        self.critic = EnsembleQCritic(repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=2, discrete=self.discrete, ignore_obs=generate,
+        # When discrete, Critic <- Actor
+        if self.discrete:
+            recipes.critic.trunk = self.actor.trunk
+            recipes.critic.Q_head = self.actor.Pi_head.ensemble
+
+        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
+                                      ensemble_size=2 if self.RL else 1,
+                                      discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
 
         self.action_selector = CategoricalCriticActor(stddev_schedule)
-
-        # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if discrete
-                                                      else RandomShiftsAug(pad=4))
 
         # Birth
 
@@ -81,29 +97,34 @@ class ExperimentAgent(torch.nn.Module):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
 
-            # EMA shadows
-            encoder = self.encoder.ema if self.ema and not self.generate else self.encoder
-            actor = self.actor.ema if self.ema and not self.discrete else self.actor
+            # Exponential moving average (EMA) shadows
+            encoder = self.encoder.ema if self.ema else self.encoder
+            actor = self.actor.ema if self.ema else self.actor
             critic = self.critic.ema if self.ema else self.critic
 
-            # "See"
+            # See
             obs = encoder(obs)
 
-            Pi = self.action_selector(critic(obs), self.step) if self.discrete \
-                else actor(obs, self.step)
+            # Act
+            Pi = actor(obs, self.step)
 
-            action = Pi.sample() if self.training \
+            action = Pi.sample(self.num_actions) if self.training \
                 else Pi.best if self.discrete \
                 else Pi.mean
 
             if self.training:
+                # Select among candidate actions based on Q-value
+                if self.num_actions > 1:
+                    All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
+
+                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).best
+
                 self.step += 1
                 self.frame += len(obs)
 
-                # Explore phase
                 if self.step < self.explore_steps and not self.generate:
-                    action = torch.randint(self.num_actions, size=action.shape) if self.discrete \
-                        else action.uniform_(-1, 1)
+                    # Explore
+                    action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
             return action
 
@@ -117,23 +138,20 @@ class ExperimentAgent(torch.nn.Module):
 
         # "Envision" / "Perceive"
 
-        # Augment
+        # Augment, encode present
         obs = self.aug(obs)
+        obs = self.encoder(obs)
+
+        if replay.nstep > 0 and not self.generate:
+            with torch.no_grad():
+                # Augment, encode future
+                next_obs = self.aug(next_obs)
+                next_obs = self.encoder(next_obs)
 
         # Actor-Critic -> Generator-Discriminator conversion
         if self.generate:
-            obs = (obs - self.low) * 2 / (self.high - self.low) - 1  # Normalize first
-            action, reward[:] = obs.flatten(-3), 1
+            action, reward[:] = obs, 1  # "Real"
             next_obs[:] = label[:] = float('nan')
-
-        # Encode
-        obs = self.encoder(obs)
-
-        # Augment and encode future
-        if replay.nstep > 0 and not self.generate:
-            with torch.no_grad():
-                next_obs = self.aug(next_obs)
-                next_obs = self.encoder(next_obs)
 
         # "Journal teachings"
 
@@ -157,9 +175,16 @@ class ExperimentAgent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            y_predicted = self.actor(obs[instruction], self.step).mean
+            Pi = self.actor(obs)
 
-            mistake = cross_entropy(y_predicted, label[instruction].long(), reduction='none')
+            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
+
+            mistake = cross_entropy(y_predicted, label.long(), reduction='none')
+            correct = (y_predicted.argmax(1) == label).float()
+            accuracy = correct.mean()
+
+            if self.log:
+                logs.update({'accuracy': accuracy})
 
             # Supervised learning
             if self.supervise:
@@ -171,56 +196,57 @@ class ExperimentAgent(torch.nn.Module):
                                self.actor, epoch=self.epoch if offline else self.episode, retain_graph=True)
 
                 if self.log:
-                    correct = (torch.argmax(y_predicted, -1) == label[instruction]).float()
-
-                    logs.update({'supervised_loss': supervised_loss.item(),
-                                 'accuracy': correct.mean().item()})
+                    logs.update({'supervised_loss': supervised_loss})
 
             # (Auxiliary) reinforcement
             if self.RL:
-                ratio = len(instruction) // (2 + self.third)
+                ratio = len(obs) // (2 + self.third)
                 if self.half or self.third:
                     mistake[:ratio] = cross_entropy(y_predicted[:ratio].uniform_(-1, 1),
-                                                    label[instruction][:ratio].long(), reduction='none')
+                                                    label[:ratio].long(), reduction='none')
                 if self.third:
                     y_predicted[-ratio:], mistake[-ratio:] = Utils.one_hot(label[-ratio:], self.action_dim, -1), 0
-                action[instruction] = y_predicted.detach()
-                reward[instruction] = -mistake[:, None].detach()  # reward = -error
-                next_obs[instruction] = float('nan')
+                action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
+                reward = -mistake.detach()  # reward = -error
+                next_obs[:] = float('nan')
+
+                if self.log:
+                    logs.update({'reward': reward})
 
         # Reinforcement learning / generative modeling
-        if self.RL or self.generate:
+        if self.RL:
             # "Imagine"
 
             # Generative modeling
             if self.generate:
                 half = len(obs) // 2
-                generated_image = self.actor(obs[:half], self.step).mean
 
-                action[:half], reward[:half] = generated_image, 0  # Discriminate
+                Pi = self.actor(obs[:half])
+                generated_image = Pi.mean.flatten(1)
+
+                action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
 
             # "Discern"
 
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
                                                       obs, action, reward, discount, next_obs,
-                                                      self.step, logs=logs)
+                                                      self.step, self.num_actions, logs=logs)
 
             # Update critic
             Utils.optimize(critic_loss,
                            self.critic, epoch=self.epoch if offline else self.episode)
 
         # Update encoder
-        if not self.generate:
-            Utils.optimize(None,  # Using gradients from previous losses
-                           self.encoder, epoch=self.epoch if offline else self.episode)
+        Utils.optimize(None,  # Using gradients from previous losses
+                       self.encoder, epoch=self.epoch if offline else self.episode)
 
-        if self.generate or self.RL and not self.discrete:
+        if self.RL and not self.discrete:
             # "Change" / "Grow"
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, logs=logs)
+                                                           self.step, self.num_actions, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss,
