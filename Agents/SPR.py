@@ -82,11 +82,13 @@ class SPRAgent(torch.nn.Module):
                                      ema_decay=ema_decay * ema)
 
         # Dynamics
-        if depth and not generate:
-            self.action_dim = action_spec.discrete_bins if discrete and action_spec.shape == (1,) \
-                else self.actor.action_dim  # Will be one-hot if single-dim discrete action
-
+        if self.depth and not self.generate:
             shape = list(self.encoder.feature_shape)
+
+            # Action -> One-Hot, if single-dim discrete
+            self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
+                else self.actor.action_dim  # Otherwise, Action as is
+
             shape[0] += self.action_dim  # Predicting from obs and action
 
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
