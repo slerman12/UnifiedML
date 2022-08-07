@@ -6,7 +6,7 @@ defaults:
 # Agent
 obs_spec: ???  # To be specified later
 action_spec: ???  # To be specified later
-num_actions: 0
+num_actions: 1
 standardize: true
 norm: true  # Note: ignored if standardizing
 trunk_dim: 50

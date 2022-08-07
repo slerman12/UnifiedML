@@ -41,6 +41,8 @@ class DQNAgent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
+        self.num_actions = num_actions
+
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
                                                       else RandomShiftsAug(pad=4))
@@ -58,10 +60,8 @@ class DQNAgent(torch.nn.Module):
             recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
-        self.num_actions = num_actions or action_spec.discrete_bins or 1
-
         # # Continuous -> discrete conversion
-        if self.discrete:
+        if self.discrete and not action_spec.discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'
 
@@ -113,7 +113,7 @@ class DQNAgent(torch.nn.Module):
 
             if self.training:
                 # Select among candidate actions based on Q-value
-                if self.num_actions > 1:
+                if self.num_actions > 1 or actor.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
                     action = self.action_selector(critic(obs, action, All_Qs), self.step, action).best
