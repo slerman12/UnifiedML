@@ -134,7 +134,8 @@ Depending on your CUDA version, you may need to install Pytorch with CUDA via pi
 
 [comment]: <> (> CUDA 11.6 example: `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`  )
 
-> CUDA 11.6 example: ```console
+> CUDA 11.6 example: 
+> ```console
 > pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 > ```
 
