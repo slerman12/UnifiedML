@@ -274,12 +274,10 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
-AC2Agent in DeepMind Control:
+AC2Agent in DeepMind Control. When in doubt, go with ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk +agent.depth=5
 ```
-
-When in doubt, go with ```AC2Agent```. It's pretty much the best of all worlds.
 
 [comment]: <> (Basic RL features are configurable:)
 
