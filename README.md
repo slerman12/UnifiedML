@@ -195,6 +195,8 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
+> :point_right: **Example**: ```python Run.py task=dmc/cheetah_run```
+
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank"><i>:arrow_forward: Click to play</i></a><br>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
@@ -202,8 +204,6 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
-
-> :point_right: **Example**: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
