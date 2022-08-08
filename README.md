@@ -187,7 +187,7 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-> :point_right: ```python Run.py task=atari/mspacman```
+:point_right: ```python Run.py task=atari/mspacman```
 
 ## 2. DeepMind Control
 
@@ -201,7 +201,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <br><i>Video of different tasks in action.</i>
 </p>
 
-> :point_right: ```python Run.py task=dmc/cheetah_run```
+:point_right: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
@@ -232,7 +232,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 That's it.
 
-> :point_right: ```python Run.py task=classify/mnist```
+:point_right: ```python Run.py task=classify/mnist```
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
