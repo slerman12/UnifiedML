@@ -131,7 +131,7 @@ conda env create --name ML --file=Conda.yml
 [comment]: <> (For GPU support, you may have to [pip install Pytorch]&#40;&#41; depending on your CUDA version.)
 
 Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from here: [pytorch.org/get-started](https://pytorch.org/get-started/locally/). For example,
-> 💡 **CUDA 11.6**: `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`
+> **CUDA 11.6**: `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`
 
 [comment]: <> (For CUDA 11+, also try:)
 
@@ -187,7 +187,7 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-> 👉 ```python Run.py task=atari/mspacman```
+> :point_right: ```python Run.py task=atari/mspacman```
 
 ## 2. DeepMind Control
 
@@ -201,7 +201,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <br><i>Video of different tasks in action.</i>
 </p>
 
-> 👉 ```python Run.py task=dmc/cheetah_run```
+> :point_right: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
@@ -230,9 +230,9 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
-> 👉 ```python Run.py task=classify/mnist```
-
 That's it.
+
+> :point_right: ```python Run.py task=classify/mnist```
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
