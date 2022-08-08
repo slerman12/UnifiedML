@@ -40,7 +40,7 @@ class Classify:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
-          "low", "high" (these last 2 should be None if discrete, can be None if not discrete), and "discrete"
+          "low", "high" (can be None if not discrete), and "discrete"
     (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
@@ -267,16 +267,10 @@ class Classify:
                                    f'to expected batch-action shape {(-1, *shape)}')
             action = action.argmax(1)
 
-        return action
+        discrete_bins, low, high = self.action_spec['discrete_bins'], self.action_spec['low'], self.action_spec['high']
 
-        # TODO Account for self.low, self.high range (shift, modulo, shift)
-        action = action % self.action_spec['high']
-
-        if np.issubdtype(int, action.dtype):
-            return action
-
-        # TODO Round to nearest decimal corresponding to (self.high - self.low) / self.discrete_bins
-        return np.round(action * self.action_spec['discrete_bins']) / self.action_spec['discrete_bins']
+        # Round to nearest decimal/int corresponding to discrete bins, high, and low
+        return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
 
 
 class Transform:
