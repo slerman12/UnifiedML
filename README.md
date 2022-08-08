@@ -249,7 +249,7 @@ Example:
 python Run.py task=classify/mnist
 ```
 
-That's it, and there you have it.
+And there you have it.
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
