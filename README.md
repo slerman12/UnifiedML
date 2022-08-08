@@ -275,7 +275,7 @@ python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 
 [comment]: <> (When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.)
 
-**Experimental**: If you'd like to discretize a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to continuous-ize a discrete domain, pass in ```discrete=false```.
+**Experimental**: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 Basic RL features are configurable:
 - N-step reward via ```nstep=```
