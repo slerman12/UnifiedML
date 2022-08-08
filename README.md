@@ -192,6 +192,12 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
+An example training script:
+
+```console
+python Run.py task=atari/mspacman
+```
+
 ## 2. DeepMind Control
 
 Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
@@ -203,6 +209,12 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
+
+An example training script:
+
+```console
+python Run.py task=dmc/cheetah_run
+```
 
 ## 3. Classify
 
@@ -230,6 +242,12 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 [comment]: <> (No additional preparation needed. All datasets download automatically.)
 
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
+
+An example training script:
+
+```console
+python Run.py task=classify/mnist
+```
 
 That's it.
 
@@ -269,6 +287,19 @@ python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
 [comment]: <> (When in doubt, go with ```Agents.AC2Agent```. It's pretty much the best of all worlds.)
+
+**Experimental**: If you'd like to discretize a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to continuous-ize a discrete domain, pass in ```discrete=false```.
+
+Basic RL features are configurable:
+- N-step reward via ```nstep=```
+- Action repeat via ```action_repeat=```
+- Frame stack via ```frame_stack=```
+Or keep the loosely-optimized per-task defaults.
+  
+Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
+- ```Agent=Agents.AC2Agent +agent.num_actors=```
+- ```Agent=Agents.AC2Agent +agent.num_critics=```
+Please see ```Hyperparams/args.yaml``` for the vast array of configurable options.
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
@@ -334,6 +365,8 @@ Many popular features are unified in this library and generalized across RL/CV/g
 * Different optimizations [can be configured](#custom-optimization) too.
   
 * As well as [Custom Datasets](#custom-datasets). 
+
+* Ensembling is supported for some agents (e.g., ```Agent=Agents.AC2Agent +agent.num_actors=```)
   
 * Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. 
   
