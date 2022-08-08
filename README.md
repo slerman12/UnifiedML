@@ -264,14 +264,14 @@ That's it.
 </summary>
 <br>
 
-Humanoid example:
+Humanoid example with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
 ```console
-python Run.py task=dmc/humanoid_walk
+python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
-[DrQV2](https://arxiv.org/abs/2107.09645) Agent in Atari:
+[SPR](https://arxiv.org/abs/2007.05929) Agent in Atari:
 ```console
-python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
+python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
 [SPR](https://arxiv.org/abs/2007.05929) Agent in DeepMind Control:
@@ -279,7 +279,7 @@ python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
-[comment]: <> (When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.)
+When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.
 
 [comment]: <> (Basic RL features are configurable:)
 
@@ -312,9 +312,9 @@ Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable 
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
-**Experimental**: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
-
 > :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe many features that are commonly used in other domains. However, since this is* **Unified***ML, the commands for those features will work in the RL domain as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
+
+**Experimental**: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 [comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
 
