@@ -28,7 +28,7 @@ Structure of runs:
 -> Project N:
     -> ...
     
-Sweep groups allow more fine-grained organization of project-specific runs.
+Sweep groups allow more fine-grained organization of project-respective runs.
 """
 
 runs = {

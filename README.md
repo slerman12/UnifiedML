@@ -297,7 +297,12 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
 
-Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available, including N-step rewards (```nstep=```), frame stack (```frame_stack=```). action repeat (```action_repeat=```), and exploration schedule (```'stddev_schedule= '```). Per-task defaults are located in ```/Hyperparams/task/```.
+Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available, including
+* N-step rewards (```nstep=```)
+* Frame stack (```frame_stack=```)
+* Action repeat (```action_repeat=```)
+* Exploration schedule (```'stddev_schedule= '```)
+* & more, with per-task defaults in ```Hyperparams/task```
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
