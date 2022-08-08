@@ -135,7 +135,7 @@ Depending on your CUDA version, you may need to install Pytorch with CUDA via pi
 > 
 > `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`
 
-And you're done, essential dependencies successfully installed. :tada:
+And you're done, essential dependencies are now successfully installed. :tada:
 
 [comment]: <> (For CUDA 11+, also try:)
 
