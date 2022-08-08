@@ -132,7 +132,7 @@ conda env create --name ML --file=Conda.yml
 
 Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from here: https://pytorch.org/get-started/locally/.
 
-For example, install Pytorch with CUDA 11.6:
+*e.g.*, install Pytorch with CUDA 11.6:
 
 ```console
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
