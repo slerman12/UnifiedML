@@ -1,7 +1,6 @@
 """
 Useful collections/stats/pre-defined sweeps
 """
-import copy
 
 dmc = 'dmc/cheetah_run,dmc/quadruped_walk,dmc/reacher_easy,dmc/cup_catch,dmc/finger_spin,dmc/walker_walk'
 
@@ -452,27 +451,12 @@ def convert_to_attr_dict(iterable):
         iterable = AttrDict(iterable)
 
     items = enumerate(iterable) if isinstance(iterable, (list, tuple)) \
-        else copy.deepcopy(iterable).items() if isinstance(iterable, AttrDict) else ()  # Iterate through lists, tuples, or dicts
+        else iterable.items() if isinstance(iterable, AttrDict) else ()  # Iterate through lists, tuples, or dicts
 
     for key, value in items:
         iterable[key] = convert_to_attr_dict(value)  # Recurse through inner values
-
-        # Convert weird characters to underscore
-        if isinstance(key, str):
-            if not key.isidentifier():
-                key = list(key)
-                for i, char in enumerate(key):
-                    if not ('_' + char).isidentifier():
-                        key[i] = '_'
-                iterable[''.join(key)] = convert_to_attr_dict(value)
 
     return iterable
 
 
 runs = convert_to_attr_dict(runs)
-
-for key in runs.UML_Paper:
-    print(key)
-
-
-
