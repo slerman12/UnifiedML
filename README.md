@@ -192,7 +192,7 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-An example training script:
+An example Atari training script:
 
 ```console
 python Run.py task=atari/mspacman
