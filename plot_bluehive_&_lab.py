@@ -59,6 +59,9 @@ tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_s
 plots = [
     # Classify + RL
     ['Classify+RL.*'],
+
+    # Q-learning expected, expected + entropy, best
+    ['Q-Learning-Target.*'],
 ]
 
 tasks = []
