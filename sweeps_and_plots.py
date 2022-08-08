@@ -1,6 +1,7 @@
 """
 Useful collections/stats/pre-defined sweeps
 """
+import copy
 
 dmc = 'dmc/cheetah_run,dmc/quadruped_walk,dmc/reacher_easy,dmc/cup_catch,dmc/finger_spin,dmc/walker_walk'
 
@@ -110,61 +111,63 @@ runs = {'Template':
                           'cifar10', 'tinyimagenet'],
                 'agents': [],
                 'suites': []},
+            'Classify+RL': {
+                'sweep': [
+                    # Classify + RL
+                    """python Run.py
+                    Agent=Agents.ExperimentAgent 
+                    task=classify/mnist,classify/cifar10,classify/tinyimagenet
+                    ema=true 
+                    weight_decay=0.01
+                    lr_decay_epochs=100
+                    Eyes=Blocks.Architectures.ResNet18
+                    'transform="{RandomHorizontalFlip:{}}"'
+                    RL=true 
+                    supervise=false,true 
+                    discrete=true,false 
+                    +agent.half=true,false 
+                    experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
+                    logger.wandb=true
+                    parallel=true
+                    num_workers=20
+                    plot_per_steps=0""",
+
+                    # Classify + RL: Variational Inference
+                    """python Run.py
+                    Agent=Agents.ExperimentAgent 
+                    task=classify/mnist,classify/cifar10,classify/tinyimagenet
+                    ema=true 
+                    weight_decay=0.01
+                    lr_decay_epochs=100
+                    Eyes=Blocks.Architectures.ResNet18
+                    RL=true 
+                    supervise=false,true 
+                    discrete=false 
+                    +agent.half=true,false 
+                    +agent.sample=true
+                    experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
+                    logger.wandb=true
+                    parallel=true
+                    num_workers=20
+                    plot_per_steps=0"""
+                ],
+                'sftp': True,
+                'bluehive': False,
+                'steps': 5e5,
+                'title': 'UML Paper',
+                'x_axis': 'Step',
+                'plots': [
+                    # Classify + RL
+                    ['Classify+RL.*'],
+
+                    # Q-learning expected, expected + entropy, best -- Note: No sweep for this one since modified Losses
+                    ['Q-Learning-Target.*'],
+                ],
+                'bluehive_only': [],
+                'tasks': [],
+                'agents': [],
+                'suites': []},
         },
-    'Classify+RL': {
-        'sweep': [
-            # Classify + RL
-            """python Run.py
-            Agent=Agents.ExperimentAgent 
-            task=classify/mnist,classify/cifar10,classify/tinyimagenet
-            ema=true 
-            weight_decay=0.01 '
-            Eyes=Blocks.Architectures.ResNet18
-            'transform="{RandomHorizontalFlip:{}}"'
-            RL=true 
-            supervise=false,true 
-            discrete=true,false 
-            +agent.half=true,false 
-            experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
-            logger.wandb=true
-            parallel=true
-            num_workers=20
-            plot_per_steps=0""",
-
-            # Classify + RL: Variational Inference
-            """python Run.py
-            Agent=Agents.ExperimentAgent 
-            task=classify/mnist,classify/cifar10,classify/tinyimagenet
-            ema=true 
-            weight_decay=0.01 '
-            Eyes=Blocks.Architectures.ResNet18
-            RL=true 
-            supervise=false,true 
-            discrete=false 
-            +agent.half=true,false 
-            +agent.sample=true
-            experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
-            logger.wandb=true
-            parallel=true
-            num_workers=20
-            plot_per_steps=0"""
-        ],
-        'sftp': True,
-        'bluehive': False,
-        'steps': 5e5,
-        'title': 'UML Paper',
-        'x_axis': 'Step',
-        'plots': [
-            # Classify + RL
-            ['Classify+RL.*'],
-
-            # Q-learning expected, expected + entropy, best -- Note: No sweep for this one since modified Losses
-            ['Q-Learning-Target.*'],
-        ],
-        'bluehive_only': [],
-        'tasks': [],
-        'agents': [],
-        'suites': []},
     'XRD':
         {
             'Summary': {
@@ -449,14 +452,27 @@ def convert_to_attr_dict(iterable):
         iterable = AttrDict(iterable)
 
     items = enumerate(iterable) if isinstance(iterable, (list, tuple)) \
-        else iterable.items() if isinstance(iterable, AttrDict) else ()  # Iterate through lists, tuples, or dicts
+        else copy.deepcopy(iterable).items() if isinstance(iterable, AttrDict) else ()  # Iterate through lists, tuples, or dicts
 
     for key, value in items:
         iterable[key] = convert_to_attr_dict(value)  # Recurse through inner values
+
+        # Convert weird characters to underscore
+        if isinstance(key, str):
+            if not key.isidentifier():
+                key = list(key)
+                for i, char in enumerate(key):
+                    if not ('_' + char).isidentifier():
+                        key[i] = '_'
+                iterable[''.join(key)] = convert_to_attr_dict(value)
 
     return iterable
 
 
 runs = convert_to_attr_dict(runs)
+
+for key in runs.UML_Paper:
+    print(key)
+
 
 

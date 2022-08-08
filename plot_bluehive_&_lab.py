@@ -13,76 +13,17 @@ import numpy as np
 
 from Plot import plot
 
+from sweeps_and_plots import runs
 
-sftp = True
-bluehive = False
+
 plot_group = 'UML_Paper'
-# steps = None
-steps = 5e5
+plot_specs = runs[plot_group]['Classify+RL']
 
-title = plot_group.replace('_', ' ')
-x_axis = 'Step'
-
-plots = [
-    # Generalized reference implementations: DQN, DrQV2, SPR
-    ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble'],
-
-    # Quickly integrating and prototyping computer vision advances in RL:
-    # EMA, weight decay, augmentations, & architectures (e.g. ViT)
-    ['CV-RL', 'ViT', 'Reference', 'CV-Transform-RL'],
-
-    # Can RL augment supervision?
-    ["No-Contrastive", "Half-Half-Contrastive", "Third-Label",
-     'Actor-Experts', 'Supervised'],
-
-    # When is reward enough?
-    ["No-Contrastive-Pure-RL", "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
-     'Supervised'],
-
-    # Unifying RL as a discrete control problem: AC2
-    ['Actor-Ensemble-3', 'Actor-Ensemble-5', 'DQN-Based',
-     'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
-     'Reference']
-]
-
-bluehive_only = ["Half-Half-Contrastive", "Third-Label",
-                 "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
-                 'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
-                 'Critic-Ensemble', 'Reference']
-
-tasks = ['cheetah_run', 'quadruped_walk', 'reacher_easy', 'cup_catch', 'finger_spin', 'walker_walk',
-         'pong', 'breakout', 'boxing',
-         # 'krull', 'seaquest', 'qbert',
-         # 'mspacman', 'jamesbond', 'frostbite', 'demonattack', 'battlezone', 'alien', 'hero'
-         'cifar10', 'tinyimagenet']
-
-plots = [
-    # Classify + RL
-    ['Classify+RL.*'],
-
-    # Q-learning expected, expected + entropy, best
-    ['Q-Learning-Target.*'],
-]
-
-bluehive_only = []
-
-tasks = []
-
-agents = []
-
-suites = []
-
-# plot_group = 'XRD'
-# tasks = []
-# plots = [['CNN_optim_.*', 'MLP_optim_.*', 'ResNet18_optim_.*']]  # Regex!
-# title = 'RRUFF'
-# x_axis = 'Step'
-
-experiments = set().union(*plots)
+experiments = set().union(*plot_specs.plots)
 
 
 # SFTP experiment results
-if sftp:
+if plot_specs.sftp:
     username = 'slerman'
 
     # Get password, encrypt, and save for reuse
@@ -104,7 +45,7 @@ if sftp:
     Path(local_path).mkdir(parents=True, exist_ok=True)
     os.chdir(local_path)
 
-    if bluehive:
+    if plot_specs.bluehive:
         # Connect VPN
         try:
             p = spawn('/opt/cisco/anyconnect/bin/vpn connect vpnconnect.rochester.edu')
@@ -121,10 +62,10 @@ if sftp:
         # SFTP
 
         print(f'SFTP\'ing: {", ".join(experiments)}')
-        if len(tasks):
-            print(f'plotting for tasks: {", ".join(tasks)}')
-        if steps:
-            print(f'up to steps: {steps:.0f}')
+        if len(plot_specs.tasks):
+            print(f'plotting for tasks: {", ".join(plot_specs.tasks)}')
+        if plot_specs.steps:
+            print(f'up to steps: {plot_specs.steps:.0f}')
 
         print('\nConnecting to Bluehive', end=" ")
         p = spawn(f'sftp {username}@bluehive.circ.rochester.edu')
@@ -151,7 +92,7 @@ if sftp:
     p.sendline("cd UnifiedML")
     p.expect('sftp> ')
     for i, experiment in enumerate(experiments):
-        if experiment not in bluehive_only:
+        if experiment not in plot_specs.bluehive_only:
             print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
             p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
             p.expect('sftp> ', timeout=None)
@@ -165,13 +106,14 @@ for plot_train in [False, True]:
 
     print(f'\n Plotting {"train" if plot_train else "eval"}...')
 
-    for plot_experiments in plots:
+    for plot_experiments in plot_specs.plots:
 
         plot(path=f"./Benchmarking/{plot_group + '/' if plot_group else ''}{'_'.join(plot_experiments)}/Plots/",
              plot_experiments=plot_experiments if len(plot_experiments) else None,
-             plot_agents=agents if len(agents) else None,
-             plot_suites=suites if len(suites) else None,
-             plot_tasks=tasks if len(tasks) else None,
-             steps=steps if steps else np.inf, write_tabular=False, plot_train=plot_train, title=title, x_axis=x_axis,
-             verbose=True,
+             plot_agents=plot_specs.agents if len(plot_specs.agents) else None,
+             plot_suites=plot_specs.suites if len(plot_specs.suites) else None,
+             plot_tasks=plot_specs.tasks if len(plot_specs.tasks) else None,
+             steps=plot_specs.steps if plot_specs.steps else np.inf, write_tabular=False, plot_train=plot_train,
+             title=plot_specs.title, x_axis=plot_specs.x_axis,
+             verbose=True
              )
