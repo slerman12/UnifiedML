@@ -274,7 +274,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
-AC2Agent in DeepMind Control. When in doubt, go with ```AC2Agent```. It's pretty much the best of all worlds.
+[AC2Agent](paper) in DeepMind Control. When in doubt, go with ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk +agent.depth=5
 ```
