@@ -21,6 +21,12 @@ plot_specs = runs[plot_group]['Classify+RL']
 
 plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
 
+"""
+Example of how to plot independent from any specified run specs:
+    plot_group = 'Independent'
+    plot_specs.update(dict(plots=[['Exp']], sftp=False))
+"""
+
 experiments = set().union(*plot_specs.plots)
 
 
