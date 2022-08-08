@@ -64,6 +64,8 @@ plots = [
     ['Q-Learning-Target.*'],
 ]
 
+bluehive_only = []
+
 tasks = []
 
 agents = []

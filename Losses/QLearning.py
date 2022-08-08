@@ -38,15 +38,15 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             # Q-values per action
             next_Qs = critic.ema(next_obs, next_action, All_Next_Qs)
             next_q = next_Qs.min(1)[0]  # Min-reduced ensemble
-            # next_q_norm = next_q - next_q.max(-1, keepdim=True)[0]  # Normalized
+            next_q_norm = next_q - next_q.max(-1, keepdim=True)[0]  # Normalized
 
             # Weigh each action's Q-value by its probability
-            # temp = Utils.schedule(actor.stddev_schedule, step)  # Softmax temperature / "entropy"
+            temp = Utils.schedule(actor.stddev_schedule, step)  # Softmax temperature / "entropy"
             # temp = 1
-            # next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
+            next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
             next_v = torch.zeros_like(discount)
-            # next_v[has_future] = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
-            next_v[has_future] = next_q.max(-1, keepdim=True)[0]
+            next_v[has_future] = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+            # next_v[has_future] = next_q.max(-1, keepdim=True)[0]
 
             target_Q += discount * next_v
 
