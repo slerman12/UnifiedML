@@ -276,7 +276,8 @@ python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 
 [AC2Agent](paper) in DMC. When in doubt, go with ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
-# "depth" activates the dynamics self-supervisor to predict dynamics up to 5 timesteps in the future
+# "depth" activates the dynamics self-supervisor to predict 
+# dynamics up to 5 timesteps in the future
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5
 ```
 
