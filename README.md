@@ -275,11 +275,15 @@ python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 
 [comment]: <> (When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.)
 
-Basic RL features are configurable:
-- N-step reward via ```nstep=```
-- Action repeat via ```action_repeat=```
-- Frame stack via ```frame_stack=```
-- Exploration schedule via ```'stddev_schedule= '```
+[comment]: <> (Basic RL features are configurable:)
+
+[comment]: <> (- N-step reward via ```nstep=```)
+
+[comment]: <> (- Action repeat via ```action_repeat=```)
+
+[comment]: <> (- Frame stack via ```frame_stack=```)
+
+[comment]: <> (- Exploration schedule via ```'stddev_schedule= '```)
 
 [comment]: <> (Or keep the loosely-optimized per-task defaults already specified in ```Hyperparams/task/```.)
   
