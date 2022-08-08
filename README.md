@@ -226,13 +226,13 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 [comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
 </p>
 
-> :point_right: **Example**: ```python Run.py task=classify/mnist```
-
 [comment]: <> (Comes preinstalled.)
 
 [comment]: <> (No additional preparation needed. All datasets download automatically.)
 
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
+
+> :point_right: **Example**: ```python Run.py task=classify/mnist```
 
 That's it.
 
