@@ -131,11 +131,9 @@ conda env create --name ML --file=Conda.yml
 [comment]: <> (For GPU support, you may have to [pip install Pytorch]&#40;&#41; depending on your CUDA version.)
 
 Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from here: [pytorch.org/get-started](https://pytorch.org/get-started/locally/). For example,
-> **CUDA 11.6**: 
-> 
-> `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`
+> **CUDA 11.6 Example:**: `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`
 
-And you're done, essential dependencies are now successfully installed. :tada:
+Essential dependencies are now successfully installed. :tada:
 
 [comment]: <> (For CUDA 11+, also try:)
 
@@ -178,8 +176,6 @@ conda activate ML
 <br><i>A collection of retro Atari games.</i>
 </p>
 
-> :point_right: **Example**: ```python Run.py task=atari/mspacman```
-
 You can install via ```AutoROM``` if you accept the license.
 
 ```console
@@ -193,11 +189,11 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
+> :point_right: **Example**: ```python Run.py task=atari/mspacman```
+
 ## 2. DeepMind Control
 
 Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
-
-> :point_right: **Example**: ```python Run.py task=dmc/cheetah_run```
 
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank"><i>:arrow_forward: Click to play</i></a><br>
@@ -206,6 +202,8 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
+
+> :point_right: **Example**: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
