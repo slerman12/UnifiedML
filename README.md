@@ -282,7 +282,8 @@ Basic RL features are configurable:
 - Action repeat via ```action_repeat=```
 - Frame stack via ```frame_stack=```
 - Exploration schedule via ```'stddev_schedule= '```
-- Or keep the loosely-optimized per-task defaults already specified in ```Hyperparams/task/```.
+
+Or keep the loosely-optimized per-task defaults already specified in ```Hyperparams/task/```.
   
 Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
 - ```Agent=Agents.AC2Agent +agent.num_actors=```
