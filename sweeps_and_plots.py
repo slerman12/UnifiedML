@@ -36,14 +36,14 @@ runs = {
         {
             'Sweep1': {
                 'sweep': [],
+                'plots': [
+                    [],
+                ],
                 'sftp': True,
                 'bluehive': True,
                 'steps': 5e5,
                 'title': 'Template',
                 'x_axis': 'Step',
-                'plots': [
-                    [],
-                ],
                 'bluehive_only': [],
                 'tasks': [],
                 'agents': [],
@@ -74,11 +74,6 @@ runs = {
                     # 'Agent=Agents.ExperimentAgent task=classify/cifar10,classify/tinyimagenet ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18 experiment="Supervised-RL-No-Contrastive" plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true gpu=K80|V100'
                     # 'Agent=Agents.AC2Agent +agent.num_actors=5 task=classify/cifar10 ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{}}" Eyes=Blocks.Architectures.ResNet18 experiment="Actor-Experts" RL=false plot_per_steps=0 num_workers=16 num_gpus=4 parallel=true'
                 ],
-                'sftp': True,
-                'bluehive': True,
-                'steps': 5e5,
-                'title': 'UML Paper',
-                'x_axis': 'Step',
                 'plots': [
                     # Generalized reference implementations: DQN, DrQV2, SPR
                     ['Self-Supervised', 'DQN-Based', 'Reference', 'Critic-Ensemble'],
@@ -100,6 +95,11 @@ runs = {
                      'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
                      'Reference'],
                 ],
+                'sftp': True,
+                'bluehive': True,
+                'steps': 5e5,
+                'title': 'UML Paper',
+                'x_axis': 'Step',
                 'bluehive_only': ["Half-Half-Contrastive", "Third-Label",
                                   "Half-Half-Contrastive-Pure-RL", "Third-Label-Pure-RL",
                                   'Actions-Sampling-3', 'Actions-Sampling-5', 'Actor-Critic-Ensemble-5-5',
@@ -151,11 +151,6 @@ runs = {
                     num_workers=20
                     plot_per_steps=0"""
                 ],
-                'sftp': True,
-                'bluehive': False,
-                'steps': 5e5,
-                'title': 'UML Paper',
-                'x_axis': 'Step',
                 'plots': [
                     # Classify + RL
                     ['Classify+RL.*'],
@@ -163,6 +158,11 @@ runs = {
                     # Q-learning expected, expected + entropy, best -- Note: No sweep for this one since modified Losses
                     ['Q-Learning-Target.*'],
                 ],
+                'sftp': True,
+                'bluehive': False,
+                'steps': 5e5,
+                'title': 'UML Paper',
+                'x_axis': 'Step',
                 'bluehive_only': [],
                 'tasks': [],
                 'agents': [],
@@ -421,15 +421,15 @@ runs = {
                     save=true
                     logger.wandb=true""",
                 ],
+                'plots': [
+                    # Summary bar & line plots
+                    ['CNN_optim_.*', 'MLP_optim_.*'],
+                ],
                 'sftp': True,
                 'bluehive': False,
                 'steps': 5e5,
                 'title': 'RRUFF',
                 'x_axis': 'Step',
-                'plots': [
-                    # Summary bar & line plots
-                    ['CNN_optim_.*', 'MLP_optim_.*'],
-                ],
                 'bluehive_only': [],
                 'tasks': [],
                 'agents': [],
