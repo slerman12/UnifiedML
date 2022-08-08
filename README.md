@@ -243,7 +243,7 @@ python Run.py task=dmc/cheetah_run
 
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
-An example training script:
+Example:
 
 ```console
 python Run.py task=classify/mnist
