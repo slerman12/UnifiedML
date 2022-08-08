@@ -171,12 +171,12 @@ conda activate ML
 
 ## 1. Atari Arcade
 
-> :point_right: **Example**: ```python Run.py task=atari/mspacman```
-
 <p align="left">
 <img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
 <br><i>A collection of retro Atari games.</i>
 </p>
+
+> :point_right: **Example**: ```python Run.py task=atari/mspacman```
 
 You can install via ```AutoROM``` if you accept the license.
 
@@ -193,8 +193,6 @@ ale-import-roms ./Datasets/Suites/Atari_ROMS
 
 ## 2. DeepMind Control
 
-> :point_right: **Example**: ```python Run.py task=dmc/cheetah_run```
-
 Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
 
 <p align="left">
@@ -205,9 +203,9 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <br><i>Video of different tasks in action.</i>
 </p>
 
-## 3. Classify
+> :point_right: **Example**: ```python Run.py task=dmc/cheetah_run```
 
-> :point_right: **Example**: ```python Run.py task=classify/mnist```
+## 3. Classify
 
 <p align="left">
 
@@ -227,6 +225,8 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [comment]: <> (<br><i>Samples of images from the Tiny-ImageNet dataset.</i>)
 </p>
+
+> :point_right: **Example**: ```python Run.py task=classify/mnist```
 
 [comment]: <> (Comes preinstalled.)
 
