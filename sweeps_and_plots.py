@@ -31,23 +31,24 @@ Structure of runs:
 Sweep groups allow more fine-grained organization of project-specific runs.
 """
 
-runs = {'Template':
-    {
-        'Sweep1': {
-            'sweep': [],
-            'sftp': True,
-            'bluehive': True,
-            'steps': 5e5,
-            'title': 'Template',
-            'x_axis': 'Step',
-            'plots': [
-                [],
-            ],
-            'bluehive_only': [],
-            'tasks': [],
-            'agents': [],
-            'suites': []},
-    },
+runs = {
+    'Template':
+        {
+            'Sweep1': {
+                'sweep': [],
+                'sftp': True,
+                'bluehive': True,
+                'steps': 5e5,
+                'title': 'Template',
+                'x_axis': 'Step',
+                'plots': [
+                    [],
+                ],
+                'bluehive_only': [],
+                'tasks': [],
+                'agents': [],
+                'suites': []},
+        },
     'UML_Paper':
         {
             'core': {
