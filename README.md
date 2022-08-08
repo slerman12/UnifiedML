@@ -275,8 +275,6 @@ python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 
 [comment]: <> (When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.)
 
-**Experimental**: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
-
 Basic RL features are configurable:
 - N-step reward via ```nstep=```
 - Action repeat via ```action_repeat=```
@@ -295,9 +293,11 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
 
-Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available.
+Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available, including N-step reward (```nstep=```), frame stack (```frame_stack=```). action repeat (```action_repeat=```), and exploration schedule (```'stddev_schedule= '```).
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
+
+**Experimental**: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 > :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe many features that are commonly used but maybe not commonly in RL. However, since this is* **Unified***ML, the commands for those features will work in RL as well. For one example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
 
