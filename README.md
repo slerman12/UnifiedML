@@ -235,9 +235,9 @@ DMC training example from images: ```python Run.py task=dmc/cheetah_run```
 
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
-Example: ```python Run.py task=classify/mnist```
+That's it.
 
-That's it, there you have it.
+Example: ```python Run.py task=classify/mnist```
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
