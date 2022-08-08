@@ -296,7 +296,7 @@ Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable 
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
-> :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe features that are commonly used outside of RL. However, since this is *Unified*ML, the commands for those features will work in RL as well. For one example, a cosine annealing learning rate schedule: ```lr_decay_epochs=100```. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
+> :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe many features that are commonly used but maybe not in RL. However, since this is *Unified*ML, the commands for those features will work in RL as well. For one example, a cosine annealing learning rate schedule: ```lr_decay_epochs=100```. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
 
 [comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
 
