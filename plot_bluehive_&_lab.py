@@ -19,6 +19,8 @@ from sweeps_and_plots import runs
 plot_group = 'UML_Paper'
 plot_specs = runs[plot_group]['Classify+RL']
 
+plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
+
 experiments = set().union(*plot_specs.plots)
 
 
