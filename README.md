@@ -206,7 +206,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <br><i>Video of different tasks in action.</i>
 </p>
 
-An example DMC training run from images: ```python Run.py task=dmc/cheetah_run```
+DMC training example from images: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
