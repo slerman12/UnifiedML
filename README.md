@@ -283,11 +283,13 @@ Basic RL features are configurable:
 - Frame stack via ```frame_stack=```
 - Exploration schedule via ```'stddev_schedule= '```
 
-Or keep the loosely-optimized per-task defaults already specified in ```Hyperparams/task/```.
+[comment]: <> (Or keep the loosely-optimized per-task defaults already specified in ```Hyperparams/task/```.)
   
-Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
-- ```Agent=Agents.AC2Agent +agent.num_actors=```
-- ```Agent=Agents.AC2Agent +agent.num_critics=```
+[comment]: <> (Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:)
+
+[comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_actors=```)
+
+[comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
