@@ -130,7 +130,7 @@ conda env create --name ML --file=Conda.yml
 
 [comment]: <> (For GPU support, you may have to [pip install Pytorch]&#40;&#41; depending on your CUDA version.)
 
-Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from: [pytorch/get-started/locally/](https://pytorch.org/get-started/locally/).
+Depending on your CUDA version, you may need to install Pytorch with CUDA via pip from [pytorch/get-started/locally](https://pytorch.org/get-started/locally/)
 
 *e.g.*, install Pytorch with CUDA 11.6:
 
