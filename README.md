@@ -286,7 +286,9 @@ python Run.py Agent=Agents.DrQV2Agent task=atari/mspacman
 python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 ```
 
-[comment]: <> (When in doubt, go with ```Agents.AC2Agent```. It's pretty much the best of all worlds.)
+[comment]: <> (When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.)
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 **Experimental**: If you'd like to discretize a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to continuous-ize a discrete domain, pass in ```discrete=false```.
 
@@ -302,13 +304,11 @@ Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
 - ```Agent=Agents.AC2Agent +agent.num_actors=```
 - ```Agent=Agents.AC2Agent +agent.num_critics=```
 
-Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available.
-
 Save videos with ```log_video=true```.
 
-Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
+Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available.
 
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
 [comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
 
