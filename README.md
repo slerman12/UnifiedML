@@ -242,7 +242,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 That's it.
 
 > :point_right: **Example**:
-> ```console
+> :point_right: ```console
 > python Run.py task=classify/mnist
 > ```
 
