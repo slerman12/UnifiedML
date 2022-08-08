@@ -294,14 +294,15 @@ Basic RL features are configurable:
 - N-step reward via ```nstep=```
 - Action repeat via ```action_repeat=```
 - Frame stack via ```frame_stack=```
+- Exploration schedule via ```stddev_schedule=```
 
-Or keep the loosely-optimized per-task defaults.
+Or keep the loosely-optimized per-task defaults specified in ```Hyperparams/task/```.
   
 Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
 - ```Agent=Agents.AC2Agent +agent.num_actors=```
 - ```Agent=Agents.AC2Agent +agent.num_critics=```
 
-Please see ```Hyperparams/args.yaml``` for the vast array of configurable options available.
+Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available.
 
 Save videos with ```log_video=true```.
 
