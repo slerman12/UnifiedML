@@ -171,7 +171,7 @@ conda activate ML
 
 ## 1. Atari Arcade
 
-> :point_right: **Example**: ```python Run.py task=atari/mspacman```
+> :point_right: **Example**: ```python Run.py```
 
 <p align="left">
 <img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
