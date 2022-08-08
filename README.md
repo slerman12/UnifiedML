@@ -306,7 +306,6 @@ Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable 
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
-* Exploration (```stddev_schedule=```)
 * & more, with per-task defaults in ```Hyperparams/task```
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
