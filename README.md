@@ -192,7 +192,7 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-Training Atari example: ```python Run.py task=atari/mspacman```
+Example: ```python Run.py task=atari/mspacman```
 
 ## 2. DeepMind Control
 
@@ -206,7 +206,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <br><i>Video of different tasks in action.</i>
 </p>
 
-DMC training example from images: ```python Run.py task=dmc/cheetah_run```
+Example: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
