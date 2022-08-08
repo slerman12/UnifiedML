@@ -176,7 +176,7 @@ conda activate ML
 <br><i>A collection of retro Atari games.</i>
 </p>
 
-> :point_right: **Example**: ```python Run.py```
+> :point_right: **Example**: ```python Run.py task=atari/mspacman```
 
 You can install via ```AutoROM``` if you accept the license.
 
