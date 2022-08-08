@@ -288,8 +288,6 @@ python Run.py Agent=Agents.SPRAgent task=dmc/walker_walk
 
 [comment]: <> (When in doubt, go with ```Agent=Agents.AC2Agent```. It's pretty much the best of all worlds.)
 
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
-
 **Experimental**: If you'd like to discretize a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to continuous-ize a discrete domain, pass in ```discrete=false```.
 
 Basic RL features are configurable:
@@ -303,6 +301,8 @@ Or keep the loosely-optimized per-task defaults specified in ```Hyperparams/task
 Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
 - ```Agent=Agents.AC2Agent +agent.num_actors=```
 - ```Agent=Agents.AC2Agent +agent.num_critics=```
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
 
