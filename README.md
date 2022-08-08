@@ -210,7 +210,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <br><i>Video of different tasks in action.</i>
 </p>
 
-An example training script:
+An example training script from images:
 
 ```console
 python Run.py task=dmc/cheetah_run
@@ -294,18 +294,20 @@ Basic RL features are configurable:
 - N-step reward via ```nstep=```
 - Action repeat via ```action_repeat=```
 - Frame stack via ```frame_stack=```
+
 Or keep the loosely-optimized per-task defaults.
   
 Actor-Critic ensembling is also supported for some agents like ```AC2Agent```:
 - ```Agent=Agents.AC2Agent +agent.num_actors=```
 - ```Agent=Agents.AC2Agent +agent.num_critics=```
-Please see ```Hyperparams/args.yaml``` for the vast array of configurable options.
 
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+Please see ```Hyperparams/args.yaml``` for the vast array of configurable options available.
 
 Save videos with ```log_video=true```.
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 [comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
 
