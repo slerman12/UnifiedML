@@ -5,6 +5,8 @@
 import torch
 import torch.nn.functional as F
 
+import Utils
+
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step, num_actions=1, logs=None):
     # Non-NaN next_obs
@@ -24,23 +26,25 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             # Get actions for next_obs
             next_Pi = actor(next_obs, step)
 
-            if actor.discrete:
-                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
-
-            # Discrete Critic tabulates all actions for discrete Envs a priori, no need to sample
+            # Discrete Critic tabulates all actions for Discrete Envs a priori, no need to sample
             all_actions_known = hasattr(critic, 'action')
 
             if not all_actions_known:
                 next_action = next_Pi.sample(num_actions)  # Sample actions
 
+            if actor.discrete:
+                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
+
             # Q-values per action
             next_Qs = critic.ema(next_obs, next_action, All_Next_Qs)
             next_q = next_Qs.min(1)[0]  # Min-reduced ensemble
+            next_q_norm = next_q - next_q.max(-1, keepdim=True)[0]  # Normalized
 
             # Weigh each action's Q-value by its probability
+            temp = Utils.schedule(actor.stddev_schedule, step)  # Softmax temperature / "entropy"
+            next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
             next_v = torch.zeros_like(discount)
-            next_probs = torch.softmax(next_q - next_q.max(-1, keepdim=True)[0], -1)
-            next_v[has_future] = torch.sum(next_q * next_probs, -1, keepdim=True)
+            next_v[has_future] = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
 
             target_Q += discount * next_v
 

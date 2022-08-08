@@ -87,7 +87,7 @@ class SPRAgent(torch.nn.Module):
 
             # Action -> One-Hot, if single-dim discrete
             self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
-                else self.actor.action_dim  # Otherwise, Action as is
+                else self.actor.action_dim
 
             shape[0] += self.action_dim  # Predicting from obs and action
 

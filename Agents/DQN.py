@@ -16,7 +16,7 @@ from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
 
-
+# TODO per-agent hyper-params, AC2Agent, suites rounding adaptation, replay spec -> dict, creator/store
 class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
