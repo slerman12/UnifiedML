@@ -35,7 +35,9 @@ runs = {
     'Template':
         {
             'Sweep1': {
-                'sweep': [],
+                'sweep': [
+                    # Sweep commands go here
+                ],
                 'plots': [
                     [],
                 ],
