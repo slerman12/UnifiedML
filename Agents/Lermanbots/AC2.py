@@ -21,7 +21,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 
 class AC2Agent(torch.nn.Module):
-    """Actor Critic Creator (AC2) - Best of all worlds
+    """Actor Critic Creator (AC2) - Best of all worlds (https://paper)
     Does ensemble-learning with multiple critics and actors, for RL, classification, and generative modeling"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
