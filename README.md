@@ -330,7 +330,7 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 #
 
-> :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe many features. Since this is* **Unified***ML, many if not all of those features will work in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
+> :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe many features. Chances are those features are compatible in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
  
 [comment]: <> (Enjoy :thumbsup:)
 
