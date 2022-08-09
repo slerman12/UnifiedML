@@ -18,13 +18,13 @@
 
 - [Agents and performances](#bar_chart-agents--performances)
 
-- [How Is This Possible?](#interrobang-how-is-this-possible)
+[comment]: <> (- [How Is This Possible?]&#40;#interrobang-how-is-this-possible&#41;)
 
-- [Contributing](#people_holding_hands-contributing) (Best way: [please donate]()!)
+[comment]: <> (- [Contributing]&#40;#people_holding_hands-contributing&#41; &#40;Best way: [please donate]&#40;&#41;!&#41;)
 
-# 
+[comment]: <> (# )
 
-> A library for **reinforcement learning**, **supervised learning**, and **generative modeling**. And eventually, full-general intelligence.
+[comment]: <> (> A library for **reinforcement learning**, **supervised learning**, and **generative modeling**. And eventually, full-general intelligence.)
 
 # :runner: Running The Code
 
@@ -295,7 +295,7 @@ That's it.
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
 [comment]: <> (❖)
-**Play Ms. Pac-Man** with [```DQN Agent```](Agents/DQN.py):
+**Learn to play Ms. Pac-Man** with [```DQN Agent```](Agents/DQN.py):
 
 ```console
 
