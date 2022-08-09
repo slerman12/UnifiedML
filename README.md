@@ -256,11 +256,11 @@ That's it.
 
 # :file_cabinet: Key files
 
-```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
-
-```Environment.py``` handles rollouts.
-
-```./Agents``` contains self-contained agents.
+>```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
+>
+>```Environment.py``` handles rollouts.
+>
+>```./Agents``` contains self-contained agents.
 
 # :mag: Full Tutorials
 
