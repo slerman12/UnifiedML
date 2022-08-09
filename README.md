@@ -256,7 +256,7 @@ That's it.
 
 # :file_cabinet: Key files
 
-:running_man: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
+:play_or_pause_button: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
 
 :earth_africa: ```Environment.py``` handles rollouts.
 
