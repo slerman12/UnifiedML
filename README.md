@@ -316,7 +316,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 #
 
-[AC2](paper) Agent in DMC: (When in doubt: ```AC2 Agent```. It's pretty much the best of all worlds.)
+[AC2](paper) Agent in DMC: (When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.)
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
