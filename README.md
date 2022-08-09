@@ -281,6 +281,13 @@ That's it.
 
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
+A data-regularized Soft-DQN \[[1](https://arxiv.org/pdf/2004.13649.pdf), [2](https://arxiv.org/pdf/2007.14430.pdf)\] [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) Agent playing Ms. PacMan:
+```console
+python Run.py task=atari/mspacman
+```
+
+```Agent=Agents.DQNAgent``` is the library default.
+
 **Humanoid from pixels** with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
