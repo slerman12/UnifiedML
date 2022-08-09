@@ -14,7 +14,7 @@
 
 - [Setup](#wrench-setting-up)
 
-- [Examples](#mag-sample-scripts)
+- [Examples](#mag-tutorials)
 
 - [Agents and performances](#bar_chart-agents--performances)
 
@@ -107,7 +107,7 @@ All agents support discrete and continuous control, classification, and generati
 
 [comment]: <> (All agents and even tasks support discrete and continuous control, online and offline RL, imitation learning, classification, regression, and generative modeling.)
 
-See example scripts of various configurations [below](#mag-sample-scripts).
+See example scripts of various configurations [below](#mag-tutorials).
 
 # :wrench: Setting Up
 
@@ -262,7 +262,7 @@ That's it.
 
 ```./Agents``` contains self-contained agents.
 
-# :mag: Sample scripts
+# :mag: Tutorials
 
 ### RL
 
