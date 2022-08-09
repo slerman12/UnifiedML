@@ -302,10 +302,11 @@ python Run.py Agent=Agents.SPRAgent task=atari/boxing
 
 The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for the sake of simplicity.
 
-[comment]: <> (#)
+#
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
-✞———————❖———————✞
+
+[comment]: <> (✞———————❖———————✞)
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
