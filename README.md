@@ -324,7 +324,9 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 [comment]: <> (#)
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
-✞———————❖———————✞
+
+[comment]: <> (✞———————❖———————✞)
+✞——❖——✞
 
 [AC2](paper) Agent in DMC:
 ```console
@@ -353,8 +355,8 @@ When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
 
-✞———————❖———————✞
-
+[comment]: <> (✞———————❖———————✞)
+✞——❖——✞
 [comment]: <> (#)
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
