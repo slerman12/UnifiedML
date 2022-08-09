@@ -331,6 +331,8 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.n
 
 [comment]: <> (✞———————❖———————✞)
 
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+
 Save videos with ```log_video=true```.
 
 :clapper: :movie_camera: -> ```Benchmarking/<experiment>/<agent>/<suite>/<task>_<seed>_Video_Image/```
@@ -400,8 +402,6 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 [comment]: <> (——❖——)
 
 > :bulb: :information_source: *The below sections describe many features in other domains, but chances are those features will work in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
-
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 [comment]: <> (#)
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
