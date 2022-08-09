@@ -286,7 +286,7 @@ That's it.
 python Run.py task=atari/mspacman
 ```
 
-```Agent=Agents.DQNAgent``` is the library default. [Original DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
+```Agent=Agents.DQNAgent``` is the library default. See [original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
 
 **Humanoid from pixels** with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
 ```console
