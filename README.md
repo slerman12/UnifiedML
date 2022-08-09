@@ -249,6 +249,8 @@ That's it.
 > :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
+> 
+> :bulb: **Train generative-model example**: ```python Run.py task=classify/mnist generate=true```
  
 [comment]: <> (<hr class="solid">)
 
@@ -265,9 +267,9 @@ That's it.
 
 :robot: ```./Agents``` contains self-contained agents :alien: :space_invader:
  
-[comment]: <> (<hr>)
+<hr>
 
-#
+[comment]: <> (#)
 
 # :mag: Full Tutorials
 
