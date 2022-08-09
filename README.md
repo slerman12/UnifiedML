@@ -493,7 +493,7 @@ Or a ResNet18:
 python Run.py task=classify/mnist generate=true Discriminator=Resnet18
 ```
 
-Or let's speed up training by turning off the default image augmentation, which is overkill anyway for this simple case:
+Let's speed up training by turning off the default image augmentation, which is overkill anyway for this simple case:
 
 ```console
 python Run.py task=classify/mnist generate=true Aug=Identity +agent.num_critics=1
