@@ -836,7 +836,7 @@ For the best tutorial on Custom Datasets, see our full [end-to-end example]() of
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! 
 > 
-> Sky's the limit: UnifiedML should be compatible with diverse ranges of datasets, domains, and modalities beyond vision.
+> Sky's the limit: **UnifiedML should be compatible with diverse ranges of datasets, domains, and modalities beyond vision.**
 
 </details>
 
