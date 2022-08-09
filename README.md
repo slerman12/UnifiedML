@@ -305,9 +305,9 @@ When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
-```Agent=Agents.DQNAgent``` **is the library default**.
-
 ——❖——
+
+```Agent=Agents.DQNAgent``` **is the library default**.
 
 [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
 ```console
