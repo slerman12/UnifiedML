@@ -177,11 +177,11 @@ conda activate ML
 
 # :joystick: Installing The Suites
 
-> :bulb: Training Atari example: ```python Run.py task=atari/mspacman```
+> :bulb: Training Atari: ```python Run.py task=atari/mspacman```
 > 
-> :bulb: Training DMC example: ```python Run.py task=dmc/cheetah_run```
+> :bulb: Training DMC: ```python Run.py task=dmc/cheetah_run```
 > 
-> :bulb: Training Classify example: ```python Run.py task=classify/mnist```
+> :bulb: Training Classify: ```python Run.py task=classify/mnist```
 
 ## 1. Atari Arcade
 
