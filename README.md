@@ -292,7 +292,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * Action repeat (```action_repeat=```)
 * & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new better ones!
 
-[AC2Agent](paper) in DMC. When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.
+[AC2Agent](paper) in DMC: (When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.)
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
