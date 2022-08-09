@@ -262,7 +262,7 @@ That's it.
 
 # :mag: Sample scripts
 
-### Reinforcement Learning (RL)
+### RL
 
 <details>
 <summary>
