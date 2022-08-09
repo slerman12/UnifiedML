@@ -292,7 +292,7 @@ python Run.py task=atari/mspacman
 ```
 
 
-* This agent is the library's default: ```Agent=Agents.DQNAgent```
+* This agent is the library's default: ```Agent=Agents.DQNAgent```.
 
 **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
