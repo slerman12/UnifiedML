@@ -261,6 +261,8 @@ That's it.
 >```Environment.py``` handles rollouts.
 >
 >```./Agents``` contains self-contained agents.
+ 
+<hr>
 
 # :mag: Full Tutorials
 
