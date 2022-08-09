@@ -321,6 +321,8 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.n
 
 ```+agent.num_critics=5 +agent.num_actors=5``` activates larger actor & critic ensembling.
 
+```nstep=5```  uses N-step cumulative discounted rewards of length 5.
+
 [comment]: <> (——❖——)
 
 [comment]: <> (#)
