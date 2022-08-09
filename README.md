@@ -316,8 +316,6 @@ When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 python Run.py task=atari/mspacman
 ```
 
-<img src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" data-canonical-src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" width="64" height="84" />
-
 ——❖——
 
 [comment]: <> (#)
@@ -331,6 +329,8 @@ python Run.py task=atari/mspacman
 Save videos with ```log_video=true```.
 
 :clapper: :movie_camera: -> ```Benchmarking/.../<task>_<seed>_Video_Image/``` 
+
+<img src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" data-canonical-src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" width="64" height="84" />
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
