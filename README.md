@@ -314,10 +314,11 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 
 **When in doubt**: our [AC2 Agent](paper). Pretty much the best of all worlds among this collection of algorithms.
 ```console
-python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
+python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.num_critics=5 +agent.num_actors=5 nstep=5
 ```
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+```+agent.num_critics=5 +agent.num_actors=5``` uses larger actor & critic ensembles.
 
 [comment]: <> (——❖——)
 
