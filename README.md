@@ -328,6 +328,8 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 #
 :exclamation: ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
+✼ •• ┈┈┈┈┈┈┈┈┈┈┈┈ •• ✼
+
 > :bulb: :information_source: *The below sections describe many features in other domains; chances are those features work in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
  
 [comment]: <> (Enjoy :thumbsup:)
