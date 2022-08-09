@@ -238,9 +238,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [comment]: <> (<hr class="solid">)
 
-:point_right:
-
-That's it.
+:point_right: That's it.
 
 [comment]: <> (~)
 
