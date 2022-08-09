@@ -254,7 +254,7 @@ That's it.
 
 [comment]: <> (~)
 
-> :bulb: Train Atari example**: ```python Run.py task=atari/mspacman```
+> :bulb: Train Atari example: ```python Run.py task=atari/mspacman```
 >
 > :bulb: Train DMC example: ```python Run.py task=dmc/cheetah_run```
 >
