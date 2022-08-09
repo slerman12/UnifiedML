@@ -270,7 +270,7 @@ That's it.
 </summary>
 <br>
 
-Humanoid from pixels with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
+**Humanoid from pixels** with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
