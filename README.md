@@ -177,12 +177,6 @@ conda activate ML
 
 # :joystick: Installing The Suites
 
-> :bulb: Training Atari: ```python Run.py task=atari/mspacman```
-> 
-> :bulb: Training DMC: ```python Run.py task=dmc/cheetah_run```
-> 
-> :bulb: Training Classify: ```python Run.py task=classify/mnist```
-
 ## 1. Atari Arcade
 
 <p align="left">
@@ -243,6 +237,12 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
 That's it.
+
+> :bulb: Training Atari: ```python Run.py task=atari/mspacman```
+>
+> :bulb: Training DMC: ```python Run.py task=dmc/cheetah_run```
+>
+> :bulb: Training Classify: ```python Run.py task=classify/mnist```
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
