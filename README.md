@@ -275,12 +275,11 @@ That's it.
 :mag: <i>Click to interact</i>
 </summary>
 <br>
-
 * Save videos with ```log_video=true```.
 
 * As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
-* Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
+* Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL across Atari and DMC.
 
 **Humanoid from pixels** with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
 ```console
