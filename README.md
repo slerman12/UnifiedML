@@ -826,7 +826,7 @@ Learning rate schedulers can also be customized:
 </summary>
 <br>
 
-For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file and some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
 </details>
 
