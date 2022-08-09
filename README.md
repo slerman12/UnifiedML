@@ -343,7 +343,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * Action repeat (```action_repeat=```)
 * & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new better ones!
 
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+&#9432; As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 [comment]: <> (#)
 
