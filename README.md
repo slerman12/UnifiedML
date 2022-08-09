@@ -326,7 +326,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
 
 [comment]: <> (✞———————❖———————✞)
-✞——❖——✞
+——✞——
 
 [AC2](paper) Agent in DMC:
 ```console
