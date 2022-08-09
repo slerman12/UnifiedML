@@ -366,7 +366,8 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
 
 [comment]: <> (✞———————❖———————✞)
-#
+
+[comment]: <> (#)
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
 
