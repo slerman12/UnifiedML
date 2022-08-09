@@ -296,7 +296,7 @@ python Run.py task=atari/mspacman
 
 ——❖——
 
-**Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
+**Humanoid from pixels** with [```DrQV2 Agent```](Agents/DrQV2.py), [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
