@@ -240,11 +240,11 @@ That's it.
 
 <hr class="solid">
 
-> :bulb: **Train Atari**: ```python Run.py task=atari/mspacman```
+> :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```
 >
-> :bulb: **Train DMC**: ```python Run.py task=dmc/cheetah_run```
+> :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
-> :bulb: **Train Classify**: ```python Run.py task=classify/mnist```
+> :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
  
 <hr class="solid">
 
