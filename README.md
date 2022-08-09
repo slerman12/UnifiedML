@@ -250,14 +250,15 @@ That's it.
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
 > 
-> :bulb: **Train generative-model example**: ```python Run.py task=classify/mnist generate=true```
+> :bulb: **Train GAN example**: ```python Run.py task=classify/mnist generate=true```
  
 [comment]: <> (<hr class="solid">)
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
 [comment]: <> (#)
-<hr>
+
+[comment]: <> (<hr>)
 
 # :file_cabinet: Key files
 
