@@ -278,11 +278,11 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
-Check out [Hyperparams/args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
+Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
-* & more, with per-task defaults in [Hyperparams/task](Hyperparams/task) — please [share](https://github.com/agi-init/UnifiedML/discussions) your hyperparams if you discover new better ones!
+* & more, with per-task defaults in ```/Hyperparams/task``` — please [share](https://github.com/agi-init/UnifiedML/discussions) your hyperparams if you discover new better ones!
 
 [AC2Agent](paper) in DMC. When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
