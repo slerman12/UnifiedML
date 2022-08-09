@@ -18,6 +18,10 @@
 
 - [Agents and performances](#bar_chart-agents--performances)
 
+- [How is this possible?](#bar_chart-agents--performances)
+
+- [Contributing](#bar_chart-agents--performances) (Best way: [Donate]()!)
+
 # :runner: Running The Code
 
 To start a train session, once [installed](#wrench-setting-up):
