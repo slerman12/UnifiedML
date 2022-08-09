@@ -294,14 +294,14 @@ python Run.py task=atari/mspacman
 
 ——❖——
 
-**Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
+❖ **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
 [comment]: <> (❖)
 
-```SPR Agent``` in Atari:
+❖ ```SPR Agent``` in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
@@ -310,14 +310,14 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
 
-**When in doubt**: our [AC2 Agent](paper). Pretty much the best of all worlds among this family of algorithms.
+❖ **When in doubt**: our [AC2 Agent](paper). Pretty much the best of all worlds among this family of algorithms.
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
-❖
+——❖——
 
 [comment]: <> (——❖——)
 
