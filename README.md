@@ -325,7 +325,9 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_actors=```)
 
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
-#
+
+✼ •• ┈┈┈┈┈┈┈┈┈┈┈┈ •• ✼
+
 :exclamation: ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 ✼ •• ┈┈┈┈┈┈┈┈┈┈┈┈ •• ✼
