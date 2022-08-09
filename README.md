@@ -242,11 +242,11 @@ That's it.
 
 ~
 
-> :point-right: **Train Atari example**: ```python Run.py task=atari/mspacman```
+> :point_right: **Train Atari example**: ```python Run.py task=atari/mspacman```
 >
-> :point-right: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
+> :point_right: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
-> :point-right: **Train Classify example**: ```python Run.py task=classify/mnist```
+> :point_right: **Train Classify example**: ```python Run.py task=classify/mnist```
  
 [comment]: <> (<hr class="solid">)
 
