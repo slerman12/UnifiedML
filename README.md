@@ -276,8 +276,6 @@ That's it.
 </summary>
 <br>
 
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
-
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
 **Humanoid from pixels** with [DrQV2](https://arxiv.org/abs/2107.09645) Agent:
@@ -289,6 +287,10 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/boxing
 ```
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+
+* Save videos with ```log_video=true```.
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
@@ -302,8 +304,6 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
-
-* Save videos with ```log_video=true```.
 
 [comment]: <> (Basic RL features are configurable:)
 
