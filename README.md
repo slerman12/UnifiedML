@@ -287,6 +287,8 @@ That's it.
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
+❖
+
 ```SPR Agent``` in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/boxing
@@ -305,7 +307,7 @@ When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
-——❖——
+❖
 
 ```Agent=Agents.DQNAgent``` **is the library default**.
 
@@ -315,6 +317,8 @@ python Run.py task=atari/mspacman
 ```
 
 <img src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" data-canonical-src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" width="64" height="84" />
+
+——❖——
 
 [comment]: <> (#)
 
