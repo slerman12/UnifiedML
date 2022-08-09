@@ -306,12 +306,11 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 
 [comment]: <> (❖)
 
-[AC2](paper) Agent in DMC:
+[comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
+When in doubt: [AC2 Agent](paper); it's pretty much the best of all worlds.
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
-
-When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
