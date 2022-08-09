@@ -768,7 +768,7 @@ The parser automatically registers the imports/class paths in ```Utils``` in bot
 
 </details>
 
-Of course, it's always possible to just modify the library code itself, which may be easier. See for example the two Encoder variants in ```./Blocks/Encoders.py```.
+Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.
 
 To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in ```./Blocks/Architectures```.
 
@@ -800,6 +800,9 @@ python Run.py optim=torch.optim.SGD lr=0.1
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
+Learning rate schedulers can also be customized: 
+
+
 </details>
 
 ### Custom Dataset
@@ -810,7 +813,7 @@ python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 </summary>
 <br>
 
-For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And_Space_Group Classification, in which we reproduce our [full paper on classifying crystal structures and space groups from xray diffraction patterns]() in just a single <blank>-line file. The custom dataset used in this case is Crystals, their space groups, and corresponding xray patterns, will be downloaded automatically.
+For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And-Space-Group Classification, in which we reproduce fully the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() with a single succinct file. The custom Crystal & Space Groups datasets will be downloaded automatically in the example.
 
 </details>
 
@@ -828,7 +831,7 @@ Plots automatically save to ```./Benchmarking/<experiment>/```, the default expe
 python Run.py
 ```
 
-:chart_with_upwards_trend: :bar_chart: in ```./Benchmarking/Exp/```
+:chart_with_upwards_trend: :bar_chart: --> ```./Benchmarking/Exp/```
 
 Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
