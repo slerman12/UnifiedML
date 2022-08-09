@@ -256,11 +256,11 @@ That's it.
 
 # :file_cabinet: Key files
 
-**:play_or_pause_button: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting. :repeat:**
+**:play_or_pause_button: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting :repeat:**
 
-**:earth_africa: ```Environment.py``` handles rollouts. :rainbow:**
+**:earth_africa: ```Environment.py``` handles rollouts :rainbow:**
 
-**:robot: ```./Agents``` contains self-contained agents. :alien: :space_invader:**
+**:robot: ```./Agents``` contains self-contained agents :alien: :space_invader:**
  
 <hr>
 
