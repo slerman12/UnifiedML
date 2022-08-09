@@ -247,6 +247,8 @@ That's it.
 > :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
+
+~~
  
 [comment]: <> (<hr class="solid">)
 
