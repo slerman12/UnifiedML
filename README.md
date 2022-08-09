@@ -282,9 +282,6 @@ That's it.
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
 [comment]: <> (❖)
-
-❖ ```DQN Agent```:
-
 ```console
 
 python Run.py task=atari/mspacman
