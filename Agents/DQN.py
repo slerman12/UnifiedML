@@ -16,7 +16,7 @@ from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
 
-# TODO replay spec -> dict, creator/store, bluehive memory, macula hard disc(?)
+# TODO replay spec -> dict, creator/store, bluehive memory, macula hard disc(?), debug log_video
 class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
