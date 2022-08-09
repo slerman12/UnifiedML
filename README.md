@@ -307,7 +307,7 @@ python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 
 The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
 
-——❖——
+❖
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
 When in doubt: [AC2 Agent](paper). It's pretty much the best of all worlds.
