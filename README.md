@@ -294,6 +294,17 @@ python Run.py Agent=Agents.SPRAgent task=atari/boxing
 
 The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
 
+
+
+[AC2](paper) Agent in DMC:
+```console
+python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
+```
+
+When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
+
+```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+
 ```Agent=Agents.DQNAgent``` **is the library default**.
 
 [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
@@ -327,16 +338,8 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
 
 [comment]: <> (✞———————❖———————✞)
-—————
 
-[AC2](paper) Agent in DMC:
-```console
-python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
-```
-
-When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
-
-```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+[comment]: <> (—————)
 
 [comment]: <> (Basic RL features are configurable:)
 
