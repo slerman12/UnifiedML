@@ -254,9 +254,9 @@ That's it.
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
-# :file_cabinet: Key files
-
 <hr>
+
+# :file_cabinet: Key files
 
 :play_or_pause_button: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting :repeat:
 
