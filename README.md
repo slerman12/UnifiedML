@@ -258,7 +258,7 @@ That's it.
 
 **:play_or_pause_button: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting. :repeat:**
 
-**:earth_africa: ```Environment.py``` handles rollouts. :cinema:**
+**:earth_africa: ```Environment.py``` handles rollouts. :rainbow:**
 
 **:robot: ```./Agents``` contains self-contained agents. :alien:**
  
