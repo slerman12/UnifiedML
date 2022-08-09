@@ -290,7 +290,7 @@ python Run.py task=atari/mspacman
 
 ```
 
-* This agent is the library's default (```Agent=Agents.DQNAgent```)
+* This agent is the library's default (```Agent=Agents.DQNAgent```).
 
 ——❖——
 
