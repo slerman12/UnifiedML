@@ -238,6 +238,8 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [comment]: <> (<hr class="solid">)
 
+- - - - - - - - - - - - - - -
+
 That's it.
 
 > :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```
