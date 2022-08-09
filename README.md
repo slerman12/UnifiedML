@@ -238,6 +238,8 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 That's it.
 
+<hr class="solid">
+
 > :bulb: **Train Atari**: ```python Run.py task=atari/mspacman```
 >
 > :bulb: **Train DMC**: ```python Run.py task=dmc/cheetah_run```
