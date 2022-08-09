@@ -288,7 +288,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 [AC2Agent](paper) in DMC. When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
-# "depth" activates self-supervisor to predict dynamics up to 5 timesteps ahead
+# "depth" activates self-supervisor to predict dynamics for up to 5 timesteps ahead
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
 
