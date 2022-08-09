@@ -283,7 +283,7 @@ That's it.
 
 [comment]: <> (❖)
 
-[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf)-Agent playing Ms. Pac-Man:
+1. [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf)-Agent playing Ms. Pac-Man:
 
 ```console
 
@@ -293,16 +293,14 @@ python Run.py task=atari/mspacman
 
 This agent, ```Agent=Agents.DQNAgent```, is the library's default.
 
-#
-
-**Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
+2. **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
 [comment]: <> (❖)
 
-```SPR Agent``` in Atari:
+3. ```SPR Agent``` in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
@@ -312,7 +310,7 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 ❖
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
-**When in doubt**: [AC2 Agent](paper). It's pretty much the best of all worlds among this family of algorithms.
+4. **When in doubt**: [AC2 Agent](paper). It's pretty much the best of all worlds among this family of algorithms.
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
