@@ -295,7 +295,7 @@ That's it.
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
 [comment]: <> (❖)
-**Learn to play Ms. Pac-Man** with [```DQN Agent```](Agents/DQN.py):
+**Train a** [```DQN Agent```](Agents/DQN.py) **to play Ms. Pac-Man**:
 
 ```console
 
