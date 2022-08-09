@@ -281,7 +281,7 @@ That's it.
 
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
-```Agent=Agents.DQNAgent``` is the library default. See [the original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
+```Agent=Agents.DQNAgent``` is the library default.
 
 [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] Agent playing Ms. Pac-Man:
 ```console
