@@ -249,16 +249,16 @@ That's it.
 > :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
-> 
-> :bulb: **Train GAN example**: ```python Run.py task=classify/mnist generate=true```
+
+
+[comment]: <> (> > :bulb: **Train GAN example**: ```python Run.py task=classify/mnist generate=true```)
  
 [comment]: <> (<hr class="solid">)
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
 [comment]: <> (#)
-
-[comment]: <> (<hr>)
+<hr>
 
 # :file_cabinet: Key files
 
@@ -268,9 +268,9 @@ That's it.
 
 :robot: ```./Agents``` contains self-contained agents :alien: :space_invader:
  
-<hr>
+[comment]: <> (<hr>)
 
-[comment]: <> (#)
+#
 
 # :mag: Full Tutorials
 
