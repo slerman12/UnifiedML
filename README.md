@@ -277,7 +277,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 
 [SPR](https://arxiv.org/abs/2007.05929) Agent in Atari:
 ```console
-python Run.py Agent=Agents.SPRAgent task=atari/mspacman
+python Run.py Agent=Agents.SPRAgent task=atari/boxing
 ```
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
