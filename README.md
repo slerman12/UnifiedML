@@ -825,7 +825,7 @@ For the best tutorial on Custom Datasets, see our full [end-to-end example]() of
 </summary>
 <br>
 
-Plots automatically save to ```./Benchmarking/<experiment>/```, the default experiment is ```experiment=Exp```.
+Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
 ```console
 python Run.py
