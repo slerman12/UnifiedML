@@ -295,6 +295,8 @@ See [the original Nature DQN paper](https://web.stanford.edu/class/psych209/Read
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
+A state of the art algorithm for continuous control.
+
 [SPR](https://arxiv.org/abs/2007.05929) Agent in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/boxing
