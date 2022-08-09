@@ -168,7 +168,7 @@ conda activate ML
 > ```
 
 [comment]: <> (For GPU support, you may need to install Pytorch with CUDA from https://pytorch.org/get-started/locally/.)
-> :bulb: **Train GAN example**: ```python Run.py task=classify/mnist generate=true```
+
 [comment]: <> (```console)
 
 [comment]: <> (conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch)
