@@ -18,7 +18,7 @@
 
 - [Agents and performances](#bar_chart-agents--performances)
 
-- [How is this possible?](#bar_chart-agents--performances)
+- [How Is This Possible?](#bar_chart-agents--performances)
 
 - [Contributing](#bar_chart-agents--performances) (Best way: [Donate]()!)
 
