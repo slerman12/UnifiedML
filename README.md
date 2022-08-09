@@ -373,7 +373,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 [comment]: <> (✞———————❖———————✞)
 
-[comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
+⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
 
@@ -383,7 +383,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 [comment]: <> (——❖——)
 
-#
+[comment]: <> (#)
 
 &#9432; As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
