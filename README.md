@@ -160,7 +160,7 @@ conda env create --name ML --file=Conda.yml
 conda activate ML
 ```
 
-> :grey_exclamation: Depending on your CUDA version, you may need to additionally install Pytorch with CUDA via pip from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
+> &#9432; Depending on your CUDA version, you may need to additionally install Pytorch with CUDA via pip from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
 >
 > For example, for CUDA 11.6:
 > ```console
@@ -168,7 +168,7 @@ conda activate ML
 > ```
 
 [comment]: <> (For GPU support, you may need to install Pytorch with CUDA from https://pytorch.org/get-started/locally/.)
-
+> :bulb: **Train GAN example**: ```python Run.py task=classify/mnist generate=true```
 [comment]: <> (```console)
 
 [comment]: <> (conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch)
