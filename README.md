@@ -238,11 +238,11 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 That's it.
 
-> :bulb: Training Atari: ```python Run.py task=atari/mspacman```
+> :bulb: **Train Atari**: ```python Run.py task=atari/mspacman```
 >
-> :bulb: Training DMC: ```python Run.py task=dmc/cheetah_run```
+> :bulb: **Train DMC**: ```python Run.py task=dmc/cheetah_run```
 >
-> :bulb: Training Classify: ```python Run.py task=classify/mnist```
+> :bulb: **Train Classify**: ```python Run.py task=classify/mnist```
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
