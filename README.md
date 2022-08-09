@@ -260,7 +260,7 @@ That's it.
 
 :earth_africa: ```Environment.py``` handles rollouts.
 
-:alien: ```./Agents``` contains self-contained agents.
+:space_invader: ```./Agents``` contains self-contained agents.
  
 <hr>
 
