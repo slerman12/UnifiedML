@@ -275,6 +275,7 @@ That's it.
 :mag: <i>Click to interact</i>
 </summary>
 <br>
+
 * Save videos with ```log_video=true```.
 
 * As of now, all agents are *visual*, that is, they observe pixel-based inputs.
