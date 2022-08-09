@@ -22,7 +22,7 @@
 
 - [Contributing](#bar_chart-agents--performances) (Best way: [Donate]()!)
 
-> #### A library for reinforcement learning, supervised learning, and generative modeling. And eventually, full-general intelligence.
+> A library for **reinforcement learning, supervised learning, and generative modeling**. And eventually, full-general intelligence.
 
 # :runner: Running The Code
 
