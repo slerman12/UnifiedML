@@ -290,7 +290,7 @@ python Run.py task=atari/mspacman
 
 ```
 
-* This agent is the library's default (```Agent=Agents.DQNAgent```).
+* This agent is the library's default (```Agent=```[```Agents.DQNAgent```](Agents/DQN.py)).
 * Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
 
@@ -303,7 +303,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 
 [comment]: <> (❖)
 
-**For self-supervision**, ```SPR Agent``` in Atari:
+**For self-supervision**, [```SPR Agent```](Agents/SPR.py) in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/boxing
 ```
@@ -312,7 +312,7 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
 
-**When in doubt**: our [AC2 Agent](paper). Pretty much the best of all worlds among this collection of algorithms.
+**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.num_actors=5 +agent.num_critics=5 nstep=5
 ```
