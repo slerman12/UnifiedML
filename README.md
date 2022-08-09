@@ -10,6 +10,11 @@
 
 [comment]: <> ([![]&#40;https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer&#41;]&#40;&#41;)
 
+
+# 
+
+> A library for **reinforcement learning**, **supervised learning**, and **generative modeling**. And eventually, full-general intelligence.
+
 ### Quick Links
 
 - [Setup](#wrench-setting-up)
@@ -21,10 +26,6 @@
 - [How Is This Possible?](#bar_chart-agents--performances)
 
 - [Contributing](#bar_chart-agents--performances) (Best way: [please donate]()!)
-
-# 
-
-> A library for **reinforcement learning**, **supervised learning**, and **generative modeling**. And eventually, full-general intelligence.
 
 # :runner: Running The Code
 
