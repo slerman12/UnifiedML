@@ -246,7 +246,7 @@ That's it.
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
  
-<hr class="solid">
+[comment]: <> (<hr class="solid">)
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
