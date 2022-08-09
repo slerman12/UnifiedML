@@ -300,7 +300,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/boxing
 ```
 
-The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone, whereas we use a slightly-weaker DQN backbone for the sake of simplicity.
+The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone, whereas we use a weaker DQN backbone for the sake of simplicity.
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
