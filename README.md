@@ -240,7 +240,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 That's it.
 
-~
+[comment]: <> (~)
 
 > :point_right: **Train Atari example**: ```python Run.py task=atari/mspacman```
 >
