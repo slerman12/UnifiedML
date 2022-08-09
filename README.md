@@ -238,17 +238,17 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [comment]: <> (<hr class="solid">)
 
-~
+:point_right:
 
 That's it.
 
 [comment]: <> (~)
 
-> :point_right: **Train Atari example**: ```python Run.py task=atari/mspacman```
+> :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```
 >
-> :point_right: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
+> :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
-> :point_right: **Train Classify example**: ```python Run.py task=classify/mnist```
+> :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
  
 [comment]: <> (<hr class="solid">)
 
@@ -293,7 +293,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
 
-```+agent.depth=5``` activates self-supervisor to predict dynamics for up to 5 timesteps ahead
+```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead
 
 [comment]: <> (Basic RL features are configurable:)
 
