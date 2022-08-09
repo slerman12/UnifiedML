@@ -300,7 +300,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 
 [comment]: <> (❖)
 
-❖ ```SPR Agent``` in Atari:
+```SPR Agent``` in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
@@ -318,7 +318,7 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
-——❖——
+❖
 
 [comment]: <> (——❖——)
 
