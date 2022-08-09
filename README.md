@@ -18,9 +18,9 @@
 
 - [Agents and performances](#bar_chart-agents--performances)
 
-- [How Is This Possible?](#bar_chart-agents--performances)
+- [How Is This Possible?](#interrobang-how-is-this-possible)
 
-- [Contributing](#bar_chart-agents--performances) (Best way: [please donate]()!)
+- [Contributing](#people_holding_hands-contributing) (Best way: [please donate]()!)
 
 # 
 
