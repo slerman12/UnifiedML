@@ -310,7 +310,7 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
 
-**When in doubt**: our [AC2 Agent](paper). Pretty much the best of all worlds among this family of algorithms.
+**When in doubt**: our [AC2 Agent](paper). Pretty much the best of all worlds among this family/collection of algorithms.
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
