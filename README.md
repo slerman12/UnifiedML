@@ -289,6 +289,15 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 
 ❖
 
+```Agent=Agents.DQNAgent``` **is the library default**.
+
+[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
+```console
+python Run.py task=atari/mspacman
+```
+
+❖
+
 ```SPR Agent``` in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/boxing
@@ -306,15 +315,6 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
-
-❖
-
-```Agent=Agents.DQNAgent``` **is the library default**.
-
-[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
-```console
-python Run.py task=atari/mspacman
-```
 
 ——❖——
 
