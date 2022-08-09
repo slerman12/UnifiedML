@@ -177,6 +177,10 @@ conda activate ML
 
 # :joystick: Installing The Suites
 
+> :bulb: Training example: ```python Run.py task=atari/mspacman```
+> :bulb: Training example: ```python Run.py task=dmc/cheetah_run```
+> :bulb: Training example: ```python Run.py task=classify/mnist```
+
 ## 1. Atari Arcade
 
 <p align="left">
@@ -197,8 +201,6 @@ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
 ale-import-roms ./Datasets/Suites/Atari_ROMS
 ```
 
-> :bulb: Training example: ```python Run.py task=atari/mspacman```
-
 ## 2. DeepMind Control
 
 Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/deepmind/dm_control).
@@ -210,8 +212,6 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
-
-> :bulb: Training example: ```python Run.py task=dmc/cheetah_run```
 
 ## 3. Classify
 
@@ -241,8 +241,6 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 [All datasets](Hyperparams/task/classify) come ready-to-use :white_check_mark:
 
 That's it.
-
-> :bulb: Training example: ```python Run.py task=classify/mnist```
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
