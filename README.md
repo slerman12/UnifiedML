@@ -292,7 +292,7 @@ python Run.py task=atari/mspacman
 
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
 * This agent is the library's default (```Agent=Agents.DQNAgent```).
-* Our [```DQN Agent```](Agents/DQN.py) expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf) ([```here```](Losses/QLearning.py#L43)).
+* Our [```DQN Agent```](Agents/DQN.py) implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf) ([```here```](Losses/QLearning.py#L43)).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
 
 ——❖——
