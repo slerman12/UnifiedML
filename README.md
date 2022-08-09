@@ -283,15 +283,13 @@ That's it.
 
 [comment]: <> (❖)
 
-[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
-
 ```console
 
 python Run.py task=atari/mspacman
 
 ```
 
-
+* [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
 * This agent is the library's default (```Agent=Agents.DQNAgent```).
 
 ——❖——
