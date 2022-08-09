@@ -317,7 +317,7 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
-——❖——
+[comment]: <> (——❖——)
 
 [comment]: <> (#)
 
