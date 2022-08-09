@@ -22,6 +22,8 @@
 
 - [Contributing](#bar_chart-agents--performances) (Best way: [Donate]()!)
 
+A library for reinforcement learning, supervised learning, and generative modeling.
+
 # :runner: Running The Code
 
 To start a train session, once [installed](#wrench-setting-up):
