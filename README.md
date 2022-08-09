@@ -281,7 +281,7 @@ That's it.
 
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
-[Our](paper) data-regularized Soft-DQN \[[1](https://arxiv.org/pdf/2004.13649.pdf), [2](https://arxiv.org/pdf/2007.14430.pdf)\] [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) Agent playing Ms. Pac-Man:
+[Our](paper) *data-regularized Soft-DQN* \[[1](https://arxiv.org/pdf/2004.13649.pdf), [2](https://arxiv.org/pdf/2007.14430.pdf)\] [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) Agent playing Ms. Pac-Man:
 ```console
 python Run.py task=atari/mspacman
 ```
