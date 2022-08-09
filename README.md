@@ -283,20 +283,20 @@ That's it.
 
 [comment]: <> (❖)
 
+[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
+
+```console
+
+python Run.py task=atari/mspacman
+
+```
+
+```Agent=Agents.DQNAgent``` **is the library default**.
+
 **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
-
-[comment]: <> ([Our]&#40;paper&#41; data-regularized \[[1]&#40;https://arxiv.org/pdf/2004.13649.pdf&#41;\] Soft-DQN \[[2]&#40;https://arxiv.org/pdf/2007.14430.pdf&#41;\] ```DQN Agent``` playing Ms. Pac-Man:)
-
-[comment]: <> (```console)
-
-[comment]: <> (python Run.py task=atari/mspacman)
-
-[comment]: <> (```)
-
-[comment]: <> (```Agent=Agents.DQNAgent``` **is the library default**.)
 
 [comment]: <> (❖)
 
