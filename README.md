@@ -319,7 +319,8 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 * Save videos with ```log_video=true```.
 
-* As of now, all agents are *visual*, that is, they observe pixel-based inputs.
+* As of now, all agents are *visual*. 
+    * That is, they observe pixel-based inputs.
 
 * Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
