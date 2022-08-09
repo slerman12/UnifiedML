@@ -291,7 +291,7 @@ python Run.py task=atari/mspacman
 ```
 
 * This agent is the library's default (```Agent=Agents.DQNAgent```).
-* Our implementation expands on ensemble Q-learning \[[1](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf)\] with data regularization \[[2](https://arxiv.org/pdf/2004.13649.pdf)\] and Soft-DQN \[[3](https://arxiv.org/pdf/2007.14430.pdf)\].
+* Our implementation expands on [ensemble Q-learning](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
 
 ——❖——
 
