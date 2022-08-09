@@ -272,11 +272,17 @@ That's it.
 
 # :file_cabinet: Key files
 
-```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting :play_or_pause_button: :repeat:
+```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
 
-:earth_africa: ```Environment.py``` handles rollouts
+```Environment.py``` handles rollouts.
 
-:robot: ```./Agents``` contains self-contained agents :alien: :space_invader:
+```./Agents``` contains self-contained agents.
+
+[comment]: <> (```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting :play_or_pause_button: :repeat:)
+
+[comment]: <> (:earth_africa: ```Environment.py``` handles rollouts)
+
+[comment]: <> (:robot: ```./Agents``` contains self-contained agents :alien: :space_invader:)
  
 [comment]: <> (<hr>)
 
