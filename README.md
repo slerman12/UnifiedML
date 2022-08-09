@@ -283,7 +283,7 @@ That's it.
 
 [comment]: <> (❖)
 
-1. [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
+[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
 
 ```console
 
@@ -292,16 +292,16 @@ python Run.py task=atari/mspacman
 ```
 
 
-* This agent is the library's default ```Agent=Agents.DQNAgent```
+* This agent is the library's default: ```Agent=Agents.DQNAgent```
 
-2. **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
+**Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
 [comment]: <> (❖)
 
-3. ```SPR Agent``` in Atari:
+```SPR Agent``` in Atari:
 ```console
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
