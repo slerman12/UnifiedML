@@ -350,7 +350,7 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
-Enjoy :thumbsup:
+[comment]: <> (Enjoy :thumbsup:)
 
 [comment]: <> (More in-depth logs can be toggled with ```agent.log=true```.)
 
