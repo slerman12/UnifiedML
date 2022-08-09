@@ -501,7 +501,7 @@ python Run.py task=classify/mnist generate=true Aug=Identity +agent.num_critics=
 
 ```Aug=Identity``` substitutes the default random cropping image-augmentation with the Identity function, thereby disabling it.
 
-Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. As long as a dataset is available or a replay has [been saved](#saving), ```generate=true``` will work for any defined task, making it a powerful hyper-parameter that can just work.
+Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. As long as a dataset is available or a replay has [been saved](#saving), ```generate=true``` will work for any defined visual task, making it a powerful hyper-parameter that can just work. For now, only visual (image) tasks are compatible. 
 
 [comment]: <> (TODO: set defualts for generate in Run.py/Environment.py automatically)
 Can even work with RL tasks (due to frame stack, the generated images are technically multi-frame videos).
