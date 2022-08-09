@@ -245,6 +245,8 @@ That's it.
 > :bulb: **Train DMC**: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: **Train Classify**: ```python Run.py task=classify/mnist```
+ 
+<hr class="solid">
 
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
