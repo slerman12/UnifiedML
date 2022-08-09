@@ -264,7 +264,8 @@ That's it.
 
 :robot: ```./Agents``` contains self-contained agents :alien: :space_invader:
  
-<hr>
+[comment]: <> (<hr>)
+#
 
 # :mag: Full Tutorials
 
