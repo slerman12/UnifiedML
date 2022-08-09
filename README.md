@@ -290,7 +290,7 @@ python Run.py Agent=Agents.SPRAgent task=atari/boxing
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
-* Save videos with ```log_video=true```.
+Save videos with ```log_video=true```.
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
