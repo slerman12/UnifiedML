@@ -291,7 +291,8 @@ python Run.py task=atari/mspacman
 
 ```
 
-This agent, ```Agent=Agents.DQNAgent```, is the library's default.
+
+* This agent is the library's default ```Agent=Agents.DQNAgent```
 
 2. **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
@@ -305,7 +306,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
-The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
+* The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
 
 ❖
 
