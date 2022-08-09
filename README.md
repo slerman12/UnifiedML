@@ -307,6 +307,8 @@ When in doubt: ```AC2 Agent```; it's pretty much the best of all worlds.
 
 ```Agent=Agents.DQNAgent``` **is the library default**.
 
+——❖——
+
 [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
 ```console
 python Run.py task=atari/mspacman
@@ -317,11 +319,10 @@ python Run.py task=atari/mspacman
 [comment]: <> (#)
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
-——❖——
+
+[comment]: <> (——❖——)
 
 [comment]: <> (✞———————❖———————✞)
-
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
 
@@ -332,6 +333,8 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
 * & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new better ones!
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 [comment]: <> (#)
 
