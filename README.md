@@ -387,8 +387,6 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 &#9432; ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
-As of now, all agents are *visual*, that is, they observe pixel-based inputs.
-
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
 
 [comment]: <> (#)
@@ -402,6 +400,8 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 [comment]: <> (——❖——)
 
 > :bulb: :information_source: *The below sections describe many features in other domains, but chances are those features will work in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 [comment]: <> (#)
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
