@@ -274,7 +274,13 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
-[AC2Agent](paper) in DMC. When in doubt, go with ```AC2Agent```. It's pretty much the best of all worlds.
+Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available, including
+* N-step rewards (```nstep=```)
+* Frame stack (```frame_stack=```)
+* Action repeat (```action_repeat=```)
+* & more, with per-task defaults in ```Hyperparams/task```
+
+[AC2Agent](paper) in DMC. When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
 # "depth" activates the dynamics 
 # self-supervisor to predict 
@@ -303,12 +309,6 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
-
-Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable options available, including
-* N-step rewards (```nstep=```)
-* Frame stack (```frame_stack=```)
-* Action repeat (```action_repeat=```)
-* & more, with per-task defaults in ```Hyperparams/task```
 
 Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
@@ -652,6 +652,10 @@ python Run.py task=dmc/cheetah_run Predictor=load +predictor.path=./Checkpoints/
 
 ```console
 python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.depths=10
+```
+
+```console
+python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential '+aug._targets_="[IntensityAug(0.05), RandomShiftsAug(4)]"'
 ```
 
 </details>
