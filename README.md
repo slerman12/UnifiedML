@@ -304,7 +304,8 @@ The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](http
 
 [comment]: <> (#)
 
-⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
+[comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
+——
 
 [comment]: <> (✞———————❖———————✞)
 
