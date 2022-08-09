@@ -240,13 +240,13 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 That's it.
 
-~
-
 > :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```
 >
 > :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
+
+~
  
 [comment]: <> (<hr class="solid">)
 
@@ -660,8 +660,16 @@ python Run.py task=dmc/cheetah_run Predictor=load +predictor.path=./Checkpoints/
 python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.depths=10
 ```
 
+[comment]: <> (Doesn't work:)
+
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential '+aug._targets_="[IntensityAug&#40;0.05&#41;, RandomShiftsAug&#40;4&#41;]"')
+
+[comment]: <> (```)
+
 ```console
-python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential '+aug._targets_="[IntensityAug(0.05), RandomShiftsAug(4)]"'
+python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 +aug.pad=4
 ```
 
 </details>
