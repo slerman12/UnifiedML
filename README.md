@@ -281,12 +281,12 @@ That's it.
 
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
+```Agent=Agents.DQNAgent``` is the library default. See [the original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
+
 [Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] Agent playing Ms. Pac-Man:
 ```console
 python Run.py task=atari/mspacman
 ```
-
-```Agent=Agents.DQNAgent``` is the library default. See [the original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf). 
 
 [comment]: <> (<img src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" data-canonical-src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" width="64" height="84" />)
 
