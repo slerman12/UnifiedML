@@ -310,7 +310,7 @@ As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
 
-:clapper: :movie_camera: -> ```Benchmarking/<experiment>/<agent>/<suite>/<task>_<seed>_Video_Image/``` 
+:clapper: :movie_camera: -> ```Benchmarking/.../<task>_<seed>_Video_Image/``` 
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
