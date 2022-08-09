@@ -14,7 +14,7 @@
 
 - [Setup](#wrench-setting-up)
 
-- [Examples](#mag-tutorials)
+- [Examples](#mag-full-tutorials)
 
 - [Agents and performances](#bar_chart-agents--performances)
 
@@ -107,7 +107,7 @@ All agents support discrete and continuous control, classification, and generati
 
 [comment]: <> (All agents and even tasks support discrete and continuous control, online and offline RL, imitation learning, classification, regression, and generative modeling.)
 
-See example scripts of various configurations [below](#mag-tutorials).
+See example scripts of various configurations [below](#mag-full-tutorials).
 
 # :wrench: Setting Up
 
@@ -260,7 +260,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 ```./Agents``` contains self-contained agents.
 
-# :mag: Tutorials
+# :mag: Full Tutorials
 
 ### RL
 
