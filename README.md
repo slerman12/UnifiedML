@@ -302,6 +302,8 @@ python Run.py Agent=Agents.SPRAgent task=atari/boxing
 
 The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone, whereas we use a weaker DQN backbone for the sake of simplicity.
 
+#
+
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 Save videos with ```log_video=true```.
@@ -337,7 +339,8 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
 
-✞———————❖———————✞
+[comment]: <> (✞———————❖———————✞)
+#
 
 :exclamation: ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
