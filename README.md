@@ -278,7 +278,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 python Run.py Agent=Agents.SPRAgent task=atari/mspacman
 ```
 
-Check out ```Hyperparams/args.yaml``` for the full, vast array of configurable options available, including
+Check out ```Hyperparams/args.yaml``` for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
