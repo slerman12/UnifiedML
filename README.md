@@ -294,7 +294,9 @@ python Run.py task=atari/mspacman
 
 * This agent is the library's default: ```Agent=Agents.DQNAgent```.
 
+<p align="center">
 <img src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" data-canonical-src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" width="64" height="84" />
+</p>
 
 **Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
