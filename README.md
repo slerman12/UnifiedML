@@ -288,14 +288,17 @@ That's it.
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
-[Our](paper) data-regularized \[[1](https://arxiv.org/pdf/2004.13649.pdf)\] Soft-DQN \[[2](https://arxiv.org/pdf/2007.14430.pdf)\] ```DQN Agent``` playing Ms. Pac-Man:
-```console
-python Run.py task=atari/mspacman
-```
+[comment]: <> ([Our]&#40;paper&#41; data-regularized \[[1]&#40;https://arxiv.org/pdf/2004.13649.pdf&#41;\] Soft-DQN \[[2]&#40;https://arxiv.org/pdf/2007.14430.pdf&#41;\] ```DQN Agent``` playing Ms. Pac-Man:)
 
-```Agent=Agents.DQNAgent``` **is the library default**.
+[comment]: <> (```console)
 
-❖
+[comment]: <> (python Run.py task=atari/mspacman)
+
+[comment]: <> (```)
+
+[comment]: <> (```Agent=Agents.DQNAgent``` **is the library default**.)
+
+[comment]: <> (❖)
 
 ```SPR Agent``` in Atari:
 ```console
@@ -304,7 +307,7 @@ python Run.py Agent=Agents.SPRAgent task=atari/boxing
 
 The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
 
-[comment]: <> (❖)
+——❖——
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
 When in doubt: [AC2 Agent](paper). It's pretty much the best of all worlds.
