@@ -317,12 +317,12 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
 
-* Save videos with ```log_video=true```.
+1. Save videos with ```log_video=true```.
 
-* As of now, all agents are *visual*. 
+2. As of now, all agents are *visual*. 
     * That is, they observe pixel-based inputs.
 
-* Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
+3. Achieves [top scores](#bar_chart-agents--performances) in data-efficient RL from images across Atari and DMC.
 
 > :bulb: :information_source: *The below sections, like* [Classification](#classification)*, describe many features commonly used in their respective domains. However, since this is* **Unified***ML, the commands for those features will work in the RL domain as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
 
