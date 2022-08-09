@@ -290,7 +290,7 @@ python Run.py task=atari/mspacman
 
 See [the original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
 
-**Humanoid from pixels** with ```DrQV2 Agent``, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
+**Humanoid from pixels** with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
@@ -314,7 +314,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * Action repeat (```action_repeat=```)
 * & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new better ones!
 
-[AC2](paper) Agent in DMC: (When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.)
+[AC2](paper) Agent in DMC: (When in doubt: ```AC2 Agent```. It's pretty much the best of all worlds.)
 ```console
 python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 ```
