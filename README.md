@@ -240,15 +240,13 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 That's it.
 
-~~
+~
 
 > :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```
 >
 > :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
-
-~~
  
 [comment]: <> (<hr class="solid">)
 
