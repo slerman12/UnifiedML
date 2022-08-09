@@ -20,7 +20,7 @@
 
 - [How Is This Possible?](#bar_chart-agents--performances)
 
-- [Contributing](#bar_chart-agents--performances) (Best way: [Donate]()!)
+- [Contributing](#bar_chart-agents--performances) (Best way: [please donate]()!)
 
 # 
 
