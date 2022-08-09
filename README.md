@@ -288,14 +288,14 @@ python Run.py task=atari/mspacman
 
 ```Agent=Agents.DQNAgent``` **is the library default**.
 
-❖
+[comment]: <> (❖)
 
 Humanoid from pixels with ```DrQV2 Agent```, [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
-❖
+[comment]: <> (❖)
 
 ```SPR Agent``` in Atari:
 ```console
@@ -304,7 +304,7 @@ python Run.py Agent=Agents.SPRAgent task=atari/boxing
 
 The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
 
-❖
+[comment]: <> (❖)
 
 [AC2](paper) Agent in DMC:
 ```console
