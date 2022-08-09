@@ -256,11 +256,11 @@ That's it.
 
 # :file_cabinet: Key files
 
->```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
->
->```Environment.py``` handles rollouts.
->
->```./Agents``` contains self-contained agents.
+:running_man: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting.
+
+:earth_africa: ```Environment.py``` handles rollouts.
+
+:robot: :alien: :space_invader: ```./Agents``` contains self-contained agents.
  
 <hr>
 
