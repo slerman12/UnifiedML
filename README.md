@@ -385,9 +385,9 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 [comment]: <> (#)
 
-&#9432; As of now, all agents are *visual*, that is, they observe pixel-based inputs.
-
 &#9432; ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
+
+As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
 
