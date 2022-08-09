@@ -238,7 +238,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 [comment]: <> (<hr class="solid">)
 
-<hr style="width:50%;text-align:left;margin-left:0">
+<hr>
 
 That's it.
 
