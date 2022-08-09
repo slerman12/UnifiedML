@@ -254,11 +254,23 @@ That's it.
 
 [comment]: <> (~)
 
-> :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```
+> :bulb: Train Atari example**: ```python Run.py task=atari/mspacman```
 >
-> :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```
+> :bulb: Train DMC example: ```python Run.py task=dmc/cheetah_run```
 >
-> :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```
+> :bulb: Train Classify example: ```python Run.py task=classify/mnist```
+
+[comment]: <> (> :bulb: **Train Atari example**: ```python Run.py task=atari/mspacman```)
+
+[comment]: <> (>)
+
+[comment]: <> (> :bulb: **Train DMC example**: ```python Run.py task=dmc/cheetah_run```)
+
+[comment]: <> (>)
+
+[comment]: <> (> :bulb: **Train Classify example**: ```python Run.py task=classify/mnist```)
+
+[comment]: <> (<hr>)
 
 
 [comment]: <> (> > :bulb: **Train GAN example**: ```python Run.py task=classify/mnist generate=true```)
@@ -268,7 +280,6 @@ That's it.
 [comment]: <> (All datasets come preinstalled :white_check_mark:)
 
 [comment]: <> (#)
-<hr>
 
 # :file_cabinet: Key files
 
