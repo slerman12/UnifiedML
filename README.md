@@ -300,7 +300,7 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
 
 [comment]: <> (❖)
-——❖——
+❖
 
 ```SPR Agent``` in Atari:
 ```console
