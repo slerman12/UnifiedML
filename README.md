@@ -278,7 +278,7 @@ Please see ```Hyperparams/args.yaml``` for the full, vast array of configurable 
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
-* & more, with per-task defaults in ```Hyperparams/task```
+* & more, with per-task defaults in ```Hyperparams/task``` — please [share](discussions) your hyperparams if you discover better ones!
 
 [AC2Agent](paper) in DMC. When in doubt: ```AC2Agent```. It's pretty much the best of all worlds.
 ```console
