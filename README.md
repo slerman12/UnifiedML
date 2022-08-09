@@ -317,7 +317,7 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 nstep=5
 
 [comment]: <> (- ```Agent=Agents.AC2Agent +agent.num_critics=```)
 
-Save videos with ```log_video=true```.
+* Save videos with ```log_video=true```.
 
 * As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
