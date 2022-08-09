@@ -256,6 +256,8 @@ That's it.
 
 # :file_cabinet: Key files
 
+<hr>
+
 **:play_or_pause_button: ```Run.py``` handles learning and evaluation loops, saving, distributed training, logging, plotting :repeat:**
 
 **:earth_africa: ```Environment.py``` handles rollouts :rainbow: :cinema:**
