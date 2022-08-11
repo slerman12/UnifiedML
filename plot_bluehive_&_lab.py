@@ -5,6 +5,8 @@
 import getpass
 import os
 from pathlib import Path
+from time import sleep
+
 from cryptography.fernet import Fernet
 
 from pexpect import spawn
@@ -92,18 +94,21 @@ if plot_specs.sftp:
         print()
 
     print('Connecting to lab', end=" ")
-    p = spawn(f'sftp cornea')
+    p = spawn(f'sftp macula')
     p.expect('sftp> ')
     print('- Connected! ✓\n')
     p.sendline(f"lcd {local_path}")
     p.expect('sftp> ')
-    p.sendline("cd UnifiedML")
-    p.expect('sftp> ')
-    for i, experiment in enumerate(experiments):
-        if experiment not in plot_specs.bluehive_only:
-            print(f'{i + 1}/{len(experiments)} [lab] SFTP\'ing "{experiment}"')
-            p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
-            p.expect('sftp> ', timeout=None)
+    lab_paths = ['u1', '/localdisk2/sam']  # SFTP can't access ~/, so need full path
+    for i, path in enumerate(lab_paths):
+        p.sendline(f'cd {path}/UnifiedML')
+        p.expect('sftp> ')
+        for j, experiment in enumerate(experiments):
+            if experiment not in plot_specs.bluehive_only:
+                print(f'{i * (len(lab_paths) + 1) + j + 1}/{len(lab_paths) * len(experiments)} '
+                      f'[lab - {path}] SFTP\'ing "{experiment}"')
+                p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
+                p.expect('sftp> ', timeout=None)
 
     print('\nPlotting results...')
 

@@ -25,8 +25,12 @@ class CNNEncoder(nn.Module):
         for key in ('mean', 'stddev', 'low', 'high'):
             setattr(self, key, None if getattr(obs_spec, key, None) is None else torch.as_tensor(obs_spec[key]))
 
+        # norm should default false, except for RL task-args
+        # self.standardize = standardize and self.mean and self.stddev is not None  # Whether to center-scale 0 mean, 1 sd
+        # self.normalize = norm and self.low is not None and self.high is not None  # Whether to [0, 1] shift-max scale
+
         self.standardize = \
-            standardize and None not in [self.mean, self.stddev]  # Whether to center-scale (0 mean, 1 stddev)
+            standardize and self.mean and self.stddev is not None  # Whether to center-scale (0 mean, 1 stddev)
         self.normalize = norm and None not in [self.low, self.high]  # Whether to [0, 1] shift-max scale
 
         # Dimensions

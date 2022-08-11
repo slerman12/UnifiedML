@@ -129,9 +129,7 @@ runs = {
                     discrete=true,false 
                     +agent.half=true,false 
                     experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
-                    logger.wandb=true
-                    parallel=true
-                    num_workers=20
+                    num_workers=8
                     plot_per_steps=0""",
 
                     # Classify + RL: Variational Inference
@@ -147,15 +145,26 @@ runs = {
                     discrete=false 
                     +agent.half=true,false 
                     +agent.sample=true
-                    experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
-                    logger.wandb=true
-                    parallel=true
-                    num_workers=20
+                    experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}'
+                    num_workers=8
+                    plot_per_steps=0""",
+
+                    # Classify
+                    """python Run.py
+                    Agent=Agents.ExperimentAgent 
+                    task=classify/mnist,classify/cifar10,classify/tinyimagenet
+                    ema=true 
+                    weight_decay=0.01
+                    lr_decay_epochs=100
+                    Eyes=Blocks.Architectures.ResNet18
+                    'transform="{RandomHorizontalFlip:{}}"'
+                    experiment='Classify' 
+                    num_workers=4
                     plot_per_steps=0"""
                 ],
                 'plots': [
                     # Classify + RL
-                    ['Classify+RL.*'],
+                    ['Classify+RL.*', 'Classify'],
 
                     # Q-learning expected, expected + entropy, best -- Note: No sweep for this one since modified Losses
                     ['Q-Learning-Target.*'],

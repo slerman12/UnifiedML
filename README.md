@@ -328,6 +328,8 @@ python Run.py task=atari/mspacman
 
 ——❖——
 
+[comment]: <> (Maybe put below in collapsed)
+
 **Humanoid from pixels** with [```DrQV2 Agent```](Agents/DrQV2.py), [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
@@ -357,6 +359,8 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.n
 
 [comment]: <> (#)
 
+[comment]: <> (Collapse up to here, maybe remove video path/gif)
+
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
 [comment]: <> (——❖——)
@@ -374,6 +378,8 @@ Save videos with ```log_video=true```.
 </p>
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
+
+[comment]: <> (Maybe collapse all this up above, putting discretization note first)
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
@@ -430,6 +436,8 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 [comment]: <> (<br>)
 
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
+
+[comment]: <> (Maybe remove all this)
 
 #
 
