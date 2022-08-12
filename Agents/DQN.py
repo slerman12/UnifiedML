@@ -148,6 +148,7 @@ class DQNAgent(torch.nn.Module):
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
 
+        # TODO maybe action = obs for this and if imitate: action = label here, the rest below if generate or imitate
         # Actor-Critic -> Generator-Discriminator conversion  Todo move below?
         if self.generate:
             action, reward[:] = obs, 1  # "Real"

@@ -26,6 +26,8 @@ class EnsemblePiActor(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
+        # TODO Can make the else (-1, 1) for Classify + RL to work
+        #  (and classify default can be discrete where All_Qs not normalized so equivalent to traditional/standard)
         self.low, self.high = (action_spec.low, action_spec.high) if discrete or not action_spec.discrete else (0, 0)
 
         # Standard dev value, max cutoff clip for action sampling

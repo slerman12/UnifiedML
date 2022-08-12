@@ -24,7 +24,7 @@ class ExperimentAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 half=False, third=False, sample=False  # Experiment
+                 contrastive=False, imitate=False, sample=False  # Experiment
                  ):
         super().__init__()
 
@@ -42,11 +42,12 @@ class ExperimentAgent(torch.nn.Module):
 
         self.num_actions = num_actions
 
-        self.half, self.third = half, third  # Contrastive and ground truth RL examples
+        self.contrastive, self.imitate = contrastive, imitate  # Contrastive and ground truth RL examples
         self.sample = sample  # Whether to sample inferences variationally as per usual in RL
 
+        # TODO can modify actor/critic, don't need this
         action_spec.discrete = False
-        action_spec.low, action_spec.high = -1, 1
+        action_spec.low, action_spec.high = -1, 1  # Note that normalization essential to Classify+RL
 
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
@@ -210,12 +211,19 @@ class ExperimentAgent(torch.nn.Module):
 
             # (Auxiliary) reinforcement
             if self.RL:
-                ratio = len(obs) // (2 + self.third)
-                if self.half or self.third:
+                ratio = len(obs) // (2 + (self.contrastive and self.imitate))
+                if self.contrastive:
                     mistake[:ratio] = cross_entropy(y_predicted[:ratio].uniform_(-1, 1),
                                                     label[:ratio].long(), reduction='none')
-                if self.third:
-                    y_predicted[-ratio:], mistake[-ratio:] = Utils.one_hot(label[-ratio:], self.action_dim, -1), 0
+                if self.imitate:
+                    # TODO note: assumes d == 1; need to expand utils.one_hot to multi-dim
+                    # TODO note: works better when null_value = 0 ((high + low) / 2) rather than low; don't know why
+                    low, high = self.actor.low or 0, 1 if self.actor.high is None else self.actor.high
+                    y_predicted[-ratio:] = Utils.one_hot(label[-ratio:], y_predicted.shape[1],
+                                                         (high + low) / 2, high).unsqueeze(-1)
+                    mistake[-ratio:] = cross_entropy(y_predicted[-ratio:],
+                                                     label[-ratio:].long(), reduction='none') if self.contrastive \
+                        else 0  # "real"
                 action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
                 reward = -mistake.detach()  # reward = -error
                 next_obs[:] = float('nan')
