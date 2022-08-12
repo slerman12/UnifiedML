@@ -16,7 +16,7 @@ from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
 
-# TODO replay spec -> dict, creator/store, bluehive memory, macula hard disc(?), debug log_video, ViT & architectures!
+# TODO replay spec -> dict, creator/store, bluehive memory, debug log_video, AC2, ViT & architectures!
 class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
@@ -43,8 +43,9 @@ class DQNAgent(torch.nn.Module):
 
         self.num_actions = num_actions
 
-        # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
+        # Image augmentation TODO classify differs due to image aug!! - apples/oranges
+        self.aug = Utils.instantiate(recipes.aug) or (torch.nn.Sequential(RandomShiftsAug(pad=4),
+                                                                          IntensityAug(0.05)) if action_spec.discrete
                                                       else RandomShiftsAug(pad=4))
 
         # RL -> generate conversion
@@ -83,7 +84,7 @@ class DQNAgent(torch.nn.Module):
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=num_critics if self.RL else 1,
+                                      ensemble_size=num_critics if self.RL else 1,  # todo discrete here?
                                       discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
@@ -147,7 +148,7 @@ class DQNAgent(torch.nn.Module):
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
 
-        # Actor-Critic -> Generator-Discriminator conversion
+        # Actor-Critic -> Generator-Discriminator conversion  Todo move below?
         if self.generate:
             action, reward[:] = obs, 1  # "Real"
             next_obs[:] = label[:] = float('nan')

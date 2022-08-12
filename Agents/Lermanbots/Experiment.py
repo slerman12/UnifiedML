@@ -45,6 +45,9 @@ class ExperimentAgent(torch.nn.Module):
         self.half, self.third = half, third  # Contrastive and ground truth RL examples
         self.sample = sample  # Whether to sample inferences variationally as per usual in RL
 
+        action_spec.discrete = False
+        action_spec.low, action_spec.high = -1, 1
+
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
                                                       else RandomShiftsAug(pad=4))
