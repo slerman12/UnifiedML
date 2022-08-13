@@ -9,14 +9,14 @@ from torch.nn.functional import cross_entropy
 
 import Utils
 
-from Blocks.Augmentations import IntensityAug, RandomShiftsAug
+from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
 
-# TODO replay spec -> dict, creator/store, bluehive memory, debug log_video, AC2, ViT & architectures!
+# TODO replay spec -> dict, bluehive memory, debug log_video, AC2, ViT & architectures!
 class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""
@@ -82,7 +82,7 @@ class DQNAgent(torch.nn.Module):
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=num_critics if self.RL else 1,  # todo discrete here?
+                                      ensemble_size=num_critics if self.RL else 1,
                                       discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
@@ -115,7 +115,7 @@ class DQNAgent(torch.nn.Module):
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).best
+                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).sample()
 
                 self.step += 1
                 self.frame += len(obs)

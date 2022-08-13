@@ -12,7 +12,7 @@ from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
 
-from Blocks.Augmentations import IntensityAug, RandomShiftsAug
+from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
@@ -22,7 +22,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 class AC2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2) - Best of all worlds (https://paper)
-    Does ensemble-learning with multiple critics and actors, for RL, classification, and generative modeling"""
+    Ensemble-learning w/ multiple critics/actors for RL, classification, and generative modeling; re-sampling"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
@@ -45,14 +45,14 @@ class AC2Agent(torch.nn.Module):
         self.ema = ema
 
         self.num_actions = num_actions
-        self.num_actors = num_actors
+        self.num_actors = num_critics if self.discrete and self.RL else num_actors
 
         self.depth = depth  # Dynamics prediction depth
 
+        self.discrete_as_continuous = action_spec.discrete and not self.discrete
+
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or RandomShiftsAug(pad=4)
-
-        self.discrete_as_continuous = action_spec.discrete and not self.discrete
 
         # RL -> generate conversion
         if self.generate:
@@ -78,7 +78,7 @@ class AC2Agent(torch.nn.Module):
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     ensemble_size=num_critics if self.discrete and self.RL else num_actors,
+                                     ensemble_size=self.num_actors,
                                      discrete=self.discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                      ema_decay=ema_decay * ema)
@@ -144,23 +144,33 @@ class AC2Agent(torch.nn.Module):
                 else Pi.mean
 
             # Select among candidate actions based on Q-value
-            if self.num_actors > 1 or self.training and self.num_actions > 1:
+            if self.num_actors > 1 and not self.discrete or self.training and self.num_actions > 1:
                 All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                action = self.creator(critic(obs, action, All_Qs), self.step, action).best
+                if not self.discrete:
+                    action = action.flatten(1, -3)
+
+                Psi = self.creator(critic(obs, action, All_Qs), self.step, action)
+
+                action = Psi.sample() if self.training \
+                    else Psi.best
+
+            store = {}
 
             if self.training:
                 self.step += 1
                 self.frame += len(obs)
 
-                store = {'step': self.step, 'action': action}
-
-                if self.discrete_as_continuous:
-                    action = self.action_selector(action, self.step).sample()  # Re-sample
-
                 if self.step < self.explore_steps and not self.generate:
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
+
+                store = {'action': action}  # Store action
+
+                if self.discrete_as_continuous:  # Re-sample, however only store logits as above
+                    action = self.creator(action, self.step).sample()
+
+            store.update({'step': self.step})
 
             return action, store
 
@@ -259,8 +269,8 @@ class AC2Agent(torch.nn.Module):
                 action = self.actor(obs[:half]).mean
                 Qs = self.critic(obs, action)
 
-                generated_image = self.creator(Qs, self.step, action).best if self.num_actors > 1 \
-                    else action.flatten(1)
+                generated_image = (self.creator(Qs, self.step, action).best if self.num_actors > 1
+                                   else action).flatten(1)
 
                 action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
 
@@ -278,7 +288,7 @@ class AC2Agent(torch.nn.Module):
                                                              self.predictor, depth=min(replay.nstep, self.depth),
                                                              action_dim=self.action_dim, logs=logs)
 
-            models = () if self.generate else (self.dynamics, self.projector, self.predictor)
+            models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss,

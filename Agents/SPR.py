@@ -49,8 +49,7 @@ class SPRAgent(torch.nn.Module):
         self.depth = depth  # Dynamics prediction depth
 
         # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or torch.nn.Sequential(IntensityAug(0.05),
-                                                                         RandomShiftsAug(pad=4))
+        self.aug = Utils.instantiate(recipes.aug) or torch.nn.Sequential(IntensityAug(0.05), RandomShiftsAug(pad=4))
 
         # RL -> generate conversion
         if self.generate:
@@ -146,7 +145,7 @@ class SPRAgent(torch.nn.Module):
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).best
+                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).sample()
 
                 self.step += 1
                 self.frame += len(obs)
@@ -268,7 +267,7 @@ class SPRAgent(torch.nn.Module):
                                                              self.predictor, depth=min(replay.nstep, self.depth),
                                                              action_dim=self.action_dim, logs=logs)
 
-            models = () if self.generate else (self.dynamics, self.projector, self.predictor)
+            models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss,

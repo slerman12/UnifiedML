@@ -9,7 +9,7 @@ from torch.nn.functional import cross_entropy
 
 import Utils
 
-from Blocks.Augmentations import IntensityAug, RandomShiftsAug
+from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
@@ -114,7 +114,7 @@ class DrQV2Agent(torch.nn.Module):
                 if self.num_actions > 1:
                     All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).best
+                    action = self.action_selector(critic(obs, action, All_Qs), self.step, action).sample()
 
                 self.step += 1
                 self.frame += len(obs)
