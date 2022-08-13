@@ -50,8 +50,9 @@ class AC2Agent(torch.nn.Module):
         self.depth = depth  # Dynamics prediction depth
 
         # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
-                                                      else RandomShiftsAug(pad=4))
+        self.aug = Utils.instantiate(recipes.aug) or RandomShiftsAug(pad=4)
+
+        self.discrete_as_continuous = action_spec.discrete and not self.discrete
 
         # RL -> generate conversion
         if self.generate:
@@ -152,11 +153,16 @@ class AC2Agent(torch.nn.Module):
                 self.step += 1
                 self.frame += len(obs)
 
+                store = {'step': self.step, 'action': action}
+
+                if self.discrete_as_continuous:
+                    action = self.action_selector(action, self.step).sample()  # Re-sample
+
                 if self.step < self.explore_steps and not self.generate:
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
-            return action
+            return action, store
 
     # "Dream"
     def learn(self, replay):

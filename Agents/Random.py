@@ -41,7 +41,7 @@ class RandomAgent(torch.nn.Module):
                 self.step += 1
                 self.frame += len(obs)
 
-            return action
+            return action, {'step': self.step}
 
     # "Dream"
     def learn(self, replay=None):

@@ -23,6 +23,13 @@ nstep: 10
 frame_stack: 3
 train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,20000)'
+
+# Atari has two augmentations
+aug:
+    _target_: Utils.Sequential
+    _targets_: [RandomShiftsAug, IntensityAug]
+    pad: 4
+    noise: 0.05
 """.format(task))
         f.close()
         out += ' "' + task.lower() + '"'

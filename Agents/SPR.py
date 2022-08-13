@@ -49,8 +49,8 @@ class SPRAgent(torch.nn.Module):
         self.depth = depth  # Dynamics prediction depth
 
         # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
-                                                      else RandomShiftsAug(pad=4))
+        self.aug = Utils.instantiate(recipes.aug) or torch.nn.Sequential(IntensityAug(0.05),
+                                                                         RandomShiftsAug(pad=4))
 
         # RL -> generate conversion
         if self.generate:
@@ -155,7 +155,7 @@ class SPRAgent(torch.nn.Module):
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
-            return action
+            return action, {'step': self.step}
 
     # "Dream"
     def learn(self, replay):

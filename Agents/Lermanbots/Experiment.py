@@ -50,8 +50,7 @@ class ExperimentAgent(torch.nn.Module):
         # action_spec.low, action_spec.high = -1, 1  # Note that normalization essential to Classify+RL
 
         # Image augmentation
-        self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete
-                                                      else RandomShiftsAug(pad=4))
+        self.aug = Utils.instantiate(recipes.aug) or RandomShiftsAug(pad=4)
 
         # RL -> generate conversion
         if self.generate:
