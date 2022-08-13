@@ -24,7 +24,7 @@ class EnsembleQCritic(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape)  # d
 
-        self.low, self.high = (action_spec.low, action_spec.high) if discrete else (None,) * 2
+        self.low, self.high = action_spec.low, action_spec.high
 
         # Discrete critic always requires observation
         self.ignore_obs = ignore_obs and not discrete
@@ -88,11 +88,9 @@ class EnsembleQCritic(nn.Module):
         return Qs
 
     def normalize(self, action):
-        return action / (self.num_actions - 1) * (self.high - self.low) + self.low if self.low or self.high \
-            else action  # Normalize -> [low, high]
+        return action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize -> [low, high]
 
     def to_indices(self, action):
         action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
 
-        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
-            else action  # Inverse of normalize -> indices
+        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of normalize -> indices

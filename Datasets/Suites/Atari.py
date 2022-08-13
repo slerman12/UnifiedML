@@ -33,7 +33,7 @@ class Atari:
         - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
         - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
-          "low", "high" (can be None if not discrete), and "discrete"
+          "low", "high", and "discrete"
     (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"

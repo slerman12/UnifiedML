@@ -121,7 +121,6 @@ runs = {
                     task=classify/mnist,classify/cifar10,classify/tinyimagenet
                     ema=true 
                     weight_decay=0.01
-                    lr_decay_epochs=100
                     Eyes=Blocks.Architectures.ResNet18
                     'Aug="RandomShiftsAug(4)"'
                     'transform="{RandomHorizontalFlip:{}}"'
@@ -139,7 +138,6 @@ runs = {
                     task=classify/mnist,classify/cifar10,classify/tinyimagenet
                     ema=true 
                     weight_decay=0.01
-                    lr_decay_epochs=100
                     Eyes=Blocks.Architectures.ResNet18
                     'Aug="RandomShiftsAug(4)"'
                     'transform="{RandomHorizontalFlip:{}}"'
@@ -152,13 +150,12 @@ runs = {
                     num_workers=8
                     plot_per_steps=0""",
 
-                    # Classify  TODO looks like I should disable lr_decay (but then need to re-run above)
+                    # Classify
                     """python Run.py
                     Agent=Agents.ExperimentAgent 
                     task=classify/mnist,classify/cifar10,classify/tinyimagenet
                     ema=true 
                     weight_decay=0.01
-                    lr_decay_epochs=100
                     Eyes=Blocks.Architectures.ResNet18
                     'Aug="RandomShiftsAug(4)"'
                     'transform="{RandomHorizontalFlip:{}}"'
@@ -172,6 +169,9 @@ runs = {
 
                     # Q-learning expected, expected + entropy, best -- Note: No sweep for this one since modified Losses
                     ['Q-Learning-Target.*'],
+
+                    # Discrete as continuous - normed or not
+                    ['discrete-as-continious.*'],  # Note, typo. Also note: still need to 2nd-sample
                 ],
                 'sftp': True,
                 'bluehive': False,
