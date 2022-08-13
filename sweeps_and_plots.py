@@ -128,7 +128,7 @@ runs = {
                     RL=true 
                     supervise=false,true 
                     discrete=true,false 
-                    +agent.half=true,false 
+                    +agent.contrastive=true,false 
                     experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
                     num_workers=8
                     plot_per_steps=0""",
@@ -146,13 +146,13 @@ runs = {
                     RL=true 
                     supervise=false,true 
                     discrete=false 
-                    +agent.half=true,false 
+                    +agent.contrastive=true,false 
                     +agent.sample=true
                     experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}'
                     num_workers=8
                     plot_per_steps=0""",
 
-                    # Classify
+                    # Classify  TODO looks like I should disable lr_decay (but then need to re-run above)
                     """python Run.py
                     Agent=Agents.ExperimentAgent 
                     task=classify/mnist,classify/cifar10,classify/tinyimagenet

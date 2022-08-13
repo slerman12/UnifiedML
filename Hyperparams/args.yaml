@@ -27,7 +27,6 @@ Env: ???  # To be specified later, defaults per respective task
 env:
   _target_: ${Env}
   _recursive_: false
-  discrete: ${discrete}
 Dataset: null  # Defaults per respective Classify task
 dataset:
   _target_: ${Dataset}

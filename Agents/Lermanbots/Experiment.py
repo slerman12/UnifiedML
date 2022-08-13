@@ -46,8 +46,8 @@ class ExperimentAgent(torch.nn.Module):
         self.sample = sample  # Whether to sample inferences variationally as per usual in RL
 
         # TODO can modify actor/critic, don't need this
-        action_spec.discrete = False
-        action_spec.low, action_spec.high = -1, 1  # Note that normalization essential to Classify+RL
+        # action_spec.discrete = False
+        # action_spec.low, action_spec.high = -1, 1  # Note that normalization essential to Classify+RL
 
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or (IntensityAug(0.05) if action_spec.discrete

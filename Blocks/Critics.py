@@ -24,7 +24,6 @@ class EnsembleQCritic(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape)  # d
 
-        # TODO is this ever called when not discrete?
         self.low, self.high = (action_spec.low, action_spec.high) if discrete else (None,) * 2
 
         # Discrete critic always requires observation
@@ -96,4 +95,4 @@ class EnsembleQCritic(nn.Module):
         action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
 
         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
-            else action  # Inverse of normalize -> indices  TODO will self.low/high ever not be set for discrete?
+            else action  # Inverse of normalize -> indices
