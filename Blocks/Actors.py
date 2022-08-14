@@ -26,7 +26,7 @@ class EnsemblePiActor(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
-        self.low, self.high = (action_spec.low, action_spec.high) if discrete or not action_spec.discrete else (0, 0)
+        self.low, self.high = (action_spec.low, action_spec.high) if discrete or not action_spec.discrete else (-1, 1)
 
         # Standard dev value, max cutoff clip for action sampling
         self.stddev_schedule, self.stddev_clip = stddev_schedule, stddev_clip
