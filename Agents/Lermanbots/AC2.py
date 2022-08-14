@@ -163,9 +163,9 @@ class AC2Agent(torch.nn.Module):
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
-                store = {'action': action}  # Store action
+                store = {'action': action.cpu().numpy()}  # Store action
 
-                if self.discrete_as_continuous:  # Re-sample, however only store logits as above
+                if self.discrete_as_continuous:  # Re-sample, however store logits as above
                     action = self.creator(action, self.step).sample()
 
             store.update({'step': self.step})

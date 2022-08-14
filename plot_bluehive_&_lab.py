@@ -5,7 +5,6 @@
 import getpass
 import os
 from pathlib import Path
-from time import sleep
 
 from cryptography.fernet import Fernet
 
@@ -22,6 +21,9 @@ plot_group = 'UML_Paper'
 plot_specs = runs[plot_group]['Classify+RL']
 
 plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
+
+for plots in ['Discrete-As-Continuous']:  # Additional plots from other sub_groups, using same specs
+    plot_specs.plots += runs[plot_group][plots].plots
 
 """
 Example of how to plot independent from any specified run specs:
