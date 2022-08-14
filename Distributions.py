@@ -26,8 +26,8 @@ class TruncatedNormal(Normal):
             return super().log_prob(value)
         else:
             # To account for batch_first=True
-            return super().log_prob(value.view(self.loc.shape[0], -1,  # Assumes a single batch dim
-                                               *self.loc.shape[1:]).transpose(0, 1)).transpose(0, 1).view(value.shape)
+            b, *shape = self.loc.shape  # Assumes a single batch dim
+            return super().log_prob(value.view(b, -1, *shape).transpose(0, 1)).transpose(0, 1).view(value.shape)
 
     # No grad, defaults to no clip, batch dim first
     def sample(self, sample_shape=1, to_clip=False, batch_first=True, keepdim=True):
