@@ -18,7 +18,8 @@ weight_decay: 0
 ema_decay: 0.99
 # Domains
 discrete: ???  # To be specified later, defaults per respective task
-offline: false  # Defaults to true for classify tasks
+online: true  # Reverse-Shorthand for offline
+offline: ${not:${online}}  # Defaults to true for classify tasks
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false

@@ -53,6 +53,9 @@ OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 # Allow recipes config to accept objects as args
 OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
 
+# A boolean "not" operation in configs
+OmegaConf.register_new_resolver("not", lambda bool: not bool)
+
 
 # Saves model + args + selected attributes
 def save(path, model, args, *attributes):

@@ -46,7 +46,7 @@ seed_steps: 50
 explore_steps: 0
 log_per_episodes: 300
 RL: false
-offline: true
+online: false  # Same as offline: true
 """)
         f.close()
         out += ' "' + task.lower() + '"'
