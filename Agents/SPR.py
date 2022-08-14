@@ -88,6 +88,9 @@ class SPRAgent(torch.nn.Module):
             self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
                 else self.actor.action_dim
 
+            if action_spec.discrete and not self.discrete:  # If discrete as continuous
+                self.action_dim *= action_spec.discrete_bins
+
             shape[0] += self.action_dim  # Predicting from obs and action
 
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))

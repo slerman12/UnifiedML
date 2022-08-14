@@ -21,19 +21,20 @@ class TruncatedNormal(Normal):
         self.eps = eps
         self.stddev_clip = stddev_clip
 
-    def log_prob(self, value):
+    def log_prob(self, value, keptdim=True):
         if value.shape[-len(self.loc.shape):] == self.loc.shape:
             return super().log_prob(value)
         else:
-            diff = len(value.shape) - len(self.loc.shape)
-            return super().log_prob(value.transpose(0, diff)).transpose(0, diff)  # To account for batch_first=True
+            # To account for batch_first=True
+            return super().log_prob(value.view(self.loc.shape[0], -1,  # Assumes a single batch dim
+                                               *self.loc.shape[1:]).transpose(0, 1)).transpose(0, 1).view(value.shape)
 
     # No grad, defaults to no clip, batch dim first
-    def sample(self, sample_shape=1, to_clip=False, batch_first=True):
+    def sample(self, sample_shape=1, to_clip=False, batch_first=True, keepdim=True):
         with torch.no_grad():
-            return self.rsample(sample_shape, to_clip, batch_first)
+            return self.rsample(sample_shape, to_clip, batch_first, keepdim)
 
-    def rsample(self, sample_shape=1, to_clip=True, batch_first=True):
+    def rsample(self, sample_shape=1, to_clip=True, batch_first=True, keepdim=True):
         if isinstance(sample_shape, int):
             sample_shape = torch.Size((sample_shape,))
 
@@ -48,7 +49,10 @@ class TruncatedNormal(Normal):
         x = self.loc.expand(shape) + dev
 
         if batch_first:
-            x = x.transpose(0, len(sample_shape))  # Batch dim first
+            x = x.transpose(0, len(sample_shape))  # Batch dim first, assumes single batch dim
+
+            if keepdim:
+                x = x.flatten(1, len(sample_shape) + 1)
 
         if self.low is not None and self.high is not None:
             # Differentiable truncation

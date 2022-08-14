@@ -45,7 +45,7 @@ class AC2Agent(torch.nn.Module):
         self.ema = ema
 
         self.num_actions = num_actions
-        self.num_actors = num_critics if self.discrete and self.RL else num_actors
+        self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
 
         self.depth = depth  # Dynamics prediction depth
 
@@ -91,6 +91,9 @@ class AC2Agent(torch.nn.Module):
             self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
                 else self.actor.action_dim
 
+            if self.discrete_as_continuous:
+                self.action_dim *= action_spec.discrete_bins
+
             shape[0] += self.action_dim  # Predicting from obs and action
 
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
@@ -115,7 +118,7 @@ class AC2Agent(torch.nn.Module):
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=num_critics if self.RL else num_actors,
+                                      ensemble_size=self.num_actors if self.discrete else num_critics,
                                       discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
@@ -146,9 +149,6 @@ class AC2Agent(torch.nn.Module):
             # Select among candidate actions based on Q-value
             if self.num_actors > 1 and not self.discrete or self.training and self.num_actions > 1:
                 All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
-
-                if not self.discrete:
-                    action = action.flatten(1, -3)
 
                 Psi = self.creator(critic(obs, action, All_Qs), self.step, action)
 

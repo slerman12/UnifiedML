@@ -30,16 +30,15 @@ def bootstrapYourOwnLatent(obs, positive, encoder, projector, predictor, logs=No
 
 def dynamicsLearning(obs, traj_o, traj_a, traj_r,
                      encoder, dynamics, projector, obs_predictor=None, reward_predictor=None,
-                     depth=1, action_dim=0, one_hot=False, logs=None):
+                     depth=1, action_dim=0, logs=None):
     assert depth < traj_o.shape[1], f"depth {depth} exceeds future trajectory size of {traj_o.shape[1] - 1} steps"
+
+    # Dynamics accepts a single flat action
+    traj_a = traj_a.flatten(2)
 
     # If discrete action, converts to one-hot
     if traj_a.shape[-1] == 1 and action_dim > 1:
         traj_a = Utils.one_hot(traj_a, num_classes=action_dim)
-
-    # Differentiably convert continuous to one-hot
-    if one_hot:
-        traj_a = Utils.rone_hot(traj_a)
 
     # Predict future
     forecast = [dynamics(obs, traj_a[:, 0], pool=False)]
