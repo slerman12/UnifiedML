@@ -42,10 +42,10 @@ class Classify:
         - "shape", "discrete_bins" (should be None if not discrete), "low", "high", and "discrete"
     (7) "exp" attribute containing the latest exp
 
+    Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
+
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
     numpy values which can be NaN. Must include a batch dim.
-
-    Recommended: Discrete environments should have a conversion strategy for continuous actions (e.g. argmax)
 
     ---
 

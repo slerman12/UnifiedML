@@ -166,7 +166,7 @@ class AC2Agent(torch.nn.Module):
                 store = {'action': action.cpu().numpy()}  # Store action
 
                 if self.discrete_as_continuous:  # Re-sample, however store logits as above
-                    action = self.creator(action, self.step).sample()
+                    action = self.creator(action.transpose(-1, -2), self.step).sample()
 
             store.update({'step': self.step})
 
