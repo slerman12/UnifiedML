@@ -45,10 +45,6 @@ class ExperimentAgent(torch.nn.Module):
         self.contrastive, self.imitate = contrastive, imitate  # Contrastive and ground truth RL examples
         self.sample = sample  # Whether to sample inferences variationally as per usual in RL
 
-        # TODO can modify actor/critic, don't need this
-        # action_spec.discrete = False
-        # action_spec.low, action_spec.high = -1, 1  # Note that normalization essential to Classify+RL
-
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or RandomShiftsAug(pad=4)
 
@@ -130,7 +126,7 @@ class ExperimentAgent(torch.nn.Module):
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
-            return action
+            return action, {'step': self.step}
 
     # "Dream"
     def learn(self, replay):
