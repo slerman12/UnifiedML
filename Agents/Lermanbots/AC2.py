@@ -87,12 +87,10 @@ class AC2Agent(torch.nn.Module):
         if self.depth and not self.generate:
             shape = list(self.encoder.feature_shape)
 
-            # Action -> One-Hot, if single-dim discrete
+            # Action -> One-Hot, if single-dim discrete, otherwise action shape
             self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
+                else self.actor.num_actions * self.actor.action_dim if self.discrete_as_continuous \
                 else self.actor.action_dim
-
-            if self.discrete_as_continuous:
-                self.action_dim *= action_spec.discrete_bins
 
             shape[0] += self.action_dim  # Predicting from obs and action
 
@@ -178,7 +176,7 @@ class AC2Agent(torch.nn.Module):
     def learn(self, replay):
         # "Recollect"
 
-        batch = replay.sample(True)
+        batch = replay.sample(trajectories=True)
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
         traj_o, traj_a, traj_r, traj_l = traj

@@ -126,8 +126,6 @@ class ExperienceReplay:
 
         self._replay = None
 
-        self.device, self.discrete = 'cpu', action_spec.discrete
-
     # Samples a batch of experiences
     def sample(self, trajectories=False):
         try:
