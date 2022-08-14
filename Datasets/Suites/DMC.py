@@ -23,10 +23,9 @@ class DMC:
     (3) "render" function, -> image
     (4) "episode_done" attribute
     (5) "obs_spec" attribute which includes:
-        - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
+        - "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
-        - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
-          "low", "high", and "discrete"
+        - "shape", "discrete_bins" (should be None if not discrete), "low", "high", and "discrete"
     (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
@@ -88,15 +87,13 @@ class DMC:
         # Frame stack
         obs_shape[0] *= frame_stack
 
-        self.obs_spec = {'name': 'obs',
-                         'shape': obs_shape,
+        self.obs_spec = {'shape': obs_shape,
                          'mean': None,
                          'stddev': None,
                          'low': 0,
                          'high': 255}
 
-        self.action_spec = {'name': 'action',
-                            'shape': self.env.action_spec().shape,
+        self.action_spec = {'shape': self.env.action_spec().shape,
                             'discrete_bins': None,  # Should be None for continuous
                             'low': -1,
                             'high': 1,

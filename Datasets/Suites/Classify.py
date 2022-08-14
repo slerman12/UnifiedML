@@ -37,10 +37,9 @@ class Classify:
     (3) "render" function, -> image
     (4) "episode_done" attribute
     (5) "obs_spec" attribute which includes:
-        - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
+        - "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
-        - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
-          "low", "high", and "discrete"
+        - "shape", "discrete_bins" (should be None if not discrete), "low", "high", and "discrete"
     (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
@@ -88,8 +87,7 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
-        self.action_spec = {'name': 'action',
-                            'shape': (1,),
+        self.action_spec = {'shape': (1,),
                             'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
                             'low': 0,
                             'high': len(dataset.classes) - 1,
@@ -140,8 +138,7 @@ class Classify:
 
         """---------------------"""
 
-        self.obs_spec = {'name': 'obs',
-                         'shape': obs_shape,
+        self.obs_spec = {'shape': obs_shape,
                          'mean': mean,
                          'stddev': stddev,
                          'low': low,

@@ -60,13 +60,12 @@ class ExperienceReplay:
         self.frame_stack = frame_stack or 1
         obs_spec.shape[0] //= self.frame_stack
 
-        self.specs = (obs_spec, action_spec, *[{'name': name, 'shape': (1,)}
-                                               for name in ['reward', 'discount', 'label', 'step']],
-                      {'name': 'meta', 'shape': meta_shape})  # TODO Use dict; No spec names
+        self.specs = {'obs': obs_spec, 'action': action_spec, 'meta': {'shape': meta_shape},
+                      **{name: {'shape': (1,)} for name in ['reward', 'discount', 'label', 'step']}}
 
         # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
 
-        self.episode = {spec['name']: [] for spec in self.specs}
+        self.episode = {name: [] for name in self.specs}
         self.episode_len = 0
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
@@ -126,15 +125,15 @@ class ExperienceReplay:
 
         self._replay = None
 
-    # Samples a batch of experiences
+    # Samples a batch of experiences, optionally with trajectories
     def sample(self, trajectories=False):
         try:
             sample = next(self.replay)
-        except StopIteration:
+        except StopIteration:  # Reset iterator when depleted
             self.epoch += 1
             self._replay = None
             sample = next(self.replay)
-        return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude full trajectories
+        return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude future trajectories
 
     # Allows iteration via next (e.g. batch = next(replay) )
     def __next__(self):
@@ -160,28 +159,28 @@ class ExperienceReplay:
         assert isinstance(experiences, (list, tuple))
 
         for exp in experiences:
-            for spec in self.specs:
+            for name, spec in self.specs.items():
                 # Missing data
-                if spec['name'] not in exp:
-                    exp[spec['name']] = None
+                if name not in exp:
+                    exp[name] = None
 
                 # Add batch dimension
-                if np.isscalar(exp[spec['name']]) or exp[spec['name']] is None or type(exp[spec['name']]) == bool:
-                    exp[spec['name']] = np.full((1, *spec['shape']), exp[spec['name']], dtype=getattr(exp[spec['name']], 'dtype', 'float32'))
-                # elif len(exp[spec['name']].shape) in [0, 1, len(spec['shape'])]:
-                #     exp[spec['name']].shape = (1, *spec['shape'])
+                if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
+                    exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
+                # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
+                #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
 
                 # Expands attributes that are unique per batch (such as 'step')
                 batch_size = exp.get('obs', exp['action']).shape[0]
-                if 1 == exp[spec['name']].shape[0] < batch_size:
-                    exp[spec['name']] = np.repeat(exp[spec['name']], batch_size, axis=0)
+                if 1 == exp[name].shape[0] < batch_size:
+                    exp[name] = np.repeat(exp[name], batch_size, axis=0)
 
-                # Validate consistency
-                # assert spec['shape'] == exp[spec["name"]].shape[1:], \
-                #     f'Unexpected shape for "{spec["name"]}": {spec["shape"]} vs. {exp[spec["name"]].shape[1:]}'
+                # Validate consistency - disabled for discrete/continuous conversions
+                # assert spec['shape'] == exp[name].shape[1:], \
+                #     f'Unexpected shape for "{name}": {spec["shape"]} vs. {exp[name].shape[1:]}'
 
                 # Add the experience
-                self.episode[spec['name']].append(exp[spec['name']])
+                self.episode[name].append(exp[name])
 
         self.episode_len += len(experiences)
 
@@ -193,9 +192,9 @@ class ExperienceReplay:
         if self.episode_len == 0:
             return
 
-        for spec in self.specs:
+        for name in self.specs:
             # Concatenate into one big episode batch
-            self.episode[spec['name']] = np.concatenate(self.episode[spec['name']], axis=0)
+            self.episode[name] = np.concatenate(self.episode[name], axis=0)
 
         self.episode_len = len(self.episode['obs'])
 
@@ -210,12 +209,12 @@ class ExperienceReplay:
             with (self.path / episode_name).open('wb') as f:
                 f.write(buffer.read())
 
-        self.episode = {spec['name']: [] for spec in self.specs}
+        self.episode = {name: [] for name in self.specs}
         self.episode_len = 0
         self.episodes_stored += 1
 
     def clear(self):
-        self.episode = {spec['name']: [] for spec in self.specs}
+        self.episode = {name: [] for name in self.specs}
         self.episode_len = 0
 
     # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
@@ -306,8 +305,8 @@ class Experiences:
 
         offset = self.nstep or 1
         episode_len = len(episode['obs']) - offset
-        episode = {spec['name']: episode.get(spec['name'], np.full((episode_len + 1, *spec['shape']), np.NaN))
-                   for spec in self.specs}
+        episode = {name: episode.get(name, np.full((episode_len + 1, *spec['shape']), np.NaN))
+                   for name, spec in self.specs.items()}
 
         episode['id'] = len(self.experience_indices)
         self.experience_indices += list(enumerate([episode_name] * episode_len))

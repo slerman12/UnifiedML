@@ -30,10 +30,9 @@ class Atari:
     (3) "render" function, -> image
     (4) "episode_done" attribute
     (5) "obs_spec" attribute which includes:
-        - "name" ('obs'), "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
+        - "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
     (6) "action-spec" attribute which includes:
-        - "name" ('action'), "shape", "discrete_bins" (should be None if not discrete),
-          "low", "high", and "discrete"
+        - "shape", "discrete_bins" (should be None if not discrete), "low", "high", and "discrete"
     (7) "exp" attribute containing the latest exp
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
@@ -96,15 +95,13 @@ class Atari:
         self.color = color
         channels = 3 if color == 'rgb' else 1
 
-        self.obs_spec = {'name': 'obs',
-                         'shape': (channels * frame_stack, screen_size, screen_size),
+        self.obs_spec = {'shape': (channels * frame_stack, screen_size, screen_size),
                          'mean': None,
                          'stddev': None,
                          'low': 0,
                          'high': 255}
 
-        self.action_spec = {'name': 'action',
-                            'shape': (1,),
+        self.action_spec = {'shape': (1,),
                             'discrete_bins': self.env.action_space.n,
                             'low': 0,
                             'high': self.env.action_space.n - 1,
