@@ -216,7 +216,7 @@ class Atari:
         return self.exp
 
     def render(self):
-        return self.env.render('rgb_array')  # rgb_array | human
+        return self.env.render(mode='rgb_array')  # rgb_array | human
 
     def adapt_to_discrete(self, action):
         shape = self.action_spec['shape']
