@@ -14,14 +14,14 @@ from omegaconf import OmegaConf, DictConfig
 
 import numpy as np
 
+import torch
+import torch.nn as nn
 from torch.optim import *
 from torch.optim.lr_scheduler import *
 
-import torch  # For direct accessibility via command line
-import torch.nn as nn  # For direct accessibility via command line
 from torch.nn import Identity, Flatten  # For direct accessibility via command line
+from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
-from Blocks.Augmentations import *  # For direct accessibility via command line
 
 
 # Sets all Pytorch and Numpy random seeds

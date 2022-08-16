@@ -32,7 +32,7 @@ environment:
     num_workers: ${{num_workers}}
 suite: classify
 task_name: {'${format:${Dataset}}' if task == 'Custom' else task}
-discrete: true
+discrete: false
 train_steps: 200000
 stddev_schedule: 'linear(1.0,0.1,100000)'
 frame_stack: null

@@ -58,7 +58,12 @@ class DrQV2Agent(torch.nn.Module):
             recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
-        # # Continuous -> discrete conversion
+        # Discrete -> continuous conversion
+        if action_spec.discrete and not self.discrete:
+            # Normalizing actions to range [-1, 1] helps continuous RL
+            action_spec.low, action_spec.high = (-1, 1) if self.RL else (None, None)
+
+        # Continuous -> discrete conversion
         if self.discrete and not action_spec.discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'

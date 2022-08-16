@@ -24,6 +24,3 @@ from Blocks.Architectures.RN import RN, RN as RelationNetwork
 
 from Blocks.Architectures.Vision.CNN import AvgPool
 from Blocks.Architectures.Vision.ViT import CLSPool
-
-
-
