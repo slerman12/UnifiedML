@@ -188,7 +188,7 @@ class Classify:
     def render(self):
         # Assumes image dataset
         image = self.sample()[0] if self.exp is None else self.exp.obs
-        return np.array(image[random.randint(0, len(image))], dtype='uint8').transpose(1, 2, 0)
+        return np.array(image[random.randint(0, len(image) - 1)], dtype='uint8').transpose(1, 2, 0)
 
     def sample(self):
         try:
