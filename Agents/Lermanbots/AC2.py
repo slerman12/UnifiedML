@@ -21,7 +21,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 
 class AC2Agent(torch.nn.Module):
-    """Actor Critic Creator (AC2) - Best of all worlds (https://paper)
+    """Actor Critic Creator (AC2) - Best of all worlds (paper link)
     Ensemble-learning w/ multiple critics/actors for RL, classification, and generative modeling; re-sampling"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
@@ -199,11 +199,6 @@ class AC2Agent(torch.nn.Module):
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
 
-        # Actor-Critic -> Generator-Discriminator conversion
-        if self.generate:
-            action, reward[:] = obs, 1  # "Real"
-            next_obs[:] = label[:] = float('nan')
-
         # "Journal teachings"
 
         offline = replay.offline
@@ -217,12 +212,12 @@ class AC2Agent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
-        instruction = ~torch.isnan(label)
+        instruct = not self.generate and ~torch.isnan(label).any()
 
         # "Acquire Wisdom"
 
         # Classification
-        if instruction.any():
+        if instruct:
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
@@ -274,7 +269,10 @@ class AC2Agent(torch.nn.Module):
                 generated_image = (actions if self.num_actors == 1
                                    else self.creator(self.critic(obs[:half], actions), 1, actions).best).flatten(1)
 
+                action, reward[:] = obs, 1  # "Real"
                 action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
+
+                next_obs[:] = float('nan')
 
             # "Discern"
 

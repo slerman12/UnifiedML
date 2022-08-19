@@ -16,7 +16,7 @@ from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning
 
-# TODO bluehive memory, debug log_video, ViT & architectures!
+# TODO bluehive memory, ViT & architectures!
 class DQNAgent(torch.nn.Module):
     """Deep Q Network
     Generalized to continuous action spaces, classification, and generative modeling"""

@@ -9,7 +9,7 @@ from torch.nn.functional import cross_entropy
 
 import Utils
 
-from Blocks.Augmentations import IntensityAug, RandomShiftsAug
+from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
 from Blocks.Critics import EnsembleQCritic
@@ -186,7 +186,7 @@ class ExperimentAgent(torch.nn.Module):
 
             if self.sample and self.RL and not self.discrete:
                 action = Pi.rsample(self.num_actions)  # Variational inference
-                y_predicted = self.action_selector(self.critic(obs, action, All_Qs), self.step, action).best.mean(1)
+                y_predicted = self.action_selector(self.critic(obs, action.mean(1), All_Qs), self.step, action).best
             else:
                 y_predicted = (All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
