@@ -64,11 +64,11 @@ class RN(nn.Module):
         # Preserve batch/spatial dims
         lead_dims = input.shape[:-1]
 
-        # Flatten intermediary spatial dims, expand input & context pairwise
-        input = input.flatten(1, -2).unsqueeze(1).expand(-1, math.prod(context.shape[1:-1]), -1, -1)
-        context = context.flatten(1, -2).unsqueeze(2).expand(-1, -1, input.shape[2], -1)
+        # Flatten intermediary spatial dims, combine input & context pairwise
+        pairs = Utils.batched_cartesian_prod([input.flatten(1, -2), context.flatten(1, -2)],
+                                             dim=1, collapse_dims=False).flatten(-2)
 
-        relations = self.dropout(self.inner(input, context)).sum(1)  # Pool over contexts
+        relations = self.dropout(self.inner(pairs)).sum(1)  # Pool over contexts
 
         # Restores original leading dims
         output = relations.view(*lead_dims, -1)

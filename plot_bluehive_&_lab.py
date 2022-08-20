@@ -107,7 +107,7 @@ if plot_specs.sftp:
         p.expect('sftp> ')
         for j, experiment in enumerate(experiments):
             if experiment not in plot_specs.bluehive_only:
-                print(f'{i * (len(lab_paths) + 1) + j + 1}/{len(lab_paths) * len(experiments)} '
+                print(f'{i * len(experiments) + j + 1}/{len(lab_paths) * len(experiments)} '
                       f'[lab - {path}] SFTP\'ing "{experiment}"')
                 p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
                 p.expect('sftp> ', timeout=None)

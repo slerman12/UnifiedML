@@ -329,7 +329,7 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
     dims = [item.shape[dim] for item in items]  # D1, D2, ..., DN
     tail_dims = items[0].shape[dim + 1:] if dim + 1 else []  # O1, O2, ..., OT
 
-    return torch.stack([item.view(-1, *(1,) * i, item.shape[dim], *(1,) * (len(items) - i - 1), *tail_dims).expand(
+    return torch.stack([item.reshape(-1, *(1,) * i, item.shape[dim], *(1,) * (len(items) - i - 1), *tail_dims).expand(
         -1, *dims[:i], item.shape[dim], *dims[i + 1:], *tail_dims)
         for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *tail_dims, len(items))
 
