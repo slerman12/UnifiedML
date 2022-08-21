@@ -16,7 +16,7 @@ from Blocks.Architectures.MultiHeadAttention import Attention, MHDPA, CrossAtten
 
 from Blocks.Architectures.Transformer import AttentionBlock, CrossAttentionBlock, SelfAttentionBlock, Transformer
 
-from Blocks.Architectures.Vision.ViT import ViT
+from Blocks.Architectures.Vision.ViT import ViT, ViT as VisionTransformer
 
 from Blocks.Architectures.Perceiver import Perceiver
 

@@ -26,10 +26,10 @@ class CNN(nn.Module):
 
         if output_dim is not None:
             c, h, w = Utils.cnn_feature_shape(input_shape, self.CNN)
-            self.feature_shape = c * h * w
+            feature_shape = c * h * w
 
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.Flatten(), nn.Linear(self.feature_shape, 50), nn.ReLU(), nn.Linear(50, output_dim))
+            else nn.Sequential(nn.Flatten(), nn.Linear(feature_shape, 50), nn.ReLU(), nn.Linear(50, output_dim))
 
         self.apply(Utils.weight_init)
 
