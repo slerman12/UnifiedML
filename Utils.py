@@ -112,7 +112,8 @@ def instantiate(args, i=0, **kwargs):
         kwargs.update(args.pop('_override_'))  # For loading old models with new, overridden args
 
     while hasattr(args, '_default_'):  # Allow inheritance between shorthands
-        args.update({key: value for key, value in args.pop('_default_').items() if key not in args})
+        _default_ = args.pop('_default_')
+        args.update(dict(_target_=_default_) if isinstance(_default_, str) else _default_, **args)
 
     if hasattr(args, '_target_') and args._target_:
         try:

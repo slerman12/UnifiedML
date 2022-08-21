@@ -2,7 +2,6 @@ import math
 
 import torch
 from torch import nn
-from torch.nn import functional as F
 
 import Utils
 
@@ -15,13 +14,7 @@ class CNN(nn.Module):
         if isinstance(input_shape, int):
             input_shape = [input_shape]
 
-        # while len(input_shape) < 3:
-        #     input_shape += [1]
-
-        self.input_shape = torch.Size(input_shape)
-        in_channels = input_shape[0]
-
-        self.trunk = nn.Identity()
+        in_channels, *self.spatial_shape = input_shape
 
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
@@ -32,22 +25,20 @@ class CNN(nn.Module):
         )
 
         if output_dim is not None:
-            c, h, w = Utils.cnn_feature_shape(self.input_shape, self.trunk, self.CNN)
+            c, h, w = Utils.cnn_feature_shape(input_shape, self.CNN)
             self.feature_shape = c * h * w
 
-        # TODO Instead of projecting, use automatic feature computation in blocks
-        # TODO flatten works better than pool I think? eitehr ay, linear before relu, then linear -> in other archs
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(nn.Flatten(), nn.Linear(self.feature_shape, 50), nn.ReLU(), nn.Linear(50, output_dim))
 
         self.apply(Utils.weight_init)
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape([c, h, w], self.trunk, self.CNN, self.project)
+        return Utils.cnn_feature_shape([c, h, w], self.CNN, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        hw = self.input_shape[1:] if len(self.input_shape) == 3 else x[0].shape[-2:]
+        hw = self.spatial_shape if len(self.spatial_shape) == 2 else x[0].shape[-2:]
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *hw) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *hw) if context.shape[-1] % math.prod(hw) == 0
@@ -58,7 +49,6 @@ class CNN(nn.Module):
         # Operate on last 3 dims
         x = x.view(-1, *x.shape[-3:])
 
-        x = self.trunk(x)
         x = self.CNN(x)
         x = self.project(x)
 
