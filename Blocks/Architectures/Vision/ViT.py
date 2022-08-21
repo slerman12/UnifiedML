@@ -22,11 +22,9 @@ class ViT(nn.Module):
                  query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls', output_dim=None, fourier=False):
         super().__init__()
 
-        in_channels = input_shape[0]  # Assumes presence of spatial dimensions
-
-        # Assumes image/input spatial dims divisible by patch size(s)
-        patches = CNN(in_channels, out_channels, 0, last_relu=False, kernel_size=patch_size, stride=patch_size)
-        shape = Utils.cnn_feature_shape(input_shape, patches)
+        # Convolve into patches - assumes image/input spatial dims divisible by patch size(s)
+        self.Vi = CNN(input_shape, out_channels, 0, last_relu=False, kernel_size=patch_size, stride=patch_size)
+        shape = Utils.cnn_feature_shape(input_shape, self.Vi)
 
         positional_encodings = (LearnableFourierPositionalEncodings if fourier
                                 else LearnablePositionalEncodings)(shape)
@@ -35,64 +33,63 @@ class ViT(nn.Module):
         shape = Utils.cnn_feature_shape(shape, token)
 
         # Patches -> Positional encoding -> CLS Token -> Attention layers
-        self.ViT = nn.Sequential(patches,
-                                 positional_encodings,
-                                 token,
-                                 nn.Dropout(emb_dropout),
+        self.T = nn.Sequential(positional_encodings,
+                               token,
+                               nn.Dropout(emb_dropout),
 
-                                 # Transformer
-                                 *[SelfAttentionBlock(shape, num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
-                                   for _ in range(depth)],
+                               # Transformer
+                               *[SelfAttentionBlock(shape, num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
+                                 for _ in range(depth)],
 
-                                 # Can CLS-pool and project to a specified output dim, optional
-                                 nn.Identity() if output_dim is None else nn.Sequential(CLSPool() if pool_type == 'cls'
-                                                                                        else AvgPool(),
-                                                                                        nn.Linear(out_channels,
-                                                                                                  output_dim)))
+                               # Can CLS-pool and project to a specified output dim, optional
+                               nn.Identity() if output_dim is None else nn.Sequential(CLSPool() if pool_type == 'cls'
+                                                                                      else AvgPool(),
+                                                                                      nn.Linear(out_channels,
+                                                                                                output_dim)))
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.ViT)
+        return Utils.cnn_feature_shape(_, self.Vi, self.T)
 
     def forward(self, *x):
-        return self.ViT(*x)
+        patches = self.Vi(*x)
+
+        # Conserve leading dims
+        lead_dims = patches.shape[:-3]
+
+        outs = self.T(patches.flatten(0, -4))
+
+        # Restore lead shape
+        return outs.view(*lead_dims, *outs.shape[1:])
 
 
 class LearnablePositionalEncodings(nn.Module):
-    def __init__(self, input_shape=(32, 7, 7)):
+    def __init__(self, input_shape):
         """Learnable positional encodings. Generalized to adapt to arbitrary dimensions. Assumes channels-first!"""
         super().__init__()
 
-        in_channels, *self.spatial_shape = input_shape
-
-        self.encoding = nn.Parameter(torch.randn(1, math.prod(self.spatial_shape) + 1, in_channels))
+        self.encoding = nn.Parameter(torch.randn(*input_shape))
 
     def repr_shape(self, *_):
         return _  # Conserves shape
 
     def forward(self, x):
-        # Collapse spatial dims
-        x = x.flatten(2)
-
-        x += self.encoding[:, :x.shape[-1]]  # Add positional encodings
-
-        # Restore spatial dims
-        return x.view(*x.shape[:2], *self.spatial_shape)
+        return x + self.encoding
 
 
 class CLSToken(nn.Module):
     """Appends a CLS token, assumes channels-first (https://arxiv.org/pdf/1810.04805.pdf)"""
-    def __init__(self, input_shape=(32, 7, 7)):
+    def __init__(self, input_shape=(32,)):
         super().__init__()
 
-        in_channels, *spatial_shape = input_shape
+        in_channels = input_shape if isinstance(input_shape, int) else input_shape[0]
 
-        self.token = nn.Parameter(torch.randn(in_channels, *(1,) * len(spatial_shape)))
+        self.token = nn.Parameter(torch.randn(in_channels, 1))
 
-    def repr_shape(self, c, h, *_):
-        return c, h + 1, *_
+    def repr_shape(self, c, *_):
+        return c, math.prod(_) + 1
 
     def forward(self, obs):
-        return torch.cat([obs, self.token.expand_as(obs)], dim=2)
+        return torch.cat([obs.flatten(-2), self.token.expand(*obs.shape[:-2], 1)], dim=-1)  # Assumes 2 spatial dims
 
 
 class CLSPool(nn.Module):
@@ -101,8 +98,8 @@ class CLSPool(nn.Module):
         super().__init__()
 
     def repr_shape(self, c, *_):
-        return c, *(1,) * len(_)
+        return c,
 
     def forward(self, x):
-        return x[:, :, -1]
+        return x.flatten(2)[..., -1]
 
