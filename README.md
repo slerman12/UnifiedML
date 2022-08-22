@@ -603,7 +603,7 @@ python Run.py task=classify/mnist generate=true
 ```
 
 <p align="left">
-<img src="https://i.imgur.com/N1st6uO.png" width="320">
+<img src="https://i.imgur.com/HEudCOX.png" width="320">
 <br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
 </p>
 
