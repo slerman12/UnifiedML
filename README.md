@@ -445,7 +445,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 > :bulb: *The below sections describe many features in other domains, but chances are those features will work in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
 > 
-> The vast majority of this hasn't been tested outside of its respective domain (CV, RL, etc.), so the research opportunity is endless!
+> The vast majority of this hasn't been tested outside of its respective domain (CV, RL, etc.), so the research opportunity is a lot!
 
 [comment]: <> (#)
 [comment]: <> (⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽)
