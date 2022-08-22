@@ -477,13 +477,13 @@ python Run.py task=classify/mnist
 
 **Variations**
 
-Since this is *Unified*ML, there are a couple noteworthy variations.
+Since this is *Unified*ML, there are a couple noteworthy variations. You can ignore these if you are only interested in standard classification via cross-entropy supervision only.
 
 1. With ```RL=true```, an **augmented RL** update joins the supervised learning update $\text{s.t. } reward = -error$ (**experimental**).
 
 2. Alternatively, and interestingly, ```supervise=false RL=true``` will *only* supervise via RL $reward = -error$. This is **pure-RL** training and actually works!
 
-Classify environments are actually great testbeds for certain RL problems since they give near-instant and clear performance feedback. You can ignore these if you are only interested in standard classification.
+Classify environments can actually be a great testbed for certain RL problems since they give near-instant and clear performance feedback.
 
 [comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. $reward = -error$.)
 
