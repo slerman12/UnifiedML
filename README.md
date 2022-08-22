@@ -929,7 +929,7 @@ or via the expressive recipe interface described in [Custom Architectures](#cust
 ```console
 python Run.py Optim=SGD lr=0.1
 ```
-
+or
 ```console
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
