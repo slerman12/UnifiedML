@@ -22,7 +22,7 @@ class ViT(nn.Module):
                  query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls', output_dim=None, fourier=False):
         super().__init__()
 
-        # Convolve into patches - assumes image/input spatial dims divisible by patch size(s)
+        # Convolve into patches - assumes image/input spatial dims dividable by patch size(s)
         self.Vi = CNN(input_shape, out_channels, 0, last_relu=False, kernel_size=patch_size, stride=patch_size)
         shape = Utils.cnn_feature_shape(input_shape, self.Vi)
 
@@ -32,7 +32,7 @@ class ViT(nn.Module):
         token = CLSToken(shape)
         shape = Utils.cnn_feature_shape(shape, token)
 
-        # Patches -> Positional encoding -> CLS Token -> Attention layers
+        # Positional encoding -> CLS Token -> Attention layers
         self.T = nn.Sequential(positional_encodings,
                                token,
                                nn.Dropout(emb_dropout),
@@ -53,7 +53,7 @@ class ViT(nn.Module):
     def forward(self, *x):
         patches = self.Vi(*x)
 
-        # Conserve leading dims
+        # Conserve leading dims, operate on last 3 dims
         lead_dims = patches.shape[:-3]
 
         outs = self.T(patches.flatten(0, -4))
