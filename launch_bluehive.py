@@ -13,7 +13,7 @@ from sweeps_and_plots import runs
 
 username = 'slerman'
 
-branch = 'Cleanup'  # Note: Perhaps specify in sweeps_and_plots.runs instead
+branch = 'master'  # Note: Perhaps specify in sweeps_and_plots.runs instead
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
