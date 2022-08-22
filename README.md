@@ -385,7 +385,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
-* & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new better ones!
+* & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new or better ones!
 
 [comment]: <> (#)
 
