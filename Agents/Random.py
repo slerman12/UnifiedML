@@ -13,8 +13,8 @@ import Utils
 class RandomAgent(torch.nn.Module):
     """Random Agent"""
     def __init__(self,
-                 obs_shape, action_shape, trunk_dim, hidden_dim, data_norm, recipes,  # Architecture
-                 lr, weight_decay, ema_decay, ema,  # Optimization
+                 obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
+                 lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  ):
@@ -22,9 +22,10 @@ class RandomAgent(torch.nn.Module):
 
         self.device = device
         self.birthday = time.time()
-        self.step = self.episode = 0
+        self.step = self.frame = 0
+        self.episode = self.epoch = 1
 
-        action_dim = math.prod(obs_shape) if generate else action_shape[-1]
+        action_dim = math.prod(obs_spec.shape) if generate else action_spec.shape[-1]
 
         self.actor = Utils.Rand(action_dim, uniform=True)
 
@@ -32,14 +33,15 @@ class RandomAgent(torch.nn.Module):
 
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.actor):
-            obs = torch.as_tensor(obs, device=self.device)
+            obs = torch.as_tensor(obs, device=self.device).float()
 
             action = self.actor(obs) * 2 - 1  # [-1, 1]
 
             if self.training:
                 self.step += 1
+                self.frame += len(obs)
 
-            return action
+            return action, {'step': self.step}
 
     # "Dream"
     def learn(self, replay=None):

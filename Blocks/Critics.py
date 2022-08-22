@@ -5,11 +5,8 @@
 import math
 import copy
 
-from hydra.utils import instantiate
-
 import torch
 from torch import nn
-from torch.distributions import Normal
 
 from Blocks.Architectures.MLP import MLP
 
@@ -17,89 +14,83 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    """
-    MLP-based Critic network, employs ensemble Q learning,
-    returns a Normal distribution over the ensemble.
-    """
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_dim, recipe=None, ensemble_size=2, sigmoid=False,
-                 discrete=False, ignore_obs=False, lr=None, weight_decay=0, ema_decay=None):
+    """Ensemble Q-learning, generalized to discrete or continuous action spaces."""
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Q_head=None, ensemble_size=2,
+                 discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
+                 weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
-        self.action_dim = action_dim
+        self.num_actions = action_spec.discrete_bins or 1  # n
+        self.action_dim = math.prod(action_spec.shape)  # d
 
-        assert not (ignore_obs and discrete), "Discrete actor always requires observation, cannot ignore_obs"
-        self.ignore_obs = ignore_obs
+        self.low, self.high = action_spec.low, action_spec.high
+
+        # Discrete critic always requires observation
+        self.ignore_obs = ignore_obs and not discrete
 
         in_dim = math.prod(repr_shape)
+        out_dim = self.num_actions * self.action_dim if discrete else 1
 
-        self.trunk = nn.Sequential(nn.Linear(in_dim, trunk_dim),
-                                   nn.LayerNorm(trunk_dim), nn.Tanh()) if recipe.trunk._target_ is None \
-            else instantiate(recipe.trunk, input_shape=Utils.default(recipe.trunk.input_shape, repr_shape))
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
+            nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore obs!
 
-        dim = trunk_dim if discrete else action_dim if ignore_obs else trunk_dim + action_dim
-        shape = [dim] if recipe.q_head._target_ is None else recipe.q_head.input_shape
-        out_dim = action_dim if discrete else 1
+        # Continuous action-space Critic gets (obs, action) as input
+        in_shape = action_spec.shape if ignore_obs else [trunk_dim + (0 if discrete
+                                                                      else self.num_actions * self.action_dim)]
 
-        self.Q_head = Utils.Ensemble([MLP(dim, out_dim, hidden_dim, 2, binary=sigmoid) if recipe.q_head._target_ is None
-                                      else instantiate(recipe.q_head, input_shape=shape, output_dim=out_dim)
-                                      for _ in range(ensemble_size)], 0)
+        # Ensemble
+        self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
+                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
-        self.init(lr, weight_decay, ema_decay)
+        # Discrete actions are known a priori
+        if discrete and action_spec.discrete:
+            action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim).view(-1, self.action_dim)
 
-    def init(self, lr=None, weight_decay=0, ema_decay=None):
-        # Initialize weights
-        self.apply(Utils.weight_init)
+            self.register_buffer('action', self.normalize(action))  # [n^d, d]
 
-        # Optimizer
-        if lr is not None:
-            self.optim = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
-
-        # EMA
-        if ema_decay is not None:
-            self.ema = copy.deepcopy(self).eval()
+        # Initialize model optimizer + EMA
+        self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
+                                                          lr, lr_decay_epochs, weight_decay)
+        if ema_decay:
             self.ema_decay = ema_decay
+            self.ema = copy.deepcopy(self).eval()
 
-    def update_ema_params(self):
-        assert hasattr(self, 'ema')
-        Utils.param_copy(self, self.ema, self.ema_decay)
-
-    def forward(self, obs, action=None, context=None):
+    def forward(self, obs, action=None, All_Qs=None):
         batch_size = obs.shape[0]
 
         h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
 
-        if context is None:
-            context = torch.empty(0, device=h.device)
-
-        # Ensemble
-
         if self.discrete:
-            # All actions' Q-values
-            Qs = self.Q_head(h, context)  # [e, b, n]
+            assert hasattr(self, 'action') or action is not None, 'Continuous Env: action is needed by discrete Critic.'
+
+            if All_Qs is None:
+                # All actions' Q-values
+                All_Qs = self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [b, e, n, d]
 
             if action is None:
-                action = torch.arange(self.action_dim, device=obs.device).expand_as(Qs[0])  # [b, n]
-            else:
-                # Q values for a discrete action
-                Qs = Utils.gather_indices(Qs, action)  # [e, b, 1]
+                # All actions
+                action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d, d]
 
+            # Q values for discrete action(s)
+            Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n' or n^d]
         else:
-            assert action is not None and \
-                   action.shape[-1] == self.action_dim, f'action with dim={self.action_dim} needed for continuous space'
+            assert action is not None, f'action is needed by continuous action-space Critic.'
 
-            action = action.reshape(batch_size, -1, self.action_dim)  # [b, n, d]
+            action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
 
             # Q-values for continuous action(s)
-            Qs = self.Q_head(h, action, context).squeeze(-1)  # [e, b, n]
+            Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
 
-        # Dist
-        stddev, mean = torch.std_mean(Qs, dim=0)
-        Q = Normal(mean, stddev + 1e-8)
-        Q.__dict__.update({'Qs': Qs,
-                           'action': action})
+        return Qs
 
-        return Q
+    def normalize(self, action):
+        return action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize -> [low, high]
+
+    def to_indices(self, action):
+        action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
+
+        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of normalize -> indices

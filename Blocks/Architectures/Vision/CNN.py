@@ -2,7 +2,6 @@ import math
 
 import torch
 from torch import nn
-from torch.nn import functional as F
 
 import Utils
 
@@ -15,10 +14,7 @@ class CNN(nn.Module):
         if isinstance(input_shape, int):
             input_shape = [input_shape]
 
-        self.input_shape = torch.Size(input_shape)
-        in_channels = input_shape[0]
-
-        self.trunk = nn.Identity()
+        in_channels, *self.spatial_shape = input_shape
 
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
@@ -28,17 +24,21 @@ class CNN(nn.Module):
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
 
+        if output_dim is not None:
+            c, h, w = Utils.cnn_feature_shape(input_shape, self.CNN)
+            feature_shape = c * h * w
+
         self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
+            else nn.Sequential(nn.Flatten(), nn.Linear(feature_shape, 50), nn.ReLU(), nn.Linear(50, output_dim))
 
         self.apply(Utils.weight_init)
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.CNN, self.project)
+        return Utils.cnn_feature_shape([c, h, w], self.CNN, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        hw = self.input_shape[1:] if len(self.input_shape) == 3 else x[0].shape[-2:]
+        hw = self.spatial_shape if len(self.spatial_shape) == 2 else x[0].shape[-2:]
         x = torch.cat(
             [context.view(*context.shape[:-3], -1, *hw) if len(context.shape) > 3
              else context.view(*context.shape[:-1], -1, *hw) if context.shape[-1] % math.prod(hw) == 0
@@ -49,7 +49,6 @@ class CNN(nn.Module):
         # Operate on last 3 dims
         x = x.view(-1, *x.shape[-3:])
 
-        x = self.trunk(x)
         x = self.CNN(x)
         x = self.project(x)
 
@@ -62,8 +61,10 @@ class AvgPool(nn.Module):
     def __init__(self, **_):
         super().__init__()
 
-    def repr_shape(self, c, h, w):
-        return c, 1, 1
+    def repr_shape(self, dim, *_):
+        return dim,
 
-    def forward(self, x):
-        return F.adaptive_avg_pool2d(x, (1, 1)).flatten(-3)
+    def forward(self, input):
+        for _ in input.shape[2:]:
+            input = input.mean(-1)
+        return input

@@ -8,64 +8,54 @@ import torch.nn.functional as F
 import Utils
 
 
-def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step,
-                      num_actions=1, one_hot=False, one_hot_next=False, priority_temp=0, logs=None):
+def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step, num_actions=1, logs=None):
     # Non-NaN next_obs
-    has_future = ~torch.isnan(next_obs.flatten(1).sum(1))
+    has_future = ~torch.isnan(next_obs.flatten(1)[:, :1]).squeeze(1) * bool(next_obs.size(1))
     next_obs = next_obs[has_future]
-
-    # One-hot encoding in case discrete actions need to be treated as continuous or vice versa
-    if one_hot:
-        action = Utils.one_hot(action, critic.action_dim) * 2 - 1 if action.shape[-1] == 1 \
-            else Utils.rone_hot(action, null_value=-1)
 
     # Compute Bellman target
     with torch.no_grad():
         # Current reward
-        target_q = reward
+        target_Q = reward
+
+        # Future action and Q-values
+        next_action = All_Next_Qs = None
 
         # Discounted future reward
         if has_future.any():
             # Get actions for next_obs
-            if critic.discrete:
-                next_action, next_action_log_probs = None, 0  # Discrete critic uses all actions, no need to sample
-            else:
-                next_Pi = actor(next_obs, step)  # Sampling actions
+            next_Pi = actor(next_obs, step)
 
-                # One-hot or sample
-                next_action = torch.eye(critic.action_dim,
-                                        device=obs.device).expand(next_obs.shape[0], -1, -1) * 2 - 1 if one_hot_next \
-                    else next_Pi.rsample(num_actions)
-                next_action_log_probs = next_Pi.log_prob(next_action).sum(-1, keepdim=True).flatten(1)
+            # Discrete Critic tabulates all actions for discrete envs a priori, no need to sample subset
+            all_actions_known = hasattr(critic, 'action')
+
+            if not all_actions_known:
+                next_action = next_Pi.sample(num_actions)  # Sample actions
+
+            if actor.discrete:
+                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
 
             # Q-values per action
-            next_Q = critic.ema(next_obs, next_action)
-            next_q = torch.min(next_Q.Qs, 0)[0]  # Min-reduced ensemble
+            next_Qs = critic.ema(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy (EMA) of Critic: Q(obs, a)
+            next_q = next_Qs.min(1)[0]  # Min-reduced ensemble
+            next_q_norm = next_q - next_q.max(-1, keepdim=True)[0]  # Normalized
 
             # Weigh each action's Q-value by its probability
+            temp = Utils.schedule(actor.stddev_schedule, step)  # Softmax temperature / "entropy"
+            next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
             next_v = torch.zeros_like(discount)
-            next_q_logits = next_q - next_q.max(-1, keepdim=True)[0]
-            next_probs = torch.softmax(next_q_logits + next_action_log_probs, -1)
-            next_v[has_future] = torch.sum(next_q * next_probs, -1, keepdim=True)
+            next_v[has_future] = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
 
-            target_q += discount * next_v
+            target_Q += discount * next_v
 
-    Q = critic(obs, action)
+    Qs = critic(obs, action)  # Q-ensemble
 
     # Temporal difference (TD) error (via MSE, but could also use Huber)
-    td_error = F.mse_loss(Q.Qs, target_q.expand_as(Q.Qs), reduction='none')
-
-    # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf
-    re_prioritized_td_error = td_error * torch.sigmoid(-Q.stddev * priority_temp) + 0.5
-
-    q_loss = re_prioritized_td_error.mean()
+    q_loss = F.mse_loss(Qs, target_Q.unsqueeze(1).expand_as(Qs))
 
     if logs is not None:
-        logs['q_mean'] = Q.mean.mean().item()
-        logs['q_stddev'] = Q.stddev.mean().item()
-        logs.update({f'q{i}': q.median().item() for i, q in enumerate(Q.Qs)})
-        logs['target_q'] = target_q.mean().item()
-        logs['temporal_difference_error'] = td_error.mean().item()
-        logs['q_loss'] = q_loss.item()
+        logs['temporal_difference_error'] = q_loss
+        logs.update({f'q{i}': Qs[:, i].median() for i in range(Qs.shape[1])})
+        logs['target_q'] = target_Q.mean()
 
     return q_loss

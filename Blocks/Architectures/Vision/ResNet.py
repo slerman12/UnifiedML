@@ -36,7 +36,7 @@ class ResidualBlock(nn.Module):
                                             nn.ReLU(inplace=True))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.Residual_block)
+        return Utils.cnn_feature_shape([c, h, w], self.Residual_block)
 
     def forward(self, x):
         return self.Residual_block(x)
@@ -62,7 +62,7 @@ class MiniResNet(nn.Module):
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
                                              kernel_size=kernel_size, padding=1, bias=False),
-                                   # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
+                                             # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
                                    nn.BatchNorm2d(dims[0]),
                                    nn.ReLU(inplace=True),
                                    # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -78,7 +78,7 @@ class MiniResNet(nn.Module):
             else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
 
     def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape(c, h, w, self.trunk, self.ResNet, self.project)
+        return Utils.cnn_feature_shape([c, h, w], self.trunk, self.ResNet, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

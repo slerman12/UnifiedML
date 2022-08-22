@@ -1,20 +1,15 @@
 defaults:
       - _self_
-    
+ 
+Env: Datasets.Suites.DMC.DMC
 suite: dmc
+task_name: cheetah_run
+discrete: false
 action_repeat: 2
 frame_stack: 3
 nstep: 3
-task_name: cheetah_run
 train_steps: 1500000
 stddev_schedule: 'linear(1.0,0.1,500000)'
 
 
 
-    
-hydra:
-    job:
-        env_set:
-          # Environment variables for MuJoCo
-          MKL_SERVICE_FORCE_INTEL: '1'
-          MUJOCO_GL: 'egl'

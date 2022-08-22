@@ -13,7 +13,6 @@ import hydra
 from omegaconf import OmegaConf
 
 import warnings
-
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import os
@@ -24,16 +23,15 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 
 import matplotlib.pyplot as plt
+from matplotlib import ticker, dates
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
-         write_tabular=False, plot_bar=True, verbose=False,
-         include_train=False):  # TODO
-    include_train = False
+         write_tabular=False, plot_bar=True, plot_train=False, title='UnifiedML', x_axis='Step', verbose=False):
 
-    path = Path(path)
+    path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
 
     # Make sure non empty and lists, and gather names
@@ -53,7 +51,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Style
 
     # RdYlBu, Set1, Set2, Set3, gist_stern, icefire, tab10_r, Dark2
-    palette_colors = sns.color_palette('Accent')
+    possible_palettes = ['Accent', 'RdYlBu', 'Set1', 'Set2', 'Set3', 'gist_stern', 'icefire', 'tab10_r', 'Dark2']
+    # Note: finite number of color palettes: could error out if try to plot a billion tasks in one figure
+    palette_colors = sum([sns.color_palette(palette) for palette in possible_palettes], [])
 
     sns.set_theme(font_scale=0.7,
                   rc={
@@ -86,15 +86,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Whether to include this CSV
         include = True
 
-        if not include_train and eval.lower() != 'eval':
+        if (plot_train is (eval.lower() == 'eval')) or eval.lower() == 'seed':
             include = False
 
         datums = [experiment, agent, suite.lower(), suite_task]
         for i, spec in enumerate(specs):
-            if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(')', r'\)'),
-                                                 datums[i], re.IGNORECASE):
-                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(')', r'\)'),
-                                       datums[i], re.IGNORECASE):
+            if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
+                    ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
+                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
+                        ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
                     break
                 include = False
 
@@ -108,7 +108,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if length == 0:
             continue
 
-        # Min number of steps
+        # TODO assumes all step brackets are shared
+        # Min number of steps  TODO per suite, task
         min_steps = min(min_steps, length)
 
         found_suite_task = suite_task + ' (' + suite + ')'
@@ -145,6 +146,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     universal_hue_order, handles = np.sort(df.Agent.unique()), {}
     palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
 
+    x_axis = x_axis.capitalize()
+
     # PLOTTING (tasks)
 
     # Dynamically compute num columns/rows
@@ -155,6 +158,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     # Create subplots
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
+
+    # Title
+    if title is not None:
+        fig.suptitle(title)
 
     # Plot tasks
     for i, suite_task in enumerate(found_suite_tasks):
@@ -173,12 +180,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             else axs[row] if num_rows > 1 else axs
 
         # Format title
-        title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
+        ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
 
-        suite = title.split('(')[1].split(')')[0]
-        task = title.split(' (')[0]
+        suite = ax_title.split('(')[1].split(')')[0]
+        task = ax_title.split(' (')[0]
 
+        _x_axis = x_axis if x_axis in task_data.columns else 'Step'
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
+        if _x_axis == 'Time':
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
 
         if write_tabular or plot_bar:
             # Aggregate tabular data over all seeds/runs
@@ -212,15 +223,21 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
         hue_order = np.sort(task_data.Agent.unique())
-        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+        sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
                      palette=short_palette
                      )
-        ax.set_title(f'{title}')
+        ax.set_title(f'{ax_title}')
+
+        if _x_axis == 'Time':
+            ax.set_xlabel("Time (h)")
+            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
+            # For now, group x axis into bins only for time
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
         if 'classify' in suite.lower():
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel('Eval Accuracy')
+            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
         # Legend in subplots
         ax.legend(frameon=False).set_title(None)
@@ -251,6 +268,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Create subplots
     fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
 
+    # Title
+    if title is not None:
+        fig.suptitle(title)
+
     # Sort suites
     found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found]
 
@@ -265,7 +286,19 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if steps < np.inf:
             task_data = task_data[task_data['Step'] <= steps]
 
+        _x_axis = x_axis if x_axis in task_data.columns else 'Step'
         y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
+        if _x_axis == 'Time':
+            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
+
+        # No need to show Agent in legend if all same
+        short_palette = palette
+        if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
         # High-low-normalize
         for suite_task in task_data.Task.unique():
@@ -281,10 +314,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         ax = axs[col] if num_cols > 1 else axs
 
         hue_order = np.sort(task_data.Agent.unique())
-        sns.lineplot(x='Step', y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                     palette=palette
+        sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+                     palette=short_palette
                      )
         ax.set_title(f'{suite}')
+
+        if _x_axis == 'Time':
+            ax.set_xlabel("Time (h)")
+            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
+            # For now, group x axis into bins only for time
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
         if suite.lower() == 'atari':
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -294,7 +333,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         elif suite.lower() == 'classify':
             ax.set_ybound(0, 1)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel('Eval Accuracy')
+            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
         # Legend in subplots
         ax.legend(frameon=False).set_title(None)
@@ -338,6 +377,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         json.dump(tabular_data, f, indent=2)
         f.close()
 
+    # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
+    min_time = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
+    if len(min_time) > 1:
+        x_axis = 'Step'
+        min_time = min_steps
+    else:
+        min_time = min_time[0]
+
     # Bar plot
     if plot_bar:
         bar_data = {suite_name: {'Task': [], 'Median': [], 'Agent': []} for suite_name in found_suites}
@@ -361,17 +408,33 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Create subplots
         fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * num_cols, 3))
 
+        # Title
+        if title is not None:
+            fig.suptitle(title)
+
         for col, suite in enumerate(bar_data):
             task_data = pd.DataFrame(bar_data[suite])
 
             ax = axs[col] if num_cols > 1 else axs
 
+            # No need to show Agent in legend if all same
+            short_palette = palette
+            if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
             hue_order = np.sort(task_data.Agent.unique())
             sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                        palette=palette
+                        palette=short_palette
                         )
 
-            ax.set_title(f'{suite} (@{min_steps:.0f} Steps)')
+            if x_axis.lower() == 'time':
+                time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
+                ax.set_title(f'{suite} (@{time_str}h)')
+            else:
+                ax.set_title(f'{suite} (@{min_time:.0f} {x_axis}s)')
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -382,14 +445,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             elif suite.lower() == 'classify':
                 ax.set_ybound(0, 1)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-                ax.set_ylabel('Eval Accuracy')
+                ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
             for p in ax.patches:
                 width = p.get_width()
                 height = p.get_height()
                 x, y = p.get_xy()
                 ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
-                            (x + width/2, y + height), ha='center', size=min(24 * width, 7),
+                            (x + width/2, y + height), ha='center', size=max(min(24 * width, 7), 5),  # No max(keep, 5)?
                             # color='#498057'
                             # color='#3b423d'
                             )
@@ -410,10 +473,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         #                          borderaxespad=0, frameon=False).set_title('Agent')
 
         plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Bar.png'))  # TODO add step count to name if provided as arg
+        plt.savefig(path / (plot_name + 'Bar.png'))
 
         plt.close()
-
 
 # Lows and highs for normalization
 
@@ -478,23 +540,28 @@ low = {**atari_random}
 high = {**atari_human}
 
 
-@hydra.main(config_path='Hyperparams', config_name='args')
-def main(args):
-    OmegaConf.set_struct(args, False)
-    del args.plotting['_target_']
-    if 'path' not in sys_args:
-        if isinstance(args.plotting.plot_experiments, str):
-            args.plotting.plot_experiments = [args.plotting.plot_experiments]
-        args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
-    if 'steps' not in sys_args:
-        args.plotting.steps = np.inf
-    plot(**args.plotting)
-
-
 if __name__ == "__main__":
+
+    @hydra.main(config_path='Hyperparams', config_name='args')
+    def main(args):
+        OmegaConf.set_struct(args, False)
+        del args.plotting['_target_']
+        if 'path' not in sys_args:
+            if isinstance(args.plotting.plot_experiments, str):
+                args.plotting.plot_experiments = [args.plotting.plot_experiments]
+            args.plotting.path = f"./Benchmarking/{'_'.join(args.plotting.plot_experiments)}/Plots"
+        if 'steps' not in sys_args:
+            args.plotting.steps = np.inf
+        plot(**args.plotting)
+
+    # Format path names
+    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
     sys_args = []
     for i in range(1, len(sys.argv)):
         sys_args.append(sys.argv[i].split('=')[0].strip('"').strip("'"))
         sys.argv[i] = 'plotting.' + sys.argv[i] if sys.argv[i][0] != "'" and sys.argv[i][0] != '"' \
             else sys.argv[i][0] + 'plotting.' + sys.argv[i][1:]
+
     main()

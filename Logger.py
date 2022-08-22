@@ -8,80 +8,111 @@ import re
 from pathlib import Path
 from termcolor import colored
 
+import numpy as np
+
+import torch
+
 
 def shorthand(log_name):
     return ''.join([s[0].upper() for s in re.split('_|[ ]', log_name)] if len(log_name) > 3 else log_name.upper())
 
 
 def format(log, log_name):
-    l = shorthand(log_name)
+    k = shorthand(log_name)
 
     if 'time' in log_name.lower():
         log = str(datetime.timedelta(seconds=int(log)))
-        return f'{l}: {log}'
+        return f'{k}: {log}'
     elif float(log).is_integer():
         log = int(log)
-        return f'{l}: {log}'
+        return f'{k}: {log}'
     else:
-        return f'{l}: {log:.04f}'
+        return f'{k}: {log:.04f}'
 
 
 class Logger:
-    def __init__(self, task, seed, path='.', wandb=False):
+    def __init__(self, task, seed, generate=False, path='.', aggregation='mean', wandb=False):
 
-        self.path = path.replace('Agents.', '')
+        self.path = path
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.task = task
         self.seed = seed
+        self.generate = generate
 
         self.logs = {}
-        self.counts = {}
 
-        self.wandb = wandb
+        self.aggregation = aggregation  # mean, median, last, max, min, or sum
+        self.default_aggregations = {'step': np.ma.max, 'frame': np.ma.max, 'episode': np.ma.max, 'epoch': np.ma.max,
+                                     'time': np.ma.max, 'fps': np.ma.mean}
+
+        self.wandb = 'uninitialized' if wandb \
+            else None
 
     def log(self, log=None, name="Logs", dump=False):
         if log is not None:
 
             if name not in self.logs:
                 self.logs[name] = {}
-                self.counts[name] = {}
 
             logs = self.logs[name]
-            counts = self.counts[name]
 
-            for k, l in log.items():  # TODO Aggregate per step, median
-                if k in logs:
-                    logs[k] += l
-                    counts[k] += 1
-                else:
-                    logs[k] = l
-                    counts[k] = 1
+            for log_name, item in log.items():
+                if isinstance(item, torch.Tensor):
+                    item = item.detach().cpu().numpy()
+                logs[log_name] = logs[log_name] + [item] if log_name in logs else [item]
 
         if dump:
             self.dump_logs(name)
 
     def dump_logs(self, name=None):
         if name is None:
-            for n in self.logs:
-                for log_name in self.logs[n]:
-                    self.logs[n][log_name] /= self.counts[n][log_name]
-                self._dump_logs(self.logs[n], name=n)
-                del self.logs[n]
-                del self.counts[n]
+            # Iterate through all logs
+            for name in self.logs:
+                for log_name in self.logs[name]:
+                    agg = self.aggregate(log_name)
+                    self.logs[name][log_name] = agg(self.logs[name][log_name])
+                self._dump_logs(self.logs[name], name=name)
+                del self.logs[name]
         else:
+            # Iterate through just the named log
             if name not in self.logs:
                 return
             for log_name in self.logs[name]:
-                self.logs[name][log_name] /= self.counts[name][log_name]
+                agg = self.aggregate(log_name)
+                self.logs[name][log_name] = agg(self.logs[name][log_name])
             self._dump_logs(self.logs[name], name=name)
             self.logs[name] = {}
             del self.logs[name]
-            del self.counts[name]
+
+    # Aggregate list of scalars or batched-values of arbitrary lengths
+    def aggregate(self, log_name):
+        def last(data):
+            data = np.array(data).flat
+            return data[len(data) - 1]
+
+        agg = self.default_aggregations.get(log_name,
+                                            np.ma.mean if self.aggregation == 'mean'
+                                            else np.ma.median if self.aggregation == 'median'
+                                            else last if self.aggregation == 'last'
+                                            else np.ma.max if self.aggregation == 'max'
+                                            else np.ma.min if self.aggregation == 'min'
+                                            else np.ma.sum)
+
+        def size_agnostic_agg(stats):
+            stats = [(stat,) if np.isscalar(stat) else stat.flatten() for stat in stats]
+
+            masked = np.ma.empty((len(stats), max(map(len, stats))))
+            masked.mask = True
+            for m, stat in zip(masked, stats):
+                m[:len(stat)] = stat
+            return agg(masked)
+
+        return agg if agg == last else size_agnostic_agg
 
     def _dump_logs(self, logs, name):
         self.dump_to_console(logs, name=name)
         self.dump_to_csv(logs, name=name)
-        if self.wandb:
+        if self.wandb is not None:
             self.log_wandb(logs, name=name)
 
     def dump_to_console(self, logs, name):
@@ -114,6 +145,9 @@ class Logger:
 
         assert 'step' in logs
 
+        if self.generate:
+            name = 'Generate_' + name
+
         file_name = Path(self.path) / f'{self.task}_{self.seed}_{name}.csv'
 
         write_header = True
@@ -131,20 +165,27 @@ class Logger:
         writer.writerow(logs)
         file.flush()
 
-    # TODO
-    # def log_tensorboard(self, logs, name):
-    #     if self.tensorboard_writer is None:
-    #         self.tensorboard_writer = SummaryWriter(self.path + f'/{self.task}_{self.seed}_{name}_TensorBoard.csv')
-    #
-    #     for key in logs:
-    #         if key != 'step' and key != 'episode':
-    #             self.tensorboard_writer.add_scalar(f'{key}', logs[key], logs['step'])
-
     def log_wandb(self, logs, name):
-        if self.wandb != 'initialized':
+        if self.wandb == 'uninitialized':
             import wandb
-            wandb.init(project=str(datetime.datetime.now()),
-                       name=self.path.replace('/', '_') + f'_{self.task}_{self.seed}')
-            self.wandb = 'initialized'
-        logs.update({'name': name})
-        wandb.log(logs)
+
+            experiment, agent, suite = self.path.split('/')[2:5]
+
+            if self.generate:
+                agent = 'Generate_' + agent
+
+            wandb.init(project=experiment, name=f'{agent}_{suite}_{self.task}_{self.seed}', dir=self.path)
+
+            for file in ['', '*/', '*/*/', '*/*/*/']:
+                try:
+                    wandb.save(f'./Hyperparams/{file}*.yaml')
+                except Exception:
+                    pass
+
+            self.wandb = wandb
+
+        measure = 'reward' if 'reward' in logs else 'accuracy'
+        if measure in logs:
+            logs[f'{measure} ({name})'] = logs.pop(f'{measure}')
+
+        self.wandb.log(logs, step=int(logs['step']))

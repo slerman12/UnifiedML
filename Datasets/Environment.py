@@ -5,35 +5,30 @@
 import time
 from math import inf
 
-from Datasets.Suites import DMC, Atari, Classify
+from hydra.utils import instantiate
 
 
 class Environment:
-    def __init__(self, task_name, frame_stack, action_repeat, episode_max_frames, episode_truncate_resume_frames,
-                 seed=0, train=True, suite="DMC", offline=False, generate=False, batch_size=1, num_workers=1):
-        self.suite = suite
-        self.offline = (offline or generate) and train
+    def __init__(self, env, suite='DMC', task='cheetah_run', frame_stack=1, truncate_episode_steps=1e3, action_repeat=1,
+                 offline=False, generate=False, train=True, seed=0, **kwargs):
+        self.suite = suite.lower()
+        self.offline = offline
         self.generate = generate
 
-        self.env = self.raw_env.make(task_name, frame_stack, action_repeat, episode_max_frames,
-                                     episode_truncate_resume_frames, offline, train, seed, batch_size, num_workers)
+        # Offline and generate don't use training rollouts!
+        self.disable = (offline or generate) and train
 
-        self.env.reset()
+        self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf if None)
 
-        self.episode_done = self.episode_step = self.last_episode_len = self.episode_reward = 0
+        if not self.disable:
+            self.env = instantiate(env, task=task, frame_stack=frame_stack, action_repeat=action_repeat,
+                                   offline=offline, generate=generate, train=train, seed=seed, **kwargs)
+            self.env.reset()
+
+        self.action_repeat = getattr(getattr(self, 'env', 1), 'action_repeat', 1)  # Optional, can skip frames
+
+        self.episode_done = self.episode_step = self.episode_frame = self.last_episode_len = self.episode_reward = 0
         self.daybreak = None
-
-    @property
-    def raw_env(self):
-        if self.suite.lower() == "dmc":
-            return DMC
-        elif self.suite.lower() == "atari":
-            return Atari
-        elif self.suite.lower() == 'classify':
-            return Classify
-
-    def __getattr__(self, item):
-        return getattr(self.env, item)
 
     def rollout(self, agent, steps=inf, vlog=False):
         if self.daybreak is None:
@@ -42,59 +37,64 @@ class Environment:
         experiences = []
         video_image = []
 
-        exp = self.exp
+        self.episode_done = self.disable
 
-        self.episode_done = agent.training and self.offline
-
-        step = 0
+        step = frame = 0
         while not self.episode_done and step < steps:
+            exp = self.env.exp
+
+            # Frame-stacked obs
+            obs = getattr(self.env, 'frame_stack', lambda x: x)(exp.obs)
+
             # Act
-            if not self.offline:
-                action = agent.act(exp.observation)
+            action, store = agent.act(obs)
 
-                exp = self.env.step(None if self.generate else action.cpu().numpy())
+            if not self.generate:
+                exp = self.env.step(action.cpu().numpy())  # Experience
 
-                exp.step = agent.step
-                experiences.append(exp)
+            exp.update(store)
+            experiences.append(exp)
 
-                if vlog or self.generate:
-                    frame = action[:24].view(-1, *exp.observation.shape[1:]) if self.generate \
-                        else self.env.physics.render(height=256, width=256, camera_id=0) \
-                        if hasattr(self.env, 'physics') else self.env.render()
-                    video_image.append(frame)
-
-                # Tally reward, done
-                self.episode_reward += exp.reward.mean()
-                self.episode_done = exp.last()
+            if vlog or self.generate:
+                image_frame = action[:24].view(-1, *exp.obs.shape[1:]) if self.generate \
+                    else self.env.render()
+                video_image.append(image_frame)
 
             step += 1
+            frame += len(action)
 
+            # Tally reward, done
+            self.episode_reward += exp.reward.mean()
+            self.episode_done = self.env.episode_done or self.episode_step > self.truncate_after - 2 or self.generate
+
+            if self.env.episode_done:
+                self.env.reset()
+
+        agent.episode += agent.training * self.episode_done  # Increment agent episode
+
+        # Tally time
         self.episode_step += step
-
-        if agent.training and self.offline:
-            agent.step += 1
+        self.episode_frame += frame
 
         if self.episode_done:
-            if agent.training:
-                agent.episode += 1
-
-            self.env.reset()
             self.last_episode_len = self.episode_step
 
         # Log stats
         sundown = time.time()
-        frames = self.episode_step * self.action_repeat
+        frames = self.episode_frame * self.action_repeat
 
         logs = {'time': sundown - agent.birthday,
                 'step': agent.step,
-                'frame': agent.step * self.action_repeat,
-                'episode': agent.episode,
-                'accuracy'if self.suite == 'classify' else 'reward':
-                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),
-                'fps': frames / (sundown - self.daybreak)} if not self.offline else None
+                'frame': agent.frame * self.action_repeat,
+                'epoch' if self.offline or self.generate else 'episode':
+                    (self.offline or self.generate) and agent.epoch or agent.episode,
+                'accuracy' if self.suite == 'classify' else 'reward':
+                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),  # Accuracy is %
+                'fps': frames / (sundown - self.daybreak)} if not self.disable \
+            else None
 
         if self.episode_done:
-            self.episode_step = self.episode_reward = 0
+            self.episode_step = self.episode_frame = self.episode_reward = 0
             self.daybreak = sundown
 
         return experiences, logs, video_image

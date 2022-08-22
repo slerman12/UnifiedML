@@ -6,9 +6,9 @@ defaults:
 username: 'slerman'
 conda: 'source /scratch/slerman/miniconda/bin/activate agi'
 num_gpus: 1
-gpu: 'K80|V100|RTX'
-mem: 25
-time: '2-00:00:00'
+gpu: 'K80|V100|A100|RTX'
+mem: 50
+time: '5-00:00:00'
 lab: false
 reservation_id: null
 task: ${suite}/${task_name}

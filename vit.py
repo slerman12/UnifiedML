@@ -16,13 +16,10 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
-from Blocks.Augmentations import RandomShiftsAug
-from Blocks.Architectures.LermanBlocks import ViRP
 from Blocks.Architectures.Vision.ViT import ViT, CLSPool
-from Blocks.Architectures import MLP
 
 import Utils
-from Datasets.ExperienceReplay import ExperienceReplay
+from Datasets import ExperienceReplay
 
 try:
     _, term_width = os.popen('stty size', 'r').read().split()
@@ -266,7 +263,7 @@ wandb.init(project="cifar10-challange",
 wandb.config.update(args)
 
 if args.aug:
-    import albumentations
+    pass
 bs = int(args.bs)
 imsize = int(args.size)
 
@@ -309,7 +306,7 @@ action_spec = {'name': 'action', 'shape': (10,), 'dtype': 'float32'}
 trainloader = ExperienceReplay(bs, 8, 10000000, action_spec, 'classify', 'CIFAR10', True, False, True, True,
                                './Datasets/ReplayBuffer/Classify/CIFAR10_Buffer', obs_spec, 0, 1,
                                {'RandomCrop': {'size': 32, 'padding': 4}, 'RandomHorizontalFlip': {}})
-data_norm = torch.tensor([[0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]]).view(2, 1, -1, 1, 1).to(device)
+data_stats = torch.tensor([[0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]]).view(2, 1, -1, 1, 1).to(device)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -326,7 +323,7 @@ net = ViT(
     emb_dropout=0.1
 ).to(device)
 # aug = RandomShiftsAug(4)
-c, h, w = Utils.cnn_feature_shape(3, 32, 32, net)
+c, h, w = Utils.cnn_feature_shape((3, 32, 32), net)
 # net = nn.Sequential(net, nn.Flatten(), nn.Linear(c * h * w, 50), nn.LayerNorm(50), nn.Tanh(), MLP(50, 10, 1024, 2), nn.Tanh()).to(device)
 net = nn.Sequential(net, CLSPool(), nn.LayerNorm(c), nn.Linear(c, 10)).to(device)
 # net = ViRP(
@@ -392,7 +389,7 @@ def train(epoch):
     correct = 0
     total = 0
     for batch_idx, (inputs, _, _, _, _, targets, _, _, _, _, _) in enumerate(trainloader):
-        mean, stddev = data_norm
+        mean, stddev = data_stats
         inputs, targets = (inputs.to(device) / 255 - mean) / stddev, targets.to(device).long()
     # for batch_idx, (inputs, targets) in enumerate(trainloader):
     #     inputs, targets = inputs.to(device), targets.to(device)

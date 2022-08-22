@@ -11,7 +11,7 @@ from torchvision.utils import save_image
 
 class Vlogger:
     def __init__(self, fps, path='.', reel=False):
-        self.save_path = Path(path.replace('Agents.', ''))
+        self.save_path = Path(path)
         self.save_path.mkdir(exist_ok=True, parents=True)
         self.fps = fps
 
@@ -26,12 +26,3 @@ class Vlogger:
         else:
             # Assumes channel-last format
             imageio.mimsave(str(self.save_path / (name + '.mp4')), vlogs, fps=self.fps)
-
-
-# Note: May be able to video record more efficiently with:
-
-# frame = cv2.resize(exp.obs[-3:].transpose(1, 2, 0),
-#                    dsize=(self.render_size, self.render_size),
-#                    interpolation=cv2.INTER_CUBIC)
-
-# in Environment.py

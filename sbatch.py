@@ -7,25 +7,38 @@ import sys
 from pathlib import Path
 
 import hydra
-
+from omegaconf import OmegaConf
 
 sys_args = [arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]]
 meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m']
+
+# Format path names
+# e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
 
 def getattr_recursive(__o, name):
     for key in name.split('.'):
         __o = getattr(__o, key)
+    if __o is None:
+        return 'null'
     return __o
 
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
-    path = args.logger.path.replace('Agents.', '')
+    # Format path names
+    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
+    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+
+    path = args.logger.path
     Path(path).mkdir(parents=True, exist_ok=True)
 
     if 'task' in sys_args:
         args.task = args.task.lower()
+
+        if 'classify/custom.' in args.task:
+            args.task = 'classify/custom'
 
     if 'transform' in sys_args:
         args.transform = f'"{args.transform}"'.replace("'", '')
@@ -37,8 +50,8 @@ def main(args):
         args.experiment = f'"{args.experiment}"'
 
     conda = ''.join([f'*"{gpu}"*)\nsource /scratch/{args.username}/miniconda/bin/activate {env}\n;;\n'
-                     for gpu, cuda_version, env, _ in [('K80', 11.0, 'agi', 10.2), ('V100', 11.0, 'agi', 10.2),
-                                                       ('A100', 11.2, 'CUDA11.3', 11.3), ('RTX', 11.2, 'agi', 10.2)]])
+                     for gpu, cuda_version, env, _ in [('K80', 11.0, 'agi3', 10.2), ('V100', 11.0, 'agi3', 10.2),
+                                                       ('A100', 11.2, 'CUDA11.3', 11.3), ('RTX', 11.2, 'agi3', 10.2)]])
     cuda = f'GPU_TYPE' \
            f'=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)\ncase $GPU_TYPE in\n{conda}esac'
 
@@ -50,6 +63,8 @@ def main(args):
     # 11.3
     # cuda = f'source /scratch/{args.username}/miniconda/bin/activate CUDA11.3'
 
+    wandb_login_key = '55c12bece18d43a51c2fcbcb5b7203c395f9bc40'
+
     script = f"""#!/bin/bash
 #SBATCH -c {args.num_workers + 1}
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
@@ -59,6 +74,8 @@ def main(args):
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {cuda}
+module load gcc
+wandb login {wandb_login_key}
 python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
 """
 

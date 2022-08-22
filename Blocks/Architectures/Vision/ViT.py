@@ -7,93 +7,99 @@ import math
 import torch
 from torch import nn
 
-from einops import repeat, rearrange
-from einops.layers.torch import Rearrange
+import Utils
 
-from Blocks.Architectures.MultiHeadAttention import SelfAttentionBlock
-from Blocks.Architectures.Vision.CNN import AvgPool
+from Blocks.Architectures.Transformer import SelfAttentionBlock, LearnableFourierPositionalEncodings
+from Blocks.Architectures.Vision.CNN import AvgPool, CNN
 
 
 class ViT(nn.Module):
-    def __init__(self, input_shape, patch_size=4, out_channels=32,
-                 emb_dropout=0.1, qk_dim=None, v_dim=None, hidden_dim=None, heads=8, depth=3, dropout=0.1,
-                 pool_type='cls', rela=False, output_dim=None):
+    """
+    A Vision Transformer (https://arxiv.org/abs/2010.11929)
+    Generalized to adapt to arbitrary temporal-spatial dimensions, assumes channels-first
+    """
+    def __init__(self, input_shape=(32, 7, 7), out_channels=32, patch_size=4, num_heads=None, depth=3, emb_dropout=0.1,
+                 query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls', output_dim=None, fourier=False):
         super().__init__()
 
-        self.input_shape = input_shape
-        in_channels = input_shape[0]
-        self.out_channels = out_channels
-        image_size = input_shape[1]
-        self.patch_size = patch_size
-        self.output_dim = output_dim
+        # Convolve into patches - assumes image/input spatial dims dividable by patch size(s)
+        self.Vi = CNN(input_shape, out_channels, 0, last_relu=False, kernel_size=patch_size, stride=patch_size)
+        shape = Utils.cnn_feature_shape(input_shape, self.Vi)
 
-        assert input_shape[1] == input_shape[2], 'Compatible with square images only'
-        assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
-        num_patches = (image_size // patch_size) ** 2
-        patch_dim = in_channels * patch_size ** 2
-        assert pool_type in {'cls', 'mean'}, 'Pool type must be either cls (cls token) or mean (mean pooling)'
+        positional_encodings = (LearnableFourierPositionalEncodings if fourier
+                                else LearnablePositionalEncodings)(shape)
 
-        self.to_patch_embedding = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_size, p2=patch_size),
-            nn.Linear(patch_dim, out_channels),
-        )
+        token = CLSToken(shape)
+        shape = Utils.cnn_feature_shape(shape, token)
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, out_channels))
-        self.cls_token = nn.Parameter(torch.randn(1, 1, out_channels))
-        self.emb_dropout = nn.Dropout(emb_dropout)
+        # Positional encoding -> CLS Token -> Attention layers
+        self.T = nn.Sequential(positional_encodings,
+                               token,
+                               nn.Dropout(emb_dropout),
 
-        _, self.h, self.w = self.repr_shape(*input_shape)
+                               # Transformer
+                               *[SelfAttentionBlock(shape, num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
+                                 for _ in range(depth)],
 
-        self.attn = nn.Sequential(*[SelfAttentionBlock(out_channels, heads, out_channels, qk_dim, v_dim, hidden_dim,
-                                                       dropout=dropout, rela=rela) for _ in range(depth)])
+                               # Can CLS-pool and project to a specified output dim, optional
+                               nn.Identity() if output_dim is None else nn.Sequential(CLSPool() if pool_type == 'cls'
+                                                                                      else AvgPool(),
+                                                                                      nn.Linear(out_channels,
+                                                                                                output_dim)))
 
-        self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(CLSPool() if pool_type == 'cls' else AvgPool(),
-                               nn.Linear(out_channels, output_dim))
-
-    def repr_shape(self, c, h, w):
-        return (self.out_channels, 1, (h // self.patch_size) * (w // self.patch_size) + 1) if self.output_dim is None \
-            else (self.output_dim, 1, 1)
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.Vi, self.T)
 
     def forward(self, *x):
-        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        x = torch.cat(
-            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
-             for context in x if context.nelement() > 0], dim=-3)
-        # Conserve leading dims
-        lead_shape = x.shape[:-3]
-        # Operate on last 3 dims
-        x = x.view(-1, *x.shape[-3:])
+        patches = self.Vi(*x)
 
-        x = self.to_patch_embedding(x)
-        b, n, _ = x.shape
+        # Conserve leading dims, operate on last 3 dims
+        lead_dims = patches.shape[:-3]
 
-        cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
-        x = torch.cat([cls_tokens, x], dim=1)
-        x += self.pos_embedding[:, :n + 1]
-        x = self.emb_dropout(x)
+        outs = self.T(patches.flatten(0, -4))
 
-        x = self.attn(x)
+        # Restore lead shape
+        return outs.view(*lead_dims, *outs.shape[1:])
 
-        x = rearrange(x, 'b (h w) c -> b c h w', h=self.h, w=self.w)  # Channels 1st
 
-        x = self.project(x)
+class LearnablePositionalEncodings(nn.Module):
+    def __init__(self, input_shape):
+        """Learnable positional encodings. Generalized to adapt to arbitrary dimensions. Assumes channels-first!"""
+        super().__init__()
 
-        # Restore leading dims
-        out = x.view(*lead_shape, *x.shape[1:])
-        return out
+        self.encoding = nn.Parameter(torch.randn(*input_shape))
+
+    def repr_shape(self, *_):
+        return _  # Conserves shape
+
+    def forward(self, x):
+        return x + self.encoding
+
+
+class CLSToken(nn.Module):
+    """Appends a CLS token, assumes channels-first (https://arxiv.org/pdf/1810.04805.pdf)"""
+    def __init__(self, input_shape=(32,)):
+        super().__init__()
+
+        in_channels = input_shape if isinstance(input_shape, int) else input_shape[0]
+
+        self.token = nn.Parameter(torch.randn(in_channels, 1))
+
+    def repr_shape(self, c, *_):
+        return c, math.prod(_) + 1
+
+    def forward(self, obs):
+        return torch.cat([obs.flatten(-2), self.token.expand(*obs.shape[:-2], 1)], dim=-1)  # Assumes 2 spatial dims
 
 
 class CLSPool(nn.Module):
+    """Selects the CLS token as the representative embedding, assuming channels-first"""
     def __init__(self, **_):
         super().__init__()
 
-    def repr_shape(self, c, h, w):
-        return c, 1, 1
+    def repr_shape(self, c, *_):
+        return c,
 
     def forward(self, x):
-        return x.flatten(-2)[..., 0]
+        return x.flatten(2)[..., -1]
 

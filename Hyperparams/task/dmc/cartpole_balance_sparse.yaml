@@ -1,20 +1,15 @@
 defaults:
       - _self_
-    
+ 
+Env: Datasets.Suites.DMC.DMC
 suite: dmc
+task_name: cartpole_balance_sparse
+discrete: false
 action_repeat: 2
 frame_stack: 3
 nstep: 3
-task_name: cartpole_balance_sparse
 train_steps: 500000
 stddev_schedule: 'linear(1.0,0.1,100000)'
 
 
 
-    
-hydra:
-    job:
-        env_set:
-          # Environment variables for MuJoCo
-          MKL_SERVICE_FORCE_INTEL: '1'
-          MUJOCO_GL: 'egl'

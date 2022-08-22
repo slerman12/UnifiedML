@@ -1,42 +1,99 @@
-# Copyright (c) Sam Lerman. All Rights Reserved.
+# Copyright (c) AGI.__init__. All Rights Reserved.
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import datetime
 import glob
 import io
+import itertools
 import json
 import random
-import warnings
 from pathlib import Path
+
 from tqdm import tqdm
 
-from dm_env import specs, StepType
+from PIL.Image import Image
 
 import numpy as np
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
-import torchvision
 from torchvision.transforms import functional as F
 
-from Datasets.Suites._Wrappers import ActionSpecWrapper, AugmentAttributesWrapper, ExtendedTimeStep
-from Datasets.ReplayBuffer.Classify._TinyImageNet import TinyImageNet
+from Utils import instantiate
 
 
-class ClassifyEnv:
-    """A classification environment"""
-    def __init__(self, experiences, batch_size, num_workers, offline, train, path=None):
+class Classify:
+    """
+    A general-purpose environment:
 
-        self.num_classes = len(experiences.classes)
-        self.action_repeat = 1
+    Must accept: **kwargs as init arg.
 
-        if not train:
-            # Give eval equal-sized batches for easy accuracy computation
-            batch_size = max([i for i in range(1, batch_size + 1) if len(experiences) % i == 0][-1], batch_size // 2)
+    Must have:
 
-        self.batches = DataLoader(dataset=experiences,
+    (1) a "step" function, action -> exp
+    (2) "reset" function, -> exp
+    (3) "render" function, -> image
+    (4) "episode_done" attribute
+    (5) "obs_spec" attribute which includes:
+        - "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
+    (6) "action-spec" attribute which includes:
+        - "shape", "discrete_bins" (should be None if not discrete), "low", "high", and "discrete"
+    (7) "exp" attribute containing the latest exp
+
+    Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
+
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
+    numpy values which can be NaN. Must include a batch dim.
+
+    ---
+
+    Extended to accept a dataset config, which instantiates a Dataset. Datasets must:
+    - extend Pytorch Datasets
+    - include a "classes" (num classes) attribute
+    - output (obs, label) pairs
+
+    An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
+
+    """
+    def __init__(self, dataset, task='MNIST', train=True, offline=True, generate=False, batch_size=32, num_workers=1,
+                 low=None, high=None, frame_stack=None, action_repeat=None, seed=None, **kwargs):
+        self.episode_done = False
+
+        # Don't need once moved to replay (see below)
+        dataset_ = dataset
+
+        # Make env
+
+        # Different datasets have different specs
+        root_specs = [dict(root=f'./Datasets/ReplayBuffer/Classify/{task}_%s' %
+                                ('Train' if train else 'Eval')), {}]
+        train_specs = [dict(train=train),
+                       dict(version='2021_' + 'train' if train else 'valid'), {}]
+        download_specs = [dict(download=True), {}]
+        transform_specs = [dict(transform=Transform()), {}]
+
+        # Instantiate dataset
+        for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
+            try:
+                root_spec, train_spec, download_spec, transform_spec = all_specs
+                specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
+                specs.update(kwargs)
+                dataset = instantiate(dataset, **specs)
+            except (TypeError, ValueError):
+                continue
+            break
+
+        assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
+
+        self.action_spec = {'shape': (1,),
+                            'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
+                            'low': 0,
+                            'high': len(dataset.classes) - 1,
+                            'discrete': True}
+
+        self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   shuffle=train,
                                   num_workers=num_workers,
@@ -45,46 +102,120 @@ class ClassifyEnv:
 
         self._batches = iter(self.batches)
 
-        buffer_path = Path(path + '_Buffer')
+        obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
+        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape  # 3D
 
-        if train:
-            if offline and not buffer_path.exists():
-                self.create_replay(buffer_path)
-        else:
-            self.evaluate_episodes = len(self)
+        self.obs_spec = {'shape': obs_shape}
 
-        norm_path = glob.glob(path + '_Normalization_*')
+        """MOVE TO REPLAY"""
 
-        if len(norm_path):
-            mean, stddev = map(json.loads, norm_path[0].split('_')[-2:])
-            self.data_norm = [mean, stddev]
-        elif train:
-            self.compute_norm(path)
+        replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
 
-    @property
-    def batch(self):
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+
+        # Offline and generate don't use training rollouts
+        if (offline or generate) and not train and (not replay_path.exists() or not len(stats_path)):
+
+            # But still need to create training replay & compute stats
+            Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
+                     **kwargs)
+
+        # Create replay
+        if train and (offline or generate) and not replay_path.exists():
+            self.create_replay(replay_path)
+
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+
+        # Compute stats
+        mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
+            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else 0
+        low, high = low if low is None else low_, high_ if high is None else high
+
+        # No need
+        if (offline or generate) and train:
+            self.batches = self._batches = dataset = None
+            return
+
+        """---------------------"""
+
+        self.obs_spec = {'shape': obs_shape,
+                         'mean': mean,
+                         'stddev': stddev,
+                         'low': low,
+                         'high': high}
+
+        self.exp = None  # Experience
+
+        self.evaluate_episodes = len(self.batches)
+
+    def step(self, action):
+        # Adapt to discrete!
+        _action = self.adapt_to_discrete(action)
+
+        correct = (self.exp.label == _action).astype('float32')
+
+        self.exp.reward = correct
+        self.exp.action = action  # Note: can store argmax instead
+
+        self.episode_done = True
+
+        return self.exp
+
+    def reset(self):
+        obs, label = [np.array(b, dtype='float32') for b in self.sample()]
+        label = np.expand_dims(label, 1)
+
+        batch_size = obs.shape[0]
+
+        obs.shape = (batch_size, *self.obs_spec['shape'])
+
+        self.episode_done = False
+
+        # Create experience
+        exp = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
+
+        # Scalars/NaN to numpy
+        for key in exp:
+            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
+                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+                exp[key].shape = (1, *(exp[key].shape or [1]))
+
+        self.exp = AttrDict(exp)  # Experience
+
+        return self.exp
+
+    def render(self):
+        # Assumes image dataset
+        image = self.sample()[0] if self.exp is None else self.exp.obs
+        return np.array(image[random.randint(0, len(image) - 1)], dtype='uint8').transpose(1, 2, 0)
+
+    def sample(self):
         try:
-            batch = next(self._batches)
+            return next(self._batches)
         except StopIteration:
             self._batches = iter(self.batches)
-            batch = next(self._batches)
-        return batch
+            return next(self._batches)
 
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        for episode_ind, (x, y) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
-                                                                'This only has to be done once')):
-            x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(x, y)
+        for episode_ind, (obs, label) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
+                                                                      'This only has to be done once')):
+            obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
+            label = np.expand_dims(label, 1)
 
-            # Concat a dummy batch item
-            x, y = [np.concatenate([b, np.full_like(b[:1], np.NaN)], 0) for b in (x, y)]
+            batch_size = obs.shape[0]
 
-            episode = {'observation': x, 'action': dummy_action, 'reward': dummy_reward, 'discount': dummy_discount,
-                       'label': y, 'step': dummy_step}
+            obs.shape = (batch_size, *self.obs_spec['shape'])
+
+            dummy = np.full((batch_size, 1), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['discrete_bins'],)), np.NaN)
+
+            episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            episode_name = f'{timestamp}_{episode_ind}_{len(x)}.npz'
+            episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'
 
             with io.BytesIO() as buffer:
                 np.savez_compressed(buffer, **episode)
@@ -92,129 +223,68 @@ class ClassifyEnv:
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
 
-    def compute_norm(self, path):
+    def compute_stats(self, path):
         cnt = 0
         fst_moment, snd_moment = None, None
+        low, high = np.inf, -np.inf
 
-        for x, _ in tqdm(self.batches, 'Computing mean and stddev for normalization. '
-                                       'This only has to be done once'):
-            b, c, h, w = x.shape
+        for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
+                                         'This only has to be done once'):
+
+            b = obs.shape[0]
+            _, c, h, w = (b, *self.obs_spec['shape'])
+            obs = obs.view(b, c, h, w)
             fst_moment = torch.empty(c) if fst_moment is None else fst_moment
             snd_moment = torch.empty(c) if snd_moment is None else snd_moment
             nb_pixels = b * h * w
-            sum_ = torch.sum(x, dim=[0, 2, 3])
-            sum_of_square = torch.sum(x ** 2, dim=[0, 2, 3])
+            sum_ = torch.sum(obs, dim=[0, 2, 3])
+            sum_of_square = torch.sum(obs ** 2, dim=[0, 2, 3])
             fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
             snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
 
             cnt += nb_pixels
 
-        self.data_norm = [fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()]
-        open(path + f'_Normalization_{self.data_norm[0]}_{self.data_norm[1]}', 'w')  # Save norm values for future reuse
+            low, high = min(obs.min(), low), max(obs.max(), high)
 
-    def reset_format(self, x, y):
-        x, y = [np.array(b, dtype='float32') for b in (x, y)]
-        y = np.expand_dims(y, 1)
+        mean, stddev = fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()
+        open(path + f'_Stats_{mean}_{stddev}_{low}_{high}', 'w')  # Save stat values for future reuse
 
-        batch_size = x.shape[0]
+        return mean, stddev, low.item(), high.item()
 
-        dummy_action = np.full([batch_size + 1, self.num_classes], np.NaN, 'float32')
-        dummy_reward = dummy_step = np.full([batch_size + 1, 1], np.NaN, 'float32')
-        dummy_discount = np.full([batch_size + 1, 1], 1, 'float32')
+    def adapt_to_discrete(self, action):
+        shape = self.action_spec['shape']
 
-        return x, y, dummy_action, dummy_reward, dummy_discount, dummy_step
+        try:
+            action = action.reshape(len(action), *shape)  # Assumes a batch dim
+        except (ValueError, RuntimeError):
+            try:
+                action = action.reshape(len(action), -1, *shape)  # Assumes a batch dim
+            except:
+                raise RuntimeError(f'Discrete environment could not broadcast or adapt action of shape {action.shape} '
+                                   f'to expected batch-action shape {(-1, *shape)}')
+            action = action.argmax(1)
 
-    def reset(self):
-        x, y, dummy_action, dummy_reward, dummy_discount, dummy_step = self.reset_format(*self.batch)
+        discrete_bins, low, high = self.action_spec['discrete_bins'], self.action_spec['low'], self.action_spec['high']
 
-        self.time_step = ExtendedTimeStep(reward=dummy_reward, action=dummy_action,
-                                          discount=dummy_discount, step=dummy_step,
-                                          step_type=StepType.FIRST, observation=x, label=y)
-
-        return self.time_step
-
-    # ExperienceReplay expects at least a reset state and 'next obs', with 'reward' paired with (<->) 'next obs'
-    def step(self, action=None):
-        if action is not None:
-            assert self.time_step.observation.shape[0] == action.shape[0], 'Agent must produce actions for each obs'
-
-        # Concat a dummy batch item ('next obs')
-        x, y = [np.concatenate([b, b[:1]], 0) for b in (self.time_step.observation, self.time_step.label)]
-
-        correct = np.full_like(self.time_step.label, np.NaN) if action is None \
-            else (self.time_step.label == np.expand_dims(np.argmax(action, -1), 1)).astype('float32')
-
-        # 'reward' and 'action' paired with 'next obs'
-        self.time_step.reward[1:] = correct
-        self.time_step.reward[0] = correct.mean()
-        self.time_step.action[1:] = self.time_step.action[1:] if action is None else action
-
-        self.time_step = self.time_step._replace(step_type=StepType.LAST, observation=x, label=y)
-
-        return self.time_step
-
-    def render(self):
-        image = self.time_step.x if hasattr(self.time_step, 'x') \
-            else self.batch[0]
-        return np.array(image[random.randint(0, len(image))], dtype='uint8').transpose(1, 2, 0)
-
-    def observation_spec(self):
-        if not hasattr(self, 'observation'):
-            self.observation = np.array(self.batch[0])
-        return specs.BoundedArray(self.observation.shape[1:], self.observation.dtype, 0, 255, 'observation')
-
-    def action_spec(self):
-        return specs.BoundedArray((self.num_classes,), 'float32', 0, self.num_classes - 1, 'action')
-
-    def __len__(self):
-        return len(self.batches)
-
-
-def make(task, frame_stack=4, action_repeat=4, episode_max_frames=False, episode_truncate_resume_frames=False,
-         offline=False, train=True, seed=1, batch_size=1, num_workers=1):
-    """
-    'task' options:
-
-    ('CIFAR10', 'CIFAR100', 'EMNIST', 'FashionMNIST', 'QMNIST',
-    'MNIST', 'KMNIST', 'STL10', 'SVHN', 'PhotoTour', 'SEMEION',
-    'Omniglot', 'SBU', 'Flickr8k', 'Flickr30k',
-    'VOCSegmentation', 'VOCDetection', 'Cityscapes', 'ImageNet',
-    'Caltech101', 'Caltech256', 'CelebA', 'WIDERFace', 'SBDataset',
-    'USPS', 'Kinetics400', "Kinetics", 'HMDB51', 'UCF101',
-    'Places365', 'Kitti', "INaturalist", "LFWPeople", "LFWPairs",
-    'TinyImageNet')
-    """
-
-    assert task in torchvision.datasets.__all__ or task == 'TinyImageNet'
-
-    dataset = TinyImageNet if task == 'TinyImageNet' else getattr(torchvision.datasets, task)
-
-    path = f'./Datasets/ReplayBuffer/Classify/{task}'
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', '.*The given NumPy array.*')
-
-        experiences = dataset(root=path + "_Train" if train else path + "_Eval",
-                              **(dict(version=f'2021_{"train" if train else "valid"}') if task == 'INaturalist'
-                                 else dict(train=train)),
-                              download=True,
-                              transform=Transform())
-
-    env = ClassifyEnv(experiences, batch_size, num_workers, offline, train, path)
-
-    env = ActionSpecWrapper(env, env.action_spec().dtype, discrete=False)
-    env = AugmentAttributesWrapper(env,
-                                   add_remove_batch_dim=False)  # Disables the modification of batch dims
-
-    return env
+        # Round to nearest decimal/int corresponding to discrete bins, high, and low
+        return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
 
 
 class Transform:
     def __call__(self, sample):
-        return F.to_tensor(sample) * 255  # Standardize to pixels [0, 255]
+        return F.to_tensor(sample) if isinstance(sample, Image) else sample
 
 
 def worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
+
+
+# Access a dict with attribute or key (purely for aesthetic reasons)
+class AttrDict(dict):
+    def __init__(self, _dict):
+        super(AttrDict, self).__init__()
+        self.__dict__ = self
+        self.update(_dict)
+

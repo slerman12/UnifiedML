@@ -11,31 +11,40 @@ import Utils
 
 
 class MLP(nn.Module):
-    def __init__(self, input_dim=128, output_dim=1024, hidden_dim=512, depth=1, non_linearity=nn.ReLU(inplace=True),
-                 dropout=0, binary=False, l2_norm=False, input_shape=None):
+    """
+    MLP Architecture generalized to broadcast input shapes
+    """
+    def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, activation=nn.ReLU(inplace=True),
+                 dropout=0, binary=False):
         super().__init__()
 
-        if input_shape is not None:
-            input_dim = math.prod(input_shape)
+        self.input_shape = (input_shape,) if isinstance(input_shape, int) \
+            else input_shape
+        self.input_dim = math.prod(self.input_shape)  # If not already flattened/1D, will try to auto-flatten
+
         self.output_dim = output_dim
 
-        self.MLP = nn.Sequential(*[nn.Sequential(
-            # Optional L2 norm of penultimate
-            # (See: https://openreview.net/pdf?id=9xhgmsNVHu)
-            # Similarly, Efficient-Zero initializes 2nd-to-last layer as all 0s  TODO
-            Utils.L2Norm() if l2_norm and i == depth else nn.Identity(),
-            nn.Linear(input_dim if i == 0 else hidden_dim,
-                      hidden_dim if i < depth else output_dim),
-            non_linearity if i < depth else nn.Sigmoid() if binary else nn.Identity(),
-            nn.Dropout(dropout) if i < depth else nn.Identity()
-        )
-            for i in range(depth + 1)]
-        )
+        self.MLP = nn.Sequential(*[
+            nn.Sequential(
+                nn.Linear(self.input_dim if i == 0 else hidden_dim,
+                          hidden_dim if i < depth else output_dim),  # Linear
+                activation if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
+                nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
+            for i in range(depth + 1)])
 
+        # Initialize weights
         self.apply(Utils.weight_init)
 
     def repr_shape(self, *_):
-        return self.output_dim, *_[1:]
+        flatten = -1 if _[-1] == self.input_dim \
+            else -len(self.input_shape)  # Auto-flatten if needed
 
-    def forward(self, *x):
-        return self.MLP(torch.cat(x, -1))
+        return *[size for size in _ if size][:flatten], self.output_dim
+
+    def forward(self, *obs):
+        obs = torch.cat(obs, -1)  # Assumes inputs can be concatenated along last dim
+
+        flatten = -1 if obs.shape[-1] == self.input_dim \
+            else -len(self.input_shape)
+
+        return self.MLP(obs.flatten(flatten))  # Auto-flatten if needed

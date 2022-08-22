@@ -2,34 +2,20 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import torch
-
-import Utils
 
 
-def deepPolicyGradient(actor, critic, obs, step, num_actions=1, reward=0, discount=1,
-                       one_hot=False, priority_temp=0, logs=None):
+def deepPolicyGradient(actor, critic, obs, step, num_actions=1, logs=None):
     Pi = actor(obs, step)
 
-    action = Pi.rsample(num_actions)
-    if one_hot:
-        action = Utils.rone_hot(action, null_value=-1)
+    action = Pi.rsample(num_actions)  # Differentiable sample via "re-parameterization"
 
-    Q = critic(obs, action)
+    Qs = critic(obs, action)
+    q, _ = Qs.min(1)  # Min-reduced ensemble
 
-    q = torch.min(Q.Qs, 0)[0]
-
-    q = reward + q * discount
-
-    # Re-prioritize based on certainty e.g., https://arxiv.org/pdf/2007.04938.pdf
-    q *= torch.sigmoid(-Q.stddev * priority_temp) + 0.5
-
-    policy_loss = -q.mean()
+    policy_loss = -q.mean()  # Policy gradient ascent
 
     if logs is not None:
-        logs['policy_loss'] = policy_loss.item()
-        logs['DPG_q_stddev'] = Q.stddev.mean().item()
-        logs['Pi_prob'] = Pi.log_prob(action).exp().mean().item()
-        logs['DPG_q_mean'] = q.mean().item()
+        logs['policy_loss'] = policy_loss
+        logs['policy_prob'] = Pi.log_prob(action).exp().mean()
 
     return policy_loss

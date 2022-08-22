@@ -1,0 +1,28 @@
+name: ML
+channels:
+  - defaults
+dependencies:
+  - pip=21.1.3  # Installer
+  - python=3.8.13  # Um, Python
+  - numpy  # Array computations  # TODO Can get rid of (pytorch)?
+  - pandas=1.3.0  # Dataframes, CSVs
+  - seaborn=0.11.2  # Plotting
+  - pip:
+    - torch==1.11.0  # Deep learning
+    - torchvision==0.12.0  # Vision
+    - torchaudio==0.11.0  # Audio
+    - hydra-core==1.1.0  # Args/configs
+    - hydra-submitit-launcher==1.1.5  # TODO Can get rid of
+    - gym==0.24.0  # TODO Redundant?
+    - ale-py==0.7.5  # Atari Suite
+    - dm_control==1.0.3  # DeepMind Control Suite
+    - PyOpenGL-accelerate==3.1.5  # MuJoCo backend
+    - termcolor==1.1.0  # Console formatting
+    - wandb==0.12.17  # Online logs
+    - imageio==2.9.0  # Video saving
+    - imageio-ffmpeg==0.4.4  # Video saving
+    - opt_einsum_torch==0.1.0  # TODO Can get rid of
+    - einops==0.4.1  # TODO Do I need it?
+# Only for me
+#   - cryptography
+#   - pexpect

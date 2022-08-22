@@ -7,7 +7,7 @@ from Blocks.Architectures.Perceiver import Perceiver
 
 
 class ViPer(ViT):
-    """Vision Perceiver, a patch-based adaptation of Perceiver for images"""
+    """Vision Perceiver, a patch-based adaptation of Perceiver for images - technically by me, Sam Lerman"""
     def __init__(self, input_shape, patch_size=4, out_channels=32, heads=8, tokens=100,
                  token_dim=32, depth=3, pool_type='cls', output_dim=None):
         self.tokens = tokens
