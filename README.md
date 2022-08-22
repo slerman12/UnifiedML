@@ -812,25 +812,27 @@ python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Au
 </summary>
 <br>
 
-We use a rich and expressive command line syntax for selecting and customizing architectures such as those defined in ```./Blocks/Architectures```.
+A rich and expressive command line syntax is available for selecting and customizing architectures such as those defined in ```./Blocks/Architectures```.
 
 ResNet18 on CIFAR-10:
 
 ```console
-python Run.py task=classify/cifar10 Eyes=Blocks.Architectures.ResNet18 
+python Run.py task=classify/cifar10 Eyes=ResNet18 
 ```
 
 [comment]: <> (TODO: MiniViT, ViT)
 Atari with ViT:
 
 ```console
-python Run.py Eyes=Blocks.Architectures.ViT +recipes.encoder.eyes.patch_size=7
+python Run.py Eyes=ViT +eyes.patch_size=7
 ```
 
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
-Shorthands like ```Eyes``` and ```pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with the ```recipes.``` keyword or their [corresponding shorthands](Hyperparams/args.yaml#L166).
+Shorthands like ```Aug```, ```Eyes```, and ```Pool``` make it easy to plug and play custom architectures, but all of an agent's architectural parts can be accessed, mixed, and matched with their [corresponding recipe shorthands](Hyperparams/args.yaml#L166).
 
 Generally, the rule of thumb is capital names for paths to classes (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts to tinker with model args (such as ```+eyes.depth=1```).
+
+Architectures imported in [Blocks/Architectures/__init__.py](Blocks/Architectures/__init__.py) can be accessed directly without need for entering their full paths, as in ```Eyes=ViT``` works just as well as ```Eyes=Blocks.Architectures.ViT```.
 
 
 <details>
@@ -840,18 +842,14 @@ Generally, the rule of thumb is capital names for paths to classes (such as ```E
 CIFAR-10 with ViT:
 
 ```console
-python Run.py Eyes=ViT task=classify/cifar10 ema=true weight_decay=0.01 +eyes.depth=6 +eyes.out_channels=512 +eyes.hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}"
+python Run.py Eyes=ViT task=classify/cifar10 ema=true weight_decay=0.01 +eyes.depth=6 +eyes.out_channels=512 +eyes.mlp_hidden_dim=512 transform="{RandomCrop:{size:32,padding:4},RandomHorizontalFlip:{}}" Aug=Identity
 ```
 
-[comment]: <> (TODO: Generator/Discriminator shorthands, with default input_shape=${obs_shape})
-
-Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Null``` architecture disables that flattening component, though in this case it's not actually necessary since the ```AttentionPool``` architecture has adaptive input broadcasting - I'm pointing it out because in the general case, it might be useful.
+Here is a more complex example, disabling the Encoder's flattening of the feature map, and instead giving the Actor and Critic unique Attention Pooling operations on their trunks to pool the unflattened features. The ```Identity``` architecture disables that flattening component.
 
 ```console
-python Run.py task=classify/mnist Q_trunk=AttentionPool Pi_trunk=AttentionPool Pool=Blocks.Architectures.Null
+python Run.py task=classify/mnist Q_trunk=Transformer Pi_trunk=Transformer Pool=Identity
 ```
-
-It is recommended to use the full path for ```Blocks.Architectures.Null``` or to put it in quotes ```'Pool="Null"'``` or else Hydra may confuse it with the default ```null <-> None``` grammar. 
 
 Here is a nice example of the critic using a small CNN for downsampling features:
 
@@ -861,7 +859,7 @@ python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
 
 A CNN Actor and Critic:
 ```console
-python Run.py Q_trunk=CNN Pi_trunk=CNN +q_trunk.depth=1 +pi_trunk.depth=1 'Pool="Null"'
+python Run.py Q_trunk=CNN Pi_trunk=CNN +q_trunk.depth=1 +pi_trunk.depth=1 Pool=Identity
 ```
 
 [comment]: <> (<details>)
@@ -897,20 +895,18 @@ Some blocks have default args which can be accessed with the ```kwargs.``` inter
 
 An intricate example of the expressiveness of this syntax:
 ```console
-python Run.py Optim=torch.optim.SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
+python Run.py Optim=SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
-Both the uppercase and lowercase syntax support direct function calls in lieu of their usual syntax, with function calls distinguished by the quotes and parentheticals.
+Both the uppercase and lowercase syntax support direct function calls in place of usual syntax, with function calls distinguished by the syntactical quotes and parentheticals.
 
-The parser automatically registers the imports/class paths in ```Utils``` in both the uppercase and lowercase syntax, including modules/classes ```torch```, ```torch.nn```, and architectures/paths in ```./Blocks/Architectures/``` like ```CNN```.
+The parser automatically registers the imports/class paths in ```Utils.``` in both the uppercase and lowercase syntax, including modules/classes ```torch```, ```torch.nn```, and architectures/paths in ```./Blocks/Architectures/``` like ```CNN``` for direct access and no need to type ```Utils.```.
 
 </details>
 
 Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.
 
 To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in ```./Blocks/Architectures```.
-
-[comment]: <> (TODO repr_shape)
 
 </details>
 
@@ -931,14 +927,14 @@ python Run.py Optim=Utils.torch.optim.SGD lr=0.1
 or via the expressive recipe interface described in [Custom Architectures](#custom-architectures):
 
 ```console
-python Run.py optim=torch.optim.SGD lr=0.1
+python Run.py Optim=SGD lr=0.1
 ```
 
 ```console
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
-Learning rate schedulers can also be customized: 
+Learning rate schedulers can also be customized as well with ```scheduler=``` analogously, or via the ```lr_decay_epochs=``` shorthand for cosine annealing.
 
 
 </details>

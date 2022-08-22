@@ -12,7 +12,7 @@ import Utils
 from Blocks.Architectures.Transformer import SelfAttentionBlock, LearnableFourierPositionalEncodings
 from Blocks.Architectures.Vision.CNN import AvgPool, CNN
 
-# TODO: Recently Refactored -- Need to Re-run testing on CIFAR-10!
+
 class ViT(nn.Module):
     """
     A Vision Transformer (https://arxiv.org/abs/2010.11929)

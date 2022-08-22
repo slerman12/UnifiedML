@@ -33,10 +33,10 @@ class EnsemblePiActor(nn.Module):
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
-        in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)
+        in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)  # Will be trunk_dim when possible
         out_dim = self.num_actions * self.action_dim
 
         # Ensemble
