@@ -1,3 +1,8 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
+
 """
 Useful collections/stats/pre-defined sweeps
 """
@@ -231,6 +236,86 @@ runs = {
         {
             'Summary': {
                 'sweep': [
+                    # Large-Soup, 50-50, ViT, 7/230-Way, noise 0 - Launched ✓ (Cornea)
+                    """python Run.py
+                    task=classify/custom
+                    Dataset=XRD.XRD
+                    Aug=Identity
+                    Trunk=Identity
+                    Eyes=ViT
+                    Predictor=XRD.Predictor
+                    batch_size=256
+                    standardize=false
+                    norm=true
+                    task_name='Large-Soup-50-50_${dataset.num_classes}-Way'
+                    experiment='ViT_optim_ADAM_batch_size_${batch_size}'
+                    '+dataset.roots=["../XRDs/icsd_Datasets/icsd1.2m_large/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+                    +'dataset.train_eval_splits=[1, 0.5]'
+                    +dataset.num_classes=7,230
+                    train_steps=5e5
+                    save=true
+                    logger.wandb=true""",
+
+                    # Large-Soup, 50-50, No-Pool-CNN, 7/230-Way, noise 0 - Launched ✓ (Cornea)
+                    """python Run.py
+                    task=classify/custom
+                    Dataset=XRD.XRD
+                    Aug=Identity
+                    Trunk=Identity
+                    Eyes=XRD.NoPoolCNN
+                    Predictor=XRD.Predictor
+                    batch_size=256
+                    standardize=false
+                    norm=true
+                    task_name='Large-Soup-50-50_${dataset.num_classes}-Way'
+                    experiment='No-Pool-CNN_optim_ADAM_batch_size_${batch_size}'
+                    '+dataset.roots=["../XRDs/icsd_Datasets/icsd1.2m_large/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+                    +'dataset.train_eval_splits=[1, 0.5]'
+                    +dataset.num_classes=7,230
+                    train_steps=5e5
+                    save=true
+                    logger.wandb=true""",
+
+                    # Large-Soup, 50-50, CNN, 7/230-Way, noise 0 - Launched ✓ (Cornea)
+                    """python Run.py
+                    task=classify/custom
+                    Dataset=XRD.XRD
+                    Aug=Identity
+                    Trunk=Identity
+                    Eyes=XRD.CNN
+                    Predictor=XRD.Predictor
+                    batch_size=256
+                    standardize=false
+                    norm=true
+                    task_name='Large-Soup-50-50_${dataset.num_classes}-Way'
+                    experiment='CNN_optim_ADAM_batch_size_${batch_size}'
+                    '+dataset.roots=["../XRDs/icsd_Datasets/icsd1.2m_large/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+                    +'dataset.train_eval_splits=[1, 0.5]'
+                    +dataset.num_classes=7,230
+                    train_steps=5e5
+                    save=true
+                    logger.wandb=true""",
+
+                    # Large-Soup, 50-50, MLP, 7/230-Way, noise 0 - Launched ✓ (Cornea)
+                    """python Run.py
+                    task=classify/custom
+                    Dataset=XRD.XRD
+                    Aug=Identity
+                    Trunk=Identity
+                    Eyes=Identity
+                    Predictor=XRD.MLP
+                    batch_size=256
+                    standardize=false
+                    norm=true
+                    task_name='Large-Soup-50-50_${dataset.num_classes}-Way'
+                    experiment='MLP_optim_ADAM_batch_size_${batch_size}'
+                    '+dataset.roots=["../XRDs/icsd_Datasets/icsd1.2m_large/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+                    +'dataset.train_eval_splits=[1, 0.5]'
+                    +dataset.num_classes=7,230
+                    train_steps=5e5
+                    save=true
+                    logger.wandb=true""",
+
                     # Soup, 50-50, CNN, 7/230-Way, noise 0 - Launched ✓ (Cornea)
                     """python Run.py
                     task=classify/custom
@@ -481,8 +566,8 @@ runs = {
                     logger.wandb=true""",
                 ],
                 'plots': [
-                    # Summary bar & line plots
-                    ['CNN_optim_.*', 'MLP_optim_.*'],
+                    # Summary bar & line plots  TODO rename Large-Pool -> "..._norm"
+                    ['.*CNN_optim_ADAM_batch_size_256', '.*CNN_optim_ADAM_batch_size_256_norm', 'MLP_optim_ADAM_batch_size_256.*'],
                 ],
                 'sftp': True,
                 'bluehive': False,
@@ -490,7 +575,7 @@ runs = {
                 'title': 'RRUFF',
                 'x_axis': 'Step',
                 'bluehive_only': [],
-                'tasks': [],
+                'tasks': ['.*Soup.*'],
                 'agents': [],
                 'suites': []},
         }
