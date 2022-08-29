@@ -1,3 +1,5 @@
+import math
+
 import torch
 from torch.optim import Optimizer
 
@@ -7,10 +9,6 @@ def exists(val):
 
 
 class Adan(Optimizer):
-    """
-    A simple alternative to ADAM (https://arxiv.org/pdf/2208.06677.pdf)
-    e.g., python Run.py task=classify/mnist Optim=Blocks.Optimizers.Adan
-    """
     def __init__(
             self,
             params,
@@ -79,6 +77,17 @@ class Adan(Optimizer):
 
                     n.mul_(1 - beta3).add_(next_n, alpha = beta3)
 
+                # bias correction terms
+
+                step += 1
+
+                bias_correct1, bias_correct2, bias_correct3 = map(lambda n: 1 - (1 - n) ** step, (beta1, beta2, beta3))
+
+                sqrt_bias_correct3 = math.sqrt(bias_correct3)
+
+                correct_m = sqrt_bias_correct3 / bias_correct1  # correction term for m
+                correct_v = sqrt_bias_correct3 / bias_correct2  # correction term for v
+
                 # gradient step
 
                 def grad_step_(data, m, v, n):
@@ -86,7 +95,7 @@ class Adan(Optimizer):
 
                     denom = 1 + weight_decay * lr
 
-                    data.addcmul_(weighted_step_size, (m + (1 - beta2) * v), value = -1.).div_(denom)
+                    data.addcmul_(weighted_step_size, (m * correct_m + (1 - beta2) * v * correct_v), value = -1.).div_(denom)
 
                 grad_step_(data, m, v, n)
 
@@ -102,6 +111,6 @@ class Adan(Optimizer):
                 # set new incremented step
 
                 prev_grad.copy_(grad)
-                state['step'] += 1
+                state['step'] = step
 
         return loss
