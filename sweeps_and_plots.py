@@ -36,26 +36,28 @@ Structure of runs:
 Sweep groups allow more fine-grained organization of project-respective runs.
 """
 
+
+def template(name):
+    return {
+               name: {
+                   'sweep': [
+                       # Sweep commands go here
+                   ],
+                   'plots': [
+                       [],
+                   ],
+                   'sftp': True,
+                   'bluehive': True,
+                   'steps': 5e5,
+                   'title': 'Template',
+                   'x_axis': 'Step',
+                   'bluehive_only': [],
+                   'tasks': [],
+                   'agents': [],
+                   'suites': []},
+           }
+
 runs = {
-    'Template':
-        {
-            'Sweep1': {
-                'sweep': [
-                    # Sweep commands go here
-                ],
-                'plots': [
-                    [],
-                ],
-                'sftp': True,
-                'bluehive': True,
-                'steps': 5e5,
-                'title': 'Template',
-                'x_axis': 'Step',
-                'bluehive_only': [],
-                'tasks': [],
-                'agents': [],
-                'suites': []},
-        },
     'UML_Paper':
         {
             'core': {
@@ -567,7 +569,11 @@ runs = {
                 ],
                 'plots': [
                     # Summary bar & line plots  TODO rename Large-Pool -> "..._norm"
-                    ['.*CNN_optim_ADAM_batch_size_256', '.*CNN_optim_ADAM_batch_size_256_norm', 'MLP_optim_ADAM_batch_size_256.*'],
+                    ['.*MLP_optim_ADAM_batch_size_256'],
+                    # Summary bar & line plots  TODO rename Large-Pool -> "..._norm"
+                    # ['.*CNN_optim_ADAM_batch_size_256',
+                    #  '.*MLP_optim_ADAM_batch_size_256_norm',
+                    #  'MLP_optim_ADAM_batch_size_256.*'],
                 ],
                 'sftp': True,
                 'bluehive': False,
@@ -575,7 +581,7 @@ runs = {
                 'title': 'RRUFF',
                 'x_axis': 'Step',
                 'bluehive_only': [],
-                'tasks': ['.*Soup.*'],
+                'tasks': ['.*7-Way.*'],
                 'agents': [],
                 'suites': []},
         }
@@ -604,4 +610,15 @@ def convert_to_attr_dict(iterable):
     return iterable
 
 
+runs['XRD'].update(template('XRD_Final'))
+
 runs = convert_to_attr_dict(runs)
+
+runs.XRD.plots = [
+    ['MLP_optim_ADAM_batch_size_256.*']
+]
+runs.XRD.tasks = ['7-Way']
+runs.XRD.XRD_Final.bluehive = False
+runs.XRD.XRD_Final.title = 'RRUFF'
+
+
