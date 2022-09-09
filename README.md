@@ -976,7 +976,7 @@ For a tutorial outside of Vision, see our full [end-to-end example](https://www.
 
 </details>
 
-You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. Otherwise, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
+> &#9432; You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. By default, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
 </details>
 
