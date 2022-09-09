@@ -970,6 +970,7 @@ You can customize the task name as it's saved for benchmarking and plotting, wit
 <summary>
 <i><b>UnifiedML is compatible with datasets & domains beyond Vision - Click for more details.</b></i>
 </summary>
+<br>
 
 For a tutorial outside of Vision, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
