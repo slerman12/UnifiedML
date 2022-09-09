@@ -966,11 +966,11 @@ This will initiate a classify task on the custom-defined [```TinyImageNet```](Da
 
 By default, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
 
-UnifiedML is compatible with datasets & domains beyond Vision.
+:exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
 
 <details>
 <summary>
-<i>More details :open-book:</i>
+<i>More details :open_book:</i>
 </summary>
 <br>
 
