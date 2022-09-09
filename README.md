@@ -964,11 +964,11 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
-> &#9432; You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. Otherwise, the task name will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
+You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. Otherwise, the task name will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
 <details>
 <summary>
-<i><b>UnifiedML is compatible with datasets & domains beyond Vision</b> - Click for more details.</i>
+<i><b>UnifiedML is compatible with datasets & domains beyond Vision - Click for more details.</b></i>
 </summary>
 
 For a tutorial outside of Vision, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
