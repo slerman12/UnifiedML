@@ -970,7 +970,7 @@ This will initiate a classify task on the custom-defined [TinyImageNet dataset](
 
 See our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
-> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**!
+> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for more details.
 
 </details>
 
