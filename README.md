@@ -964,9 +964,9 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
-> &#9432; You can customize the task name with ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
+> &#9432; Since this is a custom task, you can customize the task name with ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
----
+——❖——
 
 For the best tutorial on Custom Datasets, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
