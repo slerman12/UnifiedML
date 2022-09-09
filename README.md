@@ -964,7 +964,7 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
-> &#9432; Since this is a custom task, you can customize the task name with ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
+> &#9432; You can customize the task name with ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
 ——❖——
 
@@ -972,7 +972,7 @@ For the best tutorial on Custom Datasets, see our full [end-to-end example](http
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! 
 
-Sky's the limit: **UnifiedML is compatible with datasets & domains beyond Vision.**
+**UnifiedML is compatible with datasets & domains beyond Vision.**
 
 </details>
 
