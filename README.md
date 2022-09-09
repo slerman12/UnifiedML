@@ -964,15 +964,17 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
-You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. By default, it will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
+By default, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
+
+UnifiedML is compatible with datasets & domains beyond Vision.
 
 <details>
 <summary>
-<i><b>UnifiedML is compatible with datasets & domains beyond Vision - Click for more details.</b></i>
+<i>More details :open-book:</i>
 </summary>
 <br>
 
-For a tutorial outside of Vision, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+For a non-Vision tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
 
