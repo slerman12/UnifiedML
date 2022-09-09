@@ -58,7 +58,7 @@ def template(name):
            }
 
 runs = {
-    'UML_Paper':
+    'UnifiedML':
         {
             'core': {
                 'sweep': [
@@ -135,7 +135,7 @@ runs = {
                     supervise=false,true 
                     discrete=true,false 
                     +agent.contrastive=true,false 
-                    experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}' 
+                    experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.contrastive}' 
                     num_workers=8
                     plot_per_steps=0""",
 
@@ -153,7 +153,7 @@ runs = {
                     discrete=false 
                     +agent.contrastive=true,false 
                     +agent.sample=true
-                    experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.half}'
+                    experiment='Classify+RL+Sample_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.contrastive}'
                     num_workers=8
                     plot_per_steps=0""",
 
@@ -569,7 +569,7 @@ runs = {
                 ],
                 'plots': [
                     # Summary bar & line plots  TODO rename Large-Pool -> "..._norm"
-                    ['.*MLP_optim_ADAM_batch_size_256'],
+                    ['MLP_optim_ADAM_batch_size_256'],
                     # Summary bar & line plots  TODO rename Large-Pool -> "..._norm"
                     # ['.*CNN_optim_ADAM_batch_size_256',
                     #  '.*MLP_optim_ADAM_batch_size_256_norm',
@@ -614,11 +614,17 @@ runs['XRD'].update(template('XRD_Final'))
 
 runs = convert_to_attr_dict(runs)
 
-runs.XRD.plots = [
-    ['MLP_optim_ADAM_batch_size_256.*']
+runs.XRD.XRD_Final.plots = [
+    ['MLP_optim_ADAM_batch_size_256.*'],
+    ['.*CNN_optim_ADAM_batch_size_256.*'],
+    ['ViT_optim_ADAM_batch_size_256'],
+    ['ResNet18_optim_ADAM_batch_size_256'],
 ]
-runs.XRD.tasks = ['7-Way']
+runs.XRD.XRD_Final.tasks = ['.*230-Way.*']
+runs.XRD.XRD_Final.sftp = False
 runs.XRD.XRD_Final.bluehive = False
 runs.XRD.XRD_Final.title = 'RRUFF'
+
+# TODO Could add .names to rename plot directories from experiment names to something more succinct
 
 

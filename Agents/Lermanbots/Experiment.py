@@ -224,6 +224,7 @@ class ExperimentAgent(torch.nn.Module):
                     mistake[-ratio:] = cross_entropy(y_predicted[-ratio:],
                                                      label[-ratio:].long(), reduction='none') if self.contrastive \
                         else 0  # "real"
+                # TODO creator 2nd sample if self.sample
                 action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
                 reward = -mistake.detach()  # reward = -error
                 next_obs[:] = float('nan')

@@ -20,8 +20,8 @@ from sweeps_and_plots import runs
 # plot_group = 'UML_Paper'
 # plot_specs = runs[plot_group]['Classify+RL']
 
-plot_group = 'XRD'
-plot_specs = runs[plot_group]['Summary']
+plot_group = 'UnifiedML'
+plot_specs = runs[plot_group]['Classify+RL']
 
 plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
 
@@ -126,7 +126,7 @@ for plot_train in [False, True]:
 
     for plot_experiments in plot_specs.plots:
 
-        plot(path=f"./Benchmarking/{plot_group + '/' if plot_group else ''}{'_'.join(plot_experiments)}/Plots/",
+        plot(path=f"./Benchmarking/{plot_group if plot_group else ''}/{'_'.join(plot_experiments).strip('.')}/Plots/",
              plot_experiments=plot_experiments if len(plot_experiments) else None,
              plot_agents=plot_specs.agents if len(plot_specs.agents) else None,
              plot_suites=plot_specs.suites if len(plot_specs.suites) else None,

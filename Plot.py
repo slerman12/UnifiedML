@@ -45,6 +45,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 specs[i] = [spec]
             # Plot name
             plot_name += "_".join(specs[i] if i == 0 or len(specs[i]) < 5 else (specs[i][:5] + ['etc'])) + '_'
+    plot_name = plot_name.strip('.')
     if empty:
         return
 

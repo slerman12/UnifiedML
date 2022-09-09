@@ -26,7 +26,7 @@
 
 [comment]: <> (> A library for **reinforcement learning**, **supervised learning**, and **generative modeling**. And eventually, full-general intelligence.)
 
-# :runner: Running The Code
+# :runner: Run Anything
 
 To start a train session, once [installed](#wrench-setting-up):
 
@@ -762,7 +762,7 @@ python Run.py task=classify/mnist Pool=Residual +pool.model=Transformer +pool.de
 ```
 
 ```console
-python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap, Residual]" +'pool.model="MLP(kwargs.input_shape[-1])"' +'pool.down_sample="MLP(input_shape=kwargs.input_shape[-1], output_dim=kwargs.output_shape[-1])"'
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap, Residual]" +'pool.model="MLP(kwargs.input_shape[-1])"' +'pool.down_sample="MLP(input_shape=kwargs.input_shape[-1])"'
 ```
 
 ```console
@@ -802,7 +802,7 @@ python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.d
 
 
 ```console
-python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 +aug.pad=4
+python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 aug.pad=4
 ```
 
 </details>
@@ -815,7 +815,7 @@ python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Au
 </summary>
 <br>
 
-A rich and expressive command line syntax is available for selecting and customizing architectures such as those defined in ```./Blocks/Architectures```.
+A rich and expressive command line syntax is available for selecting and customizing architectures such as those defined in [```./Blocks/Architectures```](Blocks/Architectures).
 
 ResNet18 on CIFAR-10:
 
@@ -857,7 +857,7 @@ python Run.py task=classify/mnist Q_trunk=Transformer Pi_trunk=Transformer Pool=
 Here is a nice example of the critic using a small CNN for downsampling features:
 
 ```console
-python Run.py task=classify/mnist Q_trunk=CNN +q_trunk.depth=1
+python Run.py task=dmc/cheetah_run Q_trunk=CNN +q_trunk.depth=1 pool=Identity
 ```
 
 A CNN Actor and Critic:
@@ -909,7 +909,7 @@ The parser automatically registers the imports/class paths in ```Utils.``` in bo
 
 Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.
 
-To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in ```./Blocks/Architectures```.
+To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in [```./Blocks/Architectures```](Blocks/Architectures).
 
 </details>
 
@@ -950,7 +950,25 @@ Learning rate schedulers can also be customized as well with ```scheduler=``` an
 </summary>
 <br>
 
-For the best tutorial on Custom Datasets, see our full [end-to-end example]() of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+You can pass in a Pytorch Dataset class as follows:
+
+```console
+python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
+```
+
+Another example:
+
+```console
+python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
+```
+
+This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
+
+You can customize the name of the dataset as it's saved in the file system or displayed in plots, by setting ```task_name=```. Otherwise, it will default to the Dataset class name (in the above example, ```TinyImageNet```).
+
+---
+
+For the best tutorial on Custom Datasets, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! 
 > 
