@@ -964,7 +964,7 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
-> &#9432; You can customize the name of the dataset as it's saved in the file system or displayed in plots, by setting ```task_name=```. Otherwise, it will default to the Dataset class name (in the above example, ```TinyImageNet```).
+> &#9432; You can customize the name of the dataset as it's saved in the file system or displayed in plots, by setting ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
 ---
 
