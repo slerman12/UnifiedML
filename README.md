@@ -966,11 +966,9 @@ This will initiate a classify task on the custom-defined [TinyImageNet dataset](
 
 > &#9432; You can customize the task name with ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
-——❖——
-
 **UnifiedML is compatible with datasets & domains beyond Vision.**
 
-See our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+See our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**!
 
