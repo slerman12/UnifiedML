@@ -964,14 +964,18 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
-> &#9432; You can customize the task name with ```task_name=```. Otherwise, it will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
+> &#9432; You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. Otherwise, the task name will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
-**UnifiedML is compatible with datasets & domains beyond Vision.**
+<details>
+<summary>
+<i><b>UnifiedML is compatible with datasets & domains beyond Vision</b> - Click for more details.</i>
+</summary>
 
-See our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+For a tutorial outside of Vision, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
-> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for more details.
+> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for more details on architecture adaptivity.
 
+</details>
 </details>
 
 ### Experiment naming, plotting
