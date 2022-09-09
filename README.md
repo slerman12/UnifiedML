@@ -962,7 +962,7 @@ Another example:
 python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
 ```
 
-This will initiate a classify task on the custom-defined [TinyImageNet dataset](Datasets/Suites/_TinyImageNet.py#L48) located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
+This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
 
 You can customize the task name as it's saved for benchmarking and plotting, with ```task_name=```. Otherwise, the task name will default to the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```).
 
