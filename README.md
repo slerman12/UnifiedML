@@ -875,7 +875,7 @@ python Run.py Q_trunk=CNN Pi_trunk=CNN +q_trunk.depth=1 +pi_trunk.depth=1 Pool=I
 
 [comment]: <> (```)
 
-[comment]: <> (python Run.py Eyes=Utils.load +recipes.encoder.eyes.path=<path> +recipes.encoder.eyes.attr=encoder.Eyes)
+[comment]: <> (python Run.py Eyes=Utils.load +eyes.path=<path> +eyes.attr=encoder.Eyes)
 
 [comment]: <> (```)
 
@@ -888,7 +888,7 @@ python Run.py Q_trunk=CNN Pi_trunk=CNN +q_trunk.depth=1 +pi_trunk.depth=1 Pool=I
 *A little secret*, but pytorch code can be passed directly too via quotes:
 
 ```console
-python Run.py "recipes.encoder.eyes='CNN(kwargs.input_shape,32,depth=3)'"
+python Run.py "eyes='CNN(kwargs.input_shape,32,depth=3)'"
 ```
 ```console
 python Run.py "eyes='torch.nn.Conv2d(kwargs.input_shape[0],32,kernel_size=3)'"
@@ -979,6 +979,8 @@ For a non-Vision tutorial, see our full [end-to-end example](https://www.github.
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
 
 </details>
+
+[comment]: <> (For now, a dataset item is assumed to consist of just a &#40;input, label&#41; pair. )
 
 </details>
 

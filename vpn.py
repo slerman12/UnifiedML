@@ -9,6 +9,8 @@ from cryptography.fernet import Fernet
 from pexpect import spawn
 
 
+username = 'slerman'
+
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):
     with open('pass', 'r') as file:
@@ -37,5 +39,5 @@ except Exception:
 # p = spawn('/opt/cisco/anyconnect/bin/vpn disconnect')
 # p.expect('b')
 
-print('Connected to VPN\nFor Bluehive:\nssh slerman@bluehive.circ.rochester.edu')
+print(f'Connected to VPN\nFor Bluehive:\nssh {username}@bluehive.circ.rochester.edu')
 # https://github-profile-summary-cards.vercel.app/demo.html
