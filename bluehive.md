@@ -4,7 +4,7 @@
 
 - [Structure](#structure)
 
-- [Launching](#rocket-launching)
+- [Launching Runs](#rocket-launching)
 
 - [Specifying Runs](#specifying-runs)
 
