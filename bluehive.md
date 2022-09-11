@@ -1,4 +1,14 @@
-## Setting Up UnifiedML On Bluehive
+### Quick Links
+
+- [Setup](#setting-up-unifiedml-on-bluehive)
+
+- [Structure](#structure)
+
+- [Launching](#rocket-launching)
+
+- [Specifying Runs](#specifying-runs)
+
+# Setting Up UnifiedML On Bluehive
 
 Connect to the University VPN.
 
@@ -74,7 +84,7 @@ module load gcc
 
 The way to use Bluehive, is to queue up jobs on specific GPU nodes with an "```sbatch script```". I use an automated pipeline that generates and calls sbatch scripts according to my specified runs and hyper-parameters and selected GPUs, etc. It automatically connects to VPN and Bluehive and launches my desired jobs.
 
-## Structure
+# Structure
 
 I specify my runs in: ```sweeps_and_plots.py```.
 - I also specify how to plot them / their corresponding plots.
@@ -89,7 +99,7 @@ When all is said and done, I plot locally from Bluehive by running: ```python pl
 
 Below, I'll go over how to use ```launch_bluehive.py```.
 
-## :rocket: Launching
+# :rocket: Launching
 
 Set the username in ```launch_bluehive.py```. For example,
 
@@ -126,7 +136,7 @@ python plot_bluehive_and_lab.py
 
 Which also connects to VPN, Bluehive automatically, then downloads and plots results locally.
 
-## Specifying Runs
+# Specifying Runs
 
 An example set of runs and plots in ```sweeps_and_plots.py```:
 
