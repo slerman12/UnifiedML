@@ -79,13 +79,13 @@ The way to use Bluehive, is to queue up jobs on specific GPU nodes with an "```s
 I specify my runs in: ```sweeps_and_plots.py```.
 - I also specify how to plot them / their corresponding plots.
 
-I launch them with ```launch_bluehive.py```
+I launch them with ```python launch_bluehive.py```
 - Which connects to Bluehive and then calls ```sbatch.py``` on Bluehive to deploy jobs.
 
-When all is said and done, I plot locally from Bluehive by running: ```plot_bluehive_and_lab.py```
+When all is said and done, I plot locally from Bluehive by running: ```python plot_bluehive_and_lab.py```
 - Connects to servers and Bluehive, downloads the benchmarking data specified in ```sweeps_and_plots.py```, and plots accordingly.
 
-- UnifiedML also supports plotting to WandB's online dashboards in real-time if you want. See [Experiment naming, plotting](https://github.com/AGI-init/UnifiedML#experiment-naming-plotting).
+- UnifiedML also supports plotting to [WandB](https://wandb.ai/)'s online dashboards in real-time if you want. See [Experiment naming, plotting](https://github.com/AGI-init/UnifiedML#experiment-naming-plotting).
 
 Below, I'll go over how to use ```launch_bluehive.py```.
 
