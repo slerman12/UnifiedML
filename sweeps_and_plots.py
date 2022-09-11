@@ -57,7 +57,9 @@ def template(name):
                    'suites': []},
            }
 
+
 runs = {
+    'Template': template('template'),
     'UnifiedML':
         {
             'core': {

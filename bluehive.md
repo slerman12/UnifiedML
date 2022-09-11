@@ -90,3 +90,67 @@ When all is said and done, I plot locally from Bluehive by running: ```python pl
 Below, I'll go over how to use ```launch_bluehive.py```.
 
 ## :rocket: Launching
+
+Set the username in ```launch_bluehive.py```. For example,
+
+```ruby
+username = 'slerman'
+```
+
+Likewise, update the username, conda path, and conda name in ```sbatch.yaml```. For example,
+
+```ruby
+username: 'slerman'
+conda: 'source /home/slerman/miniconda/bin/activate ML'
+```
+
+Add the ```sbatch.py``` file to the root directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML```). You can do this by SFTP'ing for example.
+
+Add the ```sbatch.yaml``` file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example.
+
+Use the template in ```sweeps_and_plots.py``` to define some runs and launch them with:
+
+```console
+python launch_bluehive.py
+```
+
+This will launch them on Bluehive. The script should take care of connecting to VPN, then Bluehive, then queueing jobs. You will still have to approve the connection via DUO push notification on your phone.
+
+Runs can be defined with flags corresponding to the hyperparams in ```sbatch.yaml``` in addition to the usual UnifiedML flags in ```args.yaml```. Those additional Bluehive-specific args include ```gpu```, ```mem```, and ```time``` for example. They can also accept a ```reservation_id``` if you have one, or enable a specific set of ```lab``` machines. All such specifications can be specified in the runs list of ```sweeps_and_plots.py```.
+
+These can later be plotted with:
+
+```console
+python plot_bluehive_and_lab.py
+```
+
+Which also connects to VPN, Bluehive automatically, then downloads and plots results locally.
+
+## Specifying Runs
+
+An example set of runs and plots in ```sweeps_and_plots.py```:
+
+```ruby
+runs = {'Example': {
+               example: {
+                   'sweep': [
+                       # Sweep commands go here
+                       'experiment=example1 seed=1 task=classify/mnist',
+                       
+                       'experiment=example2 seed=2 task=classify/mnist gpu=A100'
+                   ],
+                   'plots': [
+                       ['example.*'],
+                   ],
+                   'sftp': True,
+                   'bluehive': True,
+                   'steps': 5e5,
+                   'title': 'Example',
+                   'x_axis': 'Step',
+                   'bluehive_only': [],
+                   'tasks': [],
+                   'agents': [],
+                   'suites': []},
+           }
+      }
+```
