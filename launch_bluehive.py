@@ -26,7 +26,7 @@ else:
     with open('pass', 'w') as file:
         file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
 
-conda = f'source /home/{username}/miniconda/bin/activate CUDA11.2'
+conda = f'source /home/{username}/miniconda3/bin/activate CUDA11.2'
 
 # Connect VPN
 try:

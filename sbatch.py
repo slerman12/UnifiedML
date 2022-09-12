@@ -53,7 +53,7 @@ def main(args):
     #                  for gpu, cuda_version, env, _ in [('K80', 11.0, 'agi3', 10.2), ('V100', 11.0, 'agi3', 10.2),
     #                                                    ('A100', 11.2, 'CUDA11.3', 11.3), ('RTX', 11.2, 'agi3', 10.2)]])
 
-    conda = ''.join([f'*"{gpu}"*)\nsource /scratch/{args.username}/miniconda/bin/activate {env}\n;;\n'
+    conda = ''.join([f'*"{gpu}"*)\nsource /home/{args.username}/miniconda3/bin/activate {env}\n;;\n'
                      for gpu, cuda_version, env, _ in [('K80', 11.2, 'CUDA11.2', 11.2), ('V100', 11.2, 'CUDA11.2', 11.2),
                                                        ('A100', 11.2, 'CUDA11.2', 11.2), ('RTX', 11.2, 'CUDA11.2', 11.2)]])
     cuda = f'GPU_TYPE' \

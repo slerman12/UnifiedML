@@ -4,7 +4,7 @@ defaults:
   - task@_global_: atari/pong
 
 username: 'slerman'
-conda: 'source /home/slerman/miniconda/bin/activate CUDA11.2'
+conda: 'source /home/slerman/miniconda3/bin/activate CUDA11.2'
 num_gpus: 1
 gpu: 'K80|V100|A100|RTX'
 mem: 50
