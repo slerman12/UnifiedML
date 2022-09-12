@@ -39,7 +39,7 @@ def main(args):
     if 'task' in sys_args:
         args.task = args.task.lower()
 
-        if 'classify/custom.' in args.task:
+        if 'task=classify/custom' in sys.argv[1:]:
             args.task = 'classify/custom'
 
     if 'transform' in sys_args:

@@ -71,7 +71,8 @@ try:
     s.prompt()
     print(s.before.decode("utf-8"))
     for hyperparams in sweep:
-        print(f'python sbatch.py -m {hyperparams} username="{username}"')
+        hyperparams = "\t".join(hyperparams.splitlines())
+        print(f'python sbatch.py -m {hyperparams}   username="{username}"\n')
         s.sendline(f'python sbatch.py -m {hyperparams} username="{username}"')
         s.prompt()
         print(s.before.decode("utf-8"))
