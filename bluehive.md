@@ -114,9 +114,9 @@ username: 'slerman'
 conda: 'source /home/slerman/miniconda/bin/activate ML'
 ```
 
-Add the ```sbatch.py``` file to the root directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML```). You can do this by SFTP'ing for example.
+Add the ```sbatch.py``` file to the root directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML```). You can do this by SFTP'ing for example or via git.
 
-Add the ```sbatch.yaml``` file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example.
+Add the ```sbatch.yaml``` file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example or via git.
 
 Use the template in ```sweeps_and_plots.py``` to define some runs and launch them with:
 
@@ -150,8 +150,11 @@ runs = {'Example': {
                        'experiment=example2 seed=2 task=classify/mnist gpu=A100'
                    ],
                    'plots': [
+                       # Sets of plots
                        ['example.*'],
                    ],
+                   
+                   # Plotting-related commands go here
                    'sftp': True,
                    'bluehive': True,
                    'steps': 5e5,

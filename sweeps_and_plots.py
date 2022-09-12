@@ -25,10 +25,10 @@ Structure of runs:
 
 -> Project 1:
     -> Sweep Group 1:
-        -> Sweep & Sweep Metadata
+        -> Sweep & Plots & Plots Metadata
     ...
     -> Sweep Group M:
-        -> Sweep & Sweep Metadata
+        -> Sweep & Plots & Plots Metadata
 ...
 -> Project N:
     -> ...
@@ -44,8 +44,11 @@ def template(name):
                        # Sweep commands go here
                    ],
                    'plots': [
+                       # Sets of plots
                        [],
                    ],
+
+                   # Plotting-related commands go here
                    'sftp': True,
                    'bluehive': True,
                    'steps': 5e5,
