@@ -110,7 +110,7 @@ username = 'slerman'
 Update the [conda path and name](launch_bluehive.py#L29) in [```launch_bluehive.py```](launch_bluehive.py). For example,
 
 ```ruby
-username = 'slerman'
+conda = 'source /home/{username}/miniconda3/bin/activate ML'
 ```
 
 Likewise, update the [username, conda path, and conda name](Hyperparams/sbatch.yaml#L6-L7) in [```Hyperparams/sbatch.yaml```](Hyperparams/sbatch.yaml). For example,
@@ -118,6 +118,20 @@ Likewise, update the [username, conda path, and conda name](Hyperparams/sbatch.y
 ```ruby
 username: 'slerman'
 conda: 'source /home/slerman/miniconda/bin/activate ML'
+```
+
+In [```sbatch.py```](sbatch.py), set your [WandB API key](sbatch.py#L69):
+
+```ruby
+wandb_login_key = <your key>
+```
+
+From WandB's docs: "**Where do I find my API key?** Once you've signed in to www.wandb.ai, the API key will be on the [Authorize page](https://wandb.ai/authorize)."
+
+And your [conda path and name](sbatch.py#L67):
+
+```ruby
+cuda = f'source /home/{args.username}/miniconda3/bin/activate ML'
 ```
 
 Set the [username](plot_bluehive_&_lab.py#L42) in [```plot_bluehive_&_lab.py```](plot_bluehive_&_lab.py). For example,
