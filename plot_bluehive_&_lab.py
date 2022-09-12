@@ -20,8 +20,8 @@ from sweeps_and_plots import runs
 # plot_group = 'UML_Paper'
 # plot_specs = runs[plot_group]['Classify+RL']
 
-plot_group = 'UnifiedML'
-plot_specs = runs[plot_group]['Classify+RL']
+plot_group = list(runs.keys())[0]
+plot_specs = runs[plot_group]
 
 plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
 
@@ -51,8 +51,6 @@ if plot_specs.sftp:
         encoded = Fernet(key).encrypt(bytes(password, 'utf-8'))
         with open('pass', 'w') as file:
             file.writelines([key.decode('utf-8') + '\n', encoded.decode('utf-8')])
-
-    conda = 'source /scratch/slerman/miniconda/bin/activate agi'
 
     cwd = os.getcwd()
     local_path = f"./Benchmarking"

@@ -120,12 +120,6 @@ Set the [username](plot_bluehive_&_lab.py#L42) in [```plot_bluehive_&_lab.py```]
 username = 'slerman'
 ```
 
-And your [conda](plot_bluehive_&_lab.py#L55). Example:
-
-```ruby
-conda = 'source /scratch/slerman/miniconda/bin/activate ML'
-```
-
 Add the [```sbatch.py```](sbatch.py) file to the root directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML```). You can do this by SFTP'ing for example or via git.
 
 Add the [```Hyperparams/sbatch.yaml```](Hyperparams/sbatch.yaml) file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example or via git.

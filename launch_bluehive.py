@@ -41,7 +41,8 @@ try:
 except Exception:
     pass
 
-sweep = runs.XRD.Summary.sweep
+sweep_group = list(runs.keys())[0]
+sweep = runs[sweep_group].sweep
 
 
 # Launch on Bluehive
