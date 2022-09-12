@@ -86,41 +86,41 @@ The way to use Bluehive, is to queue up jobs on specific GPU nodes with an "```s
 
 # Structure
 
-I specify my runs in: ```sweeps_and_plots.py```.
+I specify my runs in: [```sweeps_and_plots.py```](sweeps_and_plots.py).
 - I also specify how to plot them / their corresponding plots.
 
 I launch them with ```python launch_bluehive.py```
-- Which connects to Bluehive and then calls ```sbatch.py``` on Bluehive to deploy jobs.
+- Which connects to Bluehive and then calls [```sbatch.py```](sbatch.py) on Bluehive to deploy jobs.
 
 When all is said and done, I plot locally from Bluehive by running: ```python plot_bluehive_and_lab.py```
-- Connects to servers and Bluehive, downloads the benchmarking data specified in ```sweeps_and_plots.py```, and plots accordingly.
+- Connects to servers and Bluehive, downloads the benchmarking data specified in [```sweeps_and_plots.py```](sweeps_and_plots.py), and plots accordingly.
 
 - UnifiedML also supports plotting to [WandB](https://wandb.ai/)'s online dashboards in real-time if you want. See [Experiment naming, plotting](https://github.com/AGI-init/UnifiedML#experiment-naming-plotting).
 
-Below, I'll go over how to use ```launch_bluehive.py```.
+Below, I'll go over how to use [```launch_bluehive.py```](launch_bluehive.py).
 
 # :rocket: Launching
 
-Set the username in ```launch_bluehive.py```. For example,
+Set the [username](launch_bluehive.py#L14) in [```launch_bluehive.py```](launch_bluehive.py). For example,
 
 ```ruby
 username = 'slerman'
 ```
 
-Likewise, update the username, conda path, and conda name in ```sbatch.yaml```. For example,
+Likewise, update the [username, conda path, and conda name](Hyperparams/sbatch.yaml#L6-L7) in [```Hyperparams/sbatch.yaml```](Hyperparams/sbatch.yaml). For example,
 
 ```ruby
 username: 'slerman'
 conda: 'source /home/slerman/miniconda/bin/activate ML'
 ```
 
-Add the ```sbatch.py``` file to the root directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML```). You can do this by SFTP'ing for example or via git.
+Add the [```sbatch.py```](sbatch.py) file to the root directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML```). You can do this by SFTP'ing for example or via git.
 
-Add the ```sbatch.yaml``` file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example or via git.
+Add the [```Hyperparams/sbatch.yaml```](Hyperparams/sbatch.yaml) file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example or via git.
 
 Keep the other files in the root directory of your local ```UnifiedML``` directory.
 
-Use the template in ```sweeps_and_plots.py``` to define some runs and launch them with:
+Use the template in [```sweeps_and_plots.py```](sweeps_and_plots.py) to define some runs and launch them with:
 
 ```console
 python launch_bluehive.py
@@ -128,7 +128,7 @@ python launch_bluehive.py
 
 This will launch them on Bluehive. The script should take care of connecting to VPN, then Bluehive, then queueing jobs. You will still have to approve the connection via DUO push notification on your phone.
 
-Runs can be defined with flags corresponding to the hyperparams in ```sbatch.yaml``` in addition to the usual UnifiedML flags in ```args.yaml```. Those additional Bluehive-specific args include ```gpu```, ```mem```, and ```time``` for example. They can also accept a ```reservation_id``` if you have one, or enable a specific set of ```lab``` machines. All such specifications can be specified in the runs list of ```sweeps_and_plots.py```.
+Runs can be defined with flags corresponding to the hyperparams in [```sbatch.yaml```](Hyperparams/sbatch.yaml) in addition to the usual UnifiedML flags in ```args.yaml```. Those additional Bluehive-specific args include ```gpu```, ```mem```, and ```time``` for example. They can also accept a ```reservation_id``` if you have one, or enable a specific set of ```lab``` machines. All such specifications can be specified in the runs list of [```sweeps_and_plots.py```](sweeps_and_plots.py).
 
 These can later be plotted with:
 
@@ -140,7 +140,7 @@ Which also connects to VPN, Bluehive automatically, then downloads and plots res
 
 # Specifying Runs
 
-An example set of runs and plots in ```sweeps_and_plots.py```:
+An example set of runs and plots in [```sweeps_and_plots.py```](sweeps_and_plots.py):
 
 ```ruby
 runs = {'Example': {
