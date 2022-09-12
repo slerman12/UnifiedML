@@ -7,7 +7,7 @@ username: 'slerman'
 conda: 'source /home/slerman/miniconda3/bin/activate CUDA11.3'
 num_gpus: 1
 gpu: 'K80|V100|A100|RTX'
-mem: 50
+mem: 25
 time: '5-00:00:00'
 lab: false
 reservation_id: null
