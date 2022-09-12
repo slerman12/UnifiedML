@@ -118,6 +118,8 @@ Add the ```sbatch.py``` file to the root directory of your ```UnifiedML``` direc
 
 Add the ```sbatch.yaml``` file to the ```./Hyperparams``` directory of your ```UnifiedML``` directory on Bluehive (```/scratch/<username>/UnifiedML/Hyperparams```). You can do this by SFTP'ing for example or via git.
 
+Keep the other files in the root directory of your local ```UnifiedML``` directory.
+
 Use the template in ```sweeps_and_plots.py``` to define some runs and launch them with:
 
 ```console
@@ -167,3 +169,18 @@ runs = {'Example': {
            }
       }
 ```
+---
+
+>&#9432;
+> 
+>Then to launch this, you can run:
+>
+>```console
+>python launch_bluehive.py
+>```
+>
+>And to plot:
+>
+>```console
+>python plot_bluehive_and_lab.py
+>```
