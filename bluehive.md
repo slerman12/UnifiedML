@@ -120,7 +120,7 @@ username: 'slerman'
 conda: 'source /home/slerman/miniconda/bin/activate ML'
 ```
 
-In [```sbatch.py```](sbatch.py), set your [WandB API key](sbatch.py#L69):
+In [```sbatch.py```](sbatch.py), set your [WandB API key](sbatch.py#L65):
 
 ```ruby
 wandb_login_key = <your key>
@@ -128,7 +128,7 @@ wandb_login_key = <your key>
 
 From WandB's docs: "**Where do I find my API key?** Once you've signed in to www.wandb.ai, the API key will be on the [Authorize page](https://wandb.ai/authorize)."
 
-And your [conda path and name](sbatch.py#L67):
+And your [conda path and name](sbatch.py#L63):
 
 ```ruby
 cuda = f'source /home/{args.username}/miniconda3/bin/activate ML'

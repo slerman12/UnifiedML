@@ -16,6 +16,12 @@ meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservati
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
 OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
 
+# Allow recipes config to accept objects as args
+OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
+
+# A boolean "not" operation for config
+OmegaConf.register_new_resolver("not", lambda bool: not bool)
+
 
 def getattr_recursive(__o, name):
     for key in name.split('.'):
@@ -27,16 +33,6 @@ def getattr_recursive(__o, name):
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
-    # Format path names
-    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
-    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
-
-    # Allow recipes config to accept objects as args
-    OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
-
-    # A boolean "not" operation for config
-    OmegaConf.register_new_resolver("not", lambda bool: not bool)
-
     path = args.logger.path
     Path(path).mkdir(parents=True, exist_ok=True)
 
