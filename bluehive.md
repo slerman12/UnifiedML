@@ -70,13 +70,11 @@ cd /scratch/<username>
 
 Install UnifiedML [following the instructions here](https://www.github.com/agi-init/UnifiedML#wrench-setting-up).
 
-When choosing a CUDA version, I've found ```11.2``` to work best across the different Bluehive GPU types (K80, RTX, V100, and A100). The A100 requires a higher CUDA, I use ```11.4``` and a separate Conda environment for that one (selected dynamically by the launch script).
+When choosing a CUDA version, I've found ```11.3``` to work best across the different Bluehive GPU types (K80, RTX, V100, and A100). The K80 requires a lower CUDA, I use ```10.2``` (the one installed by default for UnifiedML) and a separate Conda environment for that one (depending on the GPU that gets assigned, the Conda environment is selected dynamically by the launch script).
 
 ```console
-pip uninstall torch
-
-# CUDA 11.2
-pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu112
+# CUDA 11.3
+conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
 ```
 
 On Bluehive, you must enable ```gcc``` for torchvision to work:

@@ -52,15 +52,15 @@ def main(args):
         args.experiment = f'"{args.experiment}"'
 
     conda = ''.join([f'*"{gpu}"*)\nsource /home/{args.username}/miniconda3/bin/activate {env}\n;;\n'
-                     for gpu, env in [('K80', 'CUDA11.2'), ('V100', 'CUDA11.2'),
-                                      ('RTX', 'CUDA11.2'), ('A100', 'CUDA11.4')]])  # Conda envs w.r.t. GPU
+                     for gpu, env in [('K80', 'CUDA10.2'), ('V100', 'CUDA11.3'),
+                                      ('RTX', 'CUDA11.3'), ('A100', 'CUDA11.3')]])  # Conda envs w.r.t. GPU
     cuda = f'GPU_TYPE' \
            f'=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)\ncase $GPU_TYPE in\n{conda}esac'
 
     gpu = '$GPU_TYPE'  # Can add to python script e.g. experiment='name_{gpu}'
 
-    # 11.2
-    # cuda = f'source /home/{args.username}/miniconda3/bin/activate CUDA11.2'  # One Conda env for any GPU
+    # 11.3
+    # cuda = f'source /home/{args.username}/miniconda3/bin/activate CUDA11.3'  # One Conda env for any GPU
 
     wandb_login_key = '55c12bece18d43a51c2fcbcb5b7203c395f9bc40'
 
