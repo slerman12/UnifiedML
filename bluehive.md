@@ -70,7 +70,7 @@ cd /scratch/<username>
 
 Install UnifiedML [following the instructions here](https://www.github.com/agi-init/UnifiedML#wrench-setting-up).
 
-When choosing a CUDA version, I've found ```11.2``` to work best across the different Bluehive GPU types (K80, RTX, V100, and A100).
+When choosing a CUDA version, I've found ```11.2``` to work best across the different Bluehive GPU types (K80, RTX, V100, and A100). The A100 requires a higher CUDA, I use ```11.6``` and a separate Conda environment for that one (selected dynamically by the launch script).
 
 ```console
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu112
@@ -120,19 +120,19 @@ username: 'slerman'
 conda: 'source /home/slerman/miniconda/bin/activate ML'
 ```
 
-In [```sbatch.py```](sbatch.py), set your [WandB API key](sbatch.py#L65):
-
-```ruby
-wandb_login_key = <your key>
-```
-
-From WandB's docs: "**Where do I find my API key?** Once you've signed in to www.wandb.ai, the API key will be on the [Authorize page](https://wandb.ai/authorize)."
-
-And your [conda path and name](sbatch.py#L63):
+In [```sbatch.py```](sbatch.py), set your your [conda path and name](sbatch.py#L63) and [WandB API key](sbatch.py#L65). For example,
 
 ```ruby
 cuda = f'source /home/{args.username}/miniconda3/bin/activate ML'
+
+...
+
+wandb_login_key = '10111111yep11111111111111111111111111110'
 ```
+
+Alternatively, specify multiple Conda envs depending on CUDA version by defining conda/cuda with [lines 54 and 57](sbatch.py#L54-L57).
+
+From WandB's docs: "**Where do I find my API key?** Once you've signed in to www.wandb.ai, the API key will be on the [Authorize page](https://wandb.ai/authorize)." Or you can comment out [line 77](sbatch.py#L77) if you aren't using a WandB account.
 
 Set the [username](plot_bluehive_&_lab.py#L42) in [```plot_bluehive_&_lab.py```](plot_bluehive_&_lab.py). For example,
 
