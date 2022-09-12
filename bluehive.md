@@ -173,37 +173,35 @@ An example set of runs and plots in [```sweeps_and_plots.py```](sweeps_and_plots
 
 ```ruby
 runs = {'Example': {
-               example: {
-                   'sweep': [
-                       # Sweep commands go here
-                       'experiment=example1 seed=1 task=classify/mnist',
-                       
-                       'experiment=example2 seed=2 task=classify/mnist gpu=A100'
-                   ],
-                   'plots': [
-                       # Sets of plots
-                       ['example.*'],  # Regex to plot all experiments starting with "example"
-                   ],
-                   
-                   # Plotting-related commands go here
-                   'sftp': True,
-                   'bluehive': True,
-                   'lab': False,
-                   'steps': 5e5,
-                   'title': 'Example',
-                   'x_axis': 'Step',
-                   'bluehive_only': [],
-                   'tasks': [],
-                   'agents': [],
-                   'suites': []},
-           }
-      }
+    'sweep': [
+        # Sweep commands go here
+        'experiment=example1 seed=1 task=classify/mnist',
+
+        'experiment=example2 seed=2 task=classify/mnist gpu=A100'
+    ],
+    'plots': [
+        # Sets of plots
+        ['example.*'],  # Regex to plot all experiments starting with "example"
+    ],
+
+    # Plotting-related commands go here
+    'sftp': True,
+    'bluehive': True,
+    'lab': False,
+    'steps': 5e5,
+    'title': 'Example',
+    'x_axis': 'Step',
+    'bluehive_only': [],
+    'tasks': [],
+    'agents': [],
+    'suites': []},
+}
 ```
 ---
 
 
 :exclamation: &#9432;
- 
+
 Then to launch this, you can run:
 
 ```console
