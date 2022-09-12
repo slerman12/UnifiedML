@@ -9,7 +9,6 @@ import Utils
 
 import torch
 torch.backends.cudnn.benchmark = True
-print(torch.version.cuda)
 
 
 # Hydra conveniently and cleanly manages sys args
