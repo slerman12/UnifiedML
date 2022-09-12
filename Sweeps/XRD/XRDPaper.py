@@ -161,8 +161,7 @@ runs.XRD.sweep = [
     +dataset.num_classes=7,230
     train_steps=1
     save=true
-    logger.wandb=true
-    lab=true""",
+    logger.wandb=true""",
 
     # Large, MLP
     """task=classify/custom
@@ -181,28 +180,27 @@ runs.XRD.sweep = [
     +dataset.num_classes=7,230
     train_steps=1
     save=true
-    logger.wandb=true
-    lab=true""",
-
-    # PS1, CNN
-    """task=classify/custom
-    Dataset=XRD.XRD
-    Aug=Identity
-    Trunk=Identity
-    Eyes=XRD.CNN
-    Predictor=XRD.Predictor
-    batch_size=256
-    standardize=false
-    norm=true
-    task_name='PS1_${dataset.num_classes}-Way'
-    experiment='CNN'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_ps1/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    +dataset.num_classes=7,230
-    train_steps=1
-    save=true
-    logger.wandb=true
-    lab=true""",
+    logger.wandb=true""",
+#
+#     # PS1, CNN
+#     """task=classify/custom
+#     Dataset=XRD.XRD
+#     Aug=Identity
+#     Trunk=Identity
+#     Eyes=XRD.CNN
+#     Predictor=XRD.Predictor
+#     batch_size=256
+#     standardize=false
+#     norm=true
+#     task_name='PS1_${dataset.num_classes}-Way'
+#     experiment='CNN'
+#     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_ps1/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+#     +'dataset.train_eval_splits=[1, 0]'
+#     +dataset.num_classes=7,230
+#     train_steps=1
+#     save=true
+#     logger.wandb=true
+#     lab=true""",
 ]
 
 runs.XRD.plots = [
