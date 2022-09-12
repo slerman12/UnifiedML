@@ -98,22 +98,23 @@ if plot_specs.sftp:
             p.expect('sftp> ', timeout=None)
         print()
 
-    print('Connecting to lab', end=" ")
-    p = spawn(f'sftp macula')
-    p.expect('sftp> ')
-    print('- Connected! ✓\n')
-    p.sendline(f"lcd {local_path}")
-    p.expect('sftp> ')
-    lab_paths = ['u1', '/localdisk2/sam']  # SFTP can't access ~/, so need full path
-    for i, path in enumerate(lab_paths):
-        p.sendline(f'cd {path}/UnifiedML')
+    if plot_specs.lab:
+        print('Connecting to lab', end=" ")
+        p = spawn(f'sftp macula')
         p.expect('sftp> ')
-        for j, experiment in enumerate(experiments):
-            if experiment not in plot_specs.bluehive_only:
-                print(f'{i * len(experiments) + j + 1}/{len(lab_paths) * len(experiments)} '
-                      f'[lab - {path}] SFTP\'ing "{experiment}"')
-                p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
-                p.expect('sftp> ', timeout=None)
+        print('- Connected! ✓\n')
+        p.sendline(f"lcd {local_path}")
+        p.expect('sftp> ')
+        lab_paths = ['u1', '/localdisk2/sam']  # SFTP can't access ~/, so need full path
+        for i, path in enumerate(lab_paths):
+            p.sendline(f'cd {path}/UnifiedML')
+            p.expect('sftp> ')
+            for j, experiment in enumerate(experiments):
+                if experiment not in plot_specs.bluehive_only:
+                    print(f'{i * len(experiments) + j + 1}/{len(lab_paths) * len(experiments)} '
+                          f'[lab - {path}] SFTP\'ing "{experiment}"')
+                    p.sendline(f"get -r ./Benchmarking/{experiment.replace('.*', '*')}")  # Some regex compatibility
+                    p.expect('sftp> ', timeout=None)
 
     print('\nPlotting results...')
 

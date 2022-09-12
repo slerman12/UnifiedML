@@ -153,12 +153,13 @@ runs = {'Example': {
                    ],
                    'plots': [
                        # Sets of plots
-                       ['example.*'],
+                       ['example.*'],  # Regex to plot all experiments starting with "example"
                    ],
                    
                    # Plotting-related commands go here
                    'sftp': True,
                    'bluehive': True,
+                   'lab': False,
                    'steps': 5e5,
                    'title': 'Example',
                    'x_axis': 'Step',
