@@ -184,3 +184,5 @@ And to plot:
 ```console
 python plot_bluehive_and_lab.py
 ```
+
+That's all.
