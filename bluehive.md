@@ -171,10 +171,8 @@ runs = {'Example': {
 ```
 ---
 
-<details>
-<summary>
-&#9432;
-</summary>
+
+:exclamation: &#9432;
  
 Then to launch this, you can run:
 
@@ -189,4 +187,3 @@ python plot_bluehive_and_lab.py
 ```
 
 That's all.
-</details>
