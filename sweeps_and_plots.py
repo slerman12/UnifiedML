@@ -19,7 +19,7 @@ Structure of runs:
 # runs = template('Example')
 #
 # runs.Example.sweep = [
-#     'experiment=Test1 task=classify/mnist train_steps=2'
+#     'experiment=Test1 task=classify/mnist train_steps=2000'
 # ]
 #
 # runs.Example.plots = [

@@ -107,6 +107,12 @@ Set the [username](launch_bluehive.py#L14) in [```launch_bluehive.py```](launch_
 username = 'slerman'
 ```
 
+Update the [conda path and name](launch_bluehive.py#L29) in [```launch_bluehive.py```](launch_bluehive.py). For example,
+
+```ruby
+username = 'slerman'
+```
+
 Likewise, update the [username, conda path, and conda name](Hyperparams/sbatch.yaml#L6-L7) in [```Hyperparams/sbatch.yaml```](Hyperparams/sbatch.yaml). For example,
 
 ```ruby
