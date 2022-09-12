@@ -171,16 +171,16 @@ runs = {'Example': {
 ```
 ---
 
-> &#9432;
-> 
-> Then to launch this, you can run:
->
-> ```console
-> python launch_bluehive.py
-> ```
->
-> And to plot:
->
-> ```console
-> python plot_bluehive_and_lab.py
-> ```
+&#9432;
+ 
+Then to launch this, you can run:
+
+```console
+python launch_bluehive.py
+```
+
+And to plot:
+
+```console
+python plot_bluehive_and_lab.py
+```
