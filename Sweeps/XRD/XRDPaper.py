@@ -13,4 +13,4 @@ runs.XRD.sweep = [
 runs.XRD.plots = [
     ['Test2_.*'],
 ]
-runs.XRD.title = 'A Good Ol\' Test: CUDA 10.2 & 11.3'
+runs.XRD.title = 'RRUFF'

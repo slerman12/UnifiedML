@@ -70,7 +70,7 @@ cd /scratch/<username>
 
 Install UnifiedML [following the instructions here](https://www.github.com/agi-init/UnifiedML#wrench-setting-up).
 
-When choosing a CUDA version, I've found ```11.3``` to work best across the different Bluehive GPU types (K80, RTX, V100, and A100). The K80 requires a lower CUDA, I use ```10.2``` (the one installed by default for UnifiedML) and a separate Conda environment for that one (depending on the GPU that gets assigned, the Conda environment is selected dynamically by the launch script).
+When choosing a CUDA version, I've found ```11.3``` to work best across the different Bluehive GPU types (K80, RTX, V100, and A100). The K80 requires a lower CUDA, I use ```10.2``` (the one installed by default for UnifiedML) and a separate Conda environment for that one. The launch script can select the Conda environment adaptively depending on which GPU gets assigned after launching (more details below).
 
 ```console
 # CUDA 11.3
