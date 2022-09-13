@@ -84,11 +84,15 @@ class ExperienceReplay:
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
-        # Parallelized experience loading, either online or offline
+        # Parallelized experience loading, either online or offline (for now, only online needs to be parallelized)
 
         self.nstep = nstep * int(not (suite == 'classify' or generate))  # No nstep for classify, generate
 
-        self.num_workers = max(1, min(num_workers, os.cpu_count()))
+        # DataLoader num_workers > 1 speeds up loading data from hard disk via parallelization.
+        # For now, num_workers need only be 1 for "offline" since all data is pre-loaded onto CPU from hard disk
+        # before training.
+        # The disadvantage of CPU pre-loading is higher CPU memory demand. TODO later: Memory-mapped hard disk loading
+        self.num_workers = 1 if offline else max(1, min(num_workers, os.cpu_count()))
 
         assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
                                                              f'exceeds offline replay size ({len(self)})'

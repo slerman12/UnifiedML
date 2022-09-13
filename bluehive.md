@@ -118,7 +118,7 @@ Likewise, update the [username, conda path, and conda name](Hyperparams/sbatch.y
 
 ```ruby
 username: 'slerman'
-conda: 'source /home/slerman/miniconda/bin/activate ML'
+conda: 'source /home/slerman/miniconda3/bin/activate ML'
 ```
 
 In [```sbatch.py```](sbatch.py), set your your [conda path and name](sbatch.py#L63) and [WandB API key](sbatch.py#L65). For example,
