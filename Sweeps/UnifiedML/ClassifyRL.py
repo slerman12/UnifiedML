@@ -1,4 +1,4 @@
-runs = {'Classify+RL': {
+runs = {'UnifiedML': {
     'sweep': [
         # Classify + RL
         """python Run.py
@@ -55,8 +55,8 @@ runs = {'Classify+RL': {
     'sftp': True,
     'bluehive': False,
     'lab': True,
-    'steps': 5e5,
-    'title': 'UML Paper',
+    'steps': 2e5,
+    'title': 'UnifiedML',
     'x_axis': 'Step',
     'bluehive_only': [],
     'tasks': [],

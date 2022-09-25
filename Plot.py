@@ -94,9 +94,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         for i, spec in enumerate(specs):
             if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
                     ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
-                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
-                        ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
-                    break
+                # if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
+                #         ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):  # Why this?
+                #     break
                 include = False
 
         if not include:
@@ -407,7 +407,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                           for task in set(bar_data[suite]['Task'])])
 
         # Create subplots
-        fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * num_cols, 3))
+        fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * (num_cols + num_rows) / 2, 3))  # Size
 
         # Title
         if title is not None:
