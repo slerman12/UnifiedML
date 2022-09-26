@@ -14,7 +14,6 @@ dependencies:
   - pip:
       - torch==1.11.0
       - torchvision==0.12.0
-      - torchaudio==0.11.0
       - hydra-core==1.1.0
       - hydra-submitit-launcher==1.1.5
       - gym==0.25.1
@@ -25,7 +24,6 @@ dependencies:
       - wandb==0.12.17
       - imageio==2.9.0
       - imageio-ffmpeg==0.4.4
-      - opt_einsum_torch==0.1.0
       - einops==0.4.1
 # Only for me
 #   - cryptography
