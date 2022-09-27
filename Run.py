@@ -21,7 +21,7 @@ def main(args):
     Utils.init(args)
 
     # Train, test environments
-    env = instantiate(args.environment, train=args.train_steps > 0)
+    env = instantiate(args.environment)
     generalize = instantiate(args.environment, train=False, seed=args.seed + 1234)
 
     for arg in ('obs_spec', 'action_spec', 'evaluate_episodes'):
