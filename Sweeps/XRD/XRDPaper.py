@@ -559,6 +559,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Large-Soup, MLP - Generalize To MP
@@ -580,6 +581,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Mix-Soup, No-Pool-CNN - Generalize To MP
@@ -602,6 +604,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Large-Soup, No-Pool-CNN - Generalize To MP
@@ -623,6 +626,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Large-Soup, CNN - Generalize To MP
@@ -644,6 +648,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Large-Soup, MLP - Generalize To MP
@@ -665,6 +670,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Mix-Soup, No-Pool-CNN - Generalize To MP
@@ -687,6 +693,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 ]
 
