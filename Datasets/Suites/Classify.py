@@ -87,6 +87,10 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
+        # If the training dataset is empty, we can assume train_steps=0
+        if train and len(dataset) == 0:
+            return
+
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
                             'low': 0,
