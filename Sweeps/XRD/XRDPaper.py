@@ -537,6 +537,7 @@ runs.XRD.sweep = [
     num_workers=8
     num_gpus=1
     lab=true
+    save=false
     mem=5""",
 
     # Large-Soup, CNN - Generalize To MP
@@ -715,7 +716,11 @@ runs.XRD.sweep = [
 # runs.XRD.title = 'RRUFF'
 
 runs.XRD.plots = [
-    ['.*_on_MP.*'],
+    ['CNN', 'MLP', 'No-Pool-CNN'],
+]
+
+runs.XRD.tasks = [
+    '.*on_MP.*',
 ]
 
 runs.XRD.title = 'Magnetic Properties'
