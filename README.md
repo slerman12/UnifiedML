@@ -170,7 +170,7 @@ conda activate ML
 
 #
 
-> &#9432; Depending on your CUDA version, you may need to additionally install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
+> > &#9432; Depending on your CUDA version, you may need to additionally install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
 >
 > For example, for CUDA 11.6:
 > ```console
@@ -525,9 +525,9 @@ For example,
 python Run.py task=classify/cifar10 ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
-The above returns a $93$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
+The above returns a $94$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
-And if you set ```supervise=false RL=true```, we get a $94$%... vis-à-vis pure-RL. 
+And if you set ```supervise=false RL=true```, we get about the same score... vis-à-vis pure-RL. 
 
 [comment]: <> (Rollouts fill up data in an online fashion, piecemeal, until depletion &#40;all data is processed&#41; and gather metadata like past predictions, which may be useful for curriculum learning.)
 
@@ -674,6 +674,8 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 *A unique experiment* is distinguished by the flags: ```experiment=```, ```Agent=```, ```task=```, and ```seed=```.
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+
+You can change the Agent load/save path with ```save_path=``` and ```replay.path=``` for experience replays. 
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
 
