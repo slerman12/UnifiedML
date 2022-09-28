@@ -58,7 +58,7 @@ class Classify:
 
     """
     def __init__(self, dataset, task='MNIST', train=True, offline=True, generate=False, batch_size=32, num_workers=1,
-                 low=None, high=None, frame_stack=None, action_repeat=None, seed=None, stats_task_name=None, **kwargs):
+                 low=None, high=None, frame_stack=None, action_repeat=None, seed=None, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
@@ -87,10 +87,6 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
-        # If the training dataset is empty, we can assume train_steps=0
-        if train and len(dataset) == 0:
-            return
-
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
                             'low': 0,
@@ -115,20 +111,20 @@ class Classify:
 
         replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
 
-        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{stats_task_name or task}_Stats_*')
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
         # Offline and generate don't use training rollouts
         if (offline or generate) and not train and (not replay_path.exists() or not len(stats_path)):
 
             # But still need to create training replay & compute stats
             Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
-                     stats_task_name, **kwargs)
+                     **kwargs)
 
         # Create replay
         if train and (offline or generate) and not replay_path.exists():
             self.create_replay(replay_path)
 
-        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{stats_task_name or task}_Stats_*')
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
         # Compute stats
         mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
