@@ -29,8 +29,12 @@ env:
   _target_: ${Env}
   _recursive_: false
 Dataset: null  # Defaults per respective Classify task
+TestDataset: ${Dataset}
 dataset:
   _target_: ${Dataset}
+  _recursive_: false
+test_dataset:
+  _target_: ${TestDataset}
   _recursive_: false
 suite: ???  # To be specified later, defaults per respective task
 task_name: ???  # To be specified later, defaults per respective task
@@ -54,6 +58,7 @@ ema: false
 save: true
 save_per_steps: 0
 save_path: ./Checkpoints/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}.pt
+load_path: ${save_path}
 load: false
 load_per_steps: 0
 # Logging
@@ -152,7 +157,7 @@ plotting:
   plot_agents: null
   plot_suites: null
   plot_tasks: null
-  steps: ${train_steps}
+  steps: null
   write_tabular: false
   plot_bar: true
   plot_train: false

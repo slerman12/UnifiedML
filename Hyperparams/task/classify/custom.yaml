@@ -5,6 +5,7 @@ Env: Datasets.Suites.Classify.Classify
 Dataset: null
 environment:
     dataset: ${dataset}
+    test_dataset: ${test_dataset}
     low: null
     high: null
     batch_size: ${batch_size}

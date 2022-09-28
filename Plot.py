@@ -28,11 +28,14 @@ from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
 
-def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=np.inf,
+def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=None,
          write_tabular=False, plot_bar=True, plot_train=False, title='UnifiedML', x_axis='Step', verbose=False):
 
     path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
+
+    if steps is None:
+        steps = np.inf
 
     # Make sure non empty and lists, and gather names
     empty = True

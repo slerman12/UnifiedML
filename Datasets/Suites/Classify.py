@@ -57,8 +57,8 @@ class Classify:
     An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
 
     """
-    def __init__(self, dataset, task='MNIST', train=True, offline=True, generate=False, batch_size=32, num_workers=1,
-                 low=None, high=None, frame_stack=None, action_repeat=None, seed=None, **kwargs):
+    def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False,
+                 batch_size=32, num_workers=1, low=None, high=None, seed=None, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
@@ -80,12 +80,16 @@ class Classify:
                 root_spec, train_spec, download_spec, transform_spec = all_specs
                 specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
                 specs.update(kwargs)
-                dataset = instantiate(dataset, **specs)
+                dataset = instantiate(dataset if train or test_dataset is None else test_dataset, **specs)
             except (TypeError, ValueError):
                 continue
             break
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
+
+        # If the training dataset is empty, we can assume train_steps=0
+        if train and len(dataset) == 0:
+            return
 
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
@@ -117,7 +121,7 @@ class Classify:
         if (offline or generate) and not train and (not replay_path.exists() or not len(stats_path)):
 
             # But still need to create training replay & compute stats
-            Classify(dataset_, task, True, offline, generate, batch_size, num_workers, None, None, None, None, seed,
+            Classify(dataset_, None, task, True, offline, generate, batch_size, num_workers, None, None, seed,
                      **kwargs)
 
         # Create replay

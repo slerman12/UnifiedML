@@ -26,6 +26,7 @@ Env: Datasets.Suites.Classify.Classify
 Dataset: {dataset_path}
 environment:
     dataset: ${{dataset}}
+    test_dataset: ${{test_dataset}}
     low: {'null' if task == 'Custom' else 0}
     high: {'null' if task == 'Custom' else 1}
     batch_size: ${{batch_size}}
