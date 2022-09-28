@@ -722,6 +722,9 @@ runs.XRD.sweep = [
 
 runs.XRD.plots = [
     ['.*icsd.*'],
+    ['.*_icsd.*'],
+    ['.*_nonicsd.*'],
 ]
 
 runs.XRD.title = 'Magnetic Properties'
+runs.XRD.sftp = False

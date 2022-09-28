@@ -987,7 +987,7 @@ For a non-Vision tutorial, see our full [end-to-end example](https://www.github.
 Note: You can also specify an independent test dataset with ```TestDataset=```. Here is an in-depth example:
 
 ```console
-# 1. Train and evaluate on MNIST over 1200 steps, saving the checkpoint
+# 1. Train and evaluate on MNIST over 1200 steps, automatically saving the checkpoint
 python Run.py task=classify/mnist train_steps=1200
 
 # 2. Explicitly evaluate on MNIST (or another dataset of your choosing), loading the checkpoint
