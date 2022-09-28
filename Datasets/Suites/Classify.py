@@ -58,7 +58,7 @@ class Classify:
 
     """
     def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False,
-                 batch_size=32, num_workers=1, low=None, high=None, seed=None, **kwargs):
+                 batch_size=8, num_workers=1, low=None, high=None, seed=None, frame_stack=0, action_repeat=0, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)

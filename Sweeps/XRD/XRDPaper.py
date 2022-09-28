@@ -713,11 +713,7 @@ runs.XRD.sweep = [
 # runs.XRD.title = 'RRUFF'
 
 runs.XRD.plots = [
-    ['CNN', 'MLP', 'No-Pool-CNN'],
-]
-
-runs.XRD.tasks = [
-    '.*on_MP.*',
+    ['.*icsd.*'],
 ]
 
 runs.XRD.title = 'Magnetic Properties'
