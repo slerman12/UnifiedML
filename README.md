@@ -675,9 +675,9 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 
 Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
 
-You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. Both accept string paths e.g. ```'./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
+You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
 
-Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the default offline classification replays.
+Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the offline classification replays.
 
 </details>
 
@@ -968,16 +968,6 @@ This will initiate a classify task on the custom-defined [```TinyImageNet```](Da
 
 By default, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
 
-You can also specify a different test dataset for independent validation/generalization/evaluation via ```TestDataset=```, and if you only want to do a simple evaluation round from a loaded model, you can add ```load=true train_steps=0``` and the path to the saved checkpoint ```load_path=```.
-
-```console
-# Train and evaluate on MNIST for 1200 steps
-python Run.py task=classify/mnist train_steps=1200
-
-# Explicitly evaluate on MNIST (or another dataset of your choosing)
-python Run.py task=classify/mnist load=true train_steps=0 TestDataset=torchvision.datasets.MNIST load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example 
-```
-
 :exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
 
 <details>
@@ -991,6 +981,16 @@ For a non-Vision tutorial, see our full [end-to-end example](https://www.github.
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
 
 </details>
+
+You can also specify a different test dataset. Here is an in-depth example:
+
+```console
+# (1) Train and evaluate on MNIST for 1200 steps
+python Run.py task=classify/mnist train_steps=1200
+
+# (2) Explicitly evaluate on MNIST (or another dataset of your choosing)
+python Run.py task=classify/mnist load=true train_steps=0 TestDataset=torchvision.datasets.MNIST load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example 
+```
 
 [comment]: <> (For now, a dataset item is assumed to consist of just a &#40;input, label&#41; pair. )
 

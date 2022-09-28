@@ -90,7 +90,7 @@ class ExperienceReplay:
 
         # DataLoader num_workers > 1 speeds up loading data from hard disk via parallelization.
         # For now, num_workers need only be 1 for "offline" since all data is pre-loaded onto CPU from hard disk
-        # before training.
+        # before training, which is faster.
         # The disadvantage of CPU pre-loading is higher CPU memory demand. TODO later: Memory-mapped hard disk loading
         self.num_workers = 1 if offline else max(1, min(num_workers, os.cpu_count()))
 
