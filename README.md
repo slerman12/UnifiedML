@@ -984,7 +984,7 @@ For a non-Vision tutorial, see our full [end-to-end example](https://www.github.
 
 ---
 
-Note: You can also specify an independent test dataset. Here is an in-depth example:
+Note: You can also specify an independent test dataset with ```TestDataset=```. Here is an in-depth example:
 
 ```console
 # 1. Train and evaluate on MNIST over 1200 steps
