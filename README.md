@@ -982,13 +982,13 @@ For a non-Vision tutorial, see our full [end-to-end example](https://www.github.
 
 </details>
 
-You can also specify a different test dataset. Here is an in-depth example:
+Note: You can also specify an independent test dataset. Here is an in-depth example:
 
 ```console
-# (1) Train and evaluate on MNIST for 1200 steps
+# 1. Train and evaluate on MNIST for 1200 steps
 python Run.py task=classify/mnist train_steps=1200
 
-# (2) Explicitly evaluate on MNIST (or another dataset of your choosing)
+# 2. Explicitly evaluate on MNIST (or another dataset of your choosing)
 python Run.py task=classify/mnist load=true train_steps=0 TestDataset=torchvision.datasets.MNIST load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example 
 ```
 
