@@ -49,13 +49,14 @@ class SuperMario:
     Can optionally include a frame_stack, action_repeat method.
 
     """
-    def __init__(self, task='SuperMarioBros-1-1-v0', seed=0, frame_stack=3, action_repeat=4,
+    def __init__(self, world=1, stage=1, version='v0', seed=0, frame_stack=4, action_repeat=4,
                  screen_size=84, color='grayscale', last_2_frame_pool=False, **kwargs):
         self.episode_done = False
 
         # Make env
 
         # task = SuperMarioBros-[World]-[Stage]-[Version]: SuperMarioBros-[1 - 8]-[1 - 4]-[0 - 3]
+        task = f'SuperMarioBros-{world}-{stage}-{version}'
 
         # Load task
         with warnings.catch_warnings():

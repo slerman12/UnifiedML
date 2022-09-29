@@ -998,6 +998,51 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 
 </details>
 
+### Custom Environment
+
+As an example of custom environments, we provide the Super Mario Bros game environment in [./Datasets/Suites/SuperMario.py](Datasets/Suites/SuperMario.py).
+
+To use it, you can just pass in the path to ```Env=``` and specify the ```suite``` and the ```task_name``` to names of your choosing:
+
+```console
+python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_name=Mario
+```
+
+![alt text](https://pytorch.org/tutorials/_images/mario.gif)
+
+Note that if any hyper-params you don't specify will be inherited from the default task, in this case ```atari/pong```, or whichever task is selected.
+
+If you want to save a Hyperparams file and formally define a task, you can create a file like [./Hyperparams/task/mario.yaml](Hyperparams/task/mario.yaml) in the [./Hyperparams/task](Hyperparams/task) directory:
+
+```ruby
+defaults:
+      - _self_
+    
+Env: Datasets.Suites.SuperMario.SuperMario
+suite: SuperMario
+task_name: Mario
+discrete: true
+action_repeat: 4
+truncate_episode_steps: 250
+nstep: 10
+frame_stack: 4
+train_steps: 500000
+stddev_schedule: 'linear(1.0,0.1,20000)'
+
+# Mario has two augmentations
+aug:
+    _target_: Utils.Sequential
+    _targets_: [RandomShiftsAug, IntensityAug]
+    pad: 4
+    noise: 0.05
+```
+
+Now you can launch Mario with:
+
+```console
+python Run.py task=mario
+```
+
 ### Experiment naming, plotting
 
 <details>

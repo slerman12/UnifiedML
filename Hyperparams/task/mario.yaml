@@ -3,7 +3,7 @@ defaults:
     
 Env: Datasets.Suites.SuperMario.SuperMario
 suite: SuperMario
-task_name: 'SuperMarioBros-1-1-v0'
+task_name: Mario
 discrete: true
 action_repeat: 4
 truncate_episode_steps: 250
