@@ -1002,7 +1002,7 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 
 <details>
 <summary>
-:mag: <i>Let there be light</i>
+:mag: <i>Click to let there be light</i>
 </summary>
 <br>
 
