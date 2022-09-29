@@ -972,10 +972,18 @@ If you want to save Hyperparams and formally define a task, you can create files
 ```ruby
 # ./Hyperparams/task/mario.yaml
 defaults:
-   - _self_
+  - _self_
+
 Env: Datasets.Suites.SuperMario.SuperMario
 suite: SuperMario
 task_name: Mario
+discrete: true
+action_repeat: 4
+truncate_episode_steps: 250
+nstep: 10
+frame_stack: 4
+train_steps: 500000
+stddev_schedule: 'linear(1.0,0.1,20000)'
 ```
 
 Now you can launch Mario with:
