@@ -1014,7 +1014,10 @@ To use it, you can just pass in the path to ```Env=``` and specify the ```suite`
 python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_name=Mario
 ```
 
-![alt text](https://pytorch.org/tutorials/_images/mario.gif)
+<p align="left">
+<img src="https://pytorch.org/tutorials/_images/mario.gif" width="180">
+<br><i>A Mario agent trained via DQN.</i>
+</p>
 
 Any hyper-params you don't specify will be inherited from the default task, ```atari/pong```, or whichever task is selected.
 
