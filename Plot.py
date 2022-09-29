@@ -85,7 +85,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         suite_task, seed, eval = '_'.join(task_seed[:-2]), task_seed[-2], task_seed[-1].replace('.csv', '')
 
         # Map suite names to properly-cased names
-        suite = {k.lower(): k for k in ['Atari', 'DMC', 'Classify']}[suite.lower()]
+        suite = {k.lower(): k for k in ['Atari', 'DMC', 'Classify']}.get(suite.lower(), suite)
 
         # Whether to include this CSV
         include = True
@@ -277,7 +277,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         fig.suptitle(title)
 
     # Sort suites
-    found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found]
+    found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found] + \
+                   [found for found in found_suites if found not in ['Atari', 'DMC', 'Classify']]
 
     # Plot suites
     for col, suite in enumerate(found_suites):
@@ -455,7 +456,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 width = p.get_width()
                 height = p.get_height()
                 x, y = p.get_xy()
-                ax.annotate('{:.0f}'.format(height) if suite.lower() == 'dmc' else f'{height:.0%}',
+                ax.annotate('{:.0f}'.format(height) if suite.lower() not in ['atari', 'classify'] else f'{height:.0%}',
                             (x + width/2, y + height), ha='center', size=max(min(24 * width, 7), 5),  # No max(keep, 5)?
                             # color='#498057'
                             # color='#3b423d'
@@ -546,7 +547,7 @@ high = {**atari_human}
 
 if __name__ == "__main__":
 
-    @hydra.main(config_path='Hyperparams', config_name='args')
+    @hydra.main(config_path='Hyperparams', config_name='args')  # Note: This still outputs a hydra params file
     def main(args):
         OmegaConf.set_struct(args, False)
         del args.plotting['_target_']
