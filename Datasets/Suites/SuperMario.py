@@ -185,7 +185,8 @@ class SuperMario:
         return self.exp
 
     def render(self):
-        return self.env.render(mode='rgb_array')  # rgb_array | human
+        return self.exp['obs'][0].transpose(1, 2, 0)
+        # return self.env.render(mode='rgb_array')  # rgb_array | human   <- Bugging out for some reason
 
     def adapt_to_discrete(self, action):
         shape = self.action_spec['shape']
