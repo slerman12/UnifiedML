@@ -23,7 +23,7 @@ runs = template('Example')
 # ]
 #
 runs.Example.plots = [
-    ['Test1'],
+    ['.*Test1'],
 ]
 # runs.Example.title = 'A Good Ol\' Test'
 
