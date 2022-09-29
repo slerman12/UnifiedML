@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import os
+import warnings
 from collections import deque
 
 from dm_env import StepType
@@ -54,6 +55,8 @@ class DMC:
             from dm_control import manipulation, suite
 
         from dm_control.suite.wrappers import action_scale, pixels
+
+        warnings.filterwarnings("ignore", message='.* is deprecated and will be removed in Pillow 10')
 
         domain, task = task.split('_', 1)
 
