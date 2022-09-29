@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 from pathlib import Path
-import imageio  # M1 Mac: comment out freeimage imports in imageio/plugins/_init_
+import imageio  # M1 Mac: Additionally run: conda install imageio imageio-ffmpeg
 
 import torch
 from torchvision.utils import save_image
