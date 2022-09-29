@@ -972,7 +972,7 @@ By default, the task name will appear as the Dataset class name (in the above ex
 
 <details>
 <summary>
-<i>More details :open_book:</i>
+:mountain: <i>Let there be light</i>
 </summary>
 <br>
 
@@ -999,6 +999,12 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 </details>
 
 ### Custom Environment
+
+<details>
+<summary>
+<i>More details :open_book:</i>
+</summary>
+<br>
 
 As an example of custom environments, we provide the Super Mario Bros game environment in [./Datasets/Suites/SuperMario.py](Datasets/Suites/SuperMario.py).
 
@@ -1048,6 +1054,8 @@ python Run.py task=mario
 ```console
 python Run.py task=mario +env.stage=2
 ```
+
+</details>
 
 ### Experiment naming, plotting
 
