@@ -952,7 +952,7 @@ Learning rate schedulers can also be customized as well with ```scheduler=``` an
 </summary>
 <br>
 
-As an example of custom environments, we provide the [Super Mario Bros](https://github.com/Kautenja/gym-super-mario-bros) game environment in [./Datasets/Suites/SuperMario.py](Datasets/Suites/SuperMario.py).
+As an example of custom environments, we provide the [Super Mario Bros.](https://github.com/Kautenja/gym-super-mario-bros) game environment in [./Datasets/Suites/SuperMario.py](Datasets/Suites/SuperMario.py).
 
 To use it, you can just pass in the path to ```Env=``` and specify the ```suite``` and the ```task_name``` to your choosing:
 
