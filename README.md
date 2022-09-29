@@ -972,7 +972,7 @@ By default, the task name will appear as the Dataset class name (in the above ex
 
 <details>
 <summary>
-:mountain: <i>Let there be light</i>
+<i>More details :open_book:</i>
 </summary>
 <br>
 
@@ -1002,7 +1002,7 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 
 <details>
 <summary>
-<i>More details :open_book:</i>
+:mag: <i>Let there be light</i>
 </summary>
 <br>
 
