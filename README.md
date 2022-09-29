@@ -944,60 +944,6 @@ Learning rate schedulers can also be customized as well with ```scheduler=``` an
 
 </details>
 
-### Custom Dataset
-
-<details>
-<summary>
-:mag: <i>Click to read/parse</i>
-</summary>
-<br>
-
-You can pass in a Pytorch Dataset class as follows:
-
-```console
-python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
-```
-
-Another example:
-
-```console
-python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
-```
-
-This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
-
-By default, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
-
-:exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
-
-<details>
-<summary>
-<i>More details :open_book:</i>
-</summary>
-<br>
-
-For a non-Vision tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
-
-> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
-
-</details>
-
----
-
-Note: You can also specify an **independent test dataset** with ```TestDataset=```. Here is an in-depth example:
-
-```console
-# 1. Train and evaluate on MNIST over 1200 steps, automatically saving the checkpoint
-python Run.py task=classify/mnist train_steps=1200
-
-# 2. Explicitly evaluate on MNIST (or another dataset of your choosing), loading the checkpoint
-python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets.MNIST load=true load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example 
-```
-
-[comment]: <> (For now, a dataset item is assumed to consist of just a &#40;input, label&#41; pair. )
-
-</details>
-
 ### Custom Env
 
 <details>
@@ -1059,6 +1005,60 @@ You can also customize params and worlds and stages with the ```+env.``` syntax:
 ```console
 python Run.py task=mario +env.stage=2
 ```
+
+</details>
+
+### Custom Dataset
+
+<details>
+<summary>
+:mag: <i>Click to read/parse</i>
+</summary>
+<br>
+
+You can pass in a Pytorch Dataset class as follows:
+
+```console
+python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
+```
+
+Another example:
+
+```console
+python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
+```
+
+This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset located in [./Datasets/Suites/_TinyImageNet.py](Datasets/Suites/_TinyImageNet.py).
+
+By default, the task name will appear as the Dataset class name (in the above examples, ```MNIST``` and ```TinyImageNet```). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
+
+:exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
+
+<details>
+<summary>
+<i>More details :open_book:</i>
+</summary>
+<br>
+
+For a non-Vision tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+
+> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
+
+</details>
+
+---
+
+Note: You can also specify an **independent test dataset** with ```TestDataset=```. Here is an in-depth example:
+
+```console
+# 1. Train and evaluate on MNIST over 1200 steps, automatically saving the checkpoint
+python Run.py task=classify/mnist train_steps=1200
+
+# 2. Explicitly evaluate on MNIST (or another dataset of your choosing), loading the checkpoint
+python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets.MNIST load=true load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example 
+```
+
+[comment]: <> (For now, a dataset item is assumed to consist of just a &#40;input, label&#41; pair. )
 
 </details>
 
