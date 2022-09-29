@@ -1043,6 +1043,12 @@ Now you can launch Mario with:
 python Run.py task=mario
 ```
 
+:exclamation: You can also pass in custom params and worlds and stages with the ```+env.``` syntax:
+
+```console
+python Run.py task=mario +env.stage=2
+```
+
 ### Experiment naming, plotting
 
 <details>
