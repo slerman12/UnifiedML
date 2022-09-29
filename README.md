@@ -26,7 +26,7 @@
 
 [comment]: <> (> A library for **reinforcement learning**, **supervised learning**, and **generative modeling**. And eventually, full-general intelligence.)
 
-# :runner: Run Anything
+# :runner: Running The Code
 
 To start a train session, once [installed](#wrench-setting-up):
 
@@ -998,7 +998,7 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 
 </details>
 
-### Custom Environment
+### Custom Env
 
 <details>
 <summary>
