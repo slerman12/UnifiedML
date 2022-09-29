@@ -1008,7 +1008,7 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 
 As an example of custom environments, we provide the Super Mario Bros game environment in [./Datasets/Suites/SuperMario.py](Datasets/Suites/SuperMario.py).
 
-To use it, you can just pass in the path to ```Env=``` and specify the ```suite``` and the ```task_name``` to names of your choosing:
+To use it, you can just pass in the path to ```Env=``` and specify the ```suite``` and the ```task_name``` to your choosing:
 
 ```console
 python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_name=Mario
@@ -1016,11 +1016,13 @@ python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_na
 
 ![alt text](https://pytorch.org/tutorials/_images/mario.gif)
 
-Note that if any hyper-params you don't specify will be inherited from the default task, in this case ```atari/pong```, or whichever task is selected.
+Any hyper-params you don't specify will be inherited from the default task, ```atari/pong```, or whichever task is selected.
 
-If you want to save a Hyperparams file and formally define a task, you can create a file like [./Hyperparams/task/mario.yaml](Hyperparams/task/mario.yaml) in the [./Hyperparams/task](Hyperparams/task) directory:
+If you want to save Hyperparams and formally define a task, you can create files like [./Hyperparams/task/mario.yaml](Hyperparams/task/mario.yaml) in the [./Hyperparams/task/](Hyperparams/task) directory:
 
 ```ruby
+# ./Hyperparams/task/mario.yaml
+
 defaults:
       - _self_
     
@@ -1049,7 +1051,7 @@ Now you can launch Mario with:
 python Run.py task=mario
 ```
 
-:exclamation: You can also pass in custom params and worlds and stages with the ```+env.``` syntax:
+You can also customize params and worlds and stages with the ```+env.``` syntax:
 
 ```console
 python Run.py task=mario +env.stage=2
