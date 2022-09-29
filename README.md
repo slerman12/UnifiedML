@@ -961,7 +961,7 @@ python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_na
 ```
 
 <p align="left">
-<img src="https://pytorch.org/tutorials/_images/mario.gif" width="180">
+<img src="https://i.imgur.com/12cLAs4.gifv" width="180">
 <br><i>Mario trained via DQN.</i>
 </p>
 
