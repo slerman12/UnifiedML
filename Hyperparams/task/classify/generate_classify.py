@@ -19,10 +19,7 @@ if __name__ == '__main__':
     out = ""
     for task, dataset_path in zip(names, paths):
         f = open(f"./{task.lower()}.yaml", "w")
-        f.write(fr"""defaults:
-      - _self_
-    
-Env: Datasets.Suites.Classify.Classify
+        f.write(fr"""Env: Datasets.Suites.Classify.Classify
 Dataset: {dataset_path}
 environment:
     dataset: ${{dataset}}

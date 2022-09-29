@@ -1,6 +1,3 @@
-defaults:
-      - _self_
-    
 Env: Datasets.Suites.Atari.Atari
 suite: atari
 task_name: Asteroids
