@@ -13,22 +13,24 @@ Structure of runs:
 """
 
 
-# from Sweeps.Templates import template
-#
-#
-# runs = template('Example')
-#
+from Sweeps.Templates import template
+
+
+runs = template('Example')
+
 # runs.Example.sweep = [
 #     'experiment=Test1 task=classify/mnist train_steps=2000'
 # ]
 #
-# runs.Example.plots = [
-#     ['Test1'],
-# ]
+runs.Example.plots = [
+    ['Test1'],
+]
 # runs.Example.title = 'A Good Ol\' Test'
 
+runs.Example.bluehive = False
 
-from Sweeps.XRD.XRDPaper import runs
+
+# from Sweeps.XRD.XRDPaper import runs
 # from Sweeps.UnifiedML.ClassifyRL import runs
 
 
