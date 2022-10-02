@@ -35,7 +35,10 @@ if __name__ == '__main__':
     out = ""
     for task in atari_tasks:
         f = open(f"./{task.lower()}.yaml", "w")
-        f.write(r"""Env: Datasets.Suites.Atari.Atari
+        f.write(r"""defaults:
+  - _self_
+
+Env: Datasets.Suites.Atari.Atari
 suite: atari
 task_name: {}
 discrete: true
