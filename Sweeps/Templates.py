@@ -64,4 +64,4 @@ atari_tasks = [
     'KungFuMaster', 'MsPacman', 'Pong', 'PrivateEye', 'Qbert', 'RoadRunner',
     'Seaquest', 'UpNDown'
 ]
-full_atari = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
+atari_26 = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
