@@ -23,7 +23,8 @@ def template(name):
             'bluehive_only': [],
             'tasks': [],
             'agents': [],
-            'suites': []},
+            'suites': [],
+            'description': ''},
     })
 
 

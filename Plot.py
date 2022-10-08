@@ -159,6 +159,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     while len(found_suite_tasks) % num_rows != 0:
         num_rows -= 1
     num_cols = len(found_suite_tasks) // num_rows
+    extra = 0
+
+    if num_cols / num_rows > 5:
+        num_cols = int(np.ceil(np.sqrt(len(found_suite_tasks))))
+        num_rows = int(np.ceil(len(found_suite_tasks) / num_cols))
+        extra = num_rows * num_cols - len(found_suite_tasks)
 
     # Create subplots
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
@@ -182,6 +188,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         col = i % num_cols
         ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
             else axs[row] if num_rows > 1 else axs
+
+        if row == num_rows - 1 and col > num_cols - 1 - extra:
+            break
 
         # Format title
         ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
@@ -259,6 +268,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Universal legend
     # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
     #                          borderaxespad=0, frameon=False).set_title('Agent')
+
+    for i in range(extra):
+        fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
 
     plt.tight_layout()
     plt.savefig(path / (plot_name + 'Tasks.png'))
@@ -411,7 +423,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                           for task in set(bar_data[suite]['Task'])])
 
         # Create subplots
-        fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * (num_cols + num_rows) / 2, 3))  # Size
+        fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))  # Size
 
         # Title
         if title is not None:

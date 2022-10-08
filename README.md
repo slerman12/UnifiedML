@@ -971,6 +971,9 @@ If you want to save Hyperparams and formally define a task, you can create files
 
 ```ruby
 # ./Hyperparams/task/mario.yaml
+defaults:
+  - _self_
+
 Env: Datasets.Suites.SuperMario.SuperMario
 suite: SuperMario
 task_name: Mario
