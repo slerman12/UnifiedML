@@ -130,7 +130,8 @@ for plot_train in [False, True]:
              plot_agents=plot_specs.agents if len(plot_specs.agents) else None,
              plot_suites=plot_specs.suites if len(plot_specs.suites) else None,
              plot_tasks=plot_specs.tasks if len(plot_specs.tasks) else None,
-             steps=plot_specs.steps if plot_specs.steps else np.inf, write_tabular=False, plot_train=plot_train,
+             steps=plot_specs.steps if plot_specs.steps else np.inf,
+             write_tabular=plot_specs.write_tabular, plot_train=plot_train,
              title=plot_specs.title, x_axis=plot_specs.x_axis,
              verbose=True
              )

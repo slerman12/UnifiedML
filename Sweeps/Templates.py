@@ -17,6 +17,7 @@ def template(name):
             'sftp': True,
             'bluehive': True,
             'lab': True,
+            'write_tabular': False,
             'steps': 5e5,
             'title': name,
             'x_axis': 'Step',
