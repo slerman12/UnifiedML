@@ -11,7 +11,8 @@ mem: 20
 time: '5-00:00:00'
 lab: false
 reservation_id: null
-task: mario  # Must set manually for non <suite>/<task_name> task-directory structures
+task: ${suite}/${task_name}
+#task: mario  # Must set manually for non <suite>/<task_name> task-directory structures! - Don't forget to push to GitHub
 
 hydra:
   run:

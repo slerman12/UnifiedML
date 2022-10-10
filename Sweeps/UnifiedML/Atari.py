@@ -27,13 +27,13 @@ runs = {'UnifiedML': {
         # f'save_per_steps=500000 '
         # f'reservation_id=20220929 ',
 
-        f'train_steps=2000000 '
-        f'task=mario '
-        f'experiment="Mario" '
-        f'logger.wandb=true '
-        f'time="12-00:00:00" '
-        f'save_per_steps=500000 '
-        f'reservation_id=20220929 '
+        # f'train_steps=2000000 '
+        # f'task=mario '
+        # f'experiment="Mario" '
+        # f'logger.wandb=true '
+        # f'time="12-00:00:00" '
+        # f'save_per_steps=500000 '
+        # f'reservation_id=20220929 '
 
         # f'train_steps=2000000 '
         # f'task=mario '
@@ -44,16 +44,16 @@ runs = {'UnifiedML': {
         # f'time="12-00:00:00" '
         # f'save_per_steps=500000 '
         # f'reservation_id=20220929 '
-        #
-        # f'train_steps=2000000 '
-        # f'task={atari_26} '
-        # f'experiment="Atari-26 Continuous" '
-        # f'Agent=Agents.AC2Agent '
-        # f'discrete=false '
-        # f'logger.wandb=true '
-        # f'time="12-00:00:00" '
-        # f'save_per_steps=500000 '
-        # f'reservation_id=20220929 ',
+
+        f'train_steps=2000000 '
+        f'task={atari_26} '
+        f'experiment="Atari-26 Continuous" '
+        f'Agent=Agents.AC2Agent '
+        f'discrete=false '
+        f'logger.wandb=true '
+        f'time="12-00:00:00" '
+        f'save_per_steps=500000 '
+        f'reservation_id=20220929 ',
 
         # Retry - some crashed I guess
         # f'train_steps=1500000 '
