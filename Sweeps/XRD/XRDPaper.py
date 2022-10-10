@@ -1079,4 +1079,4 @@ runs.XRD.plots = [
 ]
 
 runs.XRD.title = 'Magnetic Properties'
-# runs.XRD.sftp = False
+runs.XRD.sftp = False

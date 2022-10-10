@@ -422,7 +422,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                                    if bar_data[suite]['Task'][i] == task])) for suite in bar_data
                           for task in set(bar_data[suite]['Task'])])
 
-        # Create subplots
+        # Create bar subplots [Can edit width here figsize=(width, height)]
         fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))  # Size
 
         # Title

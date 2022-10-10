@@ -42,6 +42,9 @@ def main(args):
         if 'task=classify/custom' in sys.argv[1:]:
             args.task = 'classify/custom'
 
+        if 'task=supermario/mario' in sys.argv[1:]:
+            args.task = 'mario'  # Careful, custom suites/tasks might break
+
     if 'transform' in sys_args:
         args.transform = f'"{args.transform}"'.replace("'", '')
 
