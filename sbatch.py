@@ -33,6 +33,8 @@ def getattr_recursive(__o, name):
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
 def main(args):
+    print(args.task_name)
+    print(args.task)
     path = args.logger.path
     Path(path).mkdir(parents=True, exist_ok=True)
 
