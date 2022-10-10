@@ -48,7 +48,7 @@ runs = {'UnifiedML': {
 
         f'train_steps=2000000 '
         f'task=mario '
-        f'experiment="Self-Supervised Mario" '
+        f'experiment="Self-Supervised_Mario" '  # Bash scripts seem to break on spaces; either sue special char or sub _
         f'Agent=Agents.AC2Agent '
         f'+agent.depth=5 '
         f'logger.wandb=true '
