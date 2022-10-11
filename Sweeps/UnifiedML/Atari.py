@@ -38,7 +38,7 @@ runs = {'UnifiedML': {
 
         # f'train_steps=2000000 '
         # f'task={atari_26} '
-        # f'experiment="Atari-26 Continuous" '
+        # f'experiment="Atari-26_Continuous" '  # Bash scripts seem to break on spaces; either use special char or sub _
         # f'Agent=Agents.AC2Agent '
         # f'discrete=false '
         # f'logger.wandb=true '
@@ -46,16 +46,16 @@ runs = {'UnifiedML': {
         # f'save_per_steps=500000 '
         # f'reservation_id=20220929 ',
 
-        f'train_steps=2000000 '
-        f'task=mario '
-        f'experiment="Self-Supervised_Mario" '  # Bash scripts seem to break on spaces; either sue special char or sub _
-        f'Agent=Agents.AC2Agent '
-        f'+agent.depth=5 '
-        f'logger.wandb=true '
-        f'time="12-00:00:00" '
-        f'save_per_steps=500000 '
-        f'reservation_id=20220929 '
-        f'task_dir=mario '
+        # f'train_steps=2000000 '
+        # f'task=mario '
+        # f'experiment="Self-Supervised_Mario" '  # Bash scripts seem to break on spaces; either use special char or sub _
+        # f'Agent=Agents.AC2Agent '
+        # f'+agent.depth=5 '
+        # f'logger.wandb=true '
+        # f'time="12-00:00:00" '
+        # f'save_per_steps=500000 '
+        # f'reservation_id=20220929 '
+        # f'task_dir=mario '
 
         # Retry - some crashed I guess
         # f'train_steps=1500000 '
@@ -69,6 +69,9 @@ runs = {'UnifiedML': {
     ],
     'plots': [
         ['Atari-30'],  # I named it inconsistently
+        ['Mario'],
+        ['Self-Supervised_Mario'],
+        ['Atari-26_Continuous'],
     ],
     'sftp': False,
     'bluehive': True,
@@ -78,12 +81,12 @@ runs = {'UnifiedML': {
     'title': 'Mario',
     'x_axis': 'Step',
     'bluehive_only': [],
-    # 'tasks': ['Alien', 'Amidar', 'Assault', 'Asterix', 'BankHeist', 'BattleZone',
-    #           'Boxing', 'Breakout', 'ChopperCommand', 'CrazyClimber', 'DemonAttack',
-    #           'Freeway', 'Frostbite', 'Gopher', 'Hero', 'Jamesbond', 'Kangaroo', 'Krull',
-    #           'KungFuMaster', 'MsPacman', 'Pong', 'PrivateEye', 'Qbert', 'RoadRunner',
-    #           'Seaquest', 'UpNDown'],
-    'tasks': ['Mario'],
+    'tasks': ['Alien', 'Amidar', 'Assault', 'Asterix', 'BankHeist', 'BattleZone',
+              'Boxing', 'Breakout', 'ChopperCommand', 'CrazyClimber', 'DemonAttack',
+              'Freeway', 'Frostbite', 'Gopher', 'Hero', 'Jamesbond', 'Kangaroo', 'Krull',
+              'KungFuMaster', 'MsPacman', 'Pong', 'PrivateEye', 'Qbert', 'RoadRunner',
+              'Seaquest', 'UpNDown', 'Mario'],
+    # 'tasks': ['Mario'],
     'agents': [],
     'suites': []}
 }

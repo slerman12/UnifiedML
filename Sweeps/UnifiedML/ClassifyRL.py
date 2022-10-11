@@ -50,16 +50,17 @@ runs = {'UnifiedML': {
     ],
     'plots': [
         # Classify + RL
-        ['Classify+RL.*', 'Classify'],
+        ['Classify+RL_supervise-False.*', 'Classify'],
     ],
-    'sftp': True,
+    'sftp': False,
     'bluehive': False,
     'lab': True,
-    'steps': 2e5,
+    'steps': None,
     'title': 'UnifiedML',
     'x_axis': 'Step',
     'bluehive_only': [],
     'tasks': [],
     'agents': [],
-    'suites': []}
+    'suites': [],
+    'write_tabular': False}
 }

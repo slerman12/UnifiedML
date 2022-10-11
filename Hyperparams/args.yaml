@@ -209,24 +209,46 @@ optim:
 scheduler:
   _target_: ${Scheduler}
 
+encoder:
+  optim:
+    _target_: null
+    _default_: ${optim}
+  scheduler:
+    _target_: null
+    _default_: ${scheduler}
+actor:
+  optim:
+    _target_: null
+    _default_: ${optim}
+  scheduler:
+    _target_: null
+    _default_: ${scheduler}
+critic:
+  optim:
+    _target_: null
+    _default_: ${optim}
+  scheduler:
+    _target_: null
+    _default_: ${scheduler}
+
 # Recipes
 _recipes:
   aug: ${aug}
   encoder:
     Eyes: ${eyes}
     pool: ${pool}
-    optim: ${optim}
-    scheduler: ${scheduler}
+    optim: ${encoder.optim}
+    scheduler: ${encoder.scheduler}
   actor:
     trunk: ${pi_trunk}
     Pi_head: ${pi_head}
-    optim: ${optim}
-    scheduler: ${scheduler}
+    optim: ${actor.optim}
+    scheduler: ${actor.scheduler}
   critic:
     trunk: ${q_trunk}
     Q_head: ${q_head}
-    optim: ${optim}
-    scheduler: ${scheduler}
+    optim: ${critic.optim}
+    scheduler: ${critic.scheduler}
 
 recipes: ${allow_objects:${_recipes}}
 
