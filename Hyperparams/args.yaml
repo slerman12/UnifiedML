@@ -167,6 +167,7 @@ plotting:
 
 # Can optionally pass in custom architectures, optimizers, schedulers, etc.
 
+# Shorthands for recipes
 Aug: null  # Shorthand for recipes.aug._target_
 
 Eyes: null  # Shorthand for recipes.encoder.eyes._target_
@@ -183,7 +184,7 @@ Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 Optim: null  # Shorthand for recipes.<block>.optim._target_ ,  e.g. python Run.py Optim=Utils.torch.optim.SGD
 Scheduler: null  # Shorthand for recipes.<block>.scheduler._target_
 
-# Shorthands for recipes
+# Architectural parts
 aug:
   _target_: ${Aug}
 eyes:
@@ -204,11 +205,14 @@ discriminator:  # Shorthand for q_head
   _target_: ${Q_head}
 q_head:
   _default_: ${discriminator}
+
+# Global optimizers
 optim:
   _target_: ${Optim}
 scheduler:
   _target_: ${Scheduler}
 
+# Per-block optimizers
 encoder:
   Optim: null
   Scheduler: null
