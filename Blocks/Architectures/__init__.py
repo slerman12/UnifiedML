@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-from Blocks.Architectures.MLP import MLP
+from Blocks.Architectures.MLP import MLP, Dense
 
 from Blocks.Architectures.Vision.CNN import CNN
 

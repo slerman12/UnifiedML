@@ -48,3 +48,9 @@ class MLP(nn.Module):
             else -len(self.input_shape)
 
         return self.MLP(obs.flatten(flatten))  # Auto-flatten if needed
+
+
+class Dense(MLP):
+    """A linear layer"""
+    def __init__(self, input_shape=128, output_dim=1024):
+        super().__init__(input_shape, output_dim, depth=0)

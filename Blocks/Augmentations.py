@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 
 class RandomShiftsAug(nn.Module):
-    def __init__(self, pad):
+    def __init__(self, pad=4):
         super().__init__()
         self.pad = pad
 

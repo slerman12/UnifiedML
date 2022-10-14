@@ -85,7 +85,7 @@ class Perceiver(nn.Module):
 
             self.output_attention = AttentionBlock(self.token_dim, num_heads, self.token_dim, channels_first=False)
 
-            self.MLP = MLP(self.token_dim, 1, self.token_dim, activation=nn.GELU())
+            self.MLP = MLP(self.token_dim, 1, self.token_dim, 1, activation=nn.GELU())
 
     def repr_shape(self, *_):
         # Passed-in output dim, or same shape as tokens

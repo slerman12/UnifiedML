@@ -342,7 +342,8 @@ class Sequential(nn.Module):
         modules = nn.ModuleList()
 
         for _target_ in _targets_:
-            modules.append(instantiate(OmegaConf.create({'_target_': _target_}), i, **kwargs))
+            modules.append(instantiate(OmegaConf.create({'_target_': _target_}) if isinstance(_target_, str)
+                                       else _target_, i, **kwargs))
 
             if 'input_shape' in kwargs:
                 kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])

@@ -19,13 +19,14 @@ atari_retry = f'atari/{",atari/".join([a.lower() for a in atari_retry])}'
 
 runs = {'UnifiedML': {
     'sweep': [
-        # f'train_steps=2000000 '
-        # f'task={atari_28} '
-        # f'experiment="Atari-30" '
-        # f'logger.wandb=true '
-        # f'time="12-00:00:00" '
-        # f'save_per_steps=500000 '
-        # f'reservation_id=20220929 ',
+        f'train_steps=500000 '  # Changed from 2000000 to add 500000
+        f'task={atari_26} '
+        f'experiment="Atari-30" '  # Originally did 30
+        f'logger.wandb=true '
+        f'time="12-00:00:00" '
+        f'save_per_steps=500000 '
+        f'reservation_id=20220929 '
+        f'load=true ',
 
         # f'train_steps=2000000 '
         # f'task=mario '
@@ -73,7 +74,7 @@ runs = {'UnifiedML': {
         ['Self-Supervised_Mario'],
         ['Atari-26_Continuous'],
     ],
-    'sftp': False,
+    'sftp': True,
     'bluehive': True,
     'lab': False,
     'write_tabular': True,

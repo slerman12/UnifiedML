@@ -52,10 +52,10 @@ runs = {'UnifiedML': {
         # Classify + RL
         ['Classify+RL_supervise-False.*', 'Classify'],
     ],
-    'sftp': False,
+    'sftp': True,
     'bluehive': False,
     'lab': True,
-    'steps': None,
+    'steps': 2000000,
     'title': 'UnifiedML',
     'x_axis': 'Step',
     'bluehive_only': [],
