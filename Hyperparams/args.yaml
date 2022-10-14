@@ -142,6 +142,7 @@ logger:
   seed: ${seed}
   generate: ${generate}
   aggregation: mean
+  log_actions: false
   wandb: false
 
 vlogger:

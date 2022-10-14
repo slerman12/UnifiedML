@@ -10,6 +10,8 @@ environment:
     high: 1
     batch_size: ${batch_size}
     num_workers: ${num_workers}
+logger:
+    log_actions: true
 suite: classify
 task_name: VOCSegmentation
 discrete: false
