@@ -516,8 +516,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 palette[agent] = palette_colors[len(universal_hue_order) + i]
                 i += 1
 
-        df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task', 'Seed']).size().to_frame('Size').reset_index()
+        df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task', 'Seed']).size().to_frame('Count').reset_index()
         df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task']).mean().reset_index()
+        df['Accuracy'] = 0
+        df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
+
+        df = df.groupby(['Actual', 'Agent', 'Task']).agg({'Accuracy': 'mean', 'Count': 'sum'}).reset_index()
+        df = df.rename(columns={'Actual': 'Class_Label'})
+
+        df["Count"] = df["Count"].astype(int)
 
         # PLOTTING (confusion matrix)
 
@@ -581,7 +588,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             hue_order = np.sort(task_data.Agent.unique())
             sns.scatterplot(
-                data=task_data, x="Predicted", y="Actual", hue="Agent", size="Size",
+                data=task_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
+                alpha=0.8,
                 hue_order=hue_order, ax=ax, palette=short_palette
             )
             ax.set_title(f'{ax_title}')
@@ -593,17 +601,25 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             #     ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
             #
             # if 'classify' in suite.lower():
-            #     ax.set_ybound(0, 1)
-            #     ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            #     ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
+            ax.set_ybound(0, 1)
+            ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+            # ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
+            ax.set_ylabel('Eval Accuracy')
+
+            # ax.tick_params(axis='x', rotation=20)
 
             # Legend in subplots
-            ax.legend(frameon=False).set_title(None)
-
-            ax.tick_params(axis='x', rotation=20)
+            # ax.legend(frameon=False).set_title(None)
 
             # Legend next to subplots
+            ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False)
             # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
+            # Legend next to subplots with custom centered title
+            # handles, labels = ax.get_legend_handles_labels()
+            # ax.legend(handles=handles[1:], labels=labels[1:], title='Agent',
+            #           loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0,  # Can comment this out for in-graph legend
+            #           frameon=False)
 
             # Data for universal legend (Note: need to debug if not showing Agent)
             # handle, label = ax.get_legend_handles_labels()
