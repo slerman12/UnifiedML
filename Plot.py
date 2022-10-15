@@ -77,12 +77,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     found_suites = set()
     min_steps = steps
 
+    predicted_vs_actual_list = []
+    found_predicted_vs_actual = set()
+
     # Data recollection/parsing
     for csv_name in csv_names:
         # Parse files
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
-        task_seed = task_seed_eval.split('_')
-        suite_task, seed, eval = '_'.join(task_seed[:-2]), task_seed[-2], task_seed[-1].replace('.csv', '')
+        split_size = 3 if 'Generate' in task_seed_eval else 4 if 'Predicted_vs_Actual' in task_seed_eval else 2
+        task_seed = task_seed_eval.rsplit('_', split_size)
+        suite_task, seed, eval = task_seed[0], task_seed[1], '_'.join(task_seed[2:]).replace('.csv', '')
 
         # Map suite names to properly-cased names
         suite = {k.lower(): k for k in ['Atari', 'DMC', 'Classify']}.get(suite.lower(), suite)
@@ -90,7 +94,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Whether to include this CSV
         include = True
 
-        if (plot_train is (eval.lower() == 'eval')) or eval.lower() == 'seed':
+        if eval.lower() not in ['train' if plot_train else 'eval'] + ['predicted_vs_actual']:
             include = False
 
         datums = [experiment, agent, suite.lower(), suite_task]
@@ -108,331 +112,131 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Add CSV
         csv = pd.read_csv(csv_name)
 
-        length = int(csv['step'].max())
-        if length == 0:
-            continue
+        if 'step' in csv.columns:
+            length = int(csv['step'].max())
+            if length == 0:
+                continue
 
-        # TODO assumes all step brackets are shared
-        # Min number of steps  TODO per suite, task
-        min_steps = min(min_steps, length)
+            # TODO assumes all step brackets are shared
+            # Min number of steps  TODO per suite, task
+            min_steps = min(min_steps, length)
+
+            if verbose and length < steps != np.inf:
+                print(f'[Experiment {experiment} Agent {agent} Suite {suite} Task {suite_task} Seed {seed}] '
+                      f'has {length} steps.')
 
         found_suite_task = suite_task + ' (' + suite + ')'
+
         csv['Agent'] = agent + ' (' + experiment + ')'
         csv['Suite'] = suite
         csv['Task'] = found_suite_task
-
-        if verbose and length < steps != np.inf:
-            print(f'[Experiment {experiment} Agent {agent} Suite {suite} Task {suite_task} Seed {seed}] '
-                  f'has {length} steps.')
+        csv['Seed'] = seed
 
         # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pdf/2108.13264.pdf
         # max_csv = csv.copy()
         # max_csv['reward'] = max_csv[['reward', 'step']].rolling(length, min_periods=1, on='step').max()['reward']
 
-        csv_list.append(csv)
-        # max_csv_list.append(max_csv)
-        found_suite_tasks.update({found_suite_task})
-        found_suites.update({suite})
+        if eval == 'Predicted_vs_Actual':
+            predicted_vs_actual_list.append(csv)
+            found_predicted_vs_actual.update({found_suite_task})
+        else:
+            csv_list.append(csv)
+            # max_csv_list.append(max_csv)
+            found_suite_tasks.update({found_suite_task})
+            found_suites.update({suite})
+
+    universal_hue_order, palette = [], {}
 
     # Non-empty check
-    if len(csv_list) == 0:
-        return
+    if len(csv_list) > 0:
+        df = pd.concat(csv_list, ignore_index=True)
+        # max_df = pd.concat(max_csv_list, ignore_index=True)  # Unused
+        found_suite_tasks = np.sort(list(found_suite_tasks))
 
-    df = pd.concat(csv_list, ignore_index=True)
-    # max_df = pd.concat(max_csv_list, ignore_index=True)  # Unused
-    found_suite_tasks = np.sort(list(found_suite_tasks))
+        tabular_mean = {}
+        tabular_median = {}
+        tabular_normalized_mean = {}
+        tabular_normalized_median = {}
 
-    tabular_mean = {}
-    tabular_median = {}
-    tabular_normalized_mean = {}
-    tabular_normalized_median = {}
+        universal_hue_order, handles = np.sort(df.Agent.unique()), {}
+        palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
 
-    universal_hue_order, handles = np.sort(df.Agent.unique()), {}
-    palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
+        x_axis = x_axis.capitalize()
 
-    x_axis = x_axis.capitalize()
+        # PLOTTING (tasks)
 
-    # PLOTTING (tasks)
+        # Dynamically compute num columns/rows
+        num_rows = int(np.floor(np.sqrt(len(found_suite_tasks))))
+        while len(found_suite_tasks) % num_rows != 0:
+            num_rows -= 1
+        num_cols = len(found_suite_tasks) // num_rows
+        extra = 0
 
-    # Dynamically compute num columns/rows
-    num_rows = int(np.floor(np.sqrt(len(found_suite_tasks))))
-    while len(found_suite_tasks) % num_rows != 0:
-        num_rows -= 1
-    num_cols = len(found_suite_tasks) // num_rows
-    extra = 0
+        if num_cols / num_rows > 5:
+            num_cols = int(np.ceil(np.sqrt(len(found_suite_tasks))))
+            num_rows = int(np.ceil(len(found_suite_tasks) / num_cols))
+            extra = num_rows * num_cols - len(found_suite_tasks)
 
-    if num_cols / num_rows > 5:
-        num_cols = int(np.ceil(np.sqrt(len(found_suite_tasks))))
-        num_rows = int(np.ceil(len(found_suite_tasks) / num_cols))
-        extra = num_rows * num_cols - len(found_suite_tasks)
-
-    # Create subplots
-    fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
-
-    # Title
-    if title is not None:
-        fig.suptitle(title)
-
-    # Plot tasks
-    for i, suite_task in enumerate(found_suite_tasks):
-        task_data = df[df['Task'] == suite_task]
-
-        # Capitalize column names
-        task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
-                             for col_name in task_data.columns]
-
-        if steps < np.inf:
-            task_data = task_data[task_data['Step'] <= steps]
-
-        row = i // num_cols
-        col = i % num_cols
-        ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
-            else axs[row] if num_rows > 1 else axs
-
-        if row == num_rows - 1 and col > num_cols - 1 - extra:
-            break
-
-        # Format title
-        ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
-
-        suite = ax_title.split('(')[1].split(')')[0]
-        task = ax_title.split(' (')[0]
-
-        _x_axis = x_axis if x_axis in task_data.columns else 'Step'
-        y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
-
-        if _x_axis == 'Time':
-            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
-
-        if write_tabular or plot_bar:
-            # Aggregate tabular data over all seeds/runs
-            for agent in task_data.Agent.unique():
-                for tabular in [tabular_mean, tabular_median]:
-                    if agent not in tabular:
-                        tabular[agent] = {}
-                    if suite not in tabular[agent]:
-                        tabular[agent][suite] = {}
-                scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
-                tabular_mean[agent][suite][task] = scores.mean()
-                tabular_median[agent][suite][task] = scores.median()
-                for t in low:
-                    if t.lower() in suite_task.lower():
-                        for tabular in [tabular_normalized_mean, tabular_normalized_median]:
-                            if agent not in tabular:
-                                tabular[agent] = {}
-                            if suite not in tabular[agent]:
-                                tabular[agent][suite] = {}
-                        normalized = (scores - low[t]) / (high[t] - low[t])
-                        tabular_normalized_mean[agent][suite][task] = normalized.mean()
-                        tabular_normalized_median[agent][suite][task] = normalized.median()
-                        break
-
-        # No need to show Agent in legend if all same
-        short_palette = palette
-        if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
-
-        hue_order = np.sort(task_data.Agent.unique())
-        sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                     palette=short_palette
-                     )
-        ax.set_title(f'{ax_title}')
-
-        if _x_axis == 'Time':
-            ax.set_xlabel("Time (h)")
-            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
-            # For now, group x axis into bins only for time
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-
-        if 'classify' in suite.lower():
-            ax.set_ybound(0, 1)
-            ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
-
-        # Legend in subplots
-        ax.legend(frameon=False).set_title(None)
-
-        ax.tick_params(axis='x', rotation=20)
-
-        # Legend next to subplots
-        # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
-
-        # Data for universal legend (Note: need to debug if not showing Agent)
-        # handle, label = ax.get_legend_handles_labels()
-        # handles.update({l: h for l, h in zip(label, handle)})
-        # ax.legend().remove()
-
-    # Universal legend
-    # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-    #                          borderaxespad=0, frameon=False).set_title('Agent')
-
-    for i in range(extra):
-        fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
-
-    plt.tight_layout()
-    plt.savefig(path / (plot_name + 'Tasks.png'))
-
-    plt.close()
-
-    # PLOTTING (suites)
-
-    num_cols = len(found_suites)
-
-    # Create subplots
-    fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
-
-    # Title
-    if title is not None:
-        fig.suptitle(title)
-
-    # Sort suites
-    found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found] + \
-                   [found for found in found_suites if found not in ['Atari', 'DMC', 'Classify']]
-
-    # Plot suites
-    for col, suite in enumerate(found_suites):
-        task_data = df[df['Suite'] == suite]
-
-        # Capitalize column names
-        task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
-                             for col_name in task_data.columns]
-
-        if steps < np.inf:
-            task_data = task_data[task_data['Step'] <= steps]
-
-        _x_axis = x_axis if x_axis in task_data.columns else 'Step'
-        y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
-
-        if _x_axis == 'Time':
-            task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
-
-        # No need to show Agent in legend if all same
-        short_palette = palette
-        if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
-
-        # High-low-normalize
-        for suite_task in task_data.Task.unique():
-            for t in low:
-                if t.lower() in suite_task.lower():
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-
-                        task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
-                        task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
-                        continue
-
-        ax = axs[col] if num_cols > 1 else axs
-
-        hue_order = np.sort(task_data.Agent.unique())
-        sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                     palette=short_palette
-                     )
-        ax.set_title(f'{suite}')
-
-        if _x_axis == 'Time':
-            ax.set_xlabel("Time (h)")
-            ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
-            # For now, group x axis into bins only for time
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-
-        if suite.lower() == 'atari':
-            ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel('Human-Normalized Score')
-        elif suite.lower() == 'dmc':
-            ax.set_ybound(0, 1000)
-        elif suite.lower() == 'classify':
-            ax.set_ybound(0, 1)
-            ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
-
-        # Legend in subplots
-        ax.legend(frameon=False).set_title(None)
-
-        ax.tick_params(axis='x', rotation=20)
-
-        # Legend next to subplots
-        # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
-
-        # ax.legend().remove()
-
-    # Universal legend
-    # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-    #                          borderaxespad=0, frameon=False).set_title('Agent')
-
-    plt.tight_layout()
-    plt.savefig(path / (plot_name + 'Suites.png'))
-
-    plt.close()
-
-    # Tabular data
-    if write_tabular:
-        f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")  # TODO name after steps if provided
-        tabular_data = {'Mean': tabular_mean,
-                        'Median': tabular_median,
-                        'Normalized Mean': tabular_normalized_mean,
-                        'Normalized Median': tabular_normalized_median}
-        # Aggregating across suites
-        for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
-            for name, tabular in zip(['Mean', 'Median', 'Normalized-Mean', 'Normalized-Median'],
-                                     [tabular_mean, tabular_median,
-                                      tabular_normalized_mean, tabular_normalized_median]):
-                tabular_data.update({
-                    f'{agg_name} {name}': {
-                        agent: {
-                            suite:
-                                agg([val for val in tabular[agent][suite].values()])
-                            for suite in tabular[agent]}
-                        for agent in tabular}
-                })
-        json.dump(tabular_data, f, indent=2)
-        f.close()
-
-    # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
-    min_time = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
-    if len(min_time) > 1:
-        x_axis = 'Step'
-        min_time = min_steps
-    else:
-        min_time = min_time[0]
-
-    # Bar plot
-    if plot_bar:
-        bar_data = {suite_name: {'Task': [], 'Median': [], 'Agent': []} for suite_name in found_suites}
-        for agent in tabular_median:
-            for suite in tabular_median[agent]:
-                for task in tabular_median[agent][suite]:
-                    median = tabular_median
-                    for t in low:
-                        if t.lower() == suite.lower() or t.lower() == task.lower():
-                            median = tabular_normalized_median
-                            break
-                    bar_data[suite]['Task'].append(task)
-                    bar_data[suite]['Median'].append(median[agent][suite][task])
-                    bar_data[suite]['Agent'].append(agent)
-
-        # Max agents for a task
-        max_agents = max([len(set([bar_data[suite]['Agent'][i] for i, _ in enumerate(bar_data[suite]['Agent'])
-                                   if bar_data[suite]['Task'][i] == task])) for suite in bar_data
-                          for task in set(bar_data[suite]['Task'])])
-
-        # Create bar subplots [Can edit width here figsize=(width, height)]
-        fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))  # Size
+        # Create subplots
+        fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
 
         # Title
         if title is not None:
             fig.suptitle(title)
 
-        for col, suite in enumerate(bar_data):
-            task_data = pd.DataFrame(bar_data[suite])
+        # Plot tasks
+        for i, suite_task in enumerate(found_suite_tasks):
+            task_data = df[df['Task'] == suite_task]
 
-            ax = axs[col] if num_cols > 1 else axs
+            # Capitalize column names
+            task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
+                                 for col_name in task_data.columns]
+
+            if steps < np.inf:
+                task_data = task_data[task_data['Step'] <= steps]
+
+            row = i // num_cols
+            col = i % num_cols
+            ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
+                else axs[row] if num_rows > 1 else axs
+
+            if row == num_rows - 1 and col > num_cols - 1 - extra:
+                break
+
+            # Format title
+            ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
+
+            suite = ax_title.split('(')[1].split(')')[0]
+            task = ax_title.split(' (')[0]
+
+            _x_axis = x_axis if x_axis in task_data.columns else 'Step'
+            y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
+            if _x_axis == 'Time':
+                task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
+
+            if write_tabular or plot_bar:
+                # Aggregate tabular data over all seeds/runs
+                for agent in task_data.Agent.unique():
+                    for tabular in [tabular_mean, tabular_median]:
+                        if agent not in tabular:
+                            tabular[agent] = {}
+                        if suite not in tabular[agent]:
+                            tabular[agent][suite] = {}
+                    scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
+                    tabular_mean[agent][suite][task] = scores.mean()
+                    tabular_median[agent][suite][task] = scores.median()
+                    for t in low:
+                        if t.lower() in suite_task.lower():
+                            for tabular in [tabular_normalized_mean, tabular_normalized_median]:
+                                if agent not in tabular:
+                                    tabular[agent] = {}
+                                if suite not in tabular[agent]:
+                                    tabular[agent][suite] = {}
+                            normalized = (scores - low[t]) / (high[t] - low[t])
+                            tabular_normalized_mean[agent][suite][task] = normalized.mean()
+                            tabular_normalized_median[agent][suite][task] = normalized.median()
+                            break
 
             # No need to show Agent in legend if all same
             short_palette = palette
@@ -443,45 +247,129 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
             hue_order = np.sort(task_data.Agent.unique())
-            sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                        palette=short_palette
-                        )
+            sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+                         palette=short_palette
+                         )
+            ax.set_title(f'{ax_title}')
 
-            if x_axis.lower() == 'time':
-                time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
-                ax.set_title(f'{suite} (@{time_str}h)')
-            else:
-                ax.set_title(f'{suite} (@{min_time:.0f} {x_axis}s)')
+            if _x_axis == 'Time':
+                ax.set_xlabel("Time (h)")
+                ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
+                # For now, group x axis into bins only for time
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+
+            if 'classify' in suite.lower():
+                ax.set_ybound(0, 1)
+                ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+                ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
+
+            # Legend in subplots
+            ax.legend(frameon=False).set_title(None)
+
+            ax.tick_params(axis='x', rotation=20)
+
+            # Legend next to subplots
+            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
+            # Data for universal legend (Note: need to debug if not showing Agent)
+            # handle, label = ax.get_legend_handles_labels()
+            # handles.update({l: h for l, h in zip(label, handle)})
+            # ax.legend().remove()
+
+        # Universal legend
+        # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
+        #                          borderaxespad=0, frameon=False).set_title('Agent')
+
+        for i in range(extra):
+            fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
+
+        plt.tight_layout()
+        plt.savefig(path / (plot_name + 'Tasks.png'))
+
+        plt.close()
+
+        # PLOTTING (suites)
+
+        num_cols = len(found_suites)
+
+        # Create subplots
+        fig, axs = plt.subplots(1, num_cols, figsize=(4.5 * num_cols, 3))
+
+        # Title
+        if title is not None:
+            fig.suptitle(title)
+
+        # Sort suites
+        found_suites = [found for s in ['Atari', 'DMC', 'Classify'] for found in found_suites if s in found] + \
+                       [found for found in found_suites if found not in ['Atari', 'DMC', 'Classify']]
+
+        # Plot suites
+        for col, suite in enumerate(found_suites):
+            task_data = df[df['Suite'] == suite]
+
+            # Capitalize column names
+            task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
+                                 for col_name in task_data.columns]
+
+            if steps < np.inf:
+                task_data = task_data[task_data['Step'] <= steps]
+
+            _x_axis = x_axis if x_axis in task_data.columns else 'Step'
+            y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+
+            if _x_axis == 'Time':
+                task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
+
+            # No need to show Agent in legend if all same
+            short_palette = palette
+            if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
+            # High-low-normalize
+            for suite_task in task_data.Task.unique():
+                for t in low:
+                    if t.lower() in suite_task.lower():
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+
+                            task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
+                            task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
+                            continue
+
+            ax = axs[col] if num_cols > 1 else axs
+
+            hue_order = np.sort(task_data.Agent.unique())
+            sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
+                         palette=short_palette
+                         )
+            ax.set_title(f'{suite}')
+
+            if _x_axis == 'Time':
+                ax.set_xlabel("Time (h)")
+                ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
+                # For now, group x axis into bins only for time
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
 
             if suite.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-                ax.set_ylabel('Median Human-Normalized')
+                ax.set_ylabel('Human-Normalized Score')
             elif suite.lower() == 'dmc':
                 ax.set_ybound(0, 1000)
-                ax.set_ylabel('Median Reward')
             elif suite.lower() == 'classify':
                 ax.set_ybound(0, 1)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
                 ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
-            for p in ax.patches:
-                width = p.get_width()
-                height = p.get_height()
-                x, y = p.get_xy()
-                ax.annotate('{:.0f}'.format(height) if suite.lower() not in ['atari', 'classify'] else f'{height:.0%}',
-                            (x + width/2, y + height), ha='center', size=max(min(24 * width, 7), 5),  # No max(keep, 5)?
-                            # color='#498057'
-                            # color='#3b423d'
-                            )
+            # Legend in subplots
+            ax.legend(frameon=False).set_title(None)
 
             ax.tick_params(axis='x', rotation=20)
-            ax.set(xlabel=None)
-
-            # Legend in subplots
-            # ax.legend(frameon=False).set_title(None)
 
             # Legend next to subplots
-            ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
 
             # ax.legend().remove()
 
@@ -490,7 +378,247 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         #                          borderaxespad=0, frameon=False).set_title('Agent')
 
         plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Bar.png'))
+        plt.savefig(path / (plot_name + 'Suites.png'))
+
+        plt.close()
+
+        # Tabular data
+        if write_tabular:
+            f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")  # TODO name after steps if provided
+            tabular_data = {'Mean': tabular_mean,
+                            'Median': tabular_median,
+                            'Normalized Mean': tabular_normalized_mean,
+                            'Normalized Median': tabular_normalized_median}
+            # Aggregating across suites
+            for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
+                for name, tabular in zip(['Mean', 'Median', 'Normalized-Mean', 'Normalized-Median'],
+                                         [tabular_mean, tabular_median,
+                                          tabular_normalized_mean, tabular_normalized_median]):
+                    tabular_data.update({
+                        f'{agg_name} {name}': {
+                            agent: {
+                                suite:
+                                    agg([val for val in tabular[agent][suite].values()])
+                                for suite in tabular[agent]}
+                            for agent in tabular}
+                    })
+            json.dump(tabular_data, f, indent=2)
+            f.close()
+
+        # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
+        min_time = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
+        if len(min_time) > 1:
+            x_axis = 'Step'
+            min_time = min_steps
+        else:
+            min_time = min_time[0]
+
+        # Bar plot
+        if plot_bar:
+            bar_data = {suite_name: {'Task': [], 'Median': [], 'Agent': []} for suite_name in found_suites}
+            for agent in tabular_median:
+                for suite in tabular_median[agent]:
+                    for task in tabular_median[agent][suite]:
+                        median = tabular_median
+                        for t in low:
+                            if t.lower() == suite.lower() or t.lower() == task.lower():
+                                median = tabular_normalized_median
+                                break
+                        bar_data[suite]['Task'].append(task)
+                        bar_data[suite]['Median'].append(median[agent][suite][task])
+                        bar_data[suite]['Agent'].append(agent)
+
+            # Max agents for a task
+            max_agents = max([len(set([bar_data[suite]['Agent'][i] for i, _ in enumerate(bar_data[suite]['Agent'])
+                                       if bar_data[suite]['Task'][i] == task])) for suite in bar_data
+                              for task in set(bar_data[suite]['Task'])])
+
+            # Create bar subplots [Can edit width here figsize=(width, height)]
+            fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))  # Size
+
+            # Title
+            if title is not None:
+                fig.suptitle(title)
+
+            for col, suite in enumerate(bar_data):
+                task_data = pd.DataFrame(bar_data[suite])
+
+                ax = axs[col] if num_cols > 1 else axs
+
+                # No need to show Agent in legend if all same
+                short_palette = palette
+                if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                        task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                        short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
+                hue_order = np.sort(task_data.Agent.unique())
+                sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
+                            palette=short_palette
+                            )
+
+                if x_axis.lower() == 'time':
+                    time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
+                    ax.set_title(f'{suite} (@{time_str}h)')
+                else:
+                    ax.set_title(f'{suite} (@{min_time:.0f} {x_axis}s)')
+
+                if suite.lower() == 'atari':
+                    ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+                    ax.set_ylabel('Median Human-Normalized')
+                elif suite.lower() == 'dmc':
+                    ax.set_ybound(0, 1000)
+                    ax.set_ylabel('Median Reward')
+                elif suite.lower() == 'classify':
+                    ax.set_ybound(0, 1)
+                    ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+                    ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
+
+                for p in ax.patches:
+                    width = p.get_width()
+                    height = p.get_height()
+                    x, y = p.get_xy()
+                    ax.annotate('{:.0f}'.format(height) if suite.lower() not in ['atari', 'classify'] else f'{height:.0%}',
+                                (x + width/2, y + height), ha='center', size=max(min(24 * width, 7), 5),  # No max(keep, 5)?
+                                # color='#498057'
+                                # color='#3b423d'
+                                )
+
+                ax.tick_params(axis='x', rotation=20)
+                ax.set(xlabel=None)
+
+                # Legend in subplots
+                # ax.legend(frameon=False).set_title(None)
+
+                # Legend next to subplots
+                ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
+                # ax.legend().remove()
+
+            # Universal legend
+            # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2,
+            #                          bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
+            plt.tight_layout()
+            plt.savefig(path / (plot_name + 'Bar.png'))
+
+            plt.close()
+
+    # Confusion matrix and scatterplot
+    if len(predicted_vs_actual_list) > 0:
+        df = pd.concat(predicted_vs_actual_list, ignore_index=True)
+        found_predicted_vs_actual = np.sort(list(found_predicted_vs_actual))
+
+        i = 0
+        for agent in np.sort(df.Agent.unique()):
+            if agent not in palette:
+                palette[agent] = palette_colors[len(universal_hue_order) + i]
+                i += 1
+
+        df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task', 'Seed']).size().to_frame('Size').reset_index()
+        df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task']).mean().reset_index()
+
+        # PLOTTING (confusion matrix)
+
+        # Dynamically compute num columns/rows
+        num_rows = int(np.floor(np.sqrt(len(found_predicted_vs_actual))))
+        while len(found_predicted_vs_actual) % num_rows != 0:
+            num_rows -= 1
+        num_cols = len(found_predicted_vs_actual) // num_rows
+        extra = 0
+
+        if num_cols / num_rows > 5:
+            num_cols = int(np.ceil(np.sqrt(len(found_predicted_vs_actual))))
+            num_rows = int(np.ceil(len(found_predicted_vs_actual) / num_cols))
+            extra = num_rows * num_cols - len(found_predicted_vs_actual)
+
+        # Create subplots
+        fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
+
+        # Title
+        if title is not None:
+            fig.suptitle(title)
+
+        # Plot tasks
+        for i, suite_task in enumerate(found_predicted_vs_actual):
+            task_data = df[df['Task'] == suite_task]
+
+            # Capitalize column names
+            task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
+                                 for col_name in task_data.columns]
+
+            # if steps < np.inf:
+            #     task_data = task_data[task_data['Step'] <= steps]
+
+            row = i // num_cols
+            col = i % num_cols
+            ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
+                else axs[row] if num_rows > 1 else axs
+
+            if row == num_rows - 1 and col > num_cols - 1 - extra:
+                break
+
+            # Format title
+            ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
+
+            # suite = ax_title.split('(')[1].split(')')[0]
+            # task = ax_title.split(' (')[0]
+
+            # _x_axis = x_axis if x_axis in task_data.columns else 'Step'
+            # y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
+            #
+            # if _x_axis == 'Time':
+            #     task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
+
+            # No need to show Agent in legend if all same
+            short_palette = palette
+            if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
+            hue_order = np.sort(task_data.Agent.unique())
+            sns.scatterplot(
+                data=task_data, x="Predicted", y="Actual", hue="Agent", size="Size",
+                hue_order=hue_order, ax=ax, palette=short_palette
+            )
+            ax.set_title(f'{ax_title}')
+
+            # if _x_axis == 'Time':
+            #     ax.set_xlabel("Time (h)")
+            #     ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
+            #     # For now, group x axis into bins only for time
+            #     ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+            #
+            # if 'classify' in suite.lower():
+            #     ax.set_ybound(0, 1)
+            #     ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
+            #     ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
+
+            # Legend in subplots
+            ax.legend(frameon=False).set_title(None)
+
+            ax.tick_params(axis='x', rotation=20)
+
+            # Legend next to subplots
+            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+
+            # Data for universal legend (Note: need to debug if not showing Agent)
+            # handle, label = ax.get_legend_handles_labels()
+            # handles.update({l: h for l, h in zip(label, handle)})
+            # ax.legend().remove()
+
+        # Universal legend
+        # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
+        #                          borderaxespad=0, frameon=False).set_title('Agent')
+
+        for i in range(extra):
+            fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
+
+        plt.tight_layout()
+        plt.savefig(path / (plot_name + 'Scatter.png'))
 
         plt.close()
 
