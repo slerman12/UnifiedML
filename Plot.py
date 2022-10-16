@@ -535,9 +535,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         df['Accuracy'] /= df['Count']
         df['Count'] /= num_seeds['Seed']
 
-        # print(df)
-
-        # PLOTTING (scatter plot)
+        # PLOTTING (class sizes plot)
 
         # Dynamically compute num columns/rows
         num_rows = int(np.floor(np.sqrt(len(found_predicted_vs_actual))))
@@ -558,7 +556,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if title is not None:
             fig.suptitle(title)
 
-        # Plot tasks
+        # Plot class sizes
         for i, suite_task in enumerate(found_predicted_vs_actual):
             task_data = df[df['Task'] == suite_task]
 
@@ -609,7 +607,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
 
         plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Scatter.png'))
+        plt.savefig(path / (plot_name + 'ClassSizes.png'))
 
         plt.close()
 
