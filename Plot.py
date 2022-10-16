@@ -10,7 +10,6 @@ import glob
 from pathlib import Path
 
 import hydra
-from matplotlib.gridspec import GridSpec
 from omegaconf import OmegaConf
 
 import warnings
@@ -24,8 +23,8 @@ import pandas as pd
 from pandas.core.common import SettingWithCopyWarning
 
 import matplotlib.pyplot as plt
-from matplotlib import ticker, dates
-from matplotlib.ticker import FuncFormatter
+from matplotlib import ticker, dates, lines
+from matplotlib.ticker import FuncFormatter, PercentFormatter
 import seaborn as sns
 
 
@@ -511,7 +510,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             plt.close()
 
-    # Confusion matrix and scatterplot
+    # Scatter & Heatmap
     if len(predicted_vs_actual_list) > 0:
         df = pd.concat(predicted_vs_actual_list, ignore_index=True)
         found_predicted_vs_actual = np.sort(list(found_predicted_vs_actual))
@@ -523,6 +522,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 i += 1
 
         original_df = df.copy()
+
+        step = df[['Task', 'Step']].groupby('Task').max().reset_index() if 'Step' in df.columns else None
 
         df['Accuracy'] = 0
         df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
@@ -565,9 +566,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
                                  for col_name in task_data.columns]
 
-            # if steps < np.inf:
-            #     task_data = task_data[task_data['Step'] <= steps]
-
             row = i // num_cols
             col = i % num_cols
             ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
@@ -578,15 +576,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             # Format title
             ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
-
-            # suite = ax_title.split('(')[1].split(')')[0]
-            # task = ax_title.split(' (')[0]
-
-            # _x_axis = x_axis if x_axis in task_data.columns else 'Step'
-            # y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
-            #
-            # if _x_axis == 'Time':
-            #     task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
 
             # No need to show Agent in legend if all same
             short_palette = palette
@@ -602,49 +591,18 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 alpha=0.8,
                 hue_order=hue_order, ax=ax, palette=short_palette
             )
-            ax.set_title(f'{ax_title}')
+            step_ = '' if step is None else f' (@{int(step.loc[step["Task"] == suite_task, "Step"])} Steps)'
+            ax.set_title(f'{ax_title}{step_}')
 
-            # ax.set_title(f'{ax_title} (@{int(task_data["Step"][0]):.0f} Steps)')
-
-            # if _x_axis == 'Time':
-            #     ax.set_xlabel("Time (h)")
-            #     ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
-            #     # For now, group x axis into bins only for time
-            #     ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-            #
-            # if 'classify' in suite.lower():
             ax.set_ybound(-0.05, 1.05)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-            # ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
-            ax.set_ylabel('Eval Accuracy')
-
-            # ax.tick_params(axis='x', rotation=20)
-
-            # Legend in subplots
-            # ax.legend(frameon=False).set_title(None)
+            ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
             # Legend next to subplots
-            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False)
-            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles=handles[1:], labels=labels[1:],  # No title
                       loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0,  # Can comment this out for in-graph legend
                       frameon=False)
-
-            # Legend next to subplots with custom centered title
-            # handles, labels = ax.get_legend_handles_labels()
-            # ax.legend(handles=handles[1:], labels=labels[1:], title='Agent',
-            #           loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0,  # Can comment this out for in-graph legend
-            #           frameon=False)
-
-            # Data for universal legend (Note: need to debug if not showing Agent)
-            # handle, label = ax.get_legend_handles_labels()
-            # handles.update({l: h for l, h in zip(label, handle)})
-            # ax.legend().remove()
-
-        # Universal legend
-        # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-        #                          borderaxespad=0, frameon=False).set_title('Agent')
 
         for i in range(extra):
             fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
@@ -654,18 +612,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         plt.close()
 
-        # PLOTTING (confusion matrix)
-
-        # g = sns.FacetGrid(df, hue='Agent', col='Task', palette=palette)
-        # g.map(sns.scatterplot, 'Class_Label', 'Accuracy', alpha=0.8, size=df['Count'])
-        # g.add_legend()
-        #
-        # plt.tight_layout()
-        # plt.savefig(path / (plot_name + 'Scatter.png'))
-        #
-        # plt.close()
-
-        # PLOTTING (heatmap)
+        # PLOTTING (heatmap) - note, independent of step
 
         num_cells = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
 
@@ -714,6 +661,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
                 task_data = pd.crosstab(task_data.Predicted, task_data.Actual)
 
+                task_data = task_data.div(task_data.sum(axis=0), axis=1)  # Normalize
+
                 row = i // num_cols
                 col = i % num_cols
                 ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
@@ -724,17 +673,18 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
                 # Format title
                 ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
-                sns.heatmap(task_data, linewidths=.5, cmap=sns.light_palette(short_palette[Agent], as_cmap=True), ax=ax)
+                sns.heatmap(task_data, linewidths=.5, cmap=sns.light_palette(short_palette[Agent], as_cmap=True),
+                            vmax=1,ax=ax)
+                cbar = ax.collections[0].colorbar
+                cbar.ax.yaxis.set_major_formatter(PercentFormatter(1, 0))
                 # ax.invert_yaxis()
                 ax.set_title(f'{ax_title} :  {Agent}')
 
                 i += 1
 
         # Universal legend
-        from matplotlib import lines
         ax = axs[0, -1] if num_rows > 1 and num_cols > 1 else axs[-1] if num_cols > 1 \
             else axs[0] if num_rows > 1 else axs
-        # handles = [patches.Patch(color=short_palette[label], label=label, hatch='o') for label in hue_order]
         handles = [lines.Line2D([0], [0], marker='o', color=short_palette[label], label=label, linewidth=0)
                    for label in hue_order]
         ax.legend(handles, hue_order, loc=2, bbox_to_anchor=(1.25, 1.05),

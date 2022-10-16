@@ -100,7 +100,7 @@ class Logger:
     def dump_actions(self, logs, name):
         if self.predicted is not None and name in self.predicted and len(self.predicted[name]['Predicted']) > 0 \
                 and len(self.predicted[name]['Actual']) > 0:
-            # assert 'step' in logs
+            assert 'step' in logs
 
             file_name = Path(self.path) / f'{self.task}_{self.seed}_Predicted_vs_Actual_{name}.csv'
 
@@ -108,7 +108,7 @@ class Logger:
                 self.predicted[name][key] = np.concatenate(self.predicted[name][key])
 
             df = pd.DataFrame(self.predicted[name])
-            # df['Step'] = logs['step']
+            df['Step'] = int(logs['step'])
             df.to_csv(file_name, index=False)
 
             self.predicted[name] = {'Predicted': [], 'Actual': []}

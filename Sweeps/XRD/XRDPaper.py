@@ -1535,7 +1535,7 @@ runs.XRD.plots = [
     ['CNN', 'MLP', 'No-Pool-CNN'],
 ]
 runs.XRD.tasks = [
-    'PS1.*', 'Large.*', 'Mix.*'
+    'PS1_.*', 'Large_.*', 'Mix_.*', 'Large-Soup_.*', 'Mix-Soup_.*'
 ]
 
 runs.XRD.title = 'RRUFF'
@@ -1547,4 +1547,4 @@ runs.XRD.title = 'RRUFF'
 # ]
 
 # runs.XRD.title = 'Magnetic Properties'
-# runs.XRD.sftp = False
+runs.XRD.sftp = False
