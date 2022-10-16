@@ -80,7 +80,7 @@ class Classify:
                 root_spec, train_spec, download_spec, transform_spec = all_specs
                 specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
                 specs.update(kwargs)
-                dataset = instantiate(dataset if train or test_dataset is None else test_dataset, **specs)
+                dataset = instantiate(dataset if train or test_dataset._target_ is None else test_dataset, **specs)
             except (TypeError, ValueError):
                 continue
             break

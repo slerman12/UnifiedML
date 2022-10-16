@@ -29,13 +29,13 @@ env:
   _target_: ${Env}
   _recursive_: false
 Dataset: null  # Defaults per respective Classify task
-TestDataset: ${Dataset}
+TestDataset: null
 dataset:
   _target_: ${Dataset}
   _recursive_: false
 test_dataset:
   _target_: ${TestDataset}
-  _recursive_: false
+  _recursive_: false  # TODO when no TestDataset provided, THEN test_dataset should _default_ to ${dataset}
 suite: ???  # To be specified later, defaults per respective task
 task_name: ???  # To be specified later, defaults per respective task
 frame_stack: 3
