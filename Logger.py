@@ -43,7 +43,7 @@ class Logger:
         self.logs = {}
 
         # "Predicted vs. Actual" - logged only for classify for now
-        self.predicted = {'Predicted': [], 'Actual': []} if log_actions else None
+        self.predicted = {} if log_actions else None
 
         self.aggregation = aggregation  # mean, median, last, max, min, or sum
         self.default_aggregations = {'step': np.ma.max, 'frame': np.ma.max, 'episode': np.ma.max, 'epoch': np.ma.max,
@@ -67,8 +67,10 @@ class Logger:
 
             if self.predicted is not None and exp is not None:
                 for exp in exp:
-                    self.predicted['Predicted'].append(np.argmax(exp.action, -2).squeeze())
-                    self.predicted['Actual'].append(exp.label.squeeze())
+                    if name not in self.predicted:
+                        self.predicted[name] = {'Predicted': [], 'Actual': []}
+                    self.predicted[name]['Predicted'].append(np.argmax(exp.action, -2).squeeze())
+                    self.predicted[name]['Actual'].append(exp.label.squeeze())
 
         if dump:
             self.dump_logs(name)
@@ -81,6 +83,7 @@ class Logger:
                     agg = self.aggregate(log_name)
                     self.logs[name][log_name] = agg(self.logs[name][log_name])
                 self._dump_logs(self.logs[name], name=name)
+                self.dump_actions(self.logs[name], name=name)
                 del self.logs[name]
         else:
             # Iterate through just the named log
@@ -90,22 +93,25 @@ class Logger:
                 agg = self.aggregate(log_name)
                 self.logs[name][log_name] = agg(self.logs[name][log_name])
             self._dump_logs(self.logs[name], name=name)
+            self.dump_actions(self.logs[name], name=name)
             self.logs[name] = {}
             del self.logs[name]
 
-        if self.predicted is not None and len(self.predicted['Predicted']) > 0 and len(self.predicted['Actual']) > 0:
-            self.dump_actions()
+    def dump_actions(self, logs, name):
+        if self.predicted is not None and name in self.predicted and len(self.predicted[name]['Predicted']) > 0 \
+                and len(self.predicted[name]['Actual']) > 0:
+            # assert 'step' in logs
 
-    def dump_actions(self):
-        file_name = Path(self.path) / f'{self.task}_{self.seed}_Predicted_vs_Actual.csv'
+            file_name = Path(self.path) / f'{self.task}_{self.seed}_Predicted_vs_Actual_{name}.csv'
 
-        for name in self.predicted:
-            self.predicted[name] = np.concatenate(self.predicted[name])
+            for key in self.predicted[name]:
+                self.predicted[name][key] = np.concatenate(self.predicted[name][key])
 
-        df = pd.DataFrame(self.predicted)
-        df.to_csv(file_name, index=False)
+            df = pd.DataFrame(self.predicted[name])
+            # df['Step'] = logs['step']
+            df.to_csv(file_name, index=False)
 
-        self.predicted = {'Predicted': [], 'Actual': []}
+            self.predicted[name] = {'Predicted': [], 'Actual': []}
 
     # Aggregate list of scalars or batched-values of arbitrary lengths
     def aggregate(self, log_name):

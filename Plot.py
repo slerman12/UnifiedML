@@ -84,7 +84,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     for csv_name in csv_names:
         # Parse files
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
-        split_size = 3 if 'Generate' in task_seed_eval else 4 if 'Predicted_vs_Actual' in task_seed_eval else 2
+        split_size = 3 if 'Generate' in task_seed_eval else 5 if 'Predicted_vs_Actual' in task_seed_eval else 2
         task_seed = task_seed_eval.rsplit('_', split_size)
         suite_task, seed, eval = task_seed[0], task_seed[1], '_'.join(task_seed[2:]).replace('.csv', '')
 
@@ -94,7 +94,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Whether to include this CSV
         include = True
 
-        if eval.lower() not in ['train' if plot_train else 'eval'] + ['predicted_vs_actual']:
+        mode = 'train' if plot_train else 'eval'
+
+        if eval.lower() not in [mode, f'predicted_vs_actual_{mode}']:
+            include = False
+
+        if seed == '4':
             include = False
 
         datums = [experiment, agent, suite.lower(), suite_task]
@@ -112,7 +117,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # Add CSV
         csv = pd.read_csv(csv_name)
 
-        if 'step' in csv.columns:
+        if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower():
             length = int(csv['step'].max())
             if length == 0:
                 continue
@@ -136,7 +141,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # max_csv = csv.copy()
         # max_csv['reward'] = max_csv[['reward', 'step']].rolling(length, min_periods=1, on='step').max()['reward']
 
-        if eval == 'Predicted_vs_Actual':
+        if 'predicted_vs_actual' in eval.lower():
             predicted_vs_actual_list.append(csv)
             found_predicted_vs_actual.update({found_suite_task})
         else:
@@ -516,17 +521,19 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 palette[agent] = palette_colors[len(universal_hue_order) + i]
                 i += 1
 
-        df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task', 'Seed']).size().to_frame('Count').reset_index()
-        df = df.groupby(['Predicted', 'Actual', 'Agent', 'Task']).mean().reset_index()
         df['Accuracy'] = 0
         df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
-
-        df = df.groupby(['Actual', 'Agent', 'Task']).agg({'Accuracy': 'mean', 'Count': 'sum'}).reset_index()
+        df['Count'] = 1
+        df.drop(['Predicted'], axis=1)
         df = df.rename(columns={'Actual': 'Class_Label'})
 
-        df["Count"] = df["Count"].astype(int)
+        num_seeds = len(df.Seed.unique())
 
-        # PLOTTING (confusion matrix)
+        df = df.groupby(['Class_Label', 'Agent', 'Task']).agg({'Accuracy': 'sum', 'Count': 'size'}).reset_index()
+        df['Accuracy'] /= df['Count']
+        df['Count'] /= num_seeds
+
+        # PLOTTING (scatter plot)
 
         # Dynamically compute num columns/rows
         num_rows = int(np.floor(np.sqrt(len(found_predicted_vs_actual))))
@@ -601,7 +608,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             #     ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
             #
             # if 'classify' in suite.lower():
-            ax.set_ybound(0, 1)
+            ax.set_ybound(-0.05, 1.05)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             # ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
             ax.set_ylabel('Eval Accuracy')
@@ -612,8 +619,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # ax.legend(frameon=False).set_title(None)
 
             # Legend next to subplots
-            ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False)
+            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False)
             # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles=handles[1:], labels=labels[1:],  # No title
+                      loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0,  # Can comment this out for in-graph legend
+                      frameon=False)
 
             # Legend next to subplots with custom centered title
             # handles, labels = ax.get_legend_handles_labels()
@@ -637,6 +648,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         plt.savefig(path / (plot_name + 'Scatter.png'))
 
         plt.close()
+
 
 # Lows and highs for normalization
 
