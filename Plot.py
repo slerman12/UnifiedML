@@ -10,6 +10,7 @@ import glob
 from pathlib import Path
 
 import hydra
+from matplotlib.gridspec import GridSpec
 from omegaconf import OmegaConf
 
 import warnings
@@ -521,6 +522,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 palette[agent] = palette_colors[len(universal_hue_order) + i]
                 i += 1
 
+        original_df = df.copy()
+
         df['Accuracy'] = 0
         df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
         df['Count'] = 1
@@ -601,6 +604,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             )
             ax.set_title(f'{ax_title}')
 
+            # ax.set_title(f'{ax_title} (@{int(task_data["Step"][0]):.0f} Steps)')
+
             # if _x_axis == 'Time':
             #     ax.set_xlabel("Time (h)")
             #     ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
@@ -646,6 +651,100 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         plt.tight_layout()
         plt.savefig(path / (plot_name + 'Scatter.png'))
+
+        plt.close()
+
+        # PLOTTING (confusion matrix)
+
+        # g = sns.FacetGrid(df, hue='Agent', col='Task', palette=palette)
+        # g.map(sns.scatterplot, 'Class_Label', 'Accuracy', alpha=0.8, size=df['Count'])
+        # g.add_legend()
+        #
+        # plt.tight_layout()
+        # plt.savefig(path / (plot_name + 'Scatter.png'))
+        #
+        # plt.close()
+
+        # PLOTTING (heatmap)
+
+        num_cells = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
+
+        # Dynamically compute num columns/rows
+        num_rows = int(np.floor(np.sqrt(num_cells)))
+        while num_cells % num_rows != 0:
+            num_rows -= 1
+        num_cols = num_cells // num_rows
+        extra = 0
+
+        if num_cols / num_rows > 5:
+            num_cols = int(np.ceil(np.sqrt(num_cells)))
+            num_rows = int(np.ceil(num_cells / num_cols))
+            extra = num_rows * num_cols - num_cells
+
+        # Create subplots
+        fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
+
+        # Title
+        if title is not None:
+            fig.suptitle(title)
+
+        # Capitalize column names
+        df.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
+                      for col_name in df.columns]
+
+        # No need to show Agent in legend if all same
+        short_palette = palette
+        if len(original_df.Agent.str.split('(').str[0].unique()) == 1:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                original_df['Agent'] = original_df.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+
+        hue_order = np.sort(original_df.Agent.unique())
+
+        # Plot tasks
+        i = 0
+        for suite_task in found_predicted_vs_actual:
+            task_data_ = original_df[original_df['Task'] == suite_task]
+
+            for Agent in task_data_.Agent.unique():
+                task_data = task_data_[task_data_['Agent'] == Agent]
+
+                task_data = task_data.astype({'Predicted': int, 'Actual': int})
+
+                task_data = pd.crosstab(task_data.Predicted, task_data.Actual)
+
+                row = i // num_cols
+                col = i % num_cols
+                ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
+                    else axs[row] if num_rows > 1 else axs
+
+                if row == num_rows - 1 and col > num_cols - 1 - extra:
+                    break
+
+                # Format title
+                ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
+                sns.heatmap(task_data, linewidths=.5, cmap=sns.light_palette(short_palette[Agent], as_cmap=True), ax=ax)
+                # ax.invert_yaxis()
+                ax.set_title(f'{ax_title} :  {Agent}')
+
+                i += 1
+
+        # Universal legend
+        from matplotlib import lines
+        ax = axs[0, -1] if num_rows > 1 and num_cols > 1 else axs[-1] if num_cols > 1 \
+            else axs[0] if num_rows > 1 else axs
+        # handles = [patches.Patch(color=short_palette[label], label=label, hatch='o') for label in hue_order]
+        handles = [lines.Line2D([0], [0], marker='o', color=short_palette[label], label=label, linewidth=0)
+                   for label in hue_order]
+        ax.legend(handles, hue_order, loc=2, bbox_to_anchor=(1.25, 1.05),
+                  borderaxespad=0, frameon=False).set_title('Agent')
+
+        for i in range(extra):
+            fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
+
+        plt.tight_layout()
+        plt.savefig(path / (plot_name + 'Heatmap.png'))
 
         plt.close()
 

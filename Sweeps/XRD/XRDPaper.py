@@ -1367,55 +1367,55 @@ runs.XRD.sweep = [
     # num_gpus=8
     # mem=180""",
     #
-    # # Mix, MLP
-    # """task=classify/custom
-    # Dataset=XRD.XRD
-    # Aug=Identity
-    # Trunk=Identity
-    # Eyes=Identity
-    # Predictor=XRD.MLP
-    # batch_size=256
-    # standardize=false
-    # norm=true
-    # task_name='Mix_${dataset.num_classes}-Way'
-    # experiment='MLP'
-    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    # +'dataset.train_eval_splits=[1, 0]'
-    # +dataset.num_classes=7,230
-    # load=true
-    # train_steps=0
-    # save=true
-    # logger.wandb=true
-    # lab=true
-    # num_workers=1
-    # parallel=true
-    # num_gpus=8
-    # mem=180""",
-    #
-    # # Large, No-Pool-CNN
-    # """task=classify/custom
-    # Dataset=XRD.XRD
-    # Aug=Identity
-    # Trunk=Identity
-    # Eyes=XRD.NoPoolCNN
-    # Predictor=XRD.Predictor
-    # batch_size=256
-    # standardize=false
-    # norm=true
-    # task_name='Large_${dataset.num_classes}-Way'
-    # experiment='No-Pool-CNN'
-    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    # +'dataset.train_eval_splits=[1, 0]'
-    # +dataset.num_classes=7,230
-    # load=true
-    # train_steps=0
-    # save=true
-    # logger.wandb=true
-    # lab=true
-    # num_workers=1
-    # parallel=true
-    # num_gpus=8
-    # mem=180""",
+    # Mix, MLP
+    """task=classify/custom
+    Dataset=XRD.XRD
+    Aug=Identity
+    Trunk=Identity
+    Eyes=Identity
+    Predictor=XRD.MLP
+    batch_size=256
+    standardize=false
+    norm=true
+    task_name='Mix_${dataset.num_classes}-Way'
+    experiment='MLP'
+    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0]'
+    +dataset.num_classes=7,230
+    load=true
+    train_steps=0
+    save=true
+    logger.wandb=true
+    lab=true
+    num_workers=1
+    parallel=true
+    num_gpus=8
+    mem=180""",
+
+    # Large, No-Pool-CNN
+    """task=classify/custom
+    Dataset=XRD.XRD
+    Aug=Identity
+    Trunk=Identity
+    Eyes=XRD.NoPoolCNN
+    Predictor=XRD.Predictor
+    batch_size=256
+    standardize=false
+    norm=true
+    task_name='Large_${dataset.num_classes}-Way'
+    experiment='No-Pool-CNN'
+    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0]'
+    +dataset.num_classes=7,230
+    load=true
+    train_steps=0
+    save=true
+    logger.wandb=true
+    lab=true
+    num_workers=1
+    parallel=true
+    num_gpus=8
+    mem=180""",
 
     # Large, CNN
     """task=classify/custom
@@ -1531,20 +1531,20 @@ runs.XRD.sweep = [
 #     'Large.*', 'Mix-Soup.*'
 # ]
 
-# runs.XRD.plots = [
-#     ['CNN', 'MLP', 'No-Pool-CNN'],
-# ]
-# runs.XRD.tasks = [
-#     'PS1.*', 'Large.*', 'Mix.*'
-# ]
-#
-# runs.XRD.title = 'RRUFF'
-
 runs.XRD.plots = [
-    ['.*icsd.*'],
-    ['.*_icsd.*'],
-    ['.*_nonicsd.*'],
+    ['CNN', 'MLP', 'No-Pool-CNN'],
+]
+runs.XRD.tasks = [
+    'PS1.*', 'Large.*', 'Mix.*'
 ]
 
-runs.XRD.title = 'Magnetic Properties'
-runs.XRD.sftp = False
+runs.XRD.title = 'RRUFF'
+
+# runs.XRD.plots = [
+#     ['.*icsd.*'],
+#     ['.*_icsd.*'],
+#     ['.*_nonicsd.*'],
+# ]
+
+# runs.XRD.title = 'Magnetic Properties'
+# runs.XRD.sftp = False
