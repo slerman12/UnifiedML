@@ -99,9 +99,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         if eval.lower() not in [mode, f'predicted_vs_actual_{mode}']:
             include = False
 
-        if seed == '4':
-            include = False
-
         datums = [experiment, agent, suite.lower(), suite_task]
         for i, spec in enumerate(specs):
             if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
@@ -531,11 +528,14 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         df.drop(['Predicted'], axis=1)
         df = df.rename(columns={'Actual': 'Class_Label'})
 
-        num_seeds = len(df.Seed.unique())
+        num_seeds = df.groupby(['Class_Label', 'Agent', 'Task'])['Seed'].value_counts()
+        num_seeds = num_seeds.groupby(['Class_Label', 'Agent', 'Task']).count().reset_index()
 
         df = df.groupby(['Class_Label', 'Agent', 'Task']).agg({'Accuracy': 'sum', 'Count': 'size'}).reset_index()
         df['Accuracy'] /= df['Count']
-        df['Count'] /= num_seeds
+        df['Count'] /= num_seeds['Seed']
+
+        # print(df)
 
         # PLOTTING (scatter plot)
 
@@ -592,6 +592,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 hue_order=hue_order, ax=ax, palette=short_palette
             )
             step_ = '' if step is None else f' (@{int(step.loc[step["Task"] == suite_task, "Step"])} Steps)'
+            # step_ = ' (@500000 Steps)'
             ax.set_title(f'{ax_title}{step_}')
 
             ax.set_ybound(-0.05, 1.05)
@@ -633,7 +634,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # Title
         if title is not None:
-            fig.suptitle(title)
+            fig.suptitle(title,
+                         # y=0.99
+                         )
 
         # Capitalize column names
         df.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
@@ -674,7 +677,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 # Format title
                 ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
                 sns.heatmap(task_data, linewidths=.5, cmap=sns.light_palette(short_palette[Agent], as_cmap=True),
-                            vmax=1,ax=ax)
+                            vmin=0, vmax=1,  # Normalizes color bar in [0, 1]
+                            ax=ax)
                 cbar = ax.collections[0].colorbar
                 cbar.ax.yaxis.set_major_formatter(PercentFormatter(1, 0))
                 # ax.invert_yaxis()
