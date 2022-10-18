@@ -18,15 +18,21 @@ atari_retry = [
 atari_retry = f'atari/{",atari/".join([a.lower() for a in atari_retry])}'
 
 runs = {'UnifiedML': {
+
+    # Corrupted Checkpoint + after 2000000 Steps. Saved Agent but not Replay. Loaded Agent at 2000000 with empty Replay.
+    # Need To: Save Replay via replay.save=true.
+    # Next time: Load via replay.load=true.
     'sweep': [
-        f'train_steps=500000 '  # Changed from 2000000 to add 500000
+        f'train_steps=2500000 '  # Changed from 2000000 to add 500000
         f'task={atari_26} '
-        f'experiment="Atari-30" '  # Originally did 30
+        f'experiment="Atari-26-DQN" '  # Originally did 30
         f'logger.wandb=true '
         f'time="12-00:00:00" '
         f'save_per_steps=500000 '
+        f'replay.save=true '
         f'reservation_id=20220929 '
-        f'load=true ',
+        f'load=false '
+        f'replay.load=false ',
 
         # f'train_steps=2000000 '
         # f'task=mario '
@@ -73,8 +79,9 @@ runs = {'UnifiedML': {
         ['Mario'],
         ['Self-Supervised_Mario'],
         ['Atari-26_Continuous'],
+        ['Mario', 'Self-Supervised_Mario'],
     ],
-    'sftp': True,
+    'sftp': False,
     'bluehive': True,
     'lab': False,
     'write_tabular': True,

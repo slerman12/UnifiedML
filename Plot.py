@@ -6,6 +6,8 @@ import json
 import re
 import sys
 from typing import MutableSequence
+from operator import iand
+from functools import reduce
 import glob
 from pathlib import Path
 
@@ -152,6 +154,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Non-empty check
     if len(csv_list) > 0:
         df = pd.concat(csv_list, ignore_index=True)
+
+        # Capitalize column names
+        df.columns = [' '.join([name.capitalize() for name in col_name.split('_')]) for col_name in df.columns]
+
         # max_df = pd.concat(max_csv_list, ignore_index=True)  # Unused
         found_suite_tasks = np.sort(list(found_suite_tasks))
 
@@ -408,7 +414,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             f.close()
 
         # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
-        min_time = df.loc[df['step'] == min_steps, x_axis.lower()].unique()
+        min_time = df.loc[df['Step'] == min_steps, x_axis].unique()
         if len(min_time) > 1:
             x_axis = 'Step'
             min_time = min_steps
@@ -507,10 +513,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             plt.close()
 
-    # Scatter & Heatmap
+    # Class Sizes & Heatmap
     if len(predicted_vs_actual_list) > 0:
         df = pd.concat(predicted_vs_actual_list, ignore_index=True)
-        found_predicted_vs_actual = np.sort(list(found_predicted_vs_actual))
+        df = df.astype({'Predicted': int, 'Actual': int})
 
         i = 0
         for agent in np.sort(df.Agent.unique()):
@@ -526,179 +532,156 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
         df['Count'] = 1
         df.drop(['Predicted'], axis=1)
-        df = df.rename(columns={'Actual': 'Class_Label'})
+        df = df.rename(columns={'Actual': 'Class Label'})
 
-        num_seeds = df.groupby(['Class_Label', 'Agent', 'Task'])['Seed'].value_counts()
-        num_seeds = num_seeds.groupby(['Class_Label', 'Agent', 'Task']).count().reset_index()
+        num_seeds = df.groupby(['Class Label', 'Agent', 'Task'])['Seed'].value_counts()
+        num_seeds = num_seeds.groupby(['Class Label', 'Agent', 'Task']).count().reset_index()
 
-        df = df.groupby(['Class_Label', 'Agent', 'Task']).agg({'Accuracy': 'sum', 'Count': 'size'}).reset_index()
+        df = df.groupby(['Class Label', 'Agent', 'Task']).agg({'Accuracy': 'sum', 'Count': 'size'}).reset_index()
         df['Accuracy'] /= df['Count']
         df['Count'] /= num_seeds['Seed']
 
-        # PLOTTING (class sizes plot)
+        # Class Sizes
 
-        # Dynamically compute num columns/rows
-        num_rows = int(np.floor(np.sqrt(len(found_predicted_vs_actual))))
-        while len(found_predicted_vs_actual) % num_rows != 0:
-            num_rows -= 1
-        num_cols = len(found_predicted_vs_actual) // num_rows
-        extra = 0
+        def make(ax, ax_title, cell_data, cell, hue_names, cell_palettes, **kwargs):
+            sns.scatterplot(data=cell_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
+                            alpha=0.5, hue_order=np.sort(hue_names), ax=ax, palette=cell_palettes)
 
-        if num_cols / num_rows > 5:
-            num_cols = int(np.ceil(np.sqrt(len(found_predicted_vs_actual))))
-            num_rows = int(np.ceil(len(found_predicted_vs_actual) / num_cols))
-            extra = num_rows * num_cols - len(found_predicted_vs_actual)
-
-        # Create subplots
-        fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
-
-        # Title
-        if title is not None:
-            fig.suptitle(title)
-
-        # Plot class sizes
-        for i, suite_task in enumerate(found_predicted_vs_actual):
-            task_data = df[df['Task'] == suite_task]
-
-            # Capitalize column names
-            task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
-                                 for col_name in task_data.columns]
-
-            row = i // num_cols
-            col = i % num_cols
-            ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
-                else axs[row] if num_rows > 1 else axs
-
-            if row == num_rows - 1 and col > num_cols - 1 - extra:
-                break
-
-            # Format title
-            ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
-
-            # No need to show Agent in legend if all same
-            short_palette = palette
-            if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
-
-            hue_order = np.sort(task_data.Agent.unique())
-            sns.scatterplot(
-                data=task_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
-                alpha=0.8,
-                hue_order=hue_order, ax=ax, palette=short_palette
-            )
-            step_ = '' if step is None else f' (@{int(step.loc[step["Task"] == suite_task, "Step"])} Steps)'
+            #  Post-processing
+            step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'
             # step_ = ' (@500000 Steps)'
             ax.set_title(f'{ax_title}{step_}')
-
             ax.set_ybound(-0.05, 1.05)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
+        general_plot(df, path, plot_name + 'ClassSizes.png', palette,
+                     make, 'Task', title, 'Agent', True, False)
+
+        # Heatmap
+
+        def make(cell_data, ax, cell_palettes, hue_names, **kwargs):
+            # Pre-processing
+            cell_data = pd.crosstab(cell_data.Predicted, cell_data.Actual)  # To matrix
+            cell_data = cell_data.div(cell_data.sum(axis=0), axis=1)  # Normalize
+
+            sns.heatmap(cell_data, ax=ax, linewidths=.5, vmin=0, vmax=1,  # Normalizes color bar in [0, 1]
+                        cmap=sns.light_palette(cell_palettes[hue_names[0]], as_cmap=True))
+
+            # Post-processing
+            cbar = ax.collections[0].colorbar
+            cbar.ax.yaxis.set_major_formatter(PercentFormatter(1, 0))
+            # ax.invert_yaxis()  # Can optionally represent vertically flipped
+
+        general_plot(original_df, path, plot_name + 'Heatmap.png', palette,
+                     make, ['Task', 'Agent'], title, 'Agent', False, True)
+
+
+def general_plot(data, path, plot_name, palette, make, per='Task', title='UnifiedML', hue='Agent',
+                 legend_aside=False, universal_legend=False):
+    if not isinstance(per, list):
+        per = [per]
+
+    # Capitalize column names
+    per = [' '.join([name.capitalize() for name in re.split(r'_|\s+', col_name)])
+           for col_name in per]
+    data.columns = [' '.join([name.capitalize() for name in re.split(r'_|\s+', col_name)])
+                    for col_name in data.columns]
+
+    cells = data[per].groupby(per).size().reset_index().drop(columns=0)
+
+    total = len(cells.index)
+
+    # Manually compute a full grid of full square-ish shape
+    extra = 0
+    num_rows = int(np.floor(np.sqrt(total)))
+    while total % num_rows != 0:
+        num_rows -= 1
+    num_cols = total // num_rows
+
+    # If too rectangular, automatically infer num cols/rows square with empty extra cells
+    if num_cols / num_rows > 5:
+        num_cols = int(np.ceil(np.sqrt(total)))
+        num_rows = int(np.ceil(total / num_cols))
+        extra = num_rows * num_cols - total
+
+    # Create subplots
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
+
+    # Title
+    if title is not None:
+        fig.suptitle(title, y=0.98)
+
+    cell_palettes = {}
+
+    for i, cell in cells.iterrows():
+        cell_data = data[reduce(iand, [data[per_name] == cell_name for per_name, cell_name in zip(per, cell)])]
+
+        # Unique colors for this cell
+        hue_names = cell_data[hue].unique()
+
+        # No need to show Agent name in legend if all same
+        if len((data if universal_legend else cell_data)[hue].str.split('(').str[0].unique()) == 1:  # Unique Agent name
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+                # Remove Agent name from data columns
+                cell_data[hue] = cell_data[hue].str.split('(').str[1:].str.join('(').str.split(')'
+                                                                                               ).str[:-1].str.join(')')
+                # Remove Agent name from legend
+                for j, hue_name in enumerate(hue_names):
+                    hue_names[j] = ')'.join('('.join(hue_name.split('(')[1:]).split(')')[:-1])
+                    cell_palettes.update({hue_names[j]: palette[hue_name]})
+        else:
+            cell_palettes.update({hue_name: palette[hue_name] for hue_name in hue_names})
+
+        # Rows and cols
+        row = i // num_cols
+        col = i % num_cols
+
+        # Empty extras
+        if row == num_rows - 1 and col > num_cols - 1 - extra:
+            break
+
+        # Cell plot ("ax")
+        ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
+            else axs[row] if num_rows > 1 else axs
+
+        # Cell title
+        ax_title = ' '.join([name[0].upper() + name[1:] for name in cell[0].split('_')])
+
+        if len(per) > 1:
+            ax_title += ' :  ' + ' :  '.join(cell[1:])
+
+        ax.set_title(ax_title)
+
+        make(**locals())
+
+        if legend_aside:
             # Legend next to subplots
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles=handles[1:], labels=labels[1:],  # No title
                       loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0,  # Can comment this out for in-graph legend
                       frameon=False)
 
-        for i in range(extra):
-            fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
+    # Universal legend
+    if universal_legend:
+        # Color order in legend between hue <-> palette
+        hue_order = np.sort([hue_name for hue_name in cell_palettes])
 
-        plt.tight_layout()
-        plt.savefig(path / (plot_name + 'ClassSizes.png'))
-
-        plt.close()
-
-        # PLOTTING (heatmap) - note, independent of step
-
-        num_cells = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
-
-        # Dynamically compute num columns/rows
-        num_rows = int(np.floor(np.sqrt(num_cells)))
-        while num_cells % num_rows != 0:
-            num_rows -= 1
-        num_cols = num_cells // num_rows
-        extra = 0
-
-        if num_cols / num_rows > 5:
-            num_cols = int(np.ceil(np.sqrt(num_cells)))
-            num_rows = int(np.ceil(num_cells / num_cols))
-            extra = num_rows * num_cols - num_cells
-
-        # Create subplots
-        fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
-
-        # Title
-        if title is not None:
-            fig.suptitle(title,
-                         # y=0.99
-                         )
-
-        # Capitalize column names
-        df.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
-                      for col_name in df.columns]
-
-        # No need to show Agent in legend if all same
-        short_palette = palette
-        if len(original_df.Agent.str.split('(').str[0].unique()) == 1:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                original_df['Agent'] = original_df.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
-
-        hue_order = np.sort(original_df.Agent.unique())
-
-        # Plot tasks
-        i = 0
-        for suite_task in found_predicted_vs_actual:
-            task_data_ = original_df[original_df['Task'] == suite_task]
-
-            for Agent in task_data_.Agent.unique():
-                task_data = task_data_[task_data_['Agent'] == Agent]
-
-                task_data = task_data.astype({'Predicted': int, 'Actual': int})
-
-                task_data = pd.crosstab(task_data.Predicted, task_data.Actual)
-
-                task_data = task_data.div(task_data.sum(axis=0), axis=1)  # Normalize
-
-                row = i // num_cols
-                col = i % num_cols
-                ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
-                    else axs[row] if num_rows > 1 else axs
-
-                if row == num_rows - 1 and col > num_cols - 1 - extra:
-                    break
-
-                # Format title
-                ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
-                sns.heatmap(task_data, linewidths=.5, cmap=sns.light_palette(short_palette[Agent], as_cmap=True),
-                            vmin=0, vmax=1,  # Normalizes color bar in [0, 1]
-                            ax=ax)
-                cbar = ax.collections[0].colorbar
-                cbar.ax.yaxis.set_major_formatter(PercentFormatter(1, 0))
-                # ax.invert_yaxis()
-                ax.set_title(f'{ax_title} :  {Agent}')
-
-                i += 1
-
-        # Universal legend
         ax = axs[0, -1] if num_rows > 1 and num_cols > 1 else axs[-1] if num_cols > 1 \
             else axs[0] if num_rows > 1 else axs
-        handles = [lines.Line2D([0], [0], marker='o', color=short_palette[label], label=label, linewidth=0)
+        handles = [lines.Line2D([0], [0], marker='o', color=palette[label], label=label, linewidth=0)
                    for label in hue_order]
         ax.legend(handles, hue_order, loc=2, bbox_to_anchor=(1.25, 1.05),
-                  borderaxespad=0, frameon=False).set_title('Agent')
+                  borderaxespad=0, frameon=False).set_title(hue)
 
-        for i in range(extra):
-            fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
+    for i in range(extra):
+        fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
 
-        plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Heatmap.png'))
+    plt.tight_layout()
+    plt.savefig(path / plot_name)
 
-        plt.close()
+    plt.close()
 
 
 # Lows and highs for normalization

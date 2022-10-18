@@ -8,7 +8,7 @@ from cryptography.fernet import Fernet
 
 from pexpect import pxssh, spawn
 
-from sweeps_and_plots import runs
+from Sweeps.SweepsAndPlots import runs
 
 
 username = 'slerman'

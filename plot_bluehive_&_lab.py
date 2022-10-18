@@ -14,7 +14,7 @@ import numpy as np
 
 from Plot import plot
 
-from sweeps_and_plots import runs
+from Sweeps.SweepsAndPlots import runs
 
 
 # plot_group = 'UML_Paper'
