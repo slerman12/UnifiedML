@@ -1534,12 +1534,12 @@ runs.XRD.sweep = [
 runs.XRD.plots = [
     ['CNN', 'MLP', 'No-Pool-CNN'],
 ]
-# runs.XRD.tasks = [
-#     'PS1_.*', 'Large_.*', 'Mix_.*', 'Large-Soup_.*', 'Mix-Soup_.*'
-# ]
 runs.XRD.tasks = [
-    'Large-Soup_.*'
+    'PS1_.*', 'Large_.*', 'Mix_.*', 'Large-Soup_.*', 'Mix-Soup_.*'
 ]
+# runs.XRD.tasks = [
+#     'Large-Soup_.*'
+# ]
 
 runs.XRD.title = 'RRUFF'
 

@@ -173,69 +173,31 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # PLOTTING (tasks)
 
-        # Dynamically compute num columns/rows
-        num_rows = int(np.floor(np.sqrt(len(found_suite_tasks))))
-        while len(found_suite_tasks) % num_rows != 0:
-            num_rows -= 1
-        num_cols = len(found_suite_tasks) // num_rows
-        extra = 0
-
-        if num_cols / num_rows > 5:
-            num_cols = int(np.ceil(np.sqrt(len(found_suite_tasks))))
-            num_rows = int(np.ceil(len(found_suite_tasks) / num_cols))
-            extra = num_rows * num_cols - len(found_suite_tasks)
-
-        # Create subplots
-        fig, axs = plt.subplots(num_rows, num_cols, figsize=(4.5 * num_cols, 3 * num_rows))
-
-        # Title
-        if title is not None:
-            fig.suptitle(title)
-
-        # Plot tasks
-        for i, suite_task in enumerate(found_suite_tasks):
-            task_data = df[df['Task'] == suite_task]
-
-            # Capitalize column names
-            task_data.columns = [' '.join([c_name.capitalize() for c_name in col_name.split('_')])
-                                 for col_name in task_data.columns]
-
-            if steps < np.inf:
-                task_data = task_data[task_data['Step'] <= steps]
-
-            row = i // num_cols
-            col = i % num_cols
-            ax = axs[row, col] if num_rows > 1 and num_cols > 1 else axs[col] if num_cols > 1 \
-                else axs[row] if num_rows > 1 else axs
-
-            if row == num_rows - 1 and col > num_cols - 1 - extra:
-                break
-
-            # Format title
-            ax_title = ' '.join([task_name[0].upper() + task_name[1:] for task_name in suite_task.split('_')])
-
+        def make(cell_data, ax, ax_title, cell, cell_palettes, hue_names, **kwargs):
             suite = ax_title.split('(')[1].split(')')[0]
             task = ax_title.split(' (')[0]
 
-            _x_axis = x_axis if x_axis in task_data.columns else 'Step'
+            _x_axis = x_axis if x_axis in cell_data.columns else 'Step'
             y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
 
             if _x_axis == 'Time':
-                task_data['Time'] = pd.to_datetime(task_data['Time'], unit='s')
+                cell_data['Time'] = pd.to_datetime(cell_data['Time'], unit='s')
 
             if write_tabular or plot_bar:
                 # Aggregate tabular data over all seeds/runs
-                for agent in task_data.Agent.unique():
+                for agent in cell_data.Agent.unique():
+                    # Un-normalized mean/median
                     for tabular in [tabular_mean, tabular_median]:
                         if agent not in tabular:
                             tabular[agent] = {}
                         if suite not in tabular[agent]:
                             tabular[agent][suite] = {}
-                    scores = task_data.loc[(task_data['Step'] == min_steps) & (task_data['Agent'] == agent), y_axis]
+                    scores = cell_data.loc[(cell_data['Step'] == min_steps) & (cell_data['Agent'] == agent), y_axis]
                     tabular_mean[agent][suite][task] = scores.mean()
                     tabular_median[agent][suite][task] = scores.median()
+                    # Normalized mean/median
                     for t in low:
-                        if t.lower() in suite_task.lower():
+                        if t.lower() in cell[0].lower():
                             for tabular in [tabular_normalized_mean, tabular_normalized_median]:
                                 if agent not in tabular:
                                     tabular[agent] = {}
@@ -246,19 +208,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                             tabular_normalized_median[agent][suite][task] = normalized.median()
                             break
 
-            # No need to show Agent in legend if all same
-            short_palette = palette
-            if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
-
-            hue_order = np.sort(task_data.Agent.unique())
-            sns.lineplot(x=_x_axis, y=y_axis, data=task_data, ci='sd', hue='Agent', hue_order=hue_order, ax=ax,
-                         palette=short_palette
-                         )
-            ax.set_title(f'{ax_title}')
+            sns.lineplot(x=_x_axis, y=y_axis, data=cell_data, ci='sd', hue='Agent', hue_order=np.sort(hue_names), ax=ax,
+                         palette=cell_palettes)
 
             if _x_axis == 'Time':
                 ax.set_xlabel("Time (h)")
@@ -276,25 +227,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             ax.tick_params(axis='x', rotation=20)
 
-            # Legend next to subplots
-            # ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False).set_title('Agent')
-
-            # Data for universal legend (Note: need to debug if not showing Agent)
-            # handle, label = ax.get_legend_handles_labels()
-            # handles.update({l: h for l, h in zip(label, handle)})
-            # ax.legend().remove()
-
-        # Universal legend
-        # axs[num_cols - 1].legend([handles[label] for label in hue_order], hue_order, loc=2, bbox_to_anchor=(1.05, 1.05),
-        #                          borderaxespad=0, frameon=False).set_title('Agent')
-
-        for i in range(extra):
-            fig.delaxes(axs[num_rows - 1, num_cols - i - 1])
-
-        plt.tight_layout()
-        plt.savefig(path / (plot_name + 'Tasks.png'))
-
-        plt.close()
+        general_plot(df, path, plot_name + 'Tasks', palette, make)
 
         # PLOTTING (suites)
 
@@ -423,33 +356,37 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # Bar plot
         if plot_bar:
-            bar_data = {suite_name: {'Task': [], 'Median': [], 'Agent': []} for suite_name in found_suites}
-            for agent in tabular_median:
-                for suite in tabular_median[agent]:
-                    for task in tabular_median[agent][suite]:
-                        median = tabular_median
-                        for t in low:
-                            if t.lower() == suite.lower() or t.lower() == task.lower():
-                                median = tabular_normalized_median
-                                break
-                        bar_data[suite]['Task'].append(task)
-                        bar_data[suite]['Median'].append(median[agent][suite][task])
-                        bar_data[suite]['Agent'].append(agent)
+            # Only show results for a consistent step count
+            bar_data = df[df['Step'] == min_steps]
 
-            # Max agents for a task
-            max_agents = max([len(set([bar_data[suite]['Agent'][i] for i, _ in enumerate(bar_data[suite]['Agent'])
-                                       if bar_data[suite]['Task'][i] == task])) for suite in bar_data
-                              for task in set(bar_data[suite]['Task'])])
+            # Median all scores
+            bar_data = bar_data[['Task', 'Suite', 'Agent', 'Accuracy', 'Reward']].groupby(
+                ['Task', 'Suite', 'Agent']).median().reset_index()
 
-            # Create bar subplots [Can edit width here figsize=(width, height)]
-            fig, axs = plt.subplots(1, num_cols, figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))  # Size
+            # Median for Accuracy or Reward
+            bar_data['Median'] = bar_data['Reward'] if 'Reward' in bar_data.columns else bar_data['Accuracy']
+            if 'Reward' in bar_data.columns:
+                bar_data.loc[bar_data['Median'].isna(), 'Median'] = bar_data['Accuracy']
+
+            # Normalize
+            for i, (task, suite) in bar_data[['Task', 'Suite']].iterrows():
+                for name in [task.split(' (')[0].lower(), suite.lower()]:
+                    if name in low and name in high:
+                        bar_data.loc[i, 'Median'] = (bar_data.loc[i, 'Median'] - low[name]) / (high[name] - low[name])
+
+            # Max Agents for a Task - For configuring Bar Plot width
+            max_agents = bar_data.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
+
+            # Create bar subplots  [Can edit width here: figsize=(width, height)]
+            fig, axs = plt.subplots(1, num_cols,
+                                    figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))  # Size
 
             # Title
             if title is not None:
                 fig.suptitle(title)
 
-            for col, suite in enumerate(bar_data):
-                task_data = pd.DataFrame(bar_data[suite])
+            for col, suite in enumerate(bar_data.Suite.unique()):
+                task_data = bar_data[bar_data['Suite'] == suite]
 
                 ax = axs[col] if num_cols > 1 else axs
 
@@ -545,7 +482,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         def make(ax, ax_title, cell_data, cell, hue_names, cell_palettes, **kwargs):
             sns.scatterplot(data=cell_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
-                            alpha=0.5, hue_order=np.sort(hue_names), ax=ax, palette=cell_palettes)
+                            alpha=0.7, hue_order=np.sort(hue_names), ax=ax, palette=cell_palettes)
 
             #  Post-processing
             step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'
@@ -577,7 +514,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                      make, ['Task', 'Agent'], title, 'Agent', False, True)
 
 
-def general_plot(data, path, plot_name, palette, make, per='Task', title='UnifiedML', hue='Agent',
+def general_plot(data, path, plot_name, palette, make_func, per='Task', title='UnifiedML', hue='Agent',
                  legend_aside=False, universal_legend=False):
     if not isinstance(per, list):
         per = [per]
@@ -610,7 +547,8 @@ def general_plot(data, path, plot_name, palette, make, per='Task', title='Unifie
 
     # Title
     if title is not None:
-        fig.suptitle(title, y=0.98)
+        # fig.suptitle(title, y=0.99)  # y controls height of title
+        fig.suptitle(title)
 
     cell_palettes = {}
 
@@ -620,7 +558,7 @@ def general_plot(data, path, plot_name, palette, make, per='Task', title='Unifie
         # Unique colors for this cell
         hue_names = cell_data[hue].unique()
 
-        # No need to show Agent name in legend if all same
+        # No need to show Agent name in legend if all same - TODO perhaps across the whole plot, not just cell
         if len((data if universal_legend else cell_data)[hue].str.split('(').str[0].unique()) == 1:  # Unique Agent name
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=SettingWithCopyWarning)
@@ -654,7 +592,7 @@ def general_plot(data, path, plot_name, palette, make, per='Task', title='Unifie
 
         ax.set_title(ax_title)
 
-        make(**locals())
+        make_func(**locals())
 
         if legend_aside:
             # Legend next to subplots
@@ -670,7 +608,7 @@ def general_plot(data, path, plot_name, palette, make, per='Task', title='Unifie
 
         ax = axs[0, -1] if num_rows > 1 and num_cols > 1 else axs[-1] if num_cols > 1 \
             else axs[0] if num_rows > 1 else axs
-        handles = [lines.Line2D([0], [0], marker='o', color=palette[label], label=label, linewidth=0)
+        handles = [lines.Line2D([0], [0], marker='o', color=cell_palettes[label], label=label, linewidth=0)
                    for label in hue_order]
         ax.legend(handles, hue_order, loc=2, bbox_to_anchor=(1.25, 1.05),
                   borderaxespad=0, frameon=False).set_title(hue)
