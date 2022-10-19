@@ -297,28 +297,28 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         plt.close()
 
-        # Tabular data
-        if write_tabular:
-            f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")  # TODO name after steps if provided
-            tabular_data = {'Mean': tabular_mean,
-                            'Median': tabular_median,
-                            'Normalized Mean': tabular_normalized_mean,
-                            'Normalized Median': tabular_normalized_median}
-            # Aggregating across suites
-            for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
-                for name, tabular in zip(['Mean', 'Median', 'Normalized-Mean', 'Normalized-Median'],
-                                         [tabular_mean, tabular_median,
-                                          tabular_normalized_mean, tabular_normalized_median]):
-                    tabular_data.update({
-                        f'{agg_name} {name}': {
-                            agent: {
-                                suite:
-                                    agg([val for val in tabular[agent][suite].values()])
-                                for suite in tabular[agent]}
-                            for agent in tabular}
-                    })
-            json.dump(tabular_data, f, indent=2)
-            f.close()
+        # # Tabular data
+        # if write_tabular:
+        #     f = open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w")  # TODO name after steps if provided
+        #     tabular_data = {'Mean': tabular_mean,
+        #                     'Median': tabular_median,
+        #                     'Normalized Mean': tabular_normalized_mean,
+        #                     'Normalized Median': tabular_normalized_median}
+        #     # Aggregating across suites
+        #     for agg_name, agg in zip(['Mean', 'Median'], [np.mean, np.median]):
+        #         for name, tabular in zip(['Mean', 'Median', 'Normalized-Mean', 'Normalized-Median'],
+        #                                  [tabular_mean, tabular_median,
+        #                                   tabular_normalized_mean, tabular_normalized_median]):
+        #             tabular_data.update({
+        #                 f'{agg_name} {name}': {
+        #                     agent: {
+        #                         suite:
+        #                             agg([val for val in tabular[agent][suite].values()])
+        #                         for suite in tabular[agent]}
+        #                     for agent in tabular}
+        #             })
+        #     json.dump(tabular_data, f, indent=2)
+        #     f.close()
 
         # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
         min_time = df.loc[df['Step'] == min_steps, x_axis].unique()
@@ -349,19 +349,28 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             # Normalized Mean and Median
             for i, (task, suite) in bar_data[['Task', 'Suite']].iterrows():
-                bar_data.loc[i, f'MeanNorm'] = bar_data.loc[i, 'Mean']
-                bar_data.loc[i, f'MedianNorm'] = bar_data.loc[i, 'Median']
+                bar_data.loc[i, f'NormalizedMean'] = bar_data.loc[i, 'Mean']
+                bar_data.loc[i, f'NormalizedMedian'] = bar_data.loc[i, 'Median']
 
-                for name in [task.split(' (')[0], suite]:
-                    if name in low and name in high:
-                        # Mean
-                        bar_data.loc[i, f'MeanNorm'] -= low[name]
-                        bar_data.loc[i, f'MeanNorm'] /= high[name] - low[name]
+                # Index norm lows/highs by task name or suite name
+                task = task.split(' (')[0]
+                name = task if task in low and task in high else suite
 
-                        # Median
-                        bar_data.loc[i, f'MedianNorm'] -= low[name]
-                        bar_data.loc[i, f'MedianNorm'] /= high[name] - low[name]
-                    break
+                if name in low and name in high:
+                    # Mean
+                    bar_data.loc[i, f'NormalizedMean'] -= low[name]
+                    bar_data.loc[i, f'NormalizedMean'] /= high[name] - low[name]
+
+                    # Median
+                    bar_data.loc[i, f'NormalizedMedian'] -= low[name]
+                    bar_data.loc[i, f'NormalizedMedian'] /= high[name] - low[name]
+                break
+
+            # json_data = bar_data.to_json()
+            # json_data['MeanNormalizedMean'] =
+
+            # with open(path / (plot_name + f'{int(min_steps)}-Steps_Tabular.json'), "w") as f:
+            #     json.dump(json_data, f, indent=2)
 
             # Max Agents for a Task - For configuring Bar Plot width
             max_agents = bar_data.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
@@ -386,8 +395,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
                 hue_order = np.sort(task_data.Agent.unique())
-                sns.barplot(x='Task', y='MedianNorm', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                            palette=short_palette)
+                sns.barplot(x='Task', y='NormalizedMedian', ci='sd', hue='Agent', data=task_data, ax=ax,
+                            hue_order=hue_order, palette=short_palette)
 
                 if x_axis.lower() == 'time':
                     time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
