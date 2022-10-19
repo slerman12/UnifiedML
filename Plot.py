@@ -22,7 +22,6 @@ os.environ['NUMEXPR_MAX_THREADS'] = '8'
 
 import numpy as np
 import pandas as pd
-from pandas.core.common import SettingWithCopyWarning
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker, dates, lines
@@ -152,6 +151,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     universal_hue_order, palette = [], {}
 
+    pd.options.mode.chained_assignment = None
+
     # Non-empty check
     if len(csv_list) > 0:
         df = pd.concat(csv_list, ignore_index=True)
@@ -174,49 +175,25 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # PLOTTING (tasks)
 
-        def make(cell_data, ax, ax_title, cell, cell_palettes, hue_names, **kwargs):
+        def make(cell_data, ax, ax_title, cell_palettes, hue_names, **kwargs):
             suite = ax_title.split('(')[1].split(')')[0]
-            task = ax_title.split(' (')[0]
 
-            _x_axis = x_axis if x_axis in cell_data.columns else 'Step'
-            y_axis = 'Accuracy' if 'classify' in suite.lower() else 'Reward'
-
-            if _x_axis == 'Time':
+            # Pre-processing
+            x = x_axis if x_axis in cell_data.columns else 'Step'
+            if x == 'Time':
                 cell_data['Time'] = pd.to_datetime(cell_data['Time'], unit='s')
 
-            if write_tabular or plot_bar:
-                # Aggregate tabular data over all seeds/runs
-                for agent in cell_data.Agent.unique():
-                    # Un-normalized mean/median
-                    for tabular in [tabular_mean, tabular_median]:
-                        if agent not in tabular:
-                            tabular[agent] = {}
-                        if suite not in tabular[agent]:
-                            tabular[agent][suite] = {}
-                    scores = cell_data.loc[(cell_data['Step'] == min_steps) & (cell_data['Agent'] == agent), y_axis]
-                    tabular_mean[agent][suite][task] = scores.mean()
-                    tabular_median[agent][suite][task] = scores.median()
-                    # Normalized mean/median
-                    for t in low:
-                        if t.lower() in cell[0].lower():
-                            for tabular in [tabular_normalized_mean, tabular_normalized_median]:
-                                if agent not in tabular:
-                                    tabular[agent] = {}
-                                if suite not in tabular[agent]:
-                                    tabular[agent][suite] = {}
-                            normalized = (scores - low[t]) / (high[t] - low[t])
-                            tabular_normalized_mean[agent][suite][task] = normalized.mean()
-                            tabular_normalized_median[agent][suite][task] = normalized.median()
-                            break
+            y = 'Accuracy' if 'classify' in suite.lower() \
+                else 'Reward'
 
-            sns.lineplot(x=_x_axis, y=y_axis, data=cell_data, ci='sd', hue='Agent', hue_order=np.sort(hue_names), ax=ax,
+            sns.lineplot(x=x, y=y, data=cell_data, ci='sd', hue='Agent', hue_order=np.sort(hue_names), ax=ax,
                          palette=cell_palettes)
 
-            if _x_axis == 'Time':
+            # Post-processing
+            if x == 'Time':
                 ax.set_xlabel("Time (h)")
                 ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M:%S'))
-                # For now, group x axis into bins only for time
-                ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))  # For now group x axis into bins only for time
 
             if 'classify' in suite.lower():
                 ax.set_ybound(0, 1)
@@ -226,6 +203,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Legend in subplots
             ax.legend(frameon=False).set_title(None)
 
+            # Rotate x-axis names
             ax.tick_params(axis='x', rotation=20)
 
         general_plot(df, path, plot_name + 'Tasks', palette, make)
@@ -265,21 +243,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # No need to show Agent in legend if all same
             short_palette = palette
             if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+                task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
-            # High-low-normalize  TODO This is correct, but bar is not
+            # High-low-normalize
             for suite_task in task_data.Task.unique():
                 for t in low:
                     if t.lower() in suite_task.lower():
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-
-                            task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
-                            task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
-                            continue
+                        task_data.loc[task_data['Task'] == suite_task, y_axis] -= low[t]
+                        task_data.loc[task_data['Task'] == suite_task, y_axis] /= high[t] - low[t]
+                        continue
 
             ax = axs[col] if num_cols > 1 else axs
 
@@ -363,21 +336,32 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Score name y-axis
             metrics = [metric for metric in ['Accuracy', 'Reward'] if metric in bar_data.columns]
 
-            # Median all scores
-            bar_data = bar_data[['Task', 'Suite', 'Agent', *metrics]].groupby(
-                ['Task', 'Suite', 'Agent']).median().reset_index()
+            # Use Reward or Accuracy as "Score"
+            bar_data['Score'] = bar_data[metrics[0]]
 
-            # Median for Accuracy or Reward
-            bar_data['Median'] = bar_data[metrics[0]]
             if len(metrics) > 1:
-                bar_data.loc[bar_data['Median'].isna(), 'Median'] = bar_data[metrics[1]]
+                # Where N/A, use the other
+                bar_data.loc[bar_data['Score'].isna(), 'Score'] = bar_data[metrics[1]]
 
-            # Normalize
+            # Mean and Median scores across seeds
+            bar_data = bar_data[['Task', 'Suite', 'Agent', 'Score']].groupby(
+                ['Task', 'Suite', 'Agent']).agg(Mean=('Score', np.mean), Median=('Score', np.sum)).reset_index()
+
+            # Normalized Mean and Median
             for i, (task, suite) in bar_data[['Task', 'Suite']].iterrows():
+                bar_data.loc[i, f'MeanNorm'] = bar_data.loc[i, 'Mean']
+                bar_data.loc[i, f'MedianNorm'] = bar_data.loc[i, 'Median']
+
                 for name in [task.split(' (')[0], suite]:
                     if name in low and name in high:
-                        bar_data.loc[i, 'Median'] = (bar_data.loc[i, 'Median'] - low[name]) / (high[name] - low[name])
-                        break
+                        # Mean
+                        bar_data.loc[i, f'MeanNorm'] -= low[name]
+                        bar_data.loc[i, f'MeanNorm'] /= high[name] - low[name]
+
+                        # Median
+                        bar_data.loc[i, f'MedianNorm'] -= low[name]
+                        bar_data.loc[i, f'MedianNorm'] /= high[name] - low[name]
+                    break
 
             # Max Agents for a Task - For configuring Bar Plot width
             max_agents = bar_data.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
@@ -398,15 +382,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 # No need to show Agent in legend if all same
                 short_palette = palette
                 if len(task_data.Agent.str.split('(').str[0].unique()) == 1:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                        task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
-                        short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
+                    task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
+                    short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
                 hue_order = np.sort(task_data.Agent.unique())
-                sns.barplot(x='Task', y='Median', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
-                            palette=short_palette
-                            )
+                sns.barplot(x='Task', y='MedianNorm', ci='sd', hue='Agent', data=task_data, ax=ax, hue_order=hue_order,
+                            palette=short_palette)
 
                 if x_axis.lower() == 'time':
                     time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
@@ -566,15 +547,13 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
 
         # No need to show Agent name in legend if all same - TODO perhaps across the whole plot, not just cell
         if len((data if universal_legend else cell_data)[hue].str.split('(').str[0].unique()) == 1:  # Unique Agent name
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=SettingWithCopyWarning)
-                # Remove Agent name from data columns
-                cell_data[hue] = cell_data[hue].str.split('(').str[1:].str.join('(').str.split(')'
-                                                                                               ).str[:-1].str.join(')')
-                # Remove Agent name from legend
-                for j, hue_name in enumerate(hue_names):
-                    hue_names[j] = ')'.join('('.join(hue_name.split('(')[1:]).split(')')[:-1])
-                    cell_palettes.update({hue_names[j]: palette[hue_name]})
+            # Remove Agent name from data columns
+            cell_data[hue] = cell_data[hue].str.split('(').str[1:].str.join('(').str.split(')'
+                                                                                           ).str[:-1].str.join(')')
+            # Remove Agent name from legend
+            for j, hue_name in enumerate(hue_names):
+                hue_names[j] = ')'.join('('.join(hue_name.split('(')[1:]).split(')')[:-1])
+                cell_palettes.update({hue_names[j]: palette[hue_name]})
         else:
             cell_palettes.update({hue_name: palette[hue_name] for hue_name in hue_names})
 
