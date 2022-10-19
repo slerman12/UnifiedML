@@ -105,10 +105,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         for i, spec in enumerate(specs):
             if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
                     ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
-                # if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
-                #         ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):  # Why this?
-                #     break
+                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
+                        ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):  # Tasks can be specified with suite
+                    break
                 include = False
+                break
 
         if not include:
             continue
@@ -269,7 +270,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                     task_data['Agent'] = task_data.Agent.str.split('(').str[1:].str.join('(').str.split(')').str[:-1].str.join(')')
                     short_palette = {')'.join('('.join(agent.split('(')[1:]).split(')')[:-1]): palette[agent] for agent in palette}
 
-            # High-low-normalize
+            # High-low-normalize  TODO This is correct, but bar is not
             for suite_task in task_data.Task.unique():
                 for t in low:
                     if t.lower() in suite_task.lower():
@@ -359,20 +360,24 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Only show results for a consistent step count
             bar_data = df[df['Step'] == min_steps]
 
+            # Score name y-axis
+            metrics = [metric for metric in ['Accuracy', 'Reward'] if metric in bar_data.columns]
+
             # Median all scores
-            bar_data = bar_data[['Task', 'Suite', 'Agent', 'Accuracy', 'Reward']].groupby(
+            bar_data = bar_data[['Task', 'Suite', 'Agent', *metrics]].groupby(
                 ['Task', 'Suite', 'Agent']).median().reset_index()
 
             # Median for Accuracy or Reward
-            bar_data['Median'] = bar_data['Reward'] if 'Reward' in bar_data.columns else bar_data['Accuracy']
-            if 'Reward' in bar_data.columns:
-                bar_data.loc[bar_data['Median'].isna(), 'Median'] = bar_data['Accuracy']
+            bar_data['Median'] = bar_data[metrics[0]]
+            if len(metrics) > 1:
+                bar_data.loc[bar_data['Median'].isna(), 'Median'] = bar_data[metrics[1]]
 
             # Normalize
             for i, (task, suite) in bar_data[['Task', 'Suite']].iterrows():
-                for name in [task.split(' (')[0].lower(), suite.lower()]:
+                for name in [task.split(' (')[0], suite]:
                     if name in low and name in high:
                         bar_data.loc[i, 'Median'] = (bar_data.loc[i, 'Median'] - low[name]) / (high[name] - low[name])
+                        break
 
             # Max Agents for a Task - For configuring Bar Plot width
             max_agents = bar_data.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
@@ -464,6 +469,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         original_df = df.copy()
 
         step = df[['Task', 'Step']].groupby('Task').max().reset_index() if 'Step' in df.columns else None
+        # step = df[['Task', 'Step']].groupby('Task').max().reset_index()  # TODO Use this after XRD
 
         df['Accuracy'] = 0
         df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
