@@ -345,11 +345,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # Max Agents for a Task - for configuring Bar Plot width
         mean_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
+        max_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
         num_tasks = len(df.Task.unique())
-        # num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
+        num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
 
         general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
                      figsize=(max(4, num_tasks * mean_num_agents_per_task * 0.7), 3))
+        # TODO [num_bars / mean] = [consistent width per task] * max_num [adapt to largest task] * scale
+        # TODO [num_bars / mean * num_tasks] [if the bars were distributed evenly] * max_num * scale
+        # general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
+        #              figsize=(mean_num_agents_per_task * num_tasks * max_num_agents_per_task / 4.5, 3))
         # TODO Try:
         # general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
         #              figsize=(num_tasks * mean_num_agents_per_task / 2, 3))
@@ -396,7 +401,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             #  Post-processing
             # step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'
-            step_ = ' (@500000 Steps)'
+            step_ = ' (@500000 Steps)'  # TODO This is just for XRD
             ax.set_title(f'{ax_title}{step_}')
             ax.set_ybound(-0.05, 1.05)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
