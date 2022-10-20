@@ -222,7 +222,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # PLOTTING (bar plot)
 
-        def make(ax, cell_data, cell_palettes, hue_names, **kwargs):
+        def make(ax, cell_data, cell_palettes, hue_names, cell, **kwargs):
             # Pre-processing
             cell_data['Task'] = cell_data['Task'].str.split('(').str[0]
 
@@ -230,6 +230,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                         hue_order=np.sort(hue_names), palette=cell_palettes)
 
             # Post-processing
+            suite = cell[0]
+
             if x_axis.lower() == 'time':
                 time_str = pd.to_datetime(min_time, unit='s').strftime('%H:%M:%S')
                 ax.set_title(f'{suite} (@{time_str}h)')
