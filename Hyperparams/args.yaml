@@ -160,7 +160,6 @@ plotting:
   plot_tasks: null
   steps: null
   write_tabular: false
-  plot_bar: true
   plot_train: false
   title: UnifiedML
   x_axis: Step
