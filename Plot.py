@@ -355,7 +355,7 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
 
     min_steps = steps
 
-    # Parsing
+    # Reading/parsing
     for csv_name in csv_names:
         # Parse file names
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
