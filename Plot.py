@@ -345,19 +345,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # Max Agents for a Task - for configuring Bar Plot width
         mean_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
-        max_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
+        # max_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
         num_tasks = len(df.Task.unique())
-        num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
+        # num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
 
         general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
                      figsize=(max(4, num_tasks * mean_num_agents_per_task * 0.7), 3))
-        # TODO [num_bars / mean] = [consistent width per task] * max_num [adapt to largest task] * scale
-        # TODO [num_bars / mean * num_tasks] [if the bars were distributed evenly] * max_num * scale
-        # general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
-        #              figsize=(mean_num_agents_per_task * num_tasks * max_num_agents_per_task / 4.5, 3))
-        # TODO Try:
-        # general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
-        #              figsize=(num_tasks * mean_num_agents_per_task / 2, 3))
 
     # Class Sizes & Heatmap
     if len(predicted_vs_actual_list) > 0:
