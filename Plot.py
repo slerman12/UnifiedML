@@ -355,7 +355,7 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
 
     min_steps = steps
 
-    # Data recollection/parsing
+    # Parsing
     for csv_name in csv_names:
         # Parse file names
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
@@ -410,7 +410,8 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
         csv['Task'] = task + ' (' + suite + ')'  # Name Task together with suite
         csv['Seed'] = seed
 
-        # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pperformance/2108.13264.pperformance
+        # Rolling max per run (as in CURL, SUNRISE)
+        # This was critiqued heavily in https://arxiv.org/pperformance/2108.13264.pperformance
         # max_csv = csv.copy()
         # max_csv['reward'] = max_csv[['reward', 'step']].rolling(length, min_periods=1, on='step').max()['reward']
 
