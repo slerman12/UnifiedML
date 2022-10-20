@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import json
 import re
 import sys
 from typing import MutableSequence
@@ -74,8 +73,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
     csv_list = []
     # max_csv_list = []  # Unused
-    found_suite_tasks = set()
-    found_suites = set()
     min_steps = steps
 
     predicted_vs_actual_list = []
@@ -117,12 +114,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         csv = pd.read_csv(csv_name)
 
         if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower():
-            length = int(csv['step'].max())
+            length = int(csv.loc[csv['step'] <= steps, 'step'].max())
             if length == 0:
                 continue
 
-            # TODO assumes all step brackets are shared
-            # Min number of steps  TODO per suite, task
+            # Min number of steps over all tasks/experiments  TODO per suite, task
+            # Assumes data available for a single shared step across tasks - may not be true when log steps inconsistent
             min_steps = min(min_steps, length)
 
             if verbose and length < steps != np.inf:
@@ -145,9 +142,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             found_predicted_vs_actual.update({found_suite_task})
         else:
             csv_list.append(csv)
-            # max_csv_list.append(max_csv)
-            found_suite_tasks.update({found_suite_task})
-            found_suites.update({suite})
 
     universal_hue_order, palette = [], {}
 
@@ -158,14 +152,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         df = pd.concat(csv_list, ignore_index=True)
 
         # Capitalize column names
-        df.columns = [' '.join([name.capitalize() for name in col_name.split('_')]) for col_name in df.columns]
+        df.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
+                      for col_name in df.columns]
 
         # Steps cap
         if steps < np.inf:
             df = df[df['Step'] <= steps]
-
-        # max_df = pd.concat(max_csv_list, ignore_index=True)  # Unused
-        found_suite_tasks = np.sort(list(found_suite_tasks))
 
         universal_hue_order, handles = np.sort(df.Agent.unique()), {}
         palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
@@ -254,15 +246,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         general_plot(df, path, plot_name + 'Suites', palette, make, 'Suite', title)
 
-        # PLOTTING (tabular)
+        # WRITING (tabular)
 
-        # Consistent x axis across all tasks for bar plot since tabular data only records w.r.t. min step
-        min_time = df.loc[df['Step'] == min_steps, x_axis].unique()
-        if len(min_time) > 1:
+        # Consistent steps across all tasks for bar plot and tabular data
+        min_time = df.loc[df['Step'] == min_steps, x_axis].unique()  # Checks if specified x-axis "time" is shared
+        if len(min_time) > 1:  # If not, just use Step
             x_axis = 'Step'
             min_time = min_steps
         else:
-            min_time = min_time[0]
+            min_time = min_time[0]  # if so, use that time
 
         # Only show results for a consistent step count
         df = df[df['Step'] == min_steps]
@@ -352,11 +344,16 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         max_agents = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
 
         general_plot(df, path, plot_name + 'Bar', palette, make, 'Suite', title, 'Agent', True,
-                     figsize=(1.5 * max(max_agents, 3) * len(found_suite_tasks) / 2, 3))
+                     figsize=(1.5 * max(max_agents, 3) * len(df.Task.unique()) / 2, 3))
 
     # Class Sizes & Heatmap
     if len(predicted_vs_actual_list) > 0:
         df = pd.concat(predicted_vs_actual_list, ignore_index=True)
+
+        # Capitalize column names
+        df.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
+                      for col_name in df.columns]
+
         df = df.astype({'Predicted': int, 'Actual': int})
 
         i = 0
@@ -383,7 +380,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         df['Accuracy'] /= df['Count']
         df['Count'] /= num_seeds['Seed']
 
-        # Class Sizes
+        # Plotting (class Sizes)
 
         def make(ax, ax_title, cell_data, cell, hue_names, cell_palettes, **kwargs):
             sns.scatterplot(data=cell_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
@@ -400,7 +397,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         general_plot(df, path, plot_name + 'ClassSizes.png', palette,
                      make, 'Task', title, 'Agent', True, False, False)
 
-        # Heatmap
+        # Plotting (heatmap)
 
         def make(cell_data, ax, cell_palettes, hue_names, **kwargs):
             # Pre-processing
@@ -424,12 +421,6 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
     if not isinstance(per, list):
         per = [per]
 
-    # Capitalize column names
-    per = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
-           for col_name in per]
-    data.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
-                    for col_name in data.columns]
-
     cells = data[per].groupby(per).size().reset_index().drop(columns=0)
 
     total = len(cells.index)
@@ -452,8 +443,8 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
 
     # Title
     if title is not None:
-        # fig.suptitle(title, y=0.99)  # y controls height of title
-        fig.suptitle(title)
+        fig.suptitle(title, y=0.99 if total > 10 else None)  # y controls height of title
+        # fig.suptitle(title)
 
     cell_palettes = {}
 
@@ -463,7 +454,7 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
         # Unique colors for this cell
         hue_names = cell_data[hue].unique()
 
-        # No need to show Agent name in legend if all same - TODO perhaps across the whole plot, not just cell
+        # No need to show Agent name in legend if all same - TODO perhaps across the whole plot, not per cell
         if len((data if universal_legend else cell_data)[hue].str.split('(').str[0].unique()) == 1:  # Unique Agent name
             # Remove Agent name from data columns
             cell_data[hue] = cell_data[hue].str.split('(').str[1:].str.join('(').str.split(')'
