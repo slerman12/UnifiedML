@@ -344,13 +344,13 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.set(xlabel=None)
 
         # Max Agents for a Task - for configuring Bar Plot width
-        mean_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
-        # max_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
+        mean_num_bars_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
+        # max_num_bars_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
         num_tasks = len(df.Task.unique())
         # num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
 
         general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
-                     figsize=(max(4, num_tasks * mean_num_agents_per_task * 0.7), 3))
+                     figsize=(max(4, num_tasks * mean_num_bars_per_task * 0.7), 3))  # Somewhat adaptive sizing
 
     # Class Sizes & Heatmap
     if len(predicted_vs_actual_list) > 0:
