@@ -31,9 +31,11 @@ import seaborn as sns
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=None,
          write_tabular=False, plot_train=False, title='UnifiedML', x_axis='Step', verbose=False):
 
+    # Save path
     path = Path(path + f'/{"Train" if plot_train else "Eval"}')
     path.mkdir(parents=True, exist_ok=True)
 
+    # Max number of steps to plot
     if steps is None:
         steps = np.inf
 
@@ -59,110 +61,26 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
     # Note: finite number of color palettes: could error out if try to plot a billion tasks in one figure
     palette_colors = sum([sns.color_palette(palette) for palette in possible_palettes], [])
 
-    sns.set_theme(font_scale=0.7,
-                  rc={
-                      'legend.loc': 'lower right', 'figure.dpi': 400,
-                      'legend.fontsize': 5.5, 'legend.title_fontsize': 5.5,
-                      # 'axes.titlesize': 4, 'axes.labelsize': 4, 'font.size': 4,
-                      # 'xtick.labelsize': 7, 'ytick.labelsize': 7,
-                      # 'figure.titlesize': 4
-                  })
+    # Universal theme
+    sns.set_theme(font_scale=0.7, rc={'legend.loc': 'lower right', 'figure.dpi': 400,
+                                      'legend.fontsize': 5.5, 'legend.title_fontsize': 5.5,
+                                      # 'axes.titlesize': 4, 'axes.labelsize': 4, 'font.size': 4,
+                                      # 'xtick.labelsize': 7, 'ytick.labelsize': 7,
+                                      # 'figure.titlesize': 4
+                                      })
 
-    # All CSVs from path, recursive
-    csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
-
-    csv_list = []
-    # max_csv_list = []  # Unused
-    min_steps = steps
-
-    predicted_vs_actual_list = []
-    found_predicted_vs_actual = set()
-
-    # Data recollection/parsing
-    for csv_name in csv_names:
-        # Parse files
-        experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
-        split_size = 3 if 'Generate' in task_seed_eval else 5 if 'Predicted_vs_Actual' in task_seed_eval else 2
-        task_seed = task_seed_eval.rsplit('_', split_size)
-        suite_task, seed, eval = task_seed[0], task_seed[1], '_'.join(task_seed[2:]).replace('.csv', '')
-
-        # Map suite names to properly-cased names
-        suite = {k.lower(): k for k in ['Atari', 'DMC', 'Classify']}.get(suite.lower(), suite)
-
-        # Whether to include this CSV
-        include = True
-
-        mode = 'train' if plot_train else 'eval'
-
-        if eval.lower() not in [mode, f'predicted_vs_actual_{mode}']:
-            include = False
-
-        datums = [experiment, agent, suite.lower(), suite_task]
-        for i, spec in enumerate(specs):
-            if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
-                    ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
-                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
-                        ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):  # Tasks can be specified with suite
-                    break
-                include = False
-                break
-
-        if not include:
-            continue
-
-        # Add CSV
-        csv = pd.read_csv(csv_name)
-
-        if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower():
-            length = int(csv.loc[csv['step'] <= steps, 'step'].max())
-            if length == 0:
-                continue
-
-            # Min number of steps over all tasks/experiments  TODO per suite, task
-            # Assumes data available for a single shared step across tasks - may not be true when log steps inconsistent
-            min_steps = min(min_steps, length)
-
-            if verbose and length < steps != np.inf:
-                print(f'[Experiment {experiment} Agent {agent} Suite {suite} Task {suite_task} Seed {seed}] '
-                      f'has {length} steps.')
-
-        found_suite_task = suite_task + ' (' + suite + ')'
-
-        csv['Agent'] = agent + ' (' + experiment + ')'
-        csv['Suite'] = suite
-        csv['Task'] = found_suite_task
-        csv['Seed'] = seed
-
-        # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pdf/2108.13264.pdf
-        # max_csv = csv.copy()
-        # max_csv['reward'] = max_csv[['reward', 'step']].rolling(length, min_periods=1, on='step').max()['reward']
-
-        if 'predicted_vs_actual' in eval.lower():
-            predicted_vs_actual_list.append(csv)
-            found_predicted_vs_actual.update({found_suite_task})
-        else:
-            csv_list.append(csv)
+    # RETRIEVE DATA FOR PLOTTING
+    performance, predicted_vs_actual, min_steps = get_data(specs, steps, plot_train, verbose)
 
     universal_hue_order, palette = [], {}
 
+    x_axis = x_axis.capitalize()
+
     pd.options.mode.chained_assignment = None
 
-    # Non-empty check
-    if len(csv_list) > 0:
-        df = pd.concat(csv_list, ignore_index=True)
-
-        # Capitalize column names
-        df.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
-                      for col_name in df.columns]
-
-        # Steps cap
-        if steps < np.inf:
-            df = df[df['Step'] <= steps]
-
-        universal_hue_order, handles = np.sort(df.Agent.unique()), {}
+    if len(performance) > 0:
+        universal_hue_order, handles = np.sort(performance.Agent.unique()), {}
         palette = {agent: color for agent, color in zip(universal_hue_order, palette_colors[:len(universal_hue_order)])}
-
-        x_axis = x_axis.capitalize()
 
         # PLOTTING (tasks)
 
@@ -197,7 +115,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Rotate x-axis names
             ax.tick_params(axis='x', rotation=20)
 
-        general_plot(df, path, plot_name + 'Tasks.png', palette, make, 'Task', title)
+        general_plot(performance, path, plot_name + 'Tasks.png', palette, make, 'Task', title)
 
         # PLOTTING (suites)
 
@@ -211,11 +129,11 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 else 'Reward'
 
             # Normalize
-            for suite_task in cell_data.Task.unique():
+            for task in cell_data.Task.unique():
                 for t in low:
-                    if t.lower() in suite_task.lower():
-                        cell_data.loc[cell_data['Task'] == suite_task, y] -= low[t]
-                        cell_data.loc[cell_data['Task'] == suite_task, y] /= high[t] - low[t]
+                    if t.lower() in task.lower():
+                        cell_data.loc[cell_data['Task'] == task, y] -= low[t]
+                        cell_data.loc[cell_data['Task'] == task, y] /= high[t] - low[t]
                         continue
 
             sns.lineplot(x=x, y=y, data=cell_data, ci='sd', hue='Agent', hue_order=np.sort(hue_names), ax=ax,
@@ -244,12 +162,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Rotate x-axis names
             ax.tick_params(axis='x', rotation=20)
 
-        general_plot(df, path, plot_name + 'Suites.png', palette, make, 'Suite', title)
+        general_plot(performance, path, plot_name + 'Suites.png', palette, make, 'Suite', title)
 
         # WRITING (tabular)
 
         # Consistent steps across all tasks for bar plot and tabular data
-        min_time = df.loc[df['Step'] == min_steps, x_axis].unique()  # Checks if specified x-axis "time" is shared
+        min_time = performance.loc[performance['Step'] == min_steps, x_axis].unique()  # Checks if specified x-axis "time" is shared
         if len(min_time) > 1:  # If not, just use Step
             x_axis = 'Step'
             min_time = min_steps
@@ -257,49 +175,49 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             min_time = min_time[0]  # if so, use that time
 
         # Only show results for a consistent step count
-        df = df[df['Step'] == min_steps]
+        performance = performance[performance['Step'] == min_steps]
 
         # Score name y-axis
-        metrics = [metric for metric in ['Accuracy', 'Reward'] if metric in df.columns]
+        metrics = [metric for metric in ['Accuracy', 'Reward'] if metric in performance.columns]
 
         # Use Reward or Accuracy as "Score"
-        df['Score'] = df[metrics[0]]
+        performance['Score'] = performance[metrics[0]]
 
         if len(metrics) > 1:
             # Where N/A, use the other
-            df.loc[df['Score'].isna(), 'Score'] = df[metrics[1]]
+            performance.loc[performance['Score'].isna(), 'Score'] = performance[metrics[1]]
 
         # Mean and Median scores across seeds
-        df = df[['Task', 'Suite', 'Agent', 'Score']].groupby(
+        performance = performance[['Task', 'Suite', 'Agent', 'Score']].groupby(
             ['Task', 'Suite', 'Agent']).agg(Mean=('Score', np.mean), Median=('Score', np.median)).reset_index()
 
         # Normalized Mean and Median scores across seeds
-        for i, (task, suite) in df[['Task', 'Suite']].iterrows():
-            df.loc[i, 'NormalizedMean'] = df.loc[i, 'Mean']
-            df.loc[i, 'NormalizedMedian'] = df.loc[i, 'Median']
+        for i, (task_suite, suite) in performance[['Task', 'Suite']].iterrows():
+            performance.loc[i, 'NormalizedMean'] = performance.loc[i, 'Mean']
+            performance.loc[i, 'NormalizedMedian'] = performance.loc[i, 'Median']
 
             # Index norm lows/highs by task name or suite name
-            task = task.split(' (')[0]
+            task = task_suite.split(' (')[0]
             name = task if task in low and task in high else suite
 
             if name in low and name in high:
                 # Mean
-                df.loc[i, f'NormalizedMean'] -= low[name]
-                df.loc[i, f'NormalizedMean'] /= high[name] - low[name]
+                performance.loc[i, f'NormalizedMean'] -= low[name]
+                performance.loc[i, f'NormalizedMean'] /= high[name] - low[name]
 
                 # Median
-                df.loc[i, f'NormalizedMedian'] -= low[name]
-                df.loc[i, f'NormalizedMedian'] /= high[name] - low[name]
+                performance.loc[i, f'NormalizedMedian'] -= low[name]
+                performance.loc[i, f'NormalizedMedian'] /= high[name] - low[name]
 
         # Writes normalized metrics for this step out to csv
         if write_tabular:
             # Tasks Tabular
-            df.to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Tasks_Tabular.csv'), index=False)
+            performance.to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Tasks_Tabular.csv'), index=False)
 
             # Suites Tabular - Mean or median of scores per suite
             metrics = {name: (seed_agg_name, agg) for seed_agg_name in ['NormalizedMean', 'NormalizedMedian']
                        for name, agg in [('Mean' + seed_agg_name, np.mean), ('Median' + seed_agg_name, np.median)]}
-            df[['Suite', 'NormalizedMedian', 'NormalizedMean']].groupby(['Suite']).agg(**metrics).reset_index(). \
+            performance[['Suite', 'NormalizedMedian', 'NormalizedMean']].groupby(['Suite']).agg(**metrics).reset_index(). \
                 to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Suites_Tabular.csv'), index=False)
 
         # PLOTTING (bar plot)
@@ -343,48 +261,52 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.tick_params(axis='x', rotation=20)
             ax.set(xlabel=None)
 
-        # Max Agents for a Task - for configuring Bar Plot width
-        mean_num_bars_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
-        # max_num_bars_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
-        num_tasks = len(df.Task.unique())
-        # num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
+            # Adaptive resizing
+            # for patch in ax.patches:
+            #     diff = patch.get_height() - new_value
+            #
+            #     # Set bar width
+            #     patch.set_height(new_value)
+            #
+            #     # Recenter bar
+            #     patch.set_y(patch.get_y() + diff * .5)
 
-        general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
+        # Max Agents for a Task - for configuring Bar Plot width
+        mean_num_bars_per_task = performance.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
+        # max_num_bars_per_task = performance.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
+        num_tasks = len(performance.Task.unique())
+        # num_bars = len(performance.groupby(['Task', 'Agent']).size().reset_index().index)
+
+        general_plot(performance, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
                      figsize=(max(4, num_tasks * mean_num_bars_per_task * 0.7), 3))  # Somewhat adaptive sizing
 
-    # Class Sizes & Heatmap
-    if len(predicted_vs_actual_list) > 0:
-        df = pd.concat(predicted_vs_actual_list, ignore_index=True)
-
-        # Capitalize column names
-        df.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
-                      for col_name in df.columns]
-
-        df = df.astype({'Predicted': int, 'Actual': int})
-
-        i = 0
-        for agent in np.sort(df.Agent.unique()):
+    if len(predicted_vs_actual) > 0:
+        # Use previously defined palette if available, or add new colors from the universal hue order w/o conflict
+        new_hues = 0
+        for agent in np.sort(predicted_vs_actual.Agent.unique()):
             if agent not in palette:
-                palette[agent] = palette_colors[len(universal_hue_order) + i]
-                i += 1
+                palette[agent] = palette_colors[len(universal_hue_order) + new_hues]
+                new_hues += 1
 
-        original_df = df.copy()
+        original_predicted_vs_actual = predicted_vs_actual.copy()
 
-        step = df[['Task', 'Step']].groupby('Task').max().reset_index() if 'Step' in df.columns else None
-        # step = df[['Task', 'Step']].groupby('Task').max().reset_index()  # TODO Use this after XRD
+        step = predicted_vs_actual[['Task', 'Step']].groupby('Task').max().reset_index() \
+            if 'Step' in predicted_vs_actual.columns else None
+        # step = predicted_vs_actual[['Task', 'Step']].groupby('Task').max().reset_index()  # TODO Use this after XRD
 
-        df['Accuracy'] = 0
-        df.loc[df['Predicted'] == df['Actual'], 'Accuracy'] = 1
-        df['Count'] = 1
-        df.drop(['Predicted'], axis=1)
-        df = df.rename(columns={'Actual': 'Class Label'})
+        predicted_vs_actual['Accuracy'] = 0
+        predicted_vs_actual.loc[predicted_vs_actual['Predicted'] == predicted_vs_actual['Actual'], 'Accuracy'] = 1
+        predicted_vs_actual['Count'] = 1
+        predicted_vs_actual.drop(['Predicted'], axis=1)
+        predicted_vs_actual = predicted_vs_actual.rename(columns={'Actual': 'Class Label'})
 
-        num_seeds = df.groupby(['Class Label', 'Agent', 'Task'])['Seed'].value_counts()
+        num_seeds = predicted_vs_actual.groupby(['Class Label', 'Agent', 'Task'])['Seed'].value_counts()
         num_seeds = num_seeds.groupby(['Class Label', 'Agent', 'Task']).count().reset_index()
 
-        df = df.groupby(['Class Label', 'Agent', 'Task']).agg({'Accuracy': 'sum', 'Count': 'size'}).reset_index()
-        df['Accuracy'] /= df['Count']
-        df['Count'] /= num_seeds['Seed']
+        predicted_vs_actual = predicted_vs_actual.groupby(['Class Label', 'Agent', 'Task']).agg(
+            {'Accuracy': 'sum', 'Count': 'size'}).reset_index()
+        predicted_vs_actual['Accuracy'] /= predicted_vs_actual['Count']
+        predicted_vs_actual['Count'] /= num_seeds['Seed']
 
         # Plotting (class Sizes)
 
@@ -400,7 +322,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
             ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
-        general_plot(df, path, plot_name + 'ClassSizes.png', palette,
+        general_plot(predicted_vs_actual, path, plot_name + 'ClassSizes.png', palette,
                      make, 'Task', title, 'Agent', True, False, False)
 
         # Plotting (heatmap)
@@ -418,8 +340,107 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             cbar.ax.yaxis.set_major_formatter(PercentFormatter(1, 0))
             # ax.invert_yaxis()  # Can optionally represent vertically flipped
 
-        general_plot(original_df, path, plot_name + 'Heatmap.png', palette,
+        general_plot(original_predicted_vs_actual, path, plot_name + 'Heatmap.png', palette,
                      make, ['Task', 'Agent'], title, 'Agent', False, True)
+
+
+def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
+    # All CSVs from path, recursive
+    csv_names = glob.glob('./Benchmarking/*/*/*/*.csv', recursive=True)
+
+    performance = []
+    predicted_vs_actual = []
+
+    min_steps = steps
+
+    # Data recollection/parsing
+    for csv_name in csv_names:
+        # Parse file names
+        experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
+        split_size = 3 if 'Generate' in task_seed_eval else 5 if 'Predicted_vs_Actual' in task_seed_eval else 2
+        task_seed = task_seed_eval.rsplit('_', split_size)
+        task, seed, eval = task_seed[0], task_seed[1], '_'.join(task_seed[2:]).replace('.csv', '')
+
+        # Map suite names to properly-cased names
+        suite = {k.lower(): k for k in ['Atari', 'DMC', 'Classify']}.get(suite.lower(), suite)
+
+        # Whether to include this CSV
+        include = True
+
+        mode = 'train' if plot_train else 'eval'
+
+        if eval.lower() not in [mode, f'predicted_vs_actual_{mode}']:
+            include = False
+
+        # Include based on spec
+        datums = [experiment, agent, suite.lower(), task]
+        for i, spec in enumerate(specs):
+            if spec is not None and not re.match('^(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
+                    ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):
+                if i == 3 and re.match('^.*(%s)+$' % '|'.join(spec).replace('(', r'\(').replace(
+                        ')', r'\)').replace('+', r'\+'), datums[i], re.IGNORECASE):  # Tasks can be specified with suite
+                    break
+                include = False
+                break
+
+        if not include:
+            continue
+
+        # Add CSV
+        csv = pd.read_csv(csv_name)
+
+        # Track max step total across all csvs
+        if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower():
+            length = int(csv.loc[csv['step'] <= steps, 'step'].max())
+            if length == 0:
+                continue
+
+            # Min number of max steps over all tasks/experiments  TODO per task/suite or range
+            # Assumes data available for a single shared step across tasks - may not be true when log steps inconsistent
+            min_steps = min(min_steps, length)
+
+            if verbose and length < steps != np.inf:
+                print(f'[Experiment {experiment} Agent {agent} Suite {suite} Task {task} Seed {seed}] '
+                      f'has {length} steps.')
+
+        csv['Agent'] = agent + ' (' + experiment + ')'  # Name Agent together with experiment
+        csv['Suite'] = suite
+        csv['Task'] = task + ' (' + suite + ')'  # Name Task together with suite
+        csv['Seed'] = seed
+
+        # Rolling max per run (as in CURL, SUNRISE) This was critiqued heavily in https://arxiv.org/pperformance/2108.13264.pperformance
+        # max_csv = csv.copy()
+        # max_csv['reward'] = max_csv[['reward', 'step']].rolling(length, min_periods=1, on='step').max()['reward']
+
+        if 'predicted_vs_actual' in eval.lower():
+            predicted_vs_actual.append(csv)
+        else:
+            performance.append(csv)
+
+    # To csv
+    if len(performance):
+        performance = pd.concat(performance, ignore_index=True)
+
+        # Capitalize column names
+        performance.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+', col_name)])
+                               for col_name in performance.columns]
+
+        # Steps cap
+        if steps < np.inf:
+            performance = performance[performance['Step'] <= steps]
+
+    if len(predicted_vs_actual):
+        predicted_vs_actual = pd.concat(predicted_vs_actual, ignore_index=True)
+
+        # Capitalize column names
+        predicted_vs_actual.columns = [' '.join([name[0].capitalize() + name[1:] for name in re.split(r'_|\s+',
+                                                                                                      col_name)])
+                                       for col_name in predicted_vs_actual.columns]
+
+        # To int
+        predicted_vs_actual = predicted_vs_actual.astype({'Predicted': int, 'Actual': int})
+
+    return performance, predicted_vs_actual, min_steps
 
 
 def general_plot(data, path, plot_name, palette, make_func, per='Task', title='UnifiedML', hue='Agent',
@@ -438,7 +459,7 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
         num_rows -= 1
     num_cols = total // num_rows
 
-    # If too rectangular, automatically infer num cols/rows square with empty extra cells
+    # If too rectangular, automatically infer num cols/rows as square with empty extra cells
     if num_cols / num_rows > 5:
         num_cols = int(np.ceil(np.sqrt(total)))
         num_rows = int(np.ceil(total / num_cols))
@@ -469,6 +490,10 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
             for j, hue_name in enumerate(hue_names):
                 hue_names[j] = ')'.join('('.join(hue_name.split('(')[1:]).split(')')[:-1])
                 cell_palettes.update({hue_names[j]: palette[hue_name]})
+
+            # Remove Agent from cell names
+            if hue in per:
+                cell[per.index(hue)] = ')'.join('('.join(cell[per.index(hue)].split('(')[1:]).split(')')[:-1])
         else:
             cell_palettes.update({hue_name: palette[hue_name] for hue_name in hue_names})
 
