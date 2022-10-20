@@ -355,7 +355,7 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
 
     min_steps = steps
 
-    # Reading/parsing
+    # Parsing + reading
     for csv_name in csv_names:
         # Parse file names
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
@@ -420,8 +420,8 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
         else:
             performance.append(csv)
 
-    # To csv
     if len(performance):
+        # To csv
         performance = pd.concat(performance, ignore_index=True)
 
         # Capitalize column names
@@ -433,6 +433,7 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
             performance = performance[performance['Step'] <= steps]
 
     if len(predicted_vs_actual):
+        # To csv
         predicted_vs_actual = pd.concat(predicted_vs_actual, ignore_index=True)
 
         # Capitalize column names
