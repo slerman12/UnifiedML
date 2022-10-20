@@ -79,6 +79,7 @@ runs = {'UnifiedML': {
         ['Mario'],
         ['Self-Supervised_Mario'],
         ['Atari-26_Continuous'],
+        ['Atari-26_Continuous', 'Atari-30'],
         ['Mario', 'Self-Supervised_Mario'],
     ],
     'sftp': False,

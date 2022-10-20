@@ -197,7 +197,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Rotate x-axis names
             ax.tick_params(axis='x', rotation=20)
 
-        general_plot(df, path, plot_name + 'Tasks', palette, make, 'Task', title)
+        general_plot(df, path, plot_name + 'Tasks.png', palette, make, 'Task', title)
 
         # PLOTTING (suites)
 
@@ -244,7 +244,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Rotate x-axis names
             ax.tick_params(axis='x', rotation=20)
 
-        general_plot(df, path, plot_name + 'Suites', palette, make, 'Suite', title)
+        general_plot(df, path, plot_name + 'Suites.png', palette, make, 'Suite', title)
 
         # WRITING (tabular)
 
@@ -302,9 +302,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             df[['Suite', 'NormalizedMedian', 'NormalizedMean']].groupby(['Suite']).agg(**metrics).reset_index(). \
                 to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Suites_Tabular.csv'), index=False)
 
-        # PLOTTING (bar chart)
+        # PLOTTING (bar plot)
 
         def make(ax, cell_data, cell_palettes, hue_names, **kwargs):
+            # Pre-processing
+            cell_data['Task'] = cell_data['Task'].str.split('(').str[0]
+
             sns.barplot(x='Task', y='NormalizedMedian', ci='sd', hue='Agent', data=cell_data, ax=ax,
                         hue_order=np.sort(hue_names), palette=cell_palettes)
 
@@ -341,10 +344,15 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             ax.set(xlabel=None)
 
         # Max Agents for a Task - for configuring Bar Plot width
-        max_agents = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
+        mean_num_agents_per_task = df.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().mean()
+        num_tasks = len(df.Task.unique())
+        # num_bars = len(df.groupby(['Task', 'Agent']).size().reset_index().index)
 
-        general_plot(df, path, plot_name + 'Bar', palette, make, 'Suite', title, 'Agent', True,
-                     figsize=(1.5 * max(max_agents, 3) * len(df.Task.unique()) / 2, 3))
+        general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
+                     figsize=(max(4, num_tasks * mean_num_agents_per_task * 0.7), 3))
+        # TODO Try:
+        # general_plot(df, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
+        #              figsize=(num_tasks * mean_num_agents_per_task / 2, 3))
 
     # Class Sizes & Heatmap
     if len(predicted_vs_actual_list) > 0:
@@ -387,8 +395,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                             alpha=0.7, hue_order=np.sort(hue_names), ax=ax, palette=cell_palettes)
 
             #  Post-processing
-            step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'
-            # step_ = ' (@500000 Steps)'
+            # step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'
+            step_ = ' (@500000 Steps)'
             ax.set_title(f'{ax_title}{step_}')
             ax.set_ybound(-0.05, 1.05)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -488,14 +496,15 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
 
         make_func(**locals())
 
-        # Legend next to subplots
-        if legend_aside:
-            ax.legend(loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False)
-
         # Hide legend title
         if not legend_title:
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles=handles[1:], labels=labels[1:])
+
+        # Legend next to subplots
+        if legend_aside:
+            ax.legend(**{} if legend_title else {'handles': handles[1:], 'labels': labels[1:]},
+                      loc=2, bbox_to_anchor=(1.05, 1.05), borderaxespad=0, frameon=False,)
 
     # Universal legend
     if universal_legend:
