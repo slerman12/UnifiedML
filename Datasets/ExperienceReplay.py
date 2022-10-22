@@ -297,7 +297,7 @@ class Experiences:
 
         # If Offline, allocate RAM usage per CPU worker
         if offline:
-            self.previous_batch = None  # Verify no worker gets sent redundant batches
+            self.previous_idxs = None  # Verify no worker gets sent redundant batches
 
             self.num_experiences = sum([int(episode_name.stem.split('_')[-1]) for episode_name in data_files])
 
@@ -309,8 +309,8 @@ class Experiences:
                                    for worker, _ in enumerate(pipes)]
 
             # Worker's starting index
-            self.worker_start_idx = sum([int(episode_name.stem.split('_')[-1])  # Episode len
-                                         for episode_name in data_files[:worker_splits[self.worker_id]]])
+            self.allotted_idx = sum([int(episode_name.stem.split('_')[-1])  # Episode len
+                                     for episode_name in data_files[:worker_splits[self.worker_id]]])
 
             # Data per worker
             data_files = data_files[worker_splits[self.worker_id]:worker_splits[self.worker_id + 1]]
@@ -507,12 +507,12 @@ class Offline(Experiences, Dataset):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, True, frame_stack, nstep, discount, transform)
 
     def __getitem__(self, idxs):
-        assert idxs != self.previous_batch, 'UnionBatchSampler failed to allocate index uniquely to each CPU worker.'
-        self.previous_batch = idxs  # TODO Delete
+        assert idxs != self.previous_idxs, 'BatchUnionSampler failed to allocate index uniquely to each CPU worker.'
+        self.previous_idxs = idxs  # TODO Delete
 
         # Each worker retrieves an allotted share
-        return [self.fetch_sample_process(idx - self.worker_start_idx)
-                for idx in idxs if self.worker_start_idx <= idx < self.worker_start_idx + len(self.experience_indices)]
+        return [self.fetch_sample_process(idx - self.allotted_idx)
+                for idx in idxs if self.allotted_idx <= idx < self.allotted_idx + len(self.experience_indices)]
 
 
 # For Offline, CPU workers distribute indices (sub-batches) amongst themselves according to their disjoint RAM allotment

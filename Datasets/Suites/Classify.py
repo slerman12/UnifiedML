@@ -4,10 +4,13 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import datetime
 import glob
+from time import sleep
 import io
 import itertools
 import json
 import random
+import warnings
+from termcolor import colored
 from pathlib import Path
 
 from tqdm import tqdm
@@ -117,8 +120,23 @@ class Classify:
 
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
 
+        if replay_path.exists() and not len(stats_path):
+            warnings.warn(f'\nIncomplete replay buffer found. \n'
+                          f'If another active process is in the progress of creating the replay buffer, \n'
+                          f'then do not worry. \n'
+                          f'This process will wait until the replay is ready. \n'
+                          f'Otherwise, the path may have been corrupted. In which case, \n'
+                          f'kill this process and delete the existing path via `rm - r <path>`. \n'
+                          f'Here is the conflicting path in question:\n{replay_path}\n'
+                          f'{"As well as: " + stats_path[0] if len(stats_path) else ""}'
+                          f'{colored("Wait or kill/delete.", "yellow")} {colored("As you wish, my friend.", "red")}')
+            while not len(stats_path):
+                sleep(10)  # Wait 10 sec
+
+                stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+
         # Offline and generate don't use training rollouts
-        if (offline or generate) and not train and (not replay_path.exists() or not len(stats_path)):
+        if (offline or generate) and not train and not replay_path.exists():
 
             # But still need to create training replay & compute stats
             Classify(dataset_, None, task, True, offline, generate, batch_size, num_workers, None, None, seed,
