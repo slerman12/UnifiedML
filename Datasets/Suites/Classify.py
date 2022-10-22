@@ -102,7 +102,7 @@ class Classify:
 
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
-                                  shuffle=train,
+                                  shuffle=False,  # Since only used for Eval and to create replay
                                   num_workers=num_workers,
                                   pin_memory=True,
                                   worker_init_fn=worker_init_fn)
