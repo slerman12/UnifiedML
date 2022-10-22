@@ -18,7 +18,7 @@ from omegaconf import OmegaConf
 import numpy as np
 
 import torch
-from torch.utils.data import DataLoader, IterableDataset, Dataset, BatchSampler, RandomSampler, default_collate
+from torch.utils.data import IterableDataset, Dataset
 from torch.multiprocessing import Pipe
 
 from torchvision.transforms import transforms
@@ -84,23 +84,30 @@ class ExperienceReplay:
             # Can pass in a dict of torchvision transform names and args
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
-        # Parallelized experience loading, either online or offline (for now, only online needs to be parallelized)
+        # Future steps to compute cumulative reward from
+        self.nstep = 0 if suite == 'classify' or generate else nstep
 
-        self.nstep = nstep * int(not (suite == 'classify' or generate))  # No nstep for classify, generate
+        # Parallelized experience loading, either Online or Offline - "Online" means the data size grows
 
-        # For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
-        # since RAM is faster than loading from hard disk.
-        # The disadvantage of CPU pre-loading is the need for more CPU RAM.
-        # We bypass Pytorch's indiscriminate indexing by allotting disjoint slices of RAM data to each CPU.
-        # TODO later: Memory-mapped hard disk loading
+        #   For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
+        #   since RAM is faster to load from than hard disk epoch by epoch. A.K.A. training speedup, less bottleneck.
+        #   We bypass Pytorch's specialized indexing by allotting disjoint slices of RAM data to each CPU.
+
+        #   The disadvantage of CPU pre-loading is the dependency on more CPU RAM. This can be limiting on some setups.
+        #   Online also caches data on RAM, after storing to hard disk.
+        #       TODO: Memory-mapped hard disk loading for Offline/Online, size-adaptive w/ CPU RAM loading.
+        #       TODO: Online can send new data directly to RAM and hard disk instead of loading it to RAM from hard disk
+
+        # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
         assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
                                                              f'exceeds offline replay size ({len(self)})'
 
+        # RAM capacity - max num experiences allotted
         capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] and not offline else np.inf
 
-        # Sending data to workers directly
+        # For sending data to workers directly
         pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])
 
         self.experiences = (Offline if offline else Online)(path=self.path,
@@ -119,18 +126,18 @@ class ExperienceReplay:
         self.epoch = 1
 
         # Offline sampler allocates per CPU worker
-        sampler = BatchSampler(sampler=RandomSampler(self.experiences),
-                               batch_size=self.num_workers,
-                               drop_last=False)
+        sampler = torch.utils.data.BatchSampler(sampler=torch.utils.data.RandomSampler(self.experiences),
+                                                batch_size=self.num_workers,
+                                                drop_last=False)
 
-        self.batches = DataLoader(dataset=self.experiences,
-                                  sampler=sampler if offline else None,
-                                  batch_size=batch_size,
-                                  collate_fn=collate if offline else None,
-                                  num_workers=self.num_workers,
-                                  pin_memory=True,
-                                  worker_init_fn=worker_init_fn,
-                                  persistent_workers=True)
+        self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
+                                                   sampler=sampler if offline else None,
+                                                   batch_size=batch_size,
+                                                   collate_fn=collate if offline else None,
+                                                   num_workers=self.num_workers,
+                                                   pin_memory=True,
+                                                   worker_init_fn=worker_init_fn,
+                                                   persistent_workers=True)
 
         # Replay
 
@@ -228,24 +235,18 @@ class ExperienceReplay:
         self.episode = {name: [] for name in self.specs}
         self.episode_len = 0
 
-    # Update experiences (in workers) by IDs (experience index and worker ID) and updates dict like {spec: update value}
+    # Update experiences (in workers) by IDs (experience index and worker ID) and dict like {spec: update value}
     def rewrite(self, updates, ids):
         assert isinstance(updates, dict), f'expected \'updates\' to be dict, got {type(updates)}'
 
         updates = {key: updates[key].detach() for key in updates}
         exp_ids, worker_ids = ids.detach().int().T
 
-        # Store into replay buffer
-        if self.offline:
-            # In the offline setting, each worker has a copy of all the data
-            for worker in range(self.num_workers):
-                self.pipes[worker].send((updates, exp_ids))
-        else:
-            # Send update to dedicated worker  TODO Only this; can send indices analogously
-            for worker_id in torch.unique(worker_ids):
-                worker = worker_ids == worker_id
-                update = {key: updates[key][worker] for key in updates}
-                self.pipes[worker].send((update, exp_ids[worker]))
+        # Send update to dedicated worker  # TODO Write to replay buffer (hard disk), but only meta spec to not corrupt
+        for worker_id in torch.unique(worker_ids):
+            worker = worker_ids == worker_id
+            update = {key: updates[key][worker] for key in updates}
+            self.pipes[worker].send((update, exp_ids[worker]))
 
     def __len__(self):
         return self.episodes_stored if self.offline or not self.save \
@@ -257,26 +258,6 @@ def worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
-
-
-# For Offline, CPU workers distribute indices amongst themselves according to their disjoint RAM allotment
-class UnionBatchSampler:
-    def __init__(self, batch_sampler, num_workers):
-        self.batch_sampler, self.num_workers = batch_sampler, num_workers
-
-    def __iter__(self):
-        # Send all batch indices to each CPU worker
-        for batch in self.batch_sampler:
-            yield [[batch]] * self.num_workers
-
-    def __len__(self) -> int:
-        # Number of batches per epoch
-        return len(self.batch_sampler)  # Each CPU gets a disjoint slice of RAM data instead of a wasteful replica
-
-
-# Collates union batches
-def collate(batch):
-    return default_collate([elem for sub_batch in batch for elem in sub_batch])
 
 
 # A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
@@ -340,7 +321,7 @@ class Experiences:
     @property
     def worker_id(self):
         try:
-            return torch.utils.data.get_worker_info().id  # TODO Exception if init before DataLoader; assume 1 or 0?
+            return torch.utils.data.get_worker_info().id
         except AttributeError:
             return 0  # the initial worker is un-initialized at first
 
@@ -504,6 +485,10 @@ class Experiences:
 
         return self.process(episode, idx)  # Process episode into a compact experience
 
+    def __len__(self):
+        return (self.num_experiences if self.offline
+                else len(self.experience_indices)) - self.deleted_indices
+
 
 # Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
@@ -515,22 +500,35 @@ class Online(Experiences, IterableDataset):
         while True:
             yield self.fetch_sample_process()  # Yields a single experience
 
-    def __len__(self):
-        return len(self.experience_indices) - self.deleted_indices
 
-
-# Loads Experiences with a map-style Dataset
+# Loads Experiences with a Map Style Dataset
 class Offline(Experiences, Dataset):
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, True, frame_stack, nstep, discount, transform)
 
     def __getitem__(self, idxs):
         assert idxs != self.previous_batch, 'UnionBatchSampler failed to allocate index uniquely to each CPU worker.'
-        self.previous_batch = idxs
+        self.previous_batch = idxs  # TODO Delete
 
-        # Each worker retrieves its allotted share
+        # Each worker retrieves an allotted share
         return [self.fetch_sample_process(idx - self.worker_start_idx)
                 for idx in idxs if self.worker_start_idx <= idx < self.worker_start_idx + len(self.experience_indices)]
 
-    def __len__(self):
-        return self.num_experiences - self.deleted_indices
+
+# For Offline, CPU workers distribute indices (sub-batches) amongst themselves according to their disjoint RAM allotment
+class BatchUnionSampler:
+    def __init__(self, batch_sampler, num_workers):
+        self.batch_sampler, self.num_workers = batch_sampler, num_workers
+
+    def __iter__(self):
+        # Send all batch indices (union) to each CPU worker
+        for batch in self.batch_sampler:
+            yield [[batch]] * self.num_workers
+
+    def __len__(self) -> int:
+        return len(self.batch_sampler)  # Each CPU gets a disjoint slice of RAM data instead of a wasteful replica
+
+
+# Collates sub-batches for Offline
+def collate(batch):
+    return torch.utils.data.default_collate([elem for sub_batch in batch for elem in sub_batch])
