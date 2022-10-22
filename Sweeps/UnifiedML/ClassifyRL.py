@@ -1,6 +1,6 @@
 runs = {'UnifiedML': {
     'sweep': [
-        # Classify + RL
+        # Classify + RL  EMA breaks discrete RL :o ! TODO
         """python Run.py
         Agent=Agents.ExperimentAgent 
         task=classify/mnist,classify/cifar10,classify/tinyimagenet
@@ -10,7 +10,7 @@ runs = {'UnifiedML': {
         'Aug="RandomShiftsAug(4)"'
         'transform="{RandomHorizontalFlip:{}}"'
         RL=true 
-        supervise=false,true 
+        supervise=false
         discrete=true,false 
         +agent.contrastive=true,false 
         experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.contrastive}' 

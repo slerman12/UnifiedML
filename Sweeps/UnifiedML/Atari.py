@@ -25,7 +25,7 @@ runs = {'UnifiedML': {
     'sweep': [
         f'train_steps=2500000 '  # Changed from 2000000 to add 500000
         f'task={atari_26} '
-        f'experiment="Atari-26-DQN" '  # Originally did 30
+        f'experiment="Atari-26-DQN" '  # Originally did 30 - Meant to write SoftDQN
         f'logger.wandb=true '
         f'time="12-00:00:00" '
         f'save_per_steps=500000 '
@@ -75,14 +75,14 @@ runs = {'UnifiedML': {
         # f'reservation_id=20220929 ',
     ],
     'plots': [
-        ['Atari-30'],  # I named it inconsistently
+        ['Atari-26-DQN'],  # I named it inconsistently
         ['Mario'],
         ['Self-Supervised_Mario'],
         ['Atari-26_Continuous'],
         ['Atari-26_Continuous', 'Atari-30'],
         ['Mario', 'Self-Supervised_Mario'],
     ],
-    'sftp': False,
+    'sftp': True,
     'bluehive': True,
     'lab': False,
     'write_tabular': True,

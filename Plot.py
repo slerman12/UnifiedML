@@ -310,7 +310,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         predicted_vs_actual['Accuracy'] /= predicted_vs_actual['Count']
         predicted_vs_actual['Count'] /= num_seeds['Seed']
 
-        # Plotting (class Sizes)
+        # Plotting (class sizes)
 
         def make(ax, ax_title, cell_data, cell, hue_names, cell_palettes, **kwargs):
             sns.scatterplot(data=cell_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
