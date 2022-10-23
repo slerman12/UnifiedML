@@ -531,8 +531,8 @@ class SharedDict:
         except OSError:
             print(resource.getrlimit(resource.RLIMIT_NOFILE))
             # Increment the limit
-            resource.setrlimit(resource.RLIMIT_NOFILE,
-                               tuple(limit + 100 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
+            limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (limit[0] + 100, limit[1]))
             print(resource.getrlimit(resource.RLIMIT_NOFILE))
             self.set(key, value)
 
