@@ -9,6 +9,7 @@ import shutil
 import atexit
 import uuid
 import warnings
+import resource
 from pathlib import Path
 import datetime
 import io
@@ -521,13 +522,11 @@ class SharedDict:
         self.mems = {}
         self.specs = specs
 
-        import resource
-        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        # Shared memory can create a lot of file descriptors
+        _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
 
-        # Set soft limit
+        # Increase soft limit to hard limit just in case
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))
-
-        print(resource.getrlimit(resource.RLIMIT_NOFILE), soft_limit, hard_limit)
 
     def __setitem__(self, key, value):
         self.start_worker()
