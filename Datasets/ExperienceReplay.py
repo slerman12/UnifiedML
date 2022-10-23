@@ -462,10 +462,10 @@ class Experiences:
         return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
 
     def fetch_sample_process(self, idx=None):
+        # Populate workers with up-to-date data
+        if not self.initialized:
+            self.init_worker()
         try:
-            # Populate workers with up-to-date data
-            if not self.initialized:
-                self.init_worker()
             if not self.offline:
                 self.worker_fetch_episodes()
             self.worker_fetch_updates()
@@ -524,27 +524,28 @@ class SharedMemory:
         for spec, data in value.items():
             if spec == 'id':
                 try:
-                    mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
-                        else shared_memory.ShareableList([data], name=num_episodes + spec)
+                    self.mems.setdefault(num_episodes + spec,
+                                         shared_memory.ShareableList([data], name=num_episodes + spec))
                 except FileExistsError:
-                    mem = shared_memory.ShareableList(name=num_episodes + spec)
-                    mem[0] = data
-                self.mems[num_episodes + spec] = mem
-            elif isinstance(data, np.ndarray) and data.nbytes > 0:
-                try:
-                    mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
-                        else shared_memory.SharedMemory(create=True, name=num_episodes + spec, size=data.nbytes)
-                except FileExistsError:
-                    mem = shared_memory.SharedMemory(name=num_episodes + spec)
-                buffer = mem.buf
-                mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=buffer)
-                mem_[:] = data[:]
-                try:
-                    shape_mem = shared_memory.ShareableList(list(data.shape), name=num_episodes + spec + 'shape')
-                except FileExistsError:
-                    shape_mem = None
-                self.mems[num_episodes + spec] = mem
-                self.mems[num_episodes + spec + 'shape'] = shape_mem
+                    self.mems.setdefault(num_episodes + spec,
+                                         shared_memory.ShareableList(name=num_episodes + spec))[0] = data
+            else:
+                if data.nbytes > 0:
+                    try:
+                        mem = self.mems.setdefault(num_episodes + spec,
+                                                   shared_memory.SharedMemory(create=True, name=num_episodes + spec,
+                                                                              size=data.nbytes))
+                    except FileExistsError:
+                        mem = self.mems.setdefault(num_episodes + spec,
+                                                   shared_memory.SharedMemory(name=num_episodes + spec))
+                    mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
+                    mem_[:] = data[:]
+            try:
+                self.mems[num_episodes + spec + 'shape'] = \
+                    shared_memory.ShareableList([1] if spec == 'id' else list(data.shape),
+                                                name=num_episodes + spec + 'shape')
+            except FileExistsError:
+                self.mems[num_episodes + spec + 'shape'] = None
 
     def __getitem__(self, key):
         num_episodes, episode_len = key.stem.split('/')[-1].split('_')[1:]
@@ -552,22 +553,21 @@ class SharedMemory:
         episode = {}
 
         for spec in self.keys():
-            if spec == 'meta' and self.specs['meta']['shape'] == [0]:
-                episode[spec] = np.full((int(episode_len), 0), None, np.float32)
-            elif spec == 'id':
-                mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
-                    else shared_memory.ShareableList(name=num_episodes + spec)
-                episode[spec] = int(mem[0])
-                self.mems[num_episodes + spec] = mem
+            if spec == 'id':
+                episode[spec] = int(self.mems.setdefault(num_episodes + spec,
+                                                         shared_memory.ShareableList(name=num_episodes + spec))[0])
             else:
-                mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
+                shape = list(self.mems.setdefault(num_episodes + spec + 'shape',
+                                                  shared_memory.ShareableList(name=num_episodes + spec + 'shape')))
+
+                dtype = np.int32 if spec == 'id' else np.float32
+
+                mem = None if 0 in shape \
+                    else shared_memory.ShareableList(name=num_episodes + spec) if spec == 'id' \
                     else shared_memory.SharedMemory(name=num_episodes + spec)
-                shape_mem = self.mems[num_episodes + spec + 'shape'] if num_episodes + spec in self.mems \
-                    else shared_memory.ShareableList(name=num_episodes + spec + 'shape')
-                shape = list(shape_mem)
-                episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
-                self.mems[num_episodes + spec] = mem
-                self.mems[num_episodes + spec + 'shape'] = shape_mem
+
+                episode[spec] = np.full(shape, None, np.float32) if 0 in shape \
+                    else np.ndarray(shape, dtype, buffer=self.mems.setdefault(num_episodes + spec, mem).buf)
 
         return episode
 
