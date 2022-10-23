@@ -298,9 +298,8 @@ class Experiences:
 
         # If Offline, share RAM across CPU workers
         if self.offline:
-            self.episode_names = sorted(self.path.glob('*.npz'))
-
-            self.num_experiences = sum([int(episode_name.stem.split('_')[-1]) for episode_name in self.episode_names])
+            self.num_experiences = sum([int(episode_name.stem.split('_')[-1])
+                                        for episode_name in self.path.glob('*.npz')])
 
         self.initialized = False
 
@@ -324,6 +323,8 @@ class Experiences:
 
         # If Offline, share RAM across CPU workers
         if self.offline:
+            self.episode_names = sorted(self.path.glob('*.npz'))
+
             self.experience_indices = sum([list(enumerate([episode_name] * int(episode_name.stem.split('_')[-1])))
                                            for episode_name in self.episode_names], [])  # Slightly redundant
 
@@ -552,7 +553,7 @@ class SharedDict:
 
     def __getitem__(self, key):
         # Account for potential delay
-        for _ in range(60):
+        for _ in range(120):
             try:
                 return self.get(key)
             except FileNotFoundError as e:
