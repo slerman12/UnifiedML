@@ -521,6 +521,12 @@ class SharedDict:
         self.mems = {}
         self.specs = specs
 
+        import resource
+        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_DATA)
+
+        # Set soft limit
+        resource.setrlimit(resource.RLIMIT_DATA, (hard_limit, hard_limit))
+
     def __setitem__(self, key, value):
         self.start_worker()
 
@@ -584,6 +590,10 @@ class SharedDict:
                     mem = self.mems.setdefault(name, SharedMemory(name=name))
 
                     episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
+
+            if name in self.mems:
+                mem = self.mems[name] if isinstance(self.mems[name], SharedMemory) else self.mems[name].shm
+                mem.close()
 
         return episode
 
