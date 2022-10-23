@@ -527,9 +527,11 @@ class SharedDict:
         try:
             self.set(key, value)
         except OSError:
+            print(resource.getrlimit(resource.RLIMIT_NOFILE))
             # Increment the limit
             resource.setrlimit(resource.RLIMIT_NOFILE,
-                               [limit + 3 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)])
+                               tuple(limit + 3 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
+            print(resource.getrlimit(resource.RLIMIT_NOFILE))
             self.set(key, value)
 
     def set(self, key, value):
