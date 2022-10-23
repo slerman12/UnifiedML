@@ -532,7 +532,7 @@ class SharedDict:
             print(resource.getrlimit(resource.RLIMIT_NOFILE))
             # Increment the limit
             resource.setrlimit(resource.RLIMIT_NOFILE,
-                               tuple(limit + 3 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
+                               tuple(limit + 100 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
             print(resource.getrlimit(resource.RLIMIT_NOFILE))
             self.set(key, value)
 
@@ -579,7 +579,7 @@ class SharedDict:
                     print(resource.getrlimit(resource.RLIMIT_NOFILE))
                     # Increment the limit
                     resource.setrlimit(resource.RLIMIT_NOFILE,
-                                       tuple(limit + 3 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
+                                       tuple(limit + 100 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
                     print(resource.getrlimit(resource.RLIMIT_NOFILE))
                     self.get(key)
             except FileNotFoundError as e:
