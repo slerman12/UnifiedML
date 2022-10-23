@@ -183,6 +183,6 @@ class DMC:
 # Access a dict with attribute or key (purely for aesthetic reasons)
 class AttrDict(dict):
     def __init__(self, _dict):
-        super(AttrDict, self).__init__()
+        super().__init__()
         self.__dict__ = self
         self.update(_dict)
