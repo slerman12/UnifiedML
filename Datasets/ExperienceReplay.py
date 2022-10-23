@@ -521,11 +521,11 @@ class SharedDict:
         self.mems = {}
         self.specs = specs
 
-        # import resource
-        # soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_DATA)
+        import resource
+        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_DATA)
 
         # Set soft limit
-        # resource.setrlimit(resource.RLIMIT_DATA, (hard_limit, hard_limit))
+        resource.setrlimit(resource.RLIMIT_DATA, (hard_limit, hard_limit))
 
     def __setitem__(self, key, value):
         self.start_worker()
