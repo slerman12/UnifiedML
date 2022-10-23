@@ -573,7 +573,15 @@ class SharedDict:
         for _ in range(120):
             print('waiting')
             try:
-                return self.get(key)
+                try:
+                    return self.get(key)
+                except OSError:
+                    print(resource.getrlimit(resource.RLIMIT_NOFILE))
+                    # Increment the limit
+                    resource.setrlimit(resource.RLIMIT_NOFILE,
+                                       tuple(limit + 3 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
+                    print(resource.getrlimit(resource.RLIMIT_NOFILE))
+                    self.get(key)
             except FileNotFoundError as e:
                 sleep(1)
         raise(e)
