@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
 import os
 import random
 import glob
@@ -63,7 +64,7 @@ class ExperienceReplay:
         obs_spec.shape[0] //= self.frame_stack
 
         self.specs = {'obs': obs_spec, 'action': action_spec, 'meta': {'shape': meta_shape},
-                      **{name: {'shape': (1,)} for name in ['reward', 'discount', 'label', 'step']}}
+                      **{name: {'shape': (1,)} for name in ['reward', 'label', 'step']}}
 
         # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
 
@@ -130,20 +131,11 @@ class ExperienceReplay:
 
         self.epoch = 1
 
-        # Offline sampler allocates per CPU worker
-        batch_sampler = BatchUnionSampler(sampler=torch.utils.data.RandomSampler(self.experiences),
-                                          batch_size=batch_size,
-                                          num_workers=self.num_workers,
-                                          shuffle=True,
-                                          drop_last=False)
-
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
-                                                   batch_sampler=batch_sampler if offline else None,
-                                                   batch_size=1 if offline else batch_size,
-                                                   collate_fn=collate if offline else None,
+                                                   batch_size=batch_size,
                                                    num_workers=self.num_workers,
                                                    pin_memory=True,
-                                                   shuffle=not offline,
+                                                   shuffle=offline,
                                                    worker_init_fn=worker_init_fn,
                                                    persistent_workers=True)
 
@@ -204,6 +196,7 @@ class ExperienceReplay:
                 # Validate consistency - disabled for discrete/continuous conversions
                 # assert spec['shape'] == exp[name].shape[1:], \
                 #     f'Unexpected shape for "{name}": {spec["shape"]} vs. {exp[name].shape[1:]}'
+                spec['shape'] = exp[name].shape[1:]
 
                 # Add the experience
                 self.episode[name].append(exp[name])
@@ -277,7 +270,7 @@ class Experiences:
         self.path = path
 
         self.episode_names = []
-        self.episodes = dict()  # Episodes fetched on CPU
+        self.episodes = SharedMemory(specs) if offline else dict()  # Episodes fetched on CPU
 
         self.experience_indices = []
         self.capacity = capacity
@@ -300,52 +293,38 @@ class Experiences:
 
         self.transform = transform
 
-        # Load any pre-existing data file names in path
-        self.data_files = sorted(path.glob('*.npz'))
-
-        # If Offline, allocate RAM usage per CPU worker
+        # If Offline, share RAM across CPU workers
         if self.offline:
-            self.num_experiences = sum([int(episode_name.stem.split('_')[-1]) for episode_name in self.data_files])
+            self.episode_names = sorted(self.path.glob('*.npz'))
 
-            self.previous_idxs = None  # Verify no worker gets sent redundant batches
+            self.num_experiences = sum([int(episode_name.stem.split('_')[-1]) for episode_name in self.episode_names])
 
-            # Compute data allotment per CPU worker
-            worker_allotment, remainder = len(self.data_files) // len(pipes), len(self.data_files) % len(pipes)
-
-            # Each worker gets a disjoint split of data
-            self.worker_splits = [0] + [worker_allotment * (worker + 1) + remainder for worker, _ in enumerate(pipes)]
-
-            self.allotted_idx = None
-
-        self.initialized_worker = False
+        self.initialized = False
 
     @property
     def worker_id(self):
-        return torch.utils.data.get_worker_info().id
+        try:
+            return torch.utils.data.get_worker_info().id
+        except AttributeError:
+            return 0
 
     @property
     def num_workers(self):
-        return torch.utils.data.get_worker_info().num_workers
+        return len(self.pipes)
 
     @property
     def pipe(self):
         return self.pipes[self.worker_id]
 
-    # Initializes worker data allottment once they've each been created
     def init_worker(self):
-        # If Offline, allocate RAM usage per CPU worker
+        self.worker_fetch_episodes()  # Load in existing data
+
+        # If Offline, share RAM across CPU workers
         if self.offline:
-            # Worker's starting index
-            self.allotted_idx = sum([int(episode_name.stem.split('_')[-1])  # Episode len
-                                     for episode_name in self.data_files[:self.worker_splits[self.worker_id]]])
+            self.experience_indices = sum([list(enumerate([episode_name] * int(episode_name.stem.split('_')[-1])))
+                                           for episode_name in self.episode_names], [])
 
-            # Data per worker
-            self.data_files = self.data_files[self.worker_splits[self.worker_id]:self.worker_splits[self.worker_id + 1]]
-
-            # Load in existing data
-            list(map(self.load_episode, self.data_files))
-
-        self.initialized_worker = True
+        self.initialized = True
 
     def load_episode(self, episode_name):
         try:
@@ -357,7 +336,7 @@ class Experiences:
 
         offset = self.nstep or 0
         episode_len = len(episode['obs']) - offset
-        episode = {name: episode.get(name, np.full((episode_len + 1, *spec['shape']), np.NaN))
+        episode = {name: episode.get(name, np.full((episode_len, *spec['shape']), np.NaN))
                    for name, spec in self.specs.items()}  # TODO Shared memory dict somehow for Offline
 
         episode['id'] = len(self.experience_indices)
@@ -485,6 +464,8 @@ class Experiences:
     def fetch_sample_process(self, idx=None):
         try:
             # Populate workers with up-to-date data
+            if not self.initialized:
+                self.init_worker()
             if not self.offline:
                 self.worker_fetch_episodes()
             self.worker_fetch_updates()
@@ -504,8 +485,7 @@ class Experiences:
         return self.process(episode, idx)  # Process episode into a compact experience
 
     def __len__(self):
-        return (self.num_experiences if self.offline
-                else len(self.experience_indices)) - self.deleted_indices
+        return self.num_experiences if self.offline else len(self.experience_indices) - self.deleted_indices
 
 
 # Loads Experiences with an Iterable Dataset
@@ -519,78 +499,77 @@ class Online(Experiences, IterableDataset):
             yield self.fetch_sample_process()  # Yields a single experience
 
 
-a = [19067, 27997, 18851, 29292, 17512, 17821, 16187, 16862, 24153, 30448, 28020, 16039, 29612, 23577, 30138, 29395, 22847, 18060, 21397, 25785, 25051, 22536, 22250, 22793, 26358, 16185, 25874, 26463, 25942, 24892, 26864, 21490, 17403, 27782, 18002, 23837, 24699, 27636, 22291, 25882, 30443, 24217, 21887, 23842, 18551, 29900, 16005, 29215, 23228, 21973, 28423, 21560, 29240, 22798, 27449, 25726, 26236, 27028, 25554, 20021, 23828, 25576, 17136, 26031, 27993, 30340, 25008, 27970, 19230, 24468, 17434, 29583, 29353, 27991, 29452, 20161, 26514]
-b = [57390, 55859, 55717, 56856, 57510, 57981, 49777, 59506, 59372, 57002, 58611, 50195, 55596, 54893, 54101, 46476, 52918, 46831, 58480, 55312, 54806, 52443, 52777, 53619, 46163, 54607, 54877, 57719, 59926, 54456, 47369, 52075, 45523, 59091, 46167, 53062, 47985, 46925, 52803, 52937, 53250, 54333, 57362, 49077, 57939, 46677, 46436, 45352, 53620, 55919, 50878, 45903, 59399, 50570, 45737, 49948, 51438, 58885, 45831, 48516, 46863, 53379, 57130, 46998, 48515, 49758, 46990, 47587, 53490, 50918]
-c = [3203, 14353, 6119, 14963, 9978, 4909, 465, 14017, 5109, 15032, 3334, 7848, 15585, 10238, 2372, 4621, 6600, 2708, 7705, 3521, 10080, 4184, 650, 6438, 13406, 14221, 2624, 7627, 2469, 925, 3246, 10456, 12720, 9979, 593, 778, 8229, 5741, 12822, 932, 1064, 7806, 7422, 9200, 2935, 1974, 10463, 14381, 9764, 12667, 3458, 7891, 7114, 7191, 10050, 5642, 12484, 11798, 3694, 8638, 6903, 8612, 452, 13211, 10854, 1651, 12701]
-d = [38651, 37660, 31745, 44900, 41559, 39650, 33384, 32152, 36599, 34507, 30936, 42707, 41859, 38818, 37634, 35191, 42720, 36705, 40004, 32002, 30865, 34265, 38593, 31522, 33347, 36921, 35269, 30821, 44579, 31781, 37268, 35106, 31619, 44503, 36438, 32714, 41302, 33564, 33790, 35940, 41429, 41015, 39260, 42467, 30972, 34673, 42776, 34625, 36159, 31583, 38692, 34903, 35988, 37083, 44818, 35899, 42053, 35196, 39818, 40954, 31140, 40982, 40089, 31613, 45153]
-
-
 # Loads Experiences with a Map Style Dataset
 class Offline(Experiences, Dataset):
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, True, frame_stack, nstep, discount, transform)
 
-    def __getitem__(self, idxs):
-        if self.worker_id == 2:
-            print(idxs[0])
-        assert idxs != self.previous_idxs, f'BatchUnionSampler failed to allocate index uniquely to each CPU worker.'
-        self.previous_idxs = idxs  # TODO Delete / / Indeed, it fails
-
-        if not self.initialized_worker:
-
-            # Can replace with universal hard disk to worker index mapping and using the auto-fetching
-            self.init_worker()
-
-            # print([idx for idx in idxs[0] if self.allotted_idx <= idx < self.allotted_idx + len(self.experience_indices)])
-            # print(len(idxs), self.worker_id,
-            #       len([idx for idx in idxs[0] if self.allotted_idx <= idx < self.allotted_idx + len(self.experience_indices)]))
-
-        # Each worker retrieves from a pre-allotted share
-        return [self.fetch_sample_process(idx - self.allotted_idx)
-                for idx in idxs[0] if self.allotted_idx <= idx < self.allotted_idx + len(self.experience_indices)]
+    def __getitem__(self, idx):
+        # Retrieve a single experience by index
+        return self.fetch_sample_process(idx)
 
 
-# For Offline, CPU workers distribute indices (sub-batches) amongst themselves according to their disjoint RAM allotment
-class BatchUnionSampler(torch.utils.data.BatchSampler):
-    def __init__(self, sampler, batch_size, num_workers, shuffle=False, drop_last=False):
-        super().__init__(sampler, batch_size, drop_last)
+# Shared RAM allocation across CPU workers to avoid redundant replicas
+class SharedMemory:
+    def __init__(self, specs):
+        self.specs = specs
 
-        self.num_workers, self.shuffle = num_workers, shuffle
+        self.mems = {}
 
-    # Each CPU gets a disjoint slice of RAM data instead of a wasteful replica
-    def __iter__(self):
-        batches = list(super().__iter__())
-
-        if self.shuffle:
-            random.shuffle(batches)
-
-        # Send all batch indices (union) to each CPU worker
-        for batch in batches:
-            yield [[batch]] * self.num_workers
-
-
-# Collates sub-batches for Offline
-def collate(batch):
-    return torch.utils.data.default_collate([elem for sub_batch in batch for elem in sub_batch])
-
-
-class SharedMemory(dict):
     def __setitem__(self, key, value):
-        assert isinstance(value, dict), 'Shared Memory assumed to consist of dicts'
+        assert isinstance(value, dict), 'Shared Memory must be dict'
 
-        self[key] = {}
+        num_episodes = key.stem.split('/')[-1].split('_')[1]
 
-        for key_, value_ in value.items():
-            if isinstance(value, np.ndarray):
-                shared_memory.SharedMemory(create=False, name=key + key_, size=value_.nbytes)  # Set create exception
-                self[key][key_] = None
-            else:
-                self[key][key_] = value
+        for spec, data in value.items():
+            if spec == 'id':
+                try:
+                    mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
+                        else shared_memory.ShareableList([data], name=num_episodes + spec)
+                except FileExistsError:
+                    mem = shared_memory.ShareableList(name=num_episodes + spec)
+                    mem[0] = data
+                self.mems[num_episodes + spec] = mem
+            elif isinstance(data, np.ndarray) and data.nbytes > 0:
+                try:
+                    mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
+                        else shared_memory.SharedMemory(create=True, name=num_episodes + spec, size=data.nbytes)
+                except FileExistsError:
+                    mem = shared_memory.SharedMemory(name=num_episodes + spec)
+                buffer = mem.buf
+                mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=buffer)
+                mem_[:] = data[:]
+                try:
+                    shape_mem = shared_memory.ShareableList(list(data.shape), name=num_episodes + spec + 'shape')
+                except FileExistsError:
+                    shape_mem = None
+                self.mems[num_episodes + spec] = mem
+                self.mems[num_episodes + spec + 'shape'] = shape_mem
 
     def __getitem__(self, key):
-        value = self[key]
-        for key_, value_ in value.items():
-            if value_ is None:
-                self[key][key_] = shared_memory.SharedMemory(create=False, name=key + key_)
+        num_episodes, episode_len = key.stem.split('/')[-1].split('_')[1:]
 
-        return self[key]
+        episode = {}
+
+        for spec in self.keys():
+            if spec == 'meta' and self.specs['meta']['shape'] == [0]:
+                episode[spec] = np.full((int(episode_len), 0), None, np.float32)
+            elif spec == 'id':
+                mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
+                    else shared_memory.ShareableList(name=num_episodes + spec)
+                episode[spec] = int(mem[0])
+                self.mems[num_episodes + spec] = mem
+            else:
+                mem = self.mems[num_episodes + spec] if num_episodes + spec in self.mems \
+                    else shared_memory.SharedMemory(name=num_episodes + spec)
+                shape_mem = self.mems[num_episodes + spec + 'shape'] if num_episodes + spec in self.mems \
+                    else shared_memory.ShareableList(name=num_episodes + spec + 'shape')
+                shape = list(shape_mem)
+                episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
+                self.mems[num_episodes + spec] = mem
+                self.mems[num_episodes + spec + 'shape'] = shape_mem
+
+        return episode
+
+    def keys(self):
+        return self.specs.keys() | {'id'}
