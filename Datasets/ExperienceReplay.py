@@ -7,11 +7,13 @@ import random
 import glob
 import shutil
 import atexit
+import uuid
 import warnings
 from pathlib import Path
 import datetime
 import io
 import traceback
+from time import sleep
 
 from omegaconf import OmegaConf
 
@@ -95,9 +97,9 @@ class ExperienceReplay:
 
         #   For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
         #   since RAM is faster to load from than hard disk epoch by epoch. A.K.A. training speedup, less bottleneck.
-        #   We bypass Pytorch's specialized sampler indexing in order to allot disjoint slices of RAM data to each CPU.
+        #   We bypass Pytorch's replication of each worker's RAM data per worker with a shared-memory dict.
 
-        #   The disadvantage of CPU pre-loading is the dependency on more CPU RAM. This can be limiting in some setups.
+        #   The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
 
         #       TODO: Memory-mapped hard disk loading for Offline/Online, size-adaptive w.r.t. CPU RAM loading
 
@@ -323,7 +325,7 @@ class Experiences:
         # If Offline, share RAM across CPU workers
         if self.offline:
             self.experience_indices = sum([list(enumerate([episode_name] * int(episode_name.stem.split('_')[-1])))
-                                           for episode_name in self.episode_names], [])
+                                           for episode_name in self.episode_names], [])  # Slightly redundant
 
         self.initialized = True
 
@@ -338,14 +340,12 @@ class Experiences:
         offset = self.nstep or 0
         episode_len = len(episode['obs']) - offset
         episode = {name: episode.get(name, np.full((episode_len, *spec['shape']), np.NaN))
-                   for name, spec in self.specs.items()}  # TODO Shared memory dict somehow for Offline
+                   for name, spec in self.specs.items()}
 
         episode['id'] = len(self.experience_indices)
-        self.experience_indices += list(enumerate([episode_name] * episode_len))  # TODO Shared memory list
+        self.experience_indices += list(enumerate([episode_name] * episode_len))
 
-        self.episodes[episode_name] = episode  # TODO Shared memory dict of dicts (double keys?) somehow for Offline
-
-        # TODO Can have each worker load partially then overwrite experience_indices with a shared one or redundant
+        self.episodes[episode_name] = episode
 
         # Deleting experiences upon overfill
         while episode_len + len(self) - self.deleted_indices > self.capacity:
@@ -510,10 +510,10 @@ class Offline(Experiences, Dataset):
         return self.fetch_sample_process(idx)
 
 
-# Shared RAM allocation across CPU workers to avoid redundant replicas
+# Offline, shared RAM allocation across CPU workers to avoid redundant replicas
 class SharedDict:
     def __init__(self, specs):
-        self.id = 'unique string'  # TODO for distributed
+        self.dict_id = str(uuid.uuid4())[:8]
 
         self.mems = {}
         self.specs = specs
@@ -526,49 +526,59 @@ class SharedDict:
         num_episodes = key.stem.split('/')[-1].split('_')[1]
 
         for spec, data in value.items():
+            name = self.dict_id + num_episodes + spec
+
             # Shared integers
             if spec == 'id':
                 try:
-                    self.mems.setdefault(num_episodes + spec, ShareableList([data], name=num_episodes + spec))
+                    self.mems.setdefault(name, ShareableList([data], name=name))
                 except FileExistsError:
-                    self.mems.setdefault(num_episodes + spec, ShareableList(name=num_episodes + spec))[0] = data
+                    self.mems.setdefault(name, ShareableList(name=name))[0] = data
             # Shared numpy arrays
             elif data.nbytes > 0:
                 try:
-                    mem = self.mems.setdefault(num_episodes + spec, SharedMemory(create=True, name=num_episodes + spec,
-                                                                                 size=data.nbytes))
+                    mem = self.mems.setdefault(name, SharedMemory(create=True, name=name,  size=data.nbytes))
                 except FileExistsError:
-                    mem = self.mems.setdefault(num_episodes + spec, SharedMemory(name=num_episodes + spec))
+                    mem = self.mems.setdefault(name, SharedMemory(name=name))
                 mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
                 mem_[:] = data[:]
             # Shared shapes
             try:
-                self.mems.setdefault(num_episodes + spec + 'shape',
+                self.mems.setdefault(name + 'shape',
                                      ShareableList([1] if spec == 'id' else list(data.shape),
-                                                   name=num_episodes + spec + 'shape'))  # Assumes constant spec shapes
+                                                   name=name + 'shape'))  # Assumes constant spec shapes
             except FileExistsError:
-                self.mems.setdefault(num_episodes + spec + 'shape', ShareableList(name=num_episodes + spec + 'shape'))
+                self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape'))
 
     def __getitem__(self, key):
-        num_episodes, episode_len = key.stem.split('/')[-1].split('_')[1:]
+        # Account for potential delay
+        for _ in range(60):
+            try:
+                return self.get(key)
+            except FileNotFoundError as e:
+                sleep(1)
+        raise(e)
+
+    def get(self, key):
+        num_episodes = key.stem.split('/')[-1].split('_')[1]
 
         episode = {}
 
         for spec in self.keys():
+            name = self.dict_id + num_episodes + spec
+
             # Integer
             if spec == 'id':
-                episode[spec] = int(self.mems.setdefault(num_episodes + spec,
-                                                         ShareableList(name=num_episodes + spec))[0])
+                episode[spec] = int(self.mems.setdefault(name, ShareableList(name=name))[0])
             # Numpy array
             else:
                 # Shape
-                shape = list(self.mems.setdefault(num_episodes + spec + 'shape',
-                                                  ShareableList(name=num_episodes + spec + 'shape')))
+                shape = list(self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape')))
 
                 if 0 in shape:
                     episode[spec] = np.full(shape, None, np.float32)  # Empty array
                 else:
-                    mem = self.mems.setdefault(num_episodes + spec, SharedMemory(name=num_episodes + spec))
+                    mem = self.mems.setdefault(name, SharedMemory(name=name))
 
                     episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
 
@@ -586,6 +596,9 @@ class SharedDict:
             check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
             resource_tracker.register = check_rtype(resource_tracker.register)
             resource_tracker.unregister = check_rtype(resource_tracker.unregister)
+
+            if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
+                del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
     def cleanup(self):
         for mem in self.mems.values():
