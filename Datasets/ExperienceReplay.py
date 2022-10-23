@@ -110,7 +110,7 @@ class ExperienceReplay:
         # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
-        os.environ['NUMEXPR_MAX_THREADS'] = self.num_workers
+        os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
         assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
                                                              f'exceeds offline replay size ({len(self)})'
