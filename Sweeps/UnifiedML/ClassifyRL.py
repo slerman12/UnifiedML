@@ -1,10 +1,26 @@
 runs = {'UnifiedML': {
     'sweep': [
         # Classify + RL  EMA breaks discrete RL :o ! TODO
+        # """python Run.py
+        # Agent=Agents.ExperimentAgent
+        # task=classify/mnist,classify/cifar10,classify/tinyimagenet
+        # ema=true
+        # weight_decay=0.01
+        # Eyes=Blocks.Architectures.ResNet18
+        # 'Aug="RandomShiftsAug(4)"'
+        # 'transform="{RandomHorizontalFlip:{}}"'
+        # RL=true
+        # supervise=false
+        # discrete=true,false
+        # +agent.contrastive=true,false
+        # experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.contrastive}'
+        # num_workers=8
+        # plot_per_steps=0""",
+        # Classify + RL  EMA breaks discrete RL :o ! TODO
         """python Run.py
         Agent=Agents.ExperimentAgent 
         task=classify/mnist,classify/cifar10,classify/tinyimagenet
-        ema=true 
+        ema=false 
         weight_decay=0.01
         Eyes=Blocks.Architectures.ResNet18
         'Aug="RandomShiftsAug(4)"'
@@ -13,7 +29,7 @@ runs = {'UnifiedML': {
         supervise=false
         discrete=true,false 
         +agent.contrastive=true,false 
-        experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.contrastive}' 
+        experiment='Classify+RL_supervise-${supervise}_discrete-${discrete}_contrastive-${agent.contrastive}_no-EMA' 
         num_workers=8
         plot_per_steps=0""",
 

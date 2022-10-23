@@ -264,7 +264,7 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files)
+# A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files/RAM)
 class Experiences:
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, offline, frame_stack, nstep, discount, transform):
 
@@ -511,6 +511,9 @@ class Offline(Experiences, Dataset):
         return self.fetch_sample_process(idx)
 
 
+import resource
+
+
 # Offline, shared RAM allocation across CPU workers to avoid redundant replicas
 class SharedDict:
     def __init__(self, specs):
@@ -520,6 +523,16 @@ class SharedDict:
         self.specs = specs
 
     def __setitem__(self, key, value):
+        # Account for potential file descriptor limit
+        try:
+            self.set(key, value)
+        except OSError:
+            # Increment the limit
+            resource.setrlimit(resource.RLIMIT_NOFILE,
+                               [limit + 3 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)])
+            self.set(key, value)
+
+    def set(self, key, value):
         self.start_worker()
 
         assert isinstance(value, dict), 'Shared Memory must be dict'
