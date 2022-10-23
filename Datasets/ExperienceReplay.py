@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import math
 import os
 import random
 import glob
@@ -22,7 +21,9 @@ import torch
 from torch.utils.data import IterableDataset, Dataset
 from torch.multiprocessing import Pipe
 
-from multiprocessing import shared_memory
+from multiprocessing.shared_memory import SharedMemory, ShareableList
+
+from multiprocessing import resource_tracker
 
 from torchvision.transforms import transforms
 
@@ -270,7 +271,7 @@ class Experiences:
         self.path = path
 
         self.episode_names = []
-        self.episodes = SharedMemory(specs) if offline else dict()  # Episodes fetched on CPU
+        self.episodes = SharedDict(specs) if offline else dict()  # Episodes fetched on CPU
 
         self.experience_indices = []
         self.capacity = capacity
@@ -510,42 +511,43 @@ class Offline(Experiences, Dataset):
 
 
 # Shared RAM allocation across CPU workers to avoid redundant replicas
-class SharedMemory:
+class SharedDict:
     def __init__(self, specs):
-        self.specs = specs
+        self.id = 'unique string'  # TODO for distributed
 
         self.mems = {}
+        self.specs = specs
 
     def __setitem__(self, key, value):
+        self.start_worker()
+
         assert isinstance(value, dict), 'Shared Memory must be dict'
 
         num_episodes = key.stem.split('/')[-1].split('_')[1]
 
         for spec, data in value.items():
+            # Shared integers
             if spec == 'id':
                 try:
-                    self.mems.setdefault(num_episodes + spec,
-                                         shared_memory.ShareableList([data], name=num_episodes + spec))
+                    self.mems.setdefault(num_episodes + spec, ShareableList([data], name=num_episodes + spec))
                 except FileExistsError:
-                    self.mems.setdefault(num_episodes + spec,
-                                         shared_memory.ShareableList(name=num_episodes + spec))[0] = data
-            else:
-                if data.nbytes > 0:
-                    try:
-                        mem = self.mems.setdefault(num_episodes + spec,
-                                                   shared_memory.SharedMemory(create=True, name=num_episodes + spec,
-                                                                              size=data.nbytes))
-                    except FileExistsError:
-                        mem = self.mems.setdefault(num_episodes + spec,
-                                                   shared_memory.SharedMemory(name=num_episodes + spec))
-                    mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
-                    mem_[:] = data[:]
+                    self.mems.setdefault(num_episodes + spec, ShareableList(name=num_episodes + spec))[0] = data
+            # Shared numpy arrays
+            elif data.nbytes > 0:
+                try:
+                    mem = self.mems.setdefault(num_episodes + spec, SharedMemory(create=True, name=num_episodes + spec,
+                                                                                 size=data.nbytes))
+                except FileExistsError:
+                    mem = self.mems.setdefault(num_episodes + spec, SharedMemory(name=num_episodes + spec))
+                mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
+                mem_[:] = data[:]
+            # Shared shapes
             try:
-                self.mems[num_episodes + spec + 'shape'] = \
-                    shared_memory.ShareableList([1] if spec == 'id' else list(data.shape),
-                                                name=num_episodes + spec + 'shape')
+                self.mems.setdefault(num_episodes + spec + 'shape',
+                                     ShareableList([1] if spec == 'id' else list(data.shape),
+                                                   name=num_episodes + spec + 'shape'))  # Assumes constant spec shapes
             except FileExistsError:
-                self.mems[num_episodes + spec + 'shape'] = None
+                self.mems.setdefault(num_episodes + spec + 'shape', ShareableList(name=num_episodes + spec + 'shape'))
 
     def __getitem__(self, key):
         num_episodes, episode_len = key.stem.split('/')[-1].split('_')[1:]
@@ -553,23 +555,41 @@ class SharedMemory:
         episode = {}
 
         for spec in self.keys():
+            # Integer
             if spec == 'id':
                 episode[spec] = int(self.mems.setdefault(num_episodes + spec,
-                                                         shared_memory.ShareableList(name=num_episodes + spec))[0])
+                                                         ShareableList(name=num_episodes + spec))[0])
+            # Numpy array
             else:
+                # Shape
                 shape = list(self.mems.setdefault(num_episodes + spec + 'shape',
-                                                  shared_memory.ShareableList(name=num_episodes + spec + 'shape')))
+                                                  ShareableList(name=num_episodes + spec + 'shape')))
 
-                dtype = np.int32 if spec == 'id' else np.float32
+                if 0 in shape:
+                    episode[spec] = np.full(shape, None, np.float32)  # Empty array
+                else:
+                    mem = self.mems.setdefault(num_episodes + spec, SharedMemory(name=num_episodes + spec))
 
-                mem = None if 0 in shape \
-                    else shared_memory.ShareableList(name=num_episodes + spec) if spec == 'id' \
-                    else shared_memory.SharedMemory(name=num_episodes + spec)
-
-                episode[spec] = np.full(shape, None, np.float32) if 0 in shape \
-                    else np.ndarray(shape, dtype, buffer=self.mems.setdefault(num_episodes + spec, mem).buf)
+                    episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
 
         return episode
 
     def keys(self):
         return self.specs.keys() | {'id'}
+
+    def __del__(self):
+        self.cleanup()
+
+    def start_worker(self):
+        # Hacky fix for https://bugs.python.org/issue38119
+        if not self.mems:
+            check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
+            resource_tracker.register = check_rtype(resource_tracker.register)
+            resource_tracker.unregister = check_rtype(resource_tracker.unregister)
+
+    def cleanup(self):
+        for mem in self.mems.values():
+            if isinstance(mem, ShareableList):
+                mem = mem.shm
+            mem.close()
+            mem.unlink()
