@@ -527,6 +527,8 @@ class SharedDict:
         # Set soft limit
         resource.setrlimit(resource.RLIMIT_DATA, (hard_limit, hard_limit))
 
+        print(resource.getrlimit(resource.RLIMIT_DATA))
+
     def __setitem__(self, key, value):
         self.start_worker()
 
