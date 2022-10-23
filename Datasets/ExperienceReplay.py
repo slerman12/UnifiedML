@@ -513,9 +513,6 @@ class Offline(Experiences, Dataset):
         return self.fetch_sample_process(idx)
 
 
-import resource
-
-
 # Offline, shared RAM allocation across CPU workers to avoid redundant replicas
 class SharedDict:
     def __init__(self, specs):
@@ -525,18 +522,6 @@ class SharedDict:
         self.specs = specs
 
     def __setitem__(self, key, value):
-        # Account for potential file descriptor limit
-        try:
-            self.set(key, value)
-        except OSError:
-            print(resource.getrlimit(resource.RLIMIT_NOFILE))
-            # Increment the limit
-            limit = resource.getrlimit(resource.RLIMIT_NOFILE)
-            resource.setrlimit(resource.RLIMIT_NOFILE, (limit[0] + 100, limit[1]))
-            print(resource.getrlimit(resource.RLIMIT_NOFILE))
-            self.set(key, value)
-
-    def set(self, key, value):
         self.start_worker()
 
         assert isinstance(value, dict), 'Shared Memory must be dict'
@@ -571,17 +556,8 @@ class SharedDict:
     def __getitem__(self, key):
         # Account for potential delay
         for _ in range(120):
-            print('waiting')
             try:
-                try:
-                    return self.get(key)
-                except OSError:
-                    print(resource.getrlimit(resource.RLIMIT_NOFILE))
-                    # Increment the limit
-                    resource.setrlimit(resource.RLIMIT_NOFILE,
-                                       tuple(limit + 100 for limit in resource.getrlimit(resource.RLIMIT_NOFILE)))
-                    print(resource.getrlimit(resource.RLIMIT_NOFILE))
-                    self.get(key)
+                return self.get(key)
             except FileNotFoundError as e:
                 sleep(1)
         raise(e)
