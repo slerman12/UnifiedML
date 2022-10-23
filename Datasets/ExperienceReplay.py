@@ -110,6 +110,8 @@ class ExperienceReplay:
         # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
+        os.environ['NUMEXPR_MAX_THREADS'] = self.num_workers
+
         assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
                                                              f'exceeds offline replay size ({len(self)})'
 
@@ -569,6 +571,7 @@ class SharedDict:
     def __getitem__(self, key):
         # Account for potential delay
         for _ in range(120):
+            print('waiting')
             try:
                 return self.get(key)
             except FileNotFoundError as e:
