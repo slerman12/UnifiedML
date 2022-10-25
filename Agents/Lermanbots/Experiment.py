@@ -24,7 +24,7 @@ class ExperimentAgent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 contrastive=False, imitate=False, sample=False  # Experiment
+                 num_critics=2, contrastive=False, imitate=False, sample=False  # Experiment
                  ):
         super().__init__()
 
@@ -78,7 +78,7 @@ class ExperimentAgent(torch.nn.Module):
                                   ema_decay=ema_decay * ema)
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     ensemble_size=2 if self.discrete and self.RL else 1,
+                                     ensemble_size=num_critics if self.discrete and self.RL else 1,
                                      discrete=self.discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                      ema_decay=ema_decay * ema)
@@ -89,7 +89,7 @@ class ExperimentAgent(torch.nn.Module):
             recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=2 if self.RL else 1,
+                                      ensemble_size=num_critics if self.RL else 1,
                                       discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
@@ -184,7 +184,7 @@ class ExperimentAgent(torch.nn.Module):
 
             All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
-            if self.sample and self.RL and not self.discrete:
+            if self.sample and self.RL and not self.discrete:  # Discrete sample only possible for RL, not cross entropy
                 action = Pi.rsample(self.num_actions)  # Variational inference
                 y_predicted = self.action_selector(self.critic(obs, action.mean(1), All_Qs), self.step, action).best
             else:
@@ -224,8 +224,13 @@ class ExperimentAgent(torch.nn.Module):
                     mistake[-ratio:] = cross_entropy(y_predicted[-ratio:],
                                                      label[-ratio:].long(), reduction='none') if self.contrastive \
                         else 0  # "real"
-                # TODO creator 2nd sample if self.sample
-                action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
+                # Discrete creator samples
+                if self.discrete and self.sample:
+                    # Variational inference over num actions, mean-reduced ensemble for discrete RL
+                    y_predicted = Pi.rsample(self.num_actions)
+                    action = self.action_selector(self.critic(obs, y_predicted, All_Qs), self.step, y_predicted).best
+                else:
+                    action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
                 reward = -mistake.detach()  # reward = -error
                 next_obs[:] = float('nan')
 

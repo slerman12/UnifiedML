@@ -86,7 +86,7 @@ runs = {'UnifiedML': {
     'bluehive': True,
     'lab': False,
     'write_tabular': True,
-    'steps': 2000000,
+    'steps': 2500000,
     'title': 'Mario',
     'x_axis': 'Step',
     'bluehive_only': [],

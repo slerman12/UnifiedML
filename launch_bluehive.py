@@ -70,8 +70,9 @@ try:
     s.sendline(conda)
     s.prompt()
     print(s.before.decode("utf-8"))
-    for hyperparams in sweep:
+    for i, hyperparams in enumerate(sweep):
         hyperparams = "\t".join(hyperparams.splitlines())
+        print(f'Set: {i}')
         print(f'python sbatch.py -m {hyperparams}   username="{username}"\n')
         s.sendline(f'python sbatch.py -m {hyperparams} username="{username}"')
         s.prompt()

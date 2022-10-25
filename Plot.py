@@ -278,9 +278,10 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
         # max_num_bars_per_task = performance.groupby(['Task', 'Agent']).size().reset_index().groupby(['Task']).size().max()
         num_tasks = len(performance.Task.unique())
         # num_bars = len(performance.groupby(['Task', 'Agent']).size().reset_index().index)
+        legend_width = max([len(name) for name in performance.Agent.unique()])
 
         general_plot(performance, path, plot_name + 'Bar.png', palette, make, 'Suite', title, 'Agent', True,
-                     figsize=(max(4, num_tasks * mean_num_bars_per_task * 0.7), 3))  # Somewhat adaptive sizing
+                     figsize=(max(4, num_tasks * mean_num_bars_per_task * 0.7) + legend_width / 30, 3))  # Adapt width
 
     if len(predicted_vs_actual) > 0:
         # Use previously defined palette if available, or add new colors from the universal hue order w/o conflict

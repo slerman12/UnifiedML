@@ -23,7 +23,7 @@ from Sweeps.SweepsAndPlots import runs
 plot_group = list(runs.keys())[0]
 plot_specs = runs[plot_group]
 
-plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
+# plot_specs.update(dict(x_axis='step'))  # Can modify to Epoch, Episode, Time, etc.; can change title, steps, etc.
 
 # for plots in ['Discrete-As-Continuous']:  # Additional plots from other sub_groups, using same specs
 #     plot_specs.plots += runs[plot_group][plots].plots
