@@ -19,8 +19,7 @@ runs = {'UnifiedML': {
         # plot_per_steps=0""",
 
         # Classify + RL  EMA breaks discrete RL - no EMA
-        # """python Run.py
-        # Agent=Agents.ExperimentAgent
+        # """Agent=Agents.ExperimentAgent
         # task=classify/mnist,classify/cifar10,classify/tinyimagenet
         # ema=false
         # weight_decay=0.01
@@ -37,8 +36,7 @@ runs = {'UnifiedML': {
         # save_per_steps=100000""",
 
         # Classify + RL: Variational Inference - No EMA
-        """python Run.py
-        Agent=Agents.ExperimentAgent 
+        """Agent=Agents.ExperimentAgent 
         task=classify/mnist,classify/cifar10,classify/tinyimagenet
         ema=false 
         weight_decay=0.01
@@ -47,7 +45,7 @@ runs = {'UnifiedML': {
         'transform="{RandomHorizontalFlip:{}}"'
         RL=true 
         supervise=false
-        discrete=false 
+        discrete=true,false 
         +agent.contrastive=true,false 
         +agent.sample=true
         +agent.num_critics=1,2
@@ -80,7 +78,7 @@ runs = {'UnifiedML': {
         ['Classify+RL_supervise-False.*no-EMA', 'Classify_no-EMA'],
     ],
     'sftp': True,
-    'bluehive': False,
+    'bluehive': True,
     'lab': True,
     'steps': 2000000,
     'title': 'UnifiedML',

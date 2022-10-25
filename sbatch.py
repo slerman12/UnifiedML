@@ -28,7 +28,7 @@ def getattr_recursive(__o, name):
         __o = getattr(__o, key)
     if __o is None:
         return 'null'
-    return __o
+    return '"' + __o + '"'
 
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
