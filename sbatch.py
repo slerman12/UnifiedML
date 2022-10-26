@@ -9,8 +9,8 @@ from pathlib import Path
 import hydra
 from omegaconf import OmegaConf
 
-sys_args = [arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]]
-meta = ['username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m', 'task_dir']
+sys_args = {arg.split('=')[0].strip('"').strip("'") for arg in sys.argv[1:]}
+meta = {'username', 'conda', 'num_gpus', 'gpu', 'mem', 'time', 'lab', 'reservation_id', '-m', 'task_dir'}
 
 # Format path names
 # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
@@ -28,7 +28,9 @@ def getattr_recursive(__o, name):
         __o = getattr(__o, key)
     if __o is None:
         return 'null'
-    return '"' + __o + '"'
+    if isinstance(__o, str) and '(' in __o:
+        __o = '"' + __o + '"'
+    return __o
 
 
 @hydra.main(config_path='./Hyperparams', config_name='sbatch')
@@ -78,7 +80,7 @@ def main(args):
 {cuda}
 module load gcc
 wandb login {wandb_login_key}
-python3 Run.py {' '.join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args if key not in meta])}
+python3 Run.py {" ".join([f"'{key}={getattr_recursive(args, key.strip('+'))}'" for key in sys_args - meta])}
 """
 
     # Write script
