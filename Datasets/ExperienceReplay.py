@@ -112,7 +112,7 @@ class ExperienceReplay:
 
         os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
-        # RAM capacity per worker. Max num experiences allotted per CPU worker
+        # RAM capacity per worker. Max num experiences allotted per CPU worker (if Online)
         capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] and not offline else np.inf
 
         # For sending data to workers directly
