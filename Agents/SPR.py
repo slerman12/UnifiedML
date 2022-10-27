@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import time
+import warnings
 
 import torch
 from torch.nn.functional import cross_entropy
@@ -266,11 +267,17 @@ class SPRAgent(torch.nn.Module):
                                                       obs, action, reward, discount, next_obs,
                                                       self.step, self.num_actions, logs=logs)
 
+            # Can only predict dynamics from available trajectories
+            if self.depth > replay.nstep:
+                warnings.warn(f"Dynamics 'depth' cannot exceed trajectory 'nstep'. Lowering 'depth' to {replay.nstep}. "
+                              f"You can increase 'nstep' with the 'nstep={self.depth}' flag.")
+                self.depth = replay.nstep
+
             # Dynamics loss
-            dynamics_loss = 0 if replay.nstep == 0 or self.generate or not self.depth \
+            dynamics_loss = 0 if self.depth == 0 or self.generate \
                 else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
                                                              self.encoder, self.dynamics, self.projector,
-                                                             self.predictor, depth=min(replay.nstep, self.depth),
+                                                             self.predictor, depth=self.depth,
                                                              action_dim=self.action_dim, logs=logs)
 
             models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)

@@ -519,96 +519,96 @@ runs.XRD.sweep = [
 # Generalization To Magnetic Properties
 runs.XRD.sweep = [
     # Large-Soup, No-Pool-CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Large-Soup_${test_dataset.num_classes}-Way'
-    experiment='No-Pool-CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Large-Soup, CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Large-Soup_${test_dataset.num_classes}-Way'
-    experiment='CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Large-Soup, MLP - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Large-Soup_${test_dataset.num_classes}-Way'
-    experiment='MLP_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Mix-Soup, No-Pool-CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Mix-Soup_${test_dataset.num_classes}-Way'
-    experiment='No-Pool-CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Mix-Soup_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Large-Soup_${test_dataset.num_classes}-Way'
+    # experiment='No-Pool-CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0.5]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Large-Soup, CNN - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Large-Soup_${test_dataset.num_classes}-Way'
+    # experiment='CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0.5]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Large-Soup, MLP - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Large-Soup_${test_dataset.num_classes}-Way'
+    # experiment='MLP_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0.5]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Mix-Soup, No-Pool-CNN - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Mix-Soup_${test_dataset.num_classes}-Way'
+    # experiment='No-Pool-CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0.5]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Mix-Soup_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
 
     # Large-Soup, No-Pool-CNN - Generalize To MP nonicsd
     """task=classify/custom
@@ -618,7 +618,7 @@ runs.XRD.sweep = [
     experiment='No-Pool-CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -641,7 +641,7 @@ runs.XRD.sweep = [
     experiment='CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -664,7 +664,7 @@ runs.XRD.sweep = [
     experiment='MLP_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -687,7 +687,7 @@ runs.XRD.sweep = [
     experiment='No-Pool-CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -703,50 +703,50 @@ runs.XRD.sweep = [
     mem=180""",
 
     # Mix-Soup, CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Mix-Soup_${test_dataset.num_classes}-Way'
-    experiment='CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Mix-Soup_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Mix-Soup, MLP - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Mix-Soup_${test_dataset.num_classes}-Way'
-    experiment='MLP_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Mix-Soup_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Mix-Soup_${test_dataset.num_classes}-Way'
+    # experiment='CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0.5]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Mix-Soup_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Mix-Soup, MLP - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Mix-Soup_${test_dataset.num_classes}-Way'
+    # experiment='MLP_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0.5]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Mix-Soup_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
 
     # Mix-Soup, CNN - Generalize To MP nonicsd
     """task=classify/custom
@@ -756,7 +756,7 @@ runs.XRD.sweep = [
     experiment='CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -779,7 +779,7 @@ runs.XRD.sweep = [
     experiment='MLP_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0.5]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -795,73 +795,73 @@ runs.XRD.sweep = [
     mem=180""",
 
     # Large, No-Pool-CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Large_${test_dataset.num_classes}-Way'
-    experiment='No-Pool-CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Large_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Large, CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Large_${test_dataset.num_classes}-Way'
-    experiment='CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Large_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Large, MLP - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Large_${test_dataset.num_classes}-Way'
-    experiment='MLP_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Large_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Large_${test_dataset.num_classes}-Way'
+    # experiment='No-Pool-CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Large_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Large, CNN - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Large_${test_dataset.num_classes}-Way'
+    # experiment='CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Large_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Large, MLP - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Large_${test_dataset.num_classes}-Way'
+    # experiment='MLP_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Large_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
 
     # Large, No-Pool-CNN - Generalize To MP nonicsd
     """task=classify/custom
@@ -871,7 +871,7 @@ runs.XRD.sweep = [
     experiment='No-Pool-CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -894,7 +894,7 @@ runs.XRD.sweep = [
     experiment='CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -917,7 +917,7 @@ runs.XRD.sweep = [
     experiment='MLP_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -933,73 +933,73 @@ runs.XRD.sweep = [
     mem=180""",
 
     # Mix, No-Pool-CNN - Generalize To MP - Note: Haven't trained the base model
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Mix_${test_dataset.num_classes}-Way'
-    experiment='No-Pool-CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Mix, CNN - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Mix_${test_dataset.num_classes}-Way'
-    experiment='CNN_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
-
-    # Mix, MLP - Generalize To MP
-    """task=classify/custom
-    Dataset=XRD.XRD
-    batch_size=256
-    task_name='Mix_${test_dataset.num_classes}-Way'
-    experiment='MLP_icsd'
-    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-    +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_icsd_shen/"]'
-    +'test_dataset.train_eval_splits=[0]'
-    +test_dataset.num_classes=7,230
-    TestDataset=XRD.XRD
-    train_steps=0
-    load=true
-    load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
-    logger.wandb=true
-    num_workers=8
-    num_gpus=8
-    lab=true
-    save=false
-    parallel=true
-    mem=180""",
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Mix_${test_dataset.num_classes}-Way'
+    # experiment='No-Pool-CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Mix, CNN - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Mix_${test_dataset.num_classes}-Way'
+    # experiment='CNN_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/CNN/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
+    #
+    # # Mix, MLP - Generalize To MP
+    # """task=classify/custom
+    # Dataset=XRD.XRD
+    # batch_size=256
+    # task_name='Mix_${test_dataset.num_classes}-Way'
+    # experiment='MLP_icsd'
+    # '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    # +'dataset.train_eval_splits=[1, 0]'
+    # '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_icsd_shen/"]'
+    # +'test_dataset.train_eval_splits=[0]'
+    # +test_dataset.num_classes=7,230
+    # TestDataset=XRD.XRD
+    # train_steps=0
+    # load=true
+    # load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
+    # logger.wandb=true
+    # num_workers=8
+    # num_gpus=8
+    # lab=true
+    # save=false
+    # parallel=true
+    # mem=180""",
 
     # Mix, No-Pool-CNN - Generalize To MP nonicsd - Note: Haven't trained the base model
     """task=classify/custom
@@ -1009,7 +1009,7 @@ runs.XRD.sweep = [
     experiment='No-Pool-CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -1032,7 +1032,7 @@ runs.XRD.sweep = [
     experiment='CNN_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -1055,7 +1055,7 @@ runs.XRD.sweep = [
     experiment='MLP_nonicsd'
     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
     +'dataset.train_eval_splits=[1, 0]'
-    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_nonicsd_shen/"]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
     +'test_dataset.train_eval_splits=[0]'
     +test_dataset.num_classes=7,230
     TestDataset=XRD.XRD
@@ -1531,23 +1531,23 @@ runs.XRD.sweep = [
 #     'Large.*', 'Mix-Soup.*'
 # ]
 
-runs.XRD.plots = [
-    ['CNN', 'MLP', 'No-Pool-CNN'],
-]
-runs.XRD.tasks = [
-    'PS1_.*', 'Large_.*', 'Mix_.*', 'Large-Soup_.*', 'Mix-Soup_.*'
-]
-runs.XRD.tasks = [
-    'Large-Soup_.*'
-]
-
-runs.XRD.title = 'RRUFF'
-
 # runs.XRD.plots = [
-#     ['.*icsd.*'],
-#     ['.*_icsd.*'],
-#     ['.*_nonicsd.*'],
+#     ['CNN', 'MLP', 'No-Pool-CNN'],
+# ]
+# runs.XRD.tasks = [
+#     'PS1_.*', 'Large_.*', 'Mix_.*', 'Large-Soup_.*', 'Mix-Soup_.*'
+# ]
+# runs.XRD.tasks = [
+#     'Large-Soup_.*'
 # ]
 
-# runs.XRD.title = 'Magnetic Properties'
-runs.XRD.sftp = False
+# runs.XRD.title = 'RRUFF'
+
+runs.XRD.plots = [
+    # ['.*icsd.*'],
+    # ['.*_icsd.*'],
+    ['.*_nonicsd.*'],
+]
+
+runs.XRD.title = 'Magnetic Properties'
+runs.XRD.sftp = True

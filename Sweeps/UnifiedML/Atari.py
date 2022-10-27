@@ -25,14 +25,15 @@ runs = {'UnifiedML': {
     'sweep': [
         f'train_steps=2500000 '  # Changed from 2000000 to add 500000
         f'task={atari_26} '
-        f'experiment="Atari-26-DQN" '  # Originally did 30 - Meant to write SoftDQN
+        f'experiment="Atari-26-SoftDQN" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
         f'logger.wandb=true '
         f'time="12-00:00:00" '
         f'save_per_steps=500000 '
         f'replay.save=true '
         f'reservation_id=20220929 '
         f'load=false '
-        f'replay.load=false ',
+        f'replay.load=false '
+        f'replay.capacity=3000000 ',
 
         # f'train_steps=2000000 '
         # f'task=mario '

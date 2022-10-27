@@ -72,7 +72,7 @@ try:
     print(s.before.decode("utf-8"))
     for i, hyperparams in enumerate(sweep):
         hyperparams = "\t".join(hyperparams.splitlines())
-        print(f'Set: {i}')
+        print(f'Set: {i + 1}')
         print(f'python sbatch.py -m {hyperparams}   username="{username}"\n')
         s.sendline(f'python sbatch.py -m {hyperparams} username="{username}"')
         s.prompt()
