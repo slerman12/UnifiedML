@@ -228,7 +228,6 @@ class Classify:
             label = np.expand_dims(label, 1)
 
             batch_size = obs.shape[0]
-            print(batch_size)
 
             obs.shape = (batch_size, *self.obs_spec['shape'])
 
