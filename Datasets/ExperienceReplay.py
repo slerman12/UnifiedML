@@ -328,7 +328,7 @@ class Experiences:
             self.episode_names = sorted(self.path.glob('*.npz'))
 
             self.experience_indices = sum([list(enumerate([episode_name] * int(episode_name.stem.split('_')[-1])))
-                                           for episode_name in self.episode_names], [])  # Slightly redundant
+                                           for episode_name in self.episode_names], [])  # Slightly redundant per worker
 
         self.initialized = True
 
@@ -515,6 +515,7 @@ class Offline(Experiences, Dataset):
 
 # Offline, shared RAM allocation across CPU workers to avoid redundant replicas
 class SharedDict:
+    # TODO Make separate Datasets/SharedRAM.py file.
     def __init__(self, specs):
         self.dict_id = str(uuid.uuid4())[:8]
 
@@ -555,7 +556,7 @@ class SharedDict:
             try:
                 self.mems.setdefault(name + 'shape',
                                      ShareableList([1] if spec == 'id' else list(data.shape),
-                                                   name=name + 'shape'))  # Assumes constant spec shapes
+                                                   name=name + 'shape'))  # Assumes constant spec shapes for episode
             except FileExistsError:
                 self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape'))
 
