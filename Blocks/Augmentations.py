@@ -15,10 +15,10 @@ class RandomShiftsAug(nn.Module):
     def forward(self, obs):
         # Operates on last 3 dims of x, preserves leading dims
         shape = obs.shape
-        assert len(shape) > 3, f'Obs shape {tuple(shape)} not supported by this augmentation, try \'aug=Identity\''
+        assert len(shape) > 3, f'Obs shape {tuple(shape)} not supported by this augmentation, try \'Aug=Identity\''
         obs = obs.view(-1, *shape[-3:])
         n, c, h, w = obs.size()
-        assert h == w, f'Height≠width ({h}≠{w}), obs shape not supported by this augmentation, try \'aug=Identity\''
+        assert h == w, f'Height≠width ({h}≠{w}), obs shape not supported by this augmentation, try \'Aug=Identity\''
         padding = tuple([self.pad] * 4)
         obs = F.pad(obs, padding, 'replicate')
         eps = 1.0 / (h + 2 * self.pad)

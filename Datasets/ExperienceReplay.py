@@ -112,9 +112,6 @@ class ExperienceReplay:
 
         os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
-        assert len(self) >= self.num_workers or not offline, f'num_workers ({self.num_workers}) ' \
-                                                             f'exceeds offline replay size ({len(self)})'
-
         # RAM capacity per worker. Max num experiences allotted per CPU worker
         capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] and not offline else np.inf
 

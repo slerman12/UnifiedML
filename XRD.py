@@ -99,6 +99,8 @@ class MLP(nn.Module):
 
 
 # CPU-memory
+# Easy local test:
+# python Run.py task=classify/custom Dataset=XRD.XRD +dataset.roots='[Datasets/XRD/rruff/XY_DIF_noiseAll/]' Aug=Identity
 class XRD(Dataset):
     def __init__(self, roots=('../XRDs/icsd_Datasets/icsd171k_mix/',), train=True, train_eval_splits=(0.9,),
                  num_classes=7, seed=0, transform=None, spectrogram=False, **kwargs):
