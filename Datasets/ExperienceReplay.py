@@ -20,13 +20,12 @@ from omegaconf import OmegaConf
 
 import numpy as np
 
+from multiprocessing.shared_memory import SharedMemory, ShareableList
+from multiprocessing import resource_tracker
+
 import torch
 from torch.utils.data import IterableDataset, Dataset
 from torch.multiprocessing import Pipe
-
-from multiprocessing.shared_memory import SharedMemory, ShareableList
-
-from multiprocessing import resource_tracker
 
 from torchvision.transforms import transforms
 
@@ -102,11 +101,11 @@ class ExperienceReplay:
 
         #   The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
 
-        #       TODO: Memory-mapped hard disk loading for Offline/Online, size-adaptive w.r.t. CPU RAM loading
+        #       TODO: Memory-mapped hard disk loading for Offline/Online, capacity-adaptive w.r.t. RAM.
 
         #   Online also caches data on RAM, after storing to hard disk.
 
-        #       TODO: Online can send new data directly to RAM and hard disk instead of loading it to RAM from hard disk
+        #       TODO: Online can send new data directly to RAM and hard disk instead of loading it after hard disk.
 
         # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
@@ -562,7 +561,7 @@ class SharedDict:
 
     def __getitem__(self, key):
         # Account for potential delay
-        for _ in range(120):
+        for _ in range(2400):
             try:
                 return self.get(key)
             except FileNotFoundError as e:
