@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import datetime
 import glob
+import math
 from time import sleep
 import io
 import itertools
@@ -110,7 +111,7 @@ class Classify:
         self._batches = iter(self.batches)
 
         obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
-        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape  # 3D
+        obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 "feature dim" tacked on for conv compatibility
 
         self.obs_spec = {'shape': obs_shape}
 
@@ -126,9 +127,10 @@ class Classify:
                           f'then do not worry. \n'
                           f'This process will wait until the replay is ready. \n'
                           f'Otherwise, the path may have been corrupted. In which case, \n'
-                          f'kill this process and delete the existing path via `rm - r <path>`. \n'
+                          f'kill this process (e.g., ctrl-c) and delete the existing path (`rm -r <path>`).\n'
                           f'Here is the conflicting path in question:\n{replay_path}\n'
                           f'{"As well as: " + stats_path[0] if len(stats_path) else ""}'
+                          f'Then you can try again.\n\n'
                           f'{colored("Wait or kill/delete.", "yellow")} {colored("As you wish, my friend.", "red")}')
             while not len(stats_path):
                 sleep(10)  # Wait 10 sec
@@ -254,13 +256,14 @@ class Classify:
                                          'This only has to be done once'):
 
             b = obs.shape[0]
-            _, c, h, w = (b, *self.obs_spec['shape'])
-            obs = obs.view(b, c, h, w)
+            _, c, *hw = (b, *self.obs_spec['shape'])
+            obs = obs.view(b, c, *hw)
             fst_moment = torch.empty(c) if fst_moment is None else fst_moment
             snd_moment = torch.empty(c) if snd_moment is None else snd_moment
-            nb_pixels = b * h * w
-            sum_ = torch.sum(obs, dim=[0, 2, 3])
-            sum_of_square = torch.sum(obs ** 2, dim=[0, 2, 3])
+            nb_pixels = b * math.prod(hw)
+            dim = [0, *[2 + i for i in range(len(hw))]]
+            sum_ = torch.sum(obs, dim=dim)
+            sum_of_square = torch.sum(obs ** 2, dim=dim)
             fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
             snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
 

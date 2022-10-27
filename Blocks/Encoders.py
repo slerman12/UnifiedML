@@ -102,7 +102,7 @@ class CNNEncoder(nn.Module):
 
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
-    axes = (1,) * (3 - len(obs_shape))  # Spatial axes for dynamic input dims
+    axes = (1,) * (2 - len(obs_shape))  # Spatial axes for dynamic input dims
     obs_shape = tuple(obs_shape) + axes
 
     if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
@@ -113,14 +113,15 @@ def adapt_cnn(block, obs_shape):
             block.padding = (block.padding, block.padding)
 
         # Set them to adapt to obs shape (2D --> 1D, etc) via contracted kernels / suitable padding
-        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[-2:]))
-        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[-2:]))
+        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[1:]))
+        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[1:]))
 
         # Contract the CNN kernels accordingly
         if isinstance(block, nn.Conv2d):
-            block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
+            truncate = [slice(0, block.kernel_size[i]) if i < len(block.kernel_size) else 0 for i in [0, 1]]  # 2D trunc
+            block.weight = nn.Parameter(block.weight[:, :, truncate[0], truncate[1]])
     elif hasattr(block, 'modules'):
         for layer in block.children():
             # Iterate through all layers
-            adapt_cnn(layer, obs_shape[-3:])
-            obs_shape = Utils.cnn_feature_shape(obs_shape[-3:], layer)
+            adapt_cnn(layer, obs_shape)
+            obs_shape = Utils.cnn_feature_shape(obs_shape, layer)

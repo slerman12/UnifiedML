@@ -181,23 +181,23 @@ def update_ema_target(source, target, ema_decay=0):
 
 
 # Compute the output shape of a CNN layer
-def cnn_layer_feature_shape(in_height, in_width, kernel_size=1, stride=1, padding=0, dilation=1):
-    assert in_height and in_width, f'Height and width must be positive integers, got {in_height}, {in_width}'
+def cnn_layer_feature_shape(*spatial_shape, kernel_size=1, stride=1, padding=0, dilation=1):
     if padding == 'same':
-        return in_height, in_width
+        return spatial_shape
+    axes = [size for size in spatial_shape if size]
     if type(kernel_size) is not tuple:
-        kernel_size = [kernel_size, kernel_size]
+        kernel_size = [kernel_size] * len(axes)
     if type(stride) is not tuple:
-        stride = [stride, stride]
+        stride = [stride] * len(axes)
     if type(padding) is not tuple:
-        padding = [padding, padding]
+        padding = [padding] * len(axes)
     if type(dilation) is not tuple:
-        dilation = [dilation, dilation]
-    kernel_size = [min(size, kernel_size[i]) for i, size in enumerate([in_height, in_width])]  # Assumes adaptive
-    padding = [min(size, padding[i]) for i, size in enumerate([in_height, in_width])]  # Assumes adaptive
-    out_height = math.floor(((in_height + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
-    out_width = math.floor(((in_width + (2 * padding[1]) - (dilation[1] * (kernel_size[1] - 1)) - 1) / stride[1]) + 1)
-    return out_height, out_width
+        dilation = [dilation] * len(axes)
+    kernel_size = [min(size, kernel_size[i]) for i, size in enumerate(axes)]  # Assumes adaptive
+    padding = [min(size, padding[i]) for i, size in enumerate(axes)]  # Assumes adaptive
+    out_shape = [math.floor(((size + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
+                 for size in axes] + list(spatial_shape[len(axes):])
+    return out_shape
 
 
 # Compute the output shape of a whole CNN
