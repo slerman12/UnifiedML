@@ -204,7 +204,7 @@ def cnn_layer_feature_shape(*spatial_shape, kernel_size=1, stride=1, padding=0, 
 def cnn_feature_shape(chw, *blocks, verbose=False):
     channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
     for block in blocks:
-        if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d)):
+        if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.Conv1d, nn.AvgPool1d, nn.MaxPool1d)):
             channels = block.out_channels if hasattr(block, 'out_channels') else channels
             height, width = cnn_layer_feature_shape(height, width,
                                                     kernel_size=block.kernel_size,
@@ -214,7 +214,7 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
             channels = block.out_features  # Assumes channels-last if linear
         elif isinstance(block, nn.Flatten) and (block.start_dim == -3 or block.start_dim == 1):
             channels, height, width = channels * (height or 1) * (width or 1), None, None  # Placeholder height/width
-        elif isinstance(block, nn.AdaptiveAvgPool2d):
+        elif isinstance(block, (nn.AdaptiveAvgPool2d, nn.AdaptiveAvgPool1d)):
             height, width = block.output_size
         elif hasattr(block, 'repr_shape'):
             chw = block.repr_shape(channels, height, width)
