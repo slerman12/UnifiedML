@@ -36,7 +36,7 @@ class EnsembleQCritic(nn.Module):
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore obs!
 
         # Continuous action-space Critic gets (obs, action) as input
-        in_shape = action_spec.shape if ignore_obs else [trunk_dim + (0 if discrete
+        in_shape = action_spec.shape if ignore_obs else [trunk_dim + (0 if discrete  # Not dynamic
                                                                       else self.num_actions * self.action_dim)]
 
         # Ensemble
@@ -79,10 +79,9 @@ class EnsembleQCritic(nn.Module):
             assert action is not None, f'action is needed by continuous action-space Critic.'
 
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
-            print(h.shape, action.shape)
 
-            h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
-            print(h.shape, action.shape)
+            # TODO If dynamic trunk_dim, -1 -> *h.shape[1:]
+            h = h.unsqueeze(1).expand(*action.shape[:-1], -1)  # One for each action
 
             # Q-values for continuous action(s)
             Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']

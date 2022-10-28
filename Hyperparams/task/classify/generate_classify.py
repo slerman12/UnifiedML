@@ -32,7 +32,7 @@ environment:
     batch_size: ${{batch_size}}
     num_workers: ${{num_workers}}
 logger:
-    log_actions: true
+    log_actions: ${{not:${{generate}}}}
 suite: classify
 task_name: {'${format:${Dataset}}' if task == 'Custom' else task}
 discrete: false
