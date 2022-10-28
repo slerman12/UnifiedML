@@ -100,40 +100,43 @@ class CNNEncoder(nn.Module):
         return h
 
 
-# TODO Test avgpools, maxpool... clean repetitive attribute setting... add feature dim in encoder if 1D... 1d CNN.
-# Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
+# Adapts a 2d CNN to a smaller dimensionality or truncates (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
-    axes = (1,) * (2 - len(obs_shape))  # Spatial axes for dynamic input dims
-    obs_shape = tuple(obs_shape) + axes
+    obs_shape = tuple(obs_shape)
 
-    if isinstance(block, (torch.nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
-        # Represent hyper-params as tuples
-        if not isinstance(block.kernel_size, tuple):
-            block.kernel_size = (block.kernel_size, block.kernel_size)
-        if not isinstance(block.padding, tuple):
-            block.padding = (block.padding, block.padding)
-        if not isinstance(block.stride, tuple):
-            block.stride = (block.stride, block.stride)
-        if not isinstance(block.dilation, tuple):
-            block.dilation = (block.dilation, block.dilation)
-        if not isinstance(block.output_padding, tuple):
-            block.output_padding = (block.output_padding, block.output_padding)
+    # Nd
+    name = type(block).__name__
+    N = 2 if '2d' in name else 1 if '1d' in name else 0
 
-        # Set them to adapt to obs shape (2D --> 1D, etc) via contracted kernels / suitable padding
-        block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[1:]))
-        block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[1:]))
-        block.stride = tuple(0 if obs <= stride else stride for stride, obs in zip(block.stride, obs_shape[1:]))
-        block.dilation = tuple(0 if obs <= dilation else dilation for dilation, obs in zip(block.dilation, obs_shape[1:]))
-        block.output_padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.output_padding, obs_shape[1:]))
+    if N:
+        for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
+            if hasattr(block, attr):
+                val = getattr(block, attr)
 
-        # Contract the CNN kernels accordingly
-        if isinstance(block, nn.Conv2d):
-            truncate = [slice(0, block.kernel_size[i]) if i < len(block.kernel_size) else 0 for i in [0, 1]]  # 2D trunc
+                # Represent hyper-params as tuples
+                if not isinstance(val, tuple):
+                    setattr(block, attr, (val,) * N)
+                    val = getattr(block, attr)
+
+                # Set to adapt to obs shape: contracted kernels, padding, etc
+                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))
+
+        # Update operation to 1d if needed
+        if 0 < len(obs_shape[1:]) < N:
+            block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
+        # Contract a 1d CNN's kernels
+        if isinstance(block, nn.Conv1d):
+            block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0]])
+        # Contract a 2d CNN's kernels
+        elif isinstance(block, nn.Conv2d):
+            truncate = [slice(0, block.kernel_size[i]) if i < len(obs_shape[1:]) else 0 for i in [0, 1]]  # 2D trunc
             block.weight = nn.Parameter(block.weight[:, :, truncate[0], truncate[1]])
-            if len(block.weight.shape) == 3:
-                block._conv_forward = torch.nn.Conv1d._conv_forward.__get__(block, torch.nn.Conv2d)
+
+            # Update operation to 1d if needed
+            if len(block.kernel_size) == 1:
+                block._conv_forward = nn.Conv1d._conv_forward.__get__(block, nn.Conv2d)
     elif hasattr(block, 'modules'):
         for layer in block.children():
             # Iterate through all layers
-            adapt_cnn(layer, obs_shape)
+            adapt_cnn(layer, obs_shape)  # Dimensionality-adaptivity
             obs_shape = Utils.cnn_feature_shape(obs_shape, layer)
