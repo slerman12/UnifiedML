@@ -111,7 +111,7 @@ class Classify:
         self._batches = iter(self.batches)
 
         obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
-        obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim
+        obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
 
         self.obs_spec = {'shape': obs_shape}
 
@@ -119,7 +119,7 @@ class Classify:
 
         replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
 
-        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         if replay_path.exists() and not len(stats_path):
             warnings.warn(f'\nIncomplete replay buffer found. \n'
@@ -130,12 +130,12 @@ class Classify:
                           f'kill this process (e.g., ctrl-c) and delete the existing path (`rm -r <path>`).\n'
                           f'Here is the conflicting path in question:\n{replay_path}\n'
                           f'{"As well as: " + stats_path[0] if len(stats_path) else ""}'
-                          f'Then you can try again.\n\n'
+                          f'Then you can try again. We will re-create the replay buffer.\n\n'
                           f'{colored("Wait or kill/delete.", "yellow")} {colored("As you wish, my friend.", "red")}')
             while not len(stats_path):
                 sleep(10)  # Wait 10 sec
 
-                stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+                stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         # Offline and generate don't use training rollouts
         if (offline or generate) and not train and not replay_path.exists():
@@ -148,10 +148,10 @@ class Classify:
         if train and (offline or generate) and not replay_path.exists():
             self.create_replay(replay_path)
 
-        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats_*')
+        stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         # Compute stats
-        mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
+        mean, stddev, low_, high_ = map(json.loads, open(stats_path[0]).readline().split('_')) if len(stats_path) \
             else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else 0
         low, high = low if low is None else low_, high_ if high is None else high
 
@@ -258,8 +258,8 @@ class Classify:
             b = obs.shape[0]
             _, c, *hw = (b, *self.obs_spec['shape'])
             obs = obs.view(b, c, *hw)
-            fst_moment = torch.empty(c) if fst_moment is None else fst_moment
-            snd_moment = torch.empty(c) if snd_moment is None else snd_moment
+            fst_moment = torch.zeros(c) if fst_moment is None else fst_moment
+            snd_moment = torch.zeros(c) if snd_moment is None else snd_moment
             nb_pixels = b * math.prod(hw)
             dim = [0, *[2 + i for i in range(len(hw))]]
             sum_ = torch.sum(obs, dim=dim)
@@ -271,8 +271,12 @@ class Classify:
 
             low, high = min(obs.min(), low), max(obs.max(), high)
 
-        mean, stddev = fst_moment.tolist(), torch.sqrt(snd_moment - fst_moment ** 2).tolist()
-        open(path + f'_Stats_{mean}_{stddev}_{low}_{high}', 'w')  # Save stat values for future reuse
+        stddev = torch.sqrt(snd_moment - fst_moment ** 2)
+        stddev[stddev == 0] = 1
+
+        mean, stddev = fst_moment.tolist(), stddev.tolist()
+        with open(path + f'_Stats_Mean_Stddev_Low_High', 'w') as f:
+            f.write(f'{mean}_{stddev}_{low}_{high}')  # Save stat values for future reuse
 
         return mean, stddev, low.item(), high.item()
 

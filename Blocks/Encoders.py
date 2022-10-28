@@ -30,8 +30,7 @@ class CNNEncoder(nn.Module):
         self.normalize = norm and None not in [self.low, self.high]  # Whether to [0, 1] shift-max scale
 
         # Dimensions
-        obs_shape = list(self.obs_shape)
-
+        obs_shape = [1] * (2 - len(self.obs_shape)) + list(self.obs_shape)  # At least 1 channel dim and spatial dim
         obs_shape[0] += context_dim
 
         # CNN
@@ -63,20 +62,21 @@ class CNNEncoder(nn.Module):
         batch_dims = obs.shape[:-dims]  # Preserve leading dims
         axes = (1,) * (dims - 1)  # Spatial axes, useful for dynamic input shapes
 
+        # Standardize/normalize pixels
+        if self.standardize:
+            obs = (obs - self.mean.to(obs.device).view(-1, *axes)) / self.stddev.to(obs.device).view(-1, *axes)
+        elif self.normalize:
+            obs = 2 * (obs - self.low) / (self.high - self.low) - 1
+
         try:
-            obs = obs.reshape(-1, *self.obs_shape)  # Validate shape, collapse batch dims
+            channel_dim = (1,) * (not axes)  # At least 1 channel dim and spatial dim
+            obs = obs.reshape(-1, *channel_dim, *self.obs_shape)  # Validate shape, collapse batch dims
         except RuntimeError:
             raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
                                f'{tuple(obs.shape)}, ≠ {self.obs_shape}')
 
-        # Standardize/normalize pixels
-        if self.standardize:
-            obs = (obs - self.mean.to(obs.device).view(1, -1, *axes)) / self.stddev.to(obs.device).view(1, -1, *axes)
-        elif self.normalize:
-            obs = 2 * (obs - self.low) / (self.high - self.low) - 1
-
         # Optionally append a 1D context to channels, broadcasting
-        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes).expand(-1, -1, *obs.shape[2:])
+        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes or (1,)).expand(-1, -1, *obs.shape[2:])
                                 for c in context]], 1)
 
         # CNN encode
@@ -100,7 +100,7 @@ class CNNEncoder(nn.Module):
         return h
 
 
-# TODO Test avgpools, maxpool... clean repetitive attribute setting... add feature dim in encoder if 1D... test generate
+# TODO Test avgpools, maxpool... clean repetitive attribute setting... add feature dim in encoder if 1D... 1d CNN.
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
     axes = (1,) * (2 - len(obs_shape))  # Spatial axes for dynamic input dims

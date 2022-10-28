@@ -99,14 +99,14 @@ runs = {'UnifiedML': {
         ['Classify+RL+Sample_supervise-False.*no-EMA', 'Classify_no-EMA'],
         ['Classify+RL_supervise-False.*no-EMA', 'Classify_no-EMA'],
     ],
-    'sftp': True,
+    'sftp': False,
     'bluehive': True,
     'lab': True,
-    'steps': 2000000,
+    'steps': 200000,
     'title': 'UnifiedML',
     'x_axis': 'Step',
     'bluehive_only': [],
-    'tasks': [],
+    'tasks': ['mnist', 'cifar10'],  # TODO Note: adding classify/ broke te regex matching
     'agents': [],
     'suites': [],
     'write_tabular': False}
