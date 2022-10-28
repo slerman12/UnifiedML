@@ -215,7 +215,7 @@ class ExperienceReplay:
 
         for name in self.specs:
             # Concatenate into one big episode batch
-            self.episode[name] = np.concatenate(self.episode[name], axis=0)
+            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)  # TODO SharedDict dtype
 
         self.episode_len = len(self.episode['obs'])
 
@@ -297,7 +297,7 @@ class Experiences:
 
         # If Offline, share RAM across CPU workers
         if self.offline:
-            self.num_experiences = sum([int(episode_name.stem.split('_')[-1])
+            self.num_experiences = sum([int(episode_name.stem.split('_')[-1]) - (self.nstep or 0)
                                         for episode_name in self.path.glob('*.npz')])
 
         self.initialized = False
@@ -324,7 +324,8 @@ class Experiences:
         if self.offline:
             self.episode_names = sorted(self.path.glob('*.npz'))
 
-            self.experience_indices = sum([list(enumerate([episode_name] * int(episode_name.stem.split('_')[-1])))
+            self.experience_indices = sum([list(enumerate([episode_name] * (int(episode_name.stem.split('_')[-1])
+                                                                            - (self.nstep or 0))))
                                            for episode_name in self.episode_names], [])  # Slightly redundant per worker
 
         self.initialized = True
@@ -587,7 +588,7 @@ class SharedDict:
                 else:
                     mem = self.mems.setdefault(name, SharedMemory(name=name))
 
-                    episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
+                    episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO Str dtype
 
         return episode
 

@@ -100,26 +100,38 @@ class CNNEncoder(nn.Module):
         return h
 
 
+# TODO Test avgpools, maxpool... clean repetitive attribute setting... add feature dim in encoder if 1D... test generate
 # Adapts a 2d CNN to a smaller dimensionality (in case an image's spatial dim < kernel size)
 def adapt_cnn(block, obs_shape):
     axes = (1,) * (2 - len(obs_shape))  # Spatial axes for dynamic input dims
     obs_shape = tuple(obs_shape) + axes
 
-    if isinstance(block, (nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
+    if isinstance(block, (torch.nn.Conv2d, nn.AvgPool2d, nn.MaxPool2d, nn.AdaptiveAvgPool2d)):
         # Represent hyper-params as tuples
         if not isinstance(block.kernel_size, tuple):
             block.kernel_size = (block.kernel_size, block.kernel_size)
         if not isinstance(block.padding, tuple):
             block.padding = (block.padding, block.padding)
+        if not isinstance(block.stride, tuple):
+            block.stride = (block.stride, block.stride)
+        if not isinstance(block.dilation, tuple):
+            block.dilation = (block.dilation, block.dilation)
+        if not isinstance(block.output_padding, tuple):
+            block.output_padding = (block.output_padding, block.output_padding)
 
         # Set them to adapt to obs shape (2D --> 1D, etc) via contracted kernels / suitable padding
         block.kernel_size = tuple(min(kernel, obs) for kernel, obs in zip(block.kernel_size, obs_shape[1:]))
         block.padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.padding, obs_shape[1:]))
+        block.stride = tuple(0 if obs <= stride else stride for stride, obs in zip(block.stride, obs_shape[1:]))
+        block.dilation = tuple(0 if obs <= dilation else dilation for dilation, obs in zip(block.dilation, obs_shape[1:]))
+        block.output_padding = tuple(0 if obs <= pad else pad for pad, obs in zip(block.output_padding, obs_shape[1:]))
 
         # Contract the CNN kernels accordingly
         if isinstance(block, nn.Conv2d):
             truncate = [slice(0, block.kernel_size[i]) if i < len(block.kernel_size) else 0 for i in [0, 1]]  # 2D trunc
             block.weight = nn.Parameter(block.weight[:, :, truncate[0], truncate[1]])
+            if len(block.weight.shape) == 3:
+                block._conv_forward = torch.nn.Conv1d._conv_forward.__get__(block, torch.nn.Conv2d)
     elif hasattr(block, 'modules'):
         for layer in block.children():
             # Iterate through all layers

@@ -79,8 +79,10 @@ class EnsembleQCritic(nn.Module):
             assert action is not None, f'action is needed by continuous action-space Critic.'
 
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
+            print(h.shape, action.shape)
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)
+            print(h.shape, action.shape)
 
             # Q-values for continuous action(s)
             Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']

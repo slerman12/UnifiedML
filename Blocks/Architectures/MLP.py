@@ -51,6 +51,6 @@ class MLP(nn.Module):
 
 
 class Dense(MLP):
-    """A linear layer"""
+    """A fully-connected layer"""
     def __init__(self, input_shape=128, output_dim=1024):
         super().__init__(input_shape, output_dim, depth=0)
