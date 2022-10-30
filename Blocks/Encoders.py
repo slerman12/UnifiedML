@@ -14,7 +14,7 @@ import Utils
 
 class CNNEncoder(nn.Module):
     """
-    CNN encoder generalized to work with proprioceptive, spatial inputs and multi-dimensionality convolutions (1d or 2d)
+    CNN encoder generalized to work with proprioceptive/spatial inputs and multi-dimensionality convolutions (1d or 2d)
     """
     def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, Eyes=None, pool=None, parallel=False,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
