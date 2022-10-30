@@ -19,7 +19,7 @@ class CNN(nn.Module):
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
                                       out_channels, kernel_size, stride=stride if i == 0 else 1,
-                                      padding=padding, dilation=dilation, groups=groups, bias=True),
+                                      padding=padding, dilation=dilation, groups=groups, bias=bias),
                             nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity(),
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
