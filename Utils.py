@@ -217,11 +217,11 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
         elif isinstance(block, (nn.AdaptiveAvgPool2d, nn.AdaptiveAvgPool1d)):
             height, width = (block.output_size[0], None) if width is None else block.output_size
         elif hasattr(block, 'repr_shape'):
-            chw = block.repr_shape(channels, height, width)
+            chw = block.repr_shape(*chw)  # TODO test if changing to *chw from channels, height, width broke things
             channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
         elif hasattr(block, 'modules'):
             for layer in block.children():
-                chw = cnn_feature_shape([channels, height, width], layer, verbose=verbose)
+                chw = cnn_feature_shape(chw, layer, verbose=verbose)
                 channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
         if verbose:
             print(block, (channels, height, width))
@@ -229,6 +229,48 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
     feature_shape = tuple(size for size in (channels, height, width) if size is not None)
 
     return feature_shape
+
+
+# Adapts a 2d CNN to a smaller dimensionality or truncates adaptively (in case an image's spatial dim < kernel size)
+def adapt_cnn(block, obs_shape):
+    obs_shape = tuple(obs_shape)
+
+    # Nd
+    name = type(block).__name__
+    N = 2 if '2d' in name else 1 if '1d' in name else 0
+
+    if N:
+        for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
+            if hasattr(block, attr):
+                val = getattr(block, attr)
+
+                # Represent hyper-params as tuples
+                if not isinstance(val, tuple):
+                    setattr(block, attr, (val,) * N)
+                    val = getattr(block, attr)
+
+                # Set to adapt to obs shape: contracted kernels, padding, etc
+                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))
+
+        # Update operation to 1d if needed
+        if 0 < len(obs_shape[1:]) < N:
+            block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
+
+            # Update operation to 1d if needed
+            if hasattr(block, '_conv_forward'):
+                block._conv_forward = nn.Conv1d._conv_forward.__get__(block, type(block))
+        # Contract a 1d CNN's kernels
+        if isinstance(block, nn.Conv1d):
+            block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0]])
+        # Contract a 2d CNN's kernels
+        elif isinstance(block, nn.Conv2d):
+            truncate = [slice(0, block.kernel_size[i]) if i < len(obs_shape[1:]) else 0 for i in [0, 1]]  # 2D trunc
+            block.weight = nn.Parameter(block.weight[:, :, truncate[0], truncate[1]])
+    elif hasattr(block, 'modules'):
+        for layer in block.children():
+            # Iterate through all layers
+            adapt_cnn(layer, obs_shape)  # Dimensionality-adaptivity
+            obs_shape = cnn_feature_shape(obs_shape, layer)
 
 
 # "Ensembles" (stacks) multiple modules' outputs

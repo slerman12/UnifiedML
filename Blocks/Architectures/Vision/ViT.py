@@ -22,6 +22,8 @@ class ViT(nn.Module):
                  query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls', output_dim=None, fourier=False):
         super().__init__()
 
+        self.num_axes = len(input_shape)
+
         # Convolve into patches - assumes image/input spatial dims dividable by patch size(s)
         self.Vi = CNN(input_shape, out_channels, 0, last_relu=False, kernel_size=patch_size, stride=patch_size)
         shape = Utils.cnn_feature_shape(input_shape, self.Vi)
@@ -54,9 +56,9 @@ class ViT(nn.Module):
         patches = self.Vi(*x)
 
         # Conserve leading dims, operate on last 3 dims
-        lead_dims = patches.shape[:-3]
+        lead_dims = patches.shape[:-self.num_axes]
 
-        outs = self.T(patches.flatten(0, -4))
+        outs = self.T(patches.flatten(0, -self.num_axes - 1))
 
         # Restore lead shape
         return outs.view(*lead_dims, *outs.shape[1:])
@@ -81,7 +83,7 @@ class CLSToken(nn.Module):
     def __init__(self, input_shape=(32,)):
         super().__init__()
 
-        in_channels = input_shape if isinstance(input_shape, int) else input_shape[0]
+        in_channels, *self.spatial_dims = input_shape
 
         self.token = nn.Parameter(torch.randn(in_channels, 1))
 
@@ -89,7 +91,7 @@ class CLSToken(nn.Module):
         return c, math.prod(_) + 1
 
     def forward(self, obs):
-        return torch.cat([obs.flatten(-2), self.token.expand(*obs.shape[:-2], 1)], dim=-1)  # Assumes 2 spatial dims
+        return torch.cat([obs.flatten(-len(self.spatial_dims)), self.token.expand(*obs.shape[:-len(self.spatial_dims)], 1)], dim=-1)  # Assumes 2 spatial dims
 
 
 class CLSPool(nn.Module):

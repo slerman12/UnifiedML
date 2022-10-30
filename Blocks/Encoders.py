@@ -30,13 +30,13 @@ class CNNEncoder(nn.Module):
         self.normalize = norm and None not in [self.low, self.high]  # Whether to [0, 1] shift-max scale
 
         # Dimensions
-        obs_shape = [1] * (2 - len(self.obs_shape)) + list(self.obs_shape)  # At least 1 channel dim and spatial dim
+        obs_shape = [*(1,) * (len(self.obs_shape) < 2), *self.obs_shape]  # Create at least 1 channel dim & spatial dim
         obs_shape[0] += context_dim
 
         # CNN
         self.Eyes = Utils.instantiate(Eyes, input_shape=obs_shape) or CNN(obs_shape)
 
-        adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
+        Utils.adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
             self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
@@ -98,45 +98,3 @@ class CNNEncoder(nn.Module):
 
         h = h.view(*batch_dims, *h.shape[1:])  # Restore leading dims
         return h
-
-
-# Adapts a 2d CNN to a smaller dimensionality or truncates (in case an image's spatial dim < kernel size)
-def adapt_cnn(block, obs_shape):
-    obs_shape = tuple(obs_shape)
-
-    # Nd
-    name = type(block).__name__
-    N = 2 if '2d' in name else 1 if '1d' in name else 0
-
-    if N:
-        for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
-            if hasattr(block, attr):
-                val = getattr(block, attr)
-
-                # Represent hyper-params as tuples
-                if not isinstance(val, tuple):
-                    setattr(block, attr, (val,) * N)
-                    val = getattr(block, attr)
-
-                # Set to adapt to obs shape: contracted kernels, padding, etc
-                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))
-
-        # Update operation to 1d if needed
-        if 0 < len(obs_shape[1:]) < N:
-            block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
-        # Contract a 1d CNN's kernels
-        if isinstance(block, nn.Conv1d):
-            block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0]])
-        # Contract a 2d CNN's kernels
-        elif isinstance(block, nn.Conv2d):
-            truncate = [slice(0, block.kernel_size[i]) if i < len(obs_shape[1:]) else 0 for i in [0, 1]]  # 2D trunc
-            block.weight = nn.Parameter(block.weight[:, :, truncate[0], truncate[1]])
-
-            # Update operation to 1d if needed
-            if len(block.kernel_size) == 1:
-                block._conv_forward = nn.Conv1d._conv_forward.__get__(block, nn.Conv2d)
-    elif hasattr(block, 'modules'):
-        for layer in block.children():
-            # Iterate through all layers
-            adapt_cnn(layer, obs_shape)  # Dimensionality-adaptivity
-            obs_shape = Utils.cnn_feature_shape(obs_shape, layer)

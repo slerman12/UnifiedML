@@ -99,7 +99,7 @@ runs = {'UnifiedML': {
         ['Classify+RL+Sample_supervise-False.*no-EMA', 'Classify_no-EMA'],
         ['Classify+RL_supervise-False.*no-EMA', 'Classify_no-EMA'],
     ],
-    'sftp': False,
+    'sftp': True,
     'bluehive': True,
     'lab': True,
     'steps': 200000,

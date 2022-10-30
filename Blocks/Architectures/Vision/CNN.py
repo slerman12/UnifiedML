@@ -32,8 +32,8 @@ class CNN(nn.Module):
 
         self.apply(Utils.weight_init)
 
-    def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape([c, h, w], self.CNN, self.project)
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.CNN, self.project)
 
     def forward(self, *x):
         lead_shape, x = broadcast(self.input_shape, x)
@@ -47,7 +47,6 @@ class CNN(nn.Module):
         return out
 
 
-# TODO Add to other Vision architectures
 def broadcast(input_shape, x):
     """
     Accepts multiple inputs in a list and various shape possibilities, infers batch dims.
@@ -63,40 +62,22 @@ def broadcast(input_shape, x):
     """
 
     _, *spatial_shape = input_shape
-    concat = []
-    had_spatial_dims = False
 
-    for i, input in enumerate(x):
-        tail_shape = input.shape[-len(input_shape):]
+    # Lead shape for collapsing batch dims
+    for input in x:
+        if input.shape[-len(input_shape):] == input_shape:
+            lead_shape = input.shape[:-len(input_shape)]
+            break
+        lead_shape = input.shape[:-1]
 
-        raw = tail_shape == input_shape
+    # Broadcast
+    x = torch.cat(
+        [input if input.shape[-len(input_shape):] == input_shape
+         else input.unflatten(-1, spatial_shape) if input.shape[-1] % math.prod(spatial_shape) == 0
+        else input.view(*input.shape, *[1] * len(spatial_shape)).expand(*input.shape, *spatial_shape)
+         for input in x if input.nelement() > 0], dim=-len(input_shape))
 
-        if input.nelement() > 0:
-            if raw:
-                concat.append(input)
-                had_spatial_dims = True
-                lead_shape = input.shape[:-len(input_shape)]
-            else:
-                unflatten = input.shape[-1] % math.prod(spatial_shape) == 0
-
-                if unflatten:
-                    concat.append(input.unflatten(-1, spatial_shape))
-                else:
-                    concat.append(input.view(*input.shape, *[1] * len(spatial_shape))
-                                  .expand(*input.shape, *spatial_shape))
-
-                if not had_spatial_dims:
-                    lead_shape = input.shape[:-1]
-
-    x = torch.concat(concat, dim=-len(input_shape))
-
-    # x = torch.cat(
-    #     [input if input.shape[-len(self.input_shape):] == self.input_shape
-    #      else input.unflatten(-1, self.spatial_shape) if input.shape[-1] % math.prod(self.spatial_shape) == 0
-    #     else input.view(*input.shape, *[1] * len(self.spatial_shape)).expand(*input.shape, *self.spatial_shape)
-    #      for input in x if input.nelement() > 0], dim=-len(self.input_shape))
-
-    # Operate on remaining dims
+    # Collapse batch dims, operate on remaining dims
     x = x.view(-1, *x.shape[-len(input_shape):])
 
     return lead_shape, x
