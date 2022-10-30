@@ -8,7 +8,7 @@ import Utils
 
 class CNN(nn.Module):
     def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, last_relu=True,
-                 kernel_size=3, stride=2, padding=0, output_dim=None):
+                 kernel_size=3, stride=2, padding=0, dilation=1, groups=1, bias=True, output_dim=None):
         super().__init__()
 
         if isinstance(input_shape, int):
@@ -19,7 +19,7 @@ class CNN(nn.Module):
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
                                       out_channels, kernel_size, stride=stride if i == 0 else 1,
-                                      padding=padding),
+                                      padding=padding, dilation=dilation, groups=groups, bias=True),
                             nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity(),
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
@@ -47,14 +47,20 @@ class CNN(nn.Module):
         return out
 
 
+class Conv(CNN):
+    def __init__(self, input_shape, out_channels=32, kernel_size=3, stride=2, padding=0, dilation=1, bias=True):
+        super().__init__(input_shape, out_channels, depth=1, last_relu=False, kernel_size=kernel_size, stride=stride,
+                         padding=padding, dilation=dilation, bias=bias)
+
+
 def broadcast(input_shape, x):
     """
     Accepts multiple inputs in a list and various shape possibilities, infers batch dims.
     Handles broadcasting as follows:
 
-        1. Use raw input if matches pre-specified input dims
-        2. Otherwise, try to un-flatten last dim of input into expected spatial dims - depends on given input dims
-        3. Or, create spatial dims via repetition of last dim as channel dim - depends on given input dims
+        1. Use raw input if input matches pre-specified input dims
+        2. Otherwise, try un-flatten of last dim into expected spatial dims - depends on pre-specified input dims
+        3. Or, create spatial dims via repetition of last dim = in channels - depends on pre-specified input dims
         4. Altogether ignore if empty
         5. Finally, concatenate along channels
 
@@ -77,7 +83,7 @@ def broadcast(input_shape, x):
         else input.view(*input.shape, *[1] * len(spatial_shape)).expand(*input.shape, *spatial_shape)
          for input in x if input.nelement() > 0], dim=-len(input_shape))
 
-    # Collapse batch dims, operate on remaining dims
+    # Collapse batch dims; operate on remaining dims
     x = x.view(-1, *x.shape[-len(input_shape):])
 
     return lead_shape, x
