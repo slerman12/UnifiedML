@@ -76,7 +76,7 @@ def broadcast(input_shape, x):
             break
         lead_shape = input.shape[:-1]
 
-    # Broadcast
+    # Broadcast as above
     x = torch.cat(
         [input if input.shape[-len(input_shape):] == input_shape
          else input.unflatten(-1, spatial_shape) if input.shape[-1] % math.prod(spatial_shape) == 0
@@ -97,6 +97,4 @@ class AvgPool(nn.Module):
         return dim,
 
     def forward(self, input):
-        for _ in input.shape[2:]:
-            input = input.mean(-1)
-        return input
+        return input.mean(tuple(range(2, len(input.shape))))
