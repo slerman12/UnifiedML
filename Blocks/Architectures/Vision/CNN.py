@@ -49,7 +49,7 @@ class CNN(nn.Module):
 
 class Conv(CNN):
     def __init__(self, input_shape, out_channels=32, kernel_size=3, stride=2, padding=0, dilation=1, bias=True):
-        super().__init__(input_shape, out_channels, depth=1, last_relu=False, kernel_size=kernel_size, stride=stride,
+        super().__init__(input_shape, out_channels, depth=0, last_relu=False, kernel_size=kernel_size, stride=stride,
                          padding=padding, dilation=dilation, bias=bias)
 
 

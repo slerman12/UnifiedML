@@ -24,7 +24,7 @@ class ViT(nn.Module):
 
         self.num_axes = len(input_shape)
 
-        # Convolve into patches - assumes image/input spatial dims dividable by patch size(s)
+        # Convolve into patches - image/input spatial dims should ideally be dividable by patch size(s)
         self.Vi = CNN(input_shape, out_channels, 0, last_relu=False, kernel_size=patch_size, stride=patch_size)
         shape = Utils.cnn_feature_shape(input_shape, self.Vi)
 
@@ -95,7 +95,7 @@ class CLSToken(nn.Module):
 
 
 class CLSPool(nn.Module):
-    """Selects the CLS token as the representative embedding, assuming channels-first"""
+    """Selects (indexes) the CLS token as the representative embedding, assuming channels-first"""
     def __init__(self, **_):
         super().__init__()
 

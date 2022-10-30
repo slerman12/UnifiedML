@@ -2,13 +2,10 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import math
-
-import torch
 from torch import nn
 
 from Blocks.Architectures.Residual import Residual
-from Blocks.Architectures.Vision.CNN import AvgPool
+from Blocks.Architectures.Vision.CNN import AvgPool, broadcast
 
 import Utils
 
@@ -35,8 +32,8 @@ class ResidualBlock(nn.Module):
         self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
                                             nn.ReLU(inplace=True))
 
-    def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape([c, h, w], self.Residual_block)
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.Residual_block)
 
     def forward(self, x):
         return self.Residual_block(x)
@@ -77,21 +74,12 @@ class MiniResNet(nn.Module):
         self.project = nn.Identity() if output_dim is None \
             else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
 
-    def repr_shape(self, c, h, w):
-        return Utils.cnn_feature_shape([c, h, w], self.trunk, self.ResNet, self.project)
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.trunk, self.ResNet, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        x = torch.cat(
-            [context.view(*context.shape[:-3], -1, *self.input_shape[1:]) if len(context.shape) > 3
-             else context.view(*context.shape[:-1], -1, *self.input_shape[1:]) if context.shape[-1]
-                                                                                  % math.prod(self.input_shape[1:]) == 0
-            else context.view(*context.shape, 1, 1).expand(*context.shape, *self.input_shape[1:])
-             for context in x if context.nelement() > 0], dim=-3)
-        # Conserve leading dims
-        lead_shape = x.shape[:-3]
-        # Operate on last 3 dims
-        x = x.view(-1, *x.shape[-3:])
+        lead_shape, x = broadcast(self.input_shape, x)
 
         x = self.trunk(x)
         x = self.ResNet(x)

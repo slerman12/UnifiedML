@@ -4,7 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 from Blocks.Architectures.MLP import MLP, Dense
 
-from Blocks.Architectures.Vision.CNN import CNN
+from Blocks.Architectures.Vision.CNN import CNN, Conv
 
 from Blocks.Architectures.Residual import Residual
 
