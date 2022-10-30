@@ -14,7 +14,7 @@ import Utils
 
 class CNNEncoder(nn.Module):
     """
-    CNN encoder generalized to work with proprioceptive recipes and multi-dimensionality convolutions (1d or 2d)
+    CNN encoder generalized to work with proprioceptive inputs and multi-dimensionality convolutions (1d or 2d)
     """
     def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, Eyes=None, pool=None, parallel=False,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
@@ -102,9 +102,8 @@ class CNNEncoder(nn.Module):
 
 def adapt_cnn(block, obs_shape):
     """
-    # Adapts a 2d CNN to a smaller dimensionality or truncates adaptively (in case an image's spatial dim < kernel size)
+    Adapts a 2d CNN to a smaller dimensionality or truncates adaptively (in case an image's spatial dim < kernel size)
     """
-    # Nd
     name = type(block).__name__
     N = 2 if '2d' in name else 1 if '1d' in name else 0
 
@@ -112,22 +111,19 @@ def adapt_cnn(block, obs_shape):
         # Set attributes of block adaptively according to obs shape
         for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
             if hasattr(block, attr):
-                # To tuple
-                val = getattr(nn.modules.conv, '_single' if N < 2 else '_pair')(getattr(block, attr))
-
-                # Set to adapt to obs shape: truncated kernels, padding, etc
-                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))
+                val = getattr(nn.modules.conv, '_single' if N < 2 else '_pair')(getattr(block, attr))  # To tuple
+                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))  # Set truncation
 
         # Update 2d operation to 1d if needed
         if len(obs_shape) < N + 1:
             block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
 
+            # Contract
             if hasattr(block, 'weight'):
-                # Contract
                 block.weight = nn.Parameter(block.weight[:, :, :, 0])
                 block._conv_forward = nn.Conv1d._conv_forward.__get__(block, type(block))
+        # Truncate
         if hasattr(block, 'weight'):
-            # Truncate
             block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0]] if len(obs_shape) < 3
                                         else block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
     elif hasattr(block, 'modules'):
