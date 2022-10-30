@@ -14,7 +14,7 @@ import Utils
 
 class CNNEncoder(nn.Module):
     """
-    CNN encoder generalized to work with proprioceptive inputs and multi-dimensionality convolutions (1d or 2d)
+    CNN encoder generalized to work with proprioceptive, spatial inputs and multi-dimensionality convolutions (1d or 2d)
     """
     def __init__(self, obs_spec, context_dim=0, standardize=False, norm=False, Eyes=None, pool=None, parallel=False,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
@@ -100,6 +100,7 @@ class CNNEncoder(nn.Module):
         return h
 
 
+# Adaptive Eyes
 def adapt_cnn(block, obs_shape):
     """
     Adapts a 2d CNN to a smaller dimensionality or truncates adaptively (in case an image's spatial dim < kernel size)
@@ -112,7 +113,7 @@ def adapt_cnn(block, obs_shape):
         for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
             if hasattr(block, attr):
                 val = getattr(nn.modules.conv, '_single' if N < 2 else '_pair')(getattr(block, attr))  # To tuple
-                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))  # Set truncation
+                setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))  # Truncate
 
         # Update 2d operation to 1d if needed
         if len(obs_shape) < N + 1:
@@ -122,6 +123,7 @@ def adapt_cnn(block, obs_shape):
             if hasattr(block, 'weight'):
                 block.weight = nn.Parameter(block.weight[:, :, :, 0])
                 block._conv_forward = nn.Conv1d._conv_forward.__get__(block, type(block))
+
         # Truncate
         if hasattr(block, 'weight'):
             block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0]] if len(obs_shape) < 3
