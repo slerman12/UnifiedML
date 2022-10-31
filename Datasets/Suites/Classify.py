@@ -151,7 +151,7 @@ class Classify:
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         # Compute stats
-        mean, stddev, low_, high_ = map(json.loads, open(stats_path[0]).readline().split('_')) if len(stats_path) \
+        mean, stddev, low_, high_ = map(json.loads, stats_path[0].split('_')[-4:]) if len(stats_path) \
             else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else 0
         low, high = low if low is None else low_, high_ if high is None else high
 
@@ -275,8 +275,7 @@ class Classify:
         stddev[stddev == 0] = 1
 
         mean, stddev = fst_moment.tolist(), stddev.tolist()
-        with open(path + f'_Stats_Mean_Stddev_Low_High', 'w') as f:
-            f.write(f'{mean}_{stddev}_{low}_{high}')  # Save stat values for future reuse
+        open(path + f'_Stats_{mean}_{stddev}_{low}_{high}', 'w')  # Save stat values for future reuse
 
         return mean, stddev, low.item(), high.item()
 
