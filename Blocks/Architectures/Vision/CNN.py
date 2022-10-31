@@ -79,7 +79,7 @@ def broadcast(input_shape, x):
     # Broadcast as above
     x = torch.cat(
         [input if input.shape[-len(input_shape):] == input_shape
-         else input.unflatten(-1, spatial_shape) if input.shape[-1] % math.prod(spatial_shape) == 0
+         else input.unflatten(-1, spatial_shape) if input.shape[-1] == math.prod(spatial_shape)
         else input.view(*input.shape, *[1] * len(spatial_shape)).expand(*input.shape, *spatial_shape)
          for input in x if input.nelement() > 0], dim=-len(input_shape))
 
