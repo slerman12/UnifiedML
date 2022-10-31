@@ -22,13 +22,13 @@ class NoPoolCNN(nn.Module):
 
         self.CNN = \
             nn.Sequential(
-                nn.Conv1d(in_channels, 80, 100, 5),
+                nn.Conv2d(in_channels, 80, 100, 5),
                 nn.ReLU(),
                 nn.Dropout(0.3),
-                nn.Conv1d(80, 80, 50, 5),
+                nn.Conv2d(80, 80, 50, 5),
                 nn.ReLU(),
                 nn.Dropout(0.3),
-                nn.Conv1d(80, 80, 25, 2),
+                nn.Conv2d(80, 80, 25, 2),
                 nn.ReLU(),
                 nn.Dropout(0.3),
             )
@@ -46,18 +46,18 @@ class CNN(nn.Module):
 
         self.CNN = \
             nn.Sequential(
-                nn.Conv1d(in_channels, 80, 100, 5),
+                nn.Conv2d(in_channels, 80, 100, 5),
                 nn.ReLU(),
                 nn.Dropout(0.3),
-                nn.AvgPool1d(3, 2),
-                nn.Conv1d(80, 80, 50, 5),
+                nn.AvgPool2d(3, 2),
+                nn.Conv2d(80, 80, 50, 5),
                 nn.ReLU(),
                 nn.Dropout(0.3),
-                nn.AvgPool1d(3),
-                nn.Conv1d(80, 80, 25, 2),
+                nn.AvgPool2d(3),
+                nn.Conv2d(80, 80, 25, 2),
                 nn.ReLU(),
                 nn.Dropout(0.3),
-                nn.AvgPool1d(3),
+                nn.AvgPool2d(3),
             )
 
     def forward(self, obs):

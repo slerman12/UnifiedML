@@ -106,18 +106,18 @@ def adapt_cnn(block, obs_shape):
     Adapts a 2d CNN to a smaller dimensionality or truncates adaptively (in case an image's spatial dim < kernel size)
     """
     name = type(block).__name__
-    nd = 2 if '2d' in name else 1 if '1d' in name else 0
+    Nd = 2 if '2d' in name else 1 if '1d' in name else 0
 
-    if nd:
+    if Nd:
         # Set attributes of block adaptively according to obs shape
         for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
             if hasattr(block, attr):
-                val = getattr(nn.modules.conv, '_single' if nd < 2 else '_pair')(getattr(block, attr))  # To tuple
+                val = getattr(nn.modules.conv, '_single' if Nd < 2 else '_pair')(getattr(block, attr))  # To tuple
                 if isinstance(val[0], int):
                     setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))  # Truncate
 
         # Update 2d operation to 1d if needed
-        if len(obs_shape) < nd + 1:
+        if len(obs_shape) < Nd + 1:
             block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
 
             # Contract
