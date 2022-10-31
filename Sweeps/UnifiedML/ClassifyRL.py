@@ -59,7 +59,7 @@ runs = {'UnifiedML': {
 
         # Classify + RL: Variational Inference - No EMA - need to redo discrete
         """Agent=Agents.ExperimentAgent 
-        task=classify/mnist,classify/cifar10,classify/tinyimagenet
+        task=classify/tinyimagenet
         ema=false 
         weight_decay=0.01
         Eyes=Blocks.Architectures.ResNet18
@@ -67,7 +67,7 @@ runs = {'UnifiedML': {
         'transform="{RandomHorizontalFlip:{}}"'
         RL=true 
         supervise=false
-        discrete=true 
+        discrete=False 
         +agent.contrastive=true,false 
         +agent.sample=true
         +agent.num_critics=2
@@ -77,6 +77,7 @@ runs = {'UnifiedML': {
         logger.wandb=true
         time="12-00:00:00" 
         reservation_id=20220929
+        load=true
         save_per_steps=100000""",
 
         # Classify

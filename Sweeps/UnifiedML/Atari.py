@@ -23,17 +23,20 @@ runs = {'UnifiedML': {
     # Need To: Save Replay via replay.save=true.
     # Next time: Load via replay.load=true.  -  just re-ran by mistake so latest replay is incorrect - replay corrupted!
     'sweep': [
-        f'train_steps=2500000 '  # Changed from 2000000 to add 500000
+        f'train_steps=3000000 '  # Changed from 2000000 to add 500000
         f'task={atari_26} '
-        f'experiment="Atari-26-SoftDQN" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
+        f'experiment="Atari-26-SoftDQN-discrete-${{discrete}}" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
         f'logger.wandb=true '
         f'time="12-00:00:00" '
         f'save_per_steps=500000 '
         f'replay.save=true '
         f'reservation_id=20220929 '
+        f'discrete=true,false '
+        f'Agent=Agents.AC2Agent '
         f'load=false '
         f'replay.load=false '
-        f'replay.capacity=3000000 ',
+        f'\'stddev_schedule="linear(1.0,0.1,500000)"\' '  # Increased stddev
+        f'replay.capacity=4000000 ',
 
         # f'train_steps=2000000 '
         # f'task=mario '

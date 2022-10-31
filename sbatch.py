@@ -29,7 +29,7 @@ def getattr_recursive(__o, name):
     if __o is None:
         return 'null'
     if isinstance(__o, str) and '(' in __o:
-        __o = '"' + __o + '"'
+        __o = '"' + __o.strip('"') + '"'
     return __o
 
 
