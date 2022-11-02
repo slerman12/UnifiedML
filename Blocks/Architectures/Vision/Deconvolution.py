@@ -38,7 +38,7 @@ class CNNTranspose(nn.Module):
         self.apply(Utils.weight_init)
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.CNN, self.project)
+        return Utils.cnn_feature_shape(_, self.CNNTranspose, self.project)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities

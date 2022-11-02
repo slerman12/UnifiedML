@@ -121,6 +121,8 @@ def instantiate(args, i=0, **kwargs):
             if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                 args = args._target_
             else:
+                if 'Utils.' in args._target_:
+                    raise ImportError
                 args._target_ = 'Utils.' + args._target_  # Portal into Utils
                 try:
                     return instantiate(args, i, **kwargs)
@@ -128,9 +130,9 @@ def instantiate(args, i=0, **kwargs):
                     raise e  # Original error if all that doesn't work
         except TypeError as e:
             kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
-            if kwarg:
+            if kwarg and kwarg.group(1) not in args:
                 kwargs = {key: kwargs[key] for key in kwargs if key != kwarg.group(1)}
-                return instantiate(args, i, **kwargs)  # Signature matching
+                return instantiate(args, i, **kwargs)  # Signature matching, only for kwargs not args
             raise e  # Original error
 
     if isinstance(args, str):
