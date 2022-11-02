@@ -861,7 +861,7 @@ python Run.py Eyes=ViT +eyes.patch_size=7
 ```
 
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
-Shorthands like ```Aug```, ```Eyes```, and ```Pool``` make it easy to plug and play custom architectures. All of an agent's architectural parts can be accessed, mixed, and matched with their [corresponding recipe shorthands](Hyperparams/args.yaml#L171-L244).
+Shorthands like ```Aug```, ```Eyes```, and ```Pool``` make it easy to plug and play custom architectures. All of an agent's architectural parts can be accessed, mixed, and matched with their [corresponding recipe shorthands](Hyperparams/args.yaml#L173-L244).
 
 Generally, the rule of thumb is capital names for paths to classes (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts to tinker with model args (such as ```+eyes.depth=1```).
 
