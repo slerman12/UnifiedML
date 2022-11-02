@@ -82,7 +82,8 @@ class Perceiver(nn.Module):
         # Output tokens
 
         if self.output_dim is not None:
-            self.outputs = torch.randn(1, self.output_dim, self.token_dim)  # Max output dim
+            outputs = torch.randn(1, self.output_dim, self.token_dim)  # Max output dim
+            self.register_buffer('outputs', outputs, persistent=False)
 
             self.to_outputs = LearnableFourierPositionalEncodings(self.outputs.shape[1:], channels_first=False)
 
