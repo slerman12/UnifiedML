@@ -29,7 +29,7 @@ class AttentionBlock(nn.Module):
             input_shape = (input_shape,)
 
         if channels_first:
-            input_shape = list(reversed(input_shape))  # Assumes invariance to spatial dimensions
+            input_shape = list(reversed(input_shape))  # Move channel dim to last
 
         # Multi-Head Dot-Product Attention (MHDPA) from inputs to context
         self.attend = CrossAttention(input_shape, num_heads, context_dim, query_key_dim, None, talking_heads, rela,
@@ -89,7 +89,7 @@ class CrossAttentionBlock(AttentionBlock):
 
 
 class SelfAttentionBlock(AttentionBlock):
-    """A.K.A. a Transformer pre-norm block except input=context"""
+    """A.K.A. a Transformer pre-norm block, same as the Cross-Attention Block except input=context"""
     def forward(self, input, *_):
         return super().forward(input)
 

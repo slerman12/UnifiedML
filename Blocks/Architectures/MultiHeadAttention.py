@@ -97,7 +97,7 @@ class Attention(nn.Module):
         # Multiply (W = Q * K)
         self.saved_attention_weights = torch.einsum('b h i d, b h j d -> b h i j', query, key)
 
-        # Normalize
+        # Normalize - disabled for now
         # if not hasattr(self, 'rela'):
         #     self.saved_attention_weights -= self.saved_attention_weights.amax(-1, keepdim=True).detach()
 
@@ -130,7 +130,7 @@ class MHDPA(Attention):
 
 
 class CrossAttention(Attention):
-    """Cross-attention, pseudonym, same as Attention"""
+    """Cross-attention, pseudonym for Attention"""
 
 
 class SelfAttention(Attention):
