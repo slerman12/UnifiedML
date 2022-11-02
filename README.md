@@ -757,6 +757,20 @@ python Run.py replay.load=true replay.save=true
 
 </details>
 
+### Hard Disk vs. RAM
+
+<details>
+<summary>
+:mag: <i>Replay the deets</i>
+</summary>
+<br>
+
+```console
+stream=true
+```
+
+</details>
+
 ### Recipes
 
 <details>

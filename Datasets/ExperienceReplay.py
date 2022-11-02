@@ -79,7 +79,7 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
         self.offline = offline
-        self.stream = stream or None  # Streaming from Environment directly
+        self.stream = stream  # Streaming from Environment directly
 
         # Placeholder for streaming
         self.empty = torch.empty([0])
@@ -100,19 +100,24 @@ class ExperienceReplay:
         # Future steps to compute cumulative reward from
         self.nstep = 0 if suite == 'classify' or generate or stream else nstep
 
-        # Parallelized experience loading, either Online or Offline - "Online" means the data size grows
+        """
+        ---Parallelized experience loading--- 
+        
+        Either Online or Offline. "Online" means the data size grows.
+        
+          For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
+          since RAM is faster to load from than hard disk epoch by epoch. A.K.A. training speedup, less bottleneck.
+          We bypass Pytorch's replication of each worker's RAM data per worker with a shared-memory dict.
 
-        #   For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
-        #   since RAM is faster to load from than hard disk epoch by epoch. A.K.A. training speedup, less bottleneck.
-        #   We bypass Pytorch's replication of each worker's RAM data per worker with a shared-memory dict.
+          The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
 
-        #   The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
+              Roadmap: Memory-mapped hard disk loading for Offline/Online, capacity-adaptive w.r.t. RAM.
 
-        #       TODO: Memory-mapped hard disk loading for Offline/Online, capacity-adaptive w.r.t. RAM.
+          Online also caches data on RAM, after storing to hard disk.
 
-        #   Online also caches data on RAM, after storing to hard disk.
-
-        #       TODO: Online can send new data directly to RAM and hard disk instead of loading it after hard disk.
+              Roadmap: Online send directly to RAM + hard disk instead of loading to RAM from hard disk after storing.
+        
+        """
 
         # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
@@ -152,35 +157,37 @@ class ExperienceReplay:
 
         self._replay = None
 
-    # Samples a batch of experiences, optionally includes trajectories
-    def sample(self, trajectories=False):
-        if self.stream is None:
-            try:
-                sample = next(self.replay)
-            except StopIteration:  # Reset iterator when depleted
-                self.epoch += 1
-                self._replay = None
-                sample = next(self.replay)
-            return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude future trajectories
-        else:
-            return [self.stream.get(key, self.empty) for key in ['obs', 'action', 'reward', 'discount', 'next_obs',
-                                                                 'label', *[self.empty] * 4 * trajectories, 'step',
-                                                                 'ids', 'meta']]
-
-    # Allows iteration via next (e.g. batch = next(replay) )
+    # Allows iteration via "next" (e.g. batch = next(replay))
     def __next__(self):
         return self.sample()
 
-    # Allows iteration
-    def __iter__(self):
-        self._replay = iter(self.batches)
-        return self.replay
+    # Samples stored experiences or pulls from a data stream, optionally includes trajectories, returns a batch
+    def sample(self, trajectories=False):
+        if self.stream:
+            # Streaming
+            return [self.stream.get(key, self.empty) for key in ['obs', 'action', 'reward', 'discount', 'next_obs',
+                                                                 'label', *[self.empty] * 4 * trajectories, 'step',
+                                                                 'ids', 'meta']]  # Return contents of the data stream
+        else:
+            # Sampling
+            try:
+                sample = next(self.replay)
+            except StopIteration:
+                self.epoch += 1
+                self._replay = None  # Reset iterator when depleted
+                sample = next(self.replay)
+            return *sample[:10 if trajectories else 6], *sample[10:]  # Return batch, w(/o) future-trajectories
 
     @property
     def replay(self):
         if self._replay is None:
             self._replay = iter(self.batches)  # Recreates the iterator when exhausted
         return self._replay
+
+    # Initial iterator, allows iteration over replay
+    def __iter__(self):
+        self._replay = iter(self.batches)
+        return self.replay
 
     # Tracks single episode "trace" in memory buffer
     def add(self, experiences=None, store=False):
@@ -191,33 +198,32 @@ class ExperienceReplay:
         assert isinstance(experiences, (list, tuple))
 
         for exp in experiences:
-            if self.stream is None:
-                for name, spec in self.specs.items():
-                    # Missing data
-                    if name not in exp:
-                        exp[name] = None
+            for name, spec in self.specs.items():
+                # Missing data
+                if name not in exp:
+                    exp[name] = None
 
-                    # Add batch dimension
-                    if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
-                        exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
-                    # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
-                    #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
+                # Add batch dimension
+                if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
+                    exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
+                # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
+                #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
 
-                    # Expands attributes that are unique per batch (such as 'step')
-                    batch_size = exp.get('obs', exp['action']).shape[0]
-                    if 1 == exp[name].shape[0] < batch_size:
-                        exp[name] = np.repeat(exp[name], batch_size, axis=0)
+                # Expands attributes that are unique per batch (such as 'step')
+                batch_size = exp.get('obs', exp['action']).shape[0]
+                if 1 == exp[name].shape[0] < batch_size:
+                    exp[name] = np.repeat(exp[name], batch_size, axis=0)
 
-                    # Validate consistency - disabled for discrete/continuous conversions
-                    # assert spec['shape'] == exp[name].shape[1:], \
-                    #     f'Unexpected shape for "{name}": {spec["shape"]} vs. {exp[name].shape[1:]}'
-                    spec['shape'] = exp[name].shape[1:]
+                # Validate consistency - disabled for discrete/continuous conversions
+                # assert spec['shape'] == exp[name].shape[1:], \
+                #     f'Unexpected shape for "{name}": {spec["shape"]} vs. {exp[name].shape[1:]}'
+                spec['shape'] = exp[name].shape[1:]
 
-                    # Add the experience
-                    self.episode[name].append(exp[name])
-            else:
-                # For streaming directly from Environment
-                self.stream = exp
+                # Add the experience
+                self.episode[name].append(exp[name])
+
+            if self.stream:
+                self.stream = exp  # For streaming directly from Environment
 
         # Count experiences in episode
         self.episode_len += len(experiences)
