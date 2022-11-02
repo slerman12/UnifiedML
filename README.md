@@ -657,7 +657,7 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 </summary>
 <br>
 
-Agents are automatically saved at the end of training:
+**Agents** are automatically saved at the end of training:
 
 ```console
 python Run.py train_steps=2
