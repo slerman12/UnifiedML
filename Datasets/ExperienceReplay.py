@@ -52,7 +52,8 @@ class ExperienceReplay:
                                       f'or delete the saved buffer in {path}.')
             assert len(exists) > 0, f'\nNo existing replay buffer found in path: {path}.\ngenerate=true, ' \
                                     f'offline=true, & replay.load=true all assume the presence of a saved replay ' \
-                                    f'buffer. \nTry replay.save=true first, then you can try again with one of those 3.'
+                                    f'buffer. \nTry replay.save=true first, then you can ' \
+                                    f'try again with one of those 3, or choose a different path.'
             self.path = Path(sorted(exists)[-1])
             save = offline or save
         else:
