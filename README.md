@@ -509,7 +509,7 @@ Many popular features are unified in this library and generalized across RL/CV/g
   
 * Different optimizations [can be configured](#custom-optimization) too.
   
-* As well as [Custom Datasets](#custom-datasets). 
+* As well as [Custom Datasets](#custom-dataset). 
 
 * Ensembling is supported for some agents (e.g., ```Agent=Agents.AC2Agent +agent.num_actors=```)
   
@@ -775,7 +775,7 @@ python Run.py task=classify/mnist stream=true
 
 This feature is closely related to ```offline=false``` and its equivalent ```online=true```, but skips the replay.
 
-This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-datasets).
+This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-dataset).
 
 This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```.
 
