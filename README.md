@@ -657,26 +657,26 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 </summary>
 <br>
 
+Agents are automatically saved at the end of training:
+
 ```console
-# Saves at end of training
 python Run.py train_steps=2
 ```
 
 **Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
 
 ```console
-# Saves periodically and loads
-python Run.py save_per_steps=100000 load=true
+# Saves periodically
+python Run.py save_per_steps=100000
+
+# Loads
+python Run.py load=true
 ```
 
 An **experience replay** can be saved or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
 
 ```console
-# Saves replay
-python Run.py replay.save=true
-
-# Loads replay
-python Run.py replay.load=true
+python Run.py replay.save=true replay.load=true
 ```
 
 Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per *a unique experiment*, otherwise overriding.
