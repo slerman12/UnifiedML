@@ -1052,7 +1052,7 @@ You can pass in a Pytorch Dataset class as follows:
 python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
 ```
 
-Another example:
+Another example, with a custom path:
 
 ```console
 python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
