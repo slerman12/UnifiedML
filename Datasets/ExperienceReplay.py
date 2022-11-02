@@ -184,7 +184,7 @@ class ExperienceReplay:
             self._replay = iter(self.batches)  # Recreates the iterator when exhausted
         return self._replay
 
-    # Initial iterator, allows iteration over replay
+    # Initial iterator, allows replay iteration
     def __iter__(self):
         self._replay = iter(self.batches)
         return self.replay
