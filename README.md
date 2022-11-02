@@ -662,7 +662,7 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 ```console
 # Saves at end of training
 python Run.py train_steps=2
-# Saves perioidcally and loads
+# Saves periodically and loads
 python Run.py save_per_steps=100000 load=true
 ```
 
