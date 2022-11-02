@@ -773,7 +773,7 @@ For classification, if you'd like to disable the default RAM usage and directly 
 python Run.py task=classify/mnist stream=true
 ```
 
-This feature is closely related to ```offline=false``` and its equivalent ```online=true```, but skips the replay.
+This feature is a specific instance of ```offline=false``` and its equivalent ```online=true```, but skips the replay.
 
 This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-dataset).
 
