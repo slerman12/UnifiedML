@@ -657,11 +657,14 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 </summary>
 <br>
 
-**Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
-
 ```console
 # Saves at end of training
 python Run.py train_steps=2
+```
+
+**Agents** can be saved periodically or loaded with the ```save_per_steps=``` or ```load=true``` flags, and are automatically saved at end of training with ```save=true``` by default.
+
+```console
 # Saves periodically and loads
 python Run.py save_per_steps=100000 load=true
 ```
@@ -671,6 +674,7 @@ An **experience replay** can be saved or loaded with the ```replay.save=true``` 
 ```console
 # Saves replay
 python Run.py replay.save=true
+
 # Loads replay
 python Run.py replay.load=true
 ```
