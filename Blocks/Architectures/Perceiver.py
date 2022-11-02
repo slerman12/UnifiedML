@@ -59,8 +59,11 @@ class Perceiver(nn.Module):
         tokens = torch.zeros(1, self.token_dim, self.num_tokens) if self.channels_first \
             else torch.zeros(1, self.num_tokens, self.token_dim)
 
-        self.tokens = nn.Parameter(tokens) if learnable_tokens \
-            else PositionalEncodings(tokens.shape[1:], 0, channels_first=channels_first)(tokens)
+        if learnable_tokens:
+            self.tokens = nn.Parameter(tokens)
+        else:
+            self.tokens = PositionalEncodings(tokens.shape[1:], 0, channels_first=channels_first)(tokens)
+            self.register_buffer('tokens', self.tokens, persistent=False)
 
         if learnable_tokens:
             nn.init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
