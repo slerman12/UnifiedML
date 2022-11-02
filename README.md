@@ -765,7 +765,7 @@ python Run.py replay.load=true replay.save=true
 </summary>
 <br>
 
-Experience replay automatically pre-loads or caches data into RAM. This makes training faster because loading from RAM is much less of a bottleneck compared to loading from hard disk. For RL, this is in keeping with DrQV2, which increased the training speed for continuous RL from images significantly.
+Experience replay automatically pre-loads or caches data onto RAM. This makes training faster because loading from RAM is much less of a bottleneck compared to loading from hard disk. For RL, this is in keeping with DrQV2, which increased the training speed for continuous RL from images significantly.
 
 For classification, if you'd like to disable the default RAM usage and directly send data from the Environment to the Agent, you can use the ```stream=true``` flag. This bypasses the replay storing/loading.
 
