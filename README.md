@@ -777,7 +777,7 @@ This feature is a specific instance of ```offline=false``` and its equivalent ``
 
 This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-dataset).
 
-This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```.
+This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```. It can be thought of as "on-policy RL."
 
 </details>
 
