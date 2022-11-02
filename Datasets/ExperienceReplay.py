@@ -31,8 +31,8 @@ from torchvision.transforms import transforms
 
 
 class ExperienceReplay:
-    def __init__(self, batch_size, num_workers, capacity, action_spec, suite, task, offline, generate, save, load,
-                 path, obs_spec=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
+    def __init__(self, batch_size, num_workers, capacity, suite, task, offline, generate, stream, save, load,
+                 path, obs_spec, action_spec, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -79,6 +79,7 @@ class ExperienceReplay:
         self.episodes_stored = len(list(self.path.glob('*.npz')))
         self.save = save
         self.offline = offline
+        self.stream = stream or None  # Streaming from Environment directly
 
         # Data transform
 
@@ -94,7 +95,7 @@ class ExperienceReplay:
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
         # Future steps to compute cumulative reward from
-        self.nstep = 0 if suite == 'classify' or generate else nstep
+        self.nstep = 0 if suite == 'classify' or generate or stream else nstep
 
         # Parallelized experience loading, either Online or Offline - "Online" means the data size grows
 
@@ -150,6 +151,9 @@ class ExperienceReplay:
 
     # Samples a batch of experiences, optionally includes trajectories
     def sample(self, trajectories=False):
+        if self.stream is not None:
+            print(self.stream)
+            return self.stream
         try:
             sample = next(self.replay)
         except StopIteration:  # Reset iterator when depleted
@@ -204,12 +208,16 @@ class ExperienceReplay:
                 spec['shape'] = exp[name].shape[1:]
 
                 # Add the experience
-                self.episode[name].append(exp[name])
+                if self.stream is not None:
+                    self.stream = exp[name]
+                else:
+                    self.episode[name].append(exp[name])
 
-        self.episode_len += len(experiences)
+        if self.stream is None:
+            self.episode_len += len(experiences)
 
-        if store:
-            self.store_episode()  # Stores them in file system
+            if store:
+                self.store_episode()  # Stores them in file system
 
     # Stores episode (to file in system)
     def store_episode(self):

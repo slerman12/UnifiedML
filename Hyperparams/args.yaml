@@ -20,6 +20,7 @@ ema_decay: 0.99
 discrete: ???  # To be specified later, defaults per respective task
 online: true  # Reverse-Shorthand for offline
 offline: ${not:${online}}  # Defaults to true for classify tasks
+stream: false
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
@@ -121,16 +122,17 @@ replay:
   batch_size: ${batch_size}
   num_workers: ${num_workers}
   capacity: 1000000
-  obs_spec: ${obs_spec}
-  action_spec: ${action_spec}
   suite: ${suite}
   task: ${task_name}
+  obs_spec: ${obs_spec}
+  action_spec: ${action_spec}
   frame_stack: ${frame_stack}
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}
   offline: ${offline}
   generate: ${generate}
+  stream: ${stream}
   save: false
   load: false
   path: ./Datasets/ReplayBuffer/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
