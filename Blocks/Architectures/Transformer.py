@@ -123,7 +123,7 @@ class LearnableFourierPositionalEncodings(nn.Module):
         self.MLP = MLP(self.fourier_dim * 2, self.output_dim, self.hidden_dim, 1, nn.GELU())
 
         # Initialize weights
-        nn.init.normal_(self.Linear.weight.data)
+        # nn.init.normal_(self.Linear.weight.data)
 
     def repr_shape(self, *_):
         # Conserves spatial dimensions
