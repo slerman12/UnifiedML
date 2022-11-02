@@ -62,8 +62,8 @@ class Perceiver(nn.Module):
         if learnable_tokens:
             self.tokens = nn.Parameter(tokens)
         else:
-            tokens = PositionalEncodings(tokens.shape[1:], 0, channels_first=channels_first)(tokens)
-            self.register_buffer('tokens', tokens, persistent=False)
+            self.tokens = PositionalEncodings(tokens.shape[1:], 0, channels_first=channels_first)(tokens)
+            # self.register_buffer('tokens', tokens, persistent=False)
 
         if learnable_tokens:
             nn.init.kaiming_uniform_(self.tokens, a=math.sqrt(5))
