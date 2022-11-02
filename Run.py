@@ -68,14 +68,13 @@ def main(args):
 
         # Rollout
         experiences, logs, _ = env.rollout(agent.train(), steps=1)  # agent.train() just sets agent.training to True
-
         replay.add(experiences)
 
         if env.episode_done:
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
-            replay.add(store=env.last_episode_len > args.nstep)  # Only store full episodes
+            replay.add(store=not args.stream and env.last_episode_len > args.nstep)  # Only store full episodes
             replay.clear()
 
         converged = agent.step >= train_steps

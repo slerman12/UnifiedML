@@ -152,15 +152,17 @@ class ExperienceReplay:
     # Samples a batch of experiences, optionally includes trajectories
     def sample(self, trajectories=False):
         if self.stream is not None:
-            print(self.stream)
-            return self.stream
-        try:
-            sample = next(self.replay)
-        except StopIteration:  # Reset iterator when depleted
-            self.epoch += 1
-            self._replay = None
-            sample = next(self.replay)
-        return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude future trajectories
+            # TODO Doesn't include traj
+            return [self.stream.get(key, torch.empty([0])) for key in ['obs', 'action', 'reward', 'discount',
+                                                                       'next_obs', 'label', 'step', 'ids', 'meta']]
+        else:
+            try:
+                sample = next(self.replay)
+            except StopIteration:  # Reset iterator when depleted
+                self.epoch += 1
+                self._replay = None
+                sample = next(self.replay)
+            return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude future trajectories
 
     # Allows iteration via next (e.g. batch = next(replay) )
     def __next__(self):
@@ -186,38 +188,38 @@ class ExperienceReplay:
         assert isinstance(experiences, (list, tuple))
 
         for exp in experiences:
-            for name, spec in self.specs.items():
-                # Missing data
-                if name not in exp:
-                    exp[name] = None
+            if self.stream is None:
+                for name, spec in self.specs.items():
+                    # Missing data
+                    if name not in exp:
+                        exp[name] = None
 
-                # Add batch dimension
-                if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
-                    exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
-                # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
-                #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
+                    # Add batch dimension
+                    if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
+                        exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
+                    # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
+                    #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
 
-                # Expands attributes that are unique per batch (such as 'step')
-                batch_size = exp.get('obs', exp['action']).shape[0]
-                if 1 == exp[name].shape[0] < batch_size:
-                    exp[name] = np.repeat(exp[name], batch_size, axis=0)
+                    # Expands attributes that are unique per batch (such as 'step')
+                    batch_size = exp.get('obs', exp['action']).shape[0]
+                    if 1 == exp[name].shape[0] < batch_size:
+                        exp[name] = np.repeat(exp[name], batch_size, axis=0)
 
-                # Validate consistency - disabled for discrete/continuous conversions
-                # assert spec['shape'] == exp[name].shape[1:], \
-                #     f'Unexpected shape for "{name}": {spec["shape"]} vs. {exp[name].shape[1:]}'
-                spec['shape'] = exp[name].shape[1:]
+                    # Validate consistency - disabled for discrete/continuous conversions
+                    # assert spec['shape'] == exp[name].shape[1:], \
+                    #     f'Unexpected shape for "{name}": {spec["shape"]} vs. {exp[name].shape[1:]}'
+                    spec['shape'] = exp[name].shape[1:]
 
-                # Add the experience
-                if self.stream is not None:
-                    self.stream = exp[name]
-                else:
+                    # Add the experience
                     self.episode[name].append(exp[name])
+            else:
+                # For streaming directly from Environment
+                self.stream = exp
 
-        if self.stream is None:
-            self.episode_len += len(experiences)
+        self.episode_len += len(experiences)
 
-            if store:
-                self.store_episode()  # Stores them in file system
+        if store:
+            self.store_episode()  # Stores them in file system
 
     # Stores episode (to file in system)
     def store_episode(self):
