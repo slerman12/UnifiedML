@@ -86,6 +86,7 @@ environment:
   truncate_episode_steps: ${truncate_episode_steps}
   action_repeat: ${action_repeat}
   offline: ${offline}
+  stream: ${stream}
   generate: ${generate}
   seed: ${seed}
 

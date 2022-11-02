@@ -73,7 +73,7 @@ class CNNEncoder(nn.Module):
             obs = obs.reshape(-1, *channel_dim, *self.obs_shape)  # Validate shape, collapse batch dims
         except RuntimeError:
             raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
-                               f'{tuple(obs.shape)}, ≠ {self.obs_shape}')
+                               f'{tuple(obs.shape[1:])}, ≠ {self.obs_shape}')
 
         # Optionally append a 1D context to channels, broadcasting
         obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes or (1,)).expand(-1, -1, *obs.shape[2:])

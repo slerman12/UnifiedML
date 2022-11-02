@@ -83,7 +83,7 @@ class ExperienceReplay:
         self.stream = stream  # Streaming from Environment directly
 
         # Placeholder for streaming
-        self.empty = torch.empty([0])
+        self.empty = torch.empty([1, 0])
 
         # Data transform
 
