@@ -119,7 +119,7 @@ class LearnableFourierPositionalEncodings(nn.Module):
         self.scale = 1 / math.sqrt(self.fourier_dim)
 
         # Projections
-        self.Linear = nn.Linear(self.input_dim, self.fourier_dim)
+        self.Linear = nn.Linear(self.input_dim, self.fourier_dim, bias=False)
         self.MLP = MLP(self.fourier_dim * 2, self.output_dim, self.hidden_dim, 1, nn.GELU())
 
         # Initialize weights
