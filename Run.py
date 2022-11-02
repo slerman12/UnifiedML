@@ -78,7 +78,7 @@ def main(args):
             replay.clear()
 
         converged = agent.step >= train_steps
-        training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline or args.stream
+        training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline
 
         # Train agent
         if training and (args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged):

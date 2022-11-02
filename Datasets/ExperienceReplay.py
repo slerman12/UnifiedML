@@ -56,11 +56,11 @@ class ExperienceReplay:
                                     f'try again with one of those 3, \nor choose a different path via replay.path=.'
             self.path = Path(sorted(exists)[-1])
             save = offline or save
-        else:
+        elif not stream:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)
 
-        if not save:
+        if not save and not stream:
             # Delete replay on terminate
             atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
 
@@ -76,8 +76,9 @@ class ExperienceReplay:
 
         self.episode = {name: [] for name in self.specs}
         self.episode_len = 0
-        self.episodes_stored = len(list(self.path.glob('*.npz')))
+        self.episodes_stored = 0 if stream else len(list(self.path.glob('*.npz')))
         self.save = save
+
         self.offline = offline
         self.stream = stream  # Streaming from Environment directly
 
@@ -100,6 +101,9 @@ class ExperienceReplay:
         # Future steps to compute cumulative reward from
         self.nstep = 0 if suite == 'classify' or generate or stream else nstep
 
+        if self.stream:
+            return
+
         """
         ---Parallelized experience loading--- 
         
@@ -111,7 +115,7 @@ class ExperienceReplay:
 
           The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
 
-              Roadmap: Memory-mapped hard disk loading for Offline/Online, capacity-adaptive w.r.t. RAM.
+              Roadmap: Dual RAM/memory-mapped hard disk loading for Offline/Online, capacity-adaptive.
 
           Online also caches data on RAM, after storing to hard disk.
 
@@ -275,7 +279,8 @@ class ExperienceReplay:
             self.pipes[worker].send((update, exp_ids[worker]))
 
     def __len__(self):
-        return self.episodes_stored if self.offline or not self.save \
+        # Infinite if stream, the number of episodes stored if constant or possibly deleting from path, else in path
+        return int(5e11) if self.stream else self.episodes_stored if self.offline or not self.save \
             else len(list(self.path.glob('*.npz')))
 
 

@@ -45,7 +45,7 @@ evaluate_per_steps: 1000
 evaluate_episodes: 1
 learn_per_steps: 1
 learn_steps_after: 0
-seed_steps: 50
+seed_steps: 0
 explore_steps: 0
 log_per_episodes: 300
 RL: false
