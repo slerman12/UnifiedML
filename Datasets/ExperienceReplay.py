@@ -81,6 +81,9 @@ class ExperienceReplay:
         self.offline = offline
         self.stream = stream or None  # Streaming from Environment directly
 
+        # Placeholder for streaming
+        self.empty = torch.empty([0])
+
         # Data transform
 
         if transform is not None:
@@ -151,11 +154,7 @@ class ExperienceReplay:
 
     # Samples a batch of experiences, optionally includes trajectories
     def sample(self, trajectories=False):
-        if self.stream is not None:
-            # TODO Doesn't include traj
-            return [self.stream.get(key, torch.empty([0])) for key in ['obs', 'action', 'reward', 'discount',
-                                                                       'next_obs', 'label', 'step', 'ids', 'meta']]
-        else:
+        if self.stream is None:
             try:
                 sample = next(self.replay)
             except StopIteration:  # Reset iterator when depleted
@@ -163,6 +162,10 @@ class ExperienceReplay:
                 self._replay = None
                 sample = next(self.replay)
             return *sample[:6 + 4 * trajectories], *sample[10:]  # Include/exclude future trajectories
+        else:
+            return [self.stream.get(key, self.empty) for key in ['obs', 'action', 'reward', 'discount', 'next_obs',
+                                                                 'label', *[self.empty] * 4 * trajectories, 'step',
+                                                                 'ids', 'meta']]
 
     # Allows iteration via next (e.g. batch = next(replay) )
     def __next__(self):
@@ -216,6 +219,7 @@ class ExperienceReplay:
                 # For streaming directly from Environment
                 self.stream = exp
 
+        # Count experiences in episode
         self.episode_len += len(experiences)
 
         if store:
