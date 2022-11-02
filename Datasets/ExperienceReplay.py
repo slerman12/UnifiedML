@@ -82,9 +82,6 @@ class ExperienceReplay:
         self.offline = offline
         self.stream = stream  # Streaming from Environment directly
 
-        # Placeholder for streaming
-        self.empty = torch.empty([1, 0])
-
         # Data transform
 
         if transform is not None:
@@ -169,9 +166,9 @@ class ExperienceReplay:
     def sample(self, trajectories=False):
         if self.stream:
             # Streaming
-            return [self.stream.get(key, self.empty) for key in ['obs', 'action', 'reward', 'discount', 'next_obs',
-                                                                 'label', *[self.empty] * 4 * trajectories, 'step',
-                                                                 'ids', 'meta']]  # Return contents of the data stream
+            return [self.stream.get(key, torch.empty([1, 0]))
+                    for key in ['obs', 'action', 'reward', 'discount', 'next_obs', 'label', *[None] * 4 * trajectories,
+                                'step', 'ids', 'meta']]  # Return contents of the data stream
         else:
             # Sampling
             try:
