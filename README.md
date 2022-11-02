@@ -775,7 +775,7 @@ python Run.py task=classify/mnist stream=true
 
 This feature is closely related to ```offline=false``` and its equivalent ```online=true```, but skips the replay.
 
-This would most likely only be necessary if your training dataset is too large and won't fit on RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-datasets).
+This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-datasets).
 
 This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```.
 
