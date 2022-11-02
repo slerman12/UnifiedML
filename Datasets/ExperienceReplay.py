@@ -50,8 +50,8 @@ class ExperienceReplay:
                         warnings.warn(f'Loading a saved replay of a classify task from a previous online session.'
                                       f'For the standard offline dataset, set replay.path="{standard}" '  # If exists
                                       f'or delete the saved buffer in {path}.')
-            assert len(exists) > 0, f'No existing replay buffer found in path: {path}.\n"generate=", "offline=", & ' \
-                                    f'"replay.load=" all depend on having a saved replay buffer. ' \
+            assert len(exists) > 0, f'\nNo existing replay buffer found in path: {path}.\n"generate=true", ' \
+                                    f'"offline=true", & "replay.load=true" each assume a saved replay buffer. \n' \
                                     f'Try replay.save=true first, then you can try again with one of those 3.'
             self.path = Path(sorted(exists)[-1])
             save = offline or save
