@@ -60,7 +60,7 @@ class ExperienceReplay:
             self.path = Path(path + '_' + str(datetime.datetime.now()))
             self.path.mkdir(exist_ok=True, parents=True)
 
-        if not save and not stream:
+        if not save and hasattr(self, 'path'):
             # Delete replay on terminate
             atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
 
@@ -276,7 +276,7 @@ class ExperienceReplay:
             self.pipes[worker].send((update, exp_ids[worker]))
 
     def __len__(self):
-        # Infinite if stream, the number of episodes stored if constant or possibly deleting from path, else in path
+        # Infinite if stream, else the number of episodes stored if constant or some deleted, else the episodes in path
         return int(5e11) if self.stream else self.episodes_stored if self.offline or not self.save \
             else len(list(self.path.glob('*.npz')))
 
