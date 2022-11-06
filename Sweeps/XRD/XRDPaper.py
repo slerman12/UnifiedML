@@ -2124,6 +2124,32 @@ runs.XRD.sweep = [
 
 # runs.XRD.title = 'RRUFF'
 
+# Test
+runs.XRD.sweep = [
+    # Large-Soup, No-Pool-CNN - Generalize To MP
+    """task=classify/custom
+    Dataset=XRD.XRD
+    batch_size=256
+    task_name='Large-Soup_${test_dataset.num_classes}-Way'
+    experiment='No-Pool-CNN_MP'
+    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd1.2m_large/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0.5]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/mp_shen/"]'
+    +'test_dataset.train_eval_splits=[0]'
+    +test_dataset.num_classes=7
+    TestDataset=XRD.XRD
+    train_steps=0
+    load=true
+    load_path='/scratch/slerman/UnifiedML/Checkpoints/No-Pool-CNN/DQNAgent/classify/Large-Soup_${test_dataset.num_classes}-Way_1.pt'
+    logger.wandb=true
+    num_workers=8
+    num_gpus=8
+    lab=true
+    save=false
+    parallel=true
+    mem=180""",
+    ]
+
 runs.XRD.plots = [
     # ['.*icsd.*'],
     # ['.*_icsd.*'],
