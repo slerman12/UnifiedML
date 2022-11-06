@@ -315,7 +315,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         def make(ax, ax_title, cell_data, cell, hue_names, cell_palettes, **kwargs):
             sns.scatterplot(data=cell_data, x='Class Label', y='Accuracy', hue='Agent', size='Count',
-                            alpha=0.7, hue_order=np.sort(hue_names), ax=ax, palette=cell_palettes)
+                            alpha=0.7, sizes=(20, 200), hue_order=np.sort(hue_names), ax=ax, palette=cell_palettes)
 
             #  Post-processing
             # step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'

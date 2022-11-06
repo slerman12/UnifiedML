@@ -79,12 +79,12 @@ runs = {'UnifiedML': {
         # f'reservation_id=20220929 ',
     ],
     'plots': [
-        ['Atari-26-DQN'],  # I named it inconsistently
-        ['Mario'],
-        ['Self-Supervised_Mario'],
-        ['Atari-26_Continuous'],
-        ['Atari-26_Continuous', 'Atari-30'],
-        ['Mario', 'Self-Supervised_Mario'],
+        ['Atari-26-SoftDQN.*'],  # I named it inconsistently
+        # ['Mario'],
+        # ['Self-Supervised_Mario'],
+        # ['Atari-26_Continuous'],
+        # ['Atari-26_Continuous', 'Atari-30'],
+        # ['Mario', 'Self-Supervised_Mario'],
     ],
     'sftp': True,
     'bluehive': True,

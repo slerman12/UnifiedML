@@ -94,12 +94,12 @@ runs = {'UnifiedML': {
         # save_per_steps=100000"""
     ],
     'plots': [
-        # Classify + RL
-        ['Classify+RL_supervise-False.*true', 'Classify+RL_supervise-False.*false', 'Classify'],
-        ['Classify+RL+Sample_supervise-False.*no-EMA', 'Classify_no-EMA'],
-        ['Classify+RL_supervise-False.*no-EMA', 'Classify_no-EMA'],
+        # Classify + RL  TODOO only num critics = 2
+        # ['Classify+RL_supervise-False.*true', 'Classify+RL_supervise-False.*false', 'Classify'],
+        ['Classify+RL+Sample_supervise-False.*no-EMA', 'Classify_no-EMA'],# Note: Did not eval num_critics=1 - outdated!
+        # ['Classify+RL_supervise-False.*no-EMA', 'Classify_no-EMA'],
     ],
-    'sftp': True,
+    'sftp': False,
     'bluehive': True,
     'lab': True,
     'steps': 200000,

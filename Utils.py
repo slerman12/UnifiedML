@@ -398,7 +398,7 @@ class act_mode:
                 self.start_modes.append(None)
             else:
                 self.start_modes.append(model.training)
-                model.eval()
+                model.eval()  # Disables things like dropout, etc.
 
     def __exit__(self, *args):
         for model, mode in zip(self.models, self.start_modes):

@@ -67,7 +67,7 @@ class SPRAgent(torch.nn.Module):
 
         # Discrete -> continuous conversion
         if action_spec.discrete and not self.discrete:
-            # Normalizing actions to range [-1, 1] helps continuous RL
+            # Normalizing actions to range [-1, 1] significantly helps continuous RL
             action_spec.low, action_spec.high = (-1, 1) if self.RL else (None, None)
 
         # Continuous -> discrete conversion

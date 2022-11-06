@@ -70,7 +70,7 @@ class AC2Agent(torch.nn.Module):
 
         # Discrete -> continuous conversion
         if self.discrete_as_continuous:
-            # Normalizing actions to range [-1, 1] helps continuous RL
+            # Normalizing actions to range [-1, 1] significantly helps continuous RL
             action_spec.low, action_spec.high = (-1, 1) if self.RL else (None, None)
 
         # Continuous -> discrete conversion
@@ -169,9 +169,9 @@ class AC2Agent(torch.nn.Module):
                     # Explore
                     action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
 
-                store = {'action': action.cpu().numpy()}  # Store action
+                store = {'action': action.cpu().numpy()}  # Store action logits
 
-                if self.discrete_as_continuous:  # Re-sample, however store logits as above
+                if self.discrete_as_continuous:  # Re-sample, however store logits
                     action = self.creator(action.transpose(-1, -2), self.step).sample()
 
             store.update({'step': self.step})
