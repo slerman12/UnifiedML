@@ -1628,29 +1628,29 @@ runs.XRD.sweep = [
 ]
 
 # # Just a test
-# runs.XRD.sweep = [# # Mix, MLP - Generalize To MP nonicsd
-#     """task=classify/custom
-#     Dataset=XRD.XRD
-#     batch_size=256
-#     task_name='Mix_${test_dataset.num_classes}-Way'
-#     experiment='MLP_nonicsd'
-#     '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
-#     +'dataset.train_eval_splits=[1, 0]'
-#     '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
-#     +'test_dataset.train_eval_splits=[0]'
-#     +test_dataset.num_classes=7
-#     TestDataset=XRD.XRD
-#     train_steps=0
-#     load=true
-#     load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
-#     logger.wandb=true
-#     num_workers=8
-#     num_gpus=8
-#     lab=true
-#     save=false
-#     parallel=true
-#     mem=180""",
-# ]
+runs.XRD.sweep = [# # Mix, MLP - Generalize To MP nonicsd
+    """task=classify/custom
+    Dataset=XRD.XRD
+    batch_size=256  
+    task_name='Mix_${test_dataset.num_classes}-Way'
+    experiment='MLP_nonicsd'
+    '+dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/icsd171k_mix/icsd171k_mix/","/scratch/slerman/XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'
+    +'dataset.train_eval_splits=[1, 0]'
+    '+test_dataset.roots=["/gpfs/fs2/scratch/public/jsalgad2/LegacyDatasets/mp_nonicsd_shen/"]'
+    +'test_dataset.train_eval_splits=[0]'
+    +test_dataset.num_classes=7
+    TestDataset=XRD.XRD
+    train_steps=0
+    load=true
+    load_path='/scratch/slerman/UnifiedML/Checkpoints/MLP/DQNAgent/classify/Mix_${test_dataset.num_classes}-Way_1.pt'
+    logger.wandb=true
+    num_workers=8
+    num_gpus=8
+    lab=true
+    save=false
+    parallel=true
+    mem=180""",
+]
 
 # Re-evaluate with "Predicted vs. Actual"
 # runs.XRD.sweep = [
