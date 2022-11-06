@@ -35,7 +35,6 @@ class CNNEncoder(nn.Module):
 
         # CNN
         self.Eyes = Utils.instantiate(Eyes, input_shape=obs_shape) or CNN(obs_shape)
-        print(self.Eyes)
 
         adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
