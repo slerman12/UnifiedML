@@ -70,6 +70,7 @@ class Predictor(nn.Module):
 
         input_dim = input_shape if isinstance(input_shape, int) \
             else math.prod(input_shape)
+        print(input_dim)
 
         self.MLP = nn.Sequential(nn.Flatten(),
                                  nn.Linear(input_dim, 2300), nn.ReLU(), nn.Dropout(0.5),
