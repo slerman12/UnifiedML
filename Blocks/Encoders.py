@@ -31,6 +31,7 @@ class CNNEncoder(nn.Module):
 
         # Dimensions
         obs_shape = [*(1,) * (len(self.obs_shape) < 2), *self.obs_shape]  # Create at least 1 channel dim & spatial dim
+        print(self.obs_shape, obs_shape)
         obs_shape[0] += context_dim
 
         # CNN
@@ -61,7 +62,6 @@ class CNNEncoder(nn.Module):
 
         batch_dims = obs.shape[:-dims]  # Preserve leading dims
         axes = (1,) * (dims - 1)  # Spatial axes, useful for dynamic input shapes
-        print(batch_dims, obs.shape, self.obs_shape)
 
         # Standardize/normalize pixels
         if self.standardize:
