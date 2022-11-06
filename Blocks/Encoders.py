@@ -61,6 +61,7 @@ class CNNEncoder(nn.Module):
 
         batch_dims = obs.shape[:-dims]  # Preserve leading dims
         axes = (1,) * (dims - 1)  # Spatial axes, useful for dynamic input shapes
+        print(batch_dims, obs.shape, self.obs_shape)
 
         # Standardize/normalize pixels
         if self.standardize:
