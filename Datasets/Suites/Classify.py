@@ -111,7 +111,7 @@ class Classify:
         self._batches = iter(self.batches)
 
         obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
-        obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
+        obs_shape = (1,) * (3 - len(obs_shape)) + obs_shape  # At least 1 channel dim and 2 spatial dims
 
         self.obs_spec = {'shape': obs_shape}
 
@@ -171,7 +171,6 @@ class Classify:
         self.exp = None  # Experience
 
         self.evaluate_episodes = len(self.batches)
-        print(self.obs_spec)
 
     def step(self, action):
         # Adapt to discrete!

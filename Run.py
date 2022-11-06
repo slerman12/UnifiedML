@@ -27,7 +27,6 @@ def main(args):
     for arg in ('obs_spec', 'action_spec', 'evaluate_episodes'):
         if hasattr(generalize.env, arg):
             setattr(args, arg, getattr(generalize.env, arg))
-    print(args.obs_spec)
 
     # Agent
     agent = Utils.load(args.load_path, args.device, args.agent) if args.load \
