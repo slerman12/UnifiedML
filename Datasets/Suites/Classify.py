@@ -171,6 +171,7 @@ class Classify:
         self.exp = None  # Experience
 
         self.evaluate_episodes = len(self.batches)
+        print(self.obs_spec)
 
     def step(self, action):
         # Adapt to discrete!
