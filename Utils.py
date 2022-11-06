@@ -199,8 +199,6 @@ def cnn_layer_feature_shape(*spatial_shape, kernel_size=1, stride=1, padding=0, 
     padding = [min(size, padding[i]) for i, size in enumerate(axes)]  # Assumes adaptive
     out_shape = [math.floor(((size + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
                  for size in axes] + list(spatial_shape[len(axes):])
-    print([math.floor(((size + (2 * padding[0]) - (dilation[0] * (kernel_size[0] - 1)) - 1) / stride[0]) + 1)
-           for size in axes])
     return out_shape
 
 
