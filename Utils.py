@@ -186,7 +186,7 @@ def update_ema_target(source, target, ema_decay=0):
 def cnn_layer_feature_shape(*spatial_shape, kernel_size=1, stride=1, padding=0, dilation=1):
     if padding == 'same':
         return spatial_shape
-    axes = [size for size in spatial_shape if size and size > 1]
+    axes = [size for size in spatial_shape if size and size > 1]  # Assumes adaptive
     if type(kernel_size) is not tuple:
         kernel_size = [kernel_size] * len(axes)
     if type(stride) is not tuple:
