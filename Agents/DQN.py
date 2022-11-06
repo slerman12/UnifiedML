@@ -70,6 +70,7 @@ class DQNAgent(torch.nn.Module):
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'
 
             action_spec.discrete_bins = self.num_actions  # Continuous env has no discrete bins by default, must specify
+        print(obs_spec)
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,

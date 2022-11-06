@@ -167,7 +167,6 @@ class Classify:
                          'stddev': stddev,
                          'low': low,
                          'high': high}
-        print(self.obs_spec['shape'])
 
         self.exp = None  # Experience
 
