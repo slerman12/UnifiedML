@@ -2129,8 +2129,8 @@ runs.XRD.plots = [
     # ['.*_icsd.*'],
     # ['.*_nonicsd.*'],
     ['.*MP'],
-    ['.*LATT']
+    # ['.*LATT']
 ]
 
 runs.XRD.title = 'Magnetic Properties'
-runs.XRD.sftp = True
+runs.XRD.sftp = False
