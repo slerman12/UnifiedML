@@ -27,7 +27,8 @@ import torch
 from torch.utils.data import IterableDataset, Dataset
 from torch.multiprocessing import Pipe
 
-from torchvision.transforms import transforms
+import torchvision
+import torchaudio
 
 
 class ExperienceReplay:
@@ -85,6 +86,9 @@ class ExperienceReplay:
         # Data transform
 
         if transform is not None:
+            if self.stream:
+                warnings.warn('Command-line transforms (`transform=`) are not supported for streaming (`stream=true`). '
+                              'Try a custom dataset instead via `Dataset=` defined with your preferred transforms.')
             if isinstance(transform, str):
                 transform = OmegaConf.create(transform)
             if 'RandomCrop' in transform and 'size' not in transform['RandomCrop']:
@@ -92,8 +96,16 @@ class ExperienceReplay:
             if 'Normalize' in transform:
                 warnings.warn('"Normalizing" via transform. This may be redundant and dangerous if standardize=true, '
                               'which is the default.')
-            # Can pass in a dict of torchvision transform names and args
-            transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
+            # Can pass in a dict of torchaudio or torchvision transform names and args
+            # TODO env.transform Creates a unique dataset/buffer. Can call it whatever-Transformed if not None.
+            #   - This transform here would ideally be applied to train env as well for streaming; can skip.
+            #       But only for streaming because don't want it to affect buffer creation.
+            #   - Perhaps just instantiate
+            #   - What about transforms that can change the shape e.g. Spectrogram - need to recompute obs shape
+            #   - Can do standard instantiation with **obs_spec; instead of utils' can have context with default 'Utils'
+            transforms = torchaudio.transforms if len(obs_spec['shape']) < 3 else torchvision.transforms.transforms
+            transform = [getattr(transforms, t)(**transform[t]) for t in transform]
+            transform = torch.nn.Sequential(*transform) if len(obs_spec['shape']) < 3 else transforms.Compose(transform)
 
         # Future steps to compute cumulative reward from
         self.nstep = 0 if suite == 'classify' or generate or stream else nstep

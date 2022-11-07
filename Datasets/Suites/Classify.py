@@ -70,11 +70,14 @@ class Classify:
 
         # Make env
 
+        root = f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
+        Path(root).mkdir(parents=True, exist_ok=True)
+
         # Different datasets have different specs
-        root_specs = [dict(root=f'./Datasets/ReplayBuffer/Classify/{task}_%s' %
-                                ('Train' if train else 'Eval')), {}]
+        root_specs = [dict(root=root), {}]
         train_specs = [dict(train=train),
-                       dict(version='2021_' + 'train' if train else 'valid'), {}]
+                       dict(version='2021_' + 'train' if train else 'valid'),
+                       dict(subset='training' if train else 'testing'), {}]
         download_specs = [dict(download=True), {}]
         transform_specs = [dict(transform=Transform()), {}]
 
