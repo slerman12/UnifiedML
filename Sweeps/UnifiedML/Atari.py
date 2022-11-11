@@ -23,15 +23,15 @@ runs = {'UnifiedML': {
     # Need To: Save Replay via replay.save=true.
     # Next time: Load via replay.load=true.  -  just re-ran by mistake so latest replay is incorrect - replay corrupted!
     'sweep': [
-        f'train_steps=3000000 '  # Changed from 2000000 to add 500000
+        f'train_steps=3000000 '  # Changed from 2000000 to add 500000  TODO NOTE discrete= naming borke; it overrided
         f'task={atari_26} '
-        f'experiment="Atari-26-SoftDQN-discrete-${{discrete}}" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
+        f'experiment="Atari-26-SoftDQN-discrete-true" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
         f'logger.wandb=true '
         f'time="12-00:00:00" '
         f'save_per_steps=500000 '
         f'replay.save=true '
         f'reservation_id=20220929 '
-        f'discrete=true,false '
+        f'discrete=true '  # TODO I guess sweep breaks the naming reference
         f'Agent=Agents.AC2Agent '
         f'load=false '
         f'replay.load=false '
@@ -79,7 +79,8 @@ runs = {'UnifiedML': {
         # f'reservation_id=20220929 ',
     ],
     'plots': [
-        ['Atari-26-SoftDQN.*'],  # I named it inconsistently
+        ['Atari-26-SoftDQN-discrete-true'],  # I named it inconsistently
+        ['Atari-26-SoftDQN-discrete-false'],  # Naming broke
         # ['Mario'],
         # ['Self-Supervised_Mario'],
         # ['Atari-26_Continuous'],
@@ -90,8 +91,8 @@ runs = {'UnifiedML': {
     'bluehive': True,
     'lab': False,
     'write_tabular': True,
-    'steps': 2500000,
-    'title': 'Mario',
+    'steps': 3000000,
+    'title': 'Atari',
     'x_axis': 'Step',
     'bluehive_only': [],
     'tasks': ['Alien', 'Amidar', 'Assault', 'Asterix', 'BankHeist', 'BattleZone',
