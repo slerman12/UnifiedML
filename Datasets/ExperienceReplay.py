@@ -93,6 +93,8 @@ class ExperienceReplay:
         # Future steps to compute cumulative reward from
         self.nstep = 0 if suite == 'classify' or generate else nstep
 
+        return  # Evaluation only!  For XRD
+
         # Parallelized experience loading, either Online or Offline - "Online" means the data size grows
 
         #   For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
