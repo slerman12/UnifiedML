@@ -124,7 +124,6 @@ class Classify:
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
 
         self.obs_spec = {'shape': obs_shape}
-        print(self.obs_spec)
 
         """MOVE TO REPLAY"""
 
@@ -178,6 +177,7 @@ class Classify:
                          'stddev': stddev,
                          'low': low,
                          'high': high}
+        print(self.obs_spec, self.action_spec)
 
         self.exp = None  # Experience
 
