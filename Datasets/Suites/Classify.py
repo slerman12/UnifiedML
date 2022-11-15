@@ -100,6 +100,7 @@ class Classify:
 
         # TODO Save training class count(s) in stats so that Train/Eval don't mismatch
         classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
+        print(classes)
 
         # Make sure the dataset has a classes attr
         setattr(dataset, 'classes', classes)
