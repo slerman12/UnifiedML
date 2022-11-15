@@ -1072,13 +1072,13 @@ By default, the task name will appear as the Dataset class name (in the above ex
 
 > :exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
 
-Thanks to [*dimensionality adaptivity*](paper) for example, train directly on raw 1D Audio:
+Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the default CNN architecture directly on raw 1D Audio:
 
 ```console
 python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.SpeechCommands Aug=Identity
 ```
 
-Gets a near-perfect score on speech command classification.
+Gets a near-perfect score on speech command classification.  
 
 <details>
 <summary>
