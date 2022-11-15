@@ -55,7 +55,7 @@ class Classify:
 
     Extended to accept a dataset config, which instantiates a Dataset. Datasets must:
     - extend Pytorch Datasets
-    - include a "classes" (num classes) attribute
+    - include a "classes" attribute that lists the different class names or classes
     - output (obs, label) pairs
 
     An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
@@ -98,10 +98,16 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
+        # TODO Save training class count(s) in stats so that Train/Eval don't mismatch
+        classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
+
+        # Make sure the dataset has a classes attr
+        setattr(dataset, 'classes', classes)
+
         self.action_spec = {'shape': (1,),
-                            'discrete_bins': len(dataset.classes),  # Dataset must include a "classes" attr
+                            'discrete_bins': len(classes),
                             'low': 0,
-                            'high': len(dataset.classes) - 1,
+                            'high': len(classes) - 1,
                             'discrete': True}
 
         self.batches = DataLoader(dataset=dataset,
