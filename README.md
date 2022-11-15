@@ -757,29 +757,35 @@ python Run.py replay.load=true replay.save=true
 
 </details>
 
-### Hard Disk vs. RAM
+[comment]: <> (### Hard Disk vs. RAM)
 
-<details>
-<summary>
-:mag: <i>Replay the deets</i>
-</summary>
-<br>
+[comment]: <> (<details>)
 
-Experience replay automatically pre-loads or caches data into RAM. This makes training faster because loading from RAM is much less of a bottleneck compared to loading from hard disk. For RL, this is in keeping with DrQV2, which increased the training speed for continuous RL from images significantly.
+[comment]: <> (<summary>)
 
-For classification, if you'd like to disable the default RAM usage and directly send data from the Environment to the Agent, you can use the ```stream=true``` flag. This bypasses the replay storing/loading.
+[comment]: <> (:mag: <i>Replay the deets</i>)
 
-```console
-python Run.py task=classify/mnist stream=true
-```
+[comment]: <> (</summary>)
 
-This feature is a specific instance of ```offline=false``` and its equivalent ```online=true```, but skips the replay.
+[comment]: <> (<br>)
 
-This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets](#custom-dataset).
+[comment]: <> (Experience replay automatically pre-loads or caches data into RAM. This makes training faster because loading from RAM is much less of a bottleneck compared to loading from hard disk. For RL, this is in keeping with DrQV2, which increased the training speed for continuous RL from images significantly.)
 
-This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```. It can be thought of as on-policy RL.
+[comment]: <> (For classification, if you'd like to disable the default RAM usage and directly send data from the Environment to the Agent, you can use the ```stream=true``` flag. This bypasses the replay storing/loading.)
 
-</details>
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py task=classify/mnist stream=true)
+
+[comment]: <> (```)
+
+[comment]: <> (This feature is a specific instance of ```offline=false``` and its equivalent ```online=true```, but skips the replay.)
+
+[comment]: <> (This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets]&#40;#custom-dataset&#41;.)
+
+[comment]: <> (This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```. It can be thought of as on-policy RL.)
+
+[comment]: <> (</details>)
 
 ### Recipes
 
