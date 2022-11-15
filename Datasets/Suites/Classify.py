@@ -100,7 +100,6 @@ class Classify:
 
         # TODO Save training class count(s) in stats so that Train/Eval don't mismatch
         classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
-        print(classes)
 
         # Make sure the dataset has a classes attr
         setattr(dataset, 'classes', classes)
@@ -266,8 +265,9 @@ class Classify:
         for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
                                          'This only has to be done once'):
 
-            b = obs.shape[0]
-            _, c, *hw = (b, *self.obs_spec['shape'])
+            b, c, *hw = obs.shape
+            if not hw:
+                hw, c = (c,), 1  # At least 1 channel dim and spatial dim - can comment out
             obs = obs.view(b, c, *hw)
             fst_moment = torch.zeros(c) if fst_moment is None else fst_moment
             snd_moment = torch.zeros(c) if snd_moment is None else snd_moment
