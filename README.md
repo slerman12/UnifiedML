@@ -1100,7 +1100,7 @@ Note: You can also specify an **independent test dataset** with ```TestDataset=`
 # 1. Train and evaluate on MNIST over 1200 steps, automatically saving the checkpoint
 python Run.py task=classify/mnist train_steps=1200
 
-# 2. Explicitly evaluate on MNIST (or another dataset of your choosing), loading the checkpoint
+# 2. Explicitly evaluate on MNIST (or another dataset of your choosing), loading the trained checkpoint
 python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets.MNIST load=true load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example plot_per_steps=1
 ```
 
