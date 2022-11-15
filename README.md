@@ -1064,7 +1064,7 @@ That will launch MNIST. Another example, with a custom path:
 python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
 ```
 
-This will initiate a classify task on the custom-defined [```TinyImageNet Dataset```](Datasets/Suites/_TinyImageNet.py#L48).
+This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset.
 
 > By default, the task name will appear as the Dataset class name (in the above examples, "```MNIST```" and "```TinyImageNet```"). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
 
