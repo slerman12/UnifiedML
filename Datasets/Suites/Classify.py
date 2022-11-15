@@ -267,7 +267,7 @@ class Classify:
 
             b, c, *hw = obs.shape
             if not hw:
-                hw, c = (c,), 1  # At least 1 channel dim and spatial dim - can comment out
+                *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
             obs = obs.view(b, c, *hw)
             fst_moment = torch.zeros(c) if fst_moment is None else fst_moment
             snd_moment = torch.zeros(c) if snd_moment is None else snd_moment
