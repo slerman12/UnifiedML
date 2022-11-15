@@ -13,8 +13,6 @@ class SpeechCommands(SPEECHCOMMANDS):
 
         self.collate_fn = collate_fn
 
-        self.classes = None  # Gets automatically set by Classify.py
-
     def __getitem__(self, item):
         waveform, sample_rate, label, speaker_id, utterance_number = super().__getitem__(item)
         return waveform, torch.tensor(self.classes.index(label))
