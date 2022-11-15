@@ -10,9 +10,11 @@ class SpeechCommands(SPEECHCOMMANDS):
         self.classes = sorted(list(set(exp[2] for exp in self)))  # 'marvin', 'visual', 'zero', ... etc
         print(self.classes)
 
-    def collate_fn(self, batch):
-        waveform, label = zip(*batch)
-        return pad_sequence(waveform), torch.stack(label)  # Pad waveform
+        def collate_fn(batch):
+            waveform, label = zip(*batch)
+            return pad_sequence(waveform), torch.stack(label)  # Pad waveform
+
+        self.collate_fn = collate_fn
 
     def __getitem__(self, item):
         waveform, sample_rate, label, speaker_id, utterance_number = super().__getitem__(item)
