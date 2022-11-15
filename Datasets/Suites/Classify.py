@@ -233,15 +233,21 @@ class Classify:
 
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
+        prev = None
 
         for episode_ind, (obs, label) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
                                                                       'This only has to be done once')):
             obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
             label = np.expand_dims(label, 1)
 
-            batch_size = obs.shape[0]
+            batch_size, c, *hw = obs.shape
+            if not hw:
+                *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
+            if prev:
+                assert (c, *hw) == prev, f'{(c, *hw)} =/= prev {prev}'
+            prev = (c, *hw)
 
-            obs.shape = (batch_size, *self.obs_spec['shape'])
+            obs.shape = (batch_size, c, *hw)
 
             dummy = np.full((batch_size, 1), np.NaN)
             missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['discrete_bins'],)), np.NaN)
