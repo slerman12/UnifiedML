@@ -109,6 +109,7 @@ class Classify:
                                   shuffle=True,
                                   num_workers=num_workers,
                                   pin_memory=True,
+                                  collate_fn=getattr(dataset, 'collate_fn', None),
                                   worker_init_fn=worker_init_fn)
 
         self._batches = iter(self.batches)

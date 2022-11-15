@@ -25,13 +25,13 @@ runs = {'UnifiedML': {
     'sweep': [
         f'train_steps=3000000 '  # Changed from 2000000 to add 500000  TODO NOTE discrete= naming borke; it overrided
         f'task={atari_26} '
-        f'experiment="Atari-26-SoftDQN-discrete-true" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
+        f'experiment="Atari-26-SoftDQN-discrete-false" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
         f'logger.wandb=true '
         f'time="12-00:00:00" '
         f'save_per_steps=500000 '
         f'replay.save=true '
         f'reservation_id=20220929 '
-        f'discrete=true '  # TODO I guess sweep breaks the naming reference
+        f'discrete=false '  # TODO I guess sweep breaks the naming reference
         f'Agent=Agents.AC2Agent '
         f'load=false '
         f'replay.load=false '
