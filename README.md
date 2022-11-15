@@ -1070,7 +1070,7 @@ This will initiate a classify task on the custom-defined [```TinyImageNet```](Da
 
 ---
 
-> :exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
+> :milky_way: UnifiedML is compatible with datasets & domains beyond Vision.
 
 Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the default CNN architecture on raw 1D Audio:
 
