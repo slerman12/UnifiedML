@@ -115,7 +115,7 @@ class Classify:
                                   shuffle=True,
                                   num_workers=num_workers,
                                   pin_memory=True,
-                                  collate_fn=getattr(dataset, 'collate_fn', None),
+                                  collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
         self._batches = iter(self.batches)
@@ -177,7 +177,6 @@ class Classify:
                          'stddev': stddev,
                          'low': low,
                          'high': high}
-        print(self.obs_spec, self.action_spec)
 
         self.exp = None  # Experience
 
@@ -234,7 +233,6 @@ class Classify:
 
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
-        prev = None
 
         for episode_ind, (obs, label) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
                                                                       'This only has to be done once')):
@@ -244,9 +242,6 @@ class Classify:
             batch_size, c, *hw = obs.shape
             if not hw:
                 *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
-            if prev:
-                assert (c, *hw) == prev, f'{(c, *hw)} =/= prev {prev}'
-            prev = (c, *hw)
 
             obs.shape = (batch_size, c, *hw)
 
