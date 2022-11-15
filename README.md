@@ -1064,13 +1064,19 @@ By default, the task name will appear as the Dataset class name (in the above ex
 
 :exclamation: UnifiedML is compatible with datasets & domains beyond Vision.
 
+Thanks to [*dimensionality adaptivity*](paper) for example, train directly on raw 1D Audio:
+
+```console
+python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.SpeechCommands
+```
+
 <details>
 <summary>
 <i>More details :open_book:</i>
 </summary>
 <br>
 
-For a non-Vision tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+For a non-Vision/Audio tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
 
