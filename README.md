@@ -1082,7 +1082,7 @@ Gets a near-perfect score on speech command classification.
 
 <details>
 <summary>
-<i>More details :open_book:</i>
+<i>More details and examples :open_book:</i>
 </summary>
 <br>
 
