@@ -109,7 +109,6 @@ class Classify:
                             'low': 0,
                             'high': len(classes) - 1,
                             'discrete': True}
-        print(dataset.classes)
 
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,

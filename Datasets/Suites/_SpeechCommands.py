@@ -15,7 +15,11 @@ class SpeechCommands(SPEECHCOMMANDS):
 
     def __getitem__(self, item):
         waveform, sample_rate, label, speaker_id, utterance_number = super().__getitem__(item)
-        return waveform, torch.tensor(self.classes.index(label))  # Classes is automatically set by Classify.py
+
+        # Classes is automatically set by Classify.py
+        label = getattr(self.classes.index(label)) if hasattr(self, 'classes') else label
+
+        return waveform, torch.tensor(label)
 
 
 def pad_sequence(batch: (list, tuple)):
