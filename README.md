@@ -1078,17 +1078,21 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.Speec
 
 Gets a perfect score on speech command classification.  
 
-<details>
-<summary>
-<i>See 1D XRD crystal classification example :open_book:</i>
-</summary>
-<br>
+[comment]: <> (<details>)
 
-For a non-Vision/Audio tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+[comment]: <> (<summary>)
 
-> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
+[comment]: <> (<i>See 1D XRD crystal classification example :open_book:</i>)
 
-</details>
+[comment]: <> (</summary>)
+
+[comment]: <> (<br>)
+
+[comment]: <> (For a non-Vision/Audio tutorial, see our full [end-to-end example]&#40;https://www.github.com/agi-init/XRD&#41; of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]&#40;&#41; in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.)
+
+[comment]: <> (> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]&#40;&#41; Section 3.6 for details about architecture adaptivity.)
+
+[comment]: <> (</details>)
 
 ---
 
