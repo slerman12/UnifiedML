@@ -22,7 +22,7 @@ runs = {'UnifiedML': {
     # Corrupted Checkpoint + after 2000000 Steps. Saved Agent but not Replay. Loaded Agent at 2000000 with empty Replay.
     # Need To: Save Replay via replay.save=true.
     # Next time: Load via replay.load=true.  -  just re-ran by mistake so latest replay is incorrect - replay corrupted!
-    'sweep': [
+    'sweep': [  # TODO test Atari without terminal on life loss!
         f'train_steps=3000000 '  # Changed from 2000000 to add 500000  TODO NOTE discrete= naming borke; it overrided
         f'task={atari_26} '
         f'experiment="Atari-26-SoftDQN-discrete-false" '  # Originally did 30 - Meant to write -SoftDQN - wrote -DQN
