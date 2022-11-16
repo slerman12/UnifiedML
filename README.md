@@ -1157,6 +1157,8 @@ To do a hyperparameter sweep, just use the ```-m``` flag.
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
 
+Log video during evaluations with ```log_video=true```.
+
 </details>
 
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
