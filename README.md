@@ -1080,7 +1080,7 @@ Gets a perfect score on speech command classification.
 
 <details>
 <summary>
-<i>More details and examples :open_book:</i>
+<i>1D XRD crystal classification :open_book:</i>
 </summary>
 <br>
 
