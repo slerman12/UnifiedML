@@ -80,7 +80,7 @@ runs = {'UnifiedML': {
     ],
     'plots': [
         ['Atari-26-SoftDQN-discrete-true'],  # I named it inconsistently
-        ['Atari-26-SoftDQN-discrete-false'],  # Naming broke
+        # ['Atari-26-SoftDQN-discrete-false'],  # Naming broke
         # ['Mario'],
         # ['Self-Supervised_Mario'],
         # ['Atari-26_Continuous'],
