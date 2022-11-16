@@ -9,8 +9,8 @@ action_repeat: 4
 truncate_episode_steps: 250
 nstep: 10
 frame_stack: 4
-train_steps: 500000
-stddev_schedule: 'linear(1.0,0.1,20000)'
+train_steps: 3000000
+stddev_schedule: 'linear(1.0,0.1,800000)'
 
 # Two augmentations
 aug:
