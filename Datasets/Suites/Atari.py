@@ -47,7 +47,7 @@ class Atari:
     """
     def __init__(self, task='pong', seed=0, frame_stack=3, action_repeat=4,
                  screen_size=84, color='grayscale', sticky_action_proba=0, action_space_union=False,
-                 last_2_frame_pool=True, terminal_on_life_loss=True, **kwargs):  # Atari-specific
+                 last_2_frame_pool=True, terminal_on_life_loss=False, **kwargs):  # Atari-specific
         self.episode_done = False
 
         # Make env
@@ -89,7 +89,7 @@ class Atari:
         self.last_2_frame_pool = last_2_frame_pool
         self.last_frame = None
 
-        # Terminal on life loss
+        # Terminal on life loss - Note: Might need to be a "fakeout" reset. Currently resets for real upon life loss.
         self.terminal_on_life_loss = terminal_on_life_loss
         self.lives = None
 

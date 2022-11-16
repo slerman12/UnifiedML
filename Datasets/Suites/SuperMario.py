@@ -13,6 +13,7 @@ with warnings.catch_warnings():
 
 # NES Emulator for OpenAI Gym
 from nes_py.wrappers import JoypadSpace
+from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
 
 import numpy as np
 
@@ -50,7 +51,7 @@ class SuperMario:
 
     """
     def __init__(self, world=1, stage=1, version='v0', seed=0, frame_stack=4, action_repeat=4,
-                 screen_size=84, color='grayscale', last_2_frame_pool=False, **kwargs):
+                 screen_size=84, color='grayscale', last_2_frame_pool=False, terminal_on_life_loss=False, **kwargs):
         self.episode_done = False
 
         # Make env
@@ -64,7 +65,10 @@ class SuperMario:
             env = gym_super_mario_bros.make(task)
 
             # Limit the action-space to (0) Walk right and (1) Jump right
-            self.env = JoypadSpace(env, [["right"], ["right", "A"]])
+            # self.env = JoypadSpace(env, [["right"], ["right", "A"]])
+
+            # [['NOOP'], ["right"], ["right", "A"], ["right", "B"], ["right", "A", "B"], ["A"], ['left']]
+            self.env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
         # Set random seed
         self.env.seed(seed)
@@ -72,6 +76,10 @@ class SuperMario:
         # Nature DQN-style pooling of last 2 frames
         self.last_2_frame_pool = last_2_frame_pool
         self.last_frame = None
+
+        # Terminal on life loss - Note: Might need to be a "fakeout" reset. Currently resets for real upon life loss.
+        self.terminal_on_life_loss = terminal_on_life_loss
+        self.lives = None
 
         # Number of channels
         self.color = color
@@ -114,6 +122,13 @@ class SuperMario:
         if self.last_2_frame_pool:
             obs = np.maximum(obs, last_frame)
 
+        # Terminal on life loss
+        if self.terminal_on_life_loss:
+            lives = self.env.unwrapped._life
+            if lives < self.lives:
+                self.episode_done = True
+            self.lives = lives
+
         # Image channels
         obs = as_tensor(obs.transpose(2, 0, 1).copy())  # Channel-first
 
@@ -154,6 +169,10 @@ class SuperMario:
         # Last frame
         if self.last_2_frame_pool:
             self.last_frame = obs
+
+        # Lives
+        if self.terminal_on_life_loss:
+            self.lives = self.env.unwrapped._life
 
         # Image channels
         obs = as_tensor(obs.transpose(2, 0, 1).copy())  # Channel-first
