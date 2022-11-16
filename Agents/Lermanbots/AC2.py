@@ -33,7 +33,7 @@ class AC2Agent(torch.nn.Module):
                  ):
         super().__init__()
 
-        self.discrete = discrete   # Continuous supported!
+        self.discrete = discrete and not generate  # Continuous supported!
         self.supervise = supervise  # And classification...
         self.RL = RL or generate
         self.generate = generate  # And generative modeling, too
@@ -45,7 +45,7 @@ class AC2Agent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = num_actions
+        self.num_actions = num_actions  # A bit confusing, also controls number of samples to draw, even for discrete
         self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
 
         self.depth = depth  # Dynamics prediction depth
@@ -59,7 +59,7 @@ class AC2Agent(torch.nn.Module):
             norm = True  # Normalize Obs to range [-1, 1]
 
             # Action = Imagined Obs
-            action_spec.update({'shape': obs_spec.shape, 'discrete_bins': 255,
+            action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
                                 'low': -1, 'high': 1, 'discrete': False})
 
             # Remove encoder, replace trunk with random noise
@@ -74,7 +74,7 @@ class AC2Agent(torch.nn.Module):
             action_spec.low, action_spec.high = (-1, 1) if self.RL else (None, None)
 
         # Continuous -> discrete conversion
-        if self.discrete and not action_spec.discrete_bins:
+        if self.discrete and not action_spec.discrete:
             assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'
 
@@ -267,7 +267,7 @@ class AC2Agent(torch.nn.Module):
 
                 actions = self.actor(obs[:half]).mean
 
-                generated_image = (actions if self.num_actors == 1 or self.discrete
+                generated_image = (actions if self.num_actors == 1
                                    else self.creator(self.critic(obs[:half], actions), 1, actions).best).flatten(1)
 
                 action, reward[:] = obs, 1  # "Real"
