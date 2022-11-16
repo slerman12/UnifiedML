@@ -45,7 +45,7 @@ class AC2Agent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = num_actions  # A bit confusing, also controls number of samples to draw, even for discrete
+        self.num_actions = num_actions
         self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
 
         self.depth = depth  # Dynamics prediction depth
