@@ -103,7 +103,7 @@ class AC2Agent(torch.nn.Module):
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
 
             self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,
-                                       Eyes=torch.nn.Sequential(resnet, Utils.Norm(-3)), parallel=True,
+                                       Eyes=torch.nn.Sequential(resnet, Utils.Norm(-3)), parallel=parallel,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors
