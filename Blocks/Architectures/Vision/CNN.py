@@ -38,7 +38,7 @@ class CNN(nn.Module):
         return Utils.cnn_feature_shape(_, self.CNN, self.project)
 
     def forward(self, *x):
-        lead_shape, x = broadcast(self.input_shape, x)
+        lead_shape, x = cnn_broadcast(self.input_shape, x)
 
         x = self.CNN(x)
         x = self.project(x)
@@ -55,14 +55,15 @@ class Conv(CNN):
                          padding=padding, dilation=dilation, bias=bias)
 
 
-def broadcast(input_shape, x):
+def cnn_broadcast(input_shape, x):
     """
     Accepts multiple inputs in a list and various shape possibilities, infers batch dims.
     Handles broadcasting as follows:
 
-        1. Use raw input if input matches pre-specified input dims
-        2. Otherwise, try un-flatten of last dim into expected spatial dims - depends on pre-specified input dims
-        3. Or, create spatial dims via repetition of last dim = in channels - depends on pre-specified input dims
+        1. Use raw input if input matches pre-specified input shape and includes at least one batch dim
+        2. Otherwise, try to reshape non-batch/channel dims into expected spatial shape
+                                                            - depends on pre-specified input shape
+        3. Or, create spatial dims via repetition of in-channels over space - depends on pre-specified input shape
         4. Altogether ignore if empty
         5. Finally, concatenate along channels
 
@@ -73,15 +74,16 @@ def broadcast(input_shape, x):
 
     # Lead shape for collapsing batch dims
     for input in x:
-        if input.shape[-len(input_shape):] == input_shape:
-            lead_shape = input.shape[:-len(input_shape)]
+        if len(input_shape) < len(input.shape) and input.shape[-len(input_shape):] == input_shape:
+            lead_shape = input.shape[:-len(input_shape)]  # If match, infer dims up to input shape as batch dims
             break
-        lead_shape = input.shape[:-1]
+        lead_shape = input.shape[:-1]  # Otherwise, assume all dims are batch dims except last
 
-    # Broadcast as above
+    # Broadcast as in the docstring above
     x = torch.cat(
-        [input if input.shape[-len(input_shape):] == input_shape
-         else input.unflatten(-1, spatial_shape) if input.shape[-1] == math.prod(spatial_shape)
+        [input if len(input_shape) < len(input.shape) and input.shape[-len(input_shape):] == input_shape
+         else input.view(*lead_shape, -1, *spatial_shape) if math.prod(input.shape[len(lead_shape):]) %
+                                                             math.prod(spatial_shape) == 0
         else input.view(*input.shape, *[1] * len(spatial_shape)).expand(*input.shape, *spatial_shape)
          for input in x if input.nelement() > 0], dim=-len(input_shape))
 

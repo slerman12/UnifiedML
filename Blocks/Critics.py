@@ -39,6 +39,11 @@ class EnsembleQCritic(nn.Module):
         in_shape = action_spec.shape if ignore_obs else [trunk_dim + (0 if discrete  # Not dynamic
                                                                       else self.num_actions * self.action_dim)]
 
+        # for i in range(ensemble_size):
+        #     print(Q_head)  # Q_head gets popped (due to _default_) but not replaced so ends up empty
+        #     bla = Utils.instantiate(Q_head, i, input_shape=in_shape, output_shape=out_shape)
+        #     print(bla)  # TODO Not ensembling correct models
+
         # Ensemble
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_shape=out_shape) or
                                       MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])  # e

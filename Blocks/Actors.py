@@ -37,7 +37,7 @@ class EnsemblePiActor(nn.Module):
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)  # Will be trunk_dim when possible
-        out_shape = [self.num_actions, *action_spec.shape]
+        out_shape = [self.num_actions * action_spec.shape[0] * (1 if stddev_schedule else 2), *action_spec.shape[1:]]
 
         # Ensemble
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_shape=out_shape)
@@ -51,12 +51,12 @@ class EnsemblePiActor(nn.Module):
             self.ema = copy.deepcopy(self).eval()
 
     def forward(self, obs, step=1):
-        obs = self.trunk(obs)
+        obs = self.trunk(obs)  # TODO obs -> h
 
         mean = self.Pi_head(obs).view(obs.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
-            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
+            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]  TODO check if conv channels split not spatial dims
             stddev = log_stddev.exp()  # [b, e, n, d]
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]

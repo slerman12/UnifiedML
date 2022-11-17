@@ -5,7 +5,7 @@
 import torch
 import torch.nn as nn
 
-from Blocks.Architectures.Vision.CNN import AvgPool, broadcast
+from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 
 import Utils
 
@@ -80,7 +80,7 @@ class ConvNeXt(nn.Module):
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        lead_shape, x = broadcast(self.input_shape, x)
+        lead_shape, x = cnn_broadcast(self.input_shape, x)
 
         x = self.ConvNeXt(x)
         x = self.project(x)

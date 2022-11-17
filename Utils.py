@@ -195,14 +195,14 @@ def cnn_layer_feature_shape(*spatial_shape, kernel_size=1, stride=1, padding=0, 
         padding = [padding] * len(axes)
     if type(dilation) is not tuple:
         dilation = [dilation] * len(axes)
-    kernel_size = [min(size, kernel_size[i]) for i, size in enumerate(axes)]  # Assumes adaptive
+    kernel_size = [min(size, kernel_size[i]) for i, size in enumerate(axes)]
     padding = [min(size, padding[i]) for i, size in enumerate(axes)]  # Assumes adaptive
     out_shape = [math.floor(((size + (2 * padding[i]) - (dilation[i] * (kernel_size[i] - 1)) - 1) / stride[i]) + 1)
                  for i, size in enumerate(axes)] + list(spatial_shape[len(axes):])
     return out_shape
 
 
-# Compute the output shape of a whole CNN
+# Compute the output shape of a whole CNN (or other architecture)
 def cnn_feature_shape(chw, *blocks, verbose=False):
     channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
     for block in blocks:
@@ -231,6 +231,13 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
     feature_shape = tuple(size for size in (channels, height, width) if size is not None)
 
     return feature_shape
+
+
+# General-purpose shape pre-computation that uses manual forward pass through model(s)
+def repr_shape(input_shape, *blocks):
+    for block in blocks:
+        input_shape = block(torch.ones(1, *input_shape)).shape[1:]
+    return input_shape
 
 
 # "Ensembles" (stacks) multiple modules' outputs
@@ -373,8 +380,13 @@ ChSwap = ChannelSwap()
 
 
 # Multiples list items or returns item
-def prod(items):
+def prod(items: (int, float, bool, list, tuple)):
     return items if isinstance(items, (int, float, bool)) or items is None else math.prod(items)
+
+
+# Converts lists or scalars to tuple
+def to_tuple(items: (int, float, bool, list, tuple)):
+    return tuple((items,) if isinstance(items, (int, float, bool)) or items is None else items)
 
 
 # Shifts to positive, normalizes to [0, 1]

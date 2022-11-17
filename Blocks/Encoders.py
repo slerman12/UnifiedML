@@ -121,9 +121,10 @@ def adapt_cnn(block, obs_shape):
             block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
 
             # Contract
-            if isinstance(block, nn.Conv2d):
+            if isinstance(block, (nn.Conv2d, nn.ConvTranspose2d)):
                 block.weight = nn.Parameter(block.weight[:, :, :, 0])
-                block._conv_forward = nn.Conv1d._conv_forward.__get__(block, type(block))
+                replace = nn.Conv1d if isinstance(block, nn.Conv2d) else nn.ConvTranspose1d
+                block._conv_forward = replace._conv_forward.__get__(block, type(block))
 
         # Truncate
         if hasattr(block, '_conv_forward'):

@@ -5,7 +5,7 @@
 from torch import nn
 
 from Blocks.Architectures.Residual import Residual
-from Blocks.Architectures.Vision.CNN import AvgPool, broadcast
+from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 
 import Utils
 
@@ -80,7 +80,7 @@ class MiniResNet(nn.Module):
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
-        lead_shape, x = broadcast(self.input_shape, x)
+        lead_shape, x = cnn_broadcast(self.input_shape, x)
 
         x = self.trunk(x)
         x = self.ResNet(x)
