@@ -372,6 +372,11 @@ class ChannelSwap(nn.Module):
 ChSwap = ChannelSwap()
 
 
+# Multiples list items or returns item
+def prod(items):
+    return items if isinstance(items, (int, float, bool)) or items is None else math.prod(items)
+
+
 # Shifts to positive, normalizes to [0, 1]
 class Norm(nn.Module):
     def __init__(self, start_dim=-1):

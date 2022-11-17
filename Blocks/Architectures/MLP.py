@@ -14,7 +14,7 @@ class MLP(nn.Module):
     """
     MLP Architecture generalized to broadcast input shapes
     """
-    def __init__(self, input_shape=(128,), output_dim=1024, hidden_dim=512, depth=1, activation=nn.ReLU(inplace=True),
+    def __init__(self, input_shape=128, output_shape=1024, hidden_dim=512, depth=1, activation=nn.ReLU(inplace=True),
                  dropout=0, binary=False):
         super().__init__()
 
@@ -22,12 +22,12 @@ class MLP(nn.Module):
             else input_shape
         self.input_dim = math.prod(self.input_shape)  # If not already flattened/1D, will try to auto-flatten
 
-        self.output_dim = output_dim
+        self.output_dim = Utils.prod(output_shape)
 
         self.MLP = nn.Sequential(*[
             nn.Sequential(
                 nn.Linear(self.input_dim if i == 0 else hidden_dim,
-                          hidden_dim if i < depth else output_dim),  # Linear
+                          hidden_dim if i < depth else self.output_dim),  # Linear
                 activation if i < depth else nn.Sigmoid() if binary else nn.Identity(),  # Activation
                 nn.Dropout(dropout) if i < depth else nn.Identity())  # Dropout
             for i in range(depth + 1)])
@@ -52,5 +52,5 @@ class MLP(nn.Module):
 
 class Dense(MLP):
     """A fully-connected layer"""
-    def __init__(self, input_shape=128, output_dim=1024):
-        super().__init__(input_shape, output_dim, depth=0)
+    def __init__(self, input_shape=128, output_shape=1024):
+        super().__init__(input_shape, output_shape, depth=0)

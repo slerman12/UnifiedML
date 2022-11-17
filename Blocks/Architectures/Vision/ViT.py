@@ -19,8 +19,10 @@ class ViT(nn.Module):
     Generalized to adapt to arbitrary temporal-spatial dimensions, assumes channels-first
     """
     def __init__(self, input_shape=(32, 7, 7), out_channels=32, patch_size=4, num_heads=None, depth=3, emb_dropout=0.1,
-                 query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls', output_dim=None, fourier=False):
+                 query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls', output_shape=None, fourier=False):
         super().__init__()
+
+        output_dim = Utils.prod(output_shape)
 
         self.num_axes = len(input_shape)
 

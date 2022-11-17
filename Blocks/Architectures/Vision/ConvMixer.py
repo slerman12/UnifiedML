@@ -11,10 +11,12 @@ import Utils
 
 
 class ConvMixer(nn.Module):
-    def __init__(self, input_shape, out_channels=32, depth=3, kernel_size=9, patch_size=7, output_dim=None):
+    def __init__(self, input_shape, out_channels=32, depth=3, kernel_size=9, patch_size=7, output_shape=None):
         super().__init__()
 
         self.input_shape = in_channels, *_ = input_shape
+
+        output_dim = Utils.prod(output_shape)
 
         self.trunk = nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=patch_size, stride=patch_size),
                                    nn.GELU(),

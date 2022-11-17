@@ -95,7 +95,7 @@ class SelfAttentionBlock(AttentionBlock):
 
 
 class LearnableFourierPositionalEncodings(nn.Module):
-    def __init__(self, input_shape=(32,), fourier_dim=None, hidden_dim=None, output_dim=None, channels_first=True):
+    def __init__(self, input_shape=(32,), fourier_dim=None, hidden_dim=None, output_shape=None, channels_first=True):
         """
         Learnable Fourier Features (https://arxiv.org/pdf/2106.02795.pdf)
         Generalized to adapt to arbitrary spatial dimensions. For consistency with Vision models,
@@ -114,7 +114,7 @@ class LearnableFourierPositionalEncodings(nn.Module):
         self.fourier_dim = -(-fourier_dims // 2)  # Round up
 
         self.hidden_dim = hidden_dim or self.input_dim
-        self.output_dim = output_dim or self.input_dim
+        self.output_dim = Utils.prod(output_shape) or self.input_dim
 
         self.scale = 1 / math.sqrt(self.fourier_dim)
 

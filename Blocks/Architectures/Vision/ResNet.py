@@ -40,10 +40,11 @@ class ResidualBlock(nn.Module):
 
 
 class MiniResNet(nn.Module):
-    def __init__(self, input_shape, kernel_size=3, stride=2, dims=None, depths=None, output_dim=None):
+    def __init__(self, input_shape, kernel_size=3, stride=2, dims=None, depths=None, output_shape=None):
         super().__init__()
 
         self.input_shape = input_shape
+        output_dim = Utils.prod(output_shape)
         in_channels = input_shape[0]
 
         if dims is None:

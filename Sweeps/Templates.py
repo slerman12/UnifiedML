@@ -18,7 +18,7 @@ def template(name):
             'bluehive': True,
             'lab': True,
             'write_tabular': False,
-            'steps': 5e5,
+            'steps': None,
             'title': name,
             'x_axis': 'Step',
             'bluehive_only': [],

@@ -30,9 +30,9 @@ class EnsembleQCritic(nn.Module):
         self.ignore_obs = ignore_obs and not discrete
 
         in_dim = math.prod(repr_shape)
-        out_dim = self.num_actions * self.action_dim if discrete else 1
+        out_shape = [self.num_actions, *action_spec.shape] if discrete else [1]
 
-        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_shape=[trunk_dim]) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())  # Not used if ignore obs!
 
         # Continuous action-space Critic gets (obs, action) as input
@@ -40,8 +40,8 @@ class EnsembleQCritic(nn.Module):
                                                                       else self.num_actions * self.action_dim)]
 
         # Ensemble
-        self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_dim=out_dim) or
-                                      MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])  # e
+        self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_shape=out_shape) or
+                                      MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
         # Discrete actions are known a priori
         if discrete and action_spec.discrete:
@@ -67,7 +67,7 @@ class EnsembleQCritic(nn.Module):
 
             if All_Qs is None:
                 # All actions' Q-values
-                All_Qs = self.Q_head(h).unflatten(-1, [self.num_actions, self.action_dim])  # [b, e, n, d]
+                All_Qs = self.Q_head(h).view(batch_size, -1, self.num_actions, self.action_dim)  # [b, e, n, d]
 
             if action is None:
                 # All actions

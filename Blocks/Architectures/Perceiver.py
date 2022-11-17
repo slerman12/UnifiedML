@@ -18,7 +18,7 @@ class Perceiver(nn.Module):
     """Perceiver (https://arxiv.org/abs/2103.03206) (https://arxiv.org/abs/2107.14795)
     Generalized to arbitrary spatial dimensions, dimensionality-agnostic I/O w.r.t. state dict.
     For consistency with Vision models, assumes channels-first!"""
-    def __init__(self, input_shape=(64,), num_tokens=64, num_heads=None, token_dim=None, output_dim=None,
+    def __init__(self, input_shape=(64,), num_tokens=64, num_heads=None, token_dim=None, output_shape=None,
                  depths=None, recursions=None, learnable_tokens=True, channels_first=True,
                  learnable_positional_encodings=False, positional_encodings=True):
         super().__init__()
@@ -40,7 +40,7 @@ class Perceiver(nn.Module):
         self.channels_first = channels_first
 
         self.num_tokens = num_tokens
-        self.output_dim = output_dim
+        self.output_dim = Utils.prod(output_shape)
 
         shape = Utils.cnn_feature_shape(input_shape, self.positional_encodings)
 

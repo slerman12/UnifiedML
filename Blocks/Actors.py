@@ -33,15 +33,15 @@ class EnsemblePiActor(nn.Module):
 
         in_dim = math.prod(repr_shape)
 
-        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_dim=trunk_dim) or nn.Sequential(
+        self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_shape=[trunk_dim]) or nn.Sequential(
             nn.Flatten(), nn.Linear(in_dim, trunk_dim), nn.LayerNorm(trunk_dim), nn.Tanh())
 
         in_shape = Utils.cnn_feature_shape(repr_shape, self.trunk)  # Will be trunk_dim when possible
-        out_dim = self.num_actions * self.action_dim
+        out_shape = [self.num_actions, *action_spec.shape]
 
         # Ensemble
-        self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_dim=out_dim)
-                                       or MLP(in_shape, out_dim, hidden_dim, 2) for i in range(ensemble_size)])
+        self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_shape=out_shape)
+                                       or MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -53,7 +53,7 @@ class EnsemblePiActor(nn.Module):
     def forward(self, obs, step=1):
         obs = self.trunk(obs)
 
-        mean = self.Pi_head(obs).unflatten(-1, (self.num_actions, self.action_dim))  # [b, e, n, d or 2 * d]
+        mean = self.Pi_head(obs).view(obs.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]

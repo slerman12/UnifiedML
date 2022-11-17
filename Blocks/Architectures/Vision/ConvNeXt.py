@@ -38,10 +38,11 @@ class ConvNeXt(nn.Module):
     """
     ConvNeXt  `A ConvNet for the 2020s` (https://arxiv.org/pdf/2201.03545.pdf)
     """
-    def __init__(self, input_shape, dims=None, depths=None, output_dim=None):
+    def __init__(self, input_shape, dims=None, depths=None, output_shape=None):
         super().__init__()
 
         self.input_shape = input_shape
+        output_dim = Utils.prod(output_shape)
         channels_in = input_shape[0]
 
         if dims is None:

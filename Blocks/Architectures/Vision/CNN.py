@@ -8,11 +8,13 @@ import Utils
 
 class CNN(nn.Module):
     def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, last_relu=True,
-                 kernel_size=3, stride=2, padding=0, dilation=1, groups=1, bias=True, output_dim=None):
+                 kernel_size=3, stride=2, padding=0, dilation=1, groups=1, bias=True, output_shape=None):
         super().__init__()
 
         if isinstance(input_shape, int):
             input_shape = [input_shape]
+
+        output_dim = Utils.prod(output_shape)
 
         in_channels, *_ = self.input_shape = torch.Size(input_shape)
 
