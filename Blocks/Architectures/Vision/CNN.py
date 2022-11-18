@@ -7,16 +7,16 @@ import Utils
 
 
 class CNN(nn.Module):
+    """
+    A Convolutional Neural Network.
+    """
     def __init__(self, input_shape, out_channels=32, depth=3, batch_norm=False, last_relu=True,
                  kernel_size=3, stride=2, padding=0, dilation=1, groups=1, bias=True, output_shape=None):
         super().__init__()
 
-        if isinstance(input_shape, int):
-            input_shape = [input_shape]
+        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)  # TODO output_shape
 
-        output_dim = Utils.prod(output_shape)
-
-        in_channels, *_ = self.input_shape = torch.Size(input_shape)
+        in_channels = self.input_shape[0]
 
         self.CNN = nn.Sequential(
             *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else out_channels,
@@ -26,26 +26,27 @@ class CNN(nn.Module):
                             nn.ReLU() if i < depth or last_relu else nn.Identity()) for i in range(depth + 1)],
         )
 
-        if output_dim is not None:
-            shape = Utils.cnn_feature_shape(input_shape, self.CNN)
+        self.repr = nn.Identity()  # Optional output projection
 
-        self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(nn.Flatten(), nn.Linear(math.prod(shape), 50), nn.ReLU(), nn.Linear(50, output_dim))
+        if output_dim is not None:
+            # Optional output projection
+            self.repr = nn.Sequential(nn.Flatten(), nn.Linear(math.prod(self.repr_shape(input_shape)), 50), nn.ReLU(),
+                                      nn.Linear(50, output_dim))
 
         self.apply(Utils.weight_init)
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.CNN, self.project)
+        return Utils.cnn_feature_shape(_, self.CNN, self.repr)
 
     def forward(self, *x):
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 
         x = self.CNN(x)
-        x = self.project(x)
+        x = self.repr(x)  # Optional output projection
 
         # Restore lead dims
         out = x.view(*lead_shape, *x.shape[1:])
-
         return out
 
 

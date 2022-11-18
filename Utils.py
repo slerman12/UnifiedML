@@ -384,9 +384,9 @@ def prod(items: (int, float, bool, list, tuple)):
     return items if isinstance(items, (int, float, bool)) or items is None else math.prod(items)
 
 
-# Converts lists or scalars to tuple
+# Converts lists or scalars to tuple, preserving NoneType
 def to_tuple(items: (int, float, bool, list, tuple)):
-    return tuple((items,) if isinstance(items, (int, float, bool)) or items is None else items)
+    return None if items is None else (items,) if isinstance(items, (int, float, bool)) else tuple(items)
 
 
 # Shifts to positive, normalizes to [0, 1]
