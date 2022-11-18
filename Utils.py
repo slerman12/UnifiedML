@@ -233,7 +233,7 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
     return feature_shape
 
 
-# General-purpose shape pre-computation that uses manual forward pass through model(s)
+# General-purpose shape pre-computation. Unlike above, uses manual forward pass through model(s).
 def repr_shape(input_shape, *blocks):
     for block in blocks:
         input_shape = block(torch.ones(1, *input_shape)).shape[1:]
@@ -379,14 +379,14 @@ class ChannelSwap(nn.Module):
 ChSwap = ChannelSwap()
 
 
-# Multiples list items or returns item
-def prod(items: (int, float, bool, list, tuple)):
-    return items if isinstance(items, (int, float, bool)) or items is None else math.prod(items)
-
-
 # Converts lists or scalars to tuple, preserving NoneType
 def to_tuple(items: (int, float, bool, list, tuple)):
     return None if items is None else (items,) if isinstance(items, (int, float, bool)) else tuple(items)
+
+
+# Multiples list items or returns item
+def prod(items: (int, float, bool, list, tuple)):
+    return items if isinstance(items, (int, float, bool)) or items is None else math.prod(items)
 
 
 # Shifts to positive, normalizes to [0, 1]

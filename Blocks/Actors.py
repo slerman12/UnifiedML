@@ -51,9 +51,9 @@ class EnsemblePiActor(nn.Module):
             self.ema = copy.deepcopy(self).eval()
 
     def forward(self, obs, step=1):
-        obs = self.trunk(obs)  # TODO obs -> h
+        h = self.trunk(obs)
 
-        mean = self.Pi_head(obs).view(obs.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
+        mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]  TODO check if conv channels split not spatial dims
