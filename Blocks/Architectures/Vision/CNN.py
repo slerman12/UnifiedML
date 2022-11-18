@@ -30,8 +30,8 @@ class CNN(nn.Module):
 
         if output_dim is not None:
             # Optional output projection
-            self.repr = nn.Sequential(nn.Flatten(), nn.Linear(math.prod(self.repr_shape(input_shape)), 50), nn.ReLU(),
-                                      nn.Linear(50, output_dim))
+            self.repr = nn.Sequential(nn.Flatten(), nn.Linear(math.prod(self.repr_shape(*self.input_shape)), 50),
+                                      nn.ReLU(), nn.Linear(50, output_dim))
 
         self.apply(Utils.weight_init)
 

@@ -35,10 +35,9 @@ class CNNTranspose(nn.Module):
         self.repr = nn.Identity()  # Optional output projection
 
         if output_shape is not None:
-            shape = self.repr_shape(*self.input_shape)
-
             # Optional output projection
-            self.repr = nn.Sequential(nn.Flatten(), nn.Linear(math.prod(shape), math.prod(output_shape)))
+            self.repr = nn.Sequential(nn.Flatten(), nn.Linear(math.prod(self.repr_shape(*self.input_shape)),
+                                                              math.prod(self.output_shape)))
 
         self.apply(Utils.weight_init)
 

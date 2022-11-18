@@ -108,6 +108,9 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
 
 # Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
+    if isinstance(args, (DictConfig, dict)):
+        args = DictConfig(args)  # Non-destructive copy
+
     if hasattr(args, '_override_'):
         kwargs.update(args.pop('_override_'))  # For loading old models with new, overridden args
 
