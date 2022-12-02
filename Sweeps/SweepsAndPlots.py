@@ -25,7 +25,7 @@ runs = template('Example')
 runs.Example.plots = [
     ['.*Test1'],
 ]
-# runs.Example.title = 'A Good Ol\' Test'
+# runs.Example.title = 'A Good Ol\' Thing'
 
 runs.Example.bluehive = False
 
@@ -34,7 +34,8 @@ runs.Example.bluehive = False
 # from Sweeps.XRD.LATT import runs
 # from Sweeps.UnifiedML.ClassifyRL import runs
 # from Sweeps.UnifiedML.Atari import runs
-from Sweeps.UnifiedML.Mario import runs
+# from Sweeps.UnifiedML.Mario import runs
+from Sweeps.UnifiedML.AtariAgain import runs
 
 
 runs = convert_to_attr_dict(runs)  # Necessary if runs is defined as a dict!

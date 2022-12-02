@@ -1068,7 +1068,7 @@ This will initiate a classify task on the custom-defined [```TinyImageNet```](Da
 
 By default, the task name will appear as the Dataset class name (in the above examples, "```MNIST```" and "```TinyImageNet```"). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
 
-:dizzy: **UnifiedML is compatible with datasets & domains beyond Vision.**
+**UnifiedML is compatible with datasets & domains beyond Vision.**
 
 Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the default CNN architecture on raw 1D Audio:
 

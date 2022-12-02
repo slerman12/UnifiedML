@@ -33,5 +33,4 @@ runs.UnifiedML.plots = [
 
 runs.UnifiedML.bluehive = False
 runs.UnifiedML.title = 'Mario'
-runs.UnifiedML.steps = 5e5
 
