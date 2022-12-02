@@ -1084,7 +1084,7 @@ Gets a perfect score on speech command classification.
 </summary>
 <br>
 
-For a non-Vision/Audio tutorial, see our full [end-to-end example](https://www.github.com/agi-init/XRD) of Crystalographic-Structure-And-Space-Group classification, in which we fully reproduce the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() in a single succinct file with some UnifiedML commands. The custom Crystal & Space Groups dataset will be downloaded automatically in the example.
+For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://www.github.com/agi-init/XRD) in the domain of Crystalographic-Structure-And-Space-Group classification, reproducing the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() with UnifiedML commands.
 
 > &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
 
