@@ -48,23 +48,21 @@ class ConvNeXt(nn.Module):
         in_channels = self.input_shape[0]
 
         if dims is None:
-            dims = [96, 192, 32]
+            dims = [96]
 
         dims = [in_channels] + list(dims)
 
         if depths is None:
-            depths = [1, 1, 3]
+            depths = [1]
 
-        self.ConvNeXt = nn.Sequential(*[nn.Sequential(Print(),nn.Conv2d(dims[i],
+        self.ConvNeXt = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
                                                                 dims[i + 1],
                                                                 kernel_size=4 if i == 0 else 2,
                                                                 stride=4 if i == 0 else 2),  # Conv
-                                                      Print(),
                                                       nn.Sequential(Utils.ChannelSwap(),
                                                                     nn.LayerNorm(dims[i + 1]),
                                                                     Utils.ChannelSwap()) if i < len(depths) - 1
                                                       else nn.Identity(),  # LayerNorm
-                                                      Print(),
                                                       *[ConvNeXtBlock(dims[i + 1])
                                                         for _ in range(depth)])  # Conv, MLP, Residuals
                                         for i, depth in enumerate(depths)])
@@ -101,7 +99,6 @@ class ConvNeXtTiny(ConvNeXt):
         super().__init__(input_shape, [96, 192, 384, 768], [3, 3, 9, 3], output_dim)
 
 
-class Print(nn.Module):
-    def forward(self, x):
-        print(x.shape)
-        return x
+class ConvNeXtBase(ConvNeXt):
+    def __init__(self, input_shape, output_dim=None):
+        super().__init__(input_shape, [128, 256, 512, 1024], [3, 3, 27, 3], output_dim)  # Full Model

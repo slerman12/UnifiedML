@@ -10,7 +10,7 @@ from Blocks.Architectures.Residual import Residual
 
 from Blocks.Architectures.Vision.ResNet import MiniResNet, MiniResNet as ResNet, ResNet18, ResNet50
 from Blocks.Architectures.Vision.ConvMixer import ConvMixer
-from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt, ConvNeXtTiny
+from Blocks.Architectures.Vision.ConvNeXt import ConvNeXt, ConvNeXtTiny, ConvNeXtBase
 
 from Blocks.Architectures.MultiHeadAttention import Attention, MHDPA, CrossAttention, SelfAttention, ReLA
 

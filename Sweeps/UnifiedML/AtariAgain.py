@@ -11,7 +11,6 @@ runs.UnifiedML.sweep = [
     save_per_steps=500000 
     replay.save=true
     'stddev_schedule="linear(1.0,0.1,800000)"'
-    replay.capacity=4000000
     frame_stack=4
     nstep=3
     Agent=Agents.AC2Agent 
@@ -20,7 +19,7 @@ runs.UnifiedML.sweep = [
     lab=true
     mem=50
     """,
-]
+]  # Replay capacity is  1000000
 
 
 runs.UnifiedML.plots = [
