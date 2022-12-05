@@ -50,7 +50,7 @@ class ConvNeXt(nn.Module):
         if dims is None:
             dims = [96, 192, 32]
 
-        dims = [in_channels] + dims
+        dims = [in_channels] + list(dims)
 
         if depths is None:
             depths = [1, 1, 3]
