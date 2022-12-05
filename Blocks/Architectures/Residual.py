@@ -11,17 +11,19 @@ import Utils
 
 class Residual(nn.Module):
     """
-    Residual with support for command-line instantiation
+    Residual with support for command-line instantiation and down-sampling
     """
     def __init__(self, model, down_sample=None, **kwargs):
         super().__init__()
 
+        # Can pass a model in as an argument or via the command-line syntax
         self.model = Utils.instantiate(OmegaConf.create({'_target_': model}), **kwargs) if isinstance(model, str) \
             else model
 
         if 'input_shape' in kwargs:
             kwargs['output_shape'] = self.repr_shape(*kwargs['input_shape'])
 
+        # Can pass a down-sampling model in as an argument or via the command-line syntax
         self.down_sample = Utils.instantiate(OmegaConf.create({'_target_': down_sample}),
                                              **kwargs) if isinstance(down_sample, str) \
             else down_sample

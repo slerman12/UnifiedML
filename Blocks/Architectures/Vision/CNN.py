@@ -14,7 +14,7 @@ class CNN(nn.Module):
                  kernel_size=3, stride=2, padding=0, dilation=1, groups=1, bias=True, output_shape=None):
         super().__init__()
 
-        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)  # TODO output_shape
+        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
 
         in_channels = self.input_shape[0]
 

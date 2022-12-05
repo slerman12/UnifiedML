@@ -14,38 +14,37 @@ class ConvMixer(nn.Module):
     def __init__(self, input_shape, out_channels=32, depth=3, kernel_size=9, patch_size=7, output_shape=None):
         super().__init__()
 
-        self.input_shape = in_channels, *_ = input_shape
+        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
 
-        output_dim = Utils.prod(output_shape)
+        in_channels = self.input_shape[0]
 
-        self.trunk = nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=patch_size, stride=patch_size),
-                                   nn.GELU(),
-                                   nn.BatchNorm2d(out_channels))
-
-        self.ConvMixer = nn.Sequential(*[nn.Sequential(
-            Residual(nn.Sequential(
-                nn.Conv2d(out_channels, out_channels, kernel_size, groups=out_channels, padding="same"),
+        self.ConvMixer = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=patch_size, stride=patch_size),
+            nn.GELU(),
+            nn.BatchNorm2d(out_channels),
+            *[nn.Sequential(
+                Residual(nn.Sequential(
+                    nn.Conv2d(out_channels, out_channels, kernel_size, groups=out_channels, padding="same"),
+                    nn.GELU(),
+                    nn.BatchNorm2d(out_channels)
+                )),
+                nn.Conv2d(out_channels, out_channels, kernel_size=1),
                 nn.GELU(),
                 nn.BatchNorm2d(out_channels)
-            )),
-            nn.Conv2d(out_channels, out_channels, kernel_size=1),
-            nn.GELU(),
-            nn.BatchNorm2d(out_channels)
-        ) for _ in range(depth)])
+            ) for _ in range(depth)])
 
-        self.project = nn.Identity() if output_dim is None \
+        self.repr = nn.Identity() if output_dim is None \
             else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.trunk, self.ConvMixer, self.project)
+        return Utils.cnn_feature_shape(_, self.ConvMixer, self.repr)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 
-        x = self.trunk(x)
         x = self.ConvMixer(x)
-        x = self.project(x)
+        x = self.repr(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

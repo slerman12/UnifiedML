@@ -31,7 +31,9 @@ class ConvNeXtBlock(nn.Module):
         x = self.mlp(x)
         x = self.gamma * x
         x = x.transpose(1, -1)  # Channel swap
-        return x + input
+        assert x.shape == input.shape, \
+            f'Could not apply residual to shapes {input.shape} and {x.shape}'  # Can fail for low-resolutions e.g. MNIST
+        return x + input  # Can add DropPath on x (e.g. github.com/facebookresearch/ConvNeXt)
 
 
 class ConvNeXt(nn.Module):
@@ -41,32 +43,36 @@ class ConvNeXt(nn.Module):
     def __init__(self, input_shape, dims=None, depths=None, output_shape=None):
         super().__init__()
 
-        self.input_shape = input_shape
-        output_dim = Utils.prod(output_shape)
-        channels_in = input_shape[0]
+        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
+
+        in_channels = self.input_shape[0]
 
         if dims is None:
             dims = [96, 192, 32]
 
-        dims = [channels_in] + dims
+        dims = [in_channels] + dims
 
         if depths is None:
             depths = [1, 1, 3]
 
-        self.ConvNeXt = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
+        self.ConvNeXt = nn.Sequential(*[nn.Sequential(Print(),nn.Conv2d(dims[i],
                                                                 dims[i + 1],
                                                                 kernel_size=4 if i == 0 else 2,
                                                                 stride=4 if i == 0 else 2),  # Conv
+                                                      Print(),
                                                       nn.Sequential(Utils.ChannelSwap(),
                                                                     nn.LayerNorm(dims[i + 1]),
-                                                                    Utils.ChannelSwap()) if i < 3
+                                                                    Utils.ChannelSwap()) if i < len(depths) - 1
                                                       else nn.Identity(),  # LayerNorm
+                                                      Print(),
                                                       *[ConvNeXtBlock(dims[i + 1])
                                                         for _ in range(depth)])  # Conv, MLP, Residuals
                                         for i, depth in enumerate(depths)])
 
-        self.project = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
+        self.repr = nn.Identity()
+
+        if output_dim is not None:
+            self.repr = nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
 
         def weight_init(m):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
@@ -76,16 +82,16 @@ class ConvNeXt(nn.Module):
         self.apply(weight_init)
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.ConvNeXt, self.project)
+        return Utils.cnn_feature_shape(_, self.ConvNeXt, self.repr)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 
         x = self.ConvNeXt(x)
-        x = self.project(x)
+        x = self.repr(x)
 
-        # Restore leading dims
+        # Restore lead dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
 
@@ -93,3 +99,9 @@ class ConvNeXt(nn.Module):
 class ConvNeXtTiny(ConvNeXt):
     def __init__(self, input_shape, output_dim=None):
         super().__init__(input_shape, [96, 192, 384, 768], [3, 3, 9, 3], output_dim)
+
+
+class Print(nn.Module):
+    def forward(self, x):
+        print(x.shape)
+        return x
