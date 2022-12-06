@@ -8,7 +8,8 @@ import warnings
 import torch
 from torch.nn.functional import cross_entropy
 
-from Blocks.Architectures import MLP
+from Blocks.Architectures import MLP, Residual
+from Blocks.Architectures.Vision.CNN import CNN
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
@@ -100,7 +101,8 @@ class AC2Agent(torch.nn.Module):
 
             shape[0] += self.action_dim  # Predicting from obs and action
 
-            resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
+            # resnet = MiniResNet(input_shape=shape, stride=1, dims=(64, self.encoder.feature_shape[0]), depths=(1,))
+            resnet = Residual(CNN(input_shape=shape, kernel_size=3, padding=1, stride=1, depth=2))
 
             self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,  # TODO Debug
                                        Eyes=torch.nn.Sequential(resnet, Utils.Norm(-3)), parallel=parallel,

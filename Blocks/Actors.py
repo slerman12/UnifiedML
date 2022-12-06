@@ -56,7 +56,7 @@ class EnsemblePiActor(nn.Module):
         mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
-            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]  TODO check if conv channels split not spatial dims
+            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
             stddev = log_stddev.exp()  # [b, e, n, d]
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
