@@ -40,20 +40,14 @@ class ConvNeXt(nn.Module):
     """
     ConvNeXt  `A ConvNet for the 2020s` (https://arxiv.org/pdf/2201.03545.pdf)
     """
-    def __init__(self, input_shape, dims=None, depths=None, output_shape=None):
+    def __init__(self, input_shape, dims=(96,), depths=(1,), output_shape=None):
         super().__init__()
 
         self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
 
         in_channels = self.input_shape[0]
 
-        if dims is None:
-            dims = [96]
-
-        dims = [in_channels] + list(dims)
-
-        if depths is None:
-            depths = [1]
+        dims = [in_channels, *dims]
 
         self.ConvNeXt = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
                                                                 dims[i + 1],
@@ -67,9 +61,10 @@ class ConvNeXt(nn.Module):
                                                         for _ in range(depth)])  # Conv, MLP, Residuals
                                         for i, depth in enumerate(depths)])
 
-        self.repr = nn.Identity()
+        self.repr = nn.Identity()  # Optional output projection
 
         if output_dim is not None:
+            # Optional output projection
             self.repr = nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
 
         def weight_init(m):

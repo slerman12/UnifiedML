@@ -51,7 +51,7 @@ class MiniResNet(nn.Module):
         in_channels = self.input_shape[0]
 
         if kernel_size % 2 == 0:
-            kernel_size += 1  # Odd kernel values
+            kernel_size += 1  # Odd kernel value
 
         # ResNet
         self.ResNet = nn.Sequential(nn.Conv2d(in_channels, dims[0],
@@ -66,7 +66,7 @@ class MiniResNet(nn.Module):
                                       for i, depth in enumerate(depths)])
 
         self.repr = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
+            else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))  # Project to desired shape
 
     def repr_shape(self, *_):
         return Utils.cnn_feature_shape(_, self.ResNet, self.repr)
