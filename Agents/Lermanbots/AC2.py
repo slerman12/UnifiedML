@@ -93,14 +93,15 @@ class AC2Agent(torch.nn.Module):
         # Dynamics
         if self.depth and not self.generate:
             in_shape = list(self.encoder.feature_shape)
-            in_shape[0] += self.action_dim  # Predicting from obs and action
-
-            cnn = Residual(CNN(in_shape, self.encoder.feature_shape[0], padding=1, stride=1, depth=2))
 
             # Action -> One-Hot, if single-dim discrete, otherwise action shape
             self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
                 else self.actor.num_actions * self.actor.action_dim if self.discrete_as_continuous \
                 else self.actor.action_dim
+
+            in_shape[0] += self.action_dim  # Predicting from obs and action
+
+            cnn = Residual(CNN(in_shape, self.encoder.feature_shape[0], padding=1, stride=1, depth=2))
 
             self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,  # TODO Debug
                                        Eyes=cnn, parallel=parallel,
