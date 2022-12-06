@@ -71,7 +71,6 @@ class Environment:
                 self.env.reset()
 
         agent.episode += agent.training * self.episode_done  # Increment agent episode
-        print(agent.step, agent.episode)
 
         # Tally time
         self.episode_step += step

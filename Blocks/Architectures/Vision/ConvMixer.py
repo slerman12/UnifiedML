@@ -34,7 +34,7 @@ class ConvMixer(nn.Module):
             ) for _ in range(depth)])
 
         self.repr = nn.Identity() if output_dim is None \
-            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))  # Project to desired shape
+            else nn.Sequential(AvgPool(), nn.Linear(out_channels, output_dim))  # Optional output projection
 
     def repr_shape(self, *_):
         return Utils.cnn_feature_shape(_, self.ConvMixer, self.repr)
