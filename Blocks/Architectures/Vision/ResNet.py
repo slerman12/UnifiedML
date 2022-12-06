@@ -10,7 +10,7 @@ from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 import Utils
 
 
-class ResidualBlock(nn.Module):
+class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, down_sample=None):
         super().__init__()
 
@@ -19,72 +19,64 @@ class ResidualBlock(nn.Module):
                                                   kernel_size=1, stride=stride, bias=False),
                                         nn.BatchNorm2d(out_channels))
 
-        pre_residual = nn.Sequential(nn.Conv2d(in_channels, out_channels,
-                                               kernel_size=kernel_size, padding=kernel_size // 2,
-                                               stride=stride, bias=False),
-                                     nn.BatchNorm2d(out_channels),
-                                     nn.ReLU(inplace=True),
-                                     nn.Conv2d(out_channels, out_channels,
-                                               kernel_size=kernel_size, padding=kernel_size // 2,
-                                               bias=False),
-                                     nn.BatchNorm2d(out_channels))
+        block = nn.Sequential(nn.Conv2d(in_channels, out_channels,
+                                        kernel_size=kernel_size, padding=kernel_size // 2,
+                                        stride=stride, bias=False),
+                              nn.BatchNorm2d(out_channels),
+                              nn.ReLU(inplace=True),
+                              nn.Conv2d(out_channels, out_channels,
+                                        kernel_size=kernel_size, padding=kernel_size // 2,
+                                        bias=False),
+                              nn.BatchNorm2d(out_channels))
 
-        self.Residual_block = nn.Sequential(Residual(pre_residual, down_sample),
-                                            nn.ReLU(inplace=True))
+        self.ResBlock = nn.Sequential(Residual(block, down_sample),
+                                      nn.ReLU(inplace=True))
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.Residual_block)
+        return Utils.cnn_feature_shape(_, self.ResBlock)
 
     def forward(self, x):
-        return self.Residual_block(x)
+        return self.ResBlock(x)
 
 
 class MiniResNet(nn.Module):
-    def __init__(self, input_shape, kernel_size=3, stride=2, dims=None, depths=None, output_shape=None):
+    """
+    A ResNet backbone with computationally-efficient defaults.
+    """
+    def __init__(self, input_shape, kernel_size=3, stride=2, dims=(32, 32), depths=(3,), output_shape=None):
         super().__init__()
 
-        self.input_shape = input_shape
-        output_dim = Utils.prod(output_shape)
-        in_channels = input_shape[0]
+        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
 
-        if dims is None:
-            dims = [32, 32]  # MiniResNet
-        self.dims = dims
-
-        if depths is None:
-            depths = [3]  # MiniResNet
-        self.depths = depths
+        in_channels = self.input_shape[0]
 
         if kernel_size % 2 == 0:
-            kernel_size += 1
+            kernel_size += 1  # Odd kernel values
 
-        self.trunk = nn.Sequential(nn.Conv2d(in_channels, dims[0],
-                                             kernel_size=kernel_size, padding=1, bias=False),
-                                             # kernel_size=7, stride=2, padding=3, bias=False),  # Pytorch settings
-                                   nn.BatchNorm2d(dims[0]),
-                                   nn.ReLU(inplace=True),
-                                   # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-                                   )
-
-        # CNN ResNet
-        self.ResNet = nn.Sequential(*[nn.Sequential(*[ResidualBlock(dims[i + (j > 0)], dims[i + 1], kernel_size,
-                                                                    1 + (stride - 1) * (i > 0 and j > 0))
+        # ResNet
+        self.ResNet = nn.Sequential(nn.Conv2d(in_channels, dims[0],
+                                              kernel_size=kernel_size, padding=1, bias=False),
+                                    # kernel_size=7, stride=2, padding=3, bias=False),  # Common settings
+                                    nn.BatchNorm2d(dims[0]),
+                                    nn.ReLU(inplace=True),
+                                    # nn.MaxPool2d(kernel_size=3, stride=2, padding=1),  # Common settings
+                                    *[nn.Sequential(*[ResBlock(dims[i + (j > 0)], dims[i + 1], kernel_size,
+                                                               1 + (stride - 1) * (i > 0 and j > 0))
                                                       for j in range(depth)])
                                       for i, depth in enumerate(depths)])
 
-        self.project = nn.Identity() if output_dim is None \
+        self.repr = nn.Identity() if output_dim is None \
             else nn.Sequential(AvgPool(), nn.Linear(dims[-1], output_dim))
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, self.trunk, self.ResNet, self.project)
+        return Utils.cnn_feature_shape(_, self.ResNet, self.repr)
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 
-        x = self.trunk(x)
         x = self.ResNet(x)
-        x = self.project(x)
+        x = self.repr(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

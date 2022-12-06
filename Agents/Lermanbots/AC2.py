@@ -8,8 +8,7 @@ import warnings
 import torch
 from torch.nn.functional import cross_entropy
 
-from Blocks.Architectures import MLP, Residual
-from Blocks.Architectures.Vision.CNN import CNN
+from Blocks.Architectures import MLP
 from Blocks.Architectures.Vision.ResNet import MiniResNet
 
 import Utils
@@ -92,19 +91,20 @@ class AC2Agent(torch.nn.Module):
 
         # Dynamics
         if self.depth and not self.generate:
-            in_shape = list(self.encoder.feature_shape)
+            shape = list(self.encoder.feature_shape)
 
             # Action -> One-Hot, if single-dim discrete, otherwise action shape
             self.action_dim = action_spec.discrete_bins if self.discrete and action_spec.shape == (1,) \
                 else self.actor.num_actions * self.actor.action_dim if self.discrete_as_continuous \
                 else self.actor.action_dim
 
-            in_shape[0] += self.action_dim  # Predicting from obs and action
+            shape[0] += self.action_dim  # Predicting from obs and action
 
-            cnn = Residual(CNN(in_shape, self.encoder.feature_shape[0], padding=1, stride=1, depth=2))
+            resnet = MiniResNet(input_shape=shape, stride=1, dims=(32, self.encoder.feature_shape[0]), depths=(1,))
+            # cnn = Residual(CNN(shape, self.encoder.feature_shape[0], padding=1, stride=1, depth=2))
 
             self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,  # TODO Debug
-                                       Eyes=cnn, parallel=parallel,
+                                       Eyes=resnet, parallel=parallel,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
             # Self supervisors

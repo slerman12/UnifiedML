@@ -58,15 +58,16 @@ class Conv(CNN):
 
 def cnn_broadcast(input_shape, x):
     """
-    Accepts multiple inputs in a list and various shape possibilities, infers batch dims.
-    Handles broadcasting as follows:
+    Concatenates multiple CNN inputs into one and can broadcast them when the inputs don't match cleanly.
+    For example, pairing an image with an action. Re-broadcasts unexpected shapes as well, such as flattened images.
+
+    Accepts multiple inputs in a list and various shape possibilities. Handles broadcasting as follows:
 
         1. Use raw input if input matches pre-specified input shape and includes at least one batch dim
-        2. Otherwise, try to reshape non-batch/channel dims into expected spatial shape
-                                                            - depends on pre-specified input shape
-        3. Or, create spatial dims via repetition of in-channels over space - depends on pre-specified input shape
-        4. Altogether ignore if empty
-        5. Finally, concatenate along channels
+        2. Otherwise, try to reshape spatial dims into expected spatial shape
+        3. Or, if not possible, create spatial dims via repetition of input over space
+        4. Altogether ignore if input empty
+        5. Concatenate inputs along channel axis
 
     Allows images to be paired with lower-dim contexts or other images, inferring if lower-dim or even flattened.
     """
