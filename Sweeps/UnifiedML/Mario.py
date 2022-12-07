@@ -20,7 +20,7 @@ runs.UnifiedML.sweep = [
     save_per_steps=500000 
     Agent=Agents.AC2Agent 
     experiment=Self-Supervised_Mario 
-    +agent.depth=5 
+    +agent.depth=3
     parallel=true
     """
 ]

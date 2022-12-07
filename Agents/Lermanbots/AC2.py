@@ -23,7 +23,8 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 class AC2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2) - Best of all worlds (paper link)
-    Dynamics-learning w/ multiple critics/actors for RL, classification, and generative modeling; deux-sampling"""
+    Dynamics-learning w/ multiple critics/actors for RL, classification, and generative modeling;
+    action space conversions"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
@@ -101,9 +102,8 @@ class AC2Agent(torch.nn.Module):
             shape[0] += self.action_dim  # Predicting from obs and action
 
             resnet = MiniResNet(input_shape=shape, stride=1, dims=(32, self.encoder.feature_shape[0]), depths=(1,))
-            # cnn = Residual(CNN(shape, self.encoder.feature_shape[0], padding=1, stride=1, depth=2))
 
-            self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,  # TODO Debug
+            self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,
                                        Eyes=resnet, parallel=parallel,
                                        lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
