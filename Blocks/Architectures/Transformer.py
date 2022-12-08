@@ -89,7 +89,7 @@ class CrossAttentionBlock(AttentionBlock):
 
 
 class SelfAttentionBlock(AttentionBlock):
-    """A.K.A. a Transformer pre-norm block, same as the Cross-Attention Block except input=context"""
+    """A.K.A. a Transformer pre-norm block, same as the Cross-Attention Block except input = context"""
     def forward(self, input, *_):
         return super().forward(input)
 

@@ -14,7 +14,7 @@ import Utils
 
 
 class EnsembleQCritic(nn.Module):
-    """Ensemble Q-learning, generalized to discrete or continuous action spaces."""
+    """Ensemble Q-learning, generalized for discrete or continuous action spaces."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Q_head=None, ensemble_size=2,
                  discrete=False, ignore_obs=False, optim=None, scheduler=None, lr=None, lr_decay_epochs=None,
                  weight_decay=None, ema_decay=None):
@@ -80,7 +80,6 @@ class EnsembleQCritic(nn.Module):
 
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
-            # TODO If dynamic trunk_dim, -1 -> *h.shape[1:]
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)  # One for each action
 
             # Q-values for continuous action(s)

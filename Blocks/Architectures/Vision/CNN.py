@@ -51,9 +51,22 @@ class CNN(nn.Module):
 
 
 class Conv(CNN):
+    """A single conv layer"""
     def __init__(self, input_shape, out_channels=32, kernel_size=3, stride=2, padding=0, dilation=1, bias=True):
         super().__init__(input_shape, out_channels, depth=0, last_relu=False, kernel_size=kernel_size, stride=stride,
                          padding=padding, dilation=dilation, bias=bias)
+
+
+class AvgPool(nn.Module):
+    """Simple average pooling layer"""
+    def __init__(self, **_):
+        super().__init__()
+
+    def repr_shape(self, dim, *_):
+        return dim,
+
+    def forward(self, input):
+        return input.mean(tuple(range(2, len(input.shape))))
 
 
 def cnn_broadcast(input_shape, x):
@@ -93,14 +106,3 @@ def cnn_broadcast(input_shape, x):
     x = x.view(-1, *x.shape[-len(input_shape):])
 
     return lead_shape, x
-
-
-class AvgPool(nn.Module):
-    def __init__(self, **_):
-        super().__init__()
-
-    def repr_shape(self, dim, *_):
-        return dim,
-
-    def forward(self, input):
-        return input.mean(tuple(range(2, len(input.shape))))

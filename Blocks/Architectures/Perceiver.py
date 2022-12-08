@@ -97,7 +97,7 @@ class Perceiver(nn.Module):
             else (self.num_tokens, self.token_dim)
 
     def forward(self, input, output_dim=None):
-        # Adapt to proprioceptive
+        # Adapt proprioceptive
         if len(input.shape) < 3:
             input = input.unsqueeze(1 if self.channels_first else -1)
 

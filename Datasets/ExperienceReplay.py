@@ -27,8 +27,7 @@ import torch
 from torch.utils.data import IterableDataset, Dataset
 from torch.multiprocessing import Pipe
 
-import torchvision
-import torchaudio
+from torchvision.transforms import transforms
 
 
 class ExperienceReplay:
@@ -96,16 +95,8 @@ class ExperienceReplay:
             if 'Normalize' in transform:
                 warnings.warn('"Normalizing" via transform. This may be redundant and dangerous if standardize=true, '
                               'which is the default.')
-            # Can pass in a dict of torchaudio or torchvision transform names and args
-            # TODO env.transform Creates a unique dataset/buffer. Can call it whatever-Transformed if not None.
-            #   - This transform here would ideally be applied to train env as well for streaming; can skip.
-            #       But only for streaming because don't want it to affect buffer creation.
-            #   - Perhaps just instantiate
-            #   - What about transforms that can change the shape e.g. Spectrogram - need to recompute obs shape
-            #   - Can do standard instantiation with **obs_spec; instead of utils' can have context with default 'Utils'
-            transforms = torchaudio.transforms if len(obs_spec['shape']) < 3 else torchvision.transforms.transforms
-            transform = [getattr(transforms, t)(**transform[t]) for t in transform]
-            transform = torch.nn.Sequential(*transform) if len(obs_spec['shape']) < 3 else transforms.Compose(transform)
+            # Can pass in a dict of torchvision transform names and args
+            transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
         # Future steps to compute cumulative reward from
         self.nstep = 0 if suite == 'classify' or generate or stream else nstep
@@ -119,8 +110,8 @@ class ExperienceReplay:
         Either Online or Offline. "Online" means the data size grows.
         
           For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
-          since RAM is faster to load from than hard disk epoch by epoch. A.K.A. training speedup, less bottleneck.
-          We bypass Pytorch's replication of each worker's RAM data per worker with a shared-memory dict.
+          since RAM is faster to load from than hard disk epoch by epoch --> Training speedup, less bottleneck.
+          We bypass Pytorch's replication of each worker's RAM data per worker with a truly-shared-memory dict.
 
           The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
 

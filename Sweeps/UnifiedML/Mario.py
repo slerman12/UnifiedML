@@ -30,6 +30,6 @@ runs.UnifiedML.plots = [
     ['Mario', 'Self-Supervised_Mario'],
 ]
 
-runs.UnifiedML.sftp = False
+runs.UnifiedML.bluehive = False
 runs.UnifiedML.title = 'Mario'
 

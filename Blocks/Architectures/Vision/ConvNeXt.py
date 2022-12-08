@@ -53,7 +53,7 @@ class ConvNeXt(nn.Module):
                                                                 dims[i + 1],
                                                                 kernel_size=4 if i == 0 else 2,
                                                                 stride=4 if i == 0 else 2),  # Conv
-                                                      nn.Sequential(Utils.ChannelSwap(),
+                                                      nn.Sequential(Utils.ChannelSwap(),  # TODO Channel axis as 1 not-3
                                                                     nn.LayerNorm(dims[i + 1]),
                                                                     Utils.ChannelSwap()) if i < len(depths) - 1
                                                       else nn.Identity(),  # LayerNorm

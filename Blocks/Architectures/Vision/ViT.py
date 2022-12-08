@@ -33,7 +33,7 @@ class ViT(nn.Module):
         positional_encodings = (LearnableFourierPositionalEncodings if fourier
                                 else LearnablePositionalEncodings)(shape)
 
-        token = CLSToken(shape)
+        token = CLSToken(shape)  # Just appends a parameterized token
         shape = Utils.cnn_feature_shape(shape, token)
 
         # Positional encoding -> CLS Token -> Attention layers

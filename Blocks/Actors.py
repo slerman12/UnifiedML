@@ -16,7 +16,7 @@ import Utils
 
 
 class EnsemblePiActor(nn.Module):
-    """Ensemble of Gaussian or Categorical policies Pi, generalized to discrete or continuous action spaces."""
+    """Ensemble of Gaussian or Categorical policies Pi, generalized for discrete or continuous action spaces."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
                  discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
