@@ -19,7 +19,7 @@ runs.UnifiedML.sweep = [
     train_steps=4000000 
     save_per_steps=500000 
     Agent=Agents.AC2Agent 
-    experiment=Self-Supervised_Mario 
+    experiment=Self-Supervised-Mario 
     +agent.depth=3
     parallel=true
     """
@@ -27,7 +27,7 @@ runs.UnifiedML.sweep = [
 
 
 runs.UnifiedML.plots = [
-    ['Mario', 'Self-Supervised_Mario'],
+    ['Mario', 'Self-Supervised-Mario'],
 ]
 
 runs.UnifiedML.bluehive = False

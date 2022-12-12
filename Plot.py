@@ -193,8 +193,8 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         # Normalized Mean and Median scores across seeds
         for i, (task_suite, suite) in performance[['Task', 'Suite']].iterrows():
-            performance.loc[i, 'NormalizedMean'] = performance.loc[i, 'Mean']
-            performance.loc[i, 'NormalizedMedian'] = performance.loc[i, 'Median']
+            performance.loc[i, 'Normalized Mean'] = performance.loc[i, 'Mean']
+            performance.loc[i, 'Normalized Median'] = performance.loc[i, 'Median']
 
             # Index norm lows/highs by task name or suite name
             task = task_suite.split(' (')[0]
@@ -202,12 +202,12 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             if name in low and name in high:
                 # Mean
-                performance.loc[i, f'NormalizedMean'] -= low[name]
-                performance.loc[i, f'NormalizedMean'] /= high[name] - low[name]
+                performance.loc[i, f'Normalized Mean'] -= low[name]
+                performance.loc[i, f'Normalized Mean'] /= high[name] - low[name]
 
                 # Median
-                performance.loc[i, f'NormalizedMedian'] -= low[name]
-                performance.loc[i, f'NormalizedMedian'] /= high[name] - low[name]
+                performance.loc[i, f'Normalized Median'] -= low[name]
+                performance.loc[i, f'Normalized Median'] /= high[name] - low[name]
 
         # Writes normalized metrics for this step out to csv
         if write_tabular:
@@ -215,9 +215,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             performance.to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Tasks_Tabular.csv'), index=False)
 
             # Suites Tabular - Mean or median of scores per suite
-            metrics = {name: (seed_agg_name, agg) for seed_agg_name in ['NormalizedMean', 'NormalizedMedian']
+            metrics = {name: (seed_agg_name, agg) for seed_agg_name in ['Normalized Mean', 'Normalized Median']
                        for name, agg in [('Mean' + seed_agg_name, np.mean), ('Median' + seed_agg_name, np.median)]}
-            performance[['Suite', 'NormalizedMedian', 'NormalizedMean']].groupby(['Suite']).agg(**metrics).reset_index(). \
+            performance[['Suite', 'Normalized Median', 'Normalized Mean']].groupby(['Suite']).agg(**metrics).reset_index(). \
                 to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Suites_Tabular.csv'), index=False)
 
         # PLOTTING (bar plot)
@@ -226,7 +226,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
             # Pre-processing
             cell_data['Task'] = cell_data['Task'].str.split('(').str[0]
 
-            sns.barplot(x='Task', y='NormalizedMedian', ci='sd', hue='Agent', data=cell_data, ax=ax,
+            sns.barplot(x='Task', y='Normalized Median', ci='sd', hue='Agent', data=cell_data, ax=ax,
                         hue_order=np.sort(hue_names), palette=cell_palettes)
 
             # Post-processing
