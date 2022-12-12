@@ -61,8 +61,8 @@ class Classify:
     An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
 
     """
-    def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False,
-                 batch_size=8, num_workers=1, low=None, high=None, seed=None, frame_stack=0, action_repeat=0, **kwargs):
+    def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, batch_size=8,
+                 num_workers=1, subsets=None, low=None, high=None, seed=None, frame_stack=0, action_repeat=0, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
@@ -98,7 +98,7 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # TODO Save training class count(s) in stats so that Train/Eval don't mismatch
+        # TODO Save training class count(s) in stats in case Train/Eval mismatch
         classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
 
         # Make sure the dataset has a classes attr

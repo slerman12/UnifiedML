@@ -502,6 +502,16 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
         else:
             cell_palettes.update({hue_name: palette[hue_name] for hue_name in hue_names})
 
+        # # Underscores as spaces for data columns
+        # cell_data[hue] = cell_data[hue].str.replace('_', ' ')
+        # # Underscores as spaces for legend
+        # for j, hue_name in enumerate(hue_names):
+        #     hue_names[j] = hue_name.replace('_', ' ')
+        #     cell_palettes.update({hue_names[j]: cell_palettes.pop(hue_name)})
+        # # Underscores as spaces for cell names
+        # if hue in per:
+        #     cell[per.index(hue)] = cell[per.index(hue)].replace('_', ' ')
+
         # Rows and cols
         row = i // num_cols
         col = i % num_cols
