@@ -102,8 +102,8 @@ class AC2Agent(torch.nn.Module):
 
             shape[0] += self.action_dim  # Predicting from obs and action
 
-            resnet = MiniResNet(input_shape=shape, stride=1, dims=(32, self.encoder.feature_shape[0]), depths=(1,))
-            resnet = Residual(CNN(input_shape=shape, stride=1, padding=1))
+            # resnet = MiniResNet(input_shape=shape, stride=1, dims=(32, self.encoder.feature_shape[0]), depths=(1,))
+            resnet = Residual(CNN(input_shape=shape, out_channels=self.encoder.feature_shape[0], stride=1, padding=1))
 
             self.dynamics = CNNEncoder(self.encoder.feature_shape, context_dim=self.action_dim,
                                        Eyes=resnet, parallel=parallel,
