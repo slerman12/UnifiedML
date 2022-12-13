@@ -58,6 +58,7 @@ def main(args):
 
     if 'pseudonym' in sys_args:
         args.pseudonym = f'"{args.pseudonym}"'
+    print(args.pseudonym)
 
     conda = ''.join([f'*"{gpu}"*)\nsource /home/{args.username}/miniconda3/bin/activate {env}\n;;\n'
                      for gpu, env in [('K80', 'CUDA10.2'), ('V100', 'CUDA11.3'),
