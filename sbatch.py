@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -55,10 +56,6 @@ def main(args):
 
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
-
-    if 'pseudonym' in sys_args:
-        args.pseudonym = f'"{args.pseudonym}"'
-    print(args.pseudonym)
 
     conda = ''.join([f'*"{gpu}"*)\nsource /home/{args.username}/miniconda3/bin/activate {env}\n;;\n'
                      for gpu, env in [('K80', 'CUDA10.2'), ('V100', 'CUDA11.3'),

@@ -19,7 +19,6 @@ runs.UnifiedML.sweep = [
     experiment=Atari26
     time="5-00:00:00"
     reservation_id=20221217
-    pseudonym=${{task_name}}
     """,
 ]  # Replay capacity is  1000000
 

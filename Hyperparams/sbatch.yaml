@@ -13,7 +13,7 @@ lab: false
 reservation_id: null
 task_dir: ${suite}/${task_name}  # Must set manually for non <suite>/<task_name> task-directory structures!
 task: ${task_dir}
-pseudonym: ${experiment}
+pseudonym: ${task_name}
 
 
 hydra:
