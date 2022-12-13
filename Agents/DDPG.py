@@ -17,4 +17,4 @@ class DDPGAgent(DrQV2Agent):
     def __init__(self, recipes, stddev_schedule, **kwargs):
         recipes.aug = torch.nn.Identity()
 
-        super().__init__(recipes=recipes, stddev_schedule=None, **kwargs)
+        super().__init__(recipes=recipes, stddev_schedule=None, **kwargs)  # Use specified start sched

@@ -56,6 +56,9 @@ def main(args):
     if 'experiment' in sys_args:
         args.experiment = f'"{args.experiment}"'
 
+    if 'pseudonym' in sys_args:
+        args.pseudonym = f'"{args.pseudonym}"'
+
     conda = ''.join([f'*"{gpu}"*)\nsource /home/{args.username}/miniconda3/bin/activate {env}\n;;\n'
                      for gpu, env in [('K80', 'CUDA10.2'), ('V100', 'CUDA11.3'),
                                       ('RTX', 'CUDA11.3'), ('A100', 'CUDA11.3')]])  # Conda envs w.r.t. GPU
@@ -74,7 +77,7 @@ def main(args):
 {f'#SBATCH -p gpu --gres=gpu:{args.num_gpus}' if args.num_gpus else ''}
 {'#SBATCH -p csxu -A cxu22_lab' if args.lab else ''}
 {f'#SBATCH -p reserved --reservation={args.username}-{args.reservation_id}' if args.reservation_id else ''}
-#SBATCH -t {args.time} -o {path}{args.task_name}_{args.seed}.log -J {args.experiment}
+#SBATCH -t {args.time} -o {path}{args.task_name}_{args.seed}.log -J {args.pseudonym}
 #SBATCH --mem={args.mem}gb 
 {f'#SBATCH -C {args.gpu}' if args.num_gpus else ''}
 {cuda}
