@@ -27,7 +27,7 @@ runs.UnifiedML.sweep = [
 
 
 runs.UnifiedML.plots = [
-    ['Mario', 'Self-Supervised-Mario', 'Self-Supervised-Mario-2'],
+    ['Mario', 'Self-Supervised-Mario'],
 ]
 
 runs.UnifiedML.bluehive = False
