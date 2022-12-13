@@ -1,5 +1,6 @@
 defaults:
   - args
+  - task@_global_: atari/pong
   - _self_
   - task@_global_: atari/pong
 
