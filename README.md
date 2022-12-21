@@ -14,9 +14,9 @@
 
 - [Setup](#wrench-setting-up)
 
-- [Examples](#mag-full-tutorials)
+- [Tutorial](#mag-full-tutorials)
 
-- [Agents and performances](#bar_chart-agents--performances)
+- [Performance, Example Projects, and Mini-Papers](#bar_chart-performance-example-projects--mini-papers)
 
 [comment]: <> (- [How Is This Possible?]&#40;#interrobang-how-is-this-possible&#41;)
 
@@ -1161,7 +1161,7 @@ Log video during evaluations with ```log_video=true```.
 
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
 
-# :bar_chart: Agents & Performances
+# :bar_chart: Performance, Example projects, & Mini-Papers
 
 # :interrobang: How is this possible
 

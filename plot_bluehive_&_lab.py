@@ -118,6 +118,10 @@ if plot_specs.sftp:
 
     os.chdir(cwd)
 
+# TODO
+# if plot_specs.squeue:
+# if plot_specs.extra_commands:
+
 # Generate each plot
 for plot_train in [False, True]:
 

@@ -63,7 +63,7 @@ class EnsemblePiActor(nn.Module):
 
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble st. dev [b, n, d]
+            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
 
             Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
 

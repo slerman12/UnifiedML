@@ -59,10 +59,11 @@ class DMC:
         warnings.filterwarnings("ignore", message='.* is deprecated and will be removed in Pillow 10')
 
         domain, task = task.split('_', 1)
+        domain = 'ball_in_cup' if domain == 'cup' else domain  # Overwrite cup to ball_in_cup
 
         # Load task
         if (domain, task) in suite.ALL_TASKS:
-            self.env = suite.load('ball_in_cup' if domain == 'cup' else domain,  # Overwrite cup to ball_in_cup
+            self.env = suite.load(domain,
                                   task,
                                   task_kwargs={'random': seed},
                                   visualize_reward=False)  # Don't visualize reward

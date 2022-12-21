@@ -216,7 +216,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             # Suites Tabular - Mean or median of scores per suite
             metrics = {name: (seed_agg_name, agg) for seed_agg_name in ['Normalized Mean', 'Normalized Median']
-                       for name, agg in [('Mean' + seed_agg_name, np.mean), ('Median' + seed_agg_name, np.median)]}
+                       for name, agg in [('Mean ' + seed_agg_name, np.mean), ('Median ' + seed_agg_name, np.median)]}
             performance[['Suite', 'Normalized Median', 'Normalized Mean']].groupby(['Suite']).agg(**metrics).reset_index(). \
                 to_csv(path / (plot_name + f'{int(min_steps)}-Steps_Suites_Tabular.csv'), index=False)
 

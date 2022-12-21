@@ -55,15 +55,14 @@ def convert_to_attr_dict(iterable):
 Common sweep iterables
 """
 
-dmc = 'dmc/cheetah_run,dmc/quadruped_walk,dmc/reacher_easy,dmc/cup_catch,dmc/finger_spin,dmc/walker_walk'
+dmc = [
+    'cheetah_run', 'cup_catch', 'finger_spin', 'quadruped_walk', 'reacher_easy', 'walker_walk'
+]
 
-atari = 'atari/pong,atari/breakout,atari/boxing,atari/krull,atari/seaquest,atari/qbert'
-
-atari_tasks = [
+atari = [
     'Alien', 'Amidar', 'Assault', 'Asterix', 'BankHeist', 'BattleZone',
     'Boxing', 'Breakout', 'ChopperCommand', 'CrazyClimber', 'DemonAttack',
     'Freeway', 'Frostbite', 'Gopher', 'Hero', 'Jamesbond', 'Kangaroo', 'Krull',
     'KungFuMaster', 'MsPacman', 'Pong', 'PrivateEye', 'Qbert', 'RoadRunner',
     'Seaquest', 'UpNDown'
 ]
-atari_26 = f'atari/{",atari/".join([a.lower() for a in atari_tasks])}'
