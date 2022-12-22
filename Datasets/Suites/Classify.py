@@ -325,7 +325,7 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# Select subset of classes from dataset e.g. python Run.py task=classify/mnist '+env.classes=[0,1]
+# Select subset of classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,1]'
 class ClassSubset(torch.utils.data.Subset):
     def __init__(self, classes, **kwargs):
         super().__init__(**kwargs)
