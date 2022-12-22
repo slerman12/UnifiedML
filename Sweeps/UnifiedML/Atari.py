@@ -27,14 +27,28 @@ runs.UnifiedML.sweep = [
     # """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 
     # Less Exploration
+    # f"""
+    # task={join(atari)}
+    # train_steps=1000000
+    # save_per_steps=200000
+    # replay.save=true
+    # 'stddev_schedule="linear(1.0,0.1,20000)"'
+    # Agent=Agents.AC2Agent
+    # experiment=Atari26-LessExplore
+    # time="5-00:00:00"
+    # mem=50
+    # reservation_id=20221217
+    # """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
+
+    # Medium Exploration
     f"""
     task={join(atari)}
     train_steps=1000000 
     save_per_steps=200000 
     replay.save=true
-    'stddev_schedule="linear(1.0,0.1,20000)"'
+    'stddev_schedule="linear(1.0,0.1,200000)"'
     Agent=Agents.AC2Agent 
-    experiment=Atari26-LessExplore
+    experiment=Atari26-MediumExplore
     time="5-00:00:00"
     mem=50
     reservation_id=20221217
@@ -44,7 +58,8 @@ runs.UnifiedML.sweep = [
 
 runs.UnifiedML.plots = [
     ['Atari26'],
-    ['Atari26-LessExplore']
+    ['Atari26-LessExplore'],
+    ['Atari26-MediumExplore']
 ]
 
 runs.UnifiedML.sftp = True

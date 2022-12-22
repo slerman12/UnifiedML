@@ -62,11 +62,13 @@ class Classify:
 
     """
     def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, batch_size=8,
-                 num_workers=1, subsets=None, low=None, high=None, seed=None, frame_stack=0, action_repeat=0, **kwargs):
+                 num_workers=1, classes=None, low=None, high=None, seed=None, frame_stack=0, action_repeat=0, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
         dataset_ = dataset
+
+        task_ = task
 
         # Make env
 
@@ -98,11 +100,15 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # TODO Save training class count(s) in stats in case Train/Eval mismatch
-        classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
+        if classes is None:
+            # TODO Save training class count(s) in stats in case Train/Eval mismatch
+            classes = sorted(list(set(exp[1] for exp in dataset)))  # All classes
+        else:
+            task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
-        # Make sure the dataset has a classes attr
-        setattr(dataset, 'classes', classes)
+        # Convert class labels to indices and allow selecting subset of classes from dataset
+        indices = [i for i in range(len(dataset)) if dataset[i][1] in classes]
+        dataset = ClassSubset(classes, dataset=dataset, indices=indices)
 
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(classes),
@@ -132,16 +138,13 @@ class Classify:
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         if replay_path.exists() and not len(stats_path):
-            warnings.warn(f'\nIncomplete replay buffer found. \n'
-                          f'If another active process is in the progress of creating the replay buffer, \n'
-                          f'then do not worry. \n'
-                          f'This process will wait until the replay is ready. \n'
-                          f'Otherwise, the path may have been corrupted. In which case, \n'
-                          f'kill this process (e.g., ctrl-c) and delete the existing path (`rm -r <path>`).\n'
-                          f'Here is the conflicting path in question:\n{replay_path}\n'
-                          f'{"As well as: " + stats_path[0] if len(stats_path) else ""}'
-                          f'Then you can try again. We will re-create the replay buffer.\n\n'
-                          f'{colored("Wait or kill/delete.", "yellow")} {colored("As you wish, my friend.", "red")}')
+            warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may '
+                          f'be creating the replay still, in which case, wait. Otherwise, kill this process (ctrl-c) '
+                          f'and delete the existing path (`rm -r <Path>`) and try again to re-create.\n'
+                          f'<Path>: {colored(replay_path, "green")}\n'
+                          f'{"Also: " + stats_path[0] if len(stats_path) else ""}'
+                          f'{colored("Wait (do nothing)", "yellow")} '
+                          f'{colored("or kill (ctrl-c) and delete path (rm -r <Path>) and try again.", "red")}')
             while not len(stats_path):
                 sleep(10)  # Wait 10 sec
 
@@ -149,9 +152,8 @@ class Classify:
 
         # Offline and generate don't use training rollouts
         if (offline or generate) and not train and not replay_path.exists():
-
             # But still need to create training replay & compute stats
-            Classify(dataset_, None, task, True, offline, generate, batch_size, num_workers, None, None, seed,
+            Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, classes, None, None, seed,
                      **kwargs)
 
         # Create replay
@@ -321,6 +323,17 @@ def worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
+
+
+# Select subset of classes from dataset e.g. python Run.py task=classify/mnist '+env.classes=[0,1]
+class ClassSubset(torch.utils.data.Subset):
+    def __init__(self, classes, **kwargs):
+        super().__init__(**kwargs)
+        self.ind = {classes[i]: i for i in range(len(classes))}
+
+    def __getitem__(self, idx):
+        x, y = super().__getitem__(idx)
+        return x, self.ind[y]
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)

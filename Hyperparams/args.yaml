@@ -131,6 +131,7 @@ replay:
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}
+  classes: ${env.classes}
   offline: ${offline}
   generate: ${generate}
   stream: ${stream}
