@@ -111,7 +111,7 @@ class Classify:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        dataset = ClassSubset(dataset, classes)
+        # dataset = ClassSubset(dataset, classes)
 
         obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
@@ -242,9 +242,8 @@ class Classify:
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        episode_ind = 0
-        for obs, label in tqdm(self.batches, 'Creating a universal replay for this dataset. '
-                                                                      'This only has to be done once'):
+        for episode_ind, (obs, label) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
+                                                                      'This only has to be done once')):
             obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
             label = np.expand_dims(label, 1)
 
@@ -267,7 +266,6 @@ class Classify:
                 buffer.seek(0)
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
-            episode_ind += 1
 
     def compute_stats(self, path):
         cnt = 0
