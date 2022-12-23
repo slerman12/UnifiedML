@@ -17,6 +17,7 @@ class SpeechCommands(SPEECHCOMMANDS):
 
 def collate_fn(batch):
     waveform, label = zip(*batch)
+    print(pad_sequence(waveform).shape, torch.stack(label).shape)
     return pad_sequence(waveform), torch.stack(label)  # Pad waveform
 
 
