@@ -130,9 +130,7 @@ class Classify:
 
         self._batches = iter(self.batches)
 
-        assert False, next(iter(self.batches))
-
-        obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
+        obs_shape = tuple(dataset[0][0].shape[1:])
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
 
         self.obs_spec = {'shape': obs_shape}
