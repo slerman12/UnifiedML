@@ -42,8 +42,9 @@ class ExperienceReplay:
 
         if load or offline:
             if suite == 'classify':
-                classes = '_Classes_' + '_'.join(map(str, classes)) if classes else ''  # Subset of classes dataset
-                standard = f'./Datasets/ReplayBuffer/Classify/{task + classes}_Buffer'
+                if classes:
+                    task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
+                standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer'
                 if len(exists) == 0:
                     exists = [standard + '/']
                     print('All data loaded. Training of classifier underway.')

@@ -5,6 +5,7 @@
 import datetime
 import glob
 import math
+import os
 from time import sleep
 import io
 import itertools
@@ -102,19 +103,22 @@ class Classify:
 
         if classes is None:
             # TODO Save training class count(s) in stats in case Train/Eval mismatch
-            classes = sorted(list(set(exp[1] for exp in dataset)))  # All classes
+            classes = range(len(dataset.classes)) if hasattr(dataset, 'classes') \
+                else sorted(list(set(exp[1] for exp in dataset)))  # All classes
         else:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        indices = [i for i in range(len(dataset)) if dataset[i][1] in classes]
-        dataset = ClassSubset(classes, dataset=dataset, indices=indices)
+        dataset = ClassSubset(dataset, classes)
 
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(classes),
                             'low': 0,
                             'high': len(classes) - 1,
                             'discrete': True}
+
+        # CPU workers
+        self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
@@ -325,15 +329,19 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# Select subset of classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,1]'
+# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
 class ClassSubset(torch.utils.data.Subset):
-    def __init__(self, classes, **kwargs):
-        super().__init__(**kwargs)
-        self.ind = {classes[i]: i for i in range(len(classes))}
+    def __init__(self, dataset, classes):
+        super().__init__(dataset=dataset, indices=[i for i in range(len(dataset)) if dataset[i][1] in classes])
+
+        if hasattr(dataset, 'collate_fn'):
+            self.collate_fn = dataset.collate_fn  # Inherit collate_fn from custom dataset
+
+        self.map = {classes[i]: torch.tensor(i) for i in range(len(classes))}  # Map string labels to integers
 
     def __getitem__(self, idx):
         x, y = super().__getitem__(idx)
-        return x, self.ind[y]
+        return x, self.map[y]
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
@@ -342,4 +350,3 @@ class AttrDict(dict):
         super().__init__()
         self.__dict__ = self
         self.update(_dict)
-
