@@ -131,7 +131,7 @@ class Classify:
                                   batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=num_workers,
-                                  pin_memory=True,
+                                  pin_memory=False,
                                   collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
@@ -147,10 +147,10 @@ class Classify:
             warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be '
                           f'creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c) '
                           f'and delete the existing path (`rm -r <Path>`) and try again to re-create.\n'
-                          f'<Path>: {colored(replay_path, "green")}\n'
+                          f'Path: {colored(replay_path, "green")}\n'
                           f'{"Also: " + stats_path[0] if len(stats_path) else ""}'
                           f'{colored("Wait (do nothing)", "yellow")} '
-                          f'{colored("or kill (ctrl-c) and delete path (rm -r <Path>) and try again.", "red")}')
+                          f'{colored("or kill (ctrl-c), delete path (rm -r <Path>) and try again.", "red")}')
             while not len(stats_path):
                 sleep(10)  # Wait 10 sec
 
