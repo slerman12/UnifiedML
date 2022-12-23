@@ -334,14 +334,14 @@ class ClassSubset(torch.utils.data.Subset):
     def __init__(self, dataset, classes):
         super().__init__(dataset=dataset, indices=[i for i in range(len(dataset)) if dataset[i][1] in classes])
 
-        if hasattr(dataset, 'collate_fn'):
-            self.collate_fn = dataset.collate_fn  # Inherit collate_fn from custom dataset
-
         self.map = {classes[i]: torch.tensor(i) for i in range(len(classes))}  # Map string labels to integers
 
     def __getitem__(self, idx):
         x, y = super().__getitem__(idx)
         return x, self.map[y]
+
+    def __getattr__(self, attr):
+        return getattr(self.dataset, attr)
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
