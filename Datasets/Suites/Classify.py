@@ -111,6 +111,11 @@ class Classify:
         # Convert class labels to indices and allow selecting subset of classes from dataset
         dataset = ClassSubset(dataset, classes)
 
+        obs_shape = tuple(dataset[0][0].shape[1:])
+        obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
+
+        self.obs_spec = {'shape': obs_shape}
+
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(classes),
                             'low': 0,
@@ -129,11 +134,6 @@ class Classify:
                                   worker_init_fn=worker_init_fn)
 
         self._batches = iter(self.batches)
-
-        obs_shape = tuple(dataset[0][0].shape[1:])
-        obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
-
-        self.obs_spec = {'shape': obs_shape}
 
         """MOVE TO REPLAY"""
 
