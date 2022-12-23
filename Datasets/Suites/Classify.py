@@ -109,7 +109,7 @@ class Classify:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        dataset = ClassSubset(dataset, classes)
+        # dataset = ClassSubset(dataset, classes)
 
         self.action_spec = {'shape': (1,),
                             'discrete_bins': len(classes),
