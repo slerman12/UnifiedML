@@ -108,6 +108,8 @@ class Classify:
         else:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
+        print('BLA TEST 1st!')
+
         # Convert class labels to indices and allow selecting subset of classes from dataset
         dataset = ClassSubset(dataset, classes)
 
@@ -120,6 +122,8 @@ class Classify:
         # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
 
+        print('BLA TEST ONE')
+
         self.batches = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   shuffle=True,
@@ -128,7 +132,11 @@ class Classify:
                                   collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
+        print('BLA TEST 1')
+
         self._batches = iter(self.batches)
+
+        print('BLA TEST UNO')
 
         obs_shape = tuple(next(iter(self.batches))[0].shape[1:])
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
