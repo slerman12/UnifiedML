@@ -101,15 +101,14 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        if classes is None:
-            # TODO Save training class count(s) in stats in case Train/Eval mismatch
-            classes = range(len(dataset.classes)) if hasattr(dataset, 'classes') \
-                else sorted(list(set(exp[1] for exp in dataset)))  # All classes
-        else:
+        # TODO Save training class count(s) in stats in case Train/Eval mismatch
+        setattr(dataset, 'classes', classes if classes is not None else range(len(dataset.classes)) if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))) # All classes
+
+        if classes is not None:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        dataset = ClassSubset(dataset, classes)
+        dataset = ClassSubset(dataset, dataset.classes)
 
         obs_shape = tuple(dataset[0][0].shape[1:])
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
@@ -117,9 +116,9 @@ class Classify:
         self.obs_spec = {'shape': obs_shape}
 
         self.action_spec = {'shape': (1,),
-                            'discrete_bins': len(classes),
+                            'discrete_bins': len(dataset.classes),
                             'low': 0,
-                            'high': len(classes) - 1,
+                            'high': len(dataset.classes) - 1,
                             'discrete': True}
 
         # CPU workers
@@ -142,8 +141,8 @@ class Classify:
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         if replay_path.exists() and not len(stats_path):
-            warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may '
-                          f'be creating the replay still, in which case, wait. Otherwise, kill this process (ctrl-c) '
+            warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be '
+                          f'creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c) '
                           f'and delete the existing path (`rm -r <Path>`) and try again to re-create.\n'
                           f'<Path>: {colored(replay_path, "green")}\n'
                           f'{"Also: " + stats_path[0] if len(stats_path) else ""}'
