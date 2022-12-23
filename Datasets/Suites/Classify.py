@@ -102,8 +102,6 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
-
         if classes is None:
             # TODO Save training class count(s) in stats in case Train/Eval mismatch
             classes = list(range(len(dataset.classes))) if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))  # All classes
@@ -111,7 +109,7 @@ class Classify:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        # dataset = ClassSubset(dataset, classes)
+        dataset = ClassSubset(dataset, classes)
 
         obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
@@ -131,7 +129,7 @@ class Classify:
                                   batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=num_workers,
-                                  pin_memory=False,
+                                  pin_memory=True,
                                   collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
