@@ -70,6 +70,7 @@ class Classify:
         dataset_ = dataset
 
         task_ = task
+        subsets = classes
 
         # Make env
 
@@ -101,24 +102,26 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # TODO Save training class count(s) in stats in case Train/Eval mismatch
-        setattr(dataset, 'classes', classes if classes is not None else range(len(dataset.classes)) if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))) # All classes
+        # classes = dataset.classes if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))
 
-        if classes is not None:
+        if classes is None:
+            # TODO Save training class count(s) in stats in case Train/Eval mismatch
+            classes = list(range(len(dataset.classes))) if hasattr(dataset, 'classes') else sorted(list(set(exp[1] for exp in dataset)))  # All classes
+        else:
             task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        dataset = ClassSubset(dataset, dataset.classes)
+        dataset = ClassSubset(dataset, classes)
 
-        obs_shape = tuple(dataset[0][0].shape[1:])
+        obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
 
         self.obs_spec = {'shape': obs_shape}
 
         self.action_spec = {'shape': (1,),
-                            'discrete_bins': len(dataset.classes),
+                            'discrete_bins': len(classes),
                             'low': 0,
-                            'high': len(dataset.classes) - 1,
+                            'high': len(classes) - 1,
                             'discrete': True}
 
         # CPU workers
@@ -156,7 +159,7 @@ class Classify:
         # Offline and generate don't use training rollouts
         if (offline or generate) and not train and not replay_path.exists():
             # But still need to create training replay & compute stats
-            Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, classes, None, None, seed,
+            Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, subsets, None, None, seed,
                      **kwargs)
 
         # Create replay
