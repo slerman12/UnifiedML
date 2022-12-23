@@ -332,6 +332,8 @@ def worker_init_fn(worker_id):
 # Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
 class ClassSubset(torch.utils.data.Subset):
     def __init__(self, dataset, classes):
+        self.__dict__.update(dataset.__dict__)
+
         super().__init__(dataset=dataset, indices=[i for i in range(len(dataset)) if dataset[i][1] in classes])
 
         self.map = {classes[i]: torch.tensor(i) for i in range(len(classes))}  # Map string labels to integers
@@ -339,9 +341,6 @@ class ClassSubset(torch.utils.data.Subset):
     def __getitem__(self, idx):
         x, y = super().__getitem__(idx)
         return x, self.map[y]
-
-    def __getattr__(self, attr):
-        return getattr(self.dataset, attr)
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
