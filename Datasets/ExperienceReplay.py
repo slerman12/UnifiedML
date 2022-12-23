@@ -43,7 +43,7 @@ class ExperienceReplay:
         if load or offline:
             if suite == 'classify':
                 if classes:
-                    task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes dataset
+                    task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes
                 standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer'
                 if len(exists) == 0:
                     exists = [standard + '/']
