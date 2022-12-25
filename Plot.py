@@ -105,7 +105,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))  # For now group x axis into bins only for time
 
             if 'classify' in suite.lower():
-                ax.set_ybound(0, 1)
+                ax.set_ybound(0, 1.01)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
                 ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 
@@ -150,9 +150,9 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
                 ax.set_ylabel('Human-Normalized Score')
             elif ax_title.lower() == 'dmc':
-                ax.set_ybound(0, 1000)
+                ax.set_ybound(0, 1001)
             elif ax_title.lower() == 'classify':
-                ax.set_ybound(0, 1)
+                ax.set_ybound(0, 1.01)
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
                 ax.set_ylabel(f'{"Train" if plot_train else "Eval"} Accuracy')
 

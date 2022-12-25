@@ -36,7 +36,8 @@ runs.Example.bluehive = False
 # from Sweeps.UnifiedML.Atari import runs
 # from Sweeps.UnifiedML.Mario import runs
 # from Sweeps.UnifiedML.Atari import runs
-from Sweeps.UnifiedML.DMC import runs
+# from Sweeps.UnifiedML.DMC import runs
+from Sweeps.UnifiedML.HarmonicTransformer import runs
 
 
 runs = convert_to_attr_dict(runs)  # Necessary if runs is defined as a dict!
