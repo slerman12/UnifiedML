@@ -71,7 +71,7 @@ class AvgPool(nn.Module):
 
 def cnn_broadcast(input_shape, x):
     """
-    Concatenates multiple CNN inputs into one and can broadcast them when the inputs don't match cleanly.
+    Concatenates multiple CNN inputs into one and broadcast them when the inputs don't match cleanly.
     For example, pairing an image with an action. Re-broadcasts unexpected shapes as well, such as flattened images.
 
     Accepts multiple inputs in a list and various shape possibilities. Handles broadcasting as follows:

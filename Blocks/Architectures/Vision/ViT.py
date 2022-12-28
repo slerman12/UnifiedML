@@ -57,7 +57,7 @@ class ViT(nn.Module):
     def forward(self, *x):
         patches = self.Vi(*x)
 
-        # Conserve leading dims, operate on last 3 dims
+        # Conserve leading dims, operate on batch-item dims
         lead_dims = patches.shape[:-self.num_axes]
 
         outs = self.T(patches.flatten(0, -self.num_axes - 1))
