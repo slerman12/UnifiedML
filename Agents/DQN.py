@@ -61,7 +61,7 @@ class DQNAgent(torch.nn.Module):
                                       discrete=True, lr=lr, ema_decay=ema_decay)
 
     def act(self, obs):
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
+        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor):
             obs = torch.as_tensor(obs, device=self.device).float()
 
             obs = self.encoder(obs)
@@ -93,7 +93,7 @@ class DQNAgent(torch.nn.Module):
         instruct = ~torch.isnan(label)
 
         if instruct.any():
-            reward = (label == action.squeeze(-1)).float()  # reward = -error
+            reward = (action.squeeze(1) == label).float()  # reward = correct
 
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode': self.episode} if self.log else None

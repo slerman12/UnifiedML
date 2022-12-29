@@ -152,7 +152,7 @@ class AC2Agent(torch.nn.Module):
                 else Pi.mean
 
             # Select among candidate actions based on Q-value
-            if self.num_actors > 1 and not self.discrete or self.training and self.num_actions > 1:
+            if self.num_actors > 1 and not self.discrete or self.training and self.num_actions > 1:  # TODO get rid of self.num actions and the or statement
                 All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
 
                 Psi = self.creator(critic(obs, action, All_Qs), self.step, action)
