@@ -169,7 +169,7 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
 
     # Optimizer
     optim = len(params) > 0 and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) or lr
-                                 and AdamW(params, lr=lr, weight_decay=weight_decay))  # Default
+                                 and AdamW(params, lr=lr, weight_decay=weight_decay or 0))  # Default
 
     # Learning rate scheduler
     scheduler = optim and (instantiate(scheduler, optimizer=optim) or lr_decay_epochs

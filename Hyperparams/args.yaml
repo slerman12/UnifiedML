@@ -73,7 +73,7 @@ device: null
 parallel: false
 num_workers: 8
 # Experiment
-Agent: Agents.DQNAgent
+Agent: Agents.AC2Agent
 seed: 1
 experiment: Exp
 

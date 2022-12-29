@@ -226,7 +226,7 @@ class ExperimentAgent(torch.nn.Module):
                         else 0  # "real"
                 # Discrete creator samples
                 if self.discrete and self.sample:
-                    # Variational inference over num actions, mean-reduced ensemble for discrete RL
+                    # Variational inference over num actions, mean-reduced ensemble for discrete RL  TODO change to 1/0
                     actions = Pi.rsample(self.num_actions)
                     action = self.action_selector(self.critic(obs, actions, All_Qs), self.step, actions).best
                     num_classes = All_Qs.shape[-2]
