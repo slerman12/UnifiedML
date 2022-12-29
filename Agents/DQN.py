@@ -51,7 +51,7 @@ class DQNAgent(torch.nn.Module):
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, **recipes.encoder, parallel=parallel, lr=lr)
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     discrete=True, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip)
+                                     discrete=True, stddev_schedule=stddev_schedule)
 
         # When discrete, Critic <- Actor
         recipes.critic.trunk = self.actor.trunk
@@ -115,6 +115,6 @@ class DQNAgent(torch.nn.Module):
 
         # Update encoder and critic
         Utils.optimize(critic_loss,
-                       self.encoder, self.critic, epoch=self.episode)
+                       self.encoder, self.critic)
 
         return logs
