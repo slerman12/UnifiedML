@@ -60,17 +60,11 @@ class DQNAgent(torch.nn.Module):
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       discrete=True, lr=lr, ema_decay=ema_decay)
 
-        # "Birth"
-
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
 
-            # "See"
-
             obs = self.encoder(obs)
-
-            # "Act"
 
             Pi = self.actor(obs, self.step)
             action = Pi.sample() if self.training else Pi.best
@@ -86,14 +80,10 @@ class DQNAgent(torch.nn.Module):
 
             return action, {}
 
-    # "Dream"
-
     def learn(self, replay):
 
         # Online RL
         assert not replay.offline, 'DQNAgent does not support offline learning. Set "offline=false" or "online=true".'
-
-        # "Recollect"
 
         batch = next(replay)
         obs, action, reward, discount, next_obs, label, *_ = Utils.to_torch(
@@ -105,12 +95,8 @@ class DQNAgent(torch.nn.Module):
         if instruct.any():
             reward = (label == action.squeeze(-1)).float()  # reward = -error
 
-        # "Journal teachings"
-
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode': self.episode} if self.log else None
-
-        # "Perceive"
 
         # Augment, encode present
         obs = self.aug(obs)
@@ -121,8 +107,6 @@ class DQNAgent(torch.nn.Module):
                 # Augment, encode future
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
-
-        # "Acquire Wisdom"
 
         # Critic loss
         critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
