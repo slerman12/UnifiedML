@@ -214,6 +214,15 @@ class AC2Agent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = replay.epoch
 
+        # # Online -> Offline conversion  - Can't do offline here because action is forever NaN in classify
+        # if replay.offline:
+        #     self.step += 1
+        #     self.frame += len(obs)
+        #     self.epoch = logs['epoch'] = replay.epoch
+        #     logs['step'] = self.step
+        #     logs['frame'] += 1  # Offline is 1 behind Online
+        #     logs.pop('episode')
+
         instruct = not self.generate and ~torch.isnan(label).any()
 
         # "Acquire Wisdom"

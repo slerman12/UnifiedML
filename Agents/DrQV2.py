@@ -94,18 +94,6 @@ class DrQV2Agent(torch.nn.Module):
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode':  self.episode} if self.log else None
 
-        # Can't do offline here because action is forever NaN in classify
-        # logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
-        #         'epoch': self.epoch, 'episode': self.episode} if self.log else None
-        #
-        # # Online -> Offline conversion
-        # if replay.offline:
-        #     self.step += 1
-        #     self.frame += len(obs)
-        #     logs['step'] = self.step
-        #     logs['frame'] += 1
-        #     self.epoch = replay.epoch
-
         # Augment, encode present
         obs = self.aug(obs)
         obs = self.encoder(obs)
