@@ -93,7 +93,7 @@ class DQNAgent(torch.nn.Module):
         instruct = ~torch.isnan(label)
 
         if instruct.any():
-            reward = (action.squeeze(1) == label).float()  # reward = correct
+            reward = (action.squeeze(1) == label).float()  # reward = correct, Note: Classify Env already does this
 
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode': self.episode} if self.log else None

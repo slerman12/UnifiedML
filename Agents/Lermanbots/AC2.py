@@ -222,7 +222,7 @@ class AC2Agent(torch.nn.Module):
         if instruct:
             # "Via Example" / "Parental Support" / "School"
 
-            # Inference
+            # Inference  TODO Offline or Supervised only?
             Pi = self.actor(obs)
 
             y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
