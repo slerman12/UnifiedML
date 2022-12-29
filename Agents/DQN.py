@@ -101,7 +101,9 @@ class DQNAgent(torch.nn.Module):
 
         # Supervised -> RL conversion
         instruct = ~torch.isnan(label)
-        reward[instruct] = (label[instruct] == action[instruct].squeeze(-1)).float()
+
+        if instruct.any():
+            reward = (label == action.squeeze(-1)).float()  # reward = -error
 
         # "Journal teachings"
 
