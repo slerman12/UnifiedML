@@ -85,12 +85,6 @@ class DrQV2Agent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *_ = Utils.to_torch(
             batch, self.device)
 
-        # Supervised -> RL conversion
-        instruct = ~torch.isnan(label)
-
-        if instruct.any():
-            reward = -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
-
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode':  self.episode} if self.log else None
 

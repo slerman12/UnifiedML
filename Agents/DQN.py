@@ -83,17 +83,11 @@ class DQNAgent(torch.nn.Module):
     def learn(self, replay):
 
         # Online RL
-        assert not replay.offline, 'DQNAgent does not support offline learning. Set "offline=false" or "online=true".'
+        assert not replay.offline, f'DQNAgent does not support offline learning. Set "offline=false" or "online=true".'
 
         batch = next(replay)
         obs, action, reward, discount, next_obs, label, *_ = Utils.to_torch(
             batch, self.device)
-
-        # Supervised -> RL conversion
-        instruct = ~torch.isnan(label)
-
-        if instruct.any():
-            reward = (action.squeeze(1) == label).float()  # reward = correct, Note: Classify Env already does this
 
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode': self.episode} if self.log else None
