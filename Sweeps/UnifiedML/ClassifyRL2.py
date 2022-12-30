@@ -23,13 +23,13 @@ runs.UnifiedML.sweep = [
     RL=true 
     supervise=false
     discrete=false,true 
-    experiment=ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}
+    experiment='ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}'
     plot_per_steps=0
     time="5-00:00:00"
     mem=50
     reservation_id=20221217
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
-]  # Replay capacity is  1000000
+]  # Replay capacity is  1000000, Note: Crucial: Had to set experiment='...' in quotes for interpolation to work
 
 
 runs.UnifiedML.plots = [
