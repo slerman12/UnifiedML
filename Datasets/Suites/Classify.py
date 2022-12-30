@@ -143,9 +143,6 @@ class Classify:
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
         if replay_path.exists() and not len(stats_path):
-            with open(f'./Datasets/ReplayBuffer/Classify/{task}_confirm_sync', 'a') as f:
-                f.write(f'Confirm.')  # Save stat values for future reuse
-
             warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be '
                           f'creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c) '
                           f'and delete the existing path (`rm -r <Path>`) and try again to re-create.\n'
