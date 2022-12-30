@@ -30,7 +30,7 @@ def create(hidden_dim=1024, Pi_head=None):
             super().__init__()
 
             self.V = Utils.instantiate(Pi_head, input_shape=input_shape,
-                                       output_shape=output_shape) or MLP(input_shape, 1, hidden_dim, 2)
+                                       output_shape=output_shape) or MLP(input_shape, 1, hidden_dim, 2)  # Default, MLP
 
             self.A = Utils.instantiate(Pi_head, input_shape=input_shape,
                                        output_shape=output_shape) or MLP(input_shape, output_shape, hidden_dim, 2)

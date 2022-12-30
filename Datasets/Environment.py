@@ -52,7 +52,7 @@ class Environment:
             if not self.generate:
                 exp = self.env.step(action.cpu().numpy())  # Experience
 
-            exp.update(store)
+            exp.update(**store, step=agent.step)
             experiences.append(exp)
 
             if vlog or self.generate:

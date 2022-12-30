@@ -23,7 +23,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 class AC2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2) - Best of all worlds (paper link)
-    Dynamics-learning w/ multiple critics/actors for RL, classification, and generative modeling;
+    RL, classification, generative modeling; online, offline; self-supervised learning; critic/actor ensembles;
     action space conversions"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
@@ -46,7 +46,6 @@ class AC2Agent(torch.nn.Module):
         self.explore_steps = explore_steps
         self.ema = ema
 
-        self.num_actions = num_actions
         self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
 
         self.depth = depth  # Dynamics prediction depth
@@ -76,10 +75,10 @@ class AC2Agent(torch.nn.Module):
 
         # Continuous -> discrete conversion
         if self.discrete and not action_spec.discrete:
-            assert self.num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
+            assert num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
                                          'divide each action dimension into discrete bins, or specify "discrete=false".'
 
-            action_spec.discrete_bins = self.num_actions  # Continuous env has no discrete bins by default, must specify
+            action_spec.discrete_bins = num_actions  # Continuous env has no discrete bins by default, must specify
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
@@ -147,18 +146,17 @@ class AC2Agent(torch.nn.Module):
             # Act
             Pi = actor(obs, self.step)
 
-            action = Pi.sample(self.num_actions) if self.training \
+            action = Pi.sample() if self.training \
                 else Pi.best if self.discrete \
                 else Pi.mean
 
-            # Select among candidate actions based on Q-value
-            if self.num_actors > 1 and not self.discrete or self.training and self.num_actions > 1:  # TODO get rid of self.num actions and the or statement
-                All_Qs = getattr(Pi, 'All_Qs', None)  # Discrete Actor policy already knows all Q-values
+            # Ensemble reduction
+            if self.num_actors > 1 and not self.discrete:  # Discrete critic already min-reduces ensembles
 
-                Psi = self.creator(critic(obs, action, All_Qs), self.step, action)
+                Psi = self.creator(critic(obs, action), self.step, action)  # Creator reduces ensembles
 
-                action = Psi.sample() if self.training \
-                    else Psi.best
+                # Select among candidate actions based on Q-value
+                action = Psi.sample() if self.training else Psi.best
 
             store = {}
 
@@ -168,18 +166,18 @@ class AC2Agent(torch.nn.Module):
 
                 if self.step < self.explore_steps and not self.generate:
                     # Explore
-                    action.uniform_(actor.low or 1, actor.high or 9)  # Env will automatically round if discrete
+                    action.uniform_(actor.low, actor.high)  # Env will automatically round to whole number if discrete
 
-                store = {'action': action.cpu().numpy()}  # Store action logits
+                # Discrete -> Continuous auxiliary conversion
+                if self.discrete_as_continuous:
+                    store = {'action': action.cpu().numpy()}  # Store learned action distribution
 
-                if self.discrete_as_continuous:  # Re-sample, however store logits
-                    action = self.creator(action.transpose(-1, -2), self.step).sample()
-
-            store.update({'step': self.step})
+                    # Sample discrete action from continuous distribution
+                    action = self.creator(action.transpose(-1, -2), self.step).sample()  # Note: Env will argmax if eval
 
             return action, store
 
-    # "Dream"
+    # Dream
     def learn(self, replay):
         # "Recollect"
 
@@ -201,27 +199,19 @@ class AC2Agent(torch.nn.Module):
                 next_obs = self.aug(next_obs)
                 next_obs = self.encoder(next_obs)
 
-        # "Journal teachings"
+        # "Journal Teachings"
 
-        offline = replay.offline
+        logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
+                'episode': self.episode} if self.log else None
 
-        logs = {'time': time.time() - self.birthday, 'step': self.step + offline, 'frame': self.frame + offline,
-                'epoch' if offline else 'episode':  self.epoch if offline else self.episode} if self.log \
-            else None
-
-        if offline:
+        # Online -> Offline conversion
+        if replay.offline:
             self.step += 1
             self.frame += len(obs)
-            self.epoch = replay.epoch
-
-        # # Online -> Offline conversion  - Can't do offline here because action is forever NaN in classify
-        # if replay.offline:
-        #     self.step += 1
-        #     self.frame += len(obs)
-        #     self.epoch = logs['epoch'] = replay.epoch
-        #     logs['step'] = self.step
-        #     logs['frame'] += 1  # Offline is 1 behind Online
-        #     logs.pop('episode')
+            self.epoch = logs['epoch'] = replay.epoch
+            logs['step'] = self.step
+            logs['frame'] += 1  # Offline is 1 behind Online
+            logs.pop('episode')
 
         instruct = not self.generate and ~torch.isnan(label).any()
 
@@ -250,7 +240,7 @@ class AC2Agent(torch.nn.Module):
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
-                               self.actor, epoch=self.epoch if offline else self.episode, retain_graph=True)
+                               self.actor, epoch=self.epoch if replay.offline else self.episode, retain_graph=True)
 
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss})
@@ -288,9 +278,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
-                                                      obs, action, reward, discount, next_obs,
-                                                      self.step, self.num_actions, logs=logs)
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+                                                      self.step, logs=logs)
 
             # Can only predict dynamics from available trajectories
             if self.depth > replay.nstep:
@@ -308,23 +297,20 @@ class AC2Agent(torch.nn.Module):
             models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss,
-                           self.critic, *models,
-                           epoch=self.epoch if offline else self.episode)
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
+                           epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
         Utils.optimize(None,  # Using gradients from previous losses
-                       self.encoder, epoch=self.epoch if offline else self.episode)
+                       self.encoder, epoch=self.epoch if replay.offline else self.episode)
 
         if self.RL and not self.discrete:
-            # "Change" / "Grow"
+            # "Change" / "Grow" / "Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(),
-                                                           self.step, self.num_actions, logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
 
             # Update actor
-            Utils.optimize(actor_loss,
-                           self.actor, epoch=self.epoch if offline else self.episode)
+            Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
 
         return logs
