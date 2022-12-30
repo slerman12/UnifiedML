@@ -179,14 +179,14 @@ class AC2Agent(torch.nn.Module):
 
     # Dream
     def learn(self, replay):
-        # "Recollect"
+        # "Recall"
 
         batch = replay.sample(trajectories=True)
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
         traj_o, traj_a, traj_r, traj_l = traj
 
-        # "Envision" / "Perceive"
+        # "Perceive"
 
         # Augment, encode present
         obs = self.aug(obs)
@@ -225,8 +225,18 @@ class AC2Agent(torch.nn.Module):
             Pi = self.actor(obs)
             y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
+            # Cross entropy error
             error = cross_entropy(y_predicted, label.long(),
-                                  reduction='none' if self.RL and replay.offline else 'mean')  # Cross entropy error
+                                  reduction='none' if self.RL and replay.offline else 'mean')
+
+            # Accuracy computation
+            if self.log or self.RL and replay.offline:
+                index = y_predicted.argmax(1, keepdim=True)  # Predicted class
+                correct = (index.squeeze(1) == label).float()
+                accuracy = correct.mean()
+
+                if self.log:
+                    logs.update({'accuracy': accuracy})
 
             # Supervised learning
             if self.supervise:
@@ -240,25 +250,16 @@ class AC2Agent(torch.nn.Module):
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss})
 
-            # Accuracy computation
-            if self.log or self.RL and replay.offline:
-                index = y_predicted.argmax(1, keepdim=True)  # Predicted class
-                correct = (index.squeeze(1) == label).float()
-                accuracy = correct.mean()
-
-                if self.log:
-                    logs.update({'accuracy': accuracy})
-
         # Reinforcement learning / generative modeling
         if self.RL:
 
-            # "Get Feedback" / "Test Results"
+            # "Via Feedback" / "Test Results"
 
             # Action and reward for supervised reinforcement learning
             if instruct:
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
-                    reward = correct if self.discrete else -error  # reward = -error
+                    reward = correct if self.discrete else -error.detach()  # reward = -error
                 else:
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
@@ -283,11 +284,13 @@ class AC2Agent(torch.nn.Module):
             if self.log:
                 logs.update({'reward': reward})
 
-            # "Discern"
+            # "Discern" / "Discriminate"
 
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
                                                       self.step, logs=logs)
+
+            # "Foretell"
 
             # Can only predict dynamics from available trajectories
             if self.depth > replay.nstep:
@@ -313,7 +316,7 @@ class AC2Agent(torch.nn.Module):
                        self.encoder, epoch=self.epoch if replay.offline else self.episode)
 
         if self.RL and not self.discrete:
-            # "Change" / "Grow" / "Ascend"
+            # "Change, Grow,  Ascend"
 
             # Actor loss
             actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
