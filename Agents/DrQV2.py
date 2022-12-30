@@ -36,8 +36,8 @@ class DrQV2Agent(torch.nn.Module):
         self.explore_steps = explore_steps
 
         # Continuous RL
-        assert not discrete and RL, 'DrQV2Agent only supports continuous RL. Set "discrete=false RL=true".'
-        assert not generate, 'DrQV2Agent does not support generative modeling.'
+        assert not discrete and RL, f'{type(self).__name__} only supports continuous RL. Set "discrete=false RL=true".'
+        assert not generate, f'{type(self).__name__} does not support generative modeling.'
 
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or RandomShiftsAug(pad=4)
@@ -79,11 +79,18 @@ class DrQV2Agent(torch.nn.Module):
     def learn(self, replay):
 
         # Online RL
-        assert not replay.offline, 'DrQV2Agent does not support offline learning. Set "offline=false" or "online=true".'
+        assert not replay.offline, f'{type(self).__name__} does not support offline learning. ' \
+                                   'Set "offline=false" or "online=true".'
 
         batch = next(replay)
         obs, action, reward, discount, next_obs, label, *_ = Utils.to_torch(
             batch, self.device)
+
+        # Supervised -> RL conversion
+        instruct = ~torch.isnan(label)
+
+        if instruct.any():
+            reward = -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
                 'episode':  self.episode} if self.log else None

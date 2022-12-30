@@ -217,6 +217,9 @@ class AC2Agent(torch.nn.Module):
 
         # "Acquire Wisdom"
 
+        if instruct:
+            mistake =
+
         # Classification
         if (self.supervise or replay.offline) and instruct:
             # "Via Example" / "Parental Support" / "School"
@@ -227,11 +230,7 @@ class AC2Agent(torch.nn.Module):
             y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
             mistake = cross_entropy(y_predicted, label.long(), reduction='none')
-            correct = (y_predicted.argmax(1) == label).float()
-            accuracy = correct.mean()
-
-            if self.log:
-                logs.update({'accuracy': accuracy})
+            print(mistake.max(), mistake.min())
 
             # Supervised learning
             if self.supervise:
@@ -245,9 +244,18 @@ class AC2Agent(torch.nn.Module):
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss})
 
-            # Offline reinforcement for supervised learning (Env already computes reward per action in Online learning)
-            if self.RL and replay.offline:
+            if replay.offline or self.log:
+
                 action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
+                correct = (action.squeeze(1) == label).float()
+                accuracy = correct.mean()
+
+                if self.log:
+                    logs.update({'accuracy': accuracy})
+
+        if instruct:
+            # Offline reinforcement for supervised learning
+            if self.RL:
                 reward = -mistake.detach()  # reward = -error
                 next_obs[:] = float('nan')
 

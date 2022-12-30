@@ -15,7 +15,6 @@ import warnings
 from termcolor import colored
 from pathlib import Path
 
-from torch.nn.functional import cross_entropy
 from tqdm import tqdm
 
 from PIL.Image import Image
@@ -194,14 +193,9 @@ class Classify:
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
 
-        try:
-            # Test if already discrete
-            _test_ = action.reshape(len(action), *self.action_spec['shape'])  # Assumes a batch dim
+        correct = (self.exp.label == _action).astype('float32')
 
-            self.exp.reward = (self.exp.label == _action).astype('float32')  # reward = correct
-        except (ValueError, RuntimeError):
-            self.exp.reward = -cross_entropy(action.squeeze(1), torch.from_numpy(self.exp.label).long(), reduction='none')  # reward = -error
-
+        self.exp.reward = correct
         self.exp.action = action  # Note: can store argmax instead
 
         self.episode_done = True
