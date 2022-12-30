@@ -24,7 +24,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 class AC2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2) - Best of all worlds (paper link)
     RL, classification, generative modeling; online, offline; self-supervised learning; critic/actor ensembles;
-    action space conversions"""
+    action space conversions; optimization schedules; EMA"""
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
@@ -44,7 +44,7 @@ class AC2Agent(torch.nn.Module):
         self.step = self.frame = 0
         self.episode = self.epoch = 1
         self.explore_steps = explore_steps
-        self.ema = ema
+        self.ema = ema  # Can use an exponential moving average evaluation model
 
         self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
 
@@ -153,7 +153,7 @@ class AC2Agent(torch.nn.Module):
             # Ensemble reduction
             if self.num_actors > 1 and not self.discrete:  # Discrete critic already min-reduces ensembles
 
-                Psi = self.creator(critic(obs, action), self.step, action)  # Creator reduces ensembles
+                Psi = self.creator(critic(obs, action), self.step, action)  # Creator selects/samples across ensembles
 
                 # Select among candidate actions based on Q-value
                 action = Psi.sample() if self.training else Psi.best
@@ -210,7 +210,7 @@ class AC2Agent(torch.nn.Module):
             self.frame += len(obs)
             self.epoch = logs['epoch'] = replay.epoch
             logs['step'] = self.step
-            logs['frame'] += 1  # Offline is 1 behind Online
+            logs['frame'] += 1  # Offline is 1 behind Online in training loop
             logs.pop('episode')
 
         # "Acquire Wisdom"
@@ -225,12 +225,13 @@ class AC2Agent(torch.nn.Module):
             Pi = self.actor(obs)
             y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
-            mistake = cross_entropy(y_predicted, label.long(), reduction='none')
+            error = cross_entropy(y_predicted, label.long(),
+                                  reduction='none' if self.RL and replay.offline else 'mean')  # Cross entropy error
 
             # Supervised learning
             if self.supervise:
                 # Supervised loss
-                supervised_loss = mistake.mean()
+                supervised_loss = error.mean()
 
                 # Update supervised
                 Utils.optimize(supervised_loss,
@@ -239,9 +240,9 @@ class AC2Agent(torch.nn.Module):
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss})
 
-            # Compute accuracy for logging and optionally RL
+            # Accuracy computation
             if self.log or self.RL and replay.offline:
-                index = y_predicted.argmax(1, keepdim=True)
+                index = y_predicted.argmax(1, keepdim=True)  # Predicted class
                 correct = (index.squeeze(1) == label).float()
                 accuracy = correct.mean()
 
@@ -257,7 +258,7 @@ class AC2Agent(torch.nn.Module):
             if instruct:
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
-                    reward = correct if self.discrete else -mistake  # reward = -error
+                    reward = correct if self.discrete else -error  # reward = -error
                 else:
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
