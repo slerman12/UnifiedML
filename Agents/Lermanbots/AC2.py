@@ -76,7 +76,7 @@ class AC2Agent(torch.nn.Module):
         # Continuous -> discrete conversion
         if self.discrete and not action_spec.discrete:
             assert num_actions > 1, 'Num actions cannot be 1 when discrete; try the "num_actions=" flag (>1) to ' \
-                                         'divide each action dimension into discrete bins, or specify "discrete=false".'
+                                    'divide each action dimension into discrete bins, or specify "discrete=false".'
 
             action_spec.discrete_bins = num_actions  # Continuous env has no discrete bins by default, must specify
 
@@ -213,12 +213,9 @@ class AC2Agent(torch.nn.Module):
             logs['frame'] += 1  # Offline is 1 behind Online
             logs.pop('episode')
 
-        instruct = not self.generate and ~torch.isnan(label).any()
-
         # "Acquire Wisdom"
 
-        if instruct:
-            mistake =
+        instruct = not self.generate and ~torch.isnan(label).any()  # Are labels present?
 
         # Classification
         if (self.supervise or replay.offline) and instruct:
@@ -226,11 +223,9 @@ class AC2Agent(torch.nn.Module):
 
             # Inference
             Pi = self.actor(obs)
-
             y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
             mistake = cross_entropy(y_predicted, label.long(), reduction='none')
-            print(mistake.max(), mistake.min())
 
             # Supervised learning
             if self.supervise:
@@ -244,26 +239,27 @@ class AC2Agent(torch.nn.Module):
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss})
 
-            if replay.offline or self.log:
-
+            # Action/reward for Offline supervised reinforcement learning
+            if self.RL and replay.offline or self.log:
                 action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
                 correct = (action.squeeze(1) == label).float()
                 accuracy = correct.mean()
+                reward = correct if self.discrete else -mistake  # reward = -error
 
                 if self.log:
                     logs.update({'accuracy': accuracy})
 
-        if instruct:
-            # Offline reinforcement for supervised learning
-            if self.RL:
-                reward = -mistake.detach()  # reward = -error
-                next_obs[:] = float('nan')
-
-                if self.log:
-                    logs.update({'reward': reward})
-
         # Reinforcement learning / generative modeling
         if self.RL:
+
+            # "Get Feedback" / "Test Results"
+
+            # Reward for Online supervised reinforcement learning
+            if instruct and not replay.offline:
+
+                reward = (action.squeeze(1) == label).float() if self.discrete \
+                    else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
+
             # "Imagine"
 
             # Generative modeling
@@ -279,6 +275,10 @@ class AC2Agent(torch.nn.Module):
                 action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
 
                 next_obs[:] = float('nan')
+
+            # Update reward log
+            if self.log:
+                logs.update({'reward': reward})
 
             # "Discern"
 
