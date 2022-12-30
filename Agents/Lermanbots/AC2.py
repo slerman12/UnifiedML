@@ -253,10 +253,10 @@ class AC2Agent(torch.nn.Module):
         # Reinforcement learning / generative modeling
         if self.RL:
 
-            # "Via Feedback" / "Test Results"
-
             # Action and reward for supervised reinforcement learning
             if instruct:
+                # "Via Feedback" / "Test Results"
+
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
                     reward = correct if self.discrete else -error.detach()  # reward = -error
@@ -264,10 +264,11 @@ class AC2Agent(torch.nn.Module):
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
-            # "Imagine"
-
             # Generative modeling
             if self.generate:
+
+                # "Imagine"
+
                 half = len(obs) // 2
 
                 actions = self.actor(obs[:half]).mean
@@ -306,6 +307,8 @@ class AC2Agent(torch.nn.Module):
                                                              action_dim=self.action_dim, logs=logs)
 
             models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)
+
+            # "Sharpen, Foresee"
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
