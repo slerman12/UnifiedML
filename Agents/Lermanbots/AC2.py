@@ -239,12 +239,11 @@ class AC2Agent(torch.nn.Module):
                 if self.log:
                     logs.update({'supervised_loss': supervised_loss})
 
-            # Action/reward for Offline supervised reinforcement learning
-            if self.RL and replay.offline or self.log:
-                action = (y_predicted.argmax(1, keepdim=True) if self.discrete else y_predicted).detach()
-                correct = (action.squeeze(1) == label).float()
+            # Compute accuracy for logging and optionally RL
+            if self.log or self.RL and replay.offline:
+                index = y_predicted.argmax(1, keepdim=True)
+                correct = (index.squeeze(1) == label).float()
                 accuracy = correct.mean()
-                reward = correct if self.discrete else -mistake  # reward = -error
 
                 if self.log:
                     logs.update({'accuracy': accuracy})
@@ -254,11 +253,14 @@ class AC2Agent(torch.nn.Module):
 
             # "Get Feedback" / "Test Results"
 
-            # Reward for Online supervised reinforcement learning
-            if instruct and not replay.offline:
-
-                reward = (action.squeeze(1) == label).float() if self.discrete \
-                    else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
+            # Action and reward for supervised reinforcement learning
+            if instruct:
+                if replay.offline:
+                    action = (index if self.discrete else y_predicted).detach()
+                    reward = correct if self.discrete else -mistake  # reward = -error
+                else:
+                    reward = (action.squeeze(1) == label).float() if self.discrete \
+                        else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
             # "Imagine"
 
