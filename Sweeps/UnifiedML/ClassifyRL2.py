@@ -34,28 +34,6 @@ runs.UnifiedML.sweep = [
 
 runs.UnifiedML.sweep = [
     # # Had To Create Replays ...  On Bluehive, didn't sync.
-    f"""
-    task=classify/mnist,classify/cifar10,classify/tinyimagenet
-    train_steps=500000
-    save_per_steps=100000
-    replay.save=true
-    online=true
-    stream=false
-    weight_decay=0.01
-    Eyes=Blocks.Architectures.ResNet18
-    'Aug="RandomShiftsAug(4)"'
-    'transform="{{RandomHorizontalFlip:{{}}}}"'
-    RL=true
-    supervise=false
-    discrete=false
-    experiment='ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}'
-    plot_per_steps=0
-    time="5-00:00:00"
-    mem=50
-    reservation_id=20221217
-    """,
-
-    # # Remainder Of Experiments
     # f"""
     # task=classify/mnist,classify/cifar10,classify/tinyimagenet
     # train_steps=500000
@@ -69,35 +47,57 @@ runs.UnifiedML.sweep = [
     # 'transform="{{RandomHorizontalFlip:{{}}}}"'
     # RL=true
     # supervise=false
-    # discrete=True
+    # discrete=false
     # experiment='ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}'
     # plot_per_steps=0
     # time="5-00:00:00"
     # mem=50
     # reservation_id=20221217
     # """,
-    #
-    # # Remainder Of Experiments
-    # f"""
-    # task=classify/mnist,classify/cifar10,classify/tinyimagenet
-    # train_steps=500000
-    # save_per_steps=100000
-    # replay.save=true
-    # online=true
-    # stream=true
-    # weight_decay=0.01
-    # Eyes=Blocks.Architectures.ResNet18
-    # 'Aug="RandomShiftsAug(4)"'
-    # 'transform="{{RandomHorizontalFlip:{{}}}}"'
-    # RL=true
-    # supervise=false
-    # discrete=false,true
-    # experiment='ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}'
-    # plot_per_steps=0
-    # time="5-00:00:00"
-    # mem=50
-    # reservation_id=20221217
-    # """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
+
+    # Remainder Of Experiments
+    f"""
+    task=classify/mnist,classify/cifar10,classify/tinyimagenet
+    train_steps=500000
+    save_per_steps=100000
+    replay.save=true
+    online=true
+    stream=false
+    weight_decay=0.01
+    Eyes=Blocks.Architectures.ResNet18
+    'Aug="RandomShiftsAug(4)"'
+    'transform="{{RandomHorizontalFlip:{{}}}}"'
+    RL=true
+    supervise=false
+    discrete=True
+    experiment='ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}'
+    plot_per_steps=0
+    time="5-00:00:00"
+    mem=50
+    reservation_id=20221217
+    """,
+
+    # Remainder Of Experiments
+    f"""
+    task=classify/mnist,classify/cifar10,classify/tinyimagenet
+    train_steps=500000
+    save_per_steps=100000
+    replay.save=true
+    online=true
+    stream=true
+    weight_decay=0.01
+    Eyes=Blocks.Architectures.ResNet18
+    'Aug="RandomShiftsAug(4)"'
+    'transform="{{RandomHorizontalFlip:{{}}}}"'
+    RL=true
+    supervise=false
+    discrete=false,true
+    experiment='ClassifyRL_online-${{online}}_stream-${{stream}}_discrete-${{discrete}}'
+    plot_per_steps=0
+    time="5-00:00:00"
+    mem=50
+    reservation_id=20221217
+    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]  # Replay capacity is  1000000, Note: Crucial: Had to set experiment='...' in quotes for interpolation to work
 
 
