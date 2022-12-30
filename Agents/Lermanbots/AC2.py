@@ -266,7 +266,6 @@ class AC2Agent(torch.nn.Module):
 
             # Generative modeling
             if self.generate:
-
                 # "Imagine"
 
                 half = len(obs) // 2
