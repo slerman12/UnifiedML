@@ -241,8 +241,7 @@ class Classify:
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        i = 0
-        for obs, label in self.batches:
+        for episode_ind, (obs, label) in enumerate(self.batches):
             obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
             label = np.expand_dims(label, 1)
 
@@ -258,22 +257,20 @@ class Classify:
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-            episode_name = f'{timestamp}_{i}_{batch_size}.npz'
+            episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'
 
             with io.BytesIO() as buffer:
                 np.savez_compressed(buffer, **episode)
                 buffer.seek(0)
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
-            i += 1
 
     def compute_stats(self, path):
         cnt = 0
         fst_moment, snd_moment = None, None
         low, high = np.inf, -np.inf
 
-        for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
-                                         'This only has to be done once'):
+        for obs, _ in self.batches:
 
             b, c, *hw = obs.shape
             if not hw:
