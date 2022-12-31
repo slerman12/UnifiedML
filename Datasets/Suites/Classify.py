@@ -241,8 +241,7 @@ class Classify:
     def create_replay(self, path):
         path.mkdir(exist_ok=True, parents=True)
 
-        for episode_ind, (obs, label) in enumerate(tqdm(self.batches, 'Creating a universal replay for this dataset. '
-                                                                      'This only has to be done once')):
+        for episode_ind, (obs, label) in enumerate(self.batches):
             obs, label = [np.array(b, dtype='float32') for b in (obs, label)]
             label = np.expand_dims(label, 1)
 
