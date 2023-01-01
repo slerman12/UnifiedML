@@ -274,6 +274,7 @@ class Classify:
         for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
                                          'This only has to be done once'):
 
+            obs = obs.numpy()
             b, c, *hw = obs.shape
             if not hw:
                 *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
