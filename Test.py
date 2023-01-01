@@ -11,8 +11,7 @@ class Transform:
 
 dataset = MNIST('./', download=True, transform=Transform())
 
-dataset = DataLoader(dataset=dataset,
-                     pin_memory=True)
+dataset = DataLoader(dataset=dataset)
 
 for i, (x, y) in tqdm(enumerate(dataset)):
     continue
