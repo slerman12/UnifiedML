@@ -2,5 +2,5 @@ from torchvision.datasets.mnist import MNIST
 
 dataset = MNIST('./', download=True)
 
-for x, y in dataset:
+for i, (x, y) in enumerate(dataset):
     continue
