@@ -84,7 +84,7 @@ class Classify:
         download_specs = [dict(download=True), {}]
         transform_specs = [dict(transform=Transform()), {}]
 
-        # Instantiate dataset
+        # Instantiate dataset  (Note: Multiple processes at the same time can still clash when creating a dataset)
         for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
             try:
                 root_spec, train_spec, download_spec, transform_spec = all_specs
@@ -130,7 +130,7 @@ class Classify:
                                   batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=num_workers,
-                                  pin_memory=False,
+                                  pin_memory=True,
                                   collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
@@ -142,6 +142,7 @@ class Classify:
 
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
+        # Parallelism-protection, but note that clashes may still occur in multi-process dataset creation
         if replay_path.exists() and not len(stats_path):
             warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be '
                           f'creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c) '

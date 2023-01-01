@@ -8,7 +8,7 @@ obs_spec: ???  # To be specified later
 action_spec: ???  # To be specified later
 num_actions: 1
 standardize: true
-norm: true  # Note: ignored if standardizing
+norm: true  # Note: ignored / mutually exclusive if standardize
 trunk_dim: 50
 hidden_dim: 1024
 explore_steps: 2000
@@ -64,7 +64,7 @@ load_path: ${save_path}
 load: false
 load_per_steps: 0
 # Logging
-log_video: ${generate}
+log_media: ${generate}
 log_per_episodes: 1
 # Plotting
 plot_per_steps: 50000
@@ -137,7 +137,7 @@ replay:
   generate: ${generate}
   stream: ${stream}
   save: false
-  load: false
+  load: ${load}
   path: ./Datasets/ReplayBuffer/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
 
 logger:
@@ -170,7 +170,7 @@ plotting:
   x_axis: Step
   verbose: false
 
-# Can optionally pass in custom architectures, optimizers, schedulers, etc.
+# -- Language --
 
 Aug: null  # Shorthand for recipes.aug._target_
 

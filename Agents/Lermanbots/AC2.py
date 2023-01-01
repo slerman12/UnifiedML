@@ -153,7 +153,7 @@ class AC2Agent(torch.nn.Module):
             # Ensemble reduction
             if self.num_actors > 1 and not self.discrete:  # Discrete critic already min-reduces ensembles
 
-                Psi = self.creator(critic(obs, action), self.step, action)  # Creator selects/samples across ensembles
+                Psi = self.creator(critic(obs, action), self.step, action)  # Creator selects/samples
 
                 # Select among candidate actions based on Q-value
                 action = Psi.sample() if self.training else Psi.best
@@ -255,7 +255,7 @@ class AC2Agent(torch.nn.Module):
 
             # Action and reward for supervised reinforcement learning
             if instruct:
-                # "Via Feedback" / "Test Results"
+                # "Via Feedback" / "Test Score" / "Letter Grade'
 
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
@@ -307,7 +307,7 @@ class AC2Agent(torch.nn.Module):
 
             models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)
 
-            # "Sharpen, Foresee"
+            # "Sharpen Foresight"
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
@@ -327,3 +327,4 @@ class AC2Agent(torch.nn.Module):
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
 
         return logs
+# __ Line 330: Death of the Actor-Critic-Creator ... Until the next resurrection in the training loop... __

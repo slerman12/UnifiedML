@@ -369,7 +369,7 @@ python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.n
 
 As of now, all agents are *visual*, that is, they observe pixel-based inputs.
 
-Save videos with ```log_video=true```.
+Save videos with ```log_media=true```.
 
 :clapper: :movie_camera: -> ```Benchmarking/<experiment>/<agent>/<suite>/<task>_<seed>_Video_Image/```
 
@@ -1155,7 +1155,7 @@ To do a hyperparameter sweep, just use the ```-m``` flag.
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
 
-Log video during evaluations with ```log_video=true```.
+Log video during evaluations with ```log_media=true```.
 
 </details>
 

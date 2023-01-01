@@ -36,12 +36,12 @@ def main(args):
 
     # Experience replay
     replay = instantiate(args.replay,
-                         meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-dependant metadata
+                         meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
 
     # Loggers
     logger = instantiate(args.logger)
 
-    vlogger = instantiate(args.vlogger) if args.log_video else None
+    vlogger = instantiate(args.vlogger) if args.log_media else None
 
     # Start
     converged = training = False
@@ -51,14 +51,14 @@ def main(args):
 
             for _ in range(args.generate or args.evaluate_episodes):
                 exp, logs, vlogs = generalize.rollout(agent.eval(),  # agent.eval() just sets agent.training to False
-                                                      vlog=args.log_video)
+                                                      vlog=args.log_media)
 
                 logger.log(logs, 'Eval', exp if converged or args.train_steps == 0 else None)
 
             logger.dump_logs('Eval')
 
-            if args.log_video:
-                vlogger.dump_vlogs(vlogs, f'{agent.step}')
+            if args.log_media:
+                vlogger.dump(vlogs, f'{agent.step}')
 
         if args.plot_per_steps and (agent.step + 1) % args.plot_per_steps == 0 and not args.generate:
             call(args.plotting)

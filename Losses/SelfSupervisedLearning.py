@@ -31,7 +31,7 @@ def bootstrapYourOwnLatent(obs, positive, encoder, projector, predictor, logs=No
 def dynamicsLearning(obs, traj_o, traj_a, traj_r,
                      encoder, dynamics, projector, obs_predictor=None, reward_predictor=None,
                      depth=1, action_dim=0, logs=None):
-    assert depth < traj_o.shape[1], f"depth {depth} exceeds future trajectory size of {traj_o.shape[1] - 1} steps"
+    assert depth < traj_o.shape[1], f"Depth {depth} exceeds future trajectory size of {traj_o.shape[1] - 1} steps"
 
     # Dynamics accepts a single flat action
     traj_a = traj_a.flatten(2)

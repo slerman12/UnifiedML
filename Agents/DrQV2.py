@@ -44,7 +44,7 @@ class DrQV2Agent(torch.nn.Module):
 
         # Discrete -> continuous conversion
         if action_spec.discrete:
-            # Normalizing actions to range [-1, 1] significantly helps continuous RL
+            # Normalize actions to range [-1, 1] for continuous RL
             action_spec.low, action_spec.high = (-1, 1)
 
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, **recipes.encoder, parallel=parallel, lr=lr)

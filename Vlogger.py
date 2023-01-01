@@ -18,7 +18,7 @@ class Vlogger:
         # Saves image reels instead of video
         self.reel = reel
 
-    def dump_vlogs(self, vlogs, name="Video_Image"):
+    def dump(self, vlogs, name="Video_Image"):
         if self.reel:
             c, h, w = (min(vlogs[0].shape[-3], 3),  # Undoing frame-stack if necessary (max = 3 channels per image)
                        vlogs[0].shape[-2], vlogs[0].shape[-1])  # TODO graphs, spectrogram for 1d

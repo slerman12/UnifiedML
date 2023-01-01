@@ -29,11 +29,10 @@ runs.UnifiedML.sweep = [
 
 
 runs.UnifiedML.plots = [
-    ['Atari26-MoreExplore'],
-    ['Atari26-LessExplore'],
-    ['Atari26-MediumExplore'],
-    ['Atari26-LessExplore', 'Atari26-MediumExplore', 'Atari26-MoreExplore']
+    ['Atari26-LessExplore']
 ]
+
+runs.UnifiedML.agents = ['DuelingDQNAgent']
 
 runs.UnifiedML.sftp = True
 runs.UnifiedML.lab = False
