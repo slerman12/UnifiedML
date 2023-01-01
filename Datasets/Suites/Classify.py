@@ -130,7 +130,7 @@ class Classify:
                                   batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=num_workers,
-                                  pin_memory=True,
+                                  pin_memory=False,
                                   collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
