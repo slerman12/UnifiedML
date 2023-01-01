@@ -1,17 +1,12 @@
 from torch.utils.data import DataLoader
 from torchvision.datasets.mnist import MNIST
-from torchvision.transforms import functional as F
-from tqdm import tqdm
+from torchvision.transforms import ToTensor
 
 
-class Transform:
-    def __call__(self, x):
-        return F.to_tensor(x)
+dataset = MNIST('./', download=True, transform=ToTensor())
 
+dataset = DataLoader(dataset=dataset,
+                     pin_memory=True)  # pin_memory triggers CUDA error
 
-dataset = MNIST('./', download=True, transform=Transform())
-
-dataset = DataLoader(dataset=dataset)
-
-for i, (x, y) in tqdm(enumerate(dataset)):
+for _ in dataset:
     continue
