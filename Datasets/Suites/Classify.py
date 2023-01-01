@@ -271,7 +271,8 @@ class Classify:
         fst_moment, snd_moment = None, None
         low, high = np.inf, -np.inf
 
-        for obs, _ in self.batches:
+        for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
+                                         'This only has to be done once'):
 
             b, c, *hw = obs.shape
             if not hw:
