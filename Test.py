@@ -12,9 +12,6 @@ class Transform:
 dataset = MNIST('./', download=True, transform=Transform())
 
 dataset = DataLoader(dataset=dataset,
-                     batch_size=256,
-                     shuffle=True,
-                     num_workers=8,
                      pin_memory=True)
 
 for i, (x, y) in tqdm(enumerate(dataset)):
