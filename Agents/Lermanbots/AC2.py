@@ -255,7 +255,7 @@ class AC2Agent(torch.nn.Module):
 
             # Action and reward for supervised reinforcement learning
             if instruct:
-                # "Via Feedback" / "Test Score" / "Letter Grade'
+                # "Via Feedback" / "Test Score" / "Letter Grade"
 
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
