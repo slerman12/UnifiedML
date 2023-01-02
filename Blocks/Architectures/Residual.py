@@ -33,7 +33,7 @@ class Residual(nn.Module):
             else down_sample
 
     def repr_shape(self, *_):
-        return Utils.cnn_feature_shape(_, getattr(self, 'down_sample', 'model') or self.model)
+        return Utils.cnn_feature_shape(_, self.model)
 
     def forward(self, input):
         output = self.model(input)

@@ -14,8 +14,8 @@ from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 import Utils
 
 
-"""NOTE: This architecture implementation is still in progress. 90% done. This is a SOTA ViT reproduced in full, simply 
-and elegantly in a short file. Thank you for your understanding."""
+"""NOTE: This architecture implementation is almost done. About 90%. This is a state of the art ViT reproduced in full, 
+simply and elegantly in a short file. Thank you for your understanding. Read lines 81 and 107 to see what's left."""
 
 
 class MBConvBlock(nn.Module):
@@ -40,10 +40,7 @@ class MBConvBlock(nn.Module):
             nn.Conv2d(hidden_dim, hidden_dim, 3, 1 if expansion > 1 else stride, 1, groups=hidden_dim, bias=False),
             nn.BatchNorm2d(hidden_dim),
             nn.GELU(),
-            Residual(nn.Sequential(AvgPool(keepdim=True), Utils.ChannelSwap(),
-                                   MLP(hidden_dim, hidden_dim, max(in_channels // 4, 1),
-                                       activation=nn.GELU(), binary=True, bias=False), Utils.ChannelSwap()),
-                     mode=operator.mul) if expansion > 1 else (),  # "Squeeze-And-Excitation' Block ("SE" Block)
+            SEBlock(hidden_dim, max(in_channels // 4, 1)) if expansion > 1 else nn.Identity(),
 
             # Point-wise
             nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
@@ -58,6 +55,23 @@ class MBConvBlock(nn.Module):
 
     def forward(self, x):
         return self.MBConvBlock(x)
+
+
+class SEBlock(nn.Module):
+    """Squeeze-And-Excitation Block ("SE" Block) (https://paperswithcode.com/method/squeeze-and-excitation-block)"""
+    def __init__(self, in_channels, hidden_dim):
+        super().__init__()
+
+        self.SEBlock = Residual(nn.Sequential(AvgPool(keepdim=True), Utils.ChannelSwap(),
+                                              MLP(in_channels, in_channels, hidden_dim,
+                                                  activation=nn.GELU(), binary=True, bias=False), Utils.ChannelSwap()),
+                                mode=operator.mul)
+
+    def repr_shape(self, *_):
+        return _
+
+    def forward(self, x):
+        return self.SEBlock(x)
 
 
 class CoAtNet(nn.Module):
@@ -99,7 +113,7 @@ class CoAtNet(nn.Module):
 
                                 # Can Avg-pool and project to a specified output dim, optional
                                 nn.Identity() if output_dim is None else nn.Sequential(AvgPool(),
-                                                                                       nn.Linear(dims[3],
+                                                                                       nn.Linear(dims[2],  # dims[3]
                                                                                                  output_dim)))
 
     def repr_shape(self, *_):
@@ -139,11 +153,3 @@ class CoAtNet3(CoAtNet):
 class CoAtNet4(CoAtNet):
     def __init__(self, input_shape, output_shape=None):
         super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)
-
-
-class _Print(nn.Module):
-    def forward(self, x):
-        print(x.shape)
-        return x
-
-Print = _Print()
