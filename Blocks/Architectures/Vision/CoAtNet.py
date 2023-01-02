@@ -2,10 +2,11 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import operator
+
 from torch import nn
 
 from Blocks.Architectures import MLP
-from Blocks.Architectures.Vision.ViT import LearnablePositionalEncodings
 from Blocks.Architectures.Transformer import LearnableFourierPositionalEncodings, SelfAttentionBlock
 from Blocks.Architectures.Residual import Residual
 from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
@@ -13,8 +14,8 @@ from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 import Utils
 
 
-"""NOTE: This architecture implementation is still in progress. Debugging 90% done. This is a SOTA ViT reproduced in 
-full simply and elegantly in a short file. Thank you for your understanding."""
+"""NOTE: This architecture implementation is still in progress. 90% done. This is a SOTA ViT reproduced in full, simply 
+and elegantly in a short file. Thank you for your understanding."""
 
 
 class MBConvBlock(nn.Module):
@@ -26,7 +27,7 @@ class MBConvBlock(nn.Module):
         hidden_dim = int(in_channels * expansion)  # Width expansion in [Narrow -> Wide -> Narrow]
 
         if down_sample is None and (in_channels != out_channels or stride != 1):
-            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # TODO adapt_cnn trigger an illegal reshaping due to pad
+            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Note: Can fail for low-resolutions e.g. MNIST
                                         nn.Conv2d(in_channels, out_channels, 1, bias=False))
 
         block = nn.Sequential(
@@ -39,9 +40,10 @@ class MBConvBlock(nn.Module):
             nn.Conv2d(hidden_dim, hidden_dim, 3, 1 if expansion > 1 else stride, 1, groups=hidden_dim, bias=False),
             nn.BatchNorm2d(hidden_dim),
             nn.GELU(),
-            *[nn.AdaptiveAvgPool2d(1),
-              Utils.ChSwap, MLP(hidden_dim, hidden_dim, max(in_channels // 4, 1), activation=nn.GELU(), binary=True,
-                                bias=False), Utils.ChSwap] if expansion > 1 else (),
+            Residual(nn.Sequential(AvgPool(keepdim=True), Utils.ChannelSwap(),
+                                   MLP(hidden_dim, hidden_dim, max(in_channels // 4, 1),
+                                       activation=nn.GELU(), binary=True, bias=False), Utils.ChannelSwap()),
+                     mode=operator.mul) if expansion > 1 else (),  # "Squeeze-And-Excitation' Block ("SE" Block)
 
             # Point-wise
             nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
@@ -64,16 +66,15 @@ class CoAtNet(nn.Module):
     general-purpose attention block with learnable fourier coordinates instead of relative coordinates.
     Will include support for relative coordinates eventually.
     """
-    def __init__(self, input_shape, dims=(64, 96, 192, 384, 768), depths=(2, 2, 3, 5, 2),
-                 num_heads=None, emb_dropout=0.1, query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, fourier=True,
-                 output_shape=None):
+    def __init__(self, input_shape, dims=(64, 96, 192, 384, 768), depths=(2, 2, 3, 5, 2), num_heads=None,
+                 emb_dropout=0.1, query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, output_shape=None):
         super().__init__()
 
         self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
 
         in_channels = self.input_shape[0]
 
-        # Convolution layers
+        # Convolution "Co" layers
         self.Co = nn.Sequential(*[nn.Sequential(nn.Conv2d(in_channels if i == 0 else dims[0],
                                                           dims[0], 3, 1 + (not i), 1, bias=False),
                                                 nn.BatchNorm2d(dims[0]),
@@ -83,24 +84,20 @@ class CoAtNet(nn.Module):
                                 *[MBConvBlock(dims[1], dims[2], stride=1 + (not i)) for i in range(depths[2])])
 
         shape = Utils.cnn_feature_shape(input_shape, self.Co)
+        new_shape = [dims[3], *shape[1:]]  # After down-sampling
 
-        positional_encodings = (LearnableFourierPositionalEncodings if fourier
-                                else LearnablePositionalEncodings)(shape)
-
-        reshape = [dims[3], *shape[1:]]  # After down-sampling
-
-        # Positional encoding -> Attention layers with down-sampling nets
-        self.At = nn.Sequential(positional_encodings,
+        # Attention "At" layers with down-sampling nets
+        self.At = nn.Sequential(LearnableFourierPositionalEncodings(shape),
                                 nn.Dropout(emb_dropout),
 
-                                # Transformer  TODO Should downsample when i == 0
+                                # Transformer  TODO Should down-sample when i == 0
                                 *[SelfAttentionBlock(shape, num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
                                   for i in range(depths[3])],
-                                *[SelfAttentionBlock(shape,  # TODO should be "reshape" after downsampling
+                                *[SelfAttentionBlock(shape,  # TODO Change to new_shape after down-sampling
                                                      num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
                                   for i in range(depths[4])],
 
-                                # Can CLS-pool and project to a specified output dim, optional
+                                # Can Avg-pool and project to a specified output dim, optional
                                 nn.Identity() if output_dim is None else nn.Sequential(AvgPool(),
                                                                                        nn.Linear(dims[3],
                                                                                                  output_dim)))
@@ -118,13 +115,6 @@ class CoAtNet(nn.Module):
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])
         return out
-
-
-# For debugging
-class Print(nn.Module):
-    def forward(self, x):
-        print(x.shape)
-        return x
 
 
 class CoAtNet0(CoAtNet):
@@ -149,3 +139,11 @@ class CoAtNet3(CoAtNet):
 class CoAtNet4(CoAtNet):
     def __init__(self, input_shape, output_shape=None):
         super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)
+
+
+class _Print(nn.Module):
+    def forward(self, x):
+        print(x.shape)
+        return x
+
+Print = _Print()

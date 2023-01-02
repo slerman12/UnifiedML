@@ -59,14 +59,15 @@ class Conv(CNN):
 
 class AvgPool(nn.Module):
     """Simple average pooling layer"""
-    def __init__(self, **_):
+    def __init__(self, keepdim=False, **_):
         super().__init__()
+        self.keepdim = keepdim
 
     def repr_shape(self, dim, *_):
-        return dim,
+        return dim, *[1] * len(_) * self.keepdim
 
     def forward(self, input):
-        return input.mean(tuple(range(2, len(input.shape))))
+        return input.mean(tuple(range(2, len(input.shape))), keepdim=self.keepdim)
 
 
 def cnn_broadcast(input_shape, x):

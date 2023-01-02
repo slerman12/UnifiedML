@@ -230,7 +230,7 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
                 chw = cnn_feature_shape(chw, layer, verbose=verbose)
                 channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
         if verbose:
-            print(block, (channels, height, width))
+            print(type(block), (channels, height, width))
 
     feature_shape = tuple(size for size in (channels, height, width) if size is not None)
 
@@ -370,7 +370,7 @@ class Sequential(nn.Module):
         return self.Sequence(obs)
 
 
-# Swaps image dims between channel-last and channel-first format
+# Swaps image dims between channel-last and channel-first format (Convenient helper)
 class ChannelSwap(nn.Module):
     def repr_shape(self, *_):
         return _[-1], *_[1:-1], _[0]
