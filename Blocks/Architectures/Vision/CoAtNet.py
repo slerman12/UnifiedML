@@ -2,301 +2,158 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import torch
-import torch.nn as nn
+from torch import nn
 
-from einops import rearrange
-from einops.layers.torch import Rearrange
-# TODO combine with ViT.py
+from Blocks.Architectures import MLP
+from Blocks.Architectures.Vision.ViT import LearnablePositionalEncodings, CLSToken, CLSPool
+from Blocks.Architectures.Transformer import LearnableFourierPositionalEncodings, SelfAttentionBlock
+from Blocks.Architectures.Residual import Residual
+from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 
-
-def conv_3x3_bn(inp, oup, image_size, downsample=False):
-    stride = 1 if downsample == False else 2
-    return nn.Sequential(
-        nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-        nn.BatchNorm2d(oup),
-        nn.GELU()
-    )
+import Utils
 
 
-class PreNorm(nn.Module):
-    def __init__(self, dim, fn, norm):
+class MBConvBlock(nn.Module):
+    """MobileNetV2 Block ("MBConv") used originally in EfficientNet. Unlike ResBlock, uses [Narrow -> Wide -> Narrow] 
+    structure and depth-wise and point-wise convolutions."""
+    def __init__(self, in_channels, out_channels, down_sample=None, stride=1, expansion=4):
         super().__init__()
-        self.norm = norm(dim)
-        self.fn = fn
 
-    def forward(self, x, **kwargs):
-        return self.fn(self.norm(x), **kwargs)
+        hidden_dim = int(in_channels * expansion)  # Width expansion in [Narrow -> Wide -> Narrow]
 
+        if down_sample is None and (in_channels != out_channels or stride != 1):  # TODO set stride = 2 when downsample
+            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),
+                                        nn.Conv2d(in_channels, out_channels, 1, 1, 0, bias=False))
 
-class SE(nn.Module):
-    def __init__(self, inp, oup, expansion=0.25):
-        super().__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(oup, int(inp * expansion), bias=False),
+        block = nn.Sequential(
+            # Point-wise 
+            *[nn.Conv2d(in_channels, hidden_dim, 1, stride, bias=False),
+              nn.BatchNorm2d(hidden_dim),
+              nn.GELU()] if expansion > 1 else (),
+
+            # Depth-wise   TODO might be "down-sample in the first conv" - no need for if expansion, just if stride
+            nn.Conv2d(hidden_dim, hidden_dim, 3, int(expansion > 1) or stride, 1, groups=hidden_dim, bias=False),
+            nn.BatchNorm2d(hidden_dim),
             nn.GELU(),
-            nn.Linear(int(inp * expansion), oup, bias=False),
-            nn.Sigmoid()
+            # TODO Shaping!
+            *[nn.AdaptiveAvgPool2d(1), MLP(hidden_dim, hidden_dim, int(in_channels * 0.25),
+                                           activation=nn.GELU(), binary=True, bias=False)] if expansion > 1 else (),
+
+            # Point-wise
+            nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
         )
 
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y
+        self.MBConvBlock = Residual(nn.Sequential(nn.BatchNorm2d(in_channels),
+                                                  block), down_sample)
 
-
-class FeedForward(nn.Module):
-    def __init__(self, dim, hidden_dim, dropout=0.):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(dim, hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim, dim),
-            nn.Dropout(dropout)
-        )
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.MBConvBlock)
 
     def forward(self, x):
-        return self.net(x)
+        return self.MBConvBlock(x)
 
-
-class MBConv(nn.Module):
-    def __init__(self, inp, oup, image_size, downsample=False, expansion=4):
-        super().__init__()
-        self.downsample = downsample
-        stride = 1 if self.downsample == False else 2
-        hidden_dim = int(inp * expansion)
-
-        if self.downsample:
-            self.pool = nn.MaxPool2d(3, 2, 1)
-            self.proj = nn.Conv2d(inp, oup, 1, 1, 0, bias=False)
-
-        if expansion == 1:
-            self.conv = nn.Sequential(
-                # dw
-                nn.Conv2d(hidden_dim, hidden_dim, 3, stride,
-                          1, groups=hidden_dim, bias=False),
-                nn.BatchNorm2d(hidden_dim),
-                nn.GELU(),
-                # pw-linear
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(oup),
-            )
-        else:
-            self.conv = nn.Sequential(
-                # pw
-                # down-sample in the first conv
-                nn.Conv2d(inp, hidden_dim, 1, stride, 0, bias=False),
-                nn.BatchNorm2d(hidden_dim),
-                nn.GELU(),
-                # dw
-                nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1,
-                          groups=hidden_dim, bias=False),
-                nn.BatchNorm2d(hidden_dim),
-                nn.GELU(),
-                SE(inp, hidden_dim),
-                # pw-linear
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(oup),
-            )
-
-        self.conv = PreNorm(inp, self.conv, nn.BatchNorm2d)
-
-    def forward(self, x):
-        if self.downsample:
-            return self.proj(self.pool(x)) + self.conv(x)
-        else:
-            return x + self.conv(x)
-
-
-class Attention(nn.Module):
-    def __init__(self, inp, oup, image_size, heads=8, dim_head=32, dropout=0.):
-        super().__init__()
-        inner_dim = dim_head * heads
-        project_out = not (heads == 1 and dim_head == inp)
-
-        self.ih, self.iw = image_size
-
-        self.heads = heads
-        self.scale = dim_head ** -0.5
-
-        # parameter table of relative position bias
-        self.relative_bias_table = nn.Parameter(
-            torch.zeros((2 * self.ih - 1) * (2 * self.iw - 1), heads))
-
-        coords = torch.meshgrid((torch.arange(self.ih), torch.arange(self.iw)))
-        coords = torch.flatten(torch.stack(coords), 1)
-        relative_coords = coords[:, :, None] - coords[:, None, :]
-
-        relative_coords[0] += self.ih - 1
-        relative_coords[1] += self.iw - 1
-        relative_coords[0] *= 2 * self.iw - 1
-        relative_coords = rearrange(relative_coords, 'c h w -> h w c')
-        relative_index = relative_coords.sum(-1).flatten().unsqueeze(1)
-        self.register_buffer("relative_index", relative_index)
-
-        self.attend = nn.Softmax(dim=-1)
-        self.to_qkv = nn.Linear(inp, inner_dim * 3, bias=False)
-
-        self.to_out = nn.Sequential(
-            nn.Linear(inner_dim, oup),
-            nn.Dropout(dropout)
-        ) if project_out else nn.Identity()
-
-    def forward(self, x):
-        qkv = self.to_qkv(x).chunk(3, dim=-1)
-        q, k, v = map(lambda t: rearrange(
-            t, 'b n (h d) -> b h n d', h=self.heads), qkv)
-
-        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
-
-        # Use "gather" for more efficiency on GPUs
-        relative_bias = self.relative_bias_table.gather(
-            0, self.relative_index.repeat(1, self.heads))
-        relative_bias = rearrange(
-            relative_bias, '(h w) c -> 1 c h w', h=self.ih*self.iw, w=self.ih*self.iw)
-        dots = dots + relative_bias
-
-        attn = self.attend(dots)
-        out = torch.matmul(attn, v)
-        out = rearrange(out, 'b h n d -> b n (h d)')
-        out = self.to_out(out)
-        return out
-
-
-class Transformer(nn.Module):
-    def __init__(self, inp, oup, image_size, heads=8, dim_head=32, downsample=False, dropout=0.):
-        super().__init__()
-        hidden_dim = int(inp * 4)
-
-        self.ih, self.iw = image_size
-        self.downsample = downsample
-
-        if self.downsample:
-            self.pool1 = nn.MaxPool2d(3, 2, 1)
-            self.pool2 = nn.MaxPool2d(3, 2, 1)
-            self.proj = nn.Conv2d(inp, oup, 1, 1, 0, bias=False)
-
-        self.attn = Attention(inp, oup, image_size, heads, dim_head, dropout)
-        self.ff = FeedForward(oup, hidden_dim, dropout)
-
-        self.attn = nn.Sequential(
-            Rearrange('b c ih iw -> b (ih iw) c'),
-            PreNorm(inp, self.attn, nn.LayerNorm),
-            Rearrange('b (ih iw) c -> b c ih iw', ih=self.ih, iw=self.iw)
-        )
-
-        self.ff = nn.Sequential(
-            Rearrange('b c ih iw -> b (ih iw) c'),
-            PreNorm(oup, self.ff, nn.LayerNorm),
-            Rearrange('b (ih iw) c -> b c ih iw', ih=self.ih, iw=self.iw)
-        )
-
-    def forward(self, x):
-        if self.downsample:
-            x = self.proj(self.pool1(x)) + self.attn(self.pool2(x))
-        else:
-            x = x + self.attn(x)
-        x = x + self.ff(x)
-        return x
+    # def SE(self, x):
+    #     b, c, _, _ = x.size()
+    #     y = self.avg_pool(x).view(b, c)
+    #     y = self.fc(y).view(b, c, 1, 1)
+    #     return x * y
 
 
 class CoAtNet(nn.Module):
-    def __init__(self, image_size, in_channels, num_blocks, channels, num_classes=1000, block_types=['C', 'C', 'T', 'T']):
+    """
+    An elegant CoAtNet backbone with support for dimensionality adaptivity. Assumes channels-first. Uses a
+    general-purpose attention block with learnable fourier coordinates instead of relative coordinates.
+    Will include support for relative coordinates eventually.
+    """
+    def __init__(self, input_shape, dims=(64, 96, 192, 384, 768), depths=(2, 2, 3, 5, 2),
+                 num_heads=None, emb_dropout=0.1, query_key_dim=None, mlp_hidden_dim=None, dropout=0.1, pool_type='cls',
+                 fourier=True, output_shape=None):
         super().__init__()
-        ih, iw = image_size
-        block = {'C': MBConv, 'T': Transformer}
 
-        self.s0 = self._make_layer(
-            conv_3x3_bn, in_channels, channels[0], num_blocks[0], (ih // 2, iw // 2))
-        self.s1 = self._make_layer(
-            block[block_types[0]], channels[0], channels[1], num_blocks[1], (ih // 4, iw // 4))
-        self.s2 = self._make_layer(
-            block[block_types[1]], channels[1], channels[2], num_blocks[2], (ih // 8, iw // 8))
-        self.s3 = self._make_layer(
-            block[block_types[2]], channels[2], channels[3], num_blocks[3], (ih // 16, iw // 16))
-        self.s4 = self._make_layer(
-            block[block_types[3]], channels[3], channels[4], num_blocks[4], (ih // 32, iw // 32))
+        self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
 
-        self.pool = nn.AvgPool2d(ih // 32, 1)
-        self.fc = nn.Linear(channels[-1], num_classes, bias=False)
+        in_channels = self.input_shape[0]
 
-    def forward(self, x):
-        x = self.s0(x)
-        x = self.s1(x)
-        x = self.s2(x)
-        x = self.s3(x)
-        x = self.s4(x)
+        # Convolutions
+        self.Co = nn.Sequential(*[nn.Sequential(nn.Conv2d(in_channels, dims[0], 3, 1 + (not i), 1, bias=False),
+                                                nn.BatchNorm2d(dims[0]),
+                                                nn.GELU()
+                                                ) for i in range(depths[0])],
+                                *[MBConvBlock(dims[0], dims[1], stride=1 + (not i)) for i in range(depths[1])],
+                                *[MBConvBlock(dims[1], dims[2], stride=1 + (not i)) for i in range(depths[2])])
 
-        x = self.pool(x).view(-1, x.shape[1])
-        x = self.fc(x)
-        return x
+        shape = Utils.cnn_feature_shape(input_shape, self.Co)
 
-    def _make_layer(self, block, inp, oup, depth, image_size):
-        layers = nn.ModuleList([])
-        for i in range(depth):
-            if i == 0:
-                layers.append(block(inp, oup, image_size, downsample=True))
-            else:
-                layers.append(block(oup, oup, image_size))
-        return nn.Sequential(*layers)
+        positional_encodings = (LearnableFourierPositionalEncodings if fourier
+                                else LearnablePositionalEncodings)(shape)
 
+        token = CLSToken(shape)  # Just appends a parameterized token
+        shape[-1] += 1
 
-def coatnet_0():
-    num_blocks = [2, 2, 3, 5, 2]            # L
-    channels = [64, 96, 192, 384, 768]      # D
-    return CoAtNet((224, 224), 3, num_blocks, channels, num_classes=1000)
+        reshape = [dims[3], *shape[1:]]  # After down-sampling below
 
+        # Downsample structure for when i == 0 below
+        # if self.downsample:
+        #     self.pool1 = nn.MaxPool2d(3, 2, 1)
+        #     self.pool2 = nn.MaxPool2d(3, 2, 1)
+        #     self.proj = nn.Conv2d(dims[2 & 3], dims[3 & 4], 1, 1, 0, bias=False)
 
-def coatnet_1():
-    num_blocks = [2, 2, 6, 14, 2]           # L
-    channels = [64, 96, 192, 384, 768]      # D
-    return CoAtNet((224, 224), 3, num_blocks, channels, num_classes=1000)
+        # Positional encoding -> CLS Token -> Attention layers
+        self.At = nn.Sequential(positional_encodings,
+                                token,
+                                nn.Dropout(emb_dropout),
 
+                                # Transformer  TODO Should downsample when i == 0
+                                *[SelfAttentionBlock(shape, num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
+                                  for i in range(depths[3])],
+                                *[SelfAttentionBlock(reshape, num_heads, None, query_key_dim, mlp_hidden_dim, dropout)
+                                  for i in range(depths[4])],
 
-def coatnet_2():
-    num_blocks = [2, 2, 6, 14, 2]           # L
-    channels = [128, 128, 256, 512, 1026]   # D
-    return CoAtNet((224, 224), 3, num_blocks, channels, num_classes=1000)
+                                # Can CLS-pool and project to a specified output dim, optional
+                                nn.Identity() if output_dim is None else nn.Sequential(CLSPool() if pool_type == 'cls'
+                                                                                       else AvgPool(),
+                                                                                       nn.Linear(dims[3],
+                                                                                                 output_dim)))
 
+    def repr_shape(self, *_):
+        return Utils.cnn_feature_shape(_, self.Co, self.At)
 
-def coatnet_3():
-    num_blocks = [2, 2, 6, 14, 2]           # L
-    channels = [192, 192, 384, 768, 1536]   # D
-    return CoAtNet((224, 224), 3, num_blocks, channels, num_classes=1000)
+    def forward(self, *x):
+        # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
+        lead_shape, x = cnn_broadcast(self.input_shape, x)
 
+        x = self.Co(x)
+        x = self.At(x)
 
-def coatnet_4():
-    num_blocks = [2, 2, 12, 28, 2]          # L
-    channels = [192, 192, 384, 768, 1536]   # D
-    return CoAtNet((224, 224), 3, num_blocks, channels, num_classes=1000)
+        # Restore leading dims
+        out = x.view(*lead_shape, *x.shape[1:])
+        return out
 
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+# class RelativeCoordinatesAttention(nn.Module):  # TODO They used a slightly different Transformer
+#     pass
 
 
-if __name__ == '__main__':
-    img = torch.randn(1, 3, 224, 224)
+class CoAtNet0(CoAtNet):
+    """Pseudonym for Default CoAtNet"""
 
-    net = coatnet_0()
-    out = net(img)
-    print(out.shape, count_parameters(net))
 
-    net = coatnet_1()
-    out = net(img)
-    print(out.shape, count_parameters(net))
+class CoAtNet1(CoAtNet):
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, [64, 96, 192, 384, 768], [2, 2, 6, 14, 2], output_shape=output_shape)
 
-    net = coatnet_2()
-    out = net(img)
-    print(out.shape, count_parameters(net))
 
-    net = coatnet_3()
-    out = net(img)
-    print(out.shape, count_parameters(net))
+class CoAtNet2(CoAtNet):
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, [128, 128, 256, 512, 1026], [2, 2, 6, 14, 2], output_shape=output_shape)
 
-    net = coatnet_4()
-    out = net(img)
-    print(out.shape, count_parameters(net))
+
+class CoAtNet3(CoAtNet):
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 6, 14, 2], output_shape=output_shape)
+
+
+class CoAtNet3(CoAtNet):
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)

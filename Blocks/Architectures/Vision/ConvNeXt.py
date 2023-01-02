@@ -90,10 +90,10 @@ class ConvNeXt(nn.Module):
 
 
 class ConvNeXtTiny(ConvNeXt):
-    def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, [96, 192, 384, 768], [3, 3, 9, 3], output_dim)
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, [96, 192, 384, 768], [3, 3, 9, 3], output_shape)
 
 
 class ConvNeXtBase(ConvNeXt):
-    def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, [128, 256, 512, 1024], [3, 3, 27, 3], output_dim)  # Full Model
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, [128, 256, 512, 1024], [3, 3, 27, 3], output_shape)  # Full Model

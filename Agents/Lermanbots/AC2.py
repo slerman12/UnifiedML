@@ -153,7 +153,7 @@ class AC2Agent(torch.nn.Module):
             # Ensemble reduction
             if self.num_actors > 1 and not self.discrete:  # Discrete critic already min-reduces ensembles
 
-                Psi = self.creator(critic(obs, action), self.step, action)  # Creator selects/samples
+                Psi = self.creator(critic(obs, action), self.step, action)  # Creator selects/samples ensembles
 
                 # Select among candidate actions based on Q-value
                 action = Psi.sample() if self.training else Psi.best

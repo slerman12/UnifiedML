@@ -107,8 +107,9 @@ runs.UnifiedML.plots = [
     ['ClassifyRL_online.*'],
 ]
 
-runs.UnifiedML.sftp = True  # Also running on Bluehive
-runs.UnifiedML.lab = False  # Also running on lab
+runs.UnifiedML.sftp = True
+runs.UnifiedML.bluehive = False  # Also running on Bluehive
+runs.UnifiedML.lab = True  # Also running on lab
 
 runs.UnifiedML.title = 'Classify Via Reinforcement Learning'
 runs.UnifiedML.steps = 5e5

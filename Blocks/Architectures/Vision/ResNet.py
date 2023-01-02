@@ -84,10 +84,10 @@ class MiniResNet(nn.Module):
 
 
 class ResNet18(MiniResNet):
-    def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [2, 2, 2, 2], output_dim)
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [2, 2, 2, 2], output_shape)
 
 
 class ResNet50(MiniResNet):
-    def __init__(self, input_shape, output_dim=None):
-        super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [3, 4, 6, 3], output_dim)
+    def __init__(self, input_shape, output_shape=None):
+        super().__init__(input_shape, 3, 2, [64, 64, 128, 256, 512], [3, 4, 6, 3], output_shape)
