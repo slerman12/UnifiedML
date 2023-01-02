@@ -51,10 +51,10 @@ class CNN(nn.Module):
 
 
 class Conv(CNN):
-    """A single conv layer"""
-    def __init__(self, input_shape, out_channels=32, kernel_size=3, stride=2, padding=0, dilation=1, bias=True):
+    """A single conv layer that depends on input_shape for adaptivity"""
+    def __init__(self, input_shape, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True):
         super().__init__(input_shape, out_channels, depth=0, last_relu=False, kernel_size=kernel_size, stride=stride,
-                         padding=padding, dilation=dilation, bias=bias)
+                         padding=padding, dilation=dilation, groups=groups, bias=bias)
 
 
 class AvgPool(nn.Module):
