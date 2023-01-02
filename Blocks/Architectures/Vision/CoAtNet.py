@@ -14,8 +14,8 @@ from Blocks.Architectures.Vision.CNN import AvgPool, cnn_broadcast
 import Utils
 
 
-"""NOTE: This architecture implementation is almost done. About 90%. This is a state of the art ViT reproduced in full, 
-simply and elegantly in a short file. Thank you for your understanding. Read lines 81 and 107 to see what's left."""
+"""NOTE: This architecture implementation is almost done. 90%. This is a state of the art ViT reproduced in full, simply 
+and elegantly in a short file. Thank you for your understanding. Read lines 81 and 107 to see what's left."""
 
 
 class MBConvBlock(nn.Module):

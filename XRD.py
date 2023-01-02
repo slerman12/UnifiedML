@@ -170,3 +170,6 @@ class XRD(Dataset):
             x = self.transform(x)
 
         return x, y
+
+
+# python Run.py task=classify/custom Dataset=XRD.XRD +dataset.roots='[Datasets/XRD/rruff/XY_DIF_noiseAll/]' Aug=Identity Eyes=CoAtNet '+eyes.depths=[1,1,1,1,1]' '+eyes.dims=[2,2,2,2,2]'
