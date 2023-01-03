@@ -2,9 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import operator
-
-from torch import nn
+from torch import nn, mul
 
 from Blocks.Architectures import MLP
 from Blocks.Architectures.Transformer import LearnableFourierPositionalEncodings, SelfAttentionBlock
@@ -15,7 +13,7 @@ import Utils
 
 
 """NOTE: This architecture implementation is almost done. 90%. This is a state of the art ViT reproduced in full, simply 
-and elegantly in a short file. Thank you for your understanding. Read lines 81 and 107 to see what's left."""
+and elegantly in a short file. Thank you for your understanding. Read lines 79 and 105 to see what's left."""
 
 
 class MBConvBlock(nn.Module):
@@ -65,7 +63,7 @@ class SEBlock(nn.Module):
         self.SEBlock = Residual(nn.Sequential(AvgPool(keepdim=True), Utils.ChannelSwap(),
                                               MLP(in_channels, in_channels, hidden_dim,
                                                   activation=nn.GELU(), binary=True, bias=False), Utils.ChannelSwap()),
-                                mode=operator.mul)
+                                mode=mul)
 
     def repr_shape(self, *_):
         return _
