@@ -11,9 +11,9 @@ import Utils
 
 
 class TIMM(nn.Module):
-    """
-    Backwards compatibility with the TIMM (Pytorch Image Models) ecosystem. Download or load a model as follows.
-    Usage:  python Run.py  task=classify/mnist  Eyes=TIMM  +eyes.name=mobilenetv2_100  +eyes.pretrained=true
+    """Backwards compatibility with the TIMM (Pytorch Image Models) ecosystem. Download or load a model as follows.
+    Usage:  python Run.py  task=classify/mnist  Eyes=Blocks.Architectures.Vision.TIMM.TIMM  +eyes.name=mobilenetv2_100
+    Not installed by default. $ pip install timm  (that dollar sign is totally a Freudian slip)
     Models listed here:  https://rwightman.github.io/pytorch-image-models/models/
     """
     def __init__(self, name, pretrained=False, input_shape=None, output_shape=None, pool='avg', detach=False):
@@ -29,7 +29,7 @@ class TIMM(nn.Module):
 
         self.model = timm.create_model(name, pretrained=pretrained, in_chans=in_channels,
                                        num_classes=0 if output_shape is None else output_dim,
-                                       global_pool='' if output_shape is None else pool).train(detach)
+                                       global_pool='' if output_shape is None else pool).train(not detach)
 
         self.detach = detach  # Fix weights
 
