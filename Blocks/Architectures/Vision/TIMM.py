@@ -16,7 +16,7 @@ class TIMM(nn.Module):
     Not installed by default. $ pip install timm  (that dollar sign is totally a Freudian slip)
     Models listed here:  https://rwightman.github.io/pytorch-image-models/models/
     """
-    def __init__(self, name, pretrained=False, input_shape=None, output_shape=None, pool='avg', detach=False):
+    def __init__(self, input_shape, name, pretrained=False, detach=False, pool='avg', output_shape=None):
         super().__init__()
 
         self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
