@@ -2,20 +2,18 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import operator
-
-from torch import nn
+import torch
 
 from omegaconf import OmegaConf
 
 import Utils
 
 
-class Residual(nn.Module):
+class Residual(torch.nn.Module):
     """
     Residual with support for command-line instantiation and down-sampling
     """
-    def __init__(self, model, down_sample=None, mode=operator.add, **kwargs):
+    def __init__(self, model, down_sample=None, mode=torch.add, **kwargs):
         super().__init__()
 
         self.mode = mode  # Additive residual by default
