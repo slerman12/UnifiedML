@@ -132,11 +132,11 @@ def adapt_cnn(block, obs_shape):
                                         else block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
         elif hasattr(block, '_check_input_dim'):
             block._check_input_dim = lambda *_: None
-    elif hasattr(block, 'modules'):
+    elif hasattr(block, 'modules') and name != 'TIMM':
         for layer in block.children():
             # Iterate through all layers
             adapt_cnn(layer, obs_shape)  # Dimensionality-adaptivity
             # Account for multiple streams in Residual
-            main_stream = type(block).__name__ != 'Residual' or block.down_sample is None or layer == block.down_sample
+            main_stream = name != 'Residual' or block.down_sample is None or layer == block.down_sample
             if main_stream:
                 obs_shape = Utils.cnn_feature_shape(obs_shape, layer)
