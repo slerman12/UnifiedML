@@ -1,3 +1,7 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
 import math
 
 from torch import nn
@@ -18,6 +22,7 @@ class CNNTranspose(nn.Module):
         self.input_shape, self.output_shape = Utils.to_tuple(input_shape), Utils.to_tuple(output_shape)
         # TODO Maybe broadcast to at least 1D, but then would have to make all architectures inherently adaptive?
         #     Ord can leave as is, knowing that the corner case of using it as Eyes on 1d input wouldn't work
+        # Note: should proprioceptive be channel dim or spatial dim
         self.input_shape = (1,) * (3 - len(self.input_shape)) + tuple(self.input_shape)  # Broadcast input to 2D
         in_channels = self.input_shape[0]
 

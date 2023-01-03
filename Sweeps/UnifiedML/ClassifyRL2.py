@@ -108,8 +108,8 @@ runs.UnifiedML.plots = [
 ]
 
 runs.UnifiedML.sftp = True
-runs.UnifiedML.bluehive = False  # Also running on Bluehive
+runs.UnifiedML.bluehive = True  # Also running on Bluehive
 runs.UnifiedML.lab = True  # Also running on lab
 
-runs.UnifiedML.title = 'Classify Via Reinforcement Learning'
+runs.UnifiedML.title = 'Reinforcement Learning In Classification'
 runs.UnifiedML.steps = 5e5

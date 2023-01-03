@@ -148,7 +148,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             if ax_title.lower() == 'atari':
                 ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
-                ax.set_ylabel('Human-Normalized Score')
+                ax.set_ylabel('Avg Human-Normalized Score')
             elif ax_title.lower() == 'dmc':
                 ax.set_ybound(0, 1001)
             elif ax_title.lower() == 'classify':

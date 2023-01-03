@@ -30,11 +30,11 @@ class AC2Agent(torch.nn.Module):
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
                  explore_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
-                 num_critics=2, num_actors=1, depth=0  # AC2
+                 num_critics=2, num_actors=1, depth=0
                  ):
         super().__init__()
 
-        self.discrete = discrete and not generate  # Continuous supported!
+        self.discrete = discrete and not generate  # Discrete & Continuous supported!
         self.supervise = supervise  # And classification...
         self.RL = RL or generate
         self.generate = generate  # And generative modeling, too
