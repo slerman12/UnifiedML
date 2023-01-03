@@ -136,6 +136,7 @@ def adapt_cnn(block, obs_shape):
         for layer in block.children():
             # Iterate through all layers
             adapt_cnn(layer, obs_shape)  # Dimensionality-adaptivity
-            if type(block).__name__ != 'Residual' or block.down_sample is None \
-                    or layer == block.down_sample:  # Account for parallel streams in Residual
+            # Account for multiple streams in Residual
+            main_stream = type(block).__name__ != 'Residual' or block.down_sample is None or layer == block.down_sample
+            if main_stream:
                 obs_shape = Utils.cnn_feature_shape(obs_shape, layer)
