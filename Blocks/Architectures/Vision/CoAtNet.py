@@ -13,7 +13,7 @@ import Utils
 
 
 """NOTE: This architecture implementation is almost done. 90%. This is a state of the art ViT reproduced in full, simply 
-and elegantly in a short file. Thank you for your understanding. Read lines 79 and 105 to see what's left."""
+and elegantly in a short file. Thank you for your understanding. Read lines 79 and 105 to see what's left. Extra, 28."""
 
 
 class MBConvBlock(nn.Module):
@@ -25,7 +25,7 @@ class MBConvBlock(nn.Module):
         hidden_dim = int(in_channels * expansion)  # Width expansion in [Narrow -> Wide -> Narrow]
 
         if down_sample is None and (in_channels != out_channels or stride != 1):
-            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Note: Can fail for low-resolutions e.g. MNIST
+            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Can fail for low-resolutions e.g. MNIST  TODO Adaptive
                                         nn.Conv2d(in_channels, out_channels, 1, bias=False))
 
         block = nn.Sequential(
