@@ -2,7 +2,9 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import torch
 from torch import nn
+
 import timm
 
 from Blocks.Architectures.Vision.CNN import cnn_broadcast
@@ -29,7 +31,7 @@ class TIMM(nn.Module):
 
         self.model = timm.create_model(name, pretrained=pretrained, in_chans=in_channels,
                                        num_classes=0 if output_shape is None else output_dim,
-                                       global_pool='' if output_shape is None else pool).train(not detach)
+                                       global_pool='' if output_shape is None else pool)
 
         self.detach = detach  # Fix weights
 
@@ -40,10 +42,11 @@ class TIMM(nn.Module):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 
-        x = self.model(x)
-
         if self.detach:
-            x = x.detach()  # Detach gradients from model
+            with torch.no_grad():
+                x = self.model(x)  # Detach gradients from model
+        else:
+            x = self.model(x)
 
         # Restore leading dims
         out = x.view(*lead_shape, *x.shape[1:])

@@ -7,6 +7,12 @@ from Sweeps.Templates import template
 
 runs = template('UnifiedML')
 
+"""
+
+NOTE: Transforms not enabled/supported for streaming!
+
+"""
+
 runs.UnifiedML.sweep = [
     # If synchronization worked.. Maybe try this (semaphores):
     # https://stackoverflow.com/questions/16654908/synchronization-across-multiple-processes-in-python
@@ -108,7 +114,7 @@ runs.UnifiedML.plots = [
 ]
 
 runs.UnifiedML.sftp = True
-runs.UnifiedML.bluehive = False  # Also running on Bluehive
+runs.UnifiedML.bluehive = True  # Also running on Bluehive
 runs.UnifiedML.lab = True  # Also running on lab
 
 runs.UnifiedML.title = 'Reinforcement Learning In Classification'
