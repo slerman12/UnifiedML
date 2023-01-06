@@ -44,7 +44,7 @@ class TIMM(nn.Module):
 
         if self.detach:
             with torch.no_grad():
-                x = self.model(x)  # Detach gradients from model
+                x = self.model.eval()(x)  # Detach gradients from model
         else:
             x = self.model(x)
 
