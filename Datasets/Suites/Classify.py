@@ -354,7 +354,7 @@ class ClassSubset(torch.utils.data.Subset):
 # Select first label if multi-label
 def single(label):
     try:
-        return label[0]
+        return str(label[0])
     except TypeError:
         return label
 
