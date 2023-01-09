@@ -102,6 +102,7 @@ class Classify:
             return
 
         print('Identifying unique classes... This can take some time for large datasets.')
+        print(classes)
         # For now, assumes all Train and Eval classes can be inferred from teh respective Dataset.
         # This might not be the case and Eval might end up specifying a different action_spec.
         # Need to save all stats together with meta-data to avoid re-computations (such as of classes, as is already
