@@ -18,7 +18,7 @@ class Generator(nn.Module):
 
         self.input_shape, self.output_shape = Utils.to_tuple(input_shape), Utils.to_tuple(output_shape)
         # Note: should proprioceptive be channel dim or spatial dim
-        self.input_shape = (1,) * (3 - len(self.input_shape)) + tuple(self.input_shape)  # Broadcast input to 2D
+        self.input_shape = tuple(self.input_shape) + (1,) * (3 - len(self.input_shape))  # Broadcast input to 2D
 
         in_channels = self.input_shape[0]
         out_channels = in_channels if self.output_shape is None else self.output_shape[0]

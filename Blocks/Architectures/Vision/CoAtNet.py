@@ -153,9 +153,3 @@ class CoAtNet3(CoAtNet):
 class CoAtNet4(CoAtNet):
     def __init__(self, input_shape, output_shape=None):
         super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)
-
-
-class Print(nn.Module):
-    def forward(self, x):
-        print(x.shape)
-        return x
