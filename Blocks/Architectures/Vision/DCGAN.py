@@ -18,6 +18,7 @@ class Generator(nn.Module):
         self.input_shape = (1,) * (3 - len(self.input_shape)) + tuple(self.input_shape)  # Broadcast input to 2D
 
         in_channels = self.input_shape[0]
+        out_channels = in_channels if self.output_shape is None else self.output_shape[0]
 
         self.Generator = nn.Sequential(
             # (hidden_dim * 8) x 4 x 4
@@ -42,7 +43,8 @@ class Generator(nn.Module):
 
             # out_channels x 64 x 64
             nn.ConvTranspose2d(hidden_dim, out_channels, 4, 2, 1, bias=False),
-            nn.Tanh()
+            nn.Tanh(),
+            nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adaptive
         )
 
         self.apply(weight_init)
@@ -50,7 +52,7 @@ class Generator(nn.Module):
     def repr_shape(self, *_):
         return Utils.repr_shape(_, self.Generator)
 
-    def forward(self, x):
+    def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 
@@ -66,13 +68,12 @@ class Discriminator(nn.Module):
         super().__init__()
 
         self.input_shape, self.output_shape = Utils.to_tuple(input_shape), Utils.to_tuple(output_shape)
-        # Note: should proprioceptive be channel dim or spatial dim
-        self.input_shape = (1,) * (3 - len(self.input_shape)) + tuple(self.input_shape)  # Broadcast input to 2D
 
         in_channels = self.input_shape[0]
 
         self.Discriminator = nn.Sequential(
             # hidden_dim x 32 x 32
+            nn.AdaptiveAvgPool2d(64),  # Adaptive
             nn.Conv2d(in_channels, hidden_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
@@ -99,9 +100,9 @@ class Discriminator(nn.Module):
         self.apply(weight_init)
 
     def repr_shape(self, *_):
-        return Utils.repr_shape(_, self.Discriminator)
+        return Utils.cnn_feature_shape(_, self.Discriminator)
 
-    def forward(self, x):
+    def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
         lead_shape, x = cnn_broadcast(self.input_shape, x)
 

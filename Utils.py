@@ -221,7 +221,8 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
             channels, height, width = channels * (height or 1) * (width or 1), None, None  # Placeholder height/width
         elif isinstance(block, (nn.AdaptiveAvgPool2d, nn.AdaptiveAvgPool1d)):
             size = to_tuple(block.output_size)  # Can be int
-            height, width = (size[0], None) if width is None else size + (None,) * (2 - len(size))
+            pair = size[0] if isinstance(block, nn.AdaptiveAvgPool2d) else None
+            height, width = (size[0], pair) if width is None else size + (pair,) * (2 - len(size))
         elif hasattr(block, 'repr_shape'):
             chw = block.repr_shape(*chw)  # TODO test if changing to *chw from channels, height, width broke things
             channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None

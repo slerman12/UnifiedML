@@ -111,7 +111,7 @@ def adapt_cnn(block, obs_shape):
     if Nd:
         # Set attributes of block adaptively according to obs shape
         for attr in ['kernel_size', 'padding', 'stride', 'dilation', 'output_padding', 'output_size']:
-            if hasattr(block, attr):
+            if hasattr(block, attr) and 'Adaptive' not in name:
                 val = getattr(nn.modules.conv, '_single' if Nd < 2 else '_pair')(getattr(block, attr))  # To tuple
                 if isinstance(val[0], int):
                     setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))  # Truncate
