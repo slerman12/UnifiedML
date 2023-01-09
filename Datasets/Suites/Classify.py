@@ -347,7 +347,10 @@ class ClassSubset(torch.utils.data.Subset):
 
 # Select first label if multi-label
 def single(label):
-    return label if len(label) == 1 else label[0]
+    try:
+        return label[0]
+    except TypeError:
+        return label
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
