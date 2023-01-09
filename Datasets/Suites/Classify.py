@@ -102,7 +102,6 @@ class Classify:
             return
 
         print('Identifying unique classes... This can take some time for large datasets.')
-        print(classes)
         # For now, assumes all Train and Eval classes can be inferred from teh respective Dataset.
         # This might not be the case and Eval might end up specifying a different action_spec.
         # Need to save all stats together with meta-data to avoid re-computations (such as of classes, as is already
@@ -116,7 +115,8 @@ class Classify:
             task += '_Classes_' + '_'.join(map(str, subset))  # Subset of classes dataset
 
         # Convert class labels to indices and allow selecting subset of classes from dataset
-        dataset = ClassSubset(dataset, subset)
+        if classes is not None or single(dataset[0][1]) not in subset:
+            dataset = ClassSubset(dataset, subset)
 
         obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
@@ -348,7 +348,7 @@ class ClassSubset(torch.utils.data.Subset):
 
     def __getitem__(self, idx):
         x, y = super().__getitem__(idx)
-        return x, self.map[y]
+        return x, self.map[single(y)]
 
 
 # Select first label if multi-label
