@@ -114,15 +114,10 @@ def adapt_cnn(block, obs_shape):
             if hasattr(block, attr) and 'Adaptive' not in name:
                 val = getattr(nn.modules.conv, '_single' if Nd < 2 else '_pair')(getattr(block, attr))  # To tuple
                 if isinstance(val[0], int):
-                    for dim, adapt in zip(val, obs_shape[1:]):
-                        if dim > adapt:
-                            print(name, attr, val, obs_shape[1:])
-                            break
                     setattr(block, attr, tuple(min(dim, adapt) for dim, adapt in zip(val, obs_shape[1:])))  # Truncate
 
         # Update 2d operation to 1d if needed
         if len(obs_shape) < Nd + 1:
-            assert False
             block.forward = getattr(nn, name.replace('2d', '1d')).forward.__get__(block)
 
             # Contract
@@ -136,7 +131,6 @@ def adapt_cnn(block, obs_shape):
             block.weight = nn.Parameter(block.weight[:, :, :block.kernel_size[0]] if len(obs_shape) < 3
                                         else block.weight[:, :, :block.kernel_size[0], :block.kernel_size[1]])
         elif hasattr(block, '_check_input_dim'):
-            print('checking input_dim?')
             block._check_input_dim = lambda *_: None
     elif hasattr(block, 'modules') and name != 'TIMM':
         for layer in block.children():

@@ -13,7 +13,7 @@ import Utils
 
 
 """NOTE: This architecture implementation is almost done. 90%. This is a state of the art ViT reproduced in full, simply 
-and elegantly in a short file. Thank you for your understanding. Read lines 79 and 105 to see what's left."""
+and elegantly in a short file. Thank you for your understanding. Read lines 79 and 106 to see what's left."""
 
 
 class MBConvBlock(nn.Module):
@@ -25,16 +25,14 @@ class MBConvBlock(nn.Module):
         hidden_dim = int(in_channels * expansion)  # Width expansion in [Narrow -> Wide -> Narrow]
 
         if down_sample is None and (in_channels != out_channels or stride != 1):
-            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Can fail for low-resolutions
+            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Note: Can fail for low-resolutions if not scaled
                                         nn.Conv2d(in_channels, out_channels, 1, bias=False))
 
         block = nn.Sequential(
             # Point-wise
-            Print(),
             *[nn.Conv2d(in_channels, hidden_dim, 1, stride, bias=False),
               nn.BatchNorm2d(hidden_dim),
               nn.GELU()] if expansion > 1 else (),
-            Print(),
 
             # Depth-wise
             nn.Conv2d(hidden_dim, hidden_dim, 3, 1 if expansion > 1 else stride, 1, groups=hidden_dim, bias=False),
@@ -95,8 +93,8 @@ class CoAtNet(nn.Module):
                                                 nn.BatchNorm2d(dims[0]),
                                                 nn.GELU()
                                                 ) for i in range(depths[0])],
-                                *[MBConvBlock(dims[0], dims[1], stride=1 + (not i)) for i in range(depths[1])],
-                                *[MBConvBlock(dims[1], dims[2], stride=1 + (not i)) for i in range(depths[2])])
+                                *[MBConvBlock(dims[0 + bool(i)], dims[1], None, 1 + (not i)) for i in range(depths[1])],
+                                *[MBConvBlock(dims[1 + bool(i)], dims[2], None, 1 + (not i)) for i in range(depths[2])])
 
         shape = Utils.cnn_feature_shape(input_shape, self.Co)
         new_shape = [dims[3], *shape[1:]]  # After down-sampling
@@ -154,9 +152,3 @@ class CoAtNet3(CoAtNet):
 class CoAtNet4(CoAtNet):
     def __init__(self, input_shape, output_shape=None):
         super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)
-
-
-class Print(nn.Module):
-    def forward(self, x):
-        print(x.shape)
-        return x
