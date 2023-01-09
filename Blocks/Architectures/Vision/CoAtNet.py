@@ -13,7 +13,7 @@ import Utils
 
 
 """NOTE: This architecture implementation is almost done. 90%. This is a state of the art ViT reproduced in full, simply 
-and elegantly in a short file. Thank you for your understanding. Read lines 79 and 105 to see what's left. Extra, 28."""
+and elegantly in a short file. Thank you for your understanding. Read lines 79 and 105 to see what's left."""
 
 
 class MBConvBlock(nn.Module):
@@ -25,14 +25,16 @@ class MBConvBlock(nn.Module):
         hidden_dim = int(in_channels * expansion)  # Width expansion in [Narrow -> Wide -> Narrow]
 
         if down_sample is None and (in_channels != out_channels or stride != 1):
-            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Can fail for low-resolutions e.g. MNIST  TODO Adaptive
+            down_sample = nn.Sequential(nn.MaxPool2d(3, 2, 1),  # Can fail for low-resolutions
                                         nn.Conv2d(in_channels, out_channels, 1, bias=False))
 
         block = nn.Sequential(
-            # Point-wise 
+            # Point-wise
+            Print(),
             *[nn.Conv2d(in_channels, hidden_dim, 1, stride, bias=False),
               nn.BatchNorm2d(hidden_dim),
               nn.GELU()] if expansion > 1 else (),
+            Print(),
 
             # Depth-wise
             nn.Conv2d(hidden_dim, hidden_dim, 3, 1 if expansion > 1 else stride, 1, groups=hidden_dim, bias=False),
@@ -87,7 +89,8 @@ class CoAtNet(nn.Module):
         in_channels = self.input_shape[0]
 
         # Convolution "Co" layers
-        self.Co = nn.Sequential(*[nn.Sequential(nn.Conv2d(in_channels if i == 0 else dims[0],
+        self.Co = nn.Sequential(nn.AdaptiveAvgPool2d(224),  # CoAtNet supports 224-size images, we scale as such
+                                *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else dims[0],
                                                           dims[0], 3, 1 + (not i), 1, bias=False),
                                                 nn.BatchNorm2d(dims[0]),
                                                 nn.GELU()
@@ -151,3 +154,9 @@ class CoAtNet3(CoAtNet):
 class CoAtNet4(CoAtNet):
     def __init__(self, input_shape, output_shape=None):
         super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)
+
+
+class Print(nn.Module):
+    def forward(self, x):
+        print(x.shape)
+        return x

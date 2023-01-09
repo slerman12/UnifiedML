@@ -32,7 +32,7 @@ class ConvNeXtBlock(nn.Module):
         x = self.gamma * x
         x = x.transpose(1, -1)  # Channel swap
         assert x.shape == input.shape, \
-            f'Could not apply residual to shapes {input.shape} and {x.shape}'  # Can fail for low-resolutions e.g. MNIST
+            f'Could not apply residual to shapes {input.shape} and {x.shape}'  # Can fail for low-resolutions
         return x + input  # Can add DropPath on x (e.g. github.com/facebookresearch/ConvNeXt)
 
 
@@ -49,7 +49,8 @@ class ConvNeXt(nn.Module):
 
         dims = [in_channels, *dims]
 
-        self.ConvNeXt = nn.Sequential(*[nn.Sequential(nn.Conv2d(dims[i],
+        self.ConvNeXt = nn.Sequential(nn.AdaptiveAvgPool2d(224),  # ConvNeXt supports 224-size images, we scale as such
+                                      *[nn.Sequential(nn.Conv2d(dims[i],
                                                                 dims[i + 1],
                                                                 kernel_size=4 if i == 0 else 2,
                                                                 stride=4 if i == 0 else 2),  # Conv
