@@ -101,9 +101,7 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        print(classes)
-        print(hasattr(dataset, 'classes'))
-        print(classes is None)
+        print(sorted(list(set(exp[1] for exp in dataset))))
 
         # TODO Save training class count(s) in stats in case Train/Eval mismatch
         subset = (list(range(len(getattr(dataset, 'classes')))) if hasattr(dataset, 'classes')
