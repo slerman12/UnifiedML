@@ -9,7 +9,7 @@ action_spec: ???  # To be specified later
 num_actions: 1
 standardize: true
 norm: true  # Note: ignored / mutually exclusive if standardize
-z_dim: 50  # Shorthand for trunk_dim (generator input)
+z_dim: 50  # Shorthand for trunk_dim (Generator input dim)
 trunk_dim: ${z_dim}
 hidden_dim: 1024
 explore_steps: 2000
