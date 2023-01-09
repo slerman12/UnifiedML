@@ -101,13 +101,14 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
+        print('Identifying unique classes... This can take some time for large datasets.')
         # For now, assumes all Train and Eval classes can be inferred from teh respective Dataset.
         # This might not be the case and Eval might end up specifying a different action_spec.
         # Need to save all stats together with meta-data to avoid re-computations (such as of classes, as is already
         # done for other stats), asynchronous loading conflicts in parallel setups, and later, conflicting Transforms.
         subset = (list(range(len(getattr(dataset, 'classes')))) if hasattr(dataset, 'classes')
-                  else sorted(list(set(single(exp[1], verbose=not i)  # Only single-label allowed for now
-                                       for i, exp in enumerate(dataset))))) if classes is None \
+                  else sorted(list(set(single(exp[1])  # Only single-label allowed for now
+                                       for exp in dataset)))) if classes is None \
             else classes  # All classes or subset
 
         if classes:
@@ -351,9 +352,7 @@ class ClassSubset(torch.utils.data.Subset):
 
 
 # Select first label if multi-label
-def single(label, verbose=False):
-    if verbose:
-        print('Identifying unique classes... This can take some time for large datasets.')
+def single(label):
     try:
         return label[0]
     except TypeError:
