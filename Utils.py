@@ -224,7 +224,7 @@ def cnn_feature_shape(chw, *blocks, verbose=False):
             pair = size[0] if isinstance(block, nn.AdaptiveAvgPool2d) else None
             height, width = (size[0], pair) if width is None else size + (pair,) * (2 - len(size))
         elif hasattr(block, 'repr_shape'):
-            chw = block.repr_shape(*chw)  # TODO test if changing to *chw from channels, height, width broke things
+            chw = block.repr_shape(*chw)
             channels, height, width = chw[0], chw[1] if len(chw) > 1 else None, chw[2] if len(chw) > 2 else None
         elif hasattr(block, 'modules'):
             for layer in block.children():

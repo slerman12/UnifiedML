@@ -58,7 +58,7 @@ class Generator(nn.Module):
         self.apply(weight_init)
 
     def repr_shape(self, *_):
-        return Utils.repr_shape(_, self.Generator)
+        return Utils.repr_shape(_, self.Generator)  # cnn_feature_shape doesn't support pre-computing ConvTranspose2d
 
     def forward(self, *x):
         # Concatenate inputs along channels assuming dimensions allow, broadcast across many possibilities
