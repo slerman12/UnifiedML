@@ -9,7 +9,12 @@ import Utils
 from Blocks.Architectures.Vision.CNN import cnn_broadcast
 
 
-"""Note: Dimensionality adaptivity is still highly experimental for GANs."""
+"""
+Usage example: 
+python Run.py task=classify/mnist generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator
+
+Note: Dimensionality adaptivity is still highly experimental for GANs.
+"""
 
 
 class Generator(nn.Module):
