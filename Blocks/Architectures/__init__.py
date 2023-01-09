@@ -19,6 +19,8 @@ from Blocks.Architectures.Transformer import AttentionBlock, CrossAttentionBlock
 from Blocks.Architectures.Vision.ViT import ViT, ViT as VisionTransformer
 from Blocks.Architectures.Vision.CoAtNet import CoAtNet, CoAtNet0, CoAtNet1, CoAtNet2, CoAtNet3, CoAtNet4
 
+from Blocks.Architectures.Vision import DCGAN
+
 from Blocks.Architectures.Perceiver import Perceiver
 
 from Blocks.Architectures.RN import RN, RN as RelationNetwork

@@ -72,10 +72,10 @@ class AvgPool(nn.Module):
 
 def cnn_broadcast(input_shape, x):
     """
-    Concatenates multiple CNN inputs into one and broadcast them when the inputs don't match cleanly.
-    For example, pairing an image with an action. Re-broadcasts unexpected shapes as well, such as flattened images.
+    Concatenates multiple CNN inputs into one and broadcasts them when the inputs don't match cleanly.
+    For example, pairing an image with an action.
 
-    Accepts multiple inputs in a list and various shape possibilities. Handles broadcasting as follows:
+    Accepts multiple inputs in a list, potentially shaped differently. Handles broadcasting & concatenation as follows:
 
         1. Use raw input if input matches pre-specified input shape and includes at least one batch dim
         2. Otherwise, try to reshape spatial dims into expected spatial shape
@@ -83,7 +83,7 @@ def cnn_broadcast(input_shape, x):
         4. Altogether ignore if input empty
         5. Concatenate inputs along channel axis
 
-    Allows images to be paired with lower-dim contexts or other images, inferring if lower-dim or even flattened.
+    Allows images to be paired with lower-dim contexts or other images, broadcasting if lower-dim or even flattened.
     """
 
     _, *spatial_shape = input_shape
