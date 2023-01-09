@@ -101,9 +101,9 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # TODO Save training class count(s) in stats in case Train/Eval mismatch
         subset = (list(range(len(getattr(dataset, 'classes')))) if hasattr(dataset, 'classes')
-                  else sorted(list(set(exp[1] if len(exp[1]) == 1 else exp[1][0] for exp in dataset)))) if classes is None \
+                  else sorted(list(set(single(exp[1])  # Only single-label allowed for now
+                                       for exp in dataset)))) if classes is None \
             else classes  # All classes or subset
 
         if classes:
@@ -336,13 +336,18 @@ class ClassSubset(torch.utils.data.Subset):
     def __init__(self, dataset, classes):
         self.__dict__.update(dataset.__dict__)
 
-        super().__init__(dataset=dataset, indices=[i for i in range(len(dataset)) if dataset[i][1] in classes])
+        super().__init__(dataset=dataset, indices=[i for i in range(len(dataset)) if single(dataset[i][1]) in classes])
 
         self.map = {classes[i]: torch.tensor(i) for i in range(len(classes))}  # Map string labels to integers
 
     def __getitem__(self, idx):
         x, y = super().__getitem__(idx)
         return x, self.map[y]
+
+
+# Select first label if multi-label
+def single(label):
+    return label if len(label) == 1 else label[0]
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
