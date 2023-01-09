@@ -87,7 +87,8 @@ class CoAtNet(nn.Module):
         in_channels = self.input_shape[0]
 
         # Convolution "Co" layers
-        self.Co = nn.Sequential(nn.AdaptiveAvgPool2d(224),  # CoAtNet supports 224-size images, we scale as such
+        self.Co = nn.Sequential(nn.AdaptiveAvgPool2d(224) if len(self.input_shape) > 2
+                                else nn.Identity(),  # CoAtNet supports 224-size images, we scale as such when 2d
                                 *[nn.Sequential(nn.Conv2d(in_channels if i == 0 else dims[0],
                                                           dims[0], 3, 1 + (not i), 1, bias=False),
                                                 nn.BatchNorm2d(dims[0]),
@@ -152,3 +153,9 @@ class CoAtNet3(CoAtNet):
 class CoAtNet4(CoAtNet):
     def __init__(self, input_shape, output_shape=None):
         super().__init__(input_shape, [192, 192, 384, 768, 1536], [2, 2, 12, 28, 2], output_shape=output_shape)
+
+
+class Print(nn.Module):
+    def forward(self, x):
+        print(x.shape)
+        return x

@@ -9,6 +9,9 @@ import Utils
 from Blocks.Architectures.Vision.CNN import cnn_broadcast
 
 
+"""Note: Dimensionality adaptivity is still highly experimental for GANs."""
+
+
 class Generator(nn.Module):
     def __init__(self, input_shape, hidden_dim=64, output_shape=None):
         super().__init__()

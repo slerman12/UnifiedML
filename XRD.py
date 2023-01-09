@@ -9,7 +9,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 
-from torchaudio.transforms import Spectrogram
+# from torchaudio.transforms import Spectrogram  # Failed on my MacBook for some reason
 from torchvision.transforms import Compose, ToPILImage
 
 

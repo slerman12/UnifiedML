@@ -40,7 +40,7 @@ class ConvNeXt(nn.Module):
     """
     ConvNeXt  `A ConvNet for the 2020s` (https://arxiv.org/pdf/2201.03545.pdf)
     """
-    def __init__(self, input_shape, dims=(96,), depths=(1,), output_shape=None):
+    def __init__(self, input_shape, dims=[128, 256, 512, 1024], depths=[3, 3, 27, 3], output_shape=None):
         super().__init__()
 
         self.input_shape, output_dim = Utils.to_tuple(input_shape), Utils.prod(output_shape)
@@ -49,7 +49,8 @@ class ConvNeXt(nn.Module):
 
         dims = [in_channels, *dims]
 
-        self.ConvNeXt = nn.Sequential(nn.AdaptiveAvgPool2d(224),  # ConvNeXt supports 224-size images, we scale as such
+        self.ConvNeXt = nn.Sequential(nn.AdaptiveAvgPool2d(224) if len(self.input_shape) > 2
+                                      else nn.Identity(),  # ConvNeXt supports 224-size images, we scale as such when 2d
                                       *[nn.Sequential(nn.Conv2d(dims[i],
                                                                 dims[i + 1],
                                                                 kernel_size=4 if i == 0 else 2,
@@ -96,5 +97,4 @@ class ConvNeXtTiny(ConvNeXt):
 
 
 class ConvNeXtBase(ConvNeXt):
-    def __init__(self, input_shape, output_shape=None):
-        super().__init__(input_shape, [128, 256, 512, 1024], [3, 3, 27, 3], output_shape)  # Full Model
+    """Pseudonym"""
