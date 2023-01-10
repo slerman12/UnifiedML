@@ -118,9 +118,8 @@ class ExperienceReplay:
           since RAM is faster to load from than hard disk epoch by epoch --> Training speedup, less bottleneck.
           We bypass Pytorch's replication of each worker's RAM data per worker with a truly-shared-memory dict.
 
-          The disadvantage of CPU pre-loading is the dependency on more CPU RAM.
-
-              Roadmap: Dual RAM/memory-mapped hard disk loading for Offline/Online, capacity-adaptive.
+          The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. 'RAM_capacity=" 
+          adapts how many experiences get stored on RAM vs. memory-mapped (efficiently-formatted) on hard disk.
 
           Online also caches data on RAM, after storing to hard disk.
 
@@ -384,7 +383,7 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
-        # If offline replay exceeds specified RAM allocation ("capacity=" flag) TODO temp files not deleting!
+        # If offline replay exceeds specified RAM allocation ("capacity=" flag)  TODO Test on Bluehive with limited RAM.
         if self.offline and episode_len + len(self) > self.capacity:
             # Memory map data for efficient hard disk retrieval
             for spec in episode:
