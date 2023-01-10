@@ -101,6 +101,7 @@ class Classify:
         # If the training dataset is empty, we can assume train_steps=0
         if train and len(dataset) == 0:
             return
+        print(len(dataset))
 
         # Unique classes in dataset - warning: treats multi-label as single-label for now - TODO Only do once
         classes = subset if subset is not None \
@@ -134,8 +135,6 @@ class Classify:
                             'low': 0,
                             'high': len(classes) - 1,
                             'discrete': True}
-
-        print(self.obs_spec, self.action_spec, len(dataset))
 
         # CPU workers
         num_workers = max(1, min(num_workers, os.cpu_count()))
@@ -199,6 +198,10 @@ class Classify:
                          'stddev': stddev,
                          'low': low,
                          'high': high}
+
+
+
+        print(self.obs_spec, self.action_spec, len(dataset))
 
         self.exp = None  # Experience
 
