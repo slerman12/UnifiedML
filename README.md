@@ -610,7 +610,7 @@ python Run.py task=classify/mnist generate=true
 [DCGAN](https://arxiv.org/pdf/1511.06434.pdf) example:
 
 ```console
-python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 experiment=DCGAN "env.transform='transforms.Resize(64)'"
+python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 'env.transform="transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])"' experiment=DCGAN
 ```
 
 <p align="left">
