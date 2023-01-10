@@ -15,7 +15,7 @@ import datetime
 import io
 import traceback
 from time import sleep
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 
 from omegaconf import OmegaConf
 
@@ -68,7 +68,6 @@ class ExperienceReplay:
         if not save and hasattr(self, 'path'):
             # Delete replay on terminate
             atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
-        # TODO DELETE ALL MEMORY MAP LINKS
 
         # Data specs
 
@@ -385,13 +384,14 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
-        # If offline replay exceeds memory bounds ("capacity=" flag).
+        # If offline replay exceeds specified RAM allocation ("capacity=" flag) TODO temp files not deleting!
         if self.offline and episode_len + len(self) > self.capacity:
-            # Memory mapping data for efficient hard disk retrieval
+            # Memory map data for efficient hard disk retrieval
             for spec in episode:
                 if isinstance(episode[spec], np.ndarray) and episode[spec].shape and episode[spec].shape[-1]:
                     # Replace episode with memory mapped link
-                    filename = os.path.join(mkdtemp(), episode_name.stem + '_' + spec + '.dat')
+                    t_dir = TemporaryDirectory()
+                    filename = os.path.join(t_dir.name, episode_name.stem + '_' + spec + '.dat')
                     file = np.memmap(filename, dtype='float32', mode='w+', shape=episode[spec].shape)
                     file[:] = episode[spec][:]
                     file.flush()
@@ -402,7 +402,7 @@ class Experiences:
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
 
-        # Deleting experiences upon overfill
+        # Deleting experiences upon overfill if online
         while episode_len + len(self) - self.deleted_indices > self.capacity:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
