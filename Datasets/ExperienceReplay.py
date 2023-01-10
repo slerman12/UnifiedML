@@ -384,8 +384,8 @@ class Experiences:
         # Deleting experiences upon overfill
         while episode_len + len(self) - self.deleted_indices > self.capacity:
             if self.offline:
-                print('Replay size exceeded specified RAM capacity ("capacity=" flag). '
-                      'Memory mapping data for efficient hard disk retrieval.')
+                warnings.warn('Replay size exceeded specified RAM capacity ("capacity=" flag). '
+                              'Memory mapping data for efficient hard disk retrieval...')
                 # TODO IF OFFLINE, REPLACE EPISODE WITH MEMORY MAPPED LINK. EXPLICITLY MEMORY MAP HERE IF OFFLINE.
                 #  DO BELOW ONLY IF ONLINE.
                 continue
