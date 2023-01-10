@@ -133,8 +133,9 @@ class ExperienceReplay:
 
         os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
-        # RAM capacity per worker. Max num experiences allotted per CPU worker (if Online)
-        capacity = capacity // self.num_workers
+        # RAM capacity per worker. Max num experiences allotted per CPU worker (if Online; otherwise workers share RAM)
+        if not self.offline:
+            capacity = capacity // self.num_workers
 
         # For sending data to workers directly
         pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])
