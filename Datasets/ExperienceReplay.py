@@ -67,6 +67,7 @@ class ExperienceReplay:
         if not save and hasattr(self, 'path'):
             # Delete replay on terminate
             atexit.register(lambda p: (shutil.rmtree(p), print('Deleting replay')), self.path)
+        # TODO DELETE ALL MEMORY MAP LINKS
 
         # Data specs
 
@@ -133,7 +134,7 @@ class ExperienceReplay:
         os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
         # RAM capacity per worker. Max num experiences allotted per CPU worker (if Online)
-        capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] and not offline else np.inf
+        capacity = capacity // self.num_workers
 
         # For sending data to workers directly
         pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])
@@ -382,6 +383,10 @@ class Experiences:
 
         # Deleting experiences upon overfill
         while episode_len + len(self) - self.deleted_indices > self.capacity:
+            # TODO POP FROM EPISODE_NAMES AND CHANGE DELETED_INDICES IF ONLINE ONLY.
+            #  THEN, IF OFFLINE, REPLACE EPISODE WITH MEMORY MAPPED LINK.
+            #  PROBLEM: REPLAY BUFFER INCLUDES NP.SAVEZ_COMPRESSED.
+            #  INTERIM SOLUTION: EXPLICITLY MEMORY MAP HERE IF OFFLINE.
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
             early_episode_len = len(early_episode['obs']) - offset

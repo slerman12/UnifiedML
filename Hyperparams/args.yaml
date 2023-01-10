@@ -47,6 +47,8 @@ frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1
 # Replay
+RAM_capacity: 1000000
+capacity: ${RAM_capacity}
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -126,7 +128,7 @@ replay:
   _recursive_: false
   batch_size: ${batch_size}
   num_workers: ${num_workers}
-  capacity: 1000000
+  capacity: ${capacity}
   suite: ${suite}
   task: ${task_name}
   obs_spec: ${obs_spec}
