@@ -13,7 +13,7 @@ from Sweeps.SweepsAndPlots import runs
 
 username = 'slerman'
 
-branch = 'V2'  # Note: Perhaps specify in sweeps_and_plots.runs instead
+branch = 'MemoryMap'  # Note: Perhaps specify in sweeps_and_plots.runs instead
 
 # Get password, encrypt, and save for reuse
 if os.path.exists('pass'):

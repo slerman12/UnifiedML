@@ -394,7 +394,7 @@ class Experiences:
                     file = np.memmap(filename, dtype='float32', mode='w+', shape=episode[spec].shape)
                     file[:] = episode[spec][:]
                     file.flush()
-                    episode[spec] = file
+                    episode[spec] = file  # Memory mapping is an efficient hard disk storage format for fast retrieval
 
             return True
 

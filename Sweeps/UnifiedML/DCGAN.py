@@ -16,8 +16,9 @@ runs.UnifiedML.sweep = [
     z_dim=100 
     'env.transform="transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])"' 
     experiment=DCGAN
+    capacity=0
     time="5-00:00:00"
-    mem=150
+    mem=5
     lab=true
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]
@@ -28,5 +29,6 @@ runs.UnifiedML.plots = [
 ]
 
 runs.UnifiedML.sftp = True
-runs.UnifiedML.lab = False
+runs.UnifiedML.bluehive = False
+runs.UnifiedML.lab = True
 runs.UnifiedML.title = 'DCGAN'

@@ -135,6 +135,8 @@ class Classify:
                             'high': len(classes) - 1,
                             'discrete': True}
 
+        print(self.obs_spec, self.action_spec, len(dataset))
+
         # CPU workers
         num_workers = max(1, min(num_workers, os.cpu_count()))
 
