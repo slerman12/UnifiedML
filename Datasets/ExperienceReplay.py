@@ -31,9 +31,8 @@ from torchvision.transforms import transforms
 
 
 class ExperienceReplay:
-    def __init__(self, batch_size, num_workers, capacity, suite, task, offline, generate, stream, save, load, path,
-                 obs_spec, action_spec, frame_stack=1, nstep=0, discount=1, meta_shape=(0,),
-                 classes=None, transform=None):
+    def __init__(self, batch_size, num_workers, capacity, suite, task, offline, generate, stream, save, load, path, env,
+                 obs_spec, action_spec, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
 
         exists = glob.glob(path + '*/')
@@ -42,8 +41,10 @@ class ExperienceReplay:
 
         if load or offline:
             if suite == 'classify':
-                if classes:
-                    task += '_Classes_' + '_'.join(map(str, classes))  # Subset of classes
+                if env.subset:
+                    task += '_Classes_' + '_'.join(map(str, env.subset))  # Subset of classes
+                if getattr(env.transform, '_target_', env.transform) is not None:
+                    task += '_Transformed'  # Pre-transformed by environment (fixed transformations)
                 standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer'
                 if len(exists) == 0:
                     exists = [standard + '/']

@@ -20,6 +20,7 @@ from torch.optim import *
 from torch.optim.lr_scheduler import *
 
 from torch.nn import Identity, Flatten  # For direct accessibility via command line
+from torchvision import transforms  # For direct accessibility via command line
 from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 

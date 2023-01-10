@@ -63,7 +63,8 @@ class Classify:
 
     """
     def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, batch_size=8,
-                 num_workers=1, classes=None, low=None, high=None, seed=None, frame_stack=0, action_repeat=0, **kwargs):
+                 num_workers=1, subset=None, low=None, high=None, seed=None, transform=None, frame_stack=0,
+                 action_repeat=0, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
@@ -101,23 +102,27 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # Unique classes in dataset - warning: treats multi-label as single-label for now
-        print('Identifying unique classes... This can take some time for large datasets.')
-        subset = range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
+        # Unique classes in dataset - warning: treats multi-label as single-label for now - TODO Only do once
+        classes = subset if subset is not None \
+            else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
             else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
-            else sorted(list(set(str(exp[1]) for exp in dataset))) if classes is None \
-            else classes
+            else [sorted(list(set(str(exp[1]) for exp in dataset))),
+                  print('Identifying unique classes... This can take some time for large datasets.')][0]
 
         # Can select a subset of classes
-        if classes:
-            task += '_Classes_' + '_'.join(map(str, subset))
-            dataset = ClassSubset(dataset, subset)
+        if subset:
+            task += '_Classes_' + '_'.join(map(str, classes))
+            print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
+            dataset = ClassSubset(dataset, classes)
 
         # Map unique classes to integers
-        dataset = ClassToIdx(dataset, subset)
+        dataset = ClassToIdx(dataset, classes)
 
         # Transform inputs
-        dataset = Transform(dataset, None)
+        transform = instantiate(transform)
+        if transform:
+            task += '_Transformed'
+        dataset = Transform(dataset, transform)
 
         obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
@@ -125,9 +130,9 @@ class Classify:
         self.obs_spec = {'shape': obs_shape}
 
         self.action_spec = {'shape': (1,),
-                            'discrete_bins': len(subset),
+                            'discrete_bins': len(classes),
                             'low': 0,
-                            'high': len(subset) - 1,
+                            'high': len(classes) - 1,
                             'discrete': True}
 
         # CPU workers
@@ -166,8 +171,8 @@ class Classify:
         # Offline and generate don't use training rollouts
         if (offline or generate) and not train and not replay_path.exists():
             # But still need to create training replay & compute stats
-            Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, classes, None, None, seed,
-                     **kwargs)
+            Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, subset, None, None, seed,
+                     transform, **kwargs)
 
         # Create replay
         if train and (offline or generate) and not replay_path.exists():
@@ -178,7 +183,7 @@ class Classify:
         # Compute stats
         mean, stddev, low_, high_ = map(json.loads, open(stats_path[0]).readline().split('_')) if len(stats_path) \
             else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else 0
-        low, high = low if low is None else low_, high_ if high is None else high
+        low, high = low_ if low is None else low, high_ if high is None else high
 
         # No need
         if (offline or generate) and train:

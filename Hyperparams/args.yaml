@@ -30,7 +30,9 @@ Env: ???  # To be specified later, defaults per respective task
 env:
   _target_: ${Env}
   _recursive_: false
-  classes: null
+  subset: null
+  transform:
+    _target_: null
 Dataset: null  # Defaults per respective Classify task
 TestDataset: null
 dataset:
@@ -133,7 +135,7 @@ replay:
   nstep: ${nstep}
   discount: ${discount}
   transform: ${transform}
-  classes: ${env.classes}
+  env: ${env}
   offline: ${offline}
   generate: ${generate}
   stream: ${stream}

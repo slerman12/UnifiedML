@@ -1,6 +1,7 @@
 from Sweeps.Templates import template
 
 
+# Note: norm may have not worked because "low" was set to "low" not "low_" in classify
 runs = template('XRD')
 
 runs.XRD.sweep = [
