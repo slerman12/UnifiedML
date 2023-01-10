@@ -3,8 +3,6 @@ defaults:
 
 Env: Datasets.Suites.Classify.Classify
 Dataset: torchvision.datasets.CelebA
-env:
-  classes: [0,1]
 environment:
     dataset: ${dataset}
     test_dataset: ${test_dataset}

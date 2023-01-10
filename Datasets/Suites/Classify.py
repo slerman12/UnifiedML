@@ -12,12 +12,12 @@ import itertools
 import json
 import random
 import warnings
+
+from PIL.Image import Image
 from termcolor import colored
 from pathlib import Path
 
 from tqdm import tqdm
-
-from PIL.Image import Image
 
 import numpy as np
 
@@ -82,7 +82,7 @@ class Classify:
                        dict(version='2021_' + 'train' if train else 'valid'),
                        dict(subset='training' if train else 'testing'), {}]
         download_specs = [dict(download=True), {}]
-        transform_specs = [dict(transform=Transform()), {}]
+        transform_specs = [dict(transform=None), {}]
 
         # Instantiate dataset  (Note: Multiple processes at the same time can still clash when creating a dataset)
         for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
@@ -101,22 +101,23 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
+        # Unique classes in dataset - warning: treats multi-label as single-label for now
         print('Identifying unique classes... This can take some time for large datasets.')
-        # For now, assumes all Train and Eval classes can be inferred from teh respective Dataset.
-        # This might not be the case and Eval might end up specifying a different action_spec.
-        # Need to save all stats together with meta-data to avoid re-computations (such as of classes, as is already
-        # done for other stats), asynchronous loading conflicts in parallel setups, and later, conflicting Transforms.
-        subset = (list(range(len(getattr(dataset, 'classes')))) if hasattr(dataset, 'classes')
-                  else sorted(list(set(single(exp[1])  # Only single-label allowed for now
-                                       for exp in dataset)))) if classes is None \
-            else classes  # All classes or subset
+        subset = range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
+            else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
+            else sorted(list(set(str(exp[1]) for exp in dataset))) if classes is None \
+            else classes
 
+        # Can select a subset of classes
         if classes:
-            task += '_Classes_' + '_'.join(map(str, subset))  # Subset of classes dataset
-
-        # Convert class labels to indices and allow selecting subset of classes from dataset
-        if classes is not None or single(dataset[0][1]) not in subset:
+            task += '_Classes_' + '_'.join(map(str, subset))
             dataset = ClassSubset(dataset, subset)
+
+        # Map unique classes to integers
+        dataset = ClassToIdx(dataset, subset)
+
+        # Transform inputs
+        dataset = Transform(dataset, None)
 
         obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
@@ -326,37 +327,57 @@ class Classify:
         return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
 
 
-class Transform:
-    def __call__(self, sample):
-        return F.to_tensor(sample) if isinstance(sample, Image) else sample
+# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
+class ClassSubset(torch.utils.data.Subset):
+    def __init__(self, dataset, classes):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Find subset indices which only contain the specified classes, multi-label or single-label
+        indices = [i for i in range(len(dataset)) if str(dataset[i][1]) in map(str, classes)]
+
+        # Initialize
+        super().__init__(dataset=dataset, indices=indices)
+
+
+# Map class labels to Tensor integers
+class ClassToIdx(Dataset):
+    def __init__(self, dataset, classes):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Map string labels to integers
+        self.dataset, self.map = dataset, {str(classes[i]): torch.tensor(i) for i in range(len(classes))}
+
+    def __getitem__(self, idx):
+        x, y = self.dataset.__getitem__(idx)
+        return x, self.map[str(y)]  # Map
+
+    def __len__(self):
+        return self.dataset.__len__()
+
+
+class Transform(Dataset):
+    def __init__(self, dataset, transform=None):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Map inputs
+        self.dataset, self.transform = dataset, transform
+
+    def __getitem__(self, idx):
+        x, y = self.dataset.__getitem__(idx)
+        x = (self.transform or (lambda _: _))(x)  # Transform
+        return F.to_tensor(x) if isinstance(x, Image) else x, y
+
+    def __len__(self):
+        return self.dataset.__len__()
 
 
 def worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
-
-
-# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
-class ClassSubset(torch.utils.data.Subset):
-    def __init__(self, dataset, classes):
-        self.__dict__.update(dataset.__dict__)
-
-        super().__init__(dataset=dataset, indices=[i for i in range(len(dataset)) if single(dataset[i][1]) in classes])
-
-        self.map = {classes[i]: torch.tensor(i) for i in range(len(classes))}  # Map string labels to integers
-
-    def __getitem__(self, idx):
-        x, y = super().__getitem__(idx)
-        return x, self.map[single(y)]
-
-
-# Select first label if multi-label
-def single(label):
-    try:
-        return str(label[0])
-    except TypeError:
-        return label
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
