@@ -15,6 +15,7 @@ import datetime
 import io
 import traceback
 from time import sleep
+from tempfile import mkdtemp
 
 from omegaconf import OmegaConf
 
@@ -381,23 +382,32 @@ class Experiences:
         self.experience_indices += list(enumerate([episode_name] * episode_len))
 
         self.episodes[episode_name] = episode
+        self.episode_names.append(episode_name)
+        self.episode_names.sort()
+
+        # If offline replay exceeds memory bounds ("capacity=" flag).
+        if self.offline and episode_len + len(self) > self.capacity:
+            # Memory mapping data for efficient hard disk retrieval
+            for spec in episode:
+                if isinstance(episode[spec], np.ndarray) and episode[spec].shape and episode[spec].shape[-1]:
+                    # Replace episode with memory mapped link
+                    filename = os.path.join(mkdtemp(), episode_name.stem + '_' + spec + '.dat')
+                    file = np.memmap(filename, dtype='float32', mode='w+', shape=episode[spec].shape)
+                    file[:] = episode[spec][:]
+                    file.flush()
+                    episode[spec] = file
+
+            return True
+
+        if not self.save:
+            episode_name.unlink(missing_ok=True)  # Deletes file
 
         # Deleting experiences upon overfill
         while episode_len + len(self) - self.deleted_indices > self.capacity:
-            if self.offline:
-                warnings.warn('Replay size exceeded specified RAM capacity ("capacity=" flag). '
-                              'Memory mapping data for efficient hard disk retrieval...')
-                # TODO IF OFFLINE, REPLACE EPISODE WITH MEMORY MAPPED LINK. EXPLICITLY MEMORY MAP HERE IF OFFLINE.
-                #  DO BELOW ONLY IF ONLINE.
-                continue
-
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
             early_episode_len = len(early_episode['obs']) - offset
             self.deleted_indices += early_episode_len  # To derive a consistent experience index even as data deleted
-            if not self.save:
-                # Deletes early episode file
-                early_episode_name.unlink(missing_ok=True)
 
         return True
 
@@ -422,12 +432,6 @@ class Experiences:
             num_fetched += episode_len
             if not self.load_episode(episode_name):
                 break  # Resolve conflicts
-
-            self.episode_names.append(episode_name)
-            self.episode_names.sort()
-
-            if not self.save:
-                episode_name.unlink(missing_ok=True)  # Deletes file
 
     # Can update/write data based on piped update specs
     def worker_fetch_updates(self):
