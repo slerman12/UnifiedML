@@ -383,10 +383,13 @@ class Experiences:
 
         # Deleting experiences upon overfill
         while episode_len + len(self) - self.deleted_indices > self.capacity:
-            # TODO POP FROM EPISODE_NAMES AND CHANGE DELETED_INDICES IF ONLINE ONLY.
-            #  THEN, IF OFFLINE, REPLACE EPISODE WITH MEMORY MAPPED LINK.
-            #  PROBLEM: REPLAY BUFFER INCLUDES NP.SAVEZ_COMPRESSED.
-            #  INTERIM SOLUTION: EXPLICITLY MEMORY MAP HERE IF OFFLINE.
+            if self.offline:
+                print('Replay size exceeded specified RAM capacity ("capacity=" flag). '
+                      'Memory mapping data for efficient hard disk retrieval.')
+                # TODO IF OFFLINE, REPLACE EPISODE WITH MEMORY MAPPED LINK. EXPLICITLY MEMORY MAP HERE IF OFFLINE.
+                #  DO BELOW ONLY IF ONLINE.
+                continue
+
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
             early_episode_len = len(early_episode['obs']) - offset
