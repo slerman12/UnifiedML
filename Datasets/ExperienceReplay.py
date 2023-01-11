@@ -110,6 +110,8 @@ class ExperienceReplay:
         if self.stream:
             return
 
+        print('yaa')
+
         """
         ---Parallelized experience loading--- 
         
