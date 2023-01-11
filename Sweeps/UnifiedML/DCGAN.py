@@ -19,7 +19,7 @@ runs.UnifiedML.sweep = [
     capacity=0
     time="5-00:00:00"
     mem=5
-    lab=true
+    reservation_id=20221217
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]
 

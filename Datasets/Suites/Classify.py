@@ -102,7 +102,7 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # Unique classes in dataset - warning: treats multi-label as single-label for now - TODO Only do once
+        # Unique classes in dataset - warning: treats multi-label as single-label for now  TODO Save/Only do once
         classes = subset if subset is not None \
             else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
             else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
@@ -228,13 +228,6 @@ class Classify:
         # Create experience
         exp = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
 
-        # Scalars/NaN to numpy
-        for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
-                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
-            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
-                exp[key].shape = (1, *(exp[key].shape or [1]))
-
         self.exp = AttrDict(exp)  # Experience
 
         return self.exp
@@ -265,9 +258,8 @@ class Classify:
 
             obs.shape = (batch_size, c, *hw)
 
-            dummy = np.full((batch_size, 1), np.NaN)  # TODO Maybe instead of NaN can have empty, replaced, and collated
-            # TODO Try setting action dim to (b, *shape, 1) instead
-            missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['discrete_bins'],)), np.NaN)
+            dummy = np.full((batch_size, 0), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape'], 0), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 
@@ -333,34 +325,10 @@ class Classify:
         return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
 
 
-# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
-class ClassSubset(torch.utils.data.Subset):
-    def __init__(self, dataset, classes):
-        # Inherit attributes of given dataset
-        self.__dict__.update(dataset.__dict__)
-
-        # Find subset indices which only contain the specified classes, multi-label or single-label
-        indices = [i for i in range(len(dataset)) if str(dataset[i][1]) in map(str, classes)]
-
-        # Initialize
-        super().__init__(dataset=dataset, indices=indices)
-
-
-# Map class labels to Tensor integers
-class ClassToIdx(Dataset):
-    def __init__(self, dataset, classes):
-        # Inherit attributes of given dataset
-        self.__dict__.update(dataset.__dict__)
-
-        # Map string labels to integers
-        self.dataset, self.map = dataset, {str(classes[i]): torch.tensor(i) for i in range(len(classes))}
-
-    def __getitem__(self, idx):
-        x, y = self.dataset.__getitem__(idx)
-        return x, self.map[str(y)]  # Map
-
-    def __len__(self):
-        return self.dataset.__len__()
+def worker_init_fn(worker_id):
+    seed = np.random.get_state()[1][0] + worker_id
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 class Transform(Dataset):
@@ -380,10 +348,34 @@ class Transform(Dataset):
         return self.dataset.__len__()
 
 
-def worker_init_fn(worker_id):
-    seed = np.random.get_state()[1][0] + worker_id
-    np.random.seed(seed)
-    random.seed(seed)
+# Map class labels to Tensor integers
+class ClassToIdx(Dataset):
+    def __init__(self, dataset, classes):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Map string labels to integers
+        self.dataset, self.map = dataset, {str(classes[i]): torch.tensor(i) for i in range(len(classes))}
+
+    def __getitem__(self, idx):
+        x, y = self.dataset.__getitem__(idx)
+        return x, self.map[str(y)]  # Map
+
+    def __len__(self):
+        return self.dataset.__len__()
+
+
+# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
+class ClassSubset(torch.utils.data.Subset):
+    def __init__(self, dataset, classes):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Find subset indices which only contain the specified classes, multi-label or single-label
+        indices = [i for i in range(len(dataset)) if str(dataset[i][1]) in map(str, classes)]
+
+        # Initialize
+        super().__init__(dataset=dataset, indices=indices)
 
 
 # Access a dict with attribute or key (purely for aesthetic reasons)
