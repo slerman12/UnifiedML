@@ -16,6 +16,7 @@ import io
 import traceback
 from time import sleep
 from tempfile import TemporaryDirectory
+from mmap import mmap
 
 from omegaconf import OmegaConf
 
@@ -379,7 +380,6 @@ class Experiences:
         episode['id'] = len(self.experience_indices)
         self.experience_indices += list(enumerate([episode_name] * episode_len))
 
-        self.episodes[episode_name] = episode
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
@@ -396,7 +396,11 @@ class Experiences:
                     file.flush()
                     episode[spec] = file  # Memory mapping is an efficient hard disk storage format for fast retrieval
 
+            self.episodes[episode_name] = episode
+
             return True
+
+        self.episodes[episode_name] = episode
 
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
@@ -579,6 +583,9 @@ class SharedDict:
 
         for spec, data in value.items():
             name = self.dict_id + num_episodes + spec
+
+            # Memory map links  # TODO set and get filenames for memory mapping
+            # if isinstance(data.base, mmap):
 
             # Shared integers
             if spec == 'id':

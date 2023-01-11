@@ -101,7 +101,6 @@ class Classify:
         # If the training dataset is empty, we can assume train_steps=0
         if train and len(dataset) == 0:
             return
-        print(len(dataset))
 
         # Unique classes in dataset - warning: treats multi-label as single-label for now - TODO Only do once
         classes = subset if subset is not None \
@@ -143,7 +142,7 @@ class Classify:
                                   batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=num_workers,
-                                  pin_memory=True,
+                                  pin_memory=False,
                                   collate_fn=getattr(dataset, 'collate_fn', None),  # Useful if streaming dynamic lens
                                   worker_init_fn=worker_init_fn)
 
@@ -198,10 +197,6 @@ class Classify:
                          'stddev': stddev,
                          'low': low,
                          'high': high}
-
-
-
-        print(self.obs_spec, self.action_spec, len(dataset))
 
         self.exp = None  # Experience
 

@@ -9,7 +9,7 @@ runs = template('UnifiedML')
 
 runs.UnifiedML.sweep = [
     f"""
-    task=classify/celeba 
+    task=classify/tinyimagenet 
     generate=true 
     Discriminator=DCGAN.Discriminator 
     Generator=DCGAN.Generator 
