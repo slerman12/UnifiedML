@@ -15,7 +15,6 @@ import datetime
 import io
 import traceback
 from time import sleep
-from tempfile import TemporaryDirectory
 from mmap import mmap
 
 from omegaconf import OmegaConf
@@ -383,7 +382,7 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
-        # If Offline replay exceeds RAM ("capacity=" flag), store episode on hard disk
+        # If Offline replay exceeds RAM ("capacity=" flag), keep episode on hard disk
         if self.offline and episode_len + len(self.experience_indices) > self.capacity:
             for spec in episode:
                 if not np.isscalar(episode[spec]) and episode[spec].nbytes > 0:
@@ -446,9 +445,8 @@ class Experiences:
                     # Update experience in replay
                     if episode_name in self.episodes:
                         self.episodes[episode_name][key][idx] = update.numpy()
-                        # TODO This might not work for mem map - might need mem.flush() after mem[idx] = update, if mmap
-
-                    # TODO Update experience's "meta" spec in hard disk (memory-mapping needs to be implemented first)
+                        # if isinstance(self.episodes[episode_name][key].base, mmap):
+                        #     self.episodes[episode_name][key].flush()  # Update in hard disk if memory mapped
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
@@ -645,7 +643,7 @@ class SharedDict:
                     if 0 in is_mmap:
                         mem = self.mems.setdefault(name, SharedMemory(name=name))
 
-                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO Str dtype (or mmap, maybe)
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO dtype
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
                         episode[spec] = self.mems.setdefault(name, np.memmap(''.join(is_mmap), np.float32,
