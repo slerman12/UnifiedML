@@ -76,7 +76,7 @@ plot_per_steps: 50000
 # Misc
 device: null
 parallel: false
-num_workers: 4
+num_workers: 8
 # Experiment
 Agent: Agents.AC2Agent
 seed: 1

@@ -110,8 +110,6 @@ class ExperienceReplay:
         if self.stream:
             return
 
-        print('yaa')
-
         """
         ---Parallelized experience loading--- 
         
@@ -385,21 +383,17 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
-        # If offline replay exceeds specified RAM allocation ("capacity=" flag)  TODO Test on Bluehive with limited RAM.
-        if self.offline and episode_len + len(self) > self.capacity:
-            # Memory map data for efficient hard disk retrieval
+        # If Offline replay exceeds RAM ("capacity=" flag), store episode on hard disk
+        if self.offline and episode_len + len(self.experience_indices) > self.capacity:
             for spec in episode:
-                if isinstance(episode[spec], np.ndarray) and episode[spec].shape and episode[spec].shape[-1]:
-                    # Replace episode with memory mapped link
-                    t_dir = TemporaryDirectory()
-                    filename = os.path.join(t_dir.name, episode_name.stem + '_' + spec + '.dat')
-                    file = np.memmap(filename, dtype='float32', mode='w+', shape=episode[spec].shape)
-                    file[:] = episode[spec][:]
-                    file.flush()
-                    episode[spec] = file  # Memory mapping is an efficient hard disk storage format for fast retrieval
+                if not np.isscalar(episode[spec]) and episode[spec].nbytes > 0:
+                    path = self.path / f'{episode_name.stem}_{spec}.dat'
+                    mmap_file = np.memmap(path, 'float32', 'w+', shape=episode[spec].shape)
+                    mmap_file[:] = episode[spec][:]
+                    mmap_file.flush()  # Write episode to hard disk
+                    episode[spec] = mmap_file  # Replace episode with memory mapped link for efficient retrieval
 
             self.episodes[episode_name] = episode
-
             return True
 
         self.episodes[episode_name] = episode
@@ -407,7 +401,7 @@ class Experiences:
         if not self.save:
             episode_name.unlink(missing_ok=True)  # Deletes file
 
-        # Deleting experiences upon overfill if online
+        # Deleting experiences upon overfill if Online
         while episode_len + len(self) - self.deleted_indices > self.capacity:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
@@ -452,6 +446,7 @@ class Experiences:
                     # Update experience in replay
                     if episode_name in self.episodes:
                         self.episodes[episode_name][key][idx] = update.numpy()
+                        # TODO This might not work for mem map - might need mem.flush() after mem[idx] = update, if mmap
 
                     # TODO Update experience's "meta" spec in hard disk (memory-mapping needs to be implemented first)
 
@@ -469,7 +464,7 @@ class Experiences:
         # Frame stack
         def frame_stack(traj_o, idx):
             frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
-            for _ in range(self.frame_stack - idx - 1):
+            for _ in range(self.frame_stack - idx - 1):  # If not enough frames, re-append first
                 frames = np.concatenate([traj_o[:1], frames], 0)
             frames = frames.reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
             return frames
@@ -586,9 +581,6 @@ class SharedDict:
         for spec, data in value.items():
             name = self.dict_id + num_episodes + spec
 
-            # Memory map links  # TODO set and get filenames for memory mapping
-            # if isinstance(data.base, mmap):
-
             # Shared integers
             if spec == 'id':
                 try:
@@ -597,12 +589,20 @@ class SharedDict:
                     self.mems.setdefault(name, ShareableList(name=name))[0] = data
             # Shared numpy arrays
             elif data.nbytes > 0:
+                # Memory map links
                 try:
-                    mem = self.mems.setdefault(name, SharedMemory(create=True, name=name,  size=data.nbytes))
+                    self.mems.setdefault(name + 'mmap', ShareableList(str(data.filename) if isinstance(data.base, mmap)
+                                                                      else [0], name=name + 'mmap'))
                 except FileExistsError:
-                    mem = self.mems.setdefault(name, SharedMemory(name=name))
-                mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
-                mem_[:] = data[:]
+                    self.mems.setdefault(name + 'mmap', ShareableList(name=name + 'mmap'))
+                # Shared RAM memory
+                if not isinstance(data.base, mmap):
+                    try:
+                        mem = self.mems.setdefault(name, SharedMemory(create=True, name=name,  size=data.nbytes))
+                    except FileExistsError:
+                        mem = self.mems.setdefault(name, SharedMemory(name=name))
+                    mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
+                    mem_[:] = data[:]
             # Shared shapes
             try:
                 self.mems.setdefault(name + 'shape',
@@ -634,14 +634,22 @@ class SharedDict:
             # Numpy array
             else:
                 # Shape
-                shape = list(self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape')))
+                shape = tuple(self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape')))
 
                 if 0 in shape:
                     episode[spec] = np.full(shape, None, np.float32)  # Empty array
                 else:
-                    mem = self.mems.setdefault(name, SharedMemory(name=name))
+                    # Whether memory mapped
+                    is_mmap = list(self.mems.setdefault(name + 'mmap', ShareableList(name=name + 'mmap')))
 
-                    episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO Str dtype
+                    if 0 in is_mmap:
+                        mem = self.mems.setdefault(name, SharedMemory(name=name))
+
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO Str dtype (or mmap, maybe)
+                    else:
+                        # Read from memory-mapped hard disk file rather than shared RAM
+                        episode[spec] = self.mems.setdefault(name, np.memmap(''.join(is_mmap), np.float32,
+                                                                             'r+', shape=shape))
 
         return episode
 
