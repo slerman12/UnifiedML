@@ -132,9 +132,8 @@ class ExperienceReplay:
 
         os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
-        # RAM capacity per worker. Max num experiences allotted per CPU worker (if Online; otherwise workers share RAM)
-        if not self.offline:
-            capacity = capacity // self.num_workers
+        # RAM capacity per worker. Max num experiences allotted per CPU worker
+        capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] else np.inf
 
         # For sending data to workers directly
         pipes, self.pipes = zip(*[Pipe(duplex=False) for _ in range(self.num_workers)])
@@ -382,7 +381,7 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
-        # If Offline replay exceeds RAM ("capacity=" flag), keep episode on hard disk
+        # If Offline replay exceeds RAM ("capacity=" flag) (approximately), keep episode on hard disk
         if self.offline and episode_len + len(self.experience_indices) > self.capacity:
             for spec in episode:
                 if not np.isscalar(episode[spec]) and episode[spec].nbytes > 0:
@@ -401,7 +400,7 @@ class Experiences:
             episode_name.unlink(missing_ok=True)  # Deletes file
 
         # Deleting experiences upon overfill if Online
-        while episode_len + len(self) - self.deleted_indices > self.capacity:
+        while episode_len + len(self) > self.capacity and not self.offline:
             early_episode_name = self.episode_names.pop(0)
             early_episode = self.episodes.pop(early_episode_name)
             early_episode_len = len(early_episode['obs']) - offset

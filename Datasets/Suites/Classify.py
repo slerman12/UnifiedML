@@ -187,7 +187,7 @@ class Classify:
 
         # No need
         if (offline or generate) and train:
-            self.batches = self._batches = dataset = None
+            del self.batches, self._batches, dataset
             return
 
         """---------------------"""
