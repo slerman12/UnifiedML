@@ -98,7 +98,7 @@ class Classify:
 
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
-        # If the training dataset is empty, we can assume train_steps=0
+        # If the training dataset is empty, we will assume train_steps=0
         if train and len(dataset) == 0:
             return
 
@@ -124,6 +124,7 @@ class Classify:
             task += '_Transformed'
         dataset = Transform(dataset, transform)
 
+        # Check shape of x
         obs_shape = tuple(dataset[0][0].shape)
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
 
@@ -156,11 +157,10 @@ class Classify:
 
         # Parallelism-protection, but note that clashes may still occur in multi-process dataset creation
         if replay_path.exists() and not len(stats_path):
-            warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be '
-                          f'creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c) '
-                          f'and delete the existing path (`rm -r <Path>`) and try again to re-create.\n'
-                          f'Path: {colored(replay_path, "green")}\n'
-                          f'{"Also: " + stats_path[0] if len(stats_path) else ""}'
+            warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be'
+                          f' creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c)'
+                          f' and delete the existing path (`rm -r <Path>`) and try again to re-create.\nPath: '
+                          f'{colored(replay_path, "green")}\n{"Also: " + stats_path[0] if len(stats_path) else ""}'
                           f'{colored("Wait (do nothing)", "yellow")} '
                           f'{colored("or kill (ctrl-c), delete path (rm -r <Path>) and try again.", "red")}')
             while not len(stats_path):
@@ -265,7 +265,8 @@ class Classify:
 
             obs.shape = (batch_size, c, *hw)
 
-            dummy = np.full((batch_size, 1), np.NaN)
+            dummy = np.full((batch_size, 1), np.NaN)  # TODO Maybe instead of NaN can have empty, replaced, and collated
+            # TODO Try setting action dim to (b, *shape, 1) instead
             missing = np.full((batch_size, *self.action_spec['shape'] + (self.action_spec['discrete_bins'],)), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}

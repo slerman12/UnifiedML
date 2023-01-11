@@ -47,7 +47,7 @@ frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1
 # Replay
-RAM_capacity: 1000000
+RAM_capacity: 1000000  # Shorthand for capacity
 capacity: ${RAM_capacity}
 nstep: 10
 batch_size: 256
