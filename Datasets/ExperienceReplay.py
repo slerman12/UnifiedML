@@ -205,19 +205,19 @@ class ExperienceReplay:
         for exp in experiences:
             for name, spec in self.specs.items():
                 # Missing data
-                if name not in exp:
-                    exp[name] = None
+                if name not in exp or exp[name] is None:
+                    exp[name] = np.zeros((0,))
 
                 # # Add batch dimension TODO If None, then should be 0-dim, not NaN
-                # if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
-                #     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
+                if np.isscalar(exp[name]) or type(exp[name]) == bool:
+                    exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
                 # # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
                 # #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
                 #
-                # # Expands attributes that are unique per batch (such as 'step')
-                # batch_size = exp.get('obs', exp['action']).shape[0]
-                # if 1 == exp[name].shape[0] < batch_size:
-                #     exp[name] = np.repeat(exp[name], batch_size, axis=0)
+                # Expands attributes that are unique per batch (such as 'step')
+                batch_size = exp.get('obs', exp['action']).shape[0]
+                if 1 == exp[name].shape[0] < batch_size:
+                    exp[name] = np.repeat(exp[name], batch_size, axis=0)
 
                 # Validate consistency - disabled for discrete/continuous conversions
                 # assert spec['shape'] == exp[name].shape[1:], \
@@ -242,9 +242,9 @@ class ExperienceReplay:
             return
 
         for name, spec in self.specs.items():
-            if isinstance(self.episode[name], np.ndarray) and len(self.episode[name].shape) > 1:
-                # Concatenate into one big episode batch  # TODO SharedDict dtype
-                self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)
+            # Concatenate into one big episode batch
+            # Presumes a pre-existing batch dimension in each experience  # TODO SharedDict dtype
+            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)
 
         self.episode_len = len(self.episode['obs'])
 
@@ -370,8 +370,7 @@ class Experiences:
 
         offset = self.nstep or 0
         episode_len = len(episode['obs']) - offset
-        episode = {name: episode.get(name, np.full((episode_len, *spec['shape']), np.NaN))
-                   for name, spec in self.specs.items()}
+        episode = {name: episode.get(name, np.zeros((0,))) for name, spec in self.specs.items()}
 
         episode['id'] = len(self.experience_indices)
         self.experience_indices += list(enumerate([episode_name] * episode_len))
@@ -379,15 +378,10 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
-        # TODO Debugging & testing
-        # for spec in episode:
-        #     if spec not in ['obs', 'label', 'id']:
-        #         episode[spec] = np.full((len(episode[spec]), 0), None, np.float32)
-
         # If Offline replay exceeds RAM ("capacity=" flag) (approximately), keep episode on hard disk
         if self.offline and episode_len + len(self.experience_indices) > self.capacity:
             for spec in episode:
-                if not np.isscalar(episode[spec]) and episode[spec].nbytes > 0:
+                if isinstance(episode[spec], np.ndarray) and episode[spec].size > 1:
                     path = self.path / f'{episode_name.stem}_{spec}.dat'
                     mmap_file = np.memmap(path, 'float32', 'w+', shape=episode[spec].shape)
                     mmap_file[:] = episode[spec][:]
@@ -446,7 +440,7 @@ class Experiences:
 
                     # Update experience in replay
                     if episode_name in self.episodes:
-                        self.episodes[episode_name][key][idx] = update.numpy()
+                        self.episodes[episode_name][key][idx] = update.numpy()  # Note: Only compatible with numpy data
                         # if isinstance(self.episodes[episode_name][key], np.memmmap):
                         #     self.episodes[episode_name][key].flush()  # Update in hard disk if memory mapped
 
@@ -461,6 +455,13 @@ class Experiences:
         if idx is None:
             idx = np.random.randint(episode_len)
 
+        # Index into data that could be None
+        def safe_index(data, idx=None, _from=None, _to=None):
+            try:
+                return data[_from:_to] if idx is None else data[idx]
+            except IndexError:
+                return data
+
         # Frame stack
         def frame_stack(traj_o, idx):
             frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
@@ -471,13 +472,13 @@ class Experiences:
 
         # Present
         obs = frame_stack(episode['obs'], idx)
-        label = episode['label'][idx]
-        step = episode['step'][idx]
+        label = safe_index(episode['label'], idx)
+        step = safe_index(episode['step'], idx)
 
         exp_id, worker_id = episode['id'] + idx, self.worker_id
         ids = np.array([exp_id, worker_id])
 
-        meta = episode['meta'][idx]  # Agent-writable Metadata
+        meta = safe_index(episode['meta'], idx)  # Agent-writable Metadata
 
         # Future
         if self.nstep:
@@ -490,16 +491,16 @@ class Experiences:
                                      for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
-            traj_l = episode['label'][idx:idx + self.nstep + 1]
+            traj_l = safe_index(episode['label'], _from=idx, _to=idx + self.nstep + 1)
 
             # Cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
             reward = np.dot(discounts[:-1], traj_r)
             discount = discounts[-1:]
         else:
-            action, reward = episode['action'][idx], episode['reward'][idx]
+            action, reward = safe_index(episode['action'], idx), safe_index(episode['reward'], idx)
 
-            next_obs = traj_o = traj_a = traj_r = traj_l = np.full((0,), np.NaN)
+            next_obs = traj_o = traj_a = traj_r = traj_l = np.zeros(0,)
             discount = np.array([1.0])
 
         # Transform
@@ -583,6 +584,9 @@ class SharedDict:
         for spec, data in value.items():
             name = self.dict_id + num_episodes + spec
 
+            # if data is None:
+            #     data = np.zeros((0,))
+
             # Shared integers
             if spec == 'id':
                 mem = self.setdefault(name, [data])
@@ -629,7 +633,7 @@ class SharedDict:
                 shape = tuple(self.getdefault(name + 'shape', ShareableList))
 
                 if 0 in shape:
-                    episode[spec] = np.full(shape, None, np.float32)  # Empty array
+                    episode[spec] = np.zeros((0,))  # Empty array
                 else:
                     # Whether memory mapped
                     is_mmap = list(self.getdefault(name + 'mmap', ShareableList))
@@ -655,7 +659,7 @@ class SharedDict:
         return self.mems[name]
 
     def getdefault(self, name, method):
-        # Return if exists, else evaluate
+        # Return if cached, else evaluate
         return self.mems[name] if name in self.mems else self.mems.setdefault(name, method(name=name))
 
     def keys(self):

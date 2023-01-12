@@ -265,10 +265,11 @@ class Classify:
 
             obs.shape = (batch_size, c, *hw)
 
-            dummy = np.full((batch_size, 1), np.NaN)
-            missing = np.full((batch_size, *self.action_spec['shape'], 1), np.NaN)
+            # dummy = np.full((batch_size, 1), np.NaN)
+            # missing = np.full((batch_size, *self.action_spec['shape'], 1), np.NaN)
+            null = np.zeros((0,))
 
-            episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
+            episode = {'obs': obs, 'action': null, 'reward': null, 'label': label, 'step': null}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
             episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'
