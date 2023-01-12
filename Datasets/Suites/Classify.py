@@ -12,12 +12,12 @@ import itertools
 import json
 import random
 import warnings
-
-from PIL.Image import Image
 from termcolor import colored
 from pathlib import Path
 
 from tqdm import tqdm
+
+from PIL.Image import Image
 
 import numpy as np
 
@@ -226,7 +226,14 @@ class Classify:
         self.episode_done = False
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': None, 'label': label, 'step': None}
+        exp = {'obs': obs, 'action': None, 'reward': [np.NaN], 'label': label, 'step': None}
+
+        # Scalars/NaN to numpy - Let replay handle this
+        # for key in exp:
+        #     if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
+        #         exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
+        #     elif len(exp[key].shape) in [0, 1]:  # Add batch dim
+        #         exp[key].shape = (1, *(exp[key].shape or [1]))
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -258,8 +265,8 @@ class Classify:
 
             obs.shape = (batch_size, c, *hw)
 
-            dummy = np.full((batch_size, 0), np.NaN)
-            missing = np.full((batch_size, *self.action_spec['shape'], 0), np.NaN)
+            dummy = np.full((batch_size, 1), np.NaN)
+            missing = np.full((batch_size, *self.action_spec['shape'], 1), np.NaN)
 
             episode = {'obs': obs, 'action': missing, 'reward': dummy, 'label': label, 'step': dummy}
 

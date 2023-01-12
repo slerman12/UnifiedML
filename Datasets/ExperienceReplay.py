@@ -15,7 +15,6 @@ import datetime
 import io
 import traceback
 from time import sleep
-from mmap import mmap
 
 from omegaconf import OmegaConf
 
@@ -57,8 +56,8 @@ class ExperienceReplay:
                                       f'or delete the saved buffer in {path}.')
             assert len(exists) > 0, f'\nNo existing replay buffer found in path: {path}.\ngenerate=true, ' \
                                     f'offline=true, & replay.load=true all assume the presence of a saved replay ' \
-                                    f'buffer. \nTry replay.save=true first, then you can ' \
-                                    f'try again with one of those 3, \nor choose a different path via replay.path=.'
+                                    f'buffer. \nTry replay.save=true first, then you can try again with one ' \
+                                    f'of those 3, \nor set those to false, or choose a different path via replay.path=.'
             self.path = Path(sorted(exists)[-1])
             save = offline or save
         elif not stream:
@@ -114,17 +113,15 @@ class ExperienceReplay:
         
         Either Online or Offline. "Online" means the data size grows.
         
-          For now, for Offline, all data is automatically pre-loaded onto CPU RAM from hard disk before training,
-          since RAM is faster to load from than hard disk epoch by epoch --> Training speedup, less bottleneck.
-          We bypass Pytorch's replication of each worker's RAM data per worker with a truly-shared-memory dict.
+          Offline, data is adaptively pre-loaded onto CPU RAM from hard disk before training. Caching on RAM is faster 
+          than loading from hard disk, epoch by epoch. We use truly-shared RAM memory. 
 
-          The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. 'RAM_capacity=" 
-          adapts how many experiences get stored on RAM vs. memory-mapped (efficiently-formatted) on hard disk.
+          The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. :RAM_capacity=" 
+          adapts how many experiences get stored on RAM vs. memory-mapped on hard disk. Memory mapping is an efficient 
+          hard disk storage format for fast read-writes. 
 
-          Online also caches data on RAM, after storing to hard disk.
-
-              Roadmap: Online send directly to RAM + hard disk instead of loading to RAM from hard disk after storing.
-        
+          Online also caches data on RAM, after storing to hard disk. "capacity=" controls total capacity for training,
+          forgetting the oldest data for training but still saving it on hard disk if "replay.save".
         """
 
         # CPU workers
@@ -211,16 +208,16 @@ class ExperienceReplay:
                 if name not in exp:
                     exp[name] = None
 
-                # Add batch dimension TODO If None, then should be 0-dim, not NaN
-                if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
-                    exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
-                # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
-                #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
-
-                # Expands attributes that are unique per batch (such as 'step')
-                batch_size = exp.get('obs', exp['action']).shape[0]
-                if 1 == exp[name].shape[0] < batch_size:
-                    exp[name] = np.repeat(exp[name], batch_size, axis=0)
+                # # Add batch dimension TODO If None, then should be 0-dim, not NaN
+                # if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
+                #     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
+                # # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
+                # #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
+                #
+                # # Expands attributes that are unique per batch (such as 'step')
+                # batch_size = exp.get('obs', exp['action']).shape[0]
+                # if 1 == exp[name].shape[0] < batch_size:
+                #     exp[name] = np.repeat(exp[name], batch_size, axis=0)
 
                 # Validate consistency - disabled for discrete/continuous conversions
                 # assert spec['shape'] == exp[name].shape[1:], \
@@ -231,7 +228,7 @@ class ExperienceReplay:
                 self.episode[name].append(exp[name])
 
             if self.stream:
-                self.stream = exp  # For streaming directly from Environment
+                self.stream = exp  # For streaming directly from Environment TODO formatting... if above commented out
 
         # Count experiences in episode
         self.episode_len += len(experiences)
@@ -244,9 +241,10 @@ class ExperienceReplay:
         if self.episode_len == 0:
             return
 
-        for name in self.specs:
-            # Concatenate into one big episode batch
-            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)  # TODO SharedDict dtype
+        for name, spec in self.specs.items():
+            if isinstance(self.episode[name], np.ndarray) and len(self.episode[name].shape) > 1:
+                # Concatenate into one big episode batch  # TODO SharedDict dtype
+                self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)
 
         self.episode_len = len(self.episode['obs'])
 
@@ -381,6 +379,11 @@ class Experiences:
         self.episode_names.append(episode_name)
         self.episode_names.sort()
 
+        # TODO Debugging & testing
+        # for spec in episode:
+        #     if spec not in ['obs', 'label', 'id']:
+        #         episode[spec] = np.full((len(episode[spec]), 0), None, np.float32)
+
         # If Offline replay exceeds RAM ("capacity=" flag) (approximately), keep episode on hard disk
         if self.offline and episode_len + len(self.experience_indices) > self.capacity:
             for spec in episode:
@@ -444,7 +447,7 @@ class Experiences:
                     # Update experience in replay
                     if episode_name in self.episodes:
                         self.episodes[episode_name][key][idx] = update.numpy()
-                        # if isinstance(self.episodes[episode_name][key].base, mmap):
+                        # if isinstance(self.episodes[episode_name][key], np.memmmap):
                         #     self.episodes[episode_name][key].flush()  # Update in hard disk if memory mapped
 
     def sample(self, episode_names, metrics=None):
@@ -553,9 +556,11 @@ class Offline(Experiences, Dataset):
         return self.fetch_sample_process(idx)
 
 
-# Offline, shared RAM allocation across CPU workers to avoid redundant replicas
 class SharedDict:
-    # TODO Make separate Datasets/SharedRAM.py file.
+    """
+    An Offline dict of "episodes" dicts generalized to manage numpy arrays, integers, and hard disk memory map-links
+    in truly-shared RAM memory efficiently read-writable across parallel CPU workers.
+    """
     def __init__(self, specs):
         self.dict_id = str(uuid.uuid4())[:8]
 
@@ -580,33 +585,23 @@ class SharedDict:
 
             # Shared integers
             if spec == 'id':
-                try:
-                    self.mems.setdefault(name, ShareableList([data], name=name))
-                except FileExistsError:
-                    self.mems.setdefault(name, ShareableList(name=name))[0] = data
-            # Shared numpy arrays
+                mem = self.setdefault(name, [data])
+                mem[0] = data
+            # Shared numpy
             elif data.nbytes > 0:
-                # Memory map links
-                try:
-                    self.mems.setdefault(name + 'mmap', ShareableList(str(data.filename) if isinstance(data.base, mmap)
-                                                                      else [0], name=name + 'mmap'))
-                except FileExistsError:
-                    self.mems.setdefault(name + 'mmap', ShareableList(name=name + 'mmap'))
+                # Memory map link
+                if isinstance(data, np.memmap):
+                    self.mems[name] = data
+                    self.setdefault(name + 'mmap', list(str(data.filename)))  # Constant per spec/episode
                 # Shared RAM memory
-                if not isinstance(data.base, mmap):
-                    try:
-                        mem = self.mems.setdefault(name, SharedMemory(create=True, name=name,  size=data.nbytes))
-                    except FileExistsError:
-                        mem = self.mems.setdefault(name, SharedMemory(name=name))
+                else:
+                    mem = self.setdefault(name, data)
                     mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
                     mem_[:] = data[:]
-            # Shared shapes
-            try:
-                self.mems.setdefault(name + 'shape',
-                                     ShareableList([1] if spec == 'id' else list(data.shape),
-                                                   name=name + 'shape'))  # Assumes constant spec shapes for episode
-            except FileExistsError:
-                self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape'))
+                    self.setdefault(name + 'mmap', [0])  # False, no memory mapping. Also expects constant
+
+            # Data shape
+            self.setdefault(name + 'shape', [1] if spec == 'id' else list(data.shape))  # Constant per spec/episode
 
     def __getitem__(self, key):
         # Account for potential delay
@@ -627,28 +622,41 @@ class SharedDict:
 
             # Integer
             if spec == 'id':
-                episode[spec] = int(self.mems.setdefault(name, ShareableList(name=name))[0])
+                episode[spec] = int(self.getdefault(name, ShareableList)[0])
             # Numpy array
             else:
                 # Shape
-                shape = tuple(self.mems.setdefault(name + 'shape', ShareableList(name=name + 'shape')))
+                shape = tuple(self.getdefault(name + 'shape', ShareableList))
 
                 if 0 in shape:
                     episode[spec] = np.full(shape, None, np.float32)  # Empty array
                 else:
                     # Whether memory mapped
-                    is_mmap = list(self.mems.setdefault(name + 'mmap', ShareableList(name=name + 'mmap')))
+                    is_mmap = list(self.getdefault(name + 'mmap', ShareableList))
 
                     if 0 in is_mmap:
-                        mem = self.mems.setdefault(name, SharedMemory(name=name))
-
+                        mem = self.getdefault(name, SharedMemory)
                         episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO dtype
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
-                        episode[spec] = self.mems.setdefault(name, np.memmap(''.join(is_mmap), np.float32,
-                                                                             'r+', shape=shape))
-
+                        episode[spec] = self.getdefault(name, lambda **_: np.memmap(''.join(is_mmap), np.float32,
+                                                                                    'r+', shape=shape))
         return episode
+
+    def setdefault(self, name, data):
+        if name not in self.mems:
+            try:
+                # Create shared memory link
+                self.mems[name] = ShareableList(data, name=name) if isinstance(data, list) \
+                    else SharedMemory(create=True, name=name,  size=data.nbytes)
+            except FileExistsError:
+                # Retrieve shared memory link
+                self.mems[name] = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
+        return self.mems[name]
+
+    def getdefault(self, name, method):
+        # Return if exists, else evaluate
+        return self.mems[name] if name in self.mems else self.mems.setdefault(name, method(name=name))
 
     def keys(self):
         return self.specs.keys() | {'id'}
@@ -667,8 +675,9 @@ class SharedDict:
                 del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
     def cleanup(self):
-        for mem in self.mems.values():
+        for name, mem in self.mems.items():
             if isinstance(mem, ShareableList):
                 mem = mem.shm
-            mem.close()
-            mem.unlink()
+            if hasattr(mem, 'unlink'):
+                mem.close()
+                mem.unlink()

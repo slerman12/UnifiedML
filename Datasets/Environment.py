@@ -64,7 +64,7 @@ class Environment:
             frame += len(action)
 
             # Tally reward, done
-            self.episode_reward += exp.reward.mean()
+            self.episode_reward += sum(exp.reward) / len(exp.reward)
             self.episode_done = self.env.episode_done or self.episode_step > self.truncate_after - 2 or self.generate
 
             if self.env.episode_done:
