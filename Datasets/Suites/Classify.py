@@ -102,11 +102,11 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        # Unique classes in dataset - warning: treats multi-label as single-label for now  TODO Save/Only do once
+        # Unique classes in dataset - warning: treats multi-label as single-label for now
         classes = subset if subset is not None \
             else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
             else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
-            else [sorted(list(set(str(exp[1]) for exp in dataset))),
+            else [sorted(list(set(str(exp[1]) for exp in dataset))),  # TODO Save/Only do once
                   print('Identifying unique classes... This can take some time for large datasets.')][0]
 
         # Can select a subset of classes
@@ -272,6 +272,7 @@ class Classify:
                 with (path / episode_name).open('wb') as f:
                     f.write(buffer.read())
 
+    # Computes mean, stddev, low, high
     def compute_stats(self, path):
         cnt = 0
         fst_moment, snd_moment = None, None
@@ -306,6 +307,7 @@ class Classify:
 
         return mean, stddev, low.item(), high.item()
 
+    # Arg-maxes if categorical distribution passed in
     def adapt_to_discrete(self, action):
         shape = self.action_spec['shape']
 
@@ -365,7 +367,7 @@ class ClassToIdx(Dataset):
         return self.dataset.__len__()
 
 
-# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.classes=[0,2,3]'
+# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.subset=[0,2,3]'
 class ClassSubset(torch.utils.data.Subset):
     def __init__(self, dataset, classes):
         # Inherit attributes of given dataset

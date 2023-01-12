@@ -211,7 +211,7 @@ class ExperienceReplay:
                 if name not in exp:
                     exp[name] = None
 
-                # Add batch dimension
+                # Add batch dimension TODO If None, then should be 0-dim, not NaN
                 if np.isscalar(exp[name]) or exp[name] is None or type(exp[name]) == bool:
                     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
                 # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
