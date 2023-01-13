@@ -593,10 +593,9 @@ class SharedDict:
                 # Shared RAM memory
                 else:
                     mem = self.setdefault(name, data)
-                    self.mems[name] = mem.buf
                     mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
                     mem_[:] = data[:]
-                    # self.close(name, mem)
+                    self.close(name, mem)
                     mem = self.setdefault(name + 'mmap', [0])  # False, no memory mapping. Also expects constant
                     self.close(name + 'mmap', mem)
 
@@ -642,10 +641,11 @@ class SharedDict:
                     self.close(name + 'mmap', mem)
 
                     if 0 in is_mmap:
-                        buf = self.mems[name] if name in self.mems else self.getdefault(name, SharedMemory).buf
-                        self.mems[name] = buf
-                        episode[spec] = np.ndarray(shape, np.float32, buffer=buf)
-                        # self.close(name, mem)
+                        mem = self.getdefault(name, SharedMemory)
+                        # self.mems[name] = mem  # Caching all
+                        # Without caching all replicas... need to copy. Otherwise, data somehow gets corrupted with nans
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf).copy()  # Copying
+                        self.close(name, mem)
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
                         episode[spec] = self.getdefault(name, lambda **_: np.memmap(''.join(is_mmap), np.float32,
@@ -653,21 +653,22 @@ class SharedDict:
         return episode
 
     def setdefault(self, name, data):
-        # if name in self.mems:
-        #     self.close(name, self.mems[name], delete=True)
-        # if name not in self.mems:
+        method = (ShareableList if isinstance(data, list) else SharedMemory)
+        self.mems.update({name: method})  # For cleanup
         try:
             # Try to create shared memory link
-            self.mems[name] = ShareableList(data, name=name) if isinstance(data, list) \
-                else SharedMemory(create=True, name=name,  size=data.nbytes)
+            mem = method(data, name=name) if isinstance(data, list) \
+                else method(create=True, name=name,  size=data.nbytes)
         except FileExistsError:
             # But if exists, retrieve shared memory link
-            self.mems[name] = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
-        return self.mems[name]
+            mem = method(name=name)
+        return mem
+        # return self.mems.pop(name)  # Remember to start_worker() only once
 
     def getdefault(self, name, method):
         # Return if cached, else evaluate
-        return self.mems[name] if name in self.mems else method(name=name)
+        # return self.mems[name] if name in self.mems else method(name=name)  # Caching all
+        return method(name=name)
 
     def keys(self):
         return self.specs.keys() | {'id'}
@@ -685,21 +686,19 @@ class SharedDict:
             if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
                 del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
-    def close(self, name, mem, delete=False):
-        if name not in self.mems:
-            if isinstance(mem, ShareableList):
-                mem = mem.shm
-            mem.close()
-            if delete:
-                mem.unlink()
+    def close(self, name, mem):
+        # if name not in self.mems:
+        if isinstance(mem, ShareableList):
+            mem = mem.shm
+        mem.close()
 
     def cleanup(self):
-        for mem in self.mems.values():
+        for name, method in self.mems.items():
+            mem = self.getdefault(name, method)
             if not isinstance(mem, np.memmap):
                 if isinstance(mem, ShareableList):
                     mem = mem.shm
                 try:
-                    # mem.close()
                     mem.unlink()
                 except FileNotFoundError:
                     continue
