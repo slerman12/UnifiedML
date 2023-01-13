@@ -433,7 +433,7 @@ class act_mode:
 # Converts data to torch Tensors and moves them to the specified device as floats
 def to_torch(xs, device=None):
     return tuple(None if x is None
-                 else torch.as_tensor(x, device=device).float() for x in xs)
+                 else torch.as_tensor(x, dtype=torch.float32, device=device) for x in xs)
 
 
 # Pytorch incorrect (in this case) warning suppression

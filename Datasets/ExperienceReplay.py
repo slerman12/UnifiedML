@@ -465,6 +465,7 @@ class Experiences:
             return frames
 
         # Present
+        # assert not np.isnan(episode['obs'][idx]).any()
         obs = frame_stack(episode['obs'], idx)
         label = episode['label'][idx]
         step = episode['step'][idx]
@@ -582,7 +583,7 @@ class SharedDict:
             if spec == 'id':
                 mem = self.setdefault(name, [data])
                 mem[0] = data
-                mem.shm.close()
+                self.close(name, mem)
             # Shared numpy
             elif data.nbytes > 0:
                 # Memory map link
@@ -594,11 +595,13 @@ class SharedDict:
                     mem = self.setdefault(name, data)
                     mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
                     mem_[:] = data[:]
-                    mem.close()
-                    self.setdefault(name + 'mmap', [0]).shm.close()  # False, no memory mapping. Also expects constant
+                    self.close(name, mem)
+                    mem = self.setdefault(name + 'mmap', [0])  # False, no memory mapping. Also expects constant
+                    self.close(name + 'mmap', mem)
 
             # Data shape
-            self.setdefault(name + 'shape', [1] if spec == 'id' else list(data.shape)).shm.close()  # Constant per spec/episode
+            mem = self.setdefault(name + 'shape', [1] if spec == 'id' else list(data.shape))  # Constant per spec/episode
+            self.close(name + 'shape', mem)
 
     def __getitem__(self, key):
         # Account for potential delay
@@ -621,13 +624,13 @@ class SharedDict:
             if spec == 'id':
                 mem = self.getdefault(name, ShareableList)
                 episode[spec] = int(mem[0])
-                mem.shm.close()
+                self.close(name, mem)
             # Numpy array
             else:
                 # Shape
                 mem = self.getdefault(name + 'shape', ShareableList)
                 shape = tuple(mem)
-                mem.shm.close()
+                self.close(name + 'shape', mem)
 
                 if 0 in shape:
                     episode[spec] = np.zeros(shape)  # Empty array
@@ -635,12 +638,12 @@ class SharedDict:
                     # Whether memory mapped
                     mem = self.getdefault(name + 'mmap', ShareableList)
                     is_mmap = list(mem)
-                    mem.shm.close()
+                    self.close(name + 'mmap', mem)
 
                     if 0 in is_mmap:
                         mem = self.getdefault(name, SharedMemory)
-                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO dtype
-                        mem.close()
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf).copy()
+                        self.close(name, mem)
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
                         episode[spec] = self.getdefault(name, lambda **_: np.memmap(''.join(is_mmap), np.float32,
@@ -648,17 +651,17 @@ class SharedDict:
         return episode
 
     def setdefault(self, name, data):
-        if name not in self.mems:
-            try:
-                # Try to create shared memory link
-                mems = ShareableList(data, name=name) if isinstance(data, list) \
-                    else SharedMemory(create=True, name=name,  size=data.nbytes)
-            except FileExistsError:
-                # But if exists, retrieve shared memory link
-                mems = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
-        else:
-            assert False, 'la'
-        return mems
+        # if name in self.mems:
+        #     self.close(name, self.mems[name], delete=True)
+        # if name not in self.mems:
+        try:
+            # Try to create shared memory link
+            self.mems[name] = ShareableList(data, name=name) if isinstance(data, list) \
+                else SharedMemory(create=True, name=name,  size=data.nbytes)
+        except FileExistsError:
+            # But if exists, retrieve shared memory link
+            self.mems[name] = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
+        return self.mems[name]
 
     def getdefault(self, name, method):
         # Return if cached, else evaluate
@@ -679,7 +682,14 @@ class SharedDict:
 
             if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
                 del resource_tracker._CLEANUP_FUNCS["shared_memory"]
-        self.mems = ['True']
+
+    def close(self, name, mem, delete=False):
+        # if name not in self.mems:
+        if isinstance(mem, ShareableList):
+            mem = mem.shm
+        mem.close()
+        if delete:
+            mem.unlink()
 
     def cleanup(self):
         for mem in self.mems.values():
