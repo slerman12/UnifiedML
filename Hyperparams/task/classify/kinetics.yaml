@@ -2,7 +2,7 @@ defaults:
   - _self_
 
 Env: Datasets.Suites.Classify.Classify
-Dataset: torchvision.datasets.Kinetics
+Dataset: Datasets.Suites._Kinetics.Kinetics
 environment:
     dataset: ${dataset}
     test_dataset: ${test_dataset}
@@ -28,4 +28,4 @@ seed_steps: 0
 explore_steps: 0
 log_per_episodes: 300
 RL: false
-online: ${stream}  # Same as offline: true
+online: false # Same as offline: true

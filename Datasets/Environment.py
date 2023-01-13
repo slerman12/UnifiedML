@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import time
-from math import inf, nan
+from math import inf
 
 from hydra.utils import instantiate
 
@@ -22,7 +22,8 @@ class Environment:
 
         if not self.disable or stream:
             self.env = instantiate(env, task=task, frame_stack=int(stream) or frame_stack, action_repeat=action_repeat,
-                                   offline=offline, generate=generate, train=train, seed=seed, **kwargs)
+                                   offline=offline, generate=generate, stream=stream, train=train, seed=seed, **kwargs)
+
             self.env.reset()
 
         self.action_repeat = getattr(getattr(self, 'env', 1), 'action_repeat', 1)  # Optional, can skip frames

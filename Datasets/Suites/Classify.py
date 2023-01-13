@@ -62,9 +62,9 @@ class Classify:
     An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
 
     """
-    def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, batch_size=8,
-                 num_workers=1, subset=None, low=None, high=None, seed=None, transform=None, frame_stack=0,
-                 action_repeat=0, **kwargs):
+    def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, stream=False,
+                 batch_size=8, num_workers=1, subset=None, low=None, high=None, seed=None, transform=None,
+                 frame_stack=0, action_repeat=0, **kwargs):
         self.episode_done = False
 
         # Don't need once moved to replay (see below)
@@ -168,8 +168,8 @@ class Classify:
 
                 stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
 
-        # Offline and generate don't use training rollouts
-        if (offline or generate) and not train and not replay_path.exists():
+        # Offline and generate don't use training rollouts (unless streaming)
+        if (offline or generate) and not (stream or train or replay_path.exists()):
             # But still need to create training replay & compute stats
             Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, subset, None, None, seed,
                      transform, **kwargs)
@@ -186,9 +186,9 @@ class Classify:
         low, high = low_ if low is None else low, high_ if high is None else high
 
         # No need
-        # if (offline or generate) and train:  TODO except when stream
-        #     del self.batches, self._batches, dataset
-        #     return
+        if (offline or generate) and not stream and train:
+            del self.batches, self._batches, dataset
+            return
 
         """---------------------"""
 
@@ -203,6 +203,7 @@ class Classify:
         self.evaluate_episodes = len(self.batches)
 
     def step(self, action=None):
+        # No action - for Offline streaming
         if action is None:
             return self.exp
 

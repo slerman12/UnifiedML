@@ -21,7 +21,7 @@ from omegaconf import OmegaConf
 import numpy as np
 
 from multiprocessing.shared_memory import SharedMemory, ShareableList
-from multiprocessing import resource_tracker
+from multiprocessing import resource_tracker, Manager
 
 import torch
 from torch.utils.data import IterableDataset, Dataset
@@ -253,7 +253,7 @@ class ExperienceReplay:
 
         # Save episode
         with io.BytesIO() as buffer:
-            np.savez_compressed(buffer, **self.episode)
+            np.savez_compressed(buffer, **self.episode)  # TODO mmap_mode=True
             buffer.seek(0)
             with (self.path / episode_name).open('wb') as f:
                 f.write(buffer.read())
@@ -302,6 +302,8 @@ class Experiences:
 
         self.episode_names = []
         self.episodes = SharedDict(specs) if offline else dict()  # Episodes fetched on CPU
+        # Or can use Python's built-in shared memory, which serializes and de-serializes (isn't truly-shared, slower)
+        # self.episodes = Manager().dict() if offline else dict()
 
         self.experience_indices = []
         self.capacity = capacity
@@ -361,8 +363,8 @@ class Experiences:
 
     def load_episode(self, episode_name):
         try:
-            with episode_name.open('rb') as episode_file:
-                episode = np.load(episode_file)
+            with episode_name.open('rb') as episode_file:  # Can also do "with np.load(episode_name) as episode:"
+                episode = np.load(episode_file)  # Can optionally do "mmap_mode=True" instead of the mmap below
                 episode = {key: episode[key] for key in episode.keys()}
         except:
             return False
@@ -580,6 +582,7 @@ class SharedDict:
             if spec == 'id':
                 mem = self.setdefault(name, [data])
                 mem[0] = data
+                mem.shm.close()
             # Shared numpy
             elif data.nbytes > 0:
                 # Memory map link
@@ -591,10 +594,11 @@ class SharedDict:
                     mem = self.setdefault(name, data)
                     mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
                     mem_[:] = data[:]
-                    self.setdefault(name + 'mmap', [0])  # False, no memory mapping. Also expects constant
+                    mem.close()
+                    self.setdefault(name + 'mmap', [0]).shm.close()  # False, no memory mapping. Also expects constant
 
             # Data shape
-            self.setdefault(name + 'shape', [1] if spec == 'id' else list(data.shape))  # Constant per spec/episode
+            self.setdefault(name + 'shape', [1] if spec == 'id' else list(data.shape)).shm.close()  # Constant per spec/episode
 
     def __getitem__(self, key):
         # Account for potential delay
@@ -615,21 +619,28 @@ class SharedDict:
 
             # Integer
             if spec == 'id':
-                episode[spec] = int(self.getdefault(name, ShareableList)[0])
+                mem = self.getdefault(name, ShareableList)
+                episode[spec] = int(mem[0])
+                mem.shm.close()
             # Numpy array
             else:
                 # Shape
-                shape = tuple(self.getdefault(name + 'shape', ShareableList))
+                mem = self.getdefault(name + 'shape', ShareableList)
+                shape = tuple(mem)
+                mem.shm.close()
 
                 if 0 in shape:
                     episode[spec] = np.zeros(shape)  # Empty array
                 else:
                     # Whether memory mapped
-                    is_mmap = list(self.getdefault(name + 'mmap', ShareableList))
+                    mem = self.getdefault(name + 'mmap', ShareableList)
+                    is_mmap = list(mem)
+                    mem.shm.close()
 
                     if 0 in is_mmap:
                         mem = self.getdefault(name, SharedMemory)
                         episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # TODO dtype
+                        mem.close()
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
                         episode[spec] = self.getdefault(name, lambda **_: np.memmap(''.join(is_mmap), np.float32,
@@ -640,16 +651,18 @@ class SharedDict:
         if name not in self.mems:
             try:
                 # Try to create shared memory link
-                self.mems[name] = ShareableList(data, name=name) if isinstance(data, list) \
+                mems = ShareableList(data, name=name) if isinstance(data, list) \
                     else SharedMemory(create=True, name=name,  size=data.nbytes)
             except FileExistsError:
                 # But if exists, retrieve shared memory link
-                self.mems[name] = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
-        return self.mems[name]
+                mems = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
+        else:
+            assert False, 'la'
+        return mems
 
     def getdefault(self, name, method):
         # Return if cached, else evaluate
-        return self.mems[name] if name in self.mems else self.mems.setdefault(name, method(name=name))
+        return method(name=name)
 
     def keys(self):
         return self.specs.keys() | {'id'}
@@ -666,6 +679,7 @@ class SharedDict:
 
             if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
                 del resource_tracker._CLEANUP_FUNCS["shared_memory"]
+        self.mems = ['True']
 
     def cleanup(self):
         for mem in self.mems.values():
@@ -673,7 +687,7 @@ class SharedDict:
                 if isinstance(mem, ShareableList):
                     mem = mem.shm
                 try:
-                    mem.close()
+                    # mem.close()
                     mem.unlink()
                 except FileNotFoundError:
                     continue

@@ -49,7 +49,7 @@ seed_steps: 0
 explore_steps: 0
 log_per_episodes: 300
 RL: false
-online: ${{stream}}  # Same as offline: true
+online: false  # Same as offline: true
 """)
         f.close()
         out += ' "' + task.lower() + '"'
