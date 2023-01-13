@@ -42,8 +42,8 @@ class SuperMario:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
-    numpy array or None. Arrays contain a batch dim. "reward" should be numpy array, even if it's empty or contains NaN.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    as numpy arrays with batch dim, or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
 
@@ -142,7 +142,7 @@ class SuperMario:
         obs = np.expand_dims(obs, 0)
 
         # Create experience
-        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'step': None}
+        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None}
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -180,7 +180,7 @@ class SuperMario:
         obs = np.expand_dims(obs, 0)
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': np.zeros([]), 'label': None, 'step': None}
+        exp = {'obs': obs, 'action': None, 'reward': np.zeros([]), 'label': None}
 
         # Scalars/NaN to numpy
         for key in exp:

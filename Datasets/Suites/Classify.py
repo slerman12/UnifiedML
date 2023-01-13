@@ -49,8 +49,8 @@ class Classify:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
-    numpy array or None. Arrays contain a batch dim. "reward" should be numpy array, even if it's empty or contains NaN.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    as numpy arrays with batch dim, or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
 
@@ -226,7 +226,7 @@ class Classify:
         self.episode_done = False
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': np.array([]), 'label': label, 'step': None}
+        exp = {'obs': obs, 'action': None, 'reward': np.array([]), 'label': label}
 
         self.exp = AttrDict(exp)  # Experience
 

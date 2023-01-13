@@ -31,8 +31,8 @@ class DMC:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
-    numpy array or None. Arrays contain a batch dim. "reward" should be numpy array, even if it's empty or contains NaN.
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    as numpy arrays with batch dim, or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
 
@@ -117,7 +117,7 @@ class DMC:
         action.shape = self.action_spec['shape']
 
         # Step env
-        reward = 0
+        reward = np.zeros([])
         for _ in range(self.action_repeat):
             time_step = self.env.step(action)
             reward += time_step.reward
@@ -128,7 +128,7 @@ class DMC:
         obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
 
         # Create experience
-        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'step': None}
+        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None}
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
         # Channel-first
@@ -152,7 +152,7 @@ class DMC:
         obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': time_step.reward, 'label': None, 'step': None}
+        exp = {'obs': obs, 'action': None, 'reward': time_step.reward, 'label': None}
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
         # Channel-first
