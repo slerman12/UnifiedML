@@ -69,7 +69,7 @@ def main(args):
         # Rollout
         experiences, logs, _ = env.rollout(agent.train(), steps=1)  # agent.train() just sets agent.training to True
 
-        replay.add(experiences)
+        replay.add([env.env.step()] if args.stream and env.disable else experiences)
 
         if env.episode_done:
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:

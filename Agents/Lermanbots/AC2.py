@@ -161,6 +161,7 @@ class AC2Agent(torch.nn.Module):
             store = {}
 
             if self.training:
+                print('shit')  # TODO streaming... runs act. also, uneven step counts.
                 self.step += 1
                 self.frame += len(obs)
 

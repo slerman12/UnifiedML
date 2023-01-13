@@ -105,6 +105,8 @@ class ExperienceReplay:
         # Future steps to compute cumulative reward from
         self.nstep = 0 if suite == 'classify' or generate or stream else nstep
 
+        self.epoch = 1
+
         if self.stream:
             return
 
@@ -147,8 +149,6 @@ class ExperienceReplay:
                                                             transform=transform)
 
         # Batch loading
-
-        self.epoch = 1
 
         self.batches = torch.utils.data.DataLoader(dataset=self.experiences,
                                                    batch_size=batch_size,
@@ -209,10 +209,10 @@ class ExperienceReplay:
                     exp[name] = np.zeros((1, 0))
 
                 # # Add batch dimension to singles / convert to numpy
-                if np.isscalar(exp[name]) or not isinstance(exp[name], np.ndarray) or len(exp[name].shape) in [0, 1]:
+                if np.isscalar(exp[name]) or not isinstance(exp[name], np.ndarray):
                     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
-                # # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
-                # #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
+                elif len(exp[name].shape) in [0, 1]:
+                    exp[name].shape = (1, *exp[name].shape)  # Disabled for discrete/continuous conversions
                 #
                 # Expands attributes that are unique per batch (such as 'step')
                 batch_size = exp.get('obs', exp['action']).shape[0]

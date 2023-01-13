@@ -186,9 +186,9 @@ class Classify:
         low, high = low_ if low is None else low, high_ if high is None else high
 
         # No need
-        if (offline or generate) and train:
-            del self.batches, self._batches, dataset
-            return
+        # if (offline or generate) and train:
+        #     del self.batches, self._batches, dataset
+        #     return
 
         """---------------------"""
 
@@ -202,7 +202,10 @@ class Classify:
 
         self.evaluate_episodes = len(self.batches)
 
-    def step(self, action):
+    def step(self, action=None):
+        if action is None:
+            return self.exp
+
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
 
