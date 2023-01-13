@@ -114,14 +114,14 @@ class ExperienceReplay:
         Either Online or Offline. "Online" means the data size grows.
         
           Offline, data is adaptively pre-loaded onto CPU RAM from hard disk before training. Caching on RAM is faster 
-          than loading from hard disk, epoch by epoch. We use truly-shared RAM memory. 
+          than loading from hard disk, epoch by epoch. We use truly-shared RAM memory caching. 
 
-          The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. :RAM_capacity=" 
+          The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. "RAM_capacity=" 
           adapts how many experiences get stored on RAM vs. memory-mapped on hard disk. Memory mapping is an efficient 
           hard disk storage format for fast read-writes. 
 
           Online also caches data on RAM, after storing to hard disk. "capacity=" controls total capacity for training,
-          forgetting the oldest data for training but still saving it on hard disk if "replay.save".
+          forgetting the oldest data for training but still saving it on hard disk if "replay.save=true".
         """
 
         # CPU workers
@@ -208,7 +208,7 @@ class ExperienceReplay:
                 if name not in exp or exp[name] is None:
                     exp[name] = np.zeros((1, 0))
 
-                # # Add batch dimension / convert to numpy
+                # # Add batch dimension to singles / convert to numpy
                 if np.isscalar(exp[name]) or not isinstance(exp[name], np.ndarray) or len(exp[name].shape) in [0, 1]:
                     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
                 # # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
@@ -242,9 +242,8 @@ class ExperienceReplay:
             return
 
         for name, spec in self.specs.items():
-            # Concatenate into one big episode batch
-            # Presumes a pre-existing batch dimension in each experience  # TODO SharedDict dtype
-            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)
+            # Concatenate into one big episode batch. Presumes a pre-existing batch dimension in each experience
+            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)  # TODO SharedDict dtype
 
         self.episode_len = len(self.episode['obs'])
 
@@ -357,7 +356,6 @@ class Experiences:
             self.experience_indices = sum([list(enumerate([episode_name] * (int(episode_name.stem.split('_')[-1])
                                                                             - (self.nstep or 0))))
                                            for episode_name in self.episode_names], [])  # Slightly redundant per worker
-            import sys
 
         self.initialized = True
 
@@ -641,11 +639,11 @@ class SharedDict:
     def setdefault(self, name, data):
         if name not in self.mems:
             try:
-                # Create shared memory link
+                # Try to create shared memory link
                 self.mems[name] = ShareableList(data, name=name) if isinstance(data, list) \
                     else SharedMemory(create=True, name=name,  size=data.nbytes)
             except FileExistsError:
-                # If exists, retrieve shared memory link
+                # But if exists, retrieve shared memory link
                 self.mems[name] = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
         return self.mems[name]
 
@@ -671,6 +669,11 @@ class SharedDict:
 
     def cleanup(self):
         for mem in self.mems.values():
-            if isinstance(mem, (SharedMemory, ShareableList)):
-                getattr(mem, 'shm', mem).close()
-                getattr(mem, 'shm', mem).unlink()
+            if not isinstance(mem, np.memmap):
+                if isinstance(mem, ShareableList):
+                    mem = mem.shm
+                try:
+                    mem.close()
+                    mem.unlink()
+                except FileNotFoundError:
+                    continue
