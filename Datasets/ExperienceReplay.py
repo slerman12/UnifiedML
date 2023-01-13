@@ -455,6 +455,7 @@ class Experiences:
         episode_len = len(episode['obs']) - offset
         if idx is None:
             idx = np.random.randint(episode_len)
+        # idx = idx % 200
 
         # Frame stack
         def frame_stack(traj_o, idx):
@@ -465,6 +466,7 @@ class Experiences:
             return frames
 
         # Present
+        # print(np.isnan(episode['obs'][idx]).any())
         # assert not np.isnan(episode['obs'][idx]).any()
         obs = frame_stack(episode['obs'], idx)
         label = episode['label'][idx]
@@ -552,6 +554,7 @@ class Offline(Experiences, Dataset):
         return self.fetch_sample_process(idx)
 
 
+# TODO allow indexing idx _from, _to before of copy!
 class SharedDict:
     """
     An Offline dict of "episodes" dicts generalized to manage numpy arrays, integers, and hard disk memory map-links
@@ -644,8 +647,19 @@ class SharedDict:
                         mem = self.getdefault(name, SharedMemory)
                         # self.mems[name] = mem  # Caching all
                         # Without caching all replicas... need to copy. Otherwise, data somehow gets corrupted with nans
-                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf).copy()  # Copying
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)  # Copying
+                        # if spec == 'obs':
+                        #     print(episode[spec][0, 0, 10, :], '\n\n',
+                        #           episode[spec][0, 0, 10, :].copy()
+                        #           )
+                        #     assert not np.isnan(episode[spec][0].any())
+                        #     print(np.isnan(episode[spec][0].any()))
+                        # episode[spec] = episode[spec][:200].copy()  # Index first
+                        episode[spec] = episode[spec].copy()
                         self.close(name, mem)
+
+                        # Can't copy/access after closing
+                        # assert np.allclose(episode[spec], episode[spec].copy())
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
                         episode[spec] = self.getdefault(name, lambda **_: np.memmap(''.join(is_mmap), np.float32,
