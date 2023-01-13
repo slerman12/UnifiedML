@@ -593,9 +593,10 @@ class SharedDict:
                 # Shared RAM memory
                 else:
                     mem = self.setdefault(name, data)
+                    self.mems[name] = mem.buf
                     mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
                     mem_[:] = data[:]
-                    self.close(name, mem)
+                    # self.close(name, mem)
                     mem = self.setdefault(name + 'mmap', [0])  # False, no memory mapping. Also expects constant
                     self.close(name + 'mmap', mem)
 
@@ -641,10 +642,10 @@ class SharedDict:
                     self.close(name + 'mmap', mem)
 
                     if 0 in is_mmap:
-                        mem = self.getdefault(name, SharedMemory)
-                        self.mems[name] = mem
-                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
-                        self.close(name, mem)
+                        buf = self.mems[name] if name in self.mems else self.getdefault(name, SharedMemory).buf
+                        self.mems[name] = buf
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=buf)
+                        # self.close(name, mem)
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
                         episode[spec] = self.getdefault(name, lambda **_: np.memmap(''.join(is_mmap), np.float32,
