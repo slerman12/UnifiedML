@@ -186,7 +186,7 @@ class Classify:
         low, high = low_ if low is None else low, high_ if high is None else high
 
         # No need
-        # if (offline or generate) and train:
+        # if (offline or generate) and train:  TODO except when stream
         #     del self.batches, self._batches, dataset
         #     return
 
@@ -327,6 +327,11 @@ class Classify:
 
         # Round to nearest decimal/int corresponding to discrete bins, high, and low
         return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
+
+
+# Taking mean of empty numpy array returns nan. Expected behavior in this case. Suppress warning
+warnings.filterwarnings("ignore", message='invalid value encountered in double_scalars')
+warnings.filterwarnings("ignore", message='Mean of empty slice')
 
 
 def worker_init_fn(worker_id):
