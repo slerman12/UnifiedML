@@ -642,7 +642,8 @@ class SharedDict:
 
                     if 0 in is_mmap:
                         mem = self.getdefault(name, SharedMemory)
-                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf).copy()
+                        self.mems[name] = mem
+                        episode[spec] = np.ndarray(shape, np.float32, buffer=mem.buf)
                         self.close(name, mem)
                     else:
                         # Read from memory-mapped hard disk file rather than shared RAM
@@ -665,7 +666,7 @@ class SharedDict:
 
     def getdefault(self, name, method):
         # Return if cached, else evaluate
-        return method(name=name)
+        return self.mems[name] if name in self.mems else method(name=name)
 
     def keys(self):
         return self.specs.keys() | {'id'}
@@ -684,12 +685,12 @@ class SharedDict:
                 del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
     def close(self, name, mem, delete=False):
-        # if name not in self.mems:
-        if isinstance(mem, ShareableList):
-            mem = mem.shm
-        mem.close()
-        if delete:
-            mem.unlink()
+        if name not in self.mems:
+            if isinstance(mem, ShareableList):
+                mem = mem.shm
+            mem.close()
+            if delete:
+                mem.unlink()
 
     def cleanup(self):
         for mem in self.mems.values():
