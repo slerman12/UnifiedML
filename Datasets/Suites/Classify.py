@@ -50,7 +50,7 @@ class Classify:
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
-    numpy values which can be NaN. Must include a batch dim.
+    numpy array or None. Arrays contain a batch dim. "reward" should be numpy array, even if it's empty or contains NaN.
 
     ---
 
@@ -121,7 +121,7 @@ class Classify:
         # Transform inputs
         transform = instantiate(transform)
         if transform:
-            task += '_Transformed'
+            task += '_Transformed'  # Note: These name changes only apply to replay buffer and not benchmarking yet
         dataset = Transform(dataset, transform)
 
         # Check shape of x
@@ -226,14 +226,7 @@ class Classify:
         self.episode_done = False
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': [np.NaN], 'label': label, 'step': None}
-
-        # Scalars/NaN to numpy - Let replay handle this
-        # for key in exp:
-        #     if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
-        #         exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
-        #     elif len(exp[key].shape) in [0, 1]:  # Add batch dim
-        #         exp[key].shape = (1, *(exp[key].shape or [1]))
+        exp = {'obs': obs, 'action': None, 'reward': np.array([]), 'label': label, 'step': None}
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -265,11 +258,9 @@ class Classify:
 
             obs.shape = (batch_size, c, *hw)
 
-            # dummy = np.full((batch_size, 1), np.NaN)
-            # missing = np.full((batch_size, *self.action_spec['shape'], 1), np.NaN)
-            null = np.zeros((0,))
+            missing = np.zeros((batch_size, 0))
 
-            episode = {'obs': obs, 'action': null, 'reward': null, 'label': label, 'step': null}
+            episode = {'obs': obs, 'action': missing, 'reward': missing, 'label': label, 'step': missing}
 
             timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
             episode_name = f'{timestamp}_{episode_ind}_{batch_size}.npz'

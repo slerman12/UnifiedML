@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import time
-from math import inf
+from math import inf, nan
 
 from hydra.utils import instantiate
 
@@ -64,7 +64,7 @@ class Environment:
             frame += len(action)
 
             # Tally reward, done
-            self.episode_reward += sum(exp.reward) / len(exp.reward)
+            self.episode_reward += exp.reward.mean()
             self.episode_done = self.env.episode_done or self.episode_step > self.truncate_after - 2 or self.generate
 
             if self.env.episode_done:

@@ -206,10 +206,10 @@ class ExperienceReplay:
             for name, spec in self.specs.items():
                 # Missing data
                 if name not in exp or exp[name] is None:
-                    exp[name] = np.zeros((0,))
+                    exp[name] = np.zeros((1, 0))
 
-                # # Add batch dimension TODO If None, then should be 0-dim, not NaN
-                if np.isscalar(exp[name]) or type(exp[name]) == bool:
+                # # Add batch dimension / convert to numpy
+                if np.isscalar(exp[name]) or not isinstance(exp[name], np.ndarray) or len(exp[name].shape) in [0, 1]:
                     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
                 # # elif len(exp[name].shape) in [0, 1, len(spec['shape'])]:
                 # #     exp[name].shape = (1, *spec['shape'])  # Disabled for discrete/continuous conversions
@@ -228,7 +228,7 @@ class ExperienceReplay:
                 self.episode[name].append(exp[name])
 
             if self.stream:
-                self.stream = exp  # For streaming directly from Environment TODO formatting... if above commented out
+                self.stream = exp  # For streaming directly from Environment
 
         # Count experiences in episode
         self.episode_len += len(experiences)
@@ -357,6 +357,7 @@ class Experiences:
             self.experience_indices = sum([list(enumerate([episode_name] * (int(episode_name.stem.split('_')[-1])
                                                                             - (self.nstep or 0))))
                                            for episode_name in self.episode_names], [])  # Slightly redundant per worker
+            import sys
 
         self.initialized = True
 
@@ -370,7 +371,7 @@ class Experiences:
 
         offset = self.nstep or 0
         episode_len = len(episode['obs']) - offset
-        episode = {name: episode.get(name, np.zeros((0,))) for name, spec in self.specs.items()}
+        episode = {name: episode.get(name, np.zeros((episode_len, 0))) for name, spec in self.specs.items()}
 
         episode['id'] = len(self.experience_indices)
         self.experience_indices += list(enumerate([episode_name] * episode_len))
@@ -455,13 +456,6 @@ class Experiences:
         if idx is None:
             idx = np.random.randint(episode_len)
 
-        # Index into data that could be None
-        def safe_index(data, idx=None, _from=None, _to=None):
-            try:
-                return data[_from:_to] if idx is None else data[idx]
-            except IndexError:
-                return data
-
         # Frame stack
         def frame_stack(traj_o, idx):
             frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
@@ -472,13 +466,13 @@ class Experiences:
 
         # Present
         obs = frame_stack(episode['obs'], idx)
-        label = safe_index(episode['label'], idx)
-        step = safe_index(episode['step'], idx)
+        label = episode['label'][idx]
+        step = episode['step'][idx]
 
         exp_id, worker_id = episode['id'] + idx, self.worker_id
         ids = np.array([exp_id, worker_id])
 
-        meta = safe_index(episode['meta'], idx)  # Agent-writable Metadata
+        meta = episode['meta'][idx]  # Agent-writable Metadata
 
         # Future
         if self.nstep:
@@ -491,14 +485,14 @@ class Experiences:
                                      for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
             traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
             traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
-            traj_l = safe_index(episode['label'], _from=idx, _to=idx + self.nstep + 1)
+            traj_l = episode['label'][idx:idx + self.nstep + 1]
 
             # Cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
             reward = np.dot(discounts[:-1], traj_r)
             discount = discounts[-1:]
         else:
-            action, reward = safe_index(episode['action'], idx), safe_index(episode['reward'], idx)
+            action, reward = episode['action'][idx], episode['reward'][idx]
 
             next_obs = traj_o = traj_a = traj_r = traj_l = np.zeros(0,)
             discount = np.array([1.0])
@@ -560,7 +554,7 @@ class Offline(Experiences, Dataset):
 class SharedDict:
     """
     An Offline dict of "episodes" dicts generalized to manage numpy arrays, integers, and hard disk memory map-links
-    in truly-shared RAM memory efficiently read-writable across parallel CPU workers.
+    in truly-shared RAM memory, efficiently read-writable across parallel CPU workers.
     """
     def __init__(self, specs):
         self.dict_id = str(uuid.uuid4())[:8]
@@ -583,9 +577,6 @@ class SharedDict:
 
         for spec, data in value.items():
             name = self.dict_id + num_episodes + spec
-
-            # if data is None:
-            #     data = np.zeros((0,))
 
             # Shared integers
             if spec == 'id':
@@ -633,7 +624,7 @@ class SharedDict:
                 shape = tuple(self.getdefault(name + 'shape', ShareableList))
 
                 if 0 in shape:
-                    episode[spec] = np.zeros((0,))  # Empty array
+                    episode[spec] = np.zeros(shape)  # Empty array
                 else:
                     # Whether memory mapped
                     is_mmap = list(self.getdefault(name + 'mmap', ShareableList))
@@ -654,7 +645,7 @@ class SharedDict:
                 self.mems[name] = ShareableList(data, name=name) if isinstance(data, list) \
                     else SharedMemory(create=True, name=name,  size=data.nbytes)
             except FileExistsError:
-                # Retrieve shared memory link
+                # If exists, retrieve shared memory link
                 self.mems[name] = (ShareableList if isinstance(data, list) else SharedMemory)(name=name)
         return self.mems[name]
 
@@ -679,9 +670,7 @@ class SharedDict:
                 del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
     def cleanup(self):
-        for name, mem in self.mems.items():
-            if isinstance(mem, ShareableList):
-                mem = mem.shm
-            if hasattr(mem, 'unlink'):
-                mem.close()
-                mem.unlink()
+        for mem in self.mems.values():
+            if isinstance(mem, (SharedMemory, ShareableList)):
+                getattr(mem, 'shm', mem).close()
+                getattr(mem, 'shm', mem).unlink()

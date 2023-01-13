@@ -32,7 +32,7 @@ class DMC:
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", "label", "step"
-    numpy values which can be NaN. Must include a batch dim.
+    numpy array or None. Arrays contain a batch dim. "reward" should be numpy array, even if it's empty or contains NaN.
 
     ---
 
@@ -125,20 +125,14 @@ class DMC:
             if self.episode_done:
                 break
 
+        obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
+
         # Create experience
-        exp = {'obs': time_step.observation[self.key], 'action': action, 'reward': reward,
-               'label': None, 'step': None}
+        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'step': None}
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
         # Channel-first
         exp['obs'] = exp['obs'].transpose(0, 3, 1, 2)
-
-        # Scalars/NaN to numpy
-        for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
-                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
-            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
-                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -155,20 +149,14 @@ class DMC:
         time_step = self.env.reset()
         self.episode_done = False
 
+        obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
+
         # Create experience
-        exp = {'obs': time_step.observation[self.key], 'action': None, 'reward': time_step.reward,
-               'label': None, 'step': None}
+        exp = {'obs': obs, 'action': None, 'reward': time_step.reward, 'label': None, 'step': None}
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
         # Channel-first
         exp['obs'] = exp['obs'].transpose(0, 3, 1, 2)
-
-        # Scalars/NaN to numpy
-        for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
-                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
-            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
-                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         # Reset frame stack
         self.frames.clear()

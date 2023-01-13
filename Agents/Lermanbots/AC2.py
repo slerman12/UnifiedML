@@ -215,7 +215,7 @@ class AC2Agent(torch.nn.Module):
 
         # "Acquire Wisdom"
 
-        instruct = not self.generate and ~torch.isnan(label).any()  # Are labels present?  TODO change to label.nelem?
+        instruct = not self.generate and label.nelement()  # Are labels present?
 
         # Classification
         if (self.supervise or replay.offline) and instruct:
