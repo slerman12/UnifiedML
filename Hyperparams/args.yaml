@@ -69,7 +69,9 @@ load_path: ${save_path}
 load: false
 load_per_steps: 0
 # Logging
-log_media: ${generate}
+vlog: ${generate}  # Shorthand for render
+render: ${vlog}  # Shorthand for log_media
+log_media: ${render}
 log_per_episodes: 1
 # Plotting
 plot_per_steps: 50000

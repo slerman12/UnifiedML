@@ -25,7 +25,7 @@ runs.UnifiedML.sweep = [
 
 
 runs.UnifiedML.plots = [
-    ['DCGAN']
+    ['DCGAN_yeah']
 ]
 
 runs.UnifiedML.sftp = True
