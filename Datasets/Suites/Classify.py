@@ -171,8 +171,8 @@ class Classify:
         # Offline and generate don't use training rollouts (unless streaming)
         if (offline or generate) and not (stream or train or replay_path.exists()):
             # But still need to create training replay & compute stats
-            Classify(dataset_, None, task_, True, offline, generate, batch_size, num_workers, subset, None, None, seed,
-                     transform, **kwargs)
+            Classify(dataset_, None, task_, True, offline, generate, stream, batch_size, num_workers, subset, None,
+                     None, seed, transform, **kwargs)
 
         # Create replay
         if train and (offline or generate) and not replay_path.exists():
@@ -239,7 +239,7 @@ class Classify:
     def render(self):
         # Assumes image dataset
         image = self.sample()[0] if self.exp is None else self.exp.obs
-        return np.array(image[random.randint(0, len(image) - 1)], dtype='uint8').transpose(1, 2, 0)
+        return np.array(image[random.randint(0, len(image) - 1)]).transpose(1, 2, 0)  # Channels-last
 
     def sample(self):
         try:
@@ -347,15 +347,15 @@ class Transform(Dataset):
         self.__dict__.update(dataset.__dict__)
 
         # Map inputs
-        self.dataset, self.transform = dataset, transform
+        self.__dataset, self.__transform = dataset, transform
 
     def __getitem__(self, idx):
-        x, y = self.dataset.__getitem__(idx)
-        x = (self.transform or (lambda _: _))(x)  # Transform
+        x, y = self.__dataset.__getitem__(idx)
+        x = (self.__transform or (lambda _: _))(x)  # Transform
         return F.to_tensor(x) if isinstance(x, Image) else x, y
 
     def __len__(self):
-        return self.dataset.__len__()
+        return self.__dataset.__len__()
 
 
 # Map class labels to Tensor integers
@@ -365,14 +365,14 @@ class ClassToIdx(Dataset):
         self.__dict__.update(dataset.__dict__)
 
         # Map string labels to integers
-        self.dataset, self.map = dataset, {str(classes[i]): torch.tensor(i) for i in range(len(classes))}
+        self.__dataset, self.__map = dataset, {str(classes[i]): torch.tensor(i) for i in range(len(classes))}
 
     def __getitem__(self, idx):
-        x, y = self.dataset.__getitem__(idx)
-        return x, self.map[str(y)]  # Map
+        x, y = self.__dataset.__getitem__(idx)
+        return x, self.__map[str(y)]  # Map
 
     def __len__(self):
-        return self.dataset.__len__()
+        return self.__dataset.__len__()
 
 
 # Select classes from dataset e.g. python Run.py task=classify/mnist 'env.subset=[0,2,3]'

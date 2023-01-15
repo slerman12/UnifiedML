@@ -22,7 +22,7 @@ class Generator(nn.Module):
         super().__init__()
 
         self.input_shape, self.output_shape = Utils.to_tuple(input_shape), Utils.to_tuple(output_shape)
-        # Note: should proprioceptive be channel dim or spatial dim
+        # Proprioceptive is channel dim
         self.input_shape = tuple(self.input_shape) + (1,) * (3 - len(self.input_shape))  # Broadcast input to 2D
 
         in_channels = self.input_shape[0]
