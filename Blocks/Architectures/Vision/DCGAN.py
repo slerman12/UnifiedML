@@ -51,7 +51,6 @@ class Generator(nn.Module):
 
             # out_channels x 64 x 64
             nn.ConvTranspose2d(hidden_dim, out_channels, 4, 2, 1, bias=False),
-            nn.Tanh(),
             nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adapts scale
         )
 
