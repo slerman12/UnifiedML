@@ -9,7 +9,7 @@ from torch.nn.functional import binary_cross_entropy
 def deepPolicyGradient(actor, critic, obs, step, logs=None):
     Pi = actor(obs, step)
 
-    action = Pi.mean  # Differentiable sample via "re-parameterization"
+    action = Pi.mean  # Differentiable sample via "re-parameterization" TODO undo back to sample with num actions
 
     Qs = critic(obs, action)
     q, _ = Qs.min(1)  # Min-reduced ensemble
