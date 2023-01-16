@@ -225,8 +225,8 @@ scheduler:
 
 # Per-block optimizers and schedulers
 encoder:
-  Optim: null
-  Scheduler: null
+  Optim: ${optim._target_}
+  Scheduler: ${scheduler._target_}
   optim:
     _target_: ${encoder.Optim}
     _default_: ${optim}
@@ -234,17 +234,17 @@ encoder:
     _target_: ${encoder.Scheduler}
     _default_: ${scheduler}
 actor:
-  Optim: null
-  Scheduler: null
+  Optim: ${optim._target_}
+  Scheduler: ${scheduler._target_}
   optim:
     _target_: ${actor.Optim}
     _default_: ${optim}
   scheduler:
-    _target_: ${actor.Scheduler}  # TODO combining default and target, None target takes priority
+    _target_: ${actor.Scheduler}
     _default_: ${scheduler}
 critic:
-  Optim: null
-  Scheduler: null
+  Optim: ${optim._target_}
+  Scheduler: ${scheduler._target_}
   optim:
     _target_: ${critic.Optim}
     _default_: ${optim}

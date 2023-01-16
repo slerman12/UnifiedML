@@ -116,9 +116,7 @@ def instantiate(args, i=0, **kwargs):
         kwargs.update(args.pop('_override_'))  # For loading old models with new, overridden args
 
     while hasattr(args, '_default_'):  # Allow inheritance between shorthands
-        print(args, isinstance(args['_default_'], str))
         args = args['_default_'] if isinstance(args['_default_'], str) else DictConfig(dict(args.pop('_default_'), **args))
-        print(args)  # None target of optim overrides Adam in default TODO!
 
     if hasattr(args, '_target_') and args._target_:
         try:
@@ -171,10 +169,8 @@ def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=
     params = list(params)
 
     # Optimizer
-    # print(optim)
     optim = len(params) > 0 and (instantiate(optim, params=params, lr=getattr(optim, 'lr', lr)) or lr
                                  and AdamW(params, lr=lr, weight_decay=weight_decay or 0))  # Default
-    print(optim)
 
     # Learning rate scheduler
     scheduler = optim and (instantiate(scheduler, optimizer=optim) or lr_decay_epochs
