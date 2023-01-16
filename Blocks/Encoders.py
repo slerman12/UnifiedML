@@ -24,6 +24,7 @@ class CNNEncoder(nn.Module):
 
         for key in ('mean', 'stddev', 'low', 'high'):
             setattr(self, key, None if getattr(obs_spec, key, None) is None else torch.as_tensor(obs_spec[key]))
+        self.mean, self.stddev = 0.5, 0.5
 
         self.standardize = \
             standardize and None not in [self.mean, self.stddev]  # Whether to center-scale (0 mean, 1 stddev)
