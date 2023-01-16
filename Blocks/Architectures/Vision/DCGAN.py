@@ -51,7 +51,7 @@ class Generator(nn.Module):
 
             # out_channels x 64 x 64
             nn.ConvTranspose2d(hidden_dim, out_channels, 4, 2, 1, bias=False),
-            nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adapts scale
+            # nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adapts scale
         )
 
         self.apply(weight_init)
@@ -69,7 +69,7 @@ class Generator(nn.Module):
         out = x.view(*lead_shape, *(self.output_shape or x.shape[1:]))
         return out
 
-
+# TODO uncommnet the adaptive pools
 class Discriminator(nn.Module):
     def __init__(self, input_shape, hidden_dim=64, output_shape=None):
         super().__init__()
@@ -80,7 +80,7 @@ class Discriminator(nn.Module):
 
         self.Discriminator = nn.Sequential(
             # hidden_dim x 32 x 32
-            nn.AdaptiveAvgPool2d(64),  # Adapts from different scales
+            # nn.AdaptiveAvgPool2d(64),  # Adapts from different scales
             nn.Conv2d(in_channels, hidden_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
