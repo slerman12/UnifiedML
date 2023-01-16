@@ -43,6 +43,8 @@ class EnsembleQCritic(nn.Module):
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_shape=out_shape) or
                                       MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
+        self.binary = isinstance(list(self.Q_head.modules())[-1], nn.Sigmoid)  # Whether Sigmoid-activated e.g. GANs
+
         # Discrete actions are known a priori
         if discrete and action_spec.discrete:
             action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim).view(-1, self.action_dim)
