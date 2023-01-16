@@ -1,3 +1,4 @@
+
 # Copyright (c) AGI.__init__. All Rights Reserved.
 #
 # This source code is licensed under the MIT license found in the
@@ -14,7 +15,7 @@ class MLP(nn.Module):
     """
     MLP Architecture generalized to broadcast input shapes
     """
-    def __init__(self, input_shape=128, output_shape=1024, hidden_dim=512, depth=1, activation=nn.ReLU(inplace=True),
+    def __init__(self, input_shape=128, output_shape=1024, hidden_dim=1024, depth=1, activation=nn.ReLU(inplace=True),
                  dropout=0, binary=False, bias=True):
         super().__init__()
 

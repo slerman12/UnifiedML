@@ -349,8 +349,7 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
         for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *tail_dims, len(items))
 
 
-# Sequential of instantiations
-# e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
+# Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
 class Sequential(nn.Module):
     def __init__(self, _targets_, i=0, **kwargs):
         super().__init__()
