@@ -12,7 +12,7 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, logs=None):
     Qs = critic(obs, action)
     q, _ = Qs.min(1)  # Min-reduced ensemble
 
-    policy_loss = -q.mean()  # Policy gradient ascent
+    policy_loss = -q.log().mean()  # Policy gradient ascent
 
     if logs is not None:
         logs['policy_loss'] = policy_loss

@@ -101,6 +101,7 @@ class Discriminator(nn.Module):
 
             # 1 x 1 x 1
             nn.Conv2d(hidden_dim * 8, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
         )
 
         self.apply(weight_init)
