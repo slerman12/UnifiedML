@@ -63,7 +63,7 @@ class AC2Agent(torch.nn.Module):
                                 'low': -1, 'high': 1, 'discrete': False})
 
             # Remove encoder, replace trunk with random noise
-            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for "seeing" with Eyes
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for " seeing " with Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
         self.discrete_as_continuous = action_spec.discrete and not self.discrete
