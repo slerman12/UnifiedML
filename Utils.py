@@ -355,24 +355,26 @@ class Sequential(nn.Module):
     def __init__(self, _targets_, i=0, **kwargs):
         super().__init__()
 
-        modules = nn.ModuleList()
+        self.Sequence = nn.ModuleList()
 
         for _target_ in _targets_:
-            modules.append(instantiate(OmegaConf.create({'_target_': _target_}) if isinstance(_target_, str)
-                                       else _target_, i, **kwargs))
+            self.Sequence.append(instantiate(OmegaConf.create({'_target_': _target_}) if isinstance(_target_, str)
+                                             else _target_, i, **kwargs))
 
             if 'input_shape' in kwargs:
-                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])
-
-        self.Sequence = modules
+                kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], self.Sequence[-1])
 
     def repr_shape(self, *_):
         return cnn_feature_shape(_, self.Sequence)
 
     def forward(self, obs, *context):
-        for module in self.Sequence:
-            obs, *context = module(obs, *context)
-        return (obs, *context) if len(context) else obs
+        out = (obs, *context)
+        # Multi-input/output Sequential
+        for i, module in enumerate(self.Sequence):
+            out = module(*out)
+            if not isinstance(out, tuple) and i < len(self.Sequence) - 1:
+                out = (out,)
+        return out
 
 
 # Swaps image dims between channel-last and channel-first format (Convenient helper)
