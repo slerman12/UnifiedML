@@ -17,7 +17,6 @@ def deepPolicyGradient(actor, critic, obs, step, num_actions=1, logs=None):
     if critic.binary:
         q = -binary_cross_entropy(q, torch.ones_like(q))
         # q = q.log()  # For numerical stability of maximizing Sigmoids
-    #     can instead create ones and put on gpu via ones.type_as(q) and use -F.binary_cross_entropy(q, ones)
 
     policy_loss = -q.mean()  # Policy gradient ascent
 

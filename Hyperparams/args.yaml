@@ -240,7 +240,7 @@ actor:
     _target_: ${actor.Optim}
     _default_: ${optim}
   scheduler:
-    _target_: ${actor.Scheduler}
+    _target_: ${actor.Scheduler}  # TODO combining default and target, None target takes priority
     _default_: ${scheduler}
 critic:
   Optim: null

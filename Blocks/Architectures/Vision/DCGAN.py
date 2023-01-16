@@ -32,22 +32,22 @@ class Generator(nn.Module):
             # (hidden_dim * 8) x 4 x 4
             nn.ConvTranspose2d(in_channels, hidden_dim * 8, 4, bias=False),
             nn.BatchNorm2d(hidden_dim * 8),
-            nn.ReLU(True),
+            nn.ReLU(inplace=True),
 
             # (hidden_dim * 4) x 8 x 8
             nn.ConvTranspose2d(hidden_dim * 8, hidden_dim * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(hidden_dim * 4),
-            nn.ReLU(True),
+            nn.ReLU(inplace=True),
 
             # (hidden_dim * 2) x 16 x 16
             nn.ConvTranspose2d(hidden_dim * 4, hidden_dim * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(hidden_dim * 2),
-            nn.ReLU(True),
+            nn.ReLU(inplace=True),
 
             # hidden_dim x 32 x 32
             nn.ConvTranspose2d(hidden_dim * 2, hidden_dim, 4, 2, 1, bias=False),
             nn.BatchNorm2d(hidden_dim),
-            nn.ReLU(True),
+            nn.ReLU(inplace=True),
 
             # out_channels x 64 x 64
             nn.ConvTranspose2d(hidden_dim, out_channels, 4, 2, 1, bias=False),
