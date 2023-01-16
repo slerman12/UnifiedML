@@ -364,13 +364,15 @@ class Sequential(nn.Module):
             if 'input_shape' in kwargs:
                 kwargs['input_shape'] = cnn_feature_shape(kwargs['input_shape'], modules[-1])
 
-        self.Sequence = nn.Sequential(*modules)
+        self.Sequence = modules
 
     def repr_shape(self, *_):
         return cnn_feature_shape(_, self.Sequence)
 
     def forward(self, obs, *context):
-        return self.Sequence(obs, *context)
+        for module in self.Sequence:
+            obs, *context = module(obs, *context)
+        return (obs, *context) if len(context) else obs
 
 
 # Swaps image dims between channel-last and channel-first format (Convenient helper)
