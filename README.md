@@ -827,6 +827,10 @@ python Run.py task=classify/mnist Pool=RN
 ```
 
 ```console
+# e.g. python Run.py task=classify/mnist generate=true Discriminator=Sequential +discriminator._targets_="[MLP,'nn.sigmoid()']"
+```
+
+```console
 python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[RN, AvgPool]"
 ```
 

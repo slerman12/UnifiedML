@@ -349,7 +349,8 @@ def batched_cartesian_prod(items: (list, tuple), dim=-1, collapse_dims=True):
         for i, item in enumerate(items)], -1).view(*lead_dims, *[-1] if collapse_dims else dims, *tail_dims, len(items))
 
 
-# Sequential of instantiations e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
+# Sequential of instantiations
+# e.g. python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]"
 class Sequential(nn.Module):
     def __init__(self, _targets_, i=0, **kwargs):
         super().__init__()
@@ -368,8 +369,8 @@ class Sequential(nn.Module):
     def repr_shape(self, *_):
         return cnn_feature_shape(_, self.Sequence)
 
-    def forward(self, obs):
-        return self.Sequence(obs)
+    def forward(self, obs, *context):
+        return self.Sequence(obs, *context)
 
 
 # Swaps image dims between channel-last and channel-first format (Convenient helper)
