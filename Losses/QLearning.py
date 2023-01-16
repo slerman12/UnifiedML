@@ -8,7 +8,7 @@ from torch.nn.functional import mse_loss, binary_cross_entropy
 import Utils
 
 
-def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step, num_actions=1, logs=None):
+def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step, logs=None):
     # Non-NaN next_obs
     has_future = ~torch.isnan(next_obs.flatten(1)[:, :1]).squeeze(1) * bool(next_obs.nelement())
     next_obs = next_obs[has_future]
@@ -30,7 +30,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             all_actions_known = hasattr(critic, 'action')
 
             if not all_actions_known:
-                next_action = next_Pi.sample(num_actions)  # Sample actions
+                next_action = next_Pi.sample()  # Sample actions
 
             if actor.discrete:
                 All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
