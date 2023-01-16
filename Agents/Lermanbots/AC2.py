@@ -55,7 +55,7 @@ class AC2Agent(torch.nn.Module):
 
         # RL -> generate conversion
         if self.generate:
-            standardize = False
+            standardize = True
             norm = True  # Normalize Obs to range [-1, 1]
 
             # Action = Imagined Obs
