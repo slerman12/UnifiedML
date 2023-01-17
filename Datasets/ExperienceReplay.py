@@ -451,7 +451,6 @@ class Experiences:
         episode_len = len(episode['obs']) - offset
         if idx is None:
             idx = np.random.randint(episode_len)
-        # idx = idx % 200
 
         # Frame stack
         def frame_stack(traj_o, idx):
@@ -462,8 +461,6 @@ class Experiences:
             return frames
 
         # Present
-        # print(np.isnan(episode['obs'][idx]).any())
-        # assert not np.isnan(episode['obs'][idx]).any()
         obs = frame_stack(episode['obs'], idx)
         label = episode['label'][idx]
         step = episode['step'][idx]
