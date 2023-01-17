@@ -180,8 +180,11 @@ class Mem:
     """
     Truly-shared RAM and memory-mapped hard disk data-item usable across parallel CPU workers.
     """
-    def __init__(self, name):
-        self.name = name  # The only identifying information the CPU worker must have
+    def __init__(self, name, value):
+        self.mem = None
+        self.name = name  # The only identifying information the CPU worker needs
+        self.set(value)
+        self.created = set()  # Shared memory links created by this worker
 
     def __getitem__(self, idx):
         # Account for potential delay
@@ -199,7 +202,7 @@ class Mem:
         self.close()
 
         # Integer
-        if shape == (1,):
+        if shape == (1,):  # Can be accessed with a None idx
             self.mem = ShareableList(name=self.name)
             value = int(self.mem[0])
             self.close()
@@ -225,57 +228,44 @@ class Mem:
 
         return value
 
-    def __setitem__(self, idx, data):  # Index can be dummy e.g. mem[None] = 5 to set an integer
+    def set(self, data):
         # Shared integers
-        if idx is None and np.isscalar(data):  # Note: Doesn't get memory mapped, single integers always stored on RAM
-            self.mem = self._setitem_(self.name, [data])
+        if np.isscalar(data):  # Note: Doesn't get memory mapped, single integers always stored on RAM!
+            self.mem = self.create([data])
             self.mem[0] = data
             self.close()
         # Shared numpy
         elif data.nbytes > 0:
             # Hard disk memory-map link
             if isinstance(data, np.memmap):
-                if idx is None:
-                    # Create memory-mapped data on hard disk
-                    self.mem = self._setitem_(self.name + 'mmap', list(str(data.filename)))  # Remains constant
-                else:
-                    # Shape of data
-                    self.mem = ShareableList(name=self.name + 'shape')
-                    shape = tuple(self.mem)
-                    self.close()
-                    # Filename
-                    self.mem = ShareableList(name=self.name + 'mmap')
-                    is_mmap = list(self.mem)
-                    self.close()
-                    # Update hard disk data
-                    self.mem = np.memmap(''.join(is_mmap), np.float32, 'r+', shape=shape)
-                    self.mem[idx] = data
-                    self.mem.flush()
+                self.mem = self.create(list(str(data.filename)), 'mmap')
                 self.close()
             # Shared RAM memory
             else:
-                self.mem = self._setitem_(self.name, data)
+                self.mem = self.create(self.name, data)  # Create
                 mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=self.mem.buf)
-                if idx is None:
-                    mem_[:] = data[:]
-                else:
-                    mem_[idx] = data
+                mem_[:] = data[:]  # Set data
                 self.close()
-                self.mem = self._setitem_(self.name + 'mmap', [0])  # False, no memory mapping. Expects constant
+                self.mem = self.create([0], 'mmap')  # Set to False, no memory mapping
                 self.close()
 
         # Data shape
-        self.mem = self._setitem_(self.name + 'shape', [1] if np.isscalar(data) else list(data.shape))  # Constant
+        self.mem = self.create([1] if np.isscalar(data) else list(data.shape), 'shape')
         self.close()
 
-    def _setitem_(self, name, data):
+    def create(self, data, key=''):
+        # Two types of shared memory accesses
         method = (ShareableList if isinstance(data, list) else SharedMemory)
+
+        # Try to create shared memory link
         try:
-            # Try to create shared memory link
-            mem = method(data, name=name) if isinstance(data, list) \
-                else method(create=True, name=name,  size=data.nbytes)
+            mem = method(data, name=self.name + key) if isinstance(data, list) \
+                else method(create=True, name=self.name + key,  size=data.nbytes)
         except FileExistsError:
-            mem = method(name=name)  # But if exists, retrieve existing shared memory link
+            mem = method(name=self.name + key)  # But if exists, retrieve existing shared memory link
+
+        self.created.update(self.name + key)
+
         return mem
 
     def close(self):
@@ -284,10 +274,17 @@ class Mem:
             mem = self.mem.shm
         mem.close()
 
+        return mem
+
     def __len__(self):
         # Shape of data
         self.mem = ShareableList(name=self.name + 'shape')
         size, *_ = self.mem
         self.close()
         return size
+
+    def __del__(self):
+        for name in self.created:
+            self.close(self.get()).unlink()
+
 # https://stackoverflow.com/questions/61879811/why-can-multiple-list-indexes-be-used-with-getitem-but-not-setitem
