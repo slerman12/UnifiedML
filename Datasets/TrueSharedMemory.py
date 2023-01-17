@@ -160,8 +160,7 @@ class Mem:
             # Truly-shared RAM access
             mem = SharedMemory(name=self.name)
 
-            value = np.ndarray(shape=self.shape, dtype=np.float32, buffer=mem.buf)
-            value = value[idx].copy()
+            value = np.ndarray(shape=self.shape, dtype=np.float32, buffer=mem.buf)[idx].copy()
 
             mem.close()
 
@@ -186,7 +185,7 @@ class Mem:
             mem.flush()  # Write to hard disk
 
     def __len__(self):
-        mem = ShareableList(name=self.name + 'shape')
-        size = mem[0]
+        mem = ShareableList(name=self.name + 'shape')  # Shape
+        size = mem[0]  # Batch dim
         mem.shm.close()
         return size

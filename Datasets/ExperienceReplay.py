@@ -359,8 +359,8 @@ class Experiences:
 
     def load_episode(self, episode_name):
         try:
-            with episode_name.open('rb') as episode_file:  # Can also do "with np.load(episode_name) as episode:"
-                episode = np.load(episode_file)  # Can optionally do "mmap_mode=True" instead of the mmap below
+            with episode_name.open('rb') as episode_file:
+                episode = np.load(episode_file)
                 episode = {key: episode[key] for key in episode.keys()}
         except:
             return False
@@ -438,8 +438,6 @@ class Experiences:
                     # Update experience in replay
                     if episode_name in self.episodes:
                         self.episodes[episode_name][key][idx] = update.numpy()  # Note: Only compatible with numpy data
-                        # if isinstance(self.episodes[episode_name][key], np.memmmap):
-                        #     self.episodes[episode_name][key].flush()  # Update in hard disk if memory mapped
 
     def sample(self, episode_names, metrics=None):
         episode_name = random.choice(episode_names)  # Uniform sampling of experiences
