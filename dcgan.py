@@ -69,6 +69,7 @@ ngpu = 1
 #                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 #                            ]))
 dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
+                                             download=True,
                                              transform=transforms.Compose([
                                                  transforms.Resize(image_size),
                                                  transforms.CenterCrop(image_size),
