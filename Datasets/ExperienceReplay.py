@@ -27,6 +27,11 @@ from Datasets.TrueSharedMemory import SharedDict
 
 
 class ExperienceReplay:
+    """
+    A DataLoader generalized to support truly-shared RAM memory caching with efficient adaptive hard disk memory-mapping
+    for Online growing dataset sizes of arbitrary shapes, where the data can also be changed and updated by the Agent,
+    leveraging parallel workers.
+    """
     def __init__(self, batch_size, num_workers, capacity, suite, task, offline, generate, stream, save, load, path, env,
                  obs_spec, action_spec, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
@@ -69,10 +74,11 @@ class ExperienceReplay:
         self.frame_stack = frame_stack or 1
         obs_spec.shape[0] //= self.frame_stack
 
-        self.specs = {'obs': obs_spec, 'action': action_spec, 'meta': {'shape': meta_shape},
+        self.specs = {'obs': obs_spec, 'action': action_spec,
+                      'meta': {'shape': meta_shape},  # Shape of optional addable/update-able metadata from Agent
                       **{name: {'shape': (1,)} for name in ['reward', 'label', 'step']}}
 
-        # Episode traces (temporary in-RAM buffer until full episode ready to be stored)
+        # Episode traces (temporary in-RAM buffer until full episode ready to be stored and cached)
 
         self.episode = {name: [] for name in self.specs}
         self.episode_len = 0
@@ -112,14 +118,15 @@ class ExperienceReplay:
         Either Online or Offline. "Online" means the data size grows.
         
           Offline, data is adaptively pre-loaded onto CPU RAM from hard disk before training. Caching on RAM is faster 
-          than loading from hard disk, epoch by epoch. We use truly-shared RAM memory caching. 
+          than loading from hard disk, epoch by epoch. Caching is done with truly-shared RAM memory. 
 
           The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. "RAM_capacity=" 
-          adapts how many experiences get stored on RAM vs. memory-mapped on hard disk. Memory mapping is an efficient 
-          hard disk storage format for fast read-writes. 
+          adapts how many experiences get stored on RAM. 
+          
+          The rest gets memory-mapped on hard disk if Offline. Memory mapping is an efficient hard disk loading format.
 
-          Online also caches data on RAM, after storing to hard disk. "capacity=" controls total capacity for training,
-          forgetting the oldest data for training but still saving it on hard disk if "replay.save=true".
+          If Online, data is also cached on RAM, after storing to hard disk. "capacity=" controls total capacity for 
+          training. Online doesn't currently support hard disk caching. Saving is supported with "replay.save=true".
         """
 
         # CPU workers
@@ -179,16 +186,16 @@ class ExperienceReplay:
                 sample = next(self.replay)
             return *sample[:10 if trajectories else 6], *sample[10:]  # Return batch, w(/o) future-trajectories
 
+    # Initial iterator, allows replay iteration
+    def __iter__(self):
+        self._replay = iter(self.batches)
+        return self.replay
+
     @property
     def replay(self):
         if self._replay is None:
             self._replay = iter(self.batches)  # Recreates the iterator when exhausted
         return self._replay
-
-    # Initial iterator, allows replay iteration
-    def __iter__(self):
-        self._replay = iter(self.batches)
-        return self.replay
 
     # Tracks single episode "trace" in memory buffer
     def add(self, experiences=None, store=False):
@@ -249,7 +256,7 @@ class ExperienceReplay:
 
         # Save episode
         with io.BytesIO() as buffer:
-            np.savez_compressed(buffer, **self.episode)  # TODO mmap_mode=True
+            np.savez_compressed(buffer, **self.episode)
             buffer.seek(0)
             with (self.path / episode_name).open('wb') as f:
                 f.write(buffer.read())
@@ -269,7 +276,7 @@ class ExperienceReplay:
         updates = {key: updates[key].detach() for key in updates}
         exp_ids, worker_ids = ids.detach().int().T
 
-        # Send update to dedicated worker  # TODO Write to replay buffer (hard disk), but only meta spec to not corrupt
+        # Send update to dedicated worker
         for worker_id in torch.unique(worker_ids):
             worker = worker_ids == worker_id
             update = {key: updates[key][worker] for key in updates}
@@ -288,8 +295,10 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
-# A CPU worker that can iteratively and efficiently build/update batches of experience in parallel (from files/RAM)
 class Experiences:
+    """
+    A CPU worker that iteratively and efficiently builds/updates batches of experience in parallel (from files/RAM).
+    """
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, offline, frame_stack, nstep, discount, transform):
 
         # Dataset construction via parallel workers
@@ -524,8 +533,10 @@ class Experiences:
         return self.num_experiences if self.offline else len(self.experience_indices) - self.deleted_indices
 
 
-# Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
+    """
+    Loads Experiences with an Iterable Dataset  (https://pytorch.org/docs/stable/data.html#dataset-types)
+    """
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, False, frame_stack, nstep, discount, transform)
 
@@ -535,13 +546,16 @@ class Online(Experiences, IterableDataset):
             yield self.fetch_sample_process()  # Yields a single experience
 
 
-# Loads Experiences with a Map Style Dataset
 class Offline(Experiences, Dataset):
+    """
+    Loads Experiences with a Map Style Dataset  (https://pytorch.org/docs/stable/data.html#dataset-types)
+    """
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, True, frame_stack, nstep, discount, transform)
 
     def __getitem__(self, idx):
         # Retrieve a single experience by index
         return self.fetch_sample_process(idx)
+
 
 # TODO create_replay

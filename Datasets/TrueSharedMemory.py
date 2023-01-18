@@ -66,7 +66,7 @@ class SharedDict:
             mem.shm.close()
 
     def create(self, data, name=''):
-        # Two ways to create a truly shared RAM memory link in Python
+        # Two ways to create a truly shared RAM memory in Python
         method = (ShareableList if isinstance(data, list) else SharedMemory)
 
         # Try to create shared memory link
@@ -145,7 +145,7 @@ class SharedDict:
                 mem = mem.shm
 
             mem.close()
-            mem.unlink()
+            mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
 
 
 class Mem:
@@ -174,7 +174,7 @@ class Mem:
             # Shared RAM memory
             mem = SharedMemory(name=self.name)
 
-            value = np.ndarray(shape=self.shape, dtype=np.float32, buffer=mem.buf)  # Un-mutable shape
+            value = np.ndarray(shape=self.shape, dtype=np.float32, buffer=mem.buf)  # Un-mutable shape!
             value[idx] = value
 
             mem.close()
