@@ -77,7 +77,6 @@ class Classify:
         # Make env
 
         root = root or f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
-        print(root)
         Path(root).mkdir(parents=True, exist_ok=True)
 
         # Different datasets have different specs
