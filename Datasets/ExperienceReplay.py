@@ -28,9 +28,7 @@ from Datasets.TrueSharedMemory import SharedDict
 
 class ExperienceReplay:
     """
-    A DataLoader generalized to support truly-shared RAM memory caching with efficient adaptive hard disk memory-mapping
-    for Online growing dataset sizes of arbitrary shapes, where the data can also be changed and updated by the Agent,
-    leveraging parallel workers.
+    Generalized DataLoader supporting truly-shared RAM memory caching with efficient adaptive hard disk memory-mapping.
     """
     def __init__(self, batch_size, num_workers, capacity, suite, task, offline, generate, stream, save, load, path, env,
                  obs_spec, action_spec, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
@@ -118,7 +116,7 @@ class ExperienceReplay:
         Either Online or Offline. "Online" means the data size grows.
         
           Offline, data is adaptively pre-loaded onto CPU RAM from hard disk before training. Caching on RAM is faster 
-          than loading from hard disk, epoch by epoch. Caching is done with truly-shared RAM memory. 
+          than loading from hard disk, epoch by epoch. Caching is done with truly-shared RAM memory for Offline. 
 
           The disadvantage of CPU pre-loading is the dependency on more CPU RAM. The "capacity=" a.k.a. "RAM_capacity=" 
           adapts how many experiences get stored on RAM. 
@@ -307,6 +305,7 @@ class Experiences:
 
         self.episode_names = []
         self.episodes = SharedDict(specs) if offline else dict()  # Episodes fetched on CPU
+
         # Or can use Python's built-in shared memory, which serializes and de-serializes (isn't truly-shared, slower)
         # self.episodes = Manager().dict() if offline else dict()
 
