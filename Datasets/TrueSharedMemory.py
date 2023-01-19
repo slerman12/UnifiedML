@@ -12,10 +12,8 @@ from multiprocessing.shared_memory import SharedMemory, ShareableList
 from multiprocessing import resource_tracker
 
 
+# Truly-shared RAM and memory-mapped hard disk data usable across parallel CPU workers
 class SharedDict:
-    """
-    Truly-shared RAM and memory-mapped hard disk data usable across parallel CPU workers.
-    """
     def __init__(self, specs):
         self.specs = specs
 
@@ -148,10 +146,8 @@ class SharedDict:
             mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
 
 
+# A special view into shared memory or memory mapped data that handles index-based reads and writes
 class Mem:
-    """
-    A special view into shared memory or memory mapped data that handles index-based reads and writes.
-    """
     def __init__(self, name, shape, mmap_name=None):
         self.name, self.shape, self.mmap_name = name, shape, mmap_name
 

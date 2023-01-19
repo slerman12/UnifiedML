@@ -38,7 +38,7 @@ class Atari:
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
-    as numpy arrays with batch dim, or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
+    as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
 

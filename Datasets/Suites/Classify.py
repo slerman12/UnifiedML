@@ -50,16 +50,18 @@ class Classify:
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
     An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
-    as numpy arrays with batch dim, or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
+    as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
 
-    Extended to accept a dataset config, which instantiates a Dataset. Datasets must:
+    Extended to accept a "Dataset=" config arg, which instantiates a Dataset. Datasets must:
     - extend Pytorch Datasets
-    - include a "classes" attribute that lists the different class names or classes
     - output (obs, label) pairs
 
-    An "evaluate_episodes" attribute divides evaluation across batches since batch=episode
+    Datasets can:
+    - include a "classes" attribute that lists the different class names or classes
+
+    An "evaluate_episodes" attribute divides evaluation across batches since batch=episode in this environment.
 
     """
     def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, stream=False,
