@@ -332,7 +332,7 @@ class Classify:
         return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
 
 
-# Taking mean of empty numpy array returns nan. Expected behavior in this case. Suppress warning
+# Taking mean of empty numpy array (reward) returns nan. Expected behavior in this case. Suppress warning
 warnings.filterwarnings("ignore", message='invalid value encountered in double_scalars')
 warnings.filterwarnings("ignore", message='Mean of empty slice')
 

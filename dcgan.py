@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf
+# import tensorflow as tf
 
 # Set random seed for reproducibility
 manualSeed = 999
@@ -25,15 +25,15 @@ torch.manual_seed(manualSeed)
 dataroot = "data/celeba"
 
 
-def load_dataset(split):
-    train_list_ds = tf.data.Dataset.from_tensor_slices(np.load(dataroot.format(split)))
-    train_ds = train_list_ds.map(lambda x: (x, x))
-    return train_ds
-
-
-train_ds = load_dataset('train')
-val_ds = load_dataset('val')
-test_ds = load_dataset('test')
+# def load_dataset(split):
+#     train_list_ds = tf.data.Dataset.from_tensor_slices(np.load(dataroot.format(split)))
+#     train_ds = train_list_ds.map(lambda x: (x, x))
+#     return train_ds
+#
+#
+# train_ds = load_dataset('train')
+# val_ds = load_dataset('val')
+# test_ds = load_dataset('test')
 
 # Number of workers for dataloader
 workers = 2
@@ -74,13 +74,13 @@ ngpu = 1
 
 # We can use an image folder dataset the way we have it setup.
 # Create the dataset
-# dataset = dset.ImageFolder(root=dataroot,
-#                            transform=transforms.Compose([
-#                                transforms.Resize(image_size),
-#                                transforms.CenterCrop(image_size),
-#                                transforms.ToTensor(),
-#                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-#                            ]))
+dataset = dset.ImageFolder(root=dataroot,
+                           transform=transforms.Compose([
+                               transforms.Resize(image_size),
+                               transforms.CenterCrop(image_size),
+                               transforms.ToTensor(),
+                               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                           ]))
 dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
                                              download=True,
                                              transform=transforms.Compose([
