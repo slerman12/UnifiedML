@@ -63,7 +63,7 @@ class Classify:
 
     """
     def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, stream=False,
-                 batch_size=8, num_workers=1, subset=None, low=None, high=None, seed=None, transform=None,
+                 batch_size=8, num_workers=1, subset=None, low=None, high=None, seed=None, transform=None, root=None,
                  frame_stack=0, action_repeat=0, **kwargs):
         self.episode_done = False
 
@@ -74,7 +74,7 @@ class Classify:
 
         # Make env
 
-        root = f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
+        root = root or f'./Datasets/ReplayBuffer/Classify/{task}_{"Train" if train else "Eval"}'
         Path(root).mkdir(parents=True, exist_ok=True)
 
         # Different datasets have different specs
