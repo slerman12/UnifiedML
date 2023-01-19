@@ -9,6 +9,7 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 # Set random seed for reproducibility
 manualSeed = 999
@@ -19,8 +20,20 @@ torch.manual_seed(manualSeed)
 
 
 
+
 # Root directory for dataset
 dataroot = "data/celeba"
+
+
+def load_dataset(split):
+    train_list_ds = tf.data.Dataset.from_tensor_slices(np.load(dataroot.format(split)))
+    train_ds = train_list_ds.map(lambda x: (x, x))
+    return train_ds
+
+
+train_ds = load_dataset('train')
+val_ds = load_dataset('val')
+test_ds = load_dataset('test')
 
 # Number of workers for dataloader
 workers = 2
