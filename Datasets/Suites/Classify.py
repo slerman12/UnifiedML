@@ -177,7 +177,7 @@ class Classify:
                      None, seed, transform, **kwargs)
 
         # Create replay
-        if train and (offline or generate) and not replay_path.exists():
+        if train and (offline or generate) and not (replay_path.exists() or stream):
             self.create_replay(replay_path)
 
         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
