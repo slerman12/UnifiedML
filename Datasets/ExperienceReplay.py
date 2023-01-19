@@ -27,9 +27,6 @@ from Datasets.TrueSharedMemory import SharedDict
 
 
 class ExperienceReplay:
-    """
-    Generalized DataLoader supporting truly-shared RAM memory caching with efficient adaptive hard disk memory-mapping.
-    """
     def __init__(self, batch_size, num_workers, capacity, suite, task, offline, generate, stream, save, load, path, env,
                  obs_spec, action_spec, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), transform=None):
         # Path and loading
@@ -293,10 +290,8 @@ def worker_init_fn(worker_id):
     random.seed(seed)
 
 
+# CPU workers that can iteratively and efficiently builds/updates batches of experience in parallel (from files/RAM)
 class Experiences:
-    """
-    A CPU worker that iteratively and efficiently builds/updates batches of experience in parallel (from files/RAM).
-    """
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, offline, frame_stack, nstep, discount, transform):
 
         # Dataset construction via parallel workers
@@ -532,10 +527,8 @@ class Experiences:
         return self.num_experiences if self.offline else len(self.experience_indices) - self.deleted_indices
 
 
+# Loads Experiences with an Iterable Dataset
 class Online(Experiences, IterableDataset):
-    """
-    Loads Experiences with an Iterable Dataset  (https://pytorch.org/docs/stable/data.html#dataset-types)
-    """
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, False, frame_stack, nstep, discount, transform)
 
@@ -545,10 +538,8 @@ class Online(Experiences, IterableDataset):
             yield self.fetch_sample_process()  # Yields a single experience
 
 
+# Loads Experiences with a Map Style Dataset
 class Offline(Experiences, Dataset):
-    """
-    Loads Experiences with a Map Style Dataset  (https://pytorch.org/docs/stable/data.html#dataset-types)
-    """
     def __init__(self, path, capacity, specs, fetch_per, pipes, save, frame_stack, nstep=0, discount=1, transform=None):
         super().__init__(path, capacity, specs, fetch_per, pipes, save, True, frame_stack, nstep, discount, transform)
 
