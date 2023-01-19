@@ -655,7 +655,7 @@ class SharedDict:
                     is_mmap = list(mem)
                     mem.shm.close()
                     # View of memory
-                    episode[spec] = Mem(name, shape, mmap_name=None if 0 in is_mmap else ''.join(is_mmap))
+                    episode[spec] = SharedMem(name, shape, mmap_name=None if 0 in is_mmap else ''.join(is_mmap))
 
         return episode
 
@@ -687,7 +687,7 @@ class SharedDict:
 
 
 # A special view into shared memory or memory mapped data that handles index-based reads and writes
-class Mem:
+class SharedMem:
     def __init__(self, name, shape, mmap_name=None):
         self.name, self.shape, self.mmap_name = name, shape, mmap_name
 
