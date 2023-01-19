@@ -184,7 +184,7 @@ class Classify:
 
         # Compute stats
         mean, stddev, low_, high_ = map(json.loads, open(stats_path[0]).readline().split('_')) if len(stats_path) \
-            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train else (None,) * 4
+            else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train and not stream else (None,) * 4
         low, high = low_ if low is None else low, high_ if high is None else high
 
         # No need
