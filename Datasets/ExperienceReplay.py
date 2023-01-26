@@ -24,6 +24,7 @@ from multiprocessing.shared_memory import SharedMemory, ShareableList
 from multiprocessing import resource_tracker
 
 import torch
+from termcolor import colored
 from torch.utils.data import IterableDataset, Dataset
 from torch.multiprocessing import Pipe
 
@@ -725,6 +726,3 @@ class SharedMem:
         size = mem[0]  # Batch dim
         mem.shm.close()
         return size
-
-
-# TODO create_replay

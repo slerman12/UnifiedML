@@ -151,7 +151,7 @@ class Classify:
 
         self._batches = iter(self.batches)
 
-        """MOVE TO REPLAY"""
+        """Create Replay and compute stats"""
 
         replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
 
