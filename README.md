@@ -607,16 +607,21 @@ python Run.py task=classify/mnist generate=true
 <br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
 </p>
 
-[DCGAN](https://arxiv.org/pdf/1511.06434.pdf) example:
+[comment]: <> ([DCGAN]&#40;https://arxiv.org/pdf/1511.06434.pdf&#41; example:)
 
-```console
-python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 'env.transform="transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])"' lr=0.0002 Optim=Adam +optim.betas='[0.5,0.999]' experiment=DCGAN
-```
+[comment]: <> (```console)
 
-<p align="left">
-<img src="https://i.imgur.com/HEudCOX.png" width="180">
-<br><i>Dreamt-up celebrity faces.</i>
-</p>
+[comment]: <> (python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"' lr=0.0002 Optim=Adam +optim.betas='[0.5,0.999]' experiment=DCGAN)
+
+[comment]: <> (```)
+
+[comment]: <> (<p align="left">)
+
+[comment]: <> (<img src="https://i.imgur.com/HEudCOX.png" width="180">)
+
+[comment]: <> (<br><i>Dreamt-up celebrity faces.</i>)
+
+[comment]: <> (</p>)
 
 Saves to ```./Benchmarking/<experiment>/<Agent name>/<task>_<seed>_Video_Image/```.
 
