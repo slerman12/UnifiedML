@@ -1207,6 +1207,26 @@ Log video during evaluations with ```log_media=true```.
 
 </details>
 
+### Publishing
+
+<details>
+<summary>
+:mag: <i>Click to write your own paper</i>
+</summary>
+<br>
+
+We have released our slide deck!
+
+[Templates available here]()
+
+Feel free to use our UnifiedML templates and figures in your work, citing [us](#pen-paper--citing) of course.
+
+Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here]() in the discussion board. Read the rules to keep citations and credit attribution fair.
+
+</details>
+
+[Make sure / we recommend to post in your research your exact run script or share your hyperparam arg files]
+
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
 
 # :bar_chart: Agents & Performances
