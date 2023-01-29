@@ -1084,7 +1084,7 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 </summary>
 <br>
 
-Save hyperparams by defining them in the [./Hyperparams/task/](Hyperparams/task) directory.
+**Save hyperparams** to ```.yaml``` files by defining them in the [./Hyperparams/task/](Hyperparams/task) directory.
 
 For example, if you've defined a ```.yaml``` file called ```my_recipe.yaml```, you can use it with the ```task=my_recipe``` flag.
 
