@@ -914,7 +914,7 @@ Some blocks have default args which can be accessed with the ```kwargs.``` inter
 
 An intricate example of the expressiveness of this syntax:
 ```console
-python Run.py Optim=SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_dim=kwargs.output_dim),nn.ReLU(inplace=True))"' lr=0.01
+python Run.py Optim=SGD 'Pi_trunk="nn.Sequential(MLP(input_shape=kwargs.input_shape, output_shape=kwargs.output_shape),nn.ReLU(inplace=True))"' lr=0.01
 ```
 
 Both the uppercase and lowercase syntax support direct function calls in place of usual syntax, with function calls distinguished by the syntactical quotes and parentheticals.
@@ -925,7 +925,7 @@ The parser automatically registers the imports/class paths in ```Utils.``` in bo
 
 [comment]: <> (Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.)
 
-To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in [```./Blocks/Architectures```](Blocks/Architectures).
+To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_shape```, as in the architectures in [```./Blocks/Architectures```](Blocks/Architectures).
 
 </details>
 
