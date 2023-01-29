@@ -321,6 +321,8 @@ python Run.py task=dmc/walker_walk
 
 For self-supervision,
 * ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+  
+For ensembling,
 * ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
 
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
