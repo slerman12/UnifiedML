@@ -325,6 +325,7 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
 * Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
+* Always discrete. Continuous actions spaces are discretized into ```num_actions=``` discrete bins.
 
 ——❖——
 
@@ -335,6 +336,8 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
+* Always continuous. Continuous actions spaces are automatically ["continuous-ized"](paper).
+
 **Or use the library's default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 
 ```console
@@ -342,7 +345,7 @@ python Run.py task=dmc/walker_walk
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
-* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, defaults to the action space of the given environment/task.
+* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the given environment/task.
 * ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
 
