@@ -332,12 +332,12 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 
 **Humanoid from pixels** with [```DrQV2 Agent```](Agents/DrQV2.py), [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
-python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
+python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
 
 
-**Or use the library's default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py).
+**Or use the library's default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 
 Train a walker to walk from visual observations
 :
