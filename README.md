@@ -1086,15 +1086,15 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 
 **Save hyperparams** to ```.yaml``` files by defining them in the [./Hyperparams/task/](Hyperparams/task) directory. There are many saved examples already.
 
-If you've defined a ```.yaml``` file called ```my_recipe.yaml```, you can use it via ```task=my_recipe```.
+If you've defined a ```.yaml``` file called ```my_recipe.yaml``` for example, you can use it via ```task=my_recipe```.
 
 Please [share your recipes](https://github.com/agi-init/UnifiedML/discussions) in our Discussions page if you discover new or better hyperparams for a problem.
 
-─༺༻─
+[comment]: <> (─༺༻─)
 
 **Recipes can also be defined temporarily via command line without saving them to yaml files.**
 
-Running list of examples of some out-of-the-ordinary or interesting ones:
+Below is a running list of some out-of-the-ordinary or interesting ones:
 
 ```console
 python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify/mnist
