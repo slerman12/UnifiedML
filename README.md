@@ -348,7 +348,7 @@ python Run.py task=dmc/walker_walk
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
-* ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+* ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for 5 timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
 [comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
