@@ -325,7 +325,8 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
 * Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
-* Action space is always discrete. Continuous action spaces are discretized into ```num_actions=``` discrete bins.
+
+[comment]: <> (* Action space is always discrete. Continuous action spaces are discretized into ```num_actions=``` discrete bins.)
 
 ——❖——
 
@@ -336,7 +337,7 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
-* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized](paper)".
+[comment]: <> (* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized]&#40;paper&#41;".)
 
 **The library's default Agent**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 
@@ -345,7 +346,7 @@ python Run.py task=dmc/walker_walk
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
-* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.
+[comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
 * ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
