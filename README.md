@@ -1046,7 +1046,7 @@ Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the 
 python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.SpeechCommands Aug=Identity
 ```
 
-Gets a perfect score on speech command classification.  
+Gets a perfect score on speech command classification from raw 1D audio with teh default CNN setting.  
 
 <details>
 <summary>
