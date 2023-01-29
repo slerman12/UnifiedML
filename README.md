@@ -314,23 +314,6 @@ That's it.
 
 [comment]: <> (❖)
 
-**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
-```console
-python Run.py task=dmc/walker_walk
-```
-
-* This agent is the library's default (```Agent=Agents.AC2Agent```).
-* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, defaults to teh action space of the given environment/task.
-* In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
-
-**For self-supervision**,
-* ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
-
-**For ensembling**,
-* ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
-
-——❖——
-
 **Train a** [```DQN Agent```](Agents/DQN.py) **to play Ms. Pac-Man**:
 
 ```console
@@ -338,6 +321,8 @@ python Run.py task=dmc/walker_walk
 python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 
 ```
+
+——❖——
 
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
 * Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
@@ -349,6 +334,27 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
+
+
+
+**Or use the library's default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py).
+
+Train a walker to walk from visual observations
+:
+```console
+python Run.py task=dmc/walker_walk
+```
+
+* This agent is the library's default (```Agent=Agents.AC2Agent```).
+* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, defaults to the action space of the given environment/task.
+
+**For self-supervision**,
+* ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+
+**For ensembling**,
+* ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
+
+In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
 
 [comment]: <> (❖)
 
