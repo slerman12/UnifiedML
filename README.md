@@ -1242,7 +1242,9 @@ For generative modeling, well, it turns out that the difference between a Genera
 [comment]: <> (![alt text]&#40;https://i.imgur.com/Yf8ltyI.png&#41;)
 
 [comment]: <> (<img width="80%" alt="flowchart" src="https://i.imgur.com/ekSroTc.png">)
-![alt text](https://i.imgur.com/DOTZFRf.gif)
+
+[comment]: <> (![alt text]&#40;https://i.imgur.com/DOTZFRf.gif&#41;)
+<img width="80%" alt="flowchart" src="https://i.imgur.com/DOTZFRf.gif">
 
 [comment]: <> (</p>)
 
