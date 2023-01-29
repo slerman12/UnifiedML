@@ -310,6 +310,19 @@ That's it.
 </summary>
 <br>
 
+**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
+```console
+python Run.py task=dmc/walker_walk
+```
+
+* This agent is the library's default (```Agent=Agents.DQNAgent```).
+* ```discrete=true``` effectively defaults to DQNAgent, ```discrete=false``` effectively defaults to DrQV2Agent. When unspecified, defaults to teh action space of the given environment/task.
+* In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
+
+For self-supervision,
+* ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+* ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
+
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
 [comment]: <> (❖)
@@ -317,12 +330,11 @@ That's it.
 
 ```console
 
-python Run.py task=atari/mspacman
+python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 
 ```
 
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
-* This agent is the library's default (```Agent=Agents.DQNAgent```).
 * Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf) ([```here```](Losses/QLearning.py#L43)).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
 
@@ -337,23 +349,17 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 
 [comment]: <> (❖)
 
-**For self-supervision**, [```SPR Agent```](Agents/SPR.py) in Atari:
-```console
-python Run.py Agent=Agents.SPRAgent task=atari/boxing
-```
+[comment]: <> (**For self-supervision**, [```SPR Agent```]&#40;Agents/SPR.py&#41; in Atari:)
 
-The [original SPR paper](https://arxiv.org/abs/2007.05929) used a [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) backbone. We use a weaker [DQN](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf) backbone for now for the sake of simplicity.
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py Agent=Agents.SPRAgent task=atari/boxing)
+
+[comment]: <> (```)
+
+[comment]: <> (The [original SPR paper]&#40;https://arxiv.org/abs/2007.05929&#41; used a [Rainbow]&#40;https://arxiv.org/pdf/1710.02298.pdf&#41; backbone. We use a weaker [DQN]&#40;https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf&#41; backbone for now for the sake of simplicity.)
 
 [comment]: <> ([AC2]&#40;paper&#41; Agent in DMC:)
-
-**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
-```console
-python Run.py Agent=Agents.AC2Agent task=dmc/walker_walk +agent.depth=5 +agent.num_actors=5 +agent.num_critics=5 nstep=5
-```
-
-```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
-
-```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
 
 [comment]: <> (——❖——)
 
@@ -826,12 +832,14 @@ Atari with ViT:
 python Run.py Eyes=ViT +eyes.patch_size=7
 ```
 
+[comment]: <> (Custom architectures should follow analogous design implementations as those found in [```./Blocks/Architectures```]&#40;Blocks/Architectures&#41;.)
+
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
 Shorthands like ```Aug```, ```Eyes```, and ```Pool``` make it easy to plug and play custom architectures. All of an agent's architectural parts can be accessed, mixed, and matched with their [corresponding recipe shorthand](Hyperparams/args.yaml#L173-L244) names.
 
 Generally, the rule of thumb is capital names for paths to classes (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts to tinker with model args (such as ```+eyes.depth=1```).
 
-Let's say you define an encoder backbone called ```MyNet``` in ```Blocks/Architectures/MyNet.py```. You can use it as your model's "eyes" with ```Eyes=Blocks.Architectures.MyNet.MyNet```.
+[comment]: <> (Let's say you define an encoder backbone called ```MyNet``` in ```Blocks/Architectures/MyNet.py```. You can use it as your model's "eyes" with ```Eyes=Blocks.Architectures.MyNet.MyNet```.)
 
 Architectures imported in [Blocks/Architectures/\_\_init\_\_.py](Blocks/Architectures/__init__.py) can be accessed directly without need for entering their full paths, as in ```Eyes=ViT``` works just as well as ```Eyes=Blocks.Architectures.ViT```.
 
@@ -905,7 +913,7 @@ The parser automatically registers the imports/class paths in ```Utils.``` in bo
 
 </details>
 
-Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.
+[comment]: <> (Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.)
 
 To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_dim```, as in the architectures in [```./Blocks/Architectures```](Blocks/Architectures).
 
