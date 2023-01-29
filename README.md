@@ -377,7 +377,7 @@ In addition to RL, this agent supports classification, generative modeling, and 
 
 [comment]: <> (✞———————❖———————✞)
 
-As of now, all agents are best tested on *visual* observations, that is, they observe pixel-based inputs.
+[comment]: <> (As of now, all agents are *visual*, that is, they observe pixel-based inputs.)
 
 Save videos with ```log_media=true```.
 
