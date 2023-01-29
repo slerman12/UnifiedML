@@ -320,7 +320,7 @@ python Run.py task=dmc/walker_walk
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
-* ```discrete=true``` effectively defaults to DQNAgent, ```discrete=false``` effectively defaults to DrQV2Agent. When unspecified, defaults to teh action space of the given environment/task.
+* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, defaults to teh action space of the given environment/task.
 * In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
 
 **For self-supervision**,
