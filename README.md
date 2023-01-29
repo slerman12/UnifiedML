@@ -346,9 +346,10 @@ python Run.py task=dmc/walker_walk
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
-[comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
 * ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
+
+[comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
 
 In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
