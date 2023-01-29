@@ -325,7 +325,7 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
 * Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
-* Action space is always discrete. Continuous actions spaces are discretized into ```num_actions=``` discrete bins.
+* Action space is always discrete. Continuous action spaces are discretized into ```num_actions=``` discrete bins.
 
 ——❖——
 
@@ -336,7 +336,7 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
-* Action space is always continuous. Discrete actions spaces are automatically ["continuous-ized"](paper).
+* Action space is always continuous. Discrete action spaces are automatically ["continuous-ized"](paper).
 
 **Or use the library's default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 
