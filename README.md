@@ -383,7 +383,7 @@ python Run.py task=dmc/walker_walk
 
 [comment]: <> (As of now, all agents are *visual*, that is, they observe pixel-based inputs.)
 
-Save videos with ```log_media=true```.
+Save videos with ```vlog=true```.
 
 :clapper: :movie_camera: -> ```Benchmarking/<experiment>/<agent>/<suite>/<task>_<seed>_Video_Image/```
 
