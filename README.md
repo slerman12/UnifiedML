@@ -343,15 +343,12 @@ Train a walker to walk from visual observations
 python Run.py task=dmc/walker_walk
 ```
 
-This agent is the library's default (```Agent=Agents.AC2Agent```).
-
-In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
-
+* This agent is the library's default (```Agent=Agents.AC2Agent```).
 * ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, defaults to the action space of the given environment/task.
 * ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
 
-The full array of the library's features and cross-domain compatibilities are supported by this agent.
+In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
 [comment]: <> (❖)
 
