@@ -111,7 +111,7 @@ An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excel
 
 Yes.
 
-The default AC2Agent supports discrete and continuous control, classification, generative modeling, and more.
+UnifiedML supports discrete and continuous control, classification, generative modeling, and more.
 
 [comment]: <> (All agents and even tasks support discrete and continuous control, online and offline RL, imitation learning, classification, regression, and generative modeling.)
 

@@ -78,7 +78,7 @@ class EnsemblePiActor(nn.Module):
         return Pi
 
 
-class CategoricalCriticActor(nn.Module):  # a.k.a. "Creator"
+class CategoricalCriticActor(nn.Module):  # a.k.a. Creator
     """Selects over actions based on Q-values."""
     def __init__(self, temp_schedule=1):
         super().__init__()
