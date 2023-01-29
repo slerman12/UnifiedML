@@ -395,7 +395,7 @@ Save videos with ```vlog=true```.
 
 [comment]: <> (Maybe collapse all this up above, putting discretization note first)
 
-Check out [```args.yaml```](Hyperparams/args.yaml) for the full array of configurable options available, including
+Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
