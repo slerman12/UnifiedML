@@ -1022,7 +1022,7 @@ python Run.py task=mario +env.stage=2
 </summary>
 <br>
 
-You can pass in a Pytorch Dataset class as follows:
+You can pass in any Pytorch Dataset as follows:
 
 ```console
 python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
