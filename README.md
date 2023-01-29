@@ -322,7 +322,7 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 ```
 
 [comment]: <> (* This agent is the library's default &#40;```Agent=```[```Agents.DQNAgent```]&#40;Agents/DQN.py&#41;&#41;.)
-* Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf) ([```here```](Losses/QLearning.py#L43)).
+* Our implementation expands on [ensemble Q-learning](https://arxiv.org/abs/1802.09477v3) with [data regularization](https://arxiv.org/pdf/2004.13649.pdf) and [Soft-DQN](https://arxiv.org/pdf/2007.14430.pdf).
 * [Original Nature DQN paper](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf).
 
 ——❖——
@@ -333,6 +333,8 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 ```console
 python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 ```
+
+——❖——
 
 [comment]: <> (❖)
 
@@ -363,10 +365,10 @@ python Run.py task=dmc/walker_walk
 * ```discrete=true``` effectively defaults to DQNAgent, ```discrete=false``` effectively defaults to DrQV2Agent. When unspecified, defaults to teh action space of the given environment/task.
 * In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
 
-For self-supervision,
+**For self-supervision**,
 * ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
 
-For ensembling,
+**For ensembling**,
 * ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
 
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
