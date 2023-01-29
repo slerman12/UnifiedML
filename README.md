@@ -353,7 +353,7 @@ python Run.py task=dmc/walker_walk
 
 [comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
 
-In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
+**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
 [comment]: <> (❖)
 
