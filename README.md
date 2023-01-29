@@ -337,8 +337,6 @@ python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 
 **Or use the library's default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 
-Train a walker to walk from visual observations
-:
 ```console
 python Run.py task=dmc/walker_walk
 ```
