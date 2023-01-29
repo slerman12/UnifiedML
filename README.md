@@ -36,7 +36,7 @@ python Run.py
 
 Defaults:
 
-```Agent=Agents.DQNAgent```
+```Agent=Agents.AC2Agent```
 
 ```task=atari/pong```
 
