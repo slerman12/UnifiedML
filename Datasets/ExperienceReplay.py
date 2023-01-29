@@ -24,9 +24,8 @@ from multiprocessing.shared_memory import SharedMemory, ShareableList
 from multiprocessing import resource_tracker
 
 import torch
-from termcolor import colored
 from torch.utils.data import IterableDataset, Dataset
-from torch.multiprocessing import Pipe
+from torch.multiprocessing import Pipe, Manager
 
 from torchvision.transforms import transforms
 
@@ -85,7 +84,7 @@ class ExperienceReplay:
         self.episodes_stored = 0 if stream else len(list(self.path.glob('*.npz')))
         self.save = save
 
-        self.offline = offline
+        self.offline = offline  # Dataset doesn't grow
         self.stream = stream  # Streaming from Environment directly
 
         # Data transform
@@ -216,7 +215,7 @@ class ExperienceReplay:
                     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
                 elif len(exp[name].shape) in [0, 1]:
                     exp[name].shape = (1, *exp[name].shape)  # Disabled for discrete/continuous conversions
-                #
+
                 # Expands attributes that are unique per batch (such as 'step')
                 batch_size = exp.get('obs', exp['action']).shape[0]
                 if 1 == exp[name].shape[0] < batch_size:
@@ -461,7 +460,7 @@ class Experiences:
         # Frame stack
         def frame_stack(traj_o, idx):
             frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
-            for _ in range(self.frame_stack - idx - 1):  # If not enough frames, re-append first
+            for _ in range(self.frame_stack - idx - 1):  # If not enough frames, reuse the first
                 frames = np.concatenate([traj_o[:1], frames], 0)
             frames = frames.reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
             return frames

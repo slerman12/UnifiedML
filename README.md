@@ -16,7 +16,7 @@
 
 - [Tutorial](#mag-full-tutorials)
 
-- [Performance, Example Projects, and Mini-Papers](#bar_chart-performance-example-projects--mini-papers)
+- [Agents and performances](#bar_chart-agents--performances)
 
 [comment]: <> (- [How Is This Possible?]&#40;#interrobang-how-is-this-possible&#41;)
 
@@ -1177,7 +1177,9 @@ Log video during evaluations with ```log_media=true```.
 
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
 
-# :bar_chart: Performance, Example projects, & Mini-Papers
+# :bar_chart: Agents & Performances
+
+In progress...
 
 # :interrobang: How is this possible
 
@@ -1189,7 +1191,7 @@ For generative modeling, well, it turns out that the difference between a Genera
 
 [comment]: <> (![alt text]&#40;https://i.imgur.com/Yf8ltyI.png&#41;)
 
-<img width="80%" alt="flowchart" src="https://i.imgur.com/nMUR9Ue.png">
+<img width="80%" alt="flowchart" src="https://i.imgur.com/ekSroTc.png">
 
 [comment]: <> (</p>)
 
@@ -1201,8 +1203,10 @@ All files are designed for pedagogical clarity and extendability for research, t
 
 # :people_holding_hands: Contributing
 
-Please support financially: <br>
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/) <br>
+[comment]: <> (Please support financially: <br>)
+
+[comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
+Please support financially by Sponsoring. <br>
 
 We are a nonprofit, single-PhD student team. If possible, compute resources appreciated.
 
