@@ -328,14 +328,14 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 
 [comment]: <> (* Action space is always discrete. Continuous action spaces are discretized into ```num_actions=``` discrete bins.)
 
-——❖——
-
 [comment]: <> (Maybe put below in collapsed)
 
 **Humanoid from pixels** with [```DrQV2 Agent```](Agents/DrQV2.py), [a state of the art algorithm for continuous control from images](https://arxiv.org/abs/2107.09645):
 ```console
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
+
+——❖——
 
 [comment]: <> (* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized]&#40;paper&#41;".)
 
