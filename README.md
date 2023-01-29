@@ -495,6 +495,8 @@ Since this is *Unified*ML, there are a couple noteworthy variations. You can ign
 
 Classify environments can actually be great testbeds for certain RL problems since they give near-instant and clear performance feedback.
 
+Ignore these variations for standard classification.
+
 [comment]: <> (*Note:* ```RL=false``` sets training to standard supervised-only classification. Without ```RL=false```, an additional RL update joins the supervised learning update s.t. $reward = -error$.)
 
 [comment]: <> (Alternatively, and interestingly, ```supervise=false``` will *only* supervise via RL $reward = -error$ &#40;**experimental**&#41;. This is pure-RL training and actually works.)
