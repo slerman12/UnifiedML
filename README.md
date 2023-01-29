@@ -1225,8 +1225,6 @@ Open-source research for minimal redundancy and optimal standardization is the w
 
 </details>
 
-[Make sure / we recommend to post in your research your exact run script or share your hyperparam arg files]
-
 [comment]: <> (The above will sweep over random seeds 1, 2, and 3, and whether to use EMA.)
 
 # :bar_chart: Agents & Performances
