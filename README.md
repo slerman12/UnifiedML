@@ -643,7 +643,7 @@ Defaults can be easily modified with custom architectures or even datasets as el
 python Run.py task=classify/mnist generate=true Discriminator=CNN +agent.num_critics=1
 ```
 
-```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. See [paper]() or [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification between Critic and Discriminator. Not all Agents support custom critic ensembling, and those will default to 2.
+```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. See [paper]() or [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification between Critic and Discriminator. 
 
 Or a ResNet18:
 
