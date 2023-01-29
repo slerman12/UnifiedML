@@ -170,7 +170,7 @@ conda activate ML
 
 #
 
-> > &#9432; Depending on your CUDA version, you may need to additionally install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
+> > &#9432; Depending on your CUDA version, you may need to redundantly install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
 >
 > For example, for CUDA 11.6:
 > ```console
@@ -803,72 +803,6 @@ python Run.py replay.load=true replay.save=true
 
 [comment]: <> (</details>)
 
-### Recipes
-
-<details>
-<summary>
-:mag: <i>Learn to cook</i>
-</summary>
-<br>
-
-```console
-python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify/mnist
-```
-
-```console
-python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[Transformer, AvgPool]" +pool.positional_encodings=false
-```
-
-```console
-python Run.py task=classify/mnist Pool=Residual +pool.model=Transformer +pool.depth=2
-```
-
-```console
-python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap, Residual]" +'pool.model="MLP(kwargs.input_shape[-1])"' +'pool.down_sample="MLP(input_shape=kwargs.input_shape[-1])"'
-```
-
-```console
-python Run.py task=classify/mnist Pool=RN
-```
-
-```console
-python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[RN, AvgPool]"
-```
-
-```console
-python Run.py task=classify/mnist Eyes=Perceiver +eyes.depths="[3, 3, 2]"  +eyes.num_tokens=128
-```
-
-```console
-python Run.py task=classify/mnist Predictor=Perceiver +predictor.token_dim=32
-```
-
-```console
-python Run.py task=classify/mnist Predictor=Perceiver train_steps=2
-python Run.py task=dmc/cheetah_run Predictor=load +predictor.path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt +predictor.attr=actor.Pi_head +predictor.device=cpu save=false
-```
-
-```console
-python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.depths=10
-```
-
-[comment]: <> (Doesn't work:)
-
-[comment]: <> (```console)
-
-[comment]: <> (python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential '+aug._targets_="[IntensityAug&#40;0.05&#41;, RandomShiftsAug&#40;4&#41;]"')
-
-[comment]: <> (```)
-
-[comment]: <> (python Run.py                     task=classify/custom                     Dataset=XRD.XRD                     Aug=Identity                     Trunk=Identity                     Eyes=ViT                    batch_size=2                  Optim=SGD                     lr=1e-3                     standardize=false                     norm=false                     task_name='Soup-50-50_${dataset.num_classes}-Way'                     experiment='CNN_optim_SGD_batch_size_${batch_size}_lr_1e-3'                     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'                     +'dataset.train_eval_splits=[1, 0.5]'                     +dataset.num_classes=7                     train_steps=5e5 num_workers=1  +eyes.depth=1)
-
-
-```console
-python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 aug.pad=4
-```
-
-</details>
-
 ### Custom Architectures
 
 <details>
@@ -1119,6 +1053,72 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 ```
 
 [comment]: <> (For now, a dataset item is assumed to consist of just a &#40;input, label&#41; pair. )
+
+</details>
+
+### Recipes
+
+<details>
+<summary>
+:mag: <i>Learn to cook</i>
+</summary>
+<br>
+
+```console
+python Run.py Eyes=Sequential +eyes._targets_="[CNN, Transformer]" task=classify/mnist
+```
+
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[Transformer, AvgPool]" +pool.positional_encodings=false
+```
+
+```console
+python Run.py task=classify/mnist Pool=Residual +pool.model=Transformer +pool.depth=2
+```
+
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[ChannelSwap, Residual]" +'pool.model="MLP(kwargs.input_shape[-1])"' +'pool.down_sample="MLP(input_shape=kwargs.input_shape[-1])"'
+```
+
+```console
+python Run.py task=classify/mnist Pool=RN
+```
+
+```console
+python Run.py task=classify/mnist Pool=Sequential +pool._targets_="[RN, AvgPool]"
+```
+
+```console
+python Run.py task=classify/mnist Eyes=Perceiver +eyes.depths="[3, 3, 2]"  +eyes.num_tokens=128
+```
+
+```console
+python Run.py task=classify/mnist Predictor=Perceiver +predictor.token_dim=32
+```
+
+```console
+python Run.py task=classify/mnist Predictor=Perceiver train_steps=2
+python Run.py task=dmc/cheetah_run Predictor=load +predictor.path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt +predictor.attr=actor.Pi_head +predictor.device=cpu save=false
+```
+
+```console
+python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.depths=10
+```
+
+[comment]: <> (Doesn't work:)
+
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py experiment='Q-Learning-Target_expected+entropy_Intensity+Shift' Aug=Sequential '+aug._targets_="[IntensityAug&#40;0.05&#41;, RandomShiftsAug&#40;4&#41;]"')
+
+[comment]: <> (```)
+
+[comment]: <> (python Run.py                     task=classify/custom                     Dataset=XRD.XRD                     Aug=Identity                     Trunk=Identity                     Eyes=ViT                    batch_size=2                  Optim=SGD                     lr=1e-3                     standardize=false                     norm=false                     task_name='Soup-50-50_${dataset.num_classes}-Way'                     experiment='CNN_optim_SGD_batch_size_${batch_size}_lr_1e-3'                     '+dataset.roots=["../XRDs/icsd_Datasets/icsd171k_mix/","../XRDs/icsd_Datasets/rruff/XY_DIF_noiseAll/"]'                     +'dataset.train_eval_splits=[1, 0.5]'                     +dataset.num_classes=7                     train_steps=5e5 num_workers=1  +eyes.depth=1)
+
+
+```console
+python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 aug.pad=4
+```
 
 </details>
 
