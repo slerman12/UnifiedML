@@ -1232,15 +1232,15 @@ Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
 
-# Note
+[comment]: <> (# Note)
 
 [comment]: <> (*While UnifiedML V.0 is a fully-realized, self-complete library, we note that it is also a ground for expansion beyond what is presented, with more performative breadth and depth on the way.*)
 
-### If you are only interested in the RL portion,
+[comment]: <> (### If you are only interested in the RL portion,)
 
-Check out our [**UnifiedRL**](https:github.com/agi-init/UnifiedRL) library.
+[comment]: <> (Check out our [**UnifiedRL**]&#40;https:github.com/agi-init/UnifiedRL&#41; library.)
 
-It does with RL to this library what PyCharm does with Python to IntelliJ, i.e., waters it down mildly and rebrands a little.~
+[comment]: <> (It does with RL to this library what PyCharm does with Python to IntelliJ, i.e., waters it down mildly and rebrands a little.~)
 
 <hr class="solid">
 
