@@ -314,7 +314,7 @@ That's it.
 
 [comment]: <> (❖)
 
-**Default**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
+**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
 ```console
 python Run.py task=dmc/walker_walk
 ```
