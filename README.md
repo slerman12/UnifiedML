@@ -1084,11 +1084,11 @@ python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets
 </summary>
 <br>
 
-**Save hyperparams** to ```.yaml``` files by defining them in the [./Hyperparams/task/](Hyperparams/task) directory.
+**Save hyperparams** to ```.yaml``` files by defining them in the [./Hyperparams/task/](Hyperparams/task) directory, where you can find many examples.
 
-For example, if you've defined a ```.yaml``` file called ```my_recipe.yaml```, you can use it with the ```task=my_recipe``` flag.
+If you've defined a ```.yaml``` file called ```my_recipe.yaml```, you can use it via ```task=my_recipe```.
 
-Please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) in our Discussions page if you discover new or better ones for a problem.
+Please [share your recipes](https://github.com/agi-init/UnifiedML/discussions) in our Discussions page if you discover new or better hyperparams for a problem.
 
 ─༺༻─
 
