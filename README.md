@@ -310,21 +310,6 @@ That's it.
 </summary>
 <br>
 
-**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
-```console
-python Run.py task=dmc/walker_walk
-```
-
-* This agent is the library's default (```Agent=Agents.DQNAgent```).
-* ```discrete=true``` effectively defaults to DQNAgent, ```discrete=false``` effectively defaults to DrQV2Agent. When unspecified, defaults to teh action space of the given environment/task.
-* In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
-
-For self-supervision,
-* ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
-  
-For ensembling,
-* ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
-
 [comment]: <> (* Achieves [top scores]&#40;#bar_chart-agents--performances&#41; in data-efficient RL across Atari and DMC.)
 
 [comment]: <> (❖)
@@ -368,6 +353,21 @@ python Run.py Agent=Agents.DrQV2Agent task=dmc/humanoid_walk
 [comment]: <> (#)
 
 [comment]: <> (Collapse up to here, maybe remove video path/gif)
+
+**When in doubt**: our [```AC2 Agent```](Agents/Lermanbots/AC2.py). Pretty much the best of all worlds among this collection of algorithms.
+```console
+python Run.py task=dmc/walker_walk
+```
+
+* This agent is the library's default (```Agent=Agents.AC2Agent```).
+* ```discrete=true``` effectively defaults to DQNAgent, ```discrete=false``` effectively defaults to DrQV2Agent. When unspecified, defaults to teh action space of the given environment/task.
+* In addition to RL, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent.
+
+For self-supervision,
+* ```+agent.depth=5``` activates a self-supervisor to predict temporal dynamics for up to 5 timesteps ahead.
+
+For ensembling,
+* ```+agent.num_actors=5 +agent.num_critics=5``` activates actor-critic ensembling.
 
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
