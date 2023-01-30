@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<h1>My Yin-Yang symbol <br>with CSS</h1>
 <div class="circle">
     <div align="center">
         <div class="yin"></div>
@@ -12,39 +11,23 @@
     <div align="center">
         <div class="yang"></div>
     </div>
-
     <div align="center">
-        <div class="p-black"></div>
-        <div class="p-white"></div>
+        <a href="http://www.google.com"><div class="black"></div></a>
+        <a href="http://www.bing.com"><div class="white"></div></a>
     </div>
-
-
 </div>
 
-
-
 <style>
-    body {
-        background:#CCC;
-        width:300px;
-        margin:0 auto;
-        margin-top:100px;
+    div {
+        position: relative;
     }
-
-    h1 {
-        font-size:1.3rem;
-        text-align:center;
-        margin:30px;
-        box-sizing:border-box;
-    }
-
     .circle {
         width:300px;
         height:300px;
         background:black;
+        border: 2px solid black;
         border-radius:100%;
         text-align:center;
-        transform: rotate(0deg);
         transform: scaleX(-1);
     }
     .circle .yin {
@@ -53,7 +36,6 @@
         background:white;
         border-radius:100%;
     }
-
     .circle .yang {
         width:150px;
         height:150px;
@@ -63,9 +45,7 @@
         z-index:auto;
         position: absolute;
         margin-left:75px;
-
     }
-
     .feher {
         width:150px;
         height:300px;
@@ -75,8 +55,7 @@
         border-top-right-radius:150px;
         border-bottom-right-radius:150px;
     }
-
-    .p-black {
+    .black {
         width:50px;
         height:50px;
         background:black;
@@ -85,8 +64,7 @@
         margin-top:-260px;
         margin-left:120px;
     }
-
-    .p-white {
+    .white {
         width:50px;
         height:50px;
         background:white;

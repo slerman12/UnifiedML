@@ -45,14 +45,13 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
             next_v = torch.zeros_like(discount)
             next_v[has_future] = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
-            print(target_Q.shape, discount.shape, next_v.shape, (discount * next_v).shape)
 
             target_Q += discount * next_v
 
     Qs = critic(obs, action)  # Q-ensemble
 
     # Use BCE if Critic ends with Sigmoid
-    criterion = binary_cross_entropy if critic.binary else mse_loss
+    criterion = binary_cross_entropy if critic.binary else mse_loss  # TODO can remove all these
 
     # Temporal difference (TD) error (via MSE or BCE)
     q_loss = criterion(Qs, target_Q.unsqueeze(1).expand_as(Qs))

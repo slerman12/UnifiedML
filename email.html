@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<a href="http://www.google.com" class="yang"><div><a href="http://www.bing.com" class='yin'><div class='☯'></div></a></div></a>
+
+<style>
+    .yang {
+        pointer-events: all;
+    }
+    .yin {
+        pointer-events: none;
+    }
+    .☯ {
+        display: flex;
+        align-items: center;
+        width: 80vmin;
+        height: 80vmin;
+        border-radius: 50%;
+        background: linear-gradient(black 50%, white 0);
+        border: 2px solid black;
+        transform: rotate(45deg);
+        /*pointer-events: none;*/
+    }
+    .☯:before, .☯:after {
+        flex: 1;
+        border: solid 13.3333333333vmin white;  /* width / 6 */
+        height: 13.3333333333vmin;  /* height / 6 */
+        border-radius: 50%;
+        background: black;
+        content: "";
+    }
+    .☯:after {
+        border-color: black;
+        background: white;
+        /*pointer-events: all;*/
+    }
+</style>
+</html>

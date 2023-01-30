@@ -4,7 +4,6 @@
 # MIT_LICENSE file in the root directory of this source tree.
 from Sweeps.Templates import template
 
-
 runs = template('UnifiedML')
 
 runs.UnifiedML.sweep = [
@@ -115,7 +114,7 @@ runs.UnifiedML.sweep = [
 
 
 runs.UnifiedML.plots = [
-    ['ClassifyRL_discrete.*', 'CrossEntropyBaseline*'],
+    ['ClassifyRL_discrete.*', 'CrossEntropyBaseline.*'],
 ]
 
 runs.UnifiedML.sftp = True
