@@ -1,5 +1,7 @@
 from __future__ import print_function
 import random
+from pathlib import Path
+
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
@@ -354,3 +356,8 @@ plt.axis("off")
 plt.title("Fake Images")
 plt.imshow(np.transpose(img_list[-1],(1,2,0)))
 plt.show()
+path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image/generated.png')
+path.mkdir(parents=True, exist_ok=True)
+plt.savefig(path)
+
+plt.close()
