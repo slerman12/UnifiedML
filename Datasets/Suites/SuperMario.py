@@ -56,16 +56,12 @@ class SuperMario:
 
         # Make env
 
-        # task = SuperMarioBros-[World]-[Stage]-[Version]: SuperMarioBros-[1 - 8]-[1 - 4]-[0 - 3]
-        task = f'SuperMarioBros-{world}-{stage}-{version}'
+        task = f'SuperMarioBros-{world}-{stage}-{version}'  # SuperMarioBros-[1 - 8]-[1 - 4]-[0 - 3]
 
         # Load task
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             env = gym_super_mario_bros.make(task)
-
-            # Limit the action-space to (0) Walk right and (1) Jump right
-            # self.env = JoypadSpace(env, [["right"], ["right", "A"]])
 
             # [['NOOP'], ["right"], ["right", "A"], ["right", "B"], ["right", "A", "B"], ["A"], ['left']]
             self.env = JoypadSpace(env, SIMPLE_MOVEMENT)
@@ -181,13 +177,6 @@ class SuperMario:
 
         # Create experience
         exp = {'obs': obs, 'action': None, 'reward': np.zeros([]), 'label': None}
-
-        # Scalars/NaN to numpy
-        for key in exp:
-            if np.isscalar(exp[key]) or exp[key] is None or type(exp[key]) == bool:
-                exp[key] = np.full([1, 1], exp[key], dtype=getattr(exp[key], 'dtype', 'float32'))
-            elif len(exp[key].shape) in [0, 1]:  # Add batch dim
-                exp[key].shape = (1, *(exp[key].shape or [1]))
 
         # Reset frame stack
         self.frames.clear()

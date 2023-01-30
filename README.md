@@ -348,7 +348,7 @@ python Run.py task=dmc/walker_walk
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
-* ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for 5 timesteps ahead.
+* ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for a number of timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
 [comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
@@ -538,7 +538,7 @@ Many popular features are unified in this library and generalized across RL/CV/g
 For example,
 
 ```console
-python Run.py task=classify/cifar10 ema=true weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
+python Run.py task=classify/cifar10 weight_decay=0.01 transform="{RandomHorizontalFlip:{p:0.5}}" Eyes=Blocks.Architectures.ResNet18
 ```
 
 The above returns a $94$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.

@@ -210,11 +210,11 @@ class ExperienceReplay:
                 if name not in exp or exp[name] is None:
                     exp[name] = np.zeros((1, 0))
 
-                # # Add batch dimension to singles / convert to numpy
+                # Add batch dimension to singles / convert to numpy
                 if np.isscalar(exp[name]) or not isinstance(exp[name], np.ndarray):
                     exp[name] = np.full((1, *spec['shape']), exp[name], dtype=getattr(exp[name], 'dtype', 'float32'))
                 elif len(exp[name].shape) in [0, 1]:
-                    exp[name].shape = (1, *exp[name].shape)  # Disabled for discrete/continuous conversions
+                    exp[name].shape = (1, exp[name].size)
 
                 # Expands attributes that are unique per batch (such as 'step')
                 batch_size = exp.get('obs', exp['action']).shape[0]
@@ -611,10 +611,10 @@ class SharedDict:
         try:
             mem = method(data, name=name) if isinstance(data, list) \
                 else method(create=True, name=name,  size=data.nbytes)
+
+            self.created.update({name: method})
         except FileExistsError:
             mem = method(name=name)  # But if exists, retrieve existing shared memory link
-
-        self.created.update({name: method})
 
         return mem
 

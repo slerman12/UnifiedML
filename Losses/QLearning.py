@@ -45,6 +45,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
             next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
             next_v = torch.zeros_like(discount)
             next_v[has_future] = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+            print(target_Q.shape, discount.shape, next_v.shape, (discount * next_v).shape)
 
             target_Q += discount * next_v
 

@@ -53,7 +53,7 @@ class DQNAgent(torch.nn.Module):
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
                                      discrete=True, stddev_schedule=stddev_schedule)
 
-        # When discrete, Critic <- Actor
+        # Since discrete, Critic <- Actor
         recipes.critic.trunk = self.actor.trunk
         recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
