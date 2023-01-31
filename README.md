@@ -574,7 +574,7 @@ This library is meant to be useful for academic research, and out of the box sup
 
 <details>
 <summary>
-:mag: <i>Click to recall</i>
+:mag: <i>Click to retroact</i>
 </summary>
 <br>
 
@@ -698,7 +698,7 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 ### Saving
 <details>
 <summary>
-:mag: <i>Click to load</i>
+:mag: <i>Click to remember</i>
 </summary>
 <br>
 
