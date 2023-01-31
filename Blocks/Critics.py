@@ -56,7 +56,7 @@ class EnsembleQCritic(nn.Module):
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
             self.ema_decay = ema_decay
-            self.ema = copy.deepcopy(self).eval()
+            self.ema = copy.deepcopy(self).requires_grad_(False)
 
     def forward(self, obs, action=None, All_Qs=None):
         batch_size = obs.shape[0]

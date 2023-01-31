@@ -215,6 +215,54 @@ class Discriminator(nn.Module):
         return out
 
 
+# TODO perhaps try torch.amax(x, dim=(2,3)) # Global maximum pooling
+# TODO Perhaps init agent with .to(memory_format=torch.channels_last) and .half()
+
+# TODO Augs, Compose
+
+# def make_random_square_masks(inputs, mask_size):
+#     ##### TODO: Double check that this properly covers the whole range of values. :'( :')
+#     if mask_size == 0:
+#         return None # no need to cutout or do anything like that since the patch_size is set to 0
+#     is_even = int(mask_size % 2 == 0)
+#     in_shape = inputs.shape
+#
+#     # seed centers of squares to cutout boxes from, in one dimension each
+#     mask_center_y = torch.empty(in_shape[0], dtype=torch.long, device=inputs.device).random_(mask_size//2-is_even, in_shape[-2]-mask_size//2-is_even)
+#     mask_center_x = torch.empty(in_shape[0], dtype=torch.long, device=inputs.device).random_(mask_size//2-is_even, in_shape[-1]-mask_size//2-is_even)
+#
+#     # measure distance, using the center as a reference point
+#     to_mask_y_dists = torch.arange(in_shape[-2], device=inputs.device).view(1, 1, in_shape[-2], 1) - mask_center_y.view(-1, 1, 1, 1)
+#     to_mask_x_dists = torch.arange(in_shape[-1], device=inputs.device).view(1, 1, 1, in_shape[-1]) - mask_center_x.view(-1, 1, 1, 1)
+#
+#     to_mask_y = (to_mask_y_dists >= (-(mask_size // 2) + is_even)) * (to_mask_y_dists <= mask_size // 2)
+#     to_mask_x = (to_mask_x_dists >= (-(mask_size // 2) + is_even)) * (to_mask_x_dists <= mask_size // 2)
+#
+#     final_mask = to_mask_y * to_mask_x ## Turn (y by 1) and (x by 1) boolean masks into (y by x) masks through multiplication. Their intersection is square, hurray! :D
+#
+#     return final_mask
+#
+# def batch_cutout(inputs, patch_size):
+#     with torch.no_grad():
+#         cutout_batch_mask = make_random_square_masks(inputs, patch_size)
+#         if cutout_batch_mask is None:
+#             return inputs # if the mask is None, then that's because the patch size was set to 0 and we will not be using cutout today.
+#         # TODO: Could be fused with the crop operation for sheer speeeeeds. :D <3 :))))
+#         cutout_batch = torch.where(cutout_batch_mask, torch.zeros_like(inputs), inputs)
+#         return cutout_batch
+#
+# def batch_crop(inputs, crop_size):
+#     with torch.no_grad():
+#         crop_mask_batch = make_random_square_masks(inputs, crop_size)
+#         cropped_batch = torch.masked_select(inputs, crop_mask_batch).view(inputs.shape[0], inputs.shape[1], crop_size, crop_size)
+#         return cropped_batch
+#
+# def batch_flip_lr(batch_images, flip_chance=.5):
+#     with torch.no_grad():
+#         # TODO: Is there a more elegant way to do this? :') :'((((
+#         return torch.where(torch.rand_like(batch_images[:, 0, 0, 0].view(-1, 1, 1, 1)) < flip_chance, torch.flip(batch_images, (-1,)), batch_images)
+
+
 # Initializes model weights a la normal
 def weight_init(m):
     if isinstance(m, (nn.Conv2d, nn.Conv1d)) or isinstance(m, (nn.ConvTranspose2d, nn.ConvTranspose1d)):

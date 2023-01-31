@@ -36,7 +36,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, st
                 All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
 
             # Q-values per action
-            next_Qs = critic.ema(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy (EMA) of Critic: Q(obs, a)
+            next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed EMA of Critic: Q(obs, a)
             next_q = next_Qs.min(1)[0]  # Min-reduced ensemble
             next_q_norm = next_q - next_q.max(-1, keepdim=True)[0]  # Normalized
 
