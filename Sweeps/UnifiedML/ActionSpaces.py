@@ -16,7 +16,7 @@ def join_atari(atari_tasks):
 runs = template('UnifiedML')
 
 runs.UnifiedML.sweep = [
-    # Less Exploration
+    # TODO For the contra-spaces, need to manually specify dicrete=true for DQN and discrete=false for DrQV2
     f"""
     task={join_atari(atari)},{join_dmc(dmc)}
     train_steps=1000000
