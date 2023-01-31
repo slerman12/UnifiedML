@@ -37,8 +37,8 @@ runs.UnifiedML.plots = [
 
 # runs.UnifiedML.agents = ['DrQV2Agent']
 
-runs.UnifiedML.sftp = True
+runs.UnifiedML.sftp = False
 runs.UnifiedML.lab = False
-runs.UnifiedML.title = 'Action Space Adaptation, Discrete <-> Continuous'
+runs.UnifiedML.title = 'Action Space Adaptation, Discrete ⥃ Continuous'
 runs.UnifiedML.steps = 1e6
 runs.UnifiedML.write_tabular = True
