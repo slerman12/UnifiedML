@@ -944,13 +944,13 @@ To make your own architecture mix-and-matchable, just put it in a pytorch module
 </summary>
 <br>
 
-You can pass in a path to the ```Optim=``` flag or select a built-in Pytorch optimizer like ```SGD```.
+You can pass in a path to the ```Optim=``` flag or select a built-in Pytorch optimizer like ```SGD```, or both as below:
 
 ```console
 python Run.py Optim=Utils.torch.optim.SGD lr=0.1
 ```
 
-or equivalently via the expressive recipe interface described in [Custom Architectures](#custom-architectures):
+Equivalently, via the expressive recipe interface as described in [Custom Architectures](#custom-architectures):
 
 ```console
 python Run.py Optim=SGD lr=0.1
@@ -962,7 +962,7 @@ or
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
-Learning rate schedulers can also be customized as well with ```scheduler=``` analogously, or via the ```lr_decay_epochs=``` shorthand for cosine annealing.
+Learning rate schedulers can also be customized. ```Scheduler=``` works analogously, or just use the ```lr_decay_epochs=``` shorthand for cosine annealing.
 
 </details>
 
