@@ -1192,7 +1192,7 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 </summary>
 <br>
 
-Histogram, Confusion Matrix, Line Graph, Aggregated Line Graph, and Scatter Plot.
+:white_check_mark: Histogram :white_check_mark: Confusion matrix heatmap :white_check_mark: Line graphs for tasks :white_check_mark: Aggregated line graphs per suite :white_check_mark: Class sizes
 
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
