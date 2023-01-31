@@ -1,4 +1,4 @@
-![alt text](https://i.imgur.com/rjw4eFg.png)
+![alt text](https://i.imgur.com/Ya9FpIJ.png)
 
 [comment]: <> (<img src="https://i.imgur.com/rjw4eFg.png">)
 
@@ -358,7 +358,7 @@ python Run.py task=mario Agent=Agents.DuelingDQNAgent
 python Run.py
 ```
 
-* ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for a number of timesteps ahead similar to [Dreamer](https://arxiv.org/pdf/2301.04104v1.pdf) and [SPR](https://arxiv.org/abs/2007.05929).
+* ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for a number of timesteps ahead, similar to [Dreamer](https://arxiv.org/pdf/2301.04104v1.pdf) and [SPR](https://arxiv.org/abs/2007.05929).
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
 [comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
