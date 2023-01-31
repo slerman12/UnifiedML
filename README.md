@@ -364,7 +364,7 @@ python Run.py
 
 **In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
-&#9432; ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
+&#9432; *Experimental*: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 [comment]: <> (❖)
 
