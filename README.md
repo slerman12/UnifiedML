@@ -351,7 +351,7 @@ python Run.py task=mario Agent=Agents.DuelingDQNAgent
 **The library's default Agent** is our [```AC2 Agent```](Agents/Lermanbots/AC2.py).
 
 ```console
-python Run.py task=dmc/walker_walk
+python Run.py
 ```
 
 * This agent is the library's default (```Agent=Agents.AC2Agent```).
