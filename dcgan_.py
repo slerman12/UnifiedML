@@ -196,7 +196,7 @@ class Discriminator(nn.Module):
 
             # 1 x 1 x 1
             nn.Conv2d(hidden_dim * 8, 1, 4, 1, 0, bias=False),
-            nn.Sigmoid()
+            nn.Sigmoid()  # TODO Using Sigmoid with MSE breaks for some reason!
         )
 
         self.apply(weight_init)
@@ -291,7 +291,8 @@ print(netD)
 
 
 # Initialize BCELoss function
-criterion = nn.MSELoss()
+# criterion = nn.MSELoss()
+criterion = nn.BCELoss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
@@ -366,7 +367,8 @@ for epoch in range(num_epochs):
         # Since we just updated D, perform another forward pass of all-fake batch through D
         output = netD(fake).view(-1)
         # Calculate G's loss based on this output
-        errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
+        # errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
+        errG = -output.log().mean()  # TODO Try
         # Calculate gradients for G
         errG.backward()
         D_G_z2 = output.mean().item()
