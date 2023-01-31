@@ -344,7 +344,7 @@ python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 python Run.py task=mario Agent=Agents.DuelingDQNAgent
 ```
 
-☼ ∽ 𖥸 ∽ ☽
+☼ 𖥸 ☽☆
 
 [comment]: <> (* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized]&#40;paper&#41;".)
 
