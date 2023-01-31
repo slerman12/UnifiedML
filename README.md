@@ -2,15 +2,15 @@
 
 [comment]: <> (<img src="https://i.imgur.com/rjw4eFg.png">)
 
-[comment]: <> ([![]&#40;https://img.shields.io/badge/State_of_the_Art-Data--Efficient_RL-blue.svg??style=flat&logo=google-analytics&#41;]&#40;&#41;<br>)
+[![](https://img.shields.io/badge/State_of_the_Art-Data--Efficient_RL-blue.svg??style=flat&logo=google-analytics)]()<br>
 
-[comment]: <> ([![]&#40;https://img.shields.io/badge/Modern,_Academic--Standard-Image_Classification-blue.svg??style=flat&logo=instatus&#41;]&#40;&#41;<br>)
+[![](https://img.shields.io/badge/Modern,_Academic--Standard-Image_Classification-blue.svg??style=flat&logo=instatus)]()<br>
 
-[comment]: <> ([![]&#40;https://img.shields.io/badge/Technically--Working-Generative_Modeling-blue.svg??style=flat&logo=angellist&#41;]&#40;&#41;<br>)
+[![](https://img.shields.io/badge/Technically--Working-Generative_Modeling-blue.svg??style=flat&logo=angellist)]()<br>
 
-[comment]: <> ([![]&#40;https://img.shields.io/badge/In--Progress-Multi_Modalities-red.svg??style=flat&logo=plex&#41;]&#40;&#41;<br>)
+[![](https://img.shields.io/badge/In--Progress-Multi_Modalities-red.svg??style=flat&logo=plex)]()<br>
 
-[comment]: <> ([![]&#40;https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer&#41;]&#40;&#41;)
+[![](https://img.shields.io/badge/Unified_in_one_Framework-Seamless,_General.svg??style=flat&logo=immer)]()
 
 ### Quick Links
 
@@ -19,9 +19,6 @@
 - [Tutorial](#mag-full-tutorials)
 
 - [Agents and performances](#bar_chart-agents--performances)
-
-
-![alt text](https://i.imgur.com/rjw4eFg.png)
 
 [comment]: <> (- [How Is This Possible?]&#40;#interrobang-how-is-this-possible&#41;)
 
