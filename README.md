@@ -1,4 +1,4 @@
-![alt text](https://i.imgur.com/rjw4eFg.png)
+![alt text](https://i.imgur.com/Ya9FpIJ.png)
 
 [comment]: <> (<img src="https://i.imgur.com/rjw4eFg.png">)
 
