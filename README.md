@@ -337,6 +337,8 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
+——❖——
+
 **Play Super Mario Bros.** with [```Dueling DQN Agent```](Agents/DuelingDQN.py), an extension of DQN that uses [dueling Q networks](https://arxiv.org/abs/1511.06581):
 ```console
 python Run.py task=mario Agent=Agents.DuelingDQNAgent
