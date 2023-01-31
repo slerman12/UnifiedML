@@ -337,6 +337,13 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
+**Mario** with [```Dueling DQN Agent```](Agents/DuelingDQN.py):
+```console
+python Run.py task=mario Agent=Agents.DuelingDQNAgent
+```
+
+Dueling DQN is an extension of DQN that uses [dueling Q networks](https://arxiv.org/abs/1511.06581).
+
 ─ ·𖥸· ─
 
 [comment]: <> (* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized]&#40;paper&#41;".)
