@@ -413,7 +413,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new or better ones!
 
 
-&#9432; If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```. Action space conversions are experimental.
+&#9432; If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```. *Action space conversions are experimental*.
 
 [comment]: <> (#)
 
