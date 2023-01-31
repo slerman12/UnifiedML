@@ -962,6 +962,12 @@ or
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
+You can also customize per-block optimizers. For example, just the Encoder:
+
+```console
+python Run.py encoder.Optim=SGD
+```
+
 Learning rate schedulers can also be customized. ```Scheduler=``` works analogously, or just use the ```lr_decay_epochs=``` shorthand for cosine annealing.
 
 </details>
