@@ -24,7 +24,7 @@ torch.manual_seed(manualSeed)
 
 
 # Root directory for dataset
-dataroot = "data/celeba"
+dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
 
 
 # def load_dataset(split):
@@ -174,7 +174,7 @@ class Discriminator(nn.Module):
 
         self.Discriminator = nn.Sequential(
             # hidden_dim x 32 x 32
-            # nn.AdaptiveAvgPool2d(64),  # Adapts from different scales
+            # nn.AdaptiveAvgPool2d(64),  # Adapts from different scales  TODO Does averaging cause weird distortion?
             nn.Conv2d(in_channels, hidden_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
