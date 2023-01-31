@@ -362,6 +362,8 @@ python Run.py
 
 [comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
 
+&#9432; If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```. Action space conversions are experimental.
+
 **In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
 [comment]: <> (❖)
@@ -383,8 +385,6 @@ python Run.py
 [comment]: <> (#)
 
 [comment]: <> (Collapse up to here, maybe remove video path/gif)
-
-&#9432; If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```. Experimental.
 
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
