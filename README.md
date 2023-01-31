@@ -1188,9 +1188,11 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 
 <details>
 <summary>
-:mag: <i>Click to marvel</i>
+:mag: <i>Click to visualize</i>
 </summary>
 <br>
+
+Histogram, Confusion Matrix, Line Graph, Aggregated Line Graph, and Scatter Plot.
 
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
