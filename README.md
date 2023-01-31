@@ -344,7 +344,7 @@ python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 python Run.py task=mario Agent=Agents.DuelingDQNAgent
 ```
 
-⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼☼ 𖥸 ☽⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
+⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼✧ ☼ 𖥸 ☽ ✧⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
 [comment]: <> (༺༻)
 
@@ -363,8 +363,6 @@ python Run.py
 [comment]: <> (* ```discrete=true``` effectively defaults to ```DQNAgent```, ```discrete=false``` effectively defaults to ```DrQV2Agent```. When unspecified, ```discrete=``` defaults to the action space of the environment.)
 
 **In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it as a framework, not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
-
-> &#9432; *Experimental*: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 [comment]: <> (❖)
 
@@ -411,6 +409,8 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
 * & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions) if you discover new or better ones!
+
+&#9432; ***Experimental***: If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```.
 
 [comment]: <> (#)
 
