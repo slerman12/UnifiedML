@@ -968,7 +968,7 @@ You can also customize per-block optimizers. For example, just the Encoder:
 python Run.py encoder.Optim=SGD
 ```
 
-Learning rate schedulers can also be customized. ```Scheduler=``` works analogously, or just use the ```lr_decay_epochs=``` shorthand for cosine annealing e.g.
+Learning rate schedulers can also be customized. ```Scheduler=``` works analogously, or just use the ```lr_decay_epochs=``` shorthand for cosine annealing *e.g.*
 
 ```console
 python Run.py task=classify/mnist lr_decay_epochs=100
