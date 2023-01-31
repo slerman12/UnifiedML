@@ -1,4 +1,4 @@
-![alt text](https://i.imgur.com/rjw4eFg.png)
+![alt text](https://i.imgur.com/AcI0NgG.png)
 
 [comment]: <> ([![]&#40;https://img.shields.io/badge/State_of_the_Art-Data--Efficient_RL-blue.svg??style=flat&logo=google-analytics&#41;]&#40;&#41;<br>)
 
