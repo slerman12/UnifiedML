@@ -1044,7 +1044,7 @@ python Run.py task=mario +env.stage=2
 
 <details>
 <summary>
-:mag: <i>Click to read, parse, & load</i>
+:mag: <i>Click to read, parse, & boot</i>
 </summary>
 <br>
 
