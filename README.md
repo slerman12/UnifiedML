@@ -1,5 +1,6 @@
-[comment]: <> (![alt text]&#40;https://i.imgur.com/rjw4eFg.png&#41;)
-<img src="https://i.imgur.com/rjw4eFg.png">
+![alt text](https://i.imgur.com/rjw4eFg.png)
+
+[comment]: <> (<img src="https://i.imgur.com/rjw4eFg.png">)
 
 [comment]: <> ([![]&#40;https://img.shields.io/badge/State_of_the_Art-Data--Efficient_RL-blue.svg??style=flat&logo=google-analytics&#41;]&#40;&#41;<br>)
 
@@ -18,6 +19,9 @@
 - [Tutorial](#mag-full-tutorials)
 
 - [Agents and performances](#bar_chart-agents--performances)
+
+
+![alt text](https://i.imgur.com/rjw4eFg.png)
 
 [comment]: <> (- [How Is This Possible?]&#40;#interrobang-how-is-this-possible&#41;)
 
