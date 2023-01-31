@@ -350,13 +350,12 @@ python Run.py task=mario Agent=Agents.DuelingDQNAgent
 
 [comment]: <> (* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized]&#40;paper&#41;".)
 
-**The library's default Agent** is our [```AC2 Agent```](Agents/Lermanbots/AC2.py).
+**The library's default Agent** is our [```AC2 Agent```](Agents/Lermanbots/AC2.py) (```Agent=Agents.AC2Agent```).
 
 ```console
 python Run.py
 ```
 
-* This agent is the library's default (```Agent=Agents.AC2Agent```).
 * ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for a number of timesteps ahead.
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
