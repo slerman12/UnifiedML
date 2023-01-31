@@ -962,7 +962,7 @@ or
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
-In the first two examples, the ```lr=``` flag is optional. The default learning rate is ```lr=1e-4```. Alternatively, you could write ```+optim.lr=```.
+In the first two examples, the ```lr=``` flag was optional. The default learning rate is ```lr=1e-4```. Alternatively, you could write ```+optim.lr=```.
 
 You can also customize per-block optimizers. For example, just the Encoder:
 
