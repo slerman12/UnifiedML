@@ -954,7 +954,7 @@ You can pass in a path to the ```Optim=``` flag or select a built-in Pytorch opt
 python Run.py Optim=Utils.torch.optim.SGD lr=0.1
 ```
 
-Equivalently, via the expressive recipe interface as described in [Custom Architectures](#custom-architectures):
+Equivalently via the expressive recipe interface as described in [Custom Architectures](#custom-architectures):
 
 ```console
 python Run.py Optim=SGD lr=0.1
@@ -966,15 +966,15 @@ or
 python Run.py "optim='torch.optim.SGD(kwargs.params, lr=0.1)'"
 ```
 
-In the first two examples, the ```lr=``` flag was optional. The default learning rate is ```1e-4```. Alternatively, we could have writen ```+optim.lr=```.
+In the first two examples, the ```lr=``` flag was optional. The default learning rate is ```1e-4``` and we could have writen ```+optim.lr=```.
 
-You can also customize per-block optimizers. For example, just the Encoder:
+Can also customize per-block optimizers. For example, just the Encoder:
 
 ```console
 python Run.py encoder.Optim=SGD
 ```
 
-**Learning rate schedulers can also be customized.** ```Scheduler=``` works analogously, or just use the ```lr_decay_epochs=``` shorthand for cosine annealing *e.g.*
+**Learning rate schedulers can also be customized.** ```Scheduler=``` works analogously to ```Optim=```, or just use the ```lr_decay_epochs=``` shorthand for cosine annealing *e.g.*
 
 ```console
 python Run.py task=classify/mnist lr_decay_epochs=100
