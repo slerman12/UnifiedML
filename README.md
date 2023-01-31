@@ -483,7 +483,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 <details>
 <summary>
-:mag: <i>Click to ascertain</i>
+:mag: <i>Click to inspect categorically</i>
 </summary>
 <br>
 
