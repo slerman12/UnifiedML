@@ -344,6 +344,8 @@ python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 python Run.py task=mario Agent=Agents.DuelingDQNAgent
 ```
 
+The dueling Q networks can also be used with [```AC2 Agent```](Agents/Lermanbots/AC2.py).
+
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼✧ ☼ 𖥸 ☽ ✧⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
 [comment]: <> (༺༻)
