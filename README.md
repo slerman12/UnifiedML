@@ -1188,7 +1188,7 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 
 <details>
 <summary>
-:mag: <i>Click to see</i>
+:mag: <i>Click to marvel</i>
 </summary>
 <br>
 
