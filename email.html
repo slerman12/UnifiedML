@@ -1,15 +1,17 @@
 <!doctype html>
 <html>
-<a href="http://www.google.com" class="yang"><div><a href="http://www.bing.com" class='yin'><div class='☯'></div></a></div></a>
+<a class="yang" href="http://www.google.com"></a><a href="http://www.bing.com" class='yin'></a>
 
 <style>
-    .yang {
-        pointer-events: all;
+    a {
+        pointer-events: none;
+        color: #e5e5e5;
+        text-decoration: none;
+        text-align: center;
+        font-family: "Fira Code Light";
+        /*font-size: 3.5vmin;*/
     }
     .yin {
-        pointer-events: none;
-    }
-    .☯ {
         display: flex;
         align-items: center;
         width: 80vmin;
@@ -18,20 +20,34 @@
         background: linear-gradient(black 50%, white 0);
         border: 2px solid black;
         transform: rotate(45deg);
-        /*pointer-events: none;*/
+        pointer-events: none;
     }
-    .☯:before, .☯:after {
+    .yin:before, .yin:after {
         flex: 1;
         border: solid 13.3333333333vmin white;  /* width / 6 */
         height: 13.3333333333vmin;  /* height / 6 */
         border-radius: 50%;
         background: black;
-        content: "";
+        white-space: pre-wrap;
+        content: "\A\A Click To \A Like";
+        /*background-image: url("https://i.imgur.com/ppm4LJw.jpg");*/
+        /*background-repeat: no-repeat;*/
+        transform: rotate(-45deg);
     }
-    .☯:after {
+    .yin:after {
         border-color: black;
         background: white;
-        /*pointer-events: all;*/
+        pointer-events: all;
+        /*background-image: url("https://i.imgur.com/ppm4LJw.jpg");*/
+        white-space: pre-wrap;
+        content: "\A\A Click To \A Dislike";
+        color: #403f3f;
+    }
+    .yang {
+        position: absolute;
+        width: 80vmin;
+        height: 80vmin;
+        pointer-events: all;
     }
 </style>
 </html>
