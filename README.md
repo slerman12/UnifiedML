@@ -1192,8 +1192,6 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 </summary>
 <br>
 
-[comment]: <> (:white_check_mark: Line graphs :white_check_mark: Aggregated line graphs per suite :white_check_mark: Bar chart :white_check_mark: Heatmap &#40;confusion matrix&#41; :white_check_mark: Class sizes &#40;scatterplot&#41;)
-
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
 ```console
@@ -1201,6 +1199,8 @@ python Run.py
 ```
 
 :chart_with_upwards_trend: :bar_chart: --> ```./Benchmarking/Exp/```
+
+:white_check_mark: Line graphs :white_check_mark: Aggregated line graphs per suite :white_check_mark: Bar charts :white_check_mark: Heatmaps (confusion matrix) :white_check_mark: Class sizes (scatterplot)
 
 Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 

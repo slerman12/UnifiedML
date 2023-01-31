@@ -367,8 +367,9 @@ for epoch in range(num_epochs):
         # Since we just updated D, perform another forward pass of all-fake batch through D
         output = netD(fake).view(-1)
         # Calculate G's loss based on this output
-        errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
+        # errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
         # errG = -output.log().mean()  # TODO Try
+        errG = -output.mean()  # TODO Try
         # Calculate gradients for G
         errG.backward()
         D_G_z2 = output.mean().item()
@@ -428,6 +429,6 @@ plt.imshow(np.transpose(img_list[-1],(1,2,0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
-plt.savefig(path / 'generated.png')
+plt.savefig(path / 'generated-baseline.png')
 
 plt.close()
