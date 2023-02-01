@@ -1232,7 +1232,7 @@ python Plot.py plot_experiments="['Exp.*']"
 
 #
 
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes. See below:**
 
 | Present  | Plot Type | Suite |
 | :-------------: | ------------- | :------------- |
@@ -1246,7 +1246,7 @@ python Plot.py plot_experiments="['Exp.*']"
 
 ---
 
-Another option is to use [WandB](https://wandb.ai/), which is also supported by UnifiedML:
+Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
 ```console
 python Run.py logger.wandb=true
