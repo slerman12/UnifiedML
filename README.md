@@ -1200,11 +1200,13 @@ python Run.py
 
 :chart_with_upwards_trend: :bar_chart: --> ```./Benchmarking/Exp/```
 
+---
+
 :white_check_mark: Line graphs 
 
 :white_check_mark: Aggregated line graphs per suite 
 
-:white_check_mark: Bar charts 
+:white_check_mark: Bar chart
 
 :white_check_mark: Heatmap confusion matrix 
 
