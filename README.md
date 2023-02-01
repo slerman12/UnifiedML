@@ -1283,7 +1283,7 @@ We have released our slide deck!
 
 [Templates available here]()
 
-Feel free to use our UnifiedML templates and figures in your work, citing [us](#pen-paper--citing) of course and [donating](#people_holding_hands-contributing) if you can. One person made all of this.
+Feel free to use our UnifiedML templates and figures in your work, [citing us](#pen-paper--citing) of course and [donating](#people_holding_hands-contributing) if you can. One person made all of this.
 
 **Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here]() in the discussion board. Read the rules to keep citations and credit attribution fair.**
 
