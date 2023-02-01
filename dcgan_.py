@@ -83,6 +83,8 @@ ngpu = 1
 #                                transforms.ToTensor(),
 #                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 #                            ]))
+
+# TODO Instead of normalize, standardize in Encoder and set those norm metrics to obs_spec
 dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
                                              download=True,
                                              transform=transforms.Compose([
@@ -155,7 +157,7 @@ class Generator(nn.Module):
             # out_channels x 64 x 64
             nn.ConvTranspose2d(hidden_dim, out_channels, 4, 2, 1, bias=False),
             # nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adapts scale
-            nn.Tanh()  # TODO added here
+            # nn.Tanh()  # TODO added here
         )
 
         self.apply(weight_init)
