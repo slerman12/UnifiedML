@@ -1214,6 +1214,18 @@ python Plot.py plot_experiments="['Exp', 'Exp2']"
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
 
+#
+
+|   | Plot |
+| ------------- | ------------- |
+| :white_check_mark:  | Line graphs  |
+| :white_check_mark:  | Aggregated line graphs per suite  |
+| :white_check_mark:  | Bar chart  |
+| :white_check_mark:  | Heatmap confusion matrix  |
+| :white_check_mark:  | Class sizes (scatterplot)  |
+
+#
+
 Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp``` in the name:
 
 ```console
@@ -1244,14 +1256,6 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 ```
 
 Log video during evaluations with ```log_media=true```.
-
-|   | Plot Type |
-| ------------- | ------------- |
-| :white_check_mark:  | Line graphs  |
-| :white_check_mark:  | Aggregated line graphs per suite  |
-| :white_check_mark:  | Bar chart  |
-| :white_check_mark:  | Heatmap confusion matrix  |
-| :white_check_mark:  | Class sizes (scatterplot)  |
 
 </details>
 
