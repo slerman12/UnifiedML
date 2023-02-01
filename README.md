@@ -1255,8 +1255,6 @@ Log video during evaluations with ```log_media=true```.
 | :white_check_mark:  | Heatmap confusion matrix  |
 | :white_check_mark:  | Class sizes (scatterplot)  |
 
-#
-
 </details>
 
 ### Publishing
