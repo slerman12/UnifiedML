@@ -164,6 +164,15 @@ class Generator(nn.Module):
         out = x.view(*lead_shape, *(self.output_shape or x.shape[1:]))
         return out
 
+from Blocks.Actors import EnsemblePiActor
+from Utils import Rand
+from Datasets.Suites.Classify import AttrDict
+
+obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': None, 'stddev': None, 'low': 0, 'high': 1})  # Can set mean, stddev
+action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
+
+actor = EnsemblePiActor(0, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
+
 # TODO uncommnet the adaptive pools
 class Discriminator(nn.Module):
     def __init__(self, input_shape, hidden_dim=64, output_shape=None):
@@ -271,7 +280,8 @@ def weight_init(m):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
-netG = Generator((100,), ngf, (3, 64, 64)).to(device)
+# netG = Generator((100,), ngf, (3, 64, 64)).to(device)
+netG = actor.to(device)
 
 # Create the Discriminator
 netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
