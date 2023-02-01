@@ -171,7 +171,7 @@ from Datasets.Suites.Classify import AttrDict
 obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': None, 'stddev': None, 'low': 0, 'high': 1})  # Can set mean, stddev
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
-actor = EnsemblePiActor(0, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
+actor = EnsemblePiActor([0], 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
 
 # TODO uncommnet the adaptive pools
 class Discriminator(nn.Module):
