@@ -104,13 +104,14 @@ class ExperienceReplay:
             transform = transforms.Compose([getattr(transforms, t)(**transform[t]) for t in transform])
 
         # Future steps to compute cumulative reward from
-        self.nstep = 0 if suite == 'classify' or generate or stream else nstep
+        self.nstep = 0 if suite == 'classify' or generate else nstep
 
         self.epoch = 1
 
         if self.stream:
-            if nstep > 0:
-                warnings.warn(' Setting nstep=0. Streaming does not currently support nstep cumulative reward.')
+            if self.nstep > 0:
+                self.nstep = 0
+                warnings.warn('Setting nstep=0. Streaming does not currently support N-step cumulative reward.')
             return
 
         """
