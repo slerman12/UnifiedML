@@ -1256,7 +1256,7 @@ You can connect UnifiedML to your WandB account by first running ```wandb login`
 
 #
 
-**Other options:**
+**Other useful tools:**
 
 - To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
