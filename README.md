@@ -1230,8 +1230,6 @@ python Plot.py plot_experiments="['.*Exp.*']"
 
 :white_check_mark: Class sizes (scatterplot)
 
-#
-
 Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
 ```console
