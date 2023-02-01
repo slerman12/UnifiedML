@@ -1245,6 +1245,8 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 
 Log video during evaluations with ```log_media=true```.
 
+#
+
 **All suites support line graphs and bar charts.**
 
 | Present  | Plot Type | Suite |
