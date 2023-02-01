@@ -276,9 +276,9 @@ class AC2Agent(torch.nn.Module):
                                    else self.creator(self.critic(obs[:half], actions), 1, actions).best).flatten(1)
 
                 action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # "Real"
-                action[:half], reward[:half] = generated_image.detach(), 0  # Discriminate "fake"
-                # TODO Test with detaching, but note: Only Qlearning needs to detach, and deepPolicyLearning can reuse
-                #  action as long as Encoder doesn't require gradients (generate=true); should support action arg.
+                action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
+                # TODO Is it faster to detach action? (Either way, Actor zero_grads first). deepPolicyLearning can reuse
+                #  action as long as Encoder doesn't require gradients (generate=true) via action= arg.
 
                 next_obs[:] = float('nan')
 
