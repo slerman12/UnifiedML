@@ -1245,8 +1245,6 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 
 Log video during evaluations with ```log_media=true```.
 
-#
-
 | Present  | Plot Type | Suite |
 | :-------------: | ------------- | :------------- |
 | :white_check_mark:  | Line graphs  | Any |
