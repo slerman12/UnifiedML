@@ -1214,7 +1214,7 @@ python Run.py
 
 #
 
-**Plot multiple experiments** in a unified figure with ```plotting.plot_experiments=```.
+**Optionally plot multiple experiments** in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
 python Run.py experiment=Exp2 plotting.plot_experiments="['Exp', 'Exp2']"
@@ -1247,7 +1247,7 @@ You can connect UnifiedML to your WandB account by first running ```wandb login`
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
 
-**Log video** during evaluations with ```log_media=true```.
+Log video during evaluations with ```log_media=true```.
 
 </details>
 
