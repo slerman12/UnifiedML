@@ -1232,7 +1232,7 @@ python Plot.py plot_experiments="['Exp.*']"
 
 #
 
-**All suites support line graphs and bar charts.**
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
 
 | Present  | Plot Type | Suite |
 | :-------------: | ------------- | :------------- |
