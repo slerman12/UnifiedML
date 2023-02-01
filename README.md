@@ -1247,7 +1247,7 @@ Log video during evaluations with ```log_media=true```.
 
 #
 
-List of automatically available plots:
+List of generated plots:
 
 | Present  | Plot Type |
 | :-------------: | ------------- |
