@@ -1249,11 +1249,11 @@ Log video during evaluations with ```log_media=true```.
 
 | Present  | Plot Type | Suite |
 | :-------------: | ------------- | :------------- |
-| :white_check_mark:  | Line graphs  | Any |
-| :white_check_mark:  | Aggregated line graphs per suite  | Any |
-| :white_check_mark:  | Bar chart  | Any |
-| :white_check_mark:  | Heatmap confusion matrix  | Classify |
-| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
+| :white_check_mark:  | Line graphs  | *Any* |
+| :white_check_mark:  | Aggregated line graphs per suite  | *Any* |
+| :white_check_mark:  | Bar chart  | *Any* |
+| :white_check_mark:  | Heatmap confusion matrix  | *Classify* |
+| :white_check_mark:  | Class sizes (scatterplot)  | *Classify* |
 
 Note: the scatterplot is currently only with respect to evaluation data.
 
