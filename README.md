@@ -1202,6 +1202,8 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 | :white_check_mark:  | Heatmap confusion matrix  | Classify |
 | :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
+#
+
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
 ```console
