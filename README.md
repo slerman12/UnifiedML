@@ -1206,7 +1206,7 @@ Optionally plot multiple experiments in a unified figure with ```plotting.plot_e
 python Run.py experiment=Exp2 plotting.plot_experiments="['Exp', 'Exp2']"
 ```
 
-Alternatively, you can call ```Plot.py``` directly
+Alternatively, you can call [```Plot.py```](Plot.py) directly
 
 ```console
 python Plot.py plot_experiments="['Exp', 'Exp2']"
