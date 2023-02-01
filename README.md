@@ -1217,7 +1217,7 @@ to generate plots. Here, the ```<experiment>``` directory name will be the under
 **Plotting also accepts regex expressions.** For example, to plot all experiments with ```Exp``` in the name:
 
 ```console
-python Plot.py plot_experiments="['.*Exp.*']"
+python Plot.py plot_experiments="['Exp.*']"
 ```
 
 [comment]: <> (:white_check_mark: Line graphs)
