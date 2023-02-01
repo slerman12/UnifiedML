@@ -1192,6 +1192,14 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 </summary>
 <br>
 
+|   | Plot |
+| ------------- | ------------- |
+| :white_check_mark:  | Line graphs  |
+| :white_check_mark:  | Aggregated line graphs per suite  |
+| :white_check_mark:  | Bar chart  |
+| :white_check_mark:  | Heatmap confusion matrix  |
+| :white_check_mark:  | Class sizes (scatterplot)  |
+
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
 ```console
@@ -1213,17 +1221,6 @@ python Plot.py plot_experiments="['Exp', 'Exp2']"
 ```
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
-
-
-|   | Plot |
-| ------------- | ------------- |
-| :white_check_mark:  | Line graphs  |
-| :white_check_mark:  | Aggregated line graphs per suite  |
-| :white_check_mark:  | Bar chart  |
-| :white_check_mark:  | Heatmap confusion matrix  |
-| :white_check_mark:  | Class sizes (scatterplot)  |
-
-#
 
 Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp``` in the name:
 
