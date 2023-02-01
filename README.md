@@ -1287,7 +1287,7 @@ Feel free to use our UnifiedML templates and figures in your work, citing [us](#
 
 **Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here]() in the discussion board. Read the rules to keep citations and credit attribution fair.**
 
-> **[Please support our work](#people_holding_hands-contributing)**.
+> Making these took an ungodly number of hours and a lot of devotion on my part. [Please donate to support our work](#people_holding_hands-contributing) if you find it useful.
 
 </details>
 
