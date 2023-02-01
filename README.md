@@ -1247,7 +1247,7 @@ Log video during evaluations with ```log_media=true```.
 
 #
 
-List of available automatically saved plots:
+List of available automatically benchmarked plots:
 
 | Present  | Plot Type |
 | :-------------: | ------------- |
