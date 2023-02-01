@@ -1202,15 +1202,15 @@ python Run.py
 
 #
 
-:white_check_mark: Line graphs 
+&#10004; Line graphs 
 
-:white_check_mark: Aggregated line graphs per suite 
+&#10004; Aggregated line graphs per suite 
 
-:white_check_mark: Bar chart
+&#10004; Bar chart
 
-:white_check_mark: Heatmap confusion matrix 
+&#10004; Heatmap confusion matrix 
 
-:white_check_mark: Class sizes (scatterplot)
+&#10004; Class sizes (scatterplot)
 
 #
 
@@ -1246,10 +1246,14 @@ python Run.py logger.wandb=true
 
 You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
+#
+
 To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
+
+#
 
 Log video during evaluations with ```log_media=true```.
 
