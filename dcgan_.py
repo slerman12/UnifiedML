@@ -402,7 +402,8 @@ for epoch in range(num_epochs):
         # Check how the generator is doing by saving G's output on fixed_noise
         if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
             with torch.no_grad():
-                fake = netG(fixed_noise).mean.detach().cpu().view(fake.shape)
+                fake = netG(fixed_noise).mean.detach().cpu()
+                fake = fake.view(fake.shape[0], *real_cpu.shape)
                 print(fake.shape)
             img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
 
