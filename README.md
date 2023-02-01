@@ -352,7 +352,7 @@ python Run.py task=mario Agent=Agents.DuelingDQNAgent
 
 [comment]: <> (* Action space is always continuous. Discrete action spaces are automatically "[continuous-ized]&#40;paper&#41;".)
 
-**The library's default [Agent](paper)** is our [```AC2 Agent```](Agents/Lermanbots/AC2.py) (```Agent=Agents.AC2Agent```).
+**The library's default Agent** is [our](paper) [```AC2 Agent```](Agents/Lermanbots/AC2.py) (```Agent=Agents.AC2Agent```).
 
 ```console
 python Run.py
