@@ -1192,18 +1192,6 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 </summary>
 <br>
 
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
-
-| Present  | Plot Type | Suite |
-| :-------------: | ------------- | :------------- |
-| :white_check_mark:  | Line graphs  | Any |
-| :white_check_mark:  | Aggregated line graphs per suite  | Any |
-| :white_check_mark:  | Bar chart  | Any |
-| :white_check_mark:  | Heatmap confusion matrix  | Classify |
-| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
-
-&#9432; *Note that the scatterplot is currently only with respect to evaluation data.*
-
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
 ```console
@@ -1256,6 +1244,18 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 ```
 
 Log video during evaluations with ```log_media=true```.
+
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
+
+| Present  | Plot Type | Suite |
+| :-------------: | ------------- | :------------- |
+| :white_check_mark:  | Line graphs  | Any |
+| :white_check_mark:  | Aggregated line graphs per suite  | Any |
+| :white_check_mark:  | Bar chart  | Any |
+| :white_check_mark:  | Heatmap confusion matrix  | Classify |
+| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
+
+&#9432; *Note that the scatterplot is currently only with respect to evaluation data.*
 
 </details>
 
