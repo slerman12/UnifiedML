@@ -70,8 +70,14 @@ runs.UnifiedML.sweep = [
 ]
 
 
+# Rename
 runs.UnifiedML.plots = [
     ['Replica.*', '.*Hard_Disk', '.*Shared_RAM'],
+]
+
+# Ran with these names
+runs.UnifiedML.plots = [
+    ['Speed_.*'],
 ]
 
 runs.UnifiedML.sftp = True

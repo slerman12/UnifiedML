@@ -207,9 +207,10 @@ class Classify:
         self.evaluate_episodes = len(self.batches)
 
     def step(self, action=None):
-        # No action - for Offline streaming
+        # No action - "no-op" - for Offline streaming
         if action is None:
-            return self.exp
+            self.reset()  # Sample new batch
+            return self.exp  # Return new batch
 
         # Adapt to discrete!
         _action = self.adapt_to_discrete(action)
