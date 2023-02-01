@@ -1234,7 +1234,9 @@ to generate plots. Here, the ```<experiment>``` directory name will be the under
 python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
-**Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:**
+#
+
+Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
 ```console
 python Run.py logger.wandb=true
@@ -1242,7 +1244,7 @@ python Run.py logger.wandb=true
 
 You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
-**To do a hyperparameter sweep**, just use the ```-m``` flag.
+To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
