@@ -1283,7 +1283,7 @@ We have released our slide deck!
 
 [Templates available here]()
 
-Feel free to use our UnifiedML templates and figures in your work, [citing us](#pen-paper--citing) of course and [making a donation](#people_holding_hands-contributing) if you can.
+Feel free to use our UnifiedML templates and figures in your work, [citing us](#pen-paper--citing) of course and [making a donation if you can](#people_holding_hands-contributing).
 
 [comment]: <> (Can add a donat button here)
 
