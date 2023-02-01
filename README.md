@@ -1214,7 +1214,7 @@ python Plot.py plot_experiments="['Exp', 'Exp2']"
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
 
-**Plotting also accepts regex expressions**. For example, to plot all experiments with ```Exp``` in the name:
+Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp``` in the name:
 
 ```console
 python Plot.py plot_experiments="['.*Exp.*']"
@@ -1255,7 +1255,7 @@ Log video during evaluations with ```log_media=true```.
 | :white_check_mark:  | Heatmap confusion matrix  | Classify |
 | :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
-&#9432; *Only Classify supports heatmaps and class sizes. Note that the scatterplot is currently only with respect to evaluation data.*
+&#9432; *Classify supports heatmaps and class sizes. Note that class sizes is currently only with respect to evaluation data.*
 
 </details>
 
