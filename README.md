@@ -1291,7 +1291,7 @@ Feel free to use our UnifiedML templates and figures in your work, citing [us](#
 
 **Also!**
 
-> **One person made these! [Please donate to support our work](#people_holding_hands-contributing) if you find it useful**.
+> **Making these took a lot of time and devotion on my part. [Please donate to support our work](#people_holding_hands-contributing) if you find it useful**.
 
 </details>
 
