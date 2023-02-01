@@ -1265,6 +1265,8 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 
 - Log video during evaluations with ```log_media=true```.
 
+UnifiedML is committed to making the research process and benchmarking as streamlined as possible.
+
 </details>
 
 ### Publishing
