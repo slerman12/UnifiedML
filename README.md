@@ -1247,13 +1247,13 @@ Log video during evaluations with ```log_media=true```.
 
 #
 
-| Present  | Plot Type |
+| Present  | Plot Type | Suite |
 | :-------------: | ------------- |
-| :white_check_mark:  | Line graphs  |
-| :white_check_mark:  | Aggregated line graphs per suite  |
-| :white_check_mark:  | Bar chart  |
-| :white_check_mark:  | Heatmap confusion matrix  |
-| :white_check_mark:  | Class sizes (scatterplot)  |
+| :white_check_mark:  | Line graphs  | Any |
+| :white_check_mark:  | Aggregated line graphs per suite  | Any |
+| :white_check_mark:  | Bar chart  | Any |
+| :white_check_mark:  | Heatmap confusion matrix  | Classify |
+| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
 </details>
 
