@@ -1244,8 +1244,9 @@ python Plot.py plot_experiments="['Exp.*']"
 
 &#9432; *Note that class sizes is currently only with respect to evaluation data.*
 
+#
 
-Another option **is to use** [WandB](https://wandb.ai/), which is also supported by UnifiedML:
+Another option is to use [WandB](https://wandb.ai/), which is also supported by UnifiedML:
 
 ```console
 python Run.py logger.wandb=true
