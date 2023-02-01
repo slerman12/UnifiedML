@@ -1220,15 +1220,21 @@ Plotting also accepts regex expressions. For example, to plot all experiments wi
 python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
-:white_check_mark: Line graphs
+[comment]: <> (:white_check_mark: Line graphs)
 
-:white_check_mark: Aggregated line graphs per suite
+[comment]: <> (:white_check_mark: Aggregated line graphs per suite)
 
-:white_check_mark: Bar chart
+[comment]: <> (:white_check_mark: Bar chart)
 
-:white_check_mark: Heatmap confusion matrix
+[comment]: <> (:white_check_mark: Heatmap confusion matrix)
 
-:white_check_mark: Class sizes (scatterplot)
+[comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
+
+| :white_check_mark:  | Line graphs  |
+| :white_check_mark:  | Aggregated line graphs per suite  |
+| :white_check_mark:  | Bar chart  |
+| :white_check_mark:  | Heatmap confusion matrix  |
+| :white_check_mark:  | Class sizes (scatterplot)  |
 
 Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
