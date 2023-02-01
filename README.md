@@ -1214,7 +1214,7 @@ python Run.py
 
 #
 
-Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
+Optionally **plot multiple experiments** in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
 python Run.py experiment=Exp2 plotting.plot_experiments="['Exp', 'Exp2']"
@@ -1228,7 +1228,7 @@ python Plot.py plot_experiments="['Exp', 'Exp2']"
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
 
-Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp``` in the name:
+Plotting also accepts **regex expressions**. For example, to plot all experiments with ```Exp``` in the name:
 
 ```console
 python Plot.py plot_experiments="['.*Exp.*']"
@@ -1242,12 +1242,12 @@ python Run.py logger.wandb=true
 
 You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
-To do a hyperparameter sweep, just use the ```-m``` flag.
+**To do a hyperparameter sweep**, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
 ```
 
-Log video during evaluations with ```log_media=true```.
+**Log video** during evaluations with ```log_media=true```.
 
 </details>
 
