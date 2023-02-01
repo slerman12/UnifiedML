@@ -1245,7 +1245,7 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 
 Log video during evaluations with ```log_media=true```.
 
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
+**All suites support line graphs and bar charts.**
 
 | Present  | Plot Type | Suite |
 | :-------------: | ------------- | :------------- |
@@ -1255,7 +1255,7 @@ Log video during evaluations with ```log_media=true```.
 | :white_check_mark:  | Heatmap confusion matrix  | Classify |
 | :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
-&#9432; *Note that the scatterplot is currently only with respect to evaluation data.*
+&#9432; *Only Classify supports heatmaps and class sizes. Note that the scatterplot is currently only with respect to evaluation data.*
 
 </details>
 
