@@ -138,6 +138,5 @@ def adapt_cnn(block, obs_shape):
             # Iterate through all layers
             adapt_cnn(layer, obs_shape)  # Dimensionality-adaptivity
             # Account for multiple streams in Residual
-            main_stream = name != 'Residual' or block.down_sample is None or layer == block.down_sample
-            if main_stream:
-                obs_shape = Utils.cnn_feature_shape(obs_shape, layer)
+            if name != 'Residual' or block.down_sample is None or layer == block.down_sample:
+                obs_shape = Utils.cnn_feature_shape(obs_shape, layer)  # Update shape

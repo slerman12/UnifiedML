@@ -429,6 +429,6 @@ plt.imshow(np.transpose(img_list[-1],(1,2,0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
-plt.savefig(path / 'generated-baseline.png')
+plt.savefig(path / 'generated.png')
 
 plt.close()
