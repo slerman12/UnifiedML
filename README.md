@@ -1200,7 +1200,9 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 | :white_check_mark:  | Heatmap confusion matrix  | Classify |
 | :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
-**&#9432; All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes. Note that the scatterplot is currently only with respect to evaluation data.**
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
+
+&#9432; Note that the scatterplot is currently only with respect to evaluation data.
 
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
