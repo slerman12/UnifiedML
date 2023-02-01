@@ -306,10 +306,10 @@ class Experiences:
         self.path = path
 
         self.episode_names = []
-        self.episodes = SharedDict(specs) if offline else dict()  # Episodes fetched on CPU
+        # self.episodes = SharedDict(specs) if offline else dict()  # Episodes fetched on CPU
 
         # Or can use Python's built-in shared memory, which serializes and de-serializes (isn't truly-shared, slower)
-        # self.episodes = Manager().dict() if offline else dict()
+        self.episodes = Manager().dict() if offline else dict()
 
         self.experience_indices = []
         self.capacity = capacity
