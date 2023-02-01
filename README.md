@@ -1230,8 +1230,8 @@ python Plot.py plot_experiments="['.*Exp.*']"
 
 [comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
 
-[comment]: <> (| First Header  | Second Header |)
-| ------------- | :------------- |
+| Present  | Plot Type |
+| ------------- | ------------- |
 | :white_check_mark:  | Line graphs  |
 | :white_check_mark:  | Aggregated line graphs per suite  |
 | :white_check_mark:  | Bar chart  |
