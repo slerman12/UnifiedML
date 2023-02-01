@@ -1220,8 +1220,6 @@ Plotting also accepts regex expressions. For example, to plot all experiments wi
 python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
-#
-
 :white_check_mark: Line graphs
 
 :white_check_mark: Aggregated line graphs per suite
