@@ -91,7 +91,7 @@ dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
                                                  transforms.Resize(image_size),
                                                  transforms.CenterCrop(image_size),
                                                  transforms.ToTensor(),
-                                                 # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                              ]))
 
 
@@ -236,7 +236,7 @@ from Datasets.Suites.Classify import AttrDict
 obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
-encoder = CNNEncoder(obs_spec, standardize=True, Eyes=nn.Identity)
+encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
 
 actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
 critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discriminator, ensemble_size=1,

@@ -545,7 +545,8 @@ Many popular features are unified in this library and generalized across RL/CV/g
 * Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. 
   
 * A [cosine annealing learning rate schedule](https://arxiv.org/abs/1608.03983) can be applied for $N$ epochs (or episodes in RL) with ```lr_decay_epochs=```. 
-  
+
+[comment]: <> (* Data can be transforemd prior to training &#40;*a priori*&#41; with the ```env.transform=``` flag, which accepts TorchVision code such as ```'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"'```.)
 * And [TorchVision transforms](https://pytorch.org/vision/stable/transforms.html) can be passed in as dicts via ```transform=```. 
   
 For example,
@@ -567,6 +568,20 @@ This library is meant to be useful for academic research, and out of the box sup
 * iNaturalist, (```task=classify/inaturalist```),
 * CIFAR-100 (```task=classify/cifar100```), 
 * & [more](Hyperparams/task/classify), normalized and no manual preparation needed
+
+[comment]: <> (UnifiedML supports [TIMM]&#40;https://rwightman.github.io/pytorch-image-models&#41; compatibility. Using TIMM in UnifiedML is easy. For example,)
+
+[comment]: <> (```ruby)
+
+[comment]: <> (# TIMM is not installed by default)
+
+[comment]: <> (pip install timm)
+
+[comment]: <> (# Classify MNIST with a pretrained MobileNet from TIMM)
+
+[comment]: <> (python Run.py  task=classify/mnist  Eyes=TIMM  +eyes.name=mobilenetv2_100  +eyes.pretrained=true)
+
+[comment]: <> (```)
 
 </details>
 
