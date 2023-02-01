@@ -403,6 +403,7 @@ for epoch in range(num_epochs):
         if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
             with torch.no_grad():
                 fake = netG(fixed_noise).mean.detach().cpu()
+                print(fake.shape)
             img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
 
         iters += 1
