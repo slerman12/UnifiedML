@@ -1247,8 +1247,6 @@ Log video during evaluations with ```log_media=true```.
 
 #
 
-List of plots:
-
 | Present  | Plot Type |
 | :-------------: | ------------- |
 | :white_check_mark:  | Line graphs  |
