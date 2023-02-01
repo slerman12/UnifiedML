@@ -1246,7 +1246,7 @@ python Plot.py plot_experiments="['.*Exp.*']"
 
 #
 
-Another option is to use [WandB](https://wandb.ai/), which is also supported by UnifiedML:
+**Another option is to use** [WandB](https://wandb.ai/), which is also supported by UnifiedML:
 
 ```console
 python Run.py logger.wandb=true
