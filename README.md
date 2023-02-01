@@ -1257,7 +1257,7 @@ Log video during evaluations with ```log_media=true```.
 | :white_check_mark:  | Heatmap confusion matrix  | Classify |
 | :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
-&#9432; *Classify supports heatmaps and class sizes. Note that "class sizes" is currently only with respect to evaluation data.*
+&#9432; *Note that "class sizes" is currently only with respect to evaluation data.*
 
 </details>
 
