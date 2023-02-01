@@ -111,6 +111,15 @@ plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=
 from Blocks.Architectures.Vision.CNN import cnn_broadcast
 import Utils
 
+
+# Initializes model weights a la normal
+def weight_init(m):
+    if isinstance(m, (nn.Conv2d, nn.Conv1d)) or isinstance(m, (nn.ConvTranspose2d, nn.ConvTranspose1d)):
+        nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
+        nn.init.normal_(m.weight.data, 1.0, 0.02)
+        nn.init.constant_(m.bias.data, 0)
+
 class Generator(nn.Module):
     def __init__(self, input_shape, hidden_dim=64, output_shape=None):
         super().__init__()
@@ -271,14 +280,6 @@ class Discriminator(nn.Module):
 #         # TODO: Is there a more elegant way to do this? :') :'((((
 #         return torch.where(torch.rand_like(batch_images[:, 0, 0, 0].view(-1, 1, 1, 1)) < flip_chance, torch.flip(batch_images, (-1,)), batch_images)
 
-
-# Initializes model weights a la normal
-def weight_init(m):
-    if isinstance(m, (nn.Conv2d, nn.Conv1d)) or isinstance(m, (nn.ConvTranspose2d, nn.ConvTranspose1d)):
-        nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
-        nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0)
 
 # netG = Generator((100,), ngf, (3, 64, 64)).to(device)
 netG = actor.to(device)
