@@ -1256,6 +1256,8 @@ You can connect UnifiedML to your WandB account by first running ```wandb login`
 
 #
 
+**Other options:**
+
 - To do a hyperparameter sweep, just use the ```-m``` flag.
 ```console
 python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
