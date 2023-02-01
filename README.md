@@ -1248,7 +1248,7 @@ Log video during evaluations with ```log_media=true```.
 #
 
 | Present  | Plot Type |
-| ------------- | ------------- |
+| :-------------: | ------------- |
 | :white_check_mark:  | Line graphs  |
 | :white_check_mark:  | Aggregated line graphs per suite  |
 | :white_check_mark:  | Bar chart  |
