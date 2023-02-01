@@ -356,7 +356,7 @@ for epoch in range(num_epochs):
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, 1, 1, device=device)
         # Generate fake image batch with G
-        fake = netG(noise)
+        fake = netG(noise).mean.view(real_cpu.shape)
         label.fill_(fake_label)
         # Classify all fake batch with D
         output = netD(fake.detach()).view(-1)
