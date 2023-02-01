@@ -175,17 +175,6 @@ class Generator(nn.Module):
         out = x.view(*lead_shape, *(self.output_shape or x.shape[1:]))
         return out
 
-from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsemblePiActor
-from Utils import Rand
-from Datasets.Suites.Classify import AttrDict
-
-obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
-action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
-
-encoder = CNNEncoder(obs_spec, standardize=True, Eyes=nn.Identity)
-
-actor = EnsemblePiActor([0], 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
 
 # TODO uncommnet the adaptive pools
 class Discriminator(nn.Module):
@@ -236,6 +225,22 @@ class Discriminator(nn.Module):
         # Restore leading dims
         out = x.view(*lead_shape, *(self.output_shape or x.shape[1:]))
         return out
+
+
+from Blocks.Encoders import CNNEncoder
+from Blocks.Actors import EnsemblePiActor
+from Blocks.Critics import EnsembleQCritic
+from Utils import Rand
+from Datasets.Suites.Classify import AttrDict
+
+obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
+action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
+
+encoder = CNNEncoder(obs_spec, standardize=True, Eyes=nn.Identity)
+
+actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
+critic = EnsembleQCritic(encoder.repr_shape, -1, -1, action_spec, Q_head=Discriminator, ensemble_size=1,
+                         ignore_obs=True, lr=lr)
 
 
 # TODO perhaps try torch.amax(x, dim=(2,3)) # Global maximum pooling
@@ -290,7 +295,8 @@ class Discriminator(nn.Module):
 netG = actor.to(device)
 
 # Create the Discriminator
-netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
+# netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
+netD = critic.to(device)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -346,11 +352,14 @@ for epoch in range(num_epochs):
         ## Train with all-real batch
         netD.zero_grad()
         # Format batch
-        real_cpu = encoder(data[0].to(device))
+        real_cpu = data[0].to(device)
         b_size = real_cpu.size(0)
+
+        obs = encoder(real_cpu)
+
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
-        output = netD(real_cpu).view(-1)
+        output = netD(obs).view(-1)
         # Calculate loss on all-real batch
         errD_real = criterion(output, label)
         # Calculate gradients for D in backward pass
@@ -359,9 +368,9 @@ for epoch in range(num_epochs):
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        noise = torch.randn(b_size, 0, device=device)  # TODO just deleted it effectively since actor trunk already does
+        # noise = torch.randn(b_size, 0, device=device)
         # Generate fake image batch with G
-        fake = netG(noise).mean.view(real_cpu.shape)
+        fake = netG(obs).mean.view(real_cpu.shape)
         label.fill_(fake_label)
         # Classify all fake batch with D
         output = netD(fake.detach()).view(-1)

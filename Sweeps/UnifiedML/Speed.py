@@ -84,6 +84,6 @@ runs.UnifiedML.sftp = True
 runs.UnifiedML.bluehive = False
 runs.UnifiedML.lab = True  # Running on lab
 
-runs.UnifiedML.title = 'Speed @100k Steps'
+runs.UnifiedML.title = 'Speed @10k Steps'
 runs.UnifiedML.x_axis = 'Time'
-runs.UnifiedML.steps = 1e5
+runs.UnifiedML.steps = 1e4
