@@ -1202,7 +1202,7 @@ python Run.py
 
 #
 
-&#10004; Line graphs 
+:white_check_mark: Line graphs 
 
 &#10004; Aggregated line graphs per suite 
 
