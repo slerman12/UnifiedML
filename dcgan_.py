@@ -91,7 +91,7 @@ dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
                                                  transforms.Resize(image_size),
                                                  transforms.CenterCrop(image_size),
                                                  transforms.ToTensor(),
-                                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                 # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                              ]))
 
 
@@ -175,12 +175,15 @@ class Generator(nn.Module):
         out = x.view(*lead_shape, *(self.output_shape or x.shape[1:]))
         return out
 
+from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor
 from Utils import Rand
 from Datasets.Suites.Classify import AttrDict
 
-obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': None, 'stddev': None, 'low': 0, 'high': 1})  # Can set mean, stddev
+obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
+
+encoder = CNNEncoder(obs_spec, standardize=True, Eyes=nn.Identity)
 
 actor = EnsemblePiActor([0], 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
 
@@ -343,7 +346,7 @@ for epoch in range(num_epochs):
         ## Train with all-real batch
         netD.zero_grad()
         # Format batch
-        real_cpu = data[0].to(device)
+        real_cpu = encoder(data[0].to(device))
         b_size = real_cpu.size(0)
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
@@ -356,7 +359,7 @@ for epoch in range(num_epochs):
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        noise = torch.randn(b_size, nz, 1, 1, device=device)
+        noise = torch.randn(b_size, 0, device=device)  # TODO just deleted it effectively since actor trunk already does
         # Generate fake image batch with G
         fake = netG(noise).mean.view(real_cpu.shape)
         label.fill_(fake_label)
