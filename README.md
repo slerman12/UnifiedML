@@ -1230,6 +1230,22 @@ python Plot.py plot_experiments="['.*Exp.*']"
 
 [comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
 
+#
+
+**All suites support line graphs and bar charts.**
+
+| Present  | Plot Type | Suite |
+| :-------------: | ------------- | :------------- |
+| :white_check_mark:  | Line graphs  | Any |
+| :white_check_mark:  | Aggregated line graphs per suite  | Any |
+| :white_check_mark:  | Bar chart  | Any |
+| :white_check_mark:  | Heatmap confusion matrix  | Classify |
+| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
+
+&#9432; *Note that class sizes is currently only with respect to evaluation data.*
+
+#
+
 Another option is to use [WandB](https://wandb.ai/), which is also supported by UnifiedML:
 
 ```console
@@ -1244,20 +1260,6 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 ```
 
 Log video during evaluations with ```log_media=true```.
-
-#
-
-**All suites support line graphs and bar charts.**
-
-| Present  | Plot Type | Suite |
-| :-------------: | ------------- | :------------- |
-| :white_check_mark:  | Line graphs  | Any |
-| :white_check_mark:  | Aggregated line graphs per suite  | Any |
-| :white_check_mark:  | Bar chart  | Any |
-| :white_check_mark:  | Heatmap confusion matrix  | Classify |
-| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
-
-&#9432; *Note that class sizes is currently only with respect to evaluation data.*
 
 </details>
 
