@@ -1212,6 +1212,8 @@ python Run.py
 
 :white_check_mark: Class sizes (scatterplot)
 
+#
+
 Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
@@ -1232,7 +1234,7 @@ Plotting also accepts regex expressions. For example, to plot all experiments wi
 python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
-Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
+**Another option is to use [WandB](https://wandb.ai/)**, which is supported by UnifiedML:
 
 ```console
 python Run.py logger.wandb=true
