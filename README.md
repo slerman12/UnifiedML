@@ -1234,7 +1234,7 @@ to generate plots. Here, the ```<experiment>``` directory name will be the under
 python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
-**Another option is to use [WandB](https://wandb.ai/)**, which is supported by UnifiedML:
+**Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:**
 
 ```console
 python Run.py logger.wandb=true
