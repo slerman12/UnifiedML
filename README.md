@@ -1192,6 +1192,8 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 </summary>
 <br>
 
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
+
 | Present  | Plot Type | Suite |
 | :-------------: | ------------- | :------------- |
 | :white_check_mark:  | Line graphs  | Any |
@@ -1199,8 +1201,6 @@ python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +a
 | :white_check_mark:  | Bar chart  | Any |
 | :white_check_mark:  | Heatmap confusion matrix  | Classify |
 | :white_check_mark:  | Class sizes (scatterplot)  | Classify |
-
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes.**
 
 Plots automatically save to ```./Benchmarking/<experiment>/```; the default experiment is ```experiment=Exp```.
 
@@ -1230,7 +1230,7 @@ Plotting also accepts regex expressions. For example, to plot all experiments wi
 python Plot.py plot_experiments="['.*Exp.*']"
 ```
 
-&#9432; Note that the scatterplot is currently only with respect to evaluation data.
+&#9432; *Note that the scatterplot is currently only with respect to evaluation data.*
 
 [comment]: <> (:white_check_mark: Line graphs)
 
