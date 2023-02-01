@@ -109,6 +109,8 @@ class ExperienceReplay:
         self.epoch = 1
 
         if self.stream:
+            if nstep > 0:
+                warnings.warn(' Setting nstep=0. Streaming does not currently support nstep cumulative reward.')
             return
 
         """

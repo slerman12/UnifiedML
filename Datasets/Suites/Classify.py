@@ -61,6 +61,8 @@ class Classify:
     Datasets can:
     - include a "classes" attribute that lists the different class names or classes
 
+    The "step" function has a no-op default action (action=None) to allow for Offline-mode streaming.
+
     An "evaluate_episodes" attribute divides evaluation across batches since batch=episode in this environment.
 
     """

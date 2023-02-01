@@ -16,11 +16,11 @@ class Environment:
         self.generate = generate
 
         # Offline and generate don't use training rollouts!
-        self.disable = (offline or generate) and train
+        self.disable, self.on_policy = (offline or generate) and train, stream
 
         self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf if None)
 
-        if not self.disable or stream:  # If enabled, create env.  Env is always needed when "stream=true" (Run-loop 72)
+        if not self.disable or self.on_policy:  # Env is always needed when "stream=true" (Run-loop 72)
             self.env = instantiate(env, task=task, frame_stack=int(stream) or frame_stack, action_repeat=action_repeat,
                                    offline=offline, generate=generate, stream=stream, train=train, seed=seed, **kwargs)
             self.env.reset()
