@@ -1310,11 +1310,12 @@ We have released our slide deck!
 
 [Templates available here]()
 
-[comment]: <> (Can add a donat button here)
+[comment]: <> (Feel free to use our UnifiedML templates and figures in your work, [citing us]&#40;#pen-paper--citing&#41; of course and [making a donation if you can]&#40;#people_holding_hands-contributing&#41;.)
+[comment]: <> (Can add a donate button here)
+
+Feel free to use our UnifiedML templates and figures in your work, citing [us](#pen-paper--citing) of course.
 
 **Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here]() in the discussion board. Read the rules to keep citations and credit attribution fair.**
-
-Feel free to use our UnifiedML templates and figures in your work, [citing us](#pen-paper--citing) of course and [making a donation if you can](#people_holding_hands-contributing).
 
 </details>
 
