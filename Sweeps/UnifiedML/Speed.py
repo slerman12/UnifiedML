@@ -52,7 +52,7 @@ runs.UnifiedML.sweep = [
     weight_decay=0.01
     Eyes=Blocks.Architectures.ResNet18
     'Aug="RandomShiftsAug(4)"'
-    experiment=Adaptive_Memory_Mapping_Hard_Disk
+    experiment=Memory_Mapping_Hard_Disk
     capacity=0
     plot_per_steps=0
     """,
@@ -72,18 +72,18 @@ runs.UnifiedML.sweep = [
 
 # Rename
 runs.UnifiedML.plots = [
-    ['Replica.*', '.*Hard_Disk', '.*Shared_RAM'],
+    ['Replica.*', '.*Hard_Disk', '.*Shared_RAM.*'],
 ]
 
 # Ran with these names
-runs.UnifiedML.plots = [
-    ['Speed_.*'],
-]
+# runs.UnifiedML.plots = [
+#     ['Speed_.*'],
+# ]
 
-runs.UnifiedML.sftp = True
+runs.UnifiedML.sftp = False
 runs.UnifiedML.bluehive = False
 runs.UnifiedML.lab = True  # Running on lab
 
-runs.UnifiedML.title = 'Speed @10k Steps'
+runs.UnifiedML.title = 'Time To 10k Steps'
 runs.UnifiedML.x_axis = 'Time'
 runs.UnifiedML.steps = 1e4

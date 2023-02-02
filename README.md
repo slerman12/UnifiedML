@@ -1215,6 +1215,22 @@ python Run.py
 
 :chart_with_upwards_trend: :bar_chart: --> ```./Benchmarking/Exp/```
 
+#
+
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:
+
+| Present  | Plot Type | Suite |
+| :-------------: | ------------- | :------------- |
+| :white_check_mark:  | Line graphs  | Any |
+| :white_check_mark:  | Aggregated line graphs per suite  | Any |
+| :white_check_mark:  | Bar chart  | Any |
+| :white_check_mark:  | Heatmap confusion matrix  | Classify |
+| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
+
+&#9432; *Note that class sizes is currently only with respect to evaluation data.*
+
+#
+
 Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
 ```console
@@ -1228,6 +1244,8 @@ python Plot.py plot_experiments="['Exp', 'Exp2']"
 ```
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
+
+#
 
 Plotting also accepts regex expressions. For example, to plot all experiments with ```Exp``` in the name:
 
@@ -1246,20 +1264,6 @@ python Plot.py plot_experiments="['Exp.*']"
 [comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
 
 #
-
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:
-
-| Present  | Plot Type | Suite |
-| :-------------: | ------------- | :------------- |
-| :white_check_mark:  | Line graphs  | Any |
-| :white_check_mark:  | Aggregated line graphs per suite  | Any |
-| :white_check_mark:  | Bar chart  | Any |
-| :white_check_mark:  | Heatmap confusion matrix  | Classify |
-| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
-
-&#9432; *Note that class sizes is currently only with respect to evaluation data.*
-
----
 
 Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
@@ -1298,11 +1302,11 @@ We have released our slide deck!
 
 [Templates available here]()
 
-Feel free to use our UnifiedML templates and figures in your work, [citing us](#pen-paper--citing) of course and [making a donation if you can](#people_holding_hands-contributing).
-
 [comment]: <> (Can add a donat button here)
 
 **Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here]() in the discussion board. Read the rules to keep citations and credit attribution fair.**
+
+Feel free to use our UnifiedML templates and figures in your work, [citing us](#pen-paper--citing) of course and [making a donation if you can](#people_holding_hands-contributing).
 
 </details>
 
