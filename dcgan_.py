@@ -357,6 +357,7 @@ for epoch in range(num_epochs):
         b_size = real_cpu.size(0)
 
         # obs = encoder(real_cpu)
+        obs = real_cpu
 
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
