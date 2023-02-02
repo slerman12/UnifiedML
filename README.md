@@ -1259,8 +1259,6 @@ python Plot.py plot_experiments="['Exp.*']"
 
 &#9432; *Note that class sizes is currently only with respect to evaluation data.*
 
-#
-
 **Other useful tools:**
 
 - To do a hyperparameter sweep, just use the ```-m``` flag.
