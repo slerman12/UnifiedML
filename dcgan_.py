@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # import tensorflow as tf
 
 # Set random seed for reproducibility
-manualSeed = 999
+manualSeed = 998
 #manualSeed = random.randint(1, 10000) # use if you want new results
 print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
