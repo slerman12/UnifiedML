@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # import tensorflow as tf
 
 # Set random seed for reproducibility
-manualSeed = 998
+manualSeed = 999
 #manualSeed = random.randint(1, 10000) # use if you want new results
 print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
@@ -296,8 +296,8 @@ critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discri
 netG = actor.to(device)
 
 # Create the Discriminator
-netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
-# netD = critic.to(device)
+# netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
+netD = critic.to(device)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -362,8 +362,8 @@ for epoch in range(num_epochs):
 
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
-        # output = netD(obs, obs).view(-1)
-        output = netD(obs).view(-1)
+        output = netD(obs, obs).view(-1)
+        # output = netD(obs).view(-1)
         # Calculate loss on all-real batch
         errD_real = criterion(output, label)
         # Calculate gradients for D in backward pass
@@ -379,8 +379,8 @@ for epoch in range(num_epochs):
         # fake = netG(noise).view(real_cpu.shape)
         label.fill_(fake_label)
         # Classify all fake batch with D
-        # output = netD(obs, fake.detach()).view(-1)
-        output = netD(fake.detach()).view(-1)
+        output = netD(obs, fake.detach()).view(-1)
+        # output = netD(fake.detach()).view(-1)
         # Calculate D's loss on the all-fake batch
         errD_fake = criterion(output, label)
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
@@ -397,8 +397,8 @@ for epoch in range(num_epochs):
         netG.zero_grad()
         label.fill_(real_label)  # fake labels are real for generator cost
         # Since we just updated D, perform another forward pass of all-fake batch through D
-        # output = netD(obs, fake).view(-1)
-        output = netD(fake).view(-1)
+        output = netD(obs, fake).view(-1)
+        # output = netD(fake).view(-1)
         # Calculate G's loss based on this output
         errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
         # errG = -output.log().mean()  # TODO Try
