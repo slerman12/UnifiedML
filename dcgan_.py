@@ -292,8 +292,8 @@ critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discri
 #         return torch.where(torch.rand_like(batch_images[:, 0, 0, 0].view(-1, 1, 1, 1)) < flip_chance, torch.flip(batch_images, (-1,)), batch_images)
 
 
-# netG = Generator((100,), ngf, (3, 64, 64)).to(device)
-netG = actor.to(device)
+netG = Generator((100,), ngf, (3, 64, 64)).to(device)
+# netG = actor.to(device)
 
 # Create the Discriminator
 netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
@@ -371,9 +371,9 @@ for epoch in range(num_epochs):
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        # noise = torch.randn(b_size, 0, device=device)
+        noise = torch.randn(b_size, nz, 1, 1, device=device)
         # Generate fake image batch with G
-        fake = netG(obs).mean.view(real_cpu.shape)
+        fake = netG(noise).mean.view(real_cpu.shape)
         label.fill_(fake_label)
         # Classify all fake batch with D
         # output = netD(obs, fake.detach()).view(-1)
