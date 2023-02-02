@@ -1215,20 +1215,6 @@ python Run.py
 
 :chart_with_upwards_trend: :bar_chart: --> ```./Benchmarking/Exp/```
 
-#
-
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:
-
-| Present  | Plot Type | Suite |
-| :-------------: | ------------- | :------------- |
-| :white_check_mark:  | Line graphs  | Any |
-| :white_check_mark:  | Aggregated line graphs per suite  | Any |
-| :white_check_mark:  | Bar chart  | Any |
-| :white_check_mark:  | Heatmap confusion matrix  | Classify |
-| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
-
-&#9432; *Note that class sizes is currently only with respect to evaluation data.*
-
 Optionally plot multiple experiments
 
 ```console
@@ -1260,6 +1246,20 @@ python Plot.py plot_experiments="['Exp.*']"
 [comment]: <> (:white_check_mark: Heatmap confusion matrix)
 
 [comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
+
+#
+
+**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:
+
+| Present  | Plot Type | Suite |
+| :-------------: | ------------- | :------------- |
+| :white_check_mark:  | Line graphs  | Any |
+| :white_check_mark:  | Aggregated line graphs per suite  | Any |
+| :white_check_mark:  | Bar chart  | Any |
+| :white_check_mark:  | Heatmap confusion matrix  | Classify |
+| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
+
+&#9432; *Note that class sizes is currently only with respect to evaluation data.*
 
 #
 
