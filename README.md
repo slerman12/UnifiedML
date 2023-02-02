@@ -1229,7 +1229,7 @@ python Plot.py plot_experiments="['Exp', 'Exp2']"
 
 to generate plots. Here, the ```<experiment>``` directory name will be the underscore_concatenated union of all experiment names ("```Exp_Exp2```").
 
-Plotting also accepts regex expressions. For example,
+Plotting also accepts regex expressions. For example
 
 ```console
 python Plot.py plot_experiments="['Exp.*']"
