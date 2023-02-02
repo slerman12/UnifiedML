@@ -1245,26 +1245,37 @@ python Plot.py plot_experiments="['Exp.*']"
 
 [comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
 
-**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:
 
-| Present  | Plot Type | Suite |
-| :-------------: | ------------- | :------------- |
-| :white_check_mark:  | Line graphs  | Any |
-| :white_check_mark:  | Aggregated line graphs per suite  | Any |
-| :white_check_mark:  | Bar chart  | Any |
-| :white_check_mark:  | Heatmap confusion matrix  | Classify |
-| :white_check_mark:  | Class sizes (scatterplot)  | Classify |
 
-&#9432; *Note that class sizes is currently only with respect to evaluation data.*
+[comment]: <> (**All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:)
 
-**Other useful tools:**
+[comment]: <> (| Present  | Plot Type | Suite |)
 
-- To do a hyperparameter sweep, just use the ```-m``` flag.
-```console
-python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
-```
+[comment]: <> (| :-------------: | ------------- | :------------- |)
 
-- Log video during evaluations with ```log_media=true```.
+[comment]: <> (| :white_check_mark:  | Line graphs  | Any |)
+
+[comment]: <> (| :white_check_mark:  | Aggregated line graphs per suite  | Any |)
+
+[comment]: <> (| :white_check_mark:  | Bar chart  | Any |)
+
+[comment]: <> (| :white_check_mark:  | Heatmap confusion matrix  | Classify |)
+
+[comment]: <> (| :white_check_mark:  | Class sizes &#40;scatterplot&#41;  | Classify |)
+
+[comment]: <> (&#9432; *Note that class sizes is currently only with respect to evaluation data.*)
+
+[comment]: <> (**Other useful tools:**)
+
+[comment]: <> (- To do a hyperparameter sweep, just use the ```-m``` flag.)
+
+[comment]: <> (```console)
+
+[comment]: <> (python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 )
+
+[comment]: <> (```)
+
+[comment]: <> (- Log video during evaluations with ```log_media=true```.)
 
 Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
 
@@ -1274,9 +1285,16 @@ python Run.py logger.wandb=true
 
 You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
-#
+To do a hyperparameter sweep, just use the ```-m``` flag.
+```console
+python Run.py -m task=atari/pong,classify/mnist seed=1,2,3 
+```
 
-> **While UnifiedML is committed to making the research process and benchmarking as streamlined as possible, we are a single-PhD student team and [would appreciate your support as well](#people_holding_hands-contributing)**.
+Log video during evaluations with ```log_media=true```.
+
+[comment]: <> (#)
+
+[comment]: <> (> **While UnifiedML is committed to making the research process and benchmarking as streamlined as possible, we are a single-PhD student team and [would appreciate your support as well]&#40;#people_holding_hands-contributing&#41;**.)
 
 </details>
 
