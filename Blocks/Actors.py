@@ -53,11 +53,7 @@ class EnsemblePiActor(nn.Module):
     def forward(self, obs, step=1):
         h = self.trunk(obs)
 
-        # mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
-        mean = self.Pi_head(h)
-        view = mean.view(h.shape[0], -1, self.num_actions, self.action_dim)
-        # print(mean.shape, view.shape)
-        assert torch.allclose(mean, view.view(mean.shape)), (mean.shape, view.shape)
+        mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
             mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
