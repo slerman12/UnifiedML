@@ -58,15 +58,16 @@ runs.UnifiedML.sweep = [
     """,
 
     # Pytorch shared RAM (had to do manually)
-    f"""
-    task=classify/cifar10
-    train_steps=100000 
-    weight_decay=0.01
-    Eyes=Blocks.Architectures.ResNet18
-    'Aug="RandomShiftsAug(4)"'
-    experiment=Pytorch_Shared_RAM
-    plot_per_steps=0
-    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
+    # f"""
+    # task=classify/cifar10
+    # train_steps=100000
+    # weight_decay=0.01
+    # Eyes=Blocks.Architectures.ResNet18
+    # 'Aug="RandomShiftsAug(4)"'
+    # experiment=Pytorch_Shared_RAM
+    # plot_per_steps=0
+    # """,
+    # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]
 
 
