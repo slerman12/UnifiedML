@@ -1229,7 +1229,7 @@ python Run.py
 
 &#9432; *Note that class sizes is currently only with respect to evaluation data.*
 
-#
+---
 
 Optionally plot multiple experiments in a unified figure with ```plotting.plot_experiments=```.
 
@@ -1273,7 +1273,7 @@ python Run.py logger.wandb=true
 
 You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
-#
+---
 
 **Other useful tools:**
 
