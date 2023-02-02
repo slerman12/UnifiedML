@@ -1245,8 +1245,6 @@ python Plot.py plot_experiments="['Exp.*']"
 
 [comment]: <> (:white_check_mark: Class sizes &#40;scatterplot&#41;)
 
-#
-
 **All suites support line graphs and bar charts. Only Classify supports heatmaps and class sizes**. See below:
 
 | Present  | Plot Type | Suite |
