@@ -1261,16 +1261,6 @@ python Plot.py plot_experiments="['Exp.*']"
 
 #
 
-Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
-
-```console
-python Run.py logger.wandb=true
-```
-
-You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
-
-#
-
 **Other useful tools:**
 
 - To do a hyperparameter sweep, just use the ```-m``` flag.
@@ -1279,6 +1269,16 @@ python Run.py -m task=atari/pong,classify/mnist seed=1,2,3
 ```
 
 - Log video during evaluations with ```log_media=true```.
+
+#
+
+Another option is to use [WandB](https://wandb.ai/), which is supported by UnifiedML:
+
+```console
+python Run.py logger.wandb=true
+```
+
+You can connect UnifiedML to your WandB account by first running ```wandb login``` in your Conda environment.
 
 #
 
