@@ -239,8 +239,7 @@ action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -
 
 encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
 
-actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1,
-                        stddev_schedule=1, lr=lr)
+actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
 critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discriminator, ensemble_size=1,
                          ignore_obs=True, lr=lr)  # Note: trunk_dim for example isn't necessary for generate=true
 
@@ -376,6 +375,7 @@ for epoch in range(num_epochs):
         noise = torch.randn(b_size, nz, 1, 1, device=device)
         # Generate fake image batch with G
         fake = netG(noise).mean
+        print(real_cpu.shape)
         fake = fake.view(real_cpu.shape)
         # fake = netG(noise).view(real_cpu.shape)
         label.fill_(fake_label)

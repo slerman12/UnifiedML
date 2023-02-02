@@ -56,7 +56,7 @@ class EnsemblePiActor(nn.Module):
         # mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
         mean = self.Pi_head(h)
         view = mean.view(h.shape[0], -1, self.num_actions, self.action_dim)
-        print(mean.shape, view.shape)
+        # print(mean.shape, view.shape)
         assert torch.allclose(mean, view.view(mean.shape)), (mean.shape, view.shape)
 
         if self.stddev_schedule is None:
