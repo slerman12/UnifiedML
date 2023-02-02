@@ -91,7 +91,7 @@ dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
                                                  transforms.Resize(image_size),
                                                  transforms.CenterCrop(image_size),
                                                  transforms.ToTensor(),
-                                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                 # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                              ]))
 
 
@@ -121,6 +121,7 @@ def weight_init(m):
     elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
+
 
 class Generator(nn.Module):
     def __init__(self, input_shape, hidden_dim=64, output_shape=None):
@@ -236,7 +237,7 @@ from Datasets.Suites.Classify import AttrDict
 obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
-encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
+encoder = CNNEncoder(obs_spec, standardize=True, Eyes=nn.Identity)
 
 actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Rand, Pi_head=Generator, ensemble_size=1, lr=lr)
 critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discriminator, ensemble_size=1,
@@ -295,8 +296,8 @@ critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discri
 netG = actor.to(device)
 
 # Create the Discriminator
-# netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
-netD = critic.to(device)
+netD = Discriminator((3, 64, 64), ngf, (1,)).to(device)
+# netD = critic.to(device)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -359,7 +360,8 @@ for epoch in range(num_epochs):
 
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
-        output = netD(obs, obs).view(-1)
+        # output = netD(obs, obs).view(-1)
+        output = netD(obs).view(-1)
         # Calculate loss on all-real batch
         errD_real = criterion(output, label)
         # Calculate gradients for D in backward pass
@@ -373,7 +375,8 @@ for epoch in range(num_epochs):
         fake = netG(obs).mean.view(real_cpu.shape)
         label.fill_(fake_label)
         # Classify all fake batch with D
-        output = netD(obs, fake.detach()).view(-1)
+        # output = netD(obs, fake.detach()).view(-1)
+        output = netD(fake.detach()).view(-1)
         # Calculate D's loss on the all-fake batch
         errD_fake = criterion(output, label)
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
@@ -390,7 +393,8 @@ for epoch in range(num_epochs):
         netG.zero_grad()
         label.fill_(real_label)  # fake labels are real for generator cost
         # Since we just updated D, perform another forward pass of all-fake batch through D
-        output = netD(obs, fake).view(-1)
+        # output = netD(obs, fake).view(-1)
+        output = netD(fake).view(-1)
         # Calculate G's loss based on this output
         errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
         # errG = -output.log().mean()  # TODO Try
