@@ -236,7 +236,7 @@ from Blocks.Critics import EnsembleQCritic
 from Utils import Rand
 from Datasets.Suites.Classify import AttrDict
 
-obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
+obs_spec = AttrDict({'shape': [nc, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
 encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
