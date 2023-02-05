@@ -400,7 +400,7 @@ for epoch in range(num_epochs):
 
         noise = torch.randn(b_size * 2, nz, 1, 1, device=device)
         fake = netG(noise).mean
-        fake = fake.view(real_cpu.shape)
+        fake = fake.view(-1, *real_cpu.shape[1:])
 
         # Since we just updated D, perform another forward pass of all-fake batch through D
         output = netD(obs, fake).view(-1)
