@@ -24,8 +24,8 @@ torch.manual_seed(manualSeed)
 
 
 # Root directory for dataset
-# dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
-dataroot = "Datasets/ReplayBuffer/Classify/MNIST_Train/"
+dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
+# dataroot = "Datasets/ReplayBuffer/Classify/MNIST_Train/"
 
 
 # def load_dataset(split):
@@ -49,8 +49,8 @@ batch_size = 128
 image_size = 64
 
 # Number of channels in the training images. For color images this is 3
-# nc = 3
-nc = 1
+nc = 3
+# nc = 1
 
 # Size of z latent vector (i.e. size of generator input)
 nz = 100
@@ -87,14 +87,14 @@ ngpu = 1
 #                            ]))
 
 # TODO Instead of normalize, standardize in Encoder and set those norm metrics to obs_spec
-dataset = torchvision.datasets.mnist.MNIST(root=dataroot,
+dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
                                              download=True,
                                              transform=transforms.Compose([
                                                  transforms.Resize(image_size),
                                                  transforms.CenterCrop(image_size),
                                                  transforms.ToTensor(),
-                                                 transforms.Normalize((0.5,), (0.5,)),
-                                                 # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                 # transforms.Normalize((0.5,), (0.5,)),
+                                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                              ]))
 
 
@@ -435,7 +435,6 @@ for epoch in range(num_epochs):
                 fake = netG(fixed_noise).mean.detach().cpu()
                 # fake = netG(fixed_noise).detach().cpu()
                 fake = fake.view(fake.shape[0], *real_cpu.shape[1:])
-                print(fake.shape)
             img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
 
         iters += 1
