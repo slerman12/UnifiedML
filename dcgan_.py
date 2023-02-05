@@ -24,7 +24,8 @@ torch.manual_seed(manualSeed)
 
 
 # Root directory for dataset
-dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
+# dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
+dataroot = "Datasets/ReplayBuffer/Classify/MNIST_Train/"
 
 
 # def load_dataset(split):
