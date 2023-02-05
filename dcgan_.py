@@ -387,7 +387,8 @@ for epoch in range(num_epochs):
         errD_fake.backward()
         D_G_z1 = output.mean().item()
         # Compute error of D as sum over the fake and the real batches
-        errD = errD_real + errD_fake
+        errD = errD_real + errD_fake / 2
+        # errD = errD_real + errD_fake
         # Update D
         optimizerD.step()
 
@@ -396,6 +397,11 @@ for epoch in range(num_epochs):
         ###########################
         netG.zero_grad()
         label.fill_(real_label)  # fake labels are real for generator cost
+
+        noise = torch.randn(b_size * 2, nz, 1, 1, device=device)
+        fake = netG(noise).mean
+        fake = fake.view(real_cpu.shape)
+
         # Since we just updated D, perform another forward pass of all-fake batch through D
         output = netD(obs, fake).view(-1)
         # output = netD(fake).view(-1)
