@@ -8,7 +8,7 @@ from bleak import BleakScanner, BleakClient
 class Bittle:
     def __init__(self):
         self.bittle = discover_devices()
-        self.bluetooth = connect(self.bittle.address)
+        self.bluetooth, self.bluetooth_thread = connect(self.bittle.address)
 
         print('Connected to Bittle!')
 
@@ -17,7 +17,7 @@ class Bittle:
         self.reader, self.writer = [service.characteristics for service in self.bluetooth.services][0]
 
         reading = self.bluetooth.start_notify(self.reader, self.reading)  # Asynchronous reading Bittle measurements
-        parallelize(reading)  # Begin reading Bittle measurements in real-time
+        self.reading_thread = parallelize(reading)  # Begin reading Bittle measurements in real-time
 
         self.action_done = True
 
@@ -36,10 +36,10 @@ class Bittle:
 
         asyncio.run(act())
 
-    def __del__(self):
-        async def _del():
-            await self.bluetooth.disconnect()
-        asyncio.run(_del())
+    def disconnect(self):
+        parallelize(self.bluetooth.disconnect()).set()
+        self.bluetooth_thread.set()
+        self.reading_thread.set()
 
         print('Disconnected from Bittle')
 
@@ -69,12 +69,15 @@ def connect(address):
     async def _connect():
         await bluetooth.connect()
 
-    parallelize(_connect())
+    event = parallelize(_connect())
 
-    return bluetooth
+    return bluetooth, event
 
 
 def parallelize(run):
+    event = asyncio.Event()
+    event.clear()
+
     def _parallelize():
         async def _run():
             try:
@@ -82,14 +85,14 @@ def parallelize(run):
             except RuntimeError as e:
                 if 'got Future <Future pending> attached to a different loop' not in str(e):
                     raise e
-            event = asyncio.Event()
-            event.clear()
-            await event.wait()
+            await event.wait()  # Keep running
 
         asyncio.run(_run())
 
     thread = threading.Thread(target=_parallelize)
     thread.start()
+
+    return event
 
 
 commands = map(encode, [[45, 0, 0, 0, 0, 0, 0, 0, 25, -45, -45, 35, 66, 36, 36, 36],
