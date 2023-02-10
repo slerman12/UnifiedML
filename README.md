@@ -113,7 +113,7 @@ An acknowledgment to [Denis Yarats](https://github.com/denisyarats), whose excel
 
 Yes.
 
-UnifiedML supports discrete and continuous control, classification, generative modeling, and more.
+Our ```AC2Agent``` supports discrete and continuous control, classification, generative modeling, and more.
 
 [comment]: <> (All agents and even tasks support discrete and continuous control, online and offline RL, imitation learning, classification, regression, and generative modeling.)
 
@@ -316,7 +316,7 @@ That's it.
 
 [comment]: <> (❖)
 
-**Train a** [```DQN Agent```](Agents/DQN.py) **to play Ms. Pac-Man**:
+**Train** [```DQN Agent```](Agents/DQN.py) **to play Ms. Pac-Man**:
 
 ```console
 
@@ -339,6 +339,7 @@ python Run.py task=atari/mspacman Agent=Agents.DQNAgent
 python Run.py task=dmc/humanoid_walk Agent=Agents.DrQV2Agent
 ```
 
+[//]: # (TODO: Add spaces to center)
 ⋆⋅☆⋅⋆
 
 **Play Super Mario Bros.** with [```Dueling DQN Agent```](Agents/DuelingDQN.py), an extension of DQN that uses [dueling Q networks](https://arxiv.org/abs/1511.06581):
@@ -1079,7 +1080,7 @@ This will initiate a classify task on the custom-defined [```TinyImageNet```](Da
 
 By default, the task name will appear as the Dataset class name (in the above examples, "```MNIST```" and "```TinyImageNet```"). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
 
-**UnifiedML is compatible with datasets & domains beyond Vision.**
+**UnifiedML is compatible with datasets & domains besides Vision.**
 
 Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the default CNN architecture on raw 1D Audio:
 
@@ -1087,7 +1088,7 @@ Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the 
 python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.SpeechCommands Aug=Identity
 ```
 
-Gets a perfect score on speech command classification from raw 1D audio with teh default CNN setting.  
+Gets a perfect score on speech command classification from raw 1D audio with the default CNN setting.  
 
 <details>
 <summary>
@@ -1235,6 +1236,7 @@ Plotting also accepts regex expressions. For example, to plot all experiments wi
 python Plot.py plot_experiments="['Exp.*']"
 ```
 
+[//]: # (TODO Add as demo under Agents & Performances)
 [comment]: <> (:white_check_mark: Line graphs)
 
 [comment]: <> (:white_check_mark: Aggregated line graphs per suite)
@@ -1354,6 +1356,25 @@ All files are designed for pedagogical clarity and extendability for research, t
 
 [comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
 Please support financially by Sponsoring. <br>
+
+
+[//]: # (Donate via :)
+
+[//]: # (<br>)
+
+[//]: # (Donate via PayPal:<br> )
+
+[//]: # ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; )
+
+[//]: # (<br>)
+
+[//]: # (Donate via : )
+
+
+[//]: # (We are funded by crowd-funding and grants. Your generosity is appreciated and necessary to keep this work alive.)
+
+[//]: # ()
+[//]: # (- As of now: no Sponsors, crowd-funders, or grants. We are a nonprofit, single-PhD student team and intend to stay that way. Compute resources appreciated as well if you are able to provide them.)
 
 We are a nonprofit, single-PhD student team. If possible, compute resources appreciated.
 

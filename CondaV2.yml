@@ -27,8 +27,11 @@ dependencies:
       - imageio==2.22.0
       - imageio-ffmpeg==0.4.7
       - einops==0.4.1
-      - pyserial==3.5  # Bittle
-      - pybluez==0.23  # for pyBittle/bluetooth
+      - bleak==0.19.5  # Bittle
+#      - PyBus
+#      - pyserial==3.5  # Bittle
+#      - pybluez==0.23  # for pyBittle/bluetooth
+#      - pip install "setuptools<58.0.0"  # Allowed pip install pybluez to run
 # Only for me
 #   - cryptography
 #   - pexpect
