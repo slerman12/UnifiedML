@@ -4,8 +4,6 @@ import time
 
 from bleak import BleakScanner, BleakClient
 
-import numpy as np
-
 
 class Bittle:
     def __init__(self):
@@ -24,49 +22,20 @@ class Bittle:
 
         self.action_done = True
 
-        self.obs_spec = {'shape': (3,),  # Update
-                         'mean': None,
-                         'stddev': None,
-                         'low': None,
-                         'high': None}
-
-        self.action_spec = {'shape': (16,),
-                            'discrete_bins': None,
-                            'low': -90,
-                            'high': 90,
-                            'discrete': False}
-
-        self.exp = AttrDict()  # Experience dictionary
-
     def reading(self, _, data: bytearray):
         data = data.decode('ISO-8859-1')
         if 'i' in data:
             self.action_done = True
-        elif data and data[0] not in {'G', '?', 'k', 'p', 'g', 'R'} and data[-1] not in 'v':
-
-            measurement = np.array(list(map(float, data.strip('\r\nv\r\n').split('\t'))))
-
-            if measurement.shape == self.obs_spec['shape']:
-                self.exp.obs = measurement
 
     def step(self, action):
-        self.action_done = False
-        parallelize(self.bluetooth.write_gatt_char(self.writer, encode(action)))  # Triggers a reaction
-
-        self.exp.obs = self.exp.reward = self.exp.label = None
-        self.exp.action = action
+        async def act():
+            self.action_done = False
+            await self.bluetooth.write_gatt_char(self.writer, action)  # Triggers a reaction
 
         while not self.action_done:
             pass
 
-        parallelize(self.bluetooth.write_gatt_char(self.writer, b'v'))
-
-        while self.exp.obs is None:
-            pass
-
-        print(self.exp)
-
-        return self.exp  # Experience
+        asyncio.run(act())
 
     def disconnect(self):
         while not self.action_done:
@@ -127,21 +96,12 @@ def parallelize(run, forever=False):
     return event
 
 
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict=None):
-        super().__init__()
-        self.__dict__ = self
-        if _dict is not None:
-            self.update(_dict)
-
-
-commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]
+commands = map(encode, [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
 bittle = Bittle()
 for command in commands:
