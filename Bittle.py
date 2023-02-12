@@ -7,6 +7,8 @@ from bleak import BleakScanner, BleakClient
 
 class Bittle:
     def __init__(self):
+        print('Discovering devices...')
+
         self.bittle = discover_devices()
         self.bluetooth, self.bluetooth_thread = connect(self.bittle.address)
 
@@ -16,8 +18,7 @@ class Bittle:
 
         self.reader, self.writer = [service.characteristics for service in self.bluetooth.services][0]
 
-        reading = self.bluetooth.start_notify(self.reader, self.reading)  # Asynchronous reading Bittle measurements
-        self.reading_thread = parallelize(reading)  # Begin reading Bittle measurements in real-time
+        parallelize(self.bluetooth.start_notify(self.reader, self.reading))  # Asynchronous reading Bittle measurements
 
         self.action_done = True
 
@@ -37,9 +38,11 @@ class Bittle:
         asyncio.run(act())
 
     def disconnect(self):
-        parallelize(self.bluetooth.disconnect()).set()
+        while not self.action_done:
+            pass
+
+        parallelize(self.bluetooth.disconnect())
         self.bluetooth_thread.set()
-        self.reading_thread.set()
 
         print('Disconnected from Bittle')
 
@@ -69,37 +72,38 @@ def connect(address):
     async def _connect():
         await bluetooth.connect()
 
-    event = parallelize(_connect())
+    event = parallelize(_connect(), forever=True)
 
     return bluetooth, event
 
 
-def parallelize(run):
+def parallelize(run, forever=False):
     event = asyncio.Event()
     event.clear()
 
-    def _parallelize():
-        async def _run():
-            try:
-                await run
-            except RuntimeError as e:
-                if 'got Future <Future pending> attached to a different loop' not in str(e):
-                    raise e
+    async def launch():
+        try:
+            await run
+        except RuntimeError as e:
+            if 'got Future <Future pending> attached to a different loop' not in str(e):
+                raise e
+        if forever:
             await event.wait()  # Keep running
 
-        asyncio.run(_run())
-
-    thread = threading.Thread(target=_parallelize)
+    thread = threading.Thread(target=asyncio.run, args=(launch(),))
     thread.start()
 
     return event
 
 
-commands = map(encode, [[45, 0, 0, 0, 0, 0, 0, 0, 25, -45, -45, 35, 66, 36, 36, 36],
-                        [-45, 0, 0, 0, 0, 0, 0, 0, 45, 45, -45, 48, 36, 36, 36, 36],
-                        [45, 0, 0, 0, 0, 0, 0, 0, 45, -45, 45, 45, 36, 36, 36, 36],
-                        [-45, 0, 0, 0, 0, 0, 0, 0, 45, 45, 45, 45, 36, 36, -36, 36]])
+commands = map(encode, [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
 bittle = Bittle()
 for command in commands:
     bittle.step(command)
+bittle.disconnect()

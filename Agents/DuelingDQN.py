@@ -16,7 +16,7 @@ class DuelingDQNAgent(DQNAgent):
     Dueling Deep Q Networks Agent (https://arxiv.org/abs/1511.06581)
     """
     def __init__(self, hidden_dim, recipes, **kwargs):
-        # For configuring backbone via command line  e.g. python Run.py Agent=Agents.DuelingDQNAgent +pi_head.depth=4
+        # For command line compatibility  e.g. python Run.py Agent=Agents.DuelingDQNAgent Pi_head=MLP +pi_head.depth=4
         Pi_head = recipes.actor.Pi_head
 
         class _DuelingDQN(DuelingDQN):
