@@ -8,7 +8,36 @@ import numpy as np
 
 
 class Bittle:
-    def __init__(self):
+    """
+    A general-purpose environment:
+
+    Must accept: **kwargs as init arg.
+
+    Must have:
+
+    (1) a "step" function, action -> exp
+    (2) "reset" function, -> exp
+    (3) "render" function, -> image
+    (4) "episode_done" attribute
+    (5) "obs_spec" attribute which includes:
+        - "shape", "mean", "stddev", "low", "high" (the last 4 can be None)
+    (6) "action-spec" attribute which includes:
+        - "shape", "discrete_bins" (should be None if not discrete), "low", "high", and "discrete"
+    (7) "exp" attribute containing the latest exp
+
+    Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
+
+    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
+
+    ---
+
+    Can optionally include a frame_stack, action_repeat method.
+
+    """
+    def __init__(self, **kwargs):
+        self.episode_done = False
+
         print('Discovering devices...')
 
         self.bittle = discover_devices()
@@ -38,23 +67,30 @@ class Bittle:
 
         self.exp = AttrDict()  # Experience dictionary
 
+        # self.frames = deque([], frame_stack or 1)  # TODO
+
     def reading(self, _, data: bytearray):
         data = data.decode('ISO-8859-1')
+        print(data)
         if 'i' in data:
             self.action_done = True
-        elif data and data[0] not in {'G', '?', 'k', 'p', 'g', 'R'} and data[-1] not in 'v':
+        else:
+            try:
+                measurement = np.array(list(map(float, data.strip('\r\nv\r\n').split('\t'))))
 
-            measurement = np.array(list(map(float, data.strip('\r\nv\r\n').split('\t'))))
-
-            if measurement.shape == self.obs_spec['shape']:
-                self.exp.obs = measurement
+                if measurement.shape == self.obs_spec['shape']:
+                    self.exp.obs = measurement
+            except ValueError:
+                return
 
     def step(self, action):
         self.action_done = False
         parallelize(self.bluetooth.write_gatt_char(self.writer, encode(action)))  # Triggers a reaction
 
-        self.exp.obs = self.exp.reward = self.exp.label = None
+        self.exp.obs = None
         self.exp.action = action
+        self.exp.reward = np.array([])
+        self.exp.label = None
 
         while not self.action_done:
             pass
@@ -67,6 +103,12 @@ class Bittle:
         print(self.exp)
 
         return self.exp  # Experience
+
+    def reset(self):
+        ...
+
+    def render(self):
+        ...
 
     def disconnect(self):
         while not self.action_done:
