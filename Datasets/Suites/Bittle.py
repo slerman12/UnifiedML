@@ -142,6 +142,7 @@ def encode(rotations: list):
     return ('i ' + ' '.join(map(str, [*sum(zip(servos, np.round(rotations)), ())]))).encode('utf-8')
 
 
+# Discover Petoi Bittle device
 def discover_devices():
     async def _discover_devices():
         devices = await BleakScanner.discover(timeout=15)
@@ -154,6 +155,7 @@ def discover_devices():
     return asyncio.run(_discover_devices())
 
 
+# Connect to a Bluetooth address
 def connect(address):
     bluetooth = BleakClient(address)
 
@@ -165,6 +167,7 @@ def connect(address):
     return bluetooth, event
 
 
+# Helper function to launch coroutines in a new thread non-disruptively (since Bleak uses coroutines)
 def parallelize(run, forever=False):
     event = asyncio.Event()
     event.clear()
@@ -193,16 +196,21 @@ class AttrDict(dict):
             self.update(_dict)
 
 
-commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                               [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]
+if __name__ == '__main__':
+    bittle = Bittle()
+    while True:
+        bittle.step()
 
-bittle = Bittle()
-while True:
-    bittle.step()
-# for command in commands:
-#     bittle.step(command)
-# bittle.disconnect()
+    # Can launch custom commands
+
+    # commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    #                                                                ]]
+    #
+    # for command in commands:
+    #     bittle.step(command)
+    # bittle.disconnect()
