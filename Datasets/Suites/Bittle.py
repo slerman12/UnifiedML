@@ -59,7 +59,7 @@ class Bittle:
         self.action_done = True
         self.action_start_time = time.time()
 
-        self.obs_spec = {'shape': (3,),  # Update
+        self.obs_spec = {'shape': (3,),  # TODO 6, currently just gyroscope
                          'mean': None,
                          'stddev': None,
                          'low': None,
@@ -81,13 +81,15 @@ class Bittle:
         if 'i' in measurement:
             self.action_done = True
         else:
-            if getattr(self.exp, 'obs', None) is None:
+            obs = getattr(self.exp, 'obs', None)
+
+            if obs is None or isinstance(obs, np.ndarray):
                 self.exp.obs = measurement
             else:
                 self.exp.obs += measurement
 
             if 'v' in measurement:
-                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('Gvgd\r\n').split('\t'))))
+                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('?Gvgdk\r\n').split('\t'))))
                 self.measured = True
 
     def step(self, action=None):
@@ -101,19 +103,21 @@ class Bittle:
         self.action_done = False
         asyncio.run(self.bluetooth.write_gatt_char(self.writer, encode(action)))  # Triggers a reaction
 
-        self.exp.obs = None
         self.exp.action = action
         self.exp.reward = np.array([])
         self.exp.label = None
 
-        while not self.action_done and time.time() - self.action_start_time < 5:  # Action shouldn't take more than 5s
+        while not self.action_done and time.time() - self.action_start_time < 1:  # Action shouldn't take more than 1s
             pass
 
         self.measured = False
         asyncio.run(self.bluetooth.write_gatt_char(self.writer, b'v'))
 
+        # Keep trying to measure if fail
         while not self.measured:
-            pass
+            if time.time() - self.action_start_time > 1:  # Measure shouldn't take more than 1s
+                self.action_start_time = time.time()
+                asyncio.run(self.bluetooth.write_gatt_char(self.writer, b'v'))
 
         print(self.exp)
 
