@@ -1,3 +1,7 @@
+# Copyright (c) AGI.__init__. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# MIT_LICENSE file in the root directory of this source tree.
 import asyncio
 import threading
 import time
@@ -51,7 +55,9 @@ class Bittle:
 
         parallelize(self.bluetooth.start_notify(self.reader, self.reading))  # Asynchronous reading Bittle measurements
 
+        self.measured = True
         self.action_done = True
+        self.action_start_time = time.time()
 
         self.obs_spec = {'shape': (3,),  # Update
                          'mean': None,
@@ -61,8 +67,8 @@ class Bittle:
 
         self.action_spec = {'shape': (16,),
                             'discrete_bins': None,
-                            'low': -90,
-                            'high': 90,
+                            'low': -25,
+                            'high': 25,
                             'discrete': False}
 
         self.exp = AttrDict()  # Experience dictionary
@@ -70,34 +76,43 @@ class Bittle:
         # self.frames = deque([], frame_stack or 1)  # TODO
 
     def reading(self, _, data: bytearray):
-        data = data.decode('ISO-8859-1')
-        print(data)
-        if 'i' in data:
+        measurement = data.decode('ISO-8859-1')
+
+        if 'i' in measurement:
             self.action_done = True
         else:
-            try:
-                measurement = np.array(list(map(float, data.strip('\r\nv\r\n').split('\t'))))
+            if getattr(self.exp, 'obs', None) is None:
+                self.exp.obs = measurement
+            else:
+                self.exp.obs += measurement
 
-                if measurement.shape == self.obs_spec['shape']:
-                    self.exp.obs = measurement
-            except ValueError:
-                return
+            if 'v' in measurement:
+                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('Gvgd\r\n').split('\t'))))
+                self.measured = True
 
-    def step(self, action):
+    def step(self, action=None):
+        self.action_start_time = time.time()
+
+        if action is None:
+            # Random action
+            action = np.random.rand(*self.action_spec['shape']) * (self.action_spec['high'] - self.action_spec['low']) \
+                     + self.action_spec['low']
+
         self.action_done = False
-        parallelize(self.bluetooth.write_gatt_char(self.writer, encode(action)))  # Triggers a reaction
+        asyncio.run(self.bluetooth.write_gatt_char(self.writer, encode(action)))  # Triggers a reaction
 
         self.exp.obs = None
         self.exp.action = action
         self.exp.reward = np.array([])
         self.exp.label = None
 
-        while not self.action_done:
+        while not self.action_done and time.time() - self.action_start_time < 5:  # Action shouldn't take more than 5s
             pass
 
-        parallelize(self.bluetooth.write_gatt_char(self.writer, b'v'))
+        self.measured = False
+        asyncio.run(self.bluetooth.write_gatt_char(self.writer, b'v'))
 
-        while self.exp.obs is None:
+        while not self.measured:
             pass
 
         print(self.exp)
@@ -124,7 +139,7 @@ servos = range(16)  # 16 degrees of freedom
 
 
 def encode(rotations: list):
-    return ('i ' + ' '.join(map(str, [*sum(zip(servos, rotations), ())]))).encode('utf-8')
+    return ('i ' + ' '.join(map(str, [*sum(zip(servos, np.round(rotations)), ())]))).encode('utf-8')
 
 
 def discover_devices():
@@ -186,6 +201,8 @@ commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0
                                                                [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]
 
 bittle = Bittle()
-for command in commands:
-    bittle.step(command)
-bittle.disconnect()
+while True:
+    bittle.step()
+# for command in commands:
+#     bittle.step(command)
+# bittle.disconnect()
