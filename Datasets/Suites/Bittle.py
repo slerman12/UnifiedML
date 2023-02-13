@@ -80,16 +80,16 @@ class Bittle:
 
         if 'i' in measurement or 'Ready' in measurement:
             self.action_done = True
-        else:
+        elif all(char.isdigit() or char in '-.v\r\n\t' for char in measurement):
             obs = getattr(self.exp, 'obs', None)
 
             if obs is None or isinstance(obs, np.ndarray):
                 self.exp.obs = measurement
             else:
-                self.exp.obs += measurement
+                self.exp.obs += measurement  # Bittle sometimes sends IMU measurements in multiple increments
 
             if 'v' in measurement:
-                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('?Gvgdk\x00\r\n').split('\t'))))
+                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('v\r\n').split('\t'))))
                 self.measured = True
 
     def step(self, action=None):
@@ -191,13 +191,12 @@ def parallelize(run, forever=False):
     return event
 
 
-# Access a dict with attribute or key (purely for aesthetic reasons)
+# Access a dict with attribute or key (for aesthetic)
 class AttrDict(dict):
     def __init__(self, _dict=None):
         super().__init__()
         self.__dict__ = self
-        if _dict is not None:
-            self.update(_dict)
+        self.update(_dict or {})
 
 
 if __name__ == '__main__':
