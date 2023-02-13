@@ -78,7 +78,7 @@ class Bittle:
     def reading(self, _, data: bytearray):
         measurement = data.decode('ISO-8859-1')
 
-        if 'i' in measurement:
+        if 'i' in measurement or 'Ready' in measurement:
             self.action_done = True
         else:
             obs = getattr(self.exp, 'obs', None)
@@ -89,7 +89,7 @@ class Bittle:
                 self.exp.obs += measurement
 
             if 'v' in measurement:
-                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('?Gvgdk\r\n').split('\t'))))
+                self.exp.obs = np.array(list(map(float, self.exp.obs.strip('?Gvgdk\x00\r\n').split('\t'))))
                 self.measured = True
 
     def step(self, action=None):
@@ -171,7 +171,7 @@ def connect(address):
     return bluetooth, event
 
 
-# Helper function to launch coroutines in a new thread non-disruptively (since Bleak uses coroutines)
+# Helper function to launch coroutines in a thread non-disruptively (since Bleak uses coroutines)
 def parallelize(run, forever=False):
     event = asyncio.Event()
     event.clear()
