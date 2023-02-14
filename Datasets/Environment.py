@@ -14,13 +14,14 @@ class Environment:
         self.suite = suite.lower()
         self.offline = offline
         self.generate = generate
+        self.stream = stream
 
         # Offline and generate don't use training rollouts!
         self.disable = (offline or generate) and train
 
         self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf if None)
 
-        if not self.disable or stream:  # Env is always needed when "stream=true" (Run-loop 72)
+        if not self.disable or self.stream:  # Env is always needed when stream=True
             self.env = instantiate(env, task=task, frame_stack=int(stream) or frame_stack, action_repeat=action_repeat,
                                    offline=offline, generate=generate, stream=stream, train=train, seed=seed, **kwargs)
             self.env.reset()
@@ -96,5 +97,8 @@ class Environment:
         if self.episode_done:
             self.episode_step = self.episode_frame = self.episode_reward = 0
             self.daybreak = sundown
+
+        if self.disable and self.stream:
+            experiences.append(self.env.step())
 
         return experiences, logs, video_image
