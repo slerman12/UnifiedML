@@ -61,6 +61,8 @@ class CelebA(Dataset):
         if download:
             self.download_from_kaggle()
 
+        print('1')
+
         split_map = {
             "train": 0,
             "valid": 1,
@@ -78,6 +80,8 @@ class CelebA(Dataset):
         landmarks_align = pd.read_csv(fn("list_landmarks_align_celeba.csv"), delim_whitespace=False, header=0, index_col=0)
         attr = pd.read_csv(fn("list_attr_celeba.csv"), delim_whitespace=False, header=0, index_col=0)
 
+        print('2')
+
         mask = slice(None) if split_ is None else (splits['partition'] == split_)
 
         self.filename = splits[mask].index.values
@@ -87,6 +91,8 @@ class CelebA(Dataset):
         self.attr = torch.as_tensor(attr[mask].values)
         self.attr = torch.div(self.attr + 1, 2, rounding_mode='floor')
         self.attr_names = list(attr.columns)
+
+        print('success')
 
     def download_from_kaggle(self):
 

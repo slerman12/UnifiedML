@@ -101,8 +101,6 @@ class Classify:
                 continue
             break
 
-        print(dataset)
-
         assert isinstance(dataset, Dataset), 'Dataset must be a Pytorch Dataset or inherit from a Pytorch Dataset'
 
         # If the training dataset is empty, we will assume train_steps=0
