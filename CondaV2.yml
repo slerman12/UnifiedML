@@ -29,6 +29,6 @@ dependencies:
       - einops==0.4.1
       - bleak==0.19.5  # Bittle
 #      - kaggle==1.5.12
+#      - cryptography==39.0.1
 # Only for me
-#   - cryptography
 #   - pexpect

@@ -1,6 +1,8 @@
 """Simple CelebA dataset utility class for pytorch. Depends on Kaggle.
 https://github.com/sayantanauddy/vae_lightning/blob/main/data.py"""
+import getpass
 import os
+from cryptography.fernet import Fernet
 from functools import partial
 import glob
 
