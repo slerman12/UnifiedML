@@ -34,7 +34,7 @@ class CelebA(Dataset):
                 if os.path.exists(credential):
                     with open(credential, 'r') as file:
                         encryption_key, encryption = file.readlines()
-                        value = str(Fernet(encryption_key).decrypt(bytes(encryption, 'utf-8')))
+                        value = Fernet(encryption_key).decrypt(bytes(encryption, 'utf-8')).decode()
                         print(value)
                 else:
                     print('Please enter your Kaggle credentials (see Kaggle Account -> API -> New API Token).')
