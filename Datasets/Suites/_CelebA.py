@@ -28,8 +28,6 @@ class CelebA(Dataset):
                  key=None
                  ):
 
-        print('1\n\n\n')
-
         # Get password, encrypt, and save for reuse
         for credential, value in {'KAGGLE_USERNAME': username, 'KAGGLE_KEY': key}.items():
             if value is None:
@@ -44,9 +42,10 @@ class CelebA(Dataset):
                     with open(credential, 'w') as file:
                         file.writelines([encryption_key.decode('utf-8') + '\n', encryption.decode('utf-8')])
 
+            print('1\n\n\n')
             os.environ[credential] = value
 
-        print('2\n\n\n')
+            print('2\n\n\n')
 
         self.root = root
         self.split = split
