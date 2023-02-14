@@ -34,7 +34,7 @@ class Environment:
         if self.daybreak is None:
             self.daybreak = time.time()  # "Daybreak" for whole episode
 
-        experiences = [self.env.step() for _ in range(self.disable and self.on_policy)]
+        experiences = [*([self.env.step()] if self.disable and self.on_policy else [])]
         video_image = []
 
         self.episode_done = self.disable
