@@ -85,7 +85,8 @@ class Classify:
         root_specs = [dict(root=root), {}]
         train_specs = [dict(train=train),
                        dict(version='2021_' + 'train' if train else 'valid'),
-                       dict(subset='training' if train else 'testing'), {}]
+                       dict(subset='training' if train else 'testing'),
+                       dict(split='train' if train else 'test'), {}]
         download_specs = [dict(download=True), {}]
         transform_specs = [dict(transform=None), {}]
 
