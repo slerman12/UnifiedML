@@ -232,7 +232,7 @@ class ExperienceReplay:
                 # Add the experience
                 self.episode[name].append(exp[name])
 
-            if self.stream:
+            if self.stream:  # TODO Save obs from nstep ago, action from step - 1 ago and cumulate reward from nstep - 1
                 self.stream = exp  # For streaming directly from Environment
 
         # Count experiences in episode
@@ -689,7 +689,7 @@ class SharedDict:
             mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
 
 
-# A special view into shared memory or memory mapped data that handles index-based reads and writes
+# A special view into shared memory or memory mapped data that handles index-based reads and writes efficiently
 class SharedMem:
     def __init__(self, name, shape, mmap_name=None):
         self.name, self.shape, self.mmap_name = name, shape, mmap_name

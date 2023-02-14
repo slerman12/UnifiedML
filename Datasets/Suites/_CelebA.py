@@ -12,8 +12,6 @@ from torchvision.datasets.utils import verify_str_arg
 import PIL
 import pandas as pd
 
-import pytorch_lightning as pl
-
 
 class CelebA(Dataset):
     """Dataset for CelebA"""
@@ -155,61 +153,3 @@ class CelebA(Dataset):
     def __len__(self) -> int:
         return len(self.attr)
 
-
-class CelebADataModule(pl.LightningDataModule):
-
-    def __init__(self,
-                 data_dir,
-                 target_type="attr",
-                 train_transform=None,
-                 val_transform=None,
-                 target_transform=None,
-                 download=False,
-                 batch_size=32,
-                 num_workers=8):
-
-        super().__init__()
-
-        self.data_dir = data_dir
-        self.target_type = target_type
-        self.train_transform = train_transform
-        self.val_transform = val_transform
-        self.target_transform = target_transform
-        self.download = download
-
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-
-    def setup(self, stage=None):
-        # Training dataset
-        self.celebA_trainset = CelebA(root=self.data_dir,
-                                      split='train',
-                                      target_type=self.target_type,
-                                      download=self.download,
-                                      transform=self.train_transform,
-                                      target_transform=self.target_transform)
-
-        # Validation dataset
-        self.celebA_valset = CelebA(root=self.data_dir,
-                                    split='valid',
-                                    target_type=self.target_type,
-                                    download=False,
-                                    transform=self.val_transform,
-                                    target_transform=self.target_transform)
-
-        # Test dataset
-        self.celebA_testset = CelebA(root=self.data_dir,
-                                     split='test',
-                                     target_type=self.target_type,
-                                     download=False,
-                                     transform=self.val_transform,
-                                     target_transform=self.target_transform)
-
-    def train_dataloader(self):
-        return DataLoader(self.celebA_trainset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=self.num_workers)
-
-    def val_dataloader(self):
-        return DataLoader(self.celebA_valset, batch_size=self.batch_size, shuffle=False, drop_last=False, num_workers=self.num_workers)
-
-    def test_dataloader(self):
-        return DataLoader(self.celebA_testset, batch_size=self.batch_size, shuffle=False, drop_last=False, num_workers=self.num_workers)
