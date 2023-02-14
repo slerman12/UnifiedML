@@ -65,7 +65,7 @@ class Logger:
                     item = item.detach().cpu().numpy()
                 logs[log_name] = logs[log_name] + [item] if log_name in logs else [item]
 
-            if self.predicted is not None and exp is not None:
+            if self.predicted is not None and exp:
                 for exp in exp:
                     if name not in self.predicted:
                         self.predicted[name] = {'Predicted': [], 'Actual': []}

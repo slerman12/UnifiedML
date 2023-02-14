@@ -15,8 +15,8 @@ class Environment:
         self.offline = offline
         self.generate = generate
 
-        # Offline and generate don't use training rollouts! Unless on-policy (stream)
-        self.disable, self.on_policy = (offline or generate) and train, stream
+        # Offline and generate don't use training rollouts!
+        self.disable = (offline or generate) and train
 
         self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf if None)
 
@@ -34,7 +34,7 @@ class Environment:
         if self.daybreak is None:
             self.daybreak = time.time()  # "Daybreak" for whole episode
 
-        experiences = [*([self.env.step()] if self.disable and self.on_policy else [])]
+        experiences = []
         video_image = []
 
         self.episode_done = self.disable
@@ -97,4 +97,4 @@ class Environment:
             self.episode_step = self.episode_frame = self.episode_reward = 0
             self.daybreak = sundown
 
-        return experiences, logs, video_image
+        return experiences or hasattr(self, 'env') and [self.env.step()] or None, logs, video_image

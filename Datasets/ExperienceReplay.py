@@ -201,7 +201,7 @@ class ExperienceReplay:
 
     # Tracks single episode "trace" in memory buffer
     def add(self, experiences=None, store=False):
-        if experiences is None:
+        if not experiences:
             experiences = []
 
         # An "episode" or part of episode of experiences
