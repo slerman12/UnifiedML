@@ -21,7 +21,7 @@ class Environment:
 
         self.truncate_after = train and truncate_episode_steps or inf  # Truncate episodes shorter (inf if None)
 
-        if not self.disable or self.on_policy:
+        if not self.disable or stream:
             self.env = instantiate(env, task=task, frame_stack=int(stream) or frame_stack, action_repeat=action_repeat,
                                    offline=offline, generate=generate, stream=stream, train=train, seed=seed, **kwargs)
             self.env.reset()
