@@ -15,10 +15,6 @@ import PIL
 import pandas as pd
 
 
-os.environ['KAGGLE_USERNAME'] = 'samlerman'
-os.environ['KAGGLE_KEY'] = '19ff598687ef8a37070de9ce1bf0484e'
-
-
 class CelebA(Dataset):
     """Dataset for CelebA"""
     def __init__(self,
