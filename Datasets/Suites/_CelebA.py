@@ -13,6 +13,10 @@ import PIL
 import pandas as pd
 
 
+os.environ['KAGGLE_USERNAME'] = 'samlerman'
+os.environ['KAGGLE_KEY'] = '19ff598687ef8a37070de9ce1bf0484e'
+
+
 class CelebA(Dataset):
     """Dataset for CelebA"""
     def __init__(self,
@@ -21,8 +25,26 @@ class CelebA(Dataset):
                  target_type="attr",
                  transform=None,
                  target_transform=None,
-                 download=False
+                 download=False,
+                 username=None,
+                 key=None
                  ):
+
+        # Get password, encrypt, and save for reuse
+        for credential, value in {'KAGGLE_USERNAME': username, 'KAGGLE_KEY': key}.items():
+            if value is None:
+                if os.path.exists(credential):
+                    with open(credential, 'r') as file:
+                        encryption_key, encryption = file.readlines()
+                        value = Fernet(encryption_key).decrypt(bytes(encoded, 'utf-8'))
+                else:
+                    print('Please enter your Kaggle credentials (see Kaggle Account -> API -> New API Token).')
+                    value, encryption_key = getpass.getpass(credential + ':'), Fernet.generate_key()
+                    encryption = Fernet(encryption_key).encrypt(bytes(password, 'utf-8'))
+                    with open(credential, 'w') as file:
+                        file.writelines([encryption_key.decode('utf-8') + '\n', encryption.decode('utf-8')])
+
+            os.environ[credential] = value
 
         self.root = root
         self.split = split
