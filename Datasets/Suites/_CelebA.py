@@ -19,7 +19,7 @@ class CelebA(Dataset):
     """Dataset for CelebA"""
     def __init__(self,
                  root,
-                 split="train",
+                 split: str = "train",
                  target_type="attr",
                  transform=None,
                  target_transform=None,
@@ -132,7 +132,7 @@ class CelebA(Dataset):
                                           quiet=False)
 
             # Clear any remaining *.csv.zip files
-            files_to_delete = glob.glob(os.path.join(self.root,"*.csv.zip"))
+            files_to_delete = glob.glob(os.path.join(self.root, "*.csv.zip"))
             for f in files_to_delete:
                 os.remove(f)
 
