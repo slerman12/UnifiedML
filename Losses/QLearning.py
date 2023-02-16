@@ -9,8 +9,9 @@ import Utils
 
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step, logs=None):
-    # Non-NaN next_obs
+    # Non-empty next_obs
     has_future = bool(next_obs.nelement())
+    print(has_future, next_obs, next_obs.nelement())
 
     # Compute Bellman target
     with torch.no_grad():
