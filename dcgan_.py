@@ -414,7 +414,7 @@ for epoch in range(num_epochs):
         logs = {}
 
         # Critic loss
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones([]),
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0),
                                                   1, logs=logs)
 
         Utils.optimize(critic_loss, critic)
