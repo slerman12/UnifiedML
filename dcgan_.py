@@ -389,12 +389,12 @@ for epoch in range(num_epochs):
         # fake = fake.view(real_cpu.shape)
         # fake = netG(noise).view(real_cpu.shape)
 
-        fake = fake.view(obs.shape)
+        fake = fake
 
         reward = torch.cat([label, torch.full((b_size,), real_label, dtype=torch.float, device=device)], 0)
         # label.fill_(fake_label)
 
-        action = torch.cat([obs, fake], 0)
+        action = torch.cat([obs.view(fake.shape), fake], 0)
         obs = torch.cat([obs, obs], 0)
 
         # Classify all fake batch with D
