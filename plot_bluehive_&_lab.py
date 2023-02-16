@@ -103,7 +103,7 @@ if plot_specs.sftp:
         print('- Connected! ✓\n')
         p.sendline(f"lcd {local_path}")
         p.expect('sftp> ')
-        lab_paths = ['u1', '/localdisk2/sam', '/home/vax10/u38/slerman']  # SFTP can't access ~/, so need full path
+        lab_paths = ['/localdisk2/sam', '/home/vax10/u38/slerman', 'u1']  # SFTP can't access ~/, so need full path
         for i, path in enumerate(lab_paths):  # Note: latest one overrides
             p.sendline(f'cd {path}/UnifiedML')
             p.expect('sftp> ')

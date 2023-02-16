@@ -354,6 +354,8 @@ for epoch in range(num_epochs):
     # For each batch in the dataloader
     for i, data in enumerate(dataloader, 0):
 
+        logs = {}
+
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
@@ -384,19 +386,28 @@ for epoch in range(num_epochs):
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, 1, 1, device=device)
         # Generate fake image batch with G
-        fake = netG(noise).mean
+        # fake = netG(noise).mean
+
+        action = netG(noise).mean
+
+        reward = torch.full((b_size, 1), real_label, dtype=torch.float, device=device)
+
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0),
+                                                  1, logs=logs)
 
         # fake = fake.view(real_cpu.shape)
         # fake = netG(noise).view(real_cpu.shape)
 
-        fake = fake
+        # fake = fake
 
-        reward = torch.cat([torch.full((b_size, 1), real_label, dtype=torch.float, device=device),
-                            torch.full((b_size, 1), fake_label, dtype=torch.float, device=device)], 0)
+        # reward = torch.cat([torch.full((b_size, 1), real_label, dtype=torch.float, device=device),
+        #                     torch.full((b_size, 1), fake_label, dtype=torch.float, device=device)], 0)
         # label.fill_(fake_label)
 
-        action = torch.cat([obs.view(fake.shape), fake], 0)
-        obs = torch.cat([obs, obs], 0)
+        reward = torch.full((b_size, 1), fake_label, dtype=torch.float, device=device)
+
+        # action = torch.cat([obs.view(fake.shape), fake], 0)
+        # obs = torch.cat([obs, obs], 0)
 
         # Classify all fake batch with D
         # output = netD(obs, fake.detach()).view(-1)
@@ -412,12 +423,9 @@ for epoch in range(num_epochs):
         # # Update D
         # optimizerD.step()
 
-
-        logs = {}
-
         # Critic loss
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0),
-                                                  1, logs=logs)
+        critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0),
+                                                   1, logs=logs)
 
         Utils.optimize(critic_loss, critic)
 

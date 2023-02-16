@@ -4,12 +4,12 @@
 # MIT_LICENSE file in the root directory of this source tree.
 name: ML
 channels:
-  - defaults
+  - conda-forge
 dependencies:
-  - pip=21.1.3
+  - pip=23
   - python=3.8.13
   - numpy
-  - pandas=1.3.0
+  - pandas=1.5.3
   - seaborn=0.11.2
   - pip:
       - torch==1.11.0
