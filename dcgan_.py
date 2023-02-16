@@ -385,7 +385,8 @@ for epoch in range(num_epochs):
         noise = torch.randn(b_size, nz, 1, 1, device=device)
         # Generate fake image batch with G
         fake = netG(noise).mean
-        fake = fake.view(real_cpu.shape)
+
+        # fake = fake.view(real_cpu.shape)
         # fake = netG(noise).view(real_cpu.shape)
 
         reward = torch.cat([label, torch.full((b_size,), real_label, dtype=torch.float, device=device)], 0)
