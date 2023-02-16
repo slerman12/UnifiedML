@@ -11,6 +11,9 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
+
+from Losses import QLearning
+
 # import tensorflow as tf
 
 # Set random seed for reproducibility
@@ -364,14 +367,18 @@ for epoch in range(num_epochs):
         # obs = real_cpu
 
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+
+
         # Forward pass real batch through D
-        output = netD(obs, obs).view(-1)
-        # output = netD(obs).view(-1)
-        # Calculate loss on all-real batch
-        errD_real = criterion(output, label)
-        # Calculate gradients for D in backward pass
-        errD_real.backward()
-        D_x = output.mean().item()
+        # output = netD(obs, obs).view(-1)
+        # # output = netD(obs).view(-1)
+        # # Calculate loss on all-real batch
+        # errD_real = criterion(output, label)
+        # # Calculate gradients for D in backward pass
+        # errD_real.backward()
+        # D_x = output.mean().item()
+
+
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
@@ -380,20 +387,35 @@ for epoch in range(num_epochs):
         fake = netG(noise).mean
         fake = fake.view(real_cpu.shape)
         # fake = netG(noise).view(real_cpu.shape)
-        label.fill_(fake_label)
+
+        reward = torch.cat([label, torch.full((b_size,), real_label, dtype=torch.float, device=device)], 0)
+        # label.fill_(fake_label)
+
+        action = torch.cat([obs, fake], 0)
+
         # Classify all fake batch with D
-        output = netD(obs, fake.detach()).view(-1)
+        # output = netD(obs, fake.detach()).view(-1)
         # output = netD(fake.detach()).view(-1)
         # Calculate D's loss on the all-fake batch
-        errD_fake = criterion(output, label)
-        # Calculate the gradients for this batch, accumulated (summed) with previous gradients
-        errD_fake.backward()
-        D_G_z1 = output.mean().item()
-        # Compute error of D as sum over the fake and the real batches
-        errD = errD_real + errD_fake / 2
-        # errD = errD_real + errD_fake
-        # Update D
-        optimizerD.step()
+        # errD_fake = criterion(output, label)
+        # # Calculate the gradients for this batch, accumulated (summed) with previous gradients
+        # errD_fake.backward()
+        # D_G_z1 = output.mean().item()
+        # # Compute error of D as sum over the fake and the real batches
+        # errD = errD_real + errD_fake / 2
+        # # errD = errD_real + errD_fake
+        # # Update D
+        # optimizerD.step()
+
+
+        logs = {}
+
+        # Critic loss
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones([]),
+                                                  1, logs=logs)
+
+        Utils.optimize(critic_loss, critic)
+
 
         ############################
         # (2) Update G network: maximize log(D(G(z)))
@@ -423,11 +445,12 @@ for epoch in range(num_epochs):
         if i % 50 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, num_epochs, i, len(dataloader),
-                     errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+                     True or errD.item(), errG.item(), True or D_x, True or D_G_z1, D_G_z2)
+                  )
 
         # Save Losses for plotting later
         G_losses.append(errG.item())
-        D_losses.append(errD.item())
+        D_losses.append(True or errD.item())
 
         # Check how the generator is doing by saving G's output on fixed_noise
         if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):

@@ -264,10 +264,10 @@ class Ensemble(nn.Module):
 
 # Replaces tensor's batch items with Normal-sampled random latent
 class Rand(nn.Module):
-    def __init__(self, output_shape=1, uniform=False):
+    def __init__(self, size=1, output_shape=None, uniform=False):
         super().__init__()
 
-        self.output_shape = to_tuple(output_shape)
+        self.output_shape = to_tuple(output_shape or size)
         self.uniform = uniform
 
     def repr_shape(self, *_):
