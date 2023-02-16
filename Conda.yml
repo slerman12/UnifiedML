@@ -4,11 +4,13 @@
 # MIT_LICENSE file in the root directory of this source tree.
 name: ML
 channels:
+  - default
   - conda-forge
 dependencies:
-  - pip=23
-  - python=3.8.13
+  - pip=22.3.1
+  - python=3.10.8
   - numpy
+#  - numpy==1.24.2
   - pandas=1.5.3
   - seaborn=0.11.2
   - pip:
@@ -21,12 +23,13 @@ dependencies:
       - ale-py==0.7.5
       - dm_control==1.0.3
       - gym-super-mario-bros==7.4.0
-      - PyOpenGL-accelerate==3.1.5
+      - PyOpenGL-accelerate==3.1.6
       - termcolor==1.1.0
       - wandb==0.12.17
       - imageio==2.22.0
       - imageio-ffmpeg==0.4.7
       - einops==0.4.1
-# Only for me
-#   - cryptography
+      # Only for me
+      - cryptography==39.0.1
+      - bleak==0.19.5
 #   - pexpect

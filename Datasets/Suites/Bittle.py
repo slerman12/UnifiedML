@@ -75,6 +75,8 @@ class Bittle:
 
         # self.frames = deque([], frame_stack or 1)  # TODO
 
+        # Maybe add atexit
+
     def reading(self, _, data: bytearray):
         measurement = data.decode('ISO-8859-1')
 
