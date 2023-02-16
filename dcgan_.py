@@ -389,6 +389,8 @@ for epoch in range(num_epochs):
         # fake = fake.view(real_cpu.shape)
         # fake = netG(noise).view(real_cpu.shape)
 
+        fake = fake.view(obs.shape)
+
         reward = torch.cat([label, torch.full((b_size,), real_label, dtype=torch.float, device=device)], 0)
         # label.fill_(fake_label)
 
