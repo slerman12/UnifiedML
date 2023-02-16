@@ -391,7 +391,8 @@ for epoch in range(num_epochs):
 
         fake = fake
 
-        reward = torch.cat([label, torch.full((b_size,), fake_label, dtype=torch.float, device=device)], 0)
+        reward = torch.cat([torch.full((b_size, 1), real_label, dtype=torch.float, device=device),
+                            torch.full((b_size, 1), fake_label, dtype=torch.float, device=device)], 0)
         # label.fill_(fake_label)
 
         action = torch.cat([obs.view(fake.shape), fake], 0)
