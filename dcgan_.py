@@ -395,6 +395,7 @@ for epoch in range(num_epochs):
         # label.fill_(fake_label)
 
         action = torch.cat([obs, fake], 0)
+        obs = torch.cat([obs, obs], 0)
 
         # Classify all fake batch with D
         # output = netD(obs, fake.detach()).view(-1)
