@@ -267,7 +267,7 @@ for epoch in range(num_epochs):
         fake = fake.view(-1, *real_cpu.shape[1:])
 
         # Since we just updated D, perform another forward pass of all-fake batch through D
-        output = netD(obs, fake).view(-1)
+        output = netD(obs[:b_size], fake[:b_size]).view(-1)
         # output = netD(fake).view(-1)
         # Calculate G's loss based on this output
         errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
