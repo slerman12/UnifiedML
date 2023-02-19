@@ -20,7 +20,7 @@ dependencies:
       - hydra-core==1.1.0
       - hydra-submitit-launcher==1.1.5
       - gym==0.25.1
-      - ale-py==0.7.5
+      - ale-py==0.8.1
       - dm_control==1.0.3
       - gym-super-mario-bros==7.4.0
       - PyOpenGL-accelerate==3.1.6
