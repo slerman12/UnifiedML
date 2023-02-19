@@ -33,7 +33,7 @@ dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
 
 batch_size = 128
 image_size = 64
-channels = 1
+channels = 3
 
 # Size of z latent vector (i.e. size of generator input)
 z_dim = 100
