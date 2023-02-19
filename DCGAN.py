@@ -12,6 +12,7 @@ import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
 
+import Datasets
 from Blocks.Architectures.Vision.CNN import cnn_broadcast
 
 from Blocks.Encoders import CNNEncoder
@@ -52,7 +53,7 @@ device = torch.device('cuda')
 
 
 # TODO Instead of normalize, standardize in Encoder and set those norm metrics to obs_spec
-dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
+dataset = Datasets.Suites._CelebA.CelebA(root=dataroot,
                                            download=True,
                                            transform=transforms.Compose([
                                                transforms.Resize(image_size),
