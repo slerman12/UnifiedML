@@ -122,6 +122,7 @@ class Atari:
         # Step env
         reward = np.zeros([])
         for _ in range(self.action_repeat):
+            # TODO New Gym API now returns 5 values: Also, 2 values for reset(), and Render
             obs, _reward, self.episode_done, info = self.env.step(int(_action))  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
