@@ -5,4 +5,4 @@
 from .Atari import Atari
 from .DMC import DMC
 from .Classify import Classify
-# from .SuperMario import SuperMario
+from .SuperMario import SuperMario
