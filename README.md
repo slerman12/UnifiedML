@@ -590,7 +590,7 @@ This library is meant to be useful for academic research, and out of the box sup
 
 <details>
 <summary>
-:mag: <i>Click to retroact</i>
+:mag: <i>Click to play retroactively</i>
 </summary>
 <br>
 
@@ -638,7 +638,7 @@ Is true by default for classification, where replays are automatically downloade
 
 <details>
 <summary>
-:mag: <i>Click to synthesize</i>
+:mag: <i>Click to synth</i>
 </summary>
 <br>
 
@@ -760,7 +760,7 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 
 <details>
 <summary>
-:mag: <i>Click to disperse</i>
+:mag: <i>Click to de-centralize</i>
 </summary>
 <br>
 
