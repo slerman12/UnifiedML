@@ -212,7 +212,7 @@ for epoch in range(num_epochs):
 
         # Generate
         action = actor(obs).mean.view_as(obs)
-        Qs = critic(obs, action).view(-1)
+        Qs = critic(obs, action).view(-1, 1)
         Q_target = torch.ones_like(reward)
         actor_loss = criterion(Qs, Q_target)
 
