@@ -237,7 +237,7 @@ plt.imshow(np.transpose(vutils.make_grid(obs.to(device)[:64], padding=5, normali
 plt.subplot(1,2,2)
 plt.axis('off')
 plt.title('Fake Images')
-plt.imshow(np.transpose(vutils.make_grid(action.to(device), padding=2, normalize=True), (1, 2, 0)))
+plt.imshow(np.transpose(vutils.make_grid(action.numpy(), padding=2, normalize=True), (1, 2, 0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
