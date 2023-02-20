@@ -204,7 +204,7 @@ for epoch in range(num_epochs):
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0), 1)
 
         reward = torch.zeros_like(reward)
-        critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1, logs=logs)
+        critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
@@ -231,7 +231,7 @@ plt.imshow(np.transpose(vutils.make_grid(obs.to(device)[:64], padding=5, normali
 plt.subplot(1,2,2)
 plt.axis('off')
 plt.title('Fake Images')
-plt.imshow(np.transpose(vutils.make_grid(fake, padding=2, normalize=True), (1, 2, 0)))
+plt.imshow(np.transpose(vutils.make_grid(action, padding=2, normalize=True), (1, 2, 0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
