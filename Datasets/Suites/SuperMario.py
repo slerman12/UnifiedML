@@ -54,7 +54,11 @@ class SuperMario:
             warnings.simplefilter("ignore", category=UserWarning)
 
             # Super Mario environment for OpenAI Gym
-            import gym_super_mario_bros
+            try:
+                import gym_super_mario_bros
+            except Exception:
+                raise(RuntimeError('This machine does not support the current environment: gym_super_mario_bros. '
+                                   'Please find support here: https://github.com/Kautenja/gym-super-mario-bros.'))
 
             # NES Emulator for OpenAI Gym
             from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
