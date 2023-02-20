@@ -234,7 +234,8 @@ plt.imshow(np.transpose(vutils.make_grid(obs[:64].detach(), padding=5, normalize
 plt.subplot(1, 2, 2)
 plt.axis('off')
 plt.title('Plausible Not-Real')
-plt.imshow(np.transpose(vutils.make_grid(action.view_as(obs)[:64].detach(), padding=2, normalize=True).cpu(), (1, 2, 0)))
+action = actor(obs).mean.view_as(obs)
+plt.imshow(np.transpose(vutils.make_grid(action[:64].detach(), padding=2, normalize=True).cpu(), (1, 2, 0)))
 
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
