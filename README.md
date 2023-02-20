@@ -172,7 +172,7 @@ conda activate ML
 
 #
 
-> &#9432; Depending on your CUDA version, if the device prints 'cpu' instead of 'cuda', you may need to redundantly install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
+> &#9432; If the device prints "cpu" instead of "cuda" and you have a GPU, you may need to redundantly install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
 
 [//]: # (>)
 
