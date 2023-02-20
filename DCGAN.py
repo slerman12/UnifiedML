@@ -195,7 +195,7 @@ criterion = nn.BCELoss()
 
 
 for epoch in range(num_epochs):
-    for i, obs, *_ in enumerate(dataloader):
+    for i, (obs, *_) in enumerate(dataloader):
 
         obs = obs.to(device)
         obs = encoder(obs)
