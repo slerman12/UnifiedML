@@ -44,6 +44,7 @@ def init(args):
 
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
+
     print('Device:', args.device)
 
 
