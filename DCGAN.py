@@ -1,71 +1,53 @@
-from __future__ import print_function
-import random
 from pathlib import Path
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data
 
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
+
 import numpy as np
-import matplotlib.pyplot as plt
 
 from Blocks.Architectures.Vision.DCGAN import Generator, Discriminator
-from Datasets.Suites._CelebA import CelebA
-from Blocks.Architectures.Vision.CNN import cnn_broadcast
 
 from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor
 from Blocks.Critics import EnsembleQCritic
+
+from Datasets.Suites._CelebA import CelebA
 from Datasets.Suites.Classify import AttrDict
 
 from Losses import QLearning
 
 import Utils
 
-
-seed = 999
-torch.manual_seed(seed)
-random.seed(seed)
+import matplotlib.pyplot as plt
 
 
-dataroot = "Datasets/ReplayBuffer/Classify/CelebA_Train/"
+Utils.set_seeds(0)
 
 batch_size = 128
-image_size = 64
-channels = 3
-
-# Size of z latent vector (i.e. size of generator input)
-z_dim = 100
-
-# Size of feature maps in generator
-ngf = 64
-
-# Size of feature maps in discriminator
-ndf = 64
-
 num_epochs = 5
+z_dim = 100
 lr = 0.0002
 beta1 = 0.5
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-# TODO Instead of normalize, standardize in Encoder and set those norm metrics to obs_spec
-dataset = CelebA(root=dataroot,
+dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
                  download=True,
                  transform=transforms.Compose([
-                     transforms.Resize(image_size),
-                     transforms.CenterCrop(image_size),
+                     transforms.Resize(64),
+                     transforms.CenterCrop(64),
                      transforms.ToTensor(),
-                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Encoder can standardize
                  ]))
 
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-obs_spec = AttrDict({'shape': [channels, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})
+obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
 encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
