@@ -193,7 +193,7 @@ critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discri
 optimizerG = optim.Adam(actor.parameters(), lr=lr, betas=(beta1, 0.999))
 criterion = nn.BCELoss()
 
-num_epochs = 1
+
 for epoch in range(num_epochs):
     for i, (obs, *_) in enumerate(dataloader):
 
@@ -217,9 +217,6 @@ for epoch in range(num_epochs):
         actor_loss = criterion(Qs, Q_target)
 
         Utils.optimize(actor_loss, actor)
-
-        if i == 0:
-            break
 
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
