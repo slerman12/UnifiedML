@@ -170,14 +170,20 @@ conda env create --name ML --file=Conda.yml
 conda activate ML
 ```
 
-#
+[//]: # (#)
 
-> > &#9432; Depending on your CUDA version, you may need to redundantly install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
->
-> For example, for CUDA 11.6:
-> ```console
-> conda install pytorch torchvision torchaudio cudatoolkit=11.6 -c pytorch -c conda-forge
-> ```
+[//]: # ()
+[//]: # (> > &#9432; Depending on your CUDA version, you may need to redundantly install Pytorch with CUDA from [pytorch.org/get-started]&#40;https://pytorch.org/get-started/locally/&#41; after activating your Conda environment.)
+
+[//]: # (>)
+
+[//]: # (> For example, for CUDA 11.6:)
+
+[//]: # (> ```console)
+
+[//]: # (> conda install pytorch torchvision torchaudio cudatoolkit=11.6 -c pytorch -c conda-forge)
+
+[//]: # (> ```)
 
 [comment]: <> (For GPU support, you may need to install Pytorch with CUDA from https://pytorch.org/get-started/locally/.)
 
@@ -202,11 +208,16 @@ You can install via ```AutoROM``` if you accept the license.
 pip install autorom
 AutoROM --accept-license
 ```
-Then:
-```console
-mkdir ./Datasets/Suites/Atari_ROMS
-AutoROM --install-dir ./Datasets/Suites/Atari_ROMS
-ale-import-roms ./Datasets/Suites/Atari_ROMS
+
+[//]: # (Then:)
+
+[//]: # (```console)
+
+[//]: # (mkdir ./Datasets/Suites/Atari_ROMS)
+
+[//]: # (AutoROM --install-dir ./Datasets/Suites/Atari_ROMS)
+
+[//]: # (ale-import-roms ./Datasets/Suites/Atari_ROMS)
 ```
 
 ## 2. DeepMind Control
