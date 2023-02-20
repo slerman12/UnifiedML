@@ -223,9 +223,7 @@ conda activate ML
 <br><i>A collection of retro Atari games.</i>
 </p>
 
-You can install via ```AutoROM``` if you accept the license.
-
-First install ```AutoROM```.
+You can install via ```AutoROM``` if you accept the license. First install ```AutoROM```.
 
 ```console
 pip install autorom
