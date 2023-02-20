@@ -194,7 +194,7 @@ optimizerG = optim.Adam(actor.parameters(), lr=lr, betas=(beta1, 0.999))
 criterion = nn.BCELoss()
 
 
-for epoch in range(num_epochs):
+for epoch in range(1):
     for i, (obs, *_) in enumerate(dataloader):
 
         # Discriminate real
@@ -217,6 +217,8 @@ for epoch in range(num_epochs):
         actor_loss = criterion(Qs, Q_target)
 
         Utils.optimize(actor_loss, actor)
+        if i == 0:
+            break
 
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
@@ -235,7 +237,7 @@ plt.imshow(np.transpose(vutils.make_grid(obs.to(device)[:64], padding=5, normali
 plt.subplot(1,2,2)
 plt.axis('off')
 plt.title('Fake Images')
-plt.imshow(np.transpose(vutils.make_grid(action, padding=2, normalize=True), (1, 2, 0)))
+plt.imshow(np.transpose(vutils.make_grid(action.to(device), padding=2, normalize=True), (1, 2, 0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
