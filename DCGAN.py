@@ -226,18 +226,16 @@ for epoch in range(1):
 
 obs, *_ = next(iter(dataloader))
 
-# Plot the real images
 plt.figure(figsize=(15, 15))
 plt.subplot(1, 2, 1)
 plt.axis('off')
 plt.title('Real Images')
 plt.imshow(np.transpose(vutils.make_grid(obs.to(device)[:64], padding=5, normalize=True).cpu(), (1, 2, 0)))
 
-# Plot the fake images from the last epoch
 plt.subplot(1, 2, 2)
 plt.axis('off')
 plt.title('Fake Images')
-plt.imshow(np.transpose(vutils.make_grid(action.numpy(), padding=2, normalize=True), (1, 2, 0)))
+plt.imshow(np.transpose(vutils.make_grid(action.cpu().numpy(), padding=2, normalize=True), (1, 2, 0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
