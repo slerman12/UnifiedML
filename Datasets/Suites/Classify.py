@@ -117,7 +117,7 @@ class Classify:
         # Can select a subset of classes
         if subset:
             task += '_Classes_' + '_'.join(map(str, classes))
-            print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
+            print(f'Selecting subset of classes from dataset... This can take some time.')
             dataset = ClassSubset(dataset, classes)
 
         # Map unique classes to integers
