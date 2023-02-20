@@ -27,4 +27,4 @@ dependencies:
       # Only for me
       - cryptography==39.0.1
       - bleak==0.19.5
-      - pexpect
+      - pexpect==4.8
