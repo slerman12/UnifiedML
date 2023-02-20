@@ -193,7 +193,7 @@ critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discri
 optimizerG = optim.Adam(actor.parameters(), lr=lr, betas=(beta1, 0.999))
 criterion = nn.BCELoss()
 
-
+num_epochs = 1
 for epoch in range(num_epochs):
     for i, (obs, *_) in enumerate(dataloader):
 
@@ -218,6 +218,9 @@ for epoch in range(num_epochs):
 
         Utils.optimize(actor_loss, actor)
 
+        if i == 0:
+            break
+
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
 
@@ -225,16 +228,17 @@ for epoch in range(num_epochs):
 obs, *_ = next(iter(dataloader))
 
 plt.figure(figsize=(15, 15))
+
 plt.subplot(1, 2, 1)
 plt.axis('off')
-plt.title('Real Images')
+plt.title('Real')
 plt.imshow(np.transpose(vutils.make_grid(obs.detach(), padding=5, normalize=True).cpu(), (1, 2, 0)))
 
 plt.subplot(1, 2, 2)
 plt.axis('off')
-plt.title('Fake Images')
+plt.title('Plausible Not-Real')
 plt.imshow(np.transpose(vutils.make_grid(action.detach(), padding=2, normalize=True).cpu(), (1, 2, 0)))
-plt.show()
+
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
 plt.savefig(path / 'generated.png')
