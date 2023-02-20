@@ -234,7 +234,7 @@ plt.title('Real Images')
 plt.imshow(np.transpose(vutils.make_grid(obs.to(device)[:64], padding=5, normalize=True).cpu(), (1, 2, 0)))
 
 # Plot the fake images from the last epoch
-plt.subplot(1,2,2)
+plt.subplot(1, 2, 2)
 plt.axis('off')
 plt.title('Fake Images')
 plt.imshow(np.transpose(vutils.make_grid(action.numpy(), padding=2, normalize=True), (1, 2, 0)))
