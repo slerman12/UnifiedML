@@ -6,14 +6,6 @@ from collections import deque
 
 import warnings
 
-# Super Mario environment for OpenAI Gym
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    import gym_super_mario_bros
-
-# NES Emulator for OpenAI Gym
-from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
-
 import numpy as np
 
 from torch import as_tensor
@@ -60,6 +52,13 @@ class SuperMario:
         # Load task
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
+
+            # Super Mario environment for OpenAI Gym
+            import gym_super_mario_bros
+
+            # NES Emulator for OpenAI Gym
+            from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
+
             env = gym_super_mario_bros.make(task)
 
             from nes_py.wrappers import JoypadSpace
