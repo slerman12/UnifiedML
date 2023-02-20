@@ -12,6 +12,7 @@ import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
 
+from Datasets.Suites._CelebA import CelebA
 from Losses import QLearning
 
 # import tensorflow as tf
@@ -90,7 +91,7 @@ ngpu = 1
 #                            ]))
 
 # TODO Instead of normalize, standardize in Encoder and set those norm metrics to obs_spec
-dataset = torchvision.datasets.celeba.CelebA(root=dataroot,
+dataset = CelebA(root=dataroot,
                                              download=True,
                                              transform=transforms.Compose([
                                                  transforms.Resize(image_size),
