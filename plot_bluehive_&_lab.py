@@ -1,4 +1,4 @@
-# Copyright (c) AGI.__init__. All Rights Reserved.
+# Copyright (c) AGI.__init__. All Rights Reserved.  TODO Rename Sweeps/PlotRemote.py
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
@@ -103,7 +103,8 @@ if plot_specs.sftp:
         print('- Connected! ✓\n')
         p.sendline(f"lcd {local_path}")
         p.expect('sftp> ')
-        lab_paths = ['/localdisk2/sam', '/home/vax10/u38/slerman', 'u1']  # SFTP can't access ~/, so need full path
+        # SFTP can't access ~/, so need full path
+        lab_paths = ['/localdisk2/sam', '/home/vax10/u38/slerman', '/home/cxu-serve/u1/slerman/']
         for i, path in enumerate(lab_paths):  # Note: latest one overrides
             p.sendline(f'cd {path}/UnifiedML')
             p.expect('sftp> ')

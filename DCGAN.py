@@ -179,151 +179,59 @@ class Discriminator(nn.Module):
         return out
 
 
-obs_spec = AttrDict({'shape': [channels, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
+obs_spec = AttrDict({'shape': [channels, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
 encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
-
 actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Utils.Rand, Pi_head=Generator, ensemble_size=1,
-                        lr=lr, optim={'_target_': 'Adam', 'betas': [beta1, 0.999]})
+                        lr=lr, optim={'_target_': 'Adam', 'betas': [beta1, 0.999]}).to(device)
 critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discriminator, ensemble_size=1,
                          ignore_obs=True, lr=lr,
-                         optim={'_target_': 'Adam', 'betas': [beta1, 0.999]})  # Note: trunk_dim for example isn't necessary for generate=true
+                         optim={'_target_': 'Adam', 'betas': [beta1, 0.999]}).to(device)
 
 
-# TODO perhaps try torch.amax(x, dim=(2,3)) # Global maximum pooling
-# TODO Perhaps init agent with .to(memory_format=torch.channels_last) and .half()
-
-# TODO Augs, Compose
-
-
-netG = actor.to(device)
-netD = critic.to(device)
-
-optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
-
-# Initialize BCELoss function
-# criterion = nn.MSELoss()
+optimizerG = optim.Adam(actor.parameters(), lr=lr, betas=(beta1, 0.999))
 criterion = nn.BCELoss()
 
-# Create batch of latent vectors that we will use to visualize
-#  the progression of the generator
-fixed_noise = torch.randn(64, z_dim, 1, 1, device=device)
 
-# Establish convention for real and fake labels during training
-real_label = 1.
-fake_label = 0.
-
-# Training Loop
-
-# Lists to keep track of progress
-img_list = []
-G_losses = []
-D_losses = []
-iters = 0
-
-print("Starting Training Loop...")
-# For each epoch
 for epoch in range(num_epochs):
-    # For each batch in the dataloader
-    for i, data in enumerate(dataloader, 0):
+    for i, obs, *_ in enumerate(dataloader):
 
-        logs = {}
+        obs = obs.to(device)
+        obs = encoder(obs)
+        action = actor(obs).mean
+        reward = torch.ones((len(obs), 1)).to(obs)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0), 1)
 
-        ############################
-        # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
-        ###########################
-        ## Train with all-real batch
-        netD.zero_grad()
-        # Format batch
-        real_cpu = data[0].to(device)
-        b_size = real_cpu.size(0)
-
-        obs = encoder(real_cpu)
-
-        noise = torch.randn(b_size, z_dim, 1, 1, device=device)
-        action = netG(noise).mean
-        reward = torch.full((b_size, 1), real_label, dtype=torch.float, device=device)
-
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0),
-                                                  1, logs=logs)
-
-        reward = torch.full((b_size, 1), fake_label, dtype=torch.float, device=device)
-
-        # Critic loss
+        reward = torch.zeros_like(reward)
         critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1, logs=logs)
 
         Utils.optimize(critic_loss, critic)
 
-        ############################
-        # (2) Update G network: maximize log(D(G(z)))
-        ###########################
-        label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+        action = actor(obs).mean.view_as(obs)
+        output = critic(obs, action).view(-1)
+        actor_loss = criterion(output, torch.ones_like(reward))
 
-        netG.zero_grad()
+        Utils.optimize(actor_loss, actor)
 
-        noise = torch.randn(b_size * 2, z_dim, 1, 1, device=device)
-        fake = netG(noise).mean
-        fake = fake.view(-1, *real_cpu.shape[1:])
-
-        # Since we just updated D, perform another forward pass of all-fake batch through D
-        output = netD(obs[:b_size], fake[:b_size]).view(-1)
-        # output = netD(fake).view(-1)
-        # Calculate G's loss based on this output
-        errG = criterion(output, label)  # TODO MSE better than nothing because diminishes gradients closer to 0, 1
-        # errG = -output.log().mean()  # TODO Try
-        # errG = -output.mean()  # TODO Try
-        # Calculate gradients for G
-        errG.backward()
-        D_G_z2 = output.mean().item()
-        # Update G
-        optimizerG.step()
-
-        # Output training stats
         if i % 50 == 0:
-            print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
-                  % (epoch, num_epochs, i, len(dataloader), True, errG.item(), True, True, D_G_z2))
-
-        # Save Losses for plotting later
-        G_losses.append(errG.item())
-        D_losses.append(True)
-
-        # Check how the generator is doing by saving G's output on fixed_noise
-        if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
-            with torch.no_grad():
-                fake = netG(fixed_noise).mean.detach().cpu()
-                # fake = netG(fixed_noise).detach().cpu()
-                fake = fake.view(fake.shape[0], *real_cpu.shape[1:])
-            img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
-
-        iters += 1
+            print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
 
 
-plt.figure(figsize=(10,5))
-plt.title("Generator and Discriminator Loss During Training")
-plt.plot(G_losses,label="G")
-plt.plot(D_losses,label="D")
-plt.xlabel("iterations")
-plt.ylabel("Loss")
-plt.legend()
-plt.show()
-
-
-# Grab a batch of real images from the dataloader
-real_batch = next(iter(dataloader))
+obs, *_ = next(iter(dataloader))
 
 # Plot the real images
-plt.figure(figsize=(15,15))
-plt.subplot(1,2,1)
-plt.axis("off")
-plt.title("Real Images")
-plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=5, normalize=True).cpu(),(1,2,0)))
+plt.figure(figsize=(15, 15))
+plt.subplot(1, 2, 1)
+plt.axis('off')
+plt.title('Real Images')
+plt.imshow(np.transpose(vutils.make_grid(obs.to(device)[:64], padding=5, normalize=True).cpu(), (1, 2, 0)))
 
 # Plot the fake images from the last epoch
 plt.subplot(1,2,2)
-plt.axis("off")
-plt.title("Fake Images")
-plt.imshow(np.transpose(img_list[-1],(1,2,0)))
+plt.axis('off')
+plt.title('Fake Images')
+plt.imshow(np.transpose(vutils.make_grid(fake, padding=2, normalize=True), (1, 2, 0)))
 plt.show()
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
