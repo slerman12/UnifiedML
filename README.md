@@ -225,8 +225,15 @@ conda activate ML
 
 You can install via ```AutoROM``` if you accept the license.
 
+First install ```AutoROM```.
+
 ```console
 pip install autorom
+```
+
+Then accept the license.
+
+```console
 AutoROM --accept-license
 ```
 
