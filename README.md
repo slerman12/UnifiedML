@@ -527,7 +527,7 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 
 <details>
 <summary>
-:mag: <i>Click to inspect categorically</i>
+:mag: <i>Click to categorize</i>
 </summary>
 <br>
 
@@ -1097,7 +1097,7 @@ python Run.py task=mario +env.stage=2
 
 <details>
 <summary>
-:mag: <i>Click to read, parse, & boot</i>
+:mag: <i>Click to read, parse, & boot up</i>
 </summary>
 <br>
 
