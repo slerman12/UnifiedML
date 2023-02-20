@@ -12,7 +12,6 @@ with warnings.catch_warnings():
     import gym_super_mario_bros
 
 # NES Emulator for OpenAI Gym
-from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
 
 import numpy as np
@@ -62,6 +61,8 @@ class SuperMario:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             env = gym_super_mario_bros.make(task)
+
+            from nes_py.wrappers import JoypadSpace
 
             # [['NOOP'], ["right"], ["right", "A"], ["right", "B"], ["right", "A", "B"], ["A"], ['left']]
             self.env = JoypadSpace(env, SIMPLE_MOVEMENT)
