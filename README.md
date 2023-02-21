@@ -1116,7 +1116,7 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset.
 
 [//]: # (By default, the task name will appear as the Dataset class name &#40;in the above examples, "```MNIST```" and "```TinyImageNet```"&#41;. )
-You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```. The default is the class name (```TinyImageNet``` here).
+You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```. The default is the class name such as ```TinyImageNet```.
 
 **UnifiedML is compatible with datasets & domains besides Vision.**
 
