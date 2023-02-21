@@ -1107,7 +1107,7 @@ You can pass in any Torchvision Dataset as follows:
 python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
 ```
 
-That will launch MNIST. Another example, with a custom Pytorch Dataset class and path,
+Another example, with a custom Pytorch Dataset class and path,
 
 ```console
 python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
