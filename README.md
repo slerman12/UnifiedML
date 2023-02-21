@@ -1136,7 +1136,7 @@ Gets a perfect score on speech command classification from raw 1D audio with the
 
 For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://www.github.com/agi-init/XRD) in Crystal classification, reproducing [classifying crystal structures and space groups from X-ray diffraction patterns]().
 
-> &#9432; Note that this dataset consists of *1-dimensional* data and architectures.
+> &#9432; Note that this dataset consists of 1D data and architectures.
 
 [//]: # (> that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]&#40;&#41; Section 3.6 for details about architecture adaptivity.)
 
