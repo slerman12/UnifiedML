@@ -1134,9 +1134,11 @@ Gets a perfect score on speech command classification from raw 1D audio with the
 </summary>
 <br>
 
-For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://www.github.com/agi-init/XRD) in the domain of Crystalographic-Structure-And-Space-Group classification, reproducing the [paper on classifying crystal structures and space groups from X-ray diffraction patterns]() with UnifiedML commands.
+For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://www.github.com/agi-init/XRD) in Crystal classification, reproducing [classifying crystal structures and space groups from X-ray diffraction patterns]().
 
-> &#9432; Note that this dataset consists of *1-dimensional* data that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]() Section 3.6 for details about architecture adaptivity.
+> &#9432; Note that this dataset consists of *1-dimensional* data and architectures.
+
+[//]: # (> that is read into a 1D CNN and MLPs. UnifiedML architectures like CNN and MLP are **dimensionality-adaptive**! See [paper]&#40;&#41; Section 3.6 for details about architecture adaptivity.)
 
 </details>
 
