@@ -1101,7 +1101,7 @@ python Run.py task=mario +env.stage=2
 </summary>
 <br>
 
-You can pass in any Torchvision Dataset as follows:
+You can pass in any TorchVision Dataset as follows:
 
 ```console
 python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
