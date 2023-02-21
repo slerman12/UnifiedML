@@ -111,13 +111,14 @@ class Classify:
         classes = subset if subset is not None \
             else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
             else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
-            else [print(f'Identifying unique {"training" if train else "evaluation"} data classes... '
-                        f'This can take some time.'), sorted(list(set(str(exp[1]) for exp in dataset)))][1]
+            else [print(f'Identifying unique {{"train" if train else "eval"}} classes... '
+                        f'This can take some time for large datasets.'),  # TODO Save/Only do once
+                  sorted(list(set(str(exp[1]) for exp in dataset)))][1]
 
         # Can select a subset of classes
         if subset:
             task += '_Classes_' + '_'.join(map(str, classes))
-            print(f'Selecting subset of classes from dataset... This can take some time.')
+            print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
             dataset = ClassSubset(dataset, classes)
 
         # Map unique classes to integers

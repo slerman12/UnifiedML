@@ -1141,15 +1141,23 @@ For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://
 
 ---
 
-Note: You can also specify an **independent test dataset** with ```TestDataset=```. Here is an in-depth example:
+Note: You can also specify an **independent test dataset** with ```TestDataset=```. 
 
-```console
-# 1. Train and evaluate on MNIST over 1200 steps, automatically saving the checkpoint
-python Run.py task=classify/mnist train_steps=1200
+[//]: # (Here is an in-depth example:)
 
-# 2. Explicitly evaluate on MNIST (or another dataset of your choosing), loading the trained checkpoint
-python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets.MNIST load=true load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example plot_per_steps=1
-```
+[//]: # ()
+[//]: # (```console)
+
+[//]: # (# 1. Train and evaluate on MNIST over 1200 steps, automatically saving the checkpoint)
+
+[//]: # (python Run.py task=classify/mnist train_steps=1200)
+
+[//]: # ()
+[//]: # (# 2. Explicitly evaluate on MNIST &#40;or another dataset of your choosing&#41;, loading the trained checkpoint)
+
+[//]: # (python Run.py task=classify/mnist train_steps=0 TestDataset=torchvision.datasets.MNIST load=true load_path=./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt experiment=example plot_per_steps=1)
+
+[//]: # (```)
 
 [comment]: <> (For now, a dataset item is assumed to consist of just a &#40;input, label&#41; pair. )
 
