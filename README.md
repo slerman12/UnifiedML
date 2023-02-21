@@ -1101,13 +1101,13 @@ python Run.py task=mario +env.stage=2
 </summary>
 <br>
 
-You can pass in any Pytorch Dataset as follows:
+You can pass in any Dataset as follows:
 
 ```console
 python Run.py task=classify/custom Dataset=torchvision.datasets.MNIST
 ```
 
-That will launch MNIST. Another example, with a custom path:
+That will launch MNIST. Another example, with a custom class and path:
 
 ```console
 python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
@@ -1115,7 +1115,8 @@ python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyIma
 
 This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset.
 
-By default, the task name will appear as the Dataset class name (in the above examples, "```MNIST```" and "```TinyImageNet```"). You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```.
+[//]: # (By default, the task name will appear as the Dataset class name &#40;in the above examples, "```MNIST```" and "```TinyImageNet```"&#41;. )
+You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```. The default is the class name (```TinyImageNet``` here).
 
 **UnifiedML is compatible with datasets & domains besides Vision.**
 
