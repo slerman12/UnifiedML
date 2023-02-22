@@ -296,6 +296,8 @@ That's it.
 > :bulb: Train DMC example: ```python Run.py task=dmc/cheetah_run```
 >
 > :bulb: Train Classify example: ```python Run.py task=classify/mnist```
+>
+> :bulb: Train Generate example: ```python Run.py task=classify/mnist generate=true```
 
 [comment]: <> (:point_right:)
 
