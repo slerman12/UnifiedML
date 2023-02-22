@@ -353,8 +353,6 @@ That's it.
 
 [comment]: <> (❖)
 
-UnifiedML is foremost an RL and soon-to-be robotics library.
-
 **Train** [```DQN Agent```](Agents/DQN.py) **to play Ms. Pac-Man**:
 
 ```console
