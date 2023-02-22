@@ -353,6 +353,10 @@ That's it.
 
 [comment]: <> (❖)
 
+[//]: # (UnifiedML is foremost an RL library.)
+
+[//]: # (UnifiedML is foremost an RL and soon-to-be robotics library.)
+
 **Train** [```DQN Agent```](Agents/DQN.py) **to play Ms. Pac-Man**:
 
 ```console
@@ -1188,7 +1192,7 @@ Please [share your recipes](https://github.com/agi-init/UnifiedML/discussions) i
 
 [comment]: <> (─༺༻─)
 
-**Recipes can also be defined temporarily via command line without saving them to .yaml files.**
+**Recipes can also be defined temporarily via command line without saving them to .yaml files**
 
 Below is a running list of some out-of-the-ordinary or interesting ones:
 
