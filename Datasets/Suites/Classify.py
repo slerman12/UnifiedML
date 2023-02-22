@@ -108,11 +108,12 @@ class Classify:
             return
 
         # Unique classes in dataset - warning: treats multi-label as single-label for now
+        # TODO Save/Only do once - debug speech command on Macula
         classes = subset if subset is not None \
             else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
             else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
             else [print(f'Identifying unique {{"train" if train else "eval"}} classes... '
-                        f'This can take some time for large datasets.'),  # TODO Save/Only do once
+                        f'This can take some time for large datasets.'),
                   sorted(list(set(str(exp[1]) for exp in dataset)))][1]
 
         # Can select a subset of classes

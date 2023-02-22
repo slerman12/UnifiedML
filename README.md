@@ -176,7 +176,8 @@ conda activate ML
 >
 > For example, for CUDA 11.6:
 > ```console
-> conda install pytorch torchvision torchaudio cudatoolkit=11.6 -c pytorch -c conda-forge
+> pip3 uninstall torch torchvision torchaudio
+> pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 > ```
 [//]: # (>)
 
