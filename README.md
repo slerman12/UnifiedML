@@ -175,10 +175,11 @@ conda activate ML
 > > &#9432; Depending on your CUDA version, you may need to redundantly install Pytorch with CUDA from [pytorch.org/get-started](https://pytorch.org/get-started/locally/) after activating your Conda environment.
 >
 > For example, for CUDA 11.6:
-> 
-> ```pip3 uninstall torch torchvision torchaudio```
-> 
-> ```pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116```
+> ```console
+> 1. pip3 uninstall torch torchvision torchaudio
+> 2. pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+> ```
+[//]: # (>)
 
 [//]: # (> For example, for CUDA 11.6:)
 
