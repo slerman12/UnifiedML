@@ -1058,9 +1058,9 @@ python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_na
 <br><i>Mario trained via DQN.</i>
 </p>
 
-Any hyper-params you don't specify will be inherited from the default task, ```atari/pong```, or whichever task is selected.
+Any hyper-params you don't specify will be inherited from the default task, ```atari/pong```.
 
-If you want to save Hyperparams and formally define a task, you can create files like [./Hyperparams/task/mario.yaml](Hyperparams/task/mario.yaml) in the [./Hyperparams/task/](Hyperparams/task) directory:
+If you want to save Hyperparams and formally define a task, you can create files like [```./Hyperparams/task/mario.yaml```](Hyperparams/task/mario.yaml) in the [./Hyperparams/task/](Hyperparams/task) directory:
 
 ```ruby
 # ./Hyperparams/task/mario.yaml
