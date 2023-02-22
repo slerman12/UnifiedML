@@ -403,7 +403,7 @@ python Run.py
 
 
 
-**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](paper), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
+**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](paper), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent, including classification and generative modeling.
 
 [comment]: <> (❖)
 
@@ -713,7 +713,7 @@ Defaults can be easily modified with custom architectures or even datasets as el
 python Run.py task=classify/mnist generate=true Discriminator=CNN +agent.num_critics=1
 ```
 
-```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. See [paper]() or [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification between Critic and Discriminator. 
+```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. See [paper]() or [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification. 
 
 Or a ResNet18:
 
