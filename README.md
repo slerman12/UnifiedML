@@ -1144,7 +1144,7 @@ For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://
 
 ---
 
-Note: You can also specify an **independent test dataset** with ```TestDataset=```. 
+Note: You can also specify an **independent test dataset** explicitly with ```TestDataset=```. 
 
 [//]: # (Here is an in-depth example:)
 
