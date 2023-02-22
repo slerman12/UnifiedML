@@ -403,7 +403,9 @@ python Run.py
 
 
 
-**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](paper), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent, including classification and generative modeling.
+**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](paper), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
+
+[//]: # (, including classification and generative modeling.)
 
 [comment]: <> (❖)
 
