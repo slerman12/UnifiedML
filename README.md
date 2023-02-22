@@ -1192,7 +1192,7 @@ Please [share your recipes](https://github.com/agi-init/UnifiedML/discussions) i
 
 [comment]: <> (─༺༻─)
 
-**Recipes can also be defined temporarily via command line without saving them to .yaml files**
+**Recipes can also be defined temporarily via command line without saving them to .yaml files.**
 
 Below is a running list of some out-of-the-ordinary or interesting ones:
 
@@ -1251,6 +1251,8 @@ python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.d
 ```console
 python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 aug.pad=4
 ```
+
+These are also useful for testing whether I've broken things.
 
 </details>
 
