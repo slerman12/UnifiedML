@@ -77,7 +77,7 @@ for epoch in range(num_epochs):
         Utils.optimize(critic_loss, critic)
 
         # Generate
-        action = actor(obs).mean.view_as(obs)
+        action = actor(obs).mean.view_as(obs)  # Redundant to action_
         Qs = critic(obs, action)
         Q_target = torch.ones_like(Qs)
         actor_loss = criterion(Qs, Q_target)
