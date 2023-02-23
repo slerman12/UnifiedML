@@ -75,7 +75,7 @@ for epoch in range(num_epochs):
 
         critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
 
-        Utils.optimize(critic_loss * 2, critic)
+        Utils.optimize(critic_loss, critic)
 
         # Discriminate real
         # action_ = actor(obs).mean
@@ -97,12 +97,12 @@ for epoch in range(num_epochs):
         # Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
         #
         # # Generate
-        # # action = actor(obs).mean  # Redundant to action_
-        # Qs = critic(obs, action_)
-        # Q_target = torch.ones_like(Qs)
-        # actor_loss = criterion(Qs, Q_target)
-        #
-        # Utils.optimize(actor_loss, actor)
+        # action = actor(obs).mean  # Redundant to action_
+        Qs = critic(obs, action_)
+        Q_target = torch.ones_like(Qs)
+        actor_loss = criterion(Qs, Q_target)
+
+        Utils.optimize(actor_loss, actor)
 
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
