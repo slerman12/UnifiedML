@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 Utils.set_seeds(0)
 
-batch_size = 128
+batch_size = 256
 num_epochs = 5
 z_dim = 100
 lr = 0.0002
@@ -67,13 +67,13 @@ for epoch in range(num_epochs):
         # Discriminate real
         obs = obs.to(device)
         obs = encoder(obs)
-        action = actor(obs).mean
+        action = obs
         reward = torch.ones((len(obs), 1)).to(obs)
-        # critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0), 1)
 
         # Discriminate plausible
-        action = torch.cat([action, obs.view_as(action)], 0)
-        reward = torch.cat([reward, torch.zeros_like(reward)], 0)
+        half = len(action) // 2
+        action[:half] = actor(obs).mean
+        reward[:half] = 0
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
