@@ -94,7 +94,7 @@ for epoch in range(num_epochs):
         # Intuition - zig-zag is better than contradiction
         # Alternate - maybe batch size being uneven or halved...
         # Try: step once but compute gradients separately and add
-        Utils.optimize(critic_loss / 2, critic)  # Note: I wonder if it always helps to train unique classes independently
+        Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
 
         # Generate
         # action = actor(obs).mean  # Redundant to action_
