@@ -83,7 +83,7 @@ for epoch in range(num_epochs):
         action = obs.view_as(action_)
         reward = torch.ones((len(obs), 1)).to(obs)
 
-        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
@@ -93,7 +93,7 @@ for epoch in range(num_epochs):
         action = actor(obs).mean
         reward = torch.zeros_like(reward)
 
-        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
