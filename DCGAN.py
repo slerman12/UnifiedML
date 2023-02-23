@@ -87,13 +87,13 @@ for epoch in range(num_epochs):
 
         # Discriminate plausible
         reward = torch.zeros_like(reward)
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action_, reward, 1, torch.ones(0), 1)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action_.detach(), reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
         # Generate
         # action = actor(obs).mean  # Redundant to action_
-        Qs = critic(obs.detach(), action_)
+        Qs = critic(obs, action_)
         Q_target = torch.ones_like(Qs)
         actor_loss = criterion(Qs, Q_target)
 
