@@ -41,7 +41,7 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
                      transforms.Resize(64),
                      transforms.CenterCrop(64),
                      transforms.ToTensor(),
-                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Encoder can standardize
+                     # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Encoder can standardize
                  ]))
 
 
@@ -50,7 +50,7 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle
 obs_spec = AttrDict({'shape': [3, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})
 
-encoder = CNNEncoder(obs_spec, standardize=False, Eyes=nn.Identity)
+encoder = CNNEncoder(obs_spec, standardize=True, Eyes=nn.Identity)
 actor = EnsemblePiActor(encoder.repr_shape, 100, -1, action_spec, trunk=Utils.Rand, Pi_head=Generator, ensemble_size=1,
                         lr=lr, optim={'_target_': 'Adam', 'betas': [beta1, 0.999]}).to(device)
 critic = EnsembleQCritic(encoder.repr_shape, 100, -1, action_spec, Q_head=Discriminator, ensemble_size=1,
@@ -87,9 +87,10 @@ for epoch in range(num_epochs):
 
         # Discriminate plausible
         reward = torch.zeros_like(reward)
+        # Action must be detached
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action_.detach(), reward, 1, torch.ones(0), 1)
 
-        Utils.optimize(critic_loss, critic)
+        Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
 
         # Generate
         # action = actor(obs).mean  # Redundant to action_
