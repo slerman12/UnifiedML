@@ -121,5 +121,5 @@ runs.UnifiedML.sftp = True
 runs.UnifiedML.bluehive = True  # Also running on Bluehive
 runs.UnifiedML.lab = False  # Also running on lab
 
-runs.UnifiedML.title = 'Reinforcement Learning In Classification'
+runs.UnifiedML.title = 'Reinforcement Learner As Classifier'
 runs.UnifiedML.steps = 5e5
