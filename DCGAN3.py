@@ -62,9 +62,9 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action.detach())
         reward = torch.ones_like(Qs)
-        target_Q = reward
+        Q_target = reward
 
-        critic_loss = criterion(Qs, target_Q)
+        critic_loss = criterion(Qs, Q_target)
         discriminator_optim.zero_grad()
         critic_loss.backward()
         discriminator_optim.step()
@@ -82,6 +82,7 @@ for epoch in range(num_epochs):
         # Generate
         Qs = discriminator(action_)
         Q_target = torch.ones_like(Qs)
+
         actor_loss = criterion(Qs, Q_target)
         generator_optim.zero_grad()
         actor_loss.backward()

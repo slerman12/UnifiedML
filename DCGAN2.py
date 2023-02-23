@@ -54,16 +54,11 @@ generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 for epoch in range(num_epochs):
     for i, (obs, *_) in enumerate(dataloader):
 
-        discriminator_optim.zero_grad()
-        generator_optim.zero_grad()
-
-        obs = obs.to(device)
-
-        # Discriminate Real
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
-        action = obs.view_as(action_)
 
+        # Discriminate Real
+        action = obs.view_as(action_).to(device)
         Qs = discriminator(action.detach())
         reward = torch.ones_like(Qs)
         target_Q = reward
@@ -73,17 +68,20 @@ for epoch in range(num_epochs):
         # Discriminate Plausible
         reward = torch.zeros_like(Qs)
 
-        Qs = discriminator(action.detach())
-        target_Q = reward
+        Qs = discriminator(action_.detach())
+        Q_target = reward
 
-        critic_loss += criterion(Qs, target_Q)
+        critic_loss += criterion(Qs, Q_target)
+        discriminator_optim.zero_grad()
         critic_loss.backward()
         discriminator_optim.step()
 
         # Generate
         Qs = discriminator(action_)
         Q_target = torch.ones_like(Qs)
+
         actor_loss = criterion(Qs, Q_target)
+        generator_optim.zero_grad()
         actor_loss.backward()
         generator_optim.step()
 
