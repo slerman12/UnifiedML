@@ -33,7 +33,7 @@ class Generator(nn.Module):
 
         self.apply(weight_init)
 
-    def forward(self, *x):
+    def forward(self, x):
         return self.Generator(x)
 
 
