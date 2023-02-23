@@ -75,7 +75,7 @@ for epoch in range(num_epochs):
 
         critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action.detach(), reward, 1, torch.ones(0), 1)
 
-        Utils.optimize(critic_loss, critic)
+        Utils.optimize(critic_loss * 2, critic)
 
         # Discriminate real
         # action_ = actor(obs).mean
