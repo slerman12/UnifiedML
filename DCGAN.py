@@ -64,13 +64,34 @@ criterion = nn.BCELoss()
 for epoch in range(num_epochs):
     for i, (obs, *_) in enumerate(dataloader):
 
+        # Discriminate both
+        # obs = obs.to(device)
+        # obs = encoder(obs)
+        # action_ = actor(obs).mean
+        # action = torch.cat([obs.view_as(action_), action_], 0)
+        # reward_ = torch.zeros((len(obs), 1)).to(obs)
+        # reward = torch.cat([torch.ones_like(reward_), reward_], 0)
+        #
+        # critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+        #
+        # Utils.optimize(critic_loss, critic)
+
         # Discriminate real
         obs = obs.to(device)
         obs = encoder(obs)
         action_ = actor(obs).mean
-        action = torch.cat([obs.view_as(action_), action_], 0)
-        reward_ = torch.zeros((len(obs), 1)).to(obs)
-        reward = torch.cat([torch.ones_like(reward_), reward_], 0)
+        action = obs.view_as(action_)
+        reward = torch.ones((len(obs), 1)).to(obs)
+
+        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+
+        Utils.optimize(critic_loss, critic)
+
+        # Discriminate plausible
+        obs = obs.to(device)
+        obs = encoder(obs)
+        action = actor(obs).mean
+        reward = torch.zeros_like(reward)
 
         critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
 
