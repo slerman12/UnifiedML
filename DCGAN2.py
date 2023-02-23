@@ -1,22 +1,22 @@
+# Template created by Sam Lerman, slerman@ur.rochester.edu.
+
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+
+import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
+from torch.optim import Adam
 
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
+from CelebA import CelebA
+# from torchvision.datasets.celeba import CelebA
 
-import numpy as np
-from torch.optim import Adam
-
-from Blocks.Architectures.Vision.DCGAN import Generator, Discriminator
-
-from Datasets.Suites._CelebA import CelebA
-
-import Utils
-
-import matplotlib.pyplot as plt
+from Discriminator import Discriminator
+from Generator import Generator
 
 
 torch.manual_seed(0)
@@ -43,8 +43,8 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-discriminator = None
-generator = None
+discriminator = Discriminator()
+generator = Generator()
 
 criterion = nn.BCELoss()
 
@@ -60,19 +60,28 @@ for epoch in range(num_epochs):
 
         obs = obs.to(device)
 
+        # Discriminator Real
         rand = torch.randn((obs[0].shape[0], z_dim), device=obs[0].device)
         action_ = generator(rand)
-        action = torch.cat([obs.view_as(action_), action_], 0)
-        reward_ = torch.zeros((len(obs), 1)).to(obs)
-        reward = torch.cat([torch.ones_like(reward_), reward_], 0)
+        action = obs.view_as(action_)
+        reward = torch.ones((len(obs), 1)).to(obs)
 
         Qs = discriminator(action.detach())
         target_Q = reward
 
         critic_loss = criterion(Qs, target_Q)
+
+        # Discriminator Plausible
+        reward = torch.zeros_like(reward)
+
+        Qs = discriminator(action.detach())
+        target_Q = reward
+
+        critic_loss += criterion(Qs, target_Q)
         critic_loss.backward()
         discriminator_optim.step()
 
+        # Generator
         Qs = discriminator(action_)
         Q_target = torch.ones_like(Qs)
         actor_loss = criterion(Qs, Q_target)
