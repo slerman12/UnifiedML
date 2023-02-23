@@ -27,7 +27,6 @@ batch_size = 256
 num_epochs = 5
 z_dim = 100
 lr = 0.0002
-beta1 = 0.5
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 

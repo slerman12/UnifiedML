@@ -23,11 +23,10 @@ torch.manual_seed(0)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(0)
 
-batch_size = 256
+batch_size = 128
 num_epochs = 5
 z_dim = 100
 lr = 0.0002
-beta1 = 0.5
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -37,7 +36,7 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
                      transforms.Resize(64),
                      transforms.CenterCrop(64),
                      transforms.ToTensor(),
-                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Encoder can standardize
+                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                  ]))
 
 
@@ -74,9 +73,8 @@ for epoch in range(num_epochs):
         discriminator_optim.step()
 
         # Discriminate Plausible
-        reward = torch.zeros_like(Qs)
-
         Qs = discriminator(action.detach())
+        reward = torch.zeros_like(Qs)
         target_Q = reward
 
         critic_loss = criterion(Qs, target_Q)
