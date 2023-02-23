@@ -78,8 +78,8 @@ for epoch in range(num_epochs):
 
         # Generate
         action = actor(obs).mean.view_as(obs)
-        Qs = critic(obs, action).view(-1, 1)
-        Q_target = torch.ones_like(reward)
+        Qs = critic(obs, action)
+        Q_target = torch.ones_like(Qs)
         actor_loss = criterion(Qs, Q_target)
 
         Utils.optimize(actor_loss, actor)
