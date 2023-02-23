@@ -83,13 +83,17 @@ for epoch in range(num_epochs):
         reward = torch.ones((len(obs), 1)).to(obs)
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
-        Utils.optimize(critic_loss, critic)
+        # Utils.optimize(critic_loss, critic)
 
         # Discriminate plausible
         reward = torch.zeros_like(reward)
         # Action must be detached
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action_.detach(), reward, 1, torch.ones(0), 1)
+        critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action_.detach(), reward, 1, torch.ones(0), 1)
 
+        # This is an interesting discovery. Stepping them independently makes a big difference
+        # Intuition - zig-zag is better than contradiction
+        # Alternate - maybe batch size being uneven or halved...
+        # Try: step once but compute gradients separately and add
         Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
 
         # Generate
