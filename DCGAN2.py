@@ -91,9 +91,6 @@ for epoch in range(num_epochs):
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
 
-
-obs, *_ = next(iter(dataloader))
-
 plt.figure(figsize=(15, 15))
 
 plt.subplot(1, 2, 1)
@@ -104,7 +101,7 @@ plt.imshow(np.transpose(vutils.make_grid(obs[:64].detach(), padding=5, normalize
 plt.subplot(1, 2, 2)
 plt.axis('off')
 plt.title('Plausible Not-Real')
-action = generator(obs.to(device)).view_as(obs)
+action = generator(rand).view_as(obs)
 plt.imshow(np.transpose(vutils.make_grid(action[:64].detach(), padding=2, normalize=True).cpu(), (1, 2, 0)))
 
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
