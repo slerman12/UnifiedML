@@ -61,9 +61,8 @@ for epoch in range(num_epochs):
         obs = obs.to(device)
 
         # Discriminator Real
-        rand = torch.randn((obs[0].shape[0], z_dim, 1, 1), device=device)
+        rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
-        print(action_.shape, obs.shape)
         action = obs.view_as(action_)
         reward = torch.ones((len(obs), 1)).to(obs)
 
