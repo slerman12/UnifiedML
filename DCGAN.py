@@ -74,7 +74,7 @@ for epoch in range(num_epochs):
 
         target_Q = reward
 
-        Qs = critic(obs, action)  # Q-ensemble
+        Qs = critic(torch.cat([obs, obs], 0), action)  # Q-ensemble
 
         # Use BCE if Critic ends with Sigmoid
         # criterion = binary_cross_entropy if critic.binary else mse_loss
