@@ -73,7 +73,7 @@ for epoch in range(num_epochs):
         reward_ = torch.zeros((len(obs), 1)).to(obs)
         reward = torch.cat([torch.ones_like(reward_), reward_], 0)
 
-        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action.detach(), reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
@@ -95,8 +95,8 @@ for epoch in range(num_epochs):
         # # Alternate - maybe batch size being uneven or halved...
         # # Try: step once but compute gradients separately and add
         # Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
-        #
-        # # Generate
+
+        # Generate
         # action = actor(obs).mean  # Redundant to action_
         Qs = critic(obs, action_)
         Q_target = torch.ones_like(Qs)
