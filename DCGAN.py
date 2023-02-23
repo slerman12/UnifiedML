@@ -88,8 +88,6 @@ for epoch in range(num_epochs):
         Utils.optimize(critic_loss, critic)
 
         # Discriminate plausible
-        obs = obs.to(device)
-        obs = encoder(obs)
         action = actor(obs).mean
         reward = torch.zeros_like(reward)
 
