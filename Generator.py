@@ -1,4 +1,5 @@
 # Template created by Sam Lerman, slerman@ur.rochester.edu.
+
 from torch import nn
 
 
@@ -8,7 +9,7 @@ class Generator(nn.Module):
 
         self.Generator = nn.Sequential(
             # (64 * 8) x 4 x 4
-            nn.ConvTranspose2d(3, 64 * 8, 4, bias=False),
+            nn.ConvTranspose2d(100, 64 * 8, 4, bias=False),
             nn.BatchNorm2d(64 * 8),
             nn.ReLU(inplace=True),
 
