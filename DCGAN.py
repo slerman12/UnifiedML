@@ -79,6 +79,15 @@ for epoch in range(num_epochs):
 
         Utils.optimize(critic_loss, critic)
 
+        # Discriminate plausible
+        action[:half] = obs[:half]
+        reward[:half] = 1
+        action[half:] = action_[:half]
+        reward[half:] = 0
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
+
+        Utils.optimize(critic_loss, critic)
+
         # Generate
         action = actor(obs).mean.view_as(obs)
         Qs = critic(obs, action).view(-1, 1)
