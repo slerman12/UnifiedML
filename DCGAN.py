@@ -67,12 +67,13 @@ for epoch in range(num_epochs):
         # Discriminate real
         obs = obs.to(device)
         obs = encoder(obs)
-        action = obs
+        action_ = actor(obs).mean  # Redundant, Slow
+        action = obs.view_as(action_)
         reward = torch.ones((len(obs), 1)).to(obs)
 
         # Discriminate plausible
         half = len(action) // 2
-        action[:half] = actor(obs[:half]).mean
+        action[:half] = action_[:half]
         reward[:half] = 0
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
