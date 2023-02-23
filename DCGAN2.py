@@ -43,8 +43,8 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-discriminator = Discriminator()
-generator = Generator()
+discriminator = Discriminator().to(device)
+generator = Generator().to(device)
 
 criterion = nn.BCELoss()
 
@@ -61,7 +61,7 @@ for epoch in range(num_epochs):
         obs = obs.to(device)
 
         # Discriminator Real
-        rand = torch.randn((obs[0].shape[0], z_dim, 1, 1), device=device, dtype=torch.float64)
+        rand = torch.randn((obs[0].shape[0], z_dim, 1, 1), device=device)
         action_ = generator(rand)
         action = obs.view_as(action_)
         reward = torch.ones((len(obs), 1)).to(obs)
