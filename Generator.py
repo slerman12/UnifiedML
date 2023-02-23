@@ -30,6 +30,7 @@ class Generator(nn.Module):
 
             # 3 x 64 x 64
             nn.ConvTranspose2d(64, 3, 4, 2, 1, bias=False),
+            nn.Tanh()
         )
 
         self.apply(weight_init)
