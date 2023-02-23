@@ -64,10 +64,11 @@ for epoch in range(num_epochs):
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
         action = torch.cat([obs.view_as(action_), action_], 0)
-        reward_ = torch.zeros((len(obs), 1)).to(obs)
-        reward = torch.cat([torch.ones_like(reward_), reward_], 0)
 
         Qs = discriminator(action.detach())
+
+        reward_ = torch.zeros_like(Qs)
+        reward = torch.cat([torch.ones_like(Qs), reward_], 0)
         target_Q = reward
 
         critic_loss = criterion(Qs, target_Q)

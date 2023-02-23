@@ -72,7 +72,7 @@ for epoch in range(num_epochs):
         critic_loss = criterion(Qs, target_Q)
 
         # Discriminator Plausible
-        reward = torch.zeros_like(reward)
+        reward = torch.zeros_like(Qs)
 
         Qs = discriminator(action.detach())
         target_Q = reward
