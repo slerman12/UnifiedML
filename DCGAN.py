@@ -72,7 +72,7 @@ for epoch in range(num_epochs):
 
         # Discriminate plausible
         half = len(action) // 2
-        action[:half] = actor(obs).mean
+        action[:half] = actor(obs[:half]).mean
         reward[:half] = 0
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
