@@ -68,12 +68,12 @@ for epoch in range(num_epochs):
         obs = encoder(obs)
 
         # Discriminate both
-        action_ = actor(obs).mean
-        action = torch.cat([obs.view_as(action_), action_], 0)
-        reward_ = torch.zeros((len(obs), 1)).to(obs)
-        reward = torch.cat([torch.ones_like(reward_), reward_], 0)
+        # action_ = actor(obs).mean
+        # action = torch.cat([obs.view_as(action_), action_], 0)
+        # reward_ = torch.zeros((len(obs), 1)).to(obs)
+        # reward = torch.cat([torch.ones_like(reward_), reward_], 0)
 
-        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+        # critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
 
         # Utils.optimize(critic_loss, critic)
 
@@ -81,22 +81,19 @@ for epoch in range(num_epochs):
         action_ = actor(obs).mean
         action = obs.view_as(action_)
         reward = torch.ones((len(obs), 1)).to(obs)
-
         critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
         # Discriminate plausible
-        action = action_
         reward = torch.zeros_like(reward)
-
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action_, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
         # Generate
-        action = actor(obs).mean  # Redundant to action_
-        Qs = critic(obs, action)
+        # action = actor(obs).mean  # Redundant to action_
+        Qs = critic(obs, action_)
         Q_target = torch.ones_like(Qs)
         actor_loss = criterion(Qs, Q_target)
 
