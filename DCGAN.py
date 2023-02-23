@@ -68,41 +68,41 @@ for epoch in range(num_epochs):
         obs = encoder(obs)
 
         # Discriminate both
-        # action_ = actor(obs).mean
-        # action = torch.cat([obs.view_as(action_), action_], 0)
-        # reward_ = torch.zeros((len(obs), 1)).to(obs)
-        # reward = torch.cat([torch.ones_like(reward_), reward_], 0)
+        action_ = actor(obs).mean
+        action = torch.cat([obs.view_as(action_), action_], 0)
+        reward_ = torch.zeros((len(obs), 1)).to(obs)
+        reward = torch.cat([torch.ones_like(reward_), reward_], 0)
 
-        # critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, torch.cat([obs, obs], 0), action, reward, 1, torch.ones(0), 1)
 
-        # Utils.optimize(critic_loss, critic)
+        Utils.optimize(critic_loss * 2, critic)
 
         # Discriminate real
-        action_ = actor(obs).mean
-        action = obs.view_as(action_)
-        reward = torch.ones((len(obs), 1)).to(obs)
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
-
-        # Utils.optimize(critic_loss, critic)
-
-        # Discriminate plausible
-        reward = torch.zeros_like(reward)
-        # Action must be detached
-        critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action_.detach(), reward, 1, torch.ones(0), 1)
-
-        # This is an interesting discovery. Stepping them independently makes a big difference
-        # Intuition - zig-zag is better than contradiction
-        # Alternate - maybe batch size being uneven or halved...
-        # Try: step once but compute gradients separately and add
-        Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
-
-        # Generate
-        # action = actor(obs).mean  # Redundant to action_
-        Qs = critic(obs, action_)
-        Q_target = torch.ones_like(Qs)
-        actor_loss = criterion(Qs, Q_target)
-
-        Utils.optimize(actor_loss, actor)
+        # action_ = actor(obs).mean
+        # action = obs.view_as(action_)
+        # reward = torch.ones((len(obs), 1)).to(obs)
+        # critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
+        #
+        # # Utils.optimize(critic_loss, critic)
+        #
+        # # Discriminate plausible
+        # reward = torch.zeros_like(reward)
+        # # Action must be detached
+        # critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action_.detach(), reward, 1, torch.ones(0), 1)
+        #
+        # # This is an interesting discovery. Stepping them independently makes a big difference
+        # # Intuition - zig-zag is better than contradiction
+        # # Alternate - maybe batch size being uneven or halved...
+        # # Try: step once but compute gradients separately and add
+        # Utils.optimize(critic_loss, critic)  # Note: I wonder if it always helps to train unique classes independently
+        #
+        # # Generate
+        # # action = actor(obs).mean  # Redundant to action_
+        # Qs = critic(obs, action_)
+        # Q_target = torch.ones_like(Qs)
+        # actor_loss = criterion(Qs, Q_target)
+        #
+        # Utils.optimize(actor_loss, actor)
 
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
