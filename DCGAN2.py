@@ -64,9 +64,9 @@ for epoch in range(num_epochs):
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
         action = obs.view_as(action_)
-        reward = torch.ones((len(obs), 1)).to(obs)
 
         Qs = discriminator(action.detach())
+        reward = torch.ones_like(Qs)
         target_Q = reward
 
         critic_loss = criterion(Qs, target_Q)
