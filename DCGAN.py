@@ -69,11 +69,12 @@ for epoch in range(num_epochs):
         obs = encoder(obs)
         action = actor(obs).mean
         reward = torch.ones((len(obs), 1)).to(obs)
-        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0), 1)
+        # critic_loss = QLearning.ensembleQLearning(critic, actor, obs, obs.view_as(action), reward, 1, torch.ones(0), 1)
 
         # Discriminate plausible
-        reward = torch.zeros_like(reward)
-        critic_loss += QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
+        action = torch.cat([action, obs.view_as(action)], 0)
+        reward = torch.cat([reward, torch.zeros_like(reward)], 0)
+        critic_loss = QLearning.ensembleQLearning(critic, actor, obs, action, reward, 1, torch.ones(0), 1)
 
         Utils.optimize(critic_loss, critic)
 
