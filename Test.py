@@ -28,6 +28,7 @@ model1 = nn.Linear(10, 10)
 model2 = nn.Linear(10, 10)
 
 optim = SGD(list(model1.parameters()) + list(model2.parameters()), lr=1e-4)
+# optim = Adam(list(model1.parameters()) + list(model2.parameters()), lr=0.0002, betas=(0.5, 0.999))
 
 y1 = model1(a)
 y2 = model2(b)
