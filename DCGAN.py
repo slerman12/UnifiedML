@@ -80,7 +80,7 @@ for epoch in range(num_epochs):
         Utils.optimize(critic_loss, critic)
 
         # Discriminate plausible
-        action[:half] = obs[:half]
+        action[:half] = obs.view_as(action)[:half]
         reward[:half] = 1
         action[half:] = action_[:half]
         reward[half:] = 0
