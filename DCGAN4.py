@@ -75,7 +75,9 @@ for epoch in range(num_epochs):
         generator_optim.zero_grad()
         loss.backward()
         discriminator_optim.step()
-        # Still poor image quality
+        # Still poor image quality - Intuition - maybe the reason for this is because the actor needs to "keep up"
+        #   - Here the actor maximizes the older critic on an action that the critic hasn't tuned itself stronger to.
+        #   - Analogous to self play
         # for param in generator.parameters():
         #     param.grad *= -1
         generator_optim.step()
