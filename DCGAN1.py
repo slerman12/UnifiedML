@@ -68,16 +68,15 @@ for epoch in range(num_epochs):
 
         critic_loss = criterion(Qs, Q_target)
         discriminator_optim.zero_grad()
-        critic_loss.backward()  # Can retain graph and maximize critic_loss below maybe
+        critic_loss.backward(retain_graph=True)  # Can retain graph and maximize critic_loss below maybe
         discriminator_optim.step()
 
         # Train Generator
-        rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
-        action_ = generator(rand)
         Qs = discriminator(action_)
         Q_target = torch.ones_like(Qs)
 
         actor_loss = criterion(Qs, Q_target)
+        actor_loss = -critic_loss
         generator_optim.zero_grad()
         actor_loss.backward()
         generator_optim.step()
