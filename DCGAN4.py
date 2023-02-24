@@ -25,7 +25,7 @@ if torch.cuda.is_available():
 
 batch_size = 256
 num_epochs = 5
-z_dim = 100
+z_dim = 50
 lr = 1e-4
 beta1 = 0.5
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -37,7 +37,7 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
                      transforms.Resize(64),
                      transforms.CenterCrop(64),
                      transforms.ToTensor(),
-                     transforms.Normalize(0.5, 0.5),  # Encoder can standardize
+                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Encoder can standardize
                  ]))
 
 
@@ -49,8 +49,8 @@ generator = Generator().to(device)
 
 criterion = nn.BCELoss()
 
-discriminator_optim = Adam(discriminator.parameters(), lr=lr)
-generator_optim = Adam(generator.parameters(), lr=lr, maximize=True)  # Maximize arg?
+discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
+generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999), maximize=True)  # Maximize arg?
 # Works but not as well in image quality... lr doesn't directly act in grads in non-SGD optimizers.
 # for param_group in generator_optim.param_groups:
 #     param_group['lr'] = -lr
