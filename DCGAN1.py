@@ -73,6 +73,9 @@ for epoch in range(num_epochs):
         discriminator_optim.step()
 
         # Train Generator
+        rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
+        action_ = generator(rand)
+
         Qs = discriminator(action_)
         Q_target = torch.ones_like(Qs)
 
