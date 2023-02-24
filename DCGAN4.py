@@ -71,7 +71,7 @@ for epoch in range(num_epochs):
         critic_loss = criterion(Qs, Q_target)
         generator_optim.zero_grad()
         discriminator_optim.zero_grad()
-        critic_loss.backward(retain_graph=True)  # Can retain graph and maximize critic_loss below maybe
+        critic_loss.backward()  # Can retain graph and maximize critic_loss below maybe
         discriminator_optim.step()
 
         # Train Generator
