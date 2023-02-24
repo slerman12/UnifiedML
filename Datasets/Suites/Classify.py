@@ -112,7 +112,7 @@ class Classify:
         classes = subset if subset is not None \
             else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
             else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
-            else [print(f'Identifying unique {{"train" if train else "eval"}} classes... '
+            else [print(f'Identifying unique {"train" if train else "eval"} classes... '
                         f'This can take some time for large datasets.'),
                   sorted(list(set(str(exp[1]) for exp in dataset)))][1]
 
