@@ -62,8 +62,8 @@ for epoch in range(num_epochs):
         action = torch.cat([obs.view_as(action_).to(device), action_], 0)
 
         Qs = discriminator(action.detach())
-        reward_ = torch.zeros_like(Qs)
-        reward = torch.cat([torch.ones_like(Qs), reward_], 0)
+        reward = torch.zeros_like(Qs)
+        reward[:len(obs) // 2] = 1
         Q_target = reward
 
         critic_loss = criterion(Qs, Q_target)
