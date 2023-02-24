@@ -49,8 +49,8 @@ generator = Generator().to(device)
 
 criterion = nn.BCELoss()
 
-discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999), maximize=True)  # Maximize arg?
+discriminator_optim = Adam(discriminator.parameters(), lr=lr)
+generator_optim = Adam(generator.parameters(), lr=lr, maximize=True)  # Maximize arg?
 # Works but not as well in image quality... lr doesn't directly act in grads in non-SGD optimizers.
 # for param_group in generator_optim.param_groups:
 #     param_group['lr'] = -lr
