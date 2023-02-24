@@ -28,8 +28,6 @@ class CelebA(Dataset):
                  key=None
                  ):
 
-        self.classes = [0, 1]
-
         # Get password, encrypt, and save for reuse
         for credential, value in {'KAGGLE_USERNAME': username, 'KAGGLE_KEY': key}.items():
             if value is None:
