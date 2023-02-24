@@ -270,7 +270,7 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Discriminate"
 
-                action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # "Real"
+                action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # Real
 
                 critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, logs=logs)
 
@@ -281,7 +281,7 @@ class AC2Agent(torch.nn.Module):
                 generated_image = (actions if self.num_actors == 1
                                    else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
 
-                action, reward, next_obs = generated_image, torch.zeros_like(reward), None  # Discriminate "fake"
+                action, reward, next_obs = generated_image, torch.zeros_like(reward), None  # Discriminate Fake
 
             # Update reward log
             if self.log:
