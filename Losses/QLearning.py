@@ -8,9 +8,9 @@ from torch.nn.functional import mse_loss, binary_cross_entropy
 import Utils
 
 
-def ensembleQLearning(critic, actor, obs, action, reward, discount, next_obs, step, logs=None):
+def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=None, step=0, logs=None):
     # Non-empty next_obs
-    has_future = bool(next_obs.nelement())
+    has_future = next_obs is not None and bool(next_obs.nelement())
 
     # Compute Bellman target
     with torch.no_grad():

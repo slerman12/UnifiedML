@@ -264,23 +264,24 @@ class AC2Agent(torch.nn.Module):
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
+            critic_loss = 0
+
             # Generative modeling
             if self.generate:
-                # "Imagine"
-
-                half = len(obs) // 2
-
-                actions = self.actor(obs[:half]).mean
-
-                generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs[:half], actions), 1, actions).best).flatten(1)
+                # "Discriminate"
 
                 action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # "Real"
-                action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
-                # TODO Is it faster to detach action? (Either way, Actor zero_grads first). deepPolicyLearning can reuse
-                #  action as long as Encoder doesn't require gradients (generate=true) via action= arg.
 
-                next_obs[:] = float('nan')
+                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, logs=logs)
+
+                # "Imagine" / "Generate"
+
+                actions = self.actor(obs).mean
+
+                generated_image = (actions if self.num_actors == 1
+                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
+
+                action, reward, next_obs = generated_image, 0, None  # Discriminate "fake"
 
             # Update reward log
             if self.log:
@@ -289,8 +290,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
-                                                      self.step, logs=logs)
+            critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+                                                       self.step, logs=logs)
 
             # "Foretell"
 
