@@ -78,6 +78,8 @@ for epoch in range(num_epochs):
         # Still poor image quality - Intuition - maybe the reason for this is because the actor needs to "keep up"
         #   - Here the actor maximizes the older critic on an action that the critic hasn't tuned itself stronger to.
         #   - Analogous to self play
+        #   - Probably not, if my test on with betas works. Then I have no idea why this doesn't
+        #   - Testing if separate action can be used. If yes, above intuition may not hold: Yes
         # for param in generator.parameters():
         #     param.grad *= -1
         generator_optim.step()

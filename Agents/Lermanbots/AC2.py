@@ -266,7 +266,7 @@ class AC2Agent(torch.nn.Module):
 
             critic_loss = 0
 
-            # Generative modeling
+            # Generative modeling  TODO Maybe undo back to concat and use InstanceNorm
             if self.generate:
                 # "Discriminate"
 
