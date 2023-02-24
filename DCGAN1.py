@@ -49,7 +49,7 @@ generator = Generator().to(device)
 criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
+generator_optim = Adam(generator.parameters(), lr=-lr, betas=(0.5, 0.999))
 
 
 for epoch in range(num_epochs):
@@ -61,7 +61,7 @@ for epoch in range(num_epochs):
         # Train Discriminator
         action = torch.cat([obs.view_as(action_).to(device), action_], 0)  # Doesn't work. Hypoth. Reason: Batch norm.
 
-        Qs = discriminator(action.detach())
+        Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
         reward[:len(obs) // 2] = 1
         Q_target = reward
@@ -72,12 +72,12 @@ for epoch in range(num_epochs):
         discriminator_optim.step()
 
         # Train Generator
-        Qs = discriminator(action_)
-        Q_target = torch.ones_like(Qs)
-
+        # Qs = discriminator(action_)
+        # Q_target = torch.ones_like(Qs)
+        #
         # actor_loss = criterion(Qs, Q_target)
         # generator_optim.zero_grad()
-        -critic_loss.backward()
+        # actor_loss.backward()
         generator_optim.step()
 
         if i % 50 == 0:
