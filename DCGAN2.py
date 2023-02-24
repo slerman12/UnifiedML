@@ -61,7 +61,7 @@ for epoch in range(num_epochs):
 
         # Discriminate Real
         action = obs.view_as(action_).to(device)
-        Qs = discriminator(action.detach())
+        Qs = discriminator(action.detach())  # Detach not needed here
         reward = torch.ones_like(Qs)
         target_Q = reward
 
@@ -99,6 +99,7 @@ plt.imshow(np.transpose(vutils.make_grid(obs[:64].detach(), padding=5, normalize
 plt.subplot(1, 2, 2)
 plt.axis('off')
 plt.title('Plausible Not-Real')
+rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
 action = generator(rand).view_as(obs)
 plt.imshow(np.transpose(vutils.make_grid(action[:64].detach(), padding=2, normalize=True).cpu(), (1, 2, 0)))
 
