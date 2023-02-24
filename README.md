@@ -1386,6 +1386,12 @@ Feel free to use our UnifiedML templates and figures in your work, citing [us](#
 
 In progress...
 
+[//]: # (```console)
+
+[//]: # (python Run.py   task=classify/celeba   Dataset=Datasets.Suites._CelebA.CelebA   generate=true      Discriminator=DCGAN.Discriminator      Generator=DCGAN.Generator      z_dim=100      'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"'      experiment=DCGAN     Aug=Identity '+optim.betas=[0.5, 0.999]' lr=2e-4  +agent.num_critics=1 Optim=Adam)
+
+[//]: # (```)
+
 # :interrobang: How is this possible
 
 We use our new Creator framework to unify RL discrete and continuous action spaces, as elaborated in our [paper](https://arxiv.com).

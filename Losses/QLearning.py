@@ -56,7 +56,8 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
     if logs is not None:
         logs['temporal_difference_error'] = q_loss
-        logs.update({f'q{i}': Qs[:, i].median() for i in range(Qs.shape[1])})
+        logs.update({f'q{i}': Qs[:, i].to('cpu' if Qs.device.type == 'mps' else Qs).median()  # torch.median not on mps
+                     for i in range(Qs.shape[1])})
         logs['target_q'] = target_Q.mean()
 
     return q_loss
