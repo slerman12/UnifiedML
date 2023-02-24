@@ -49,7 +49,9 @@ generator = Generator().to(device)
 criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=-lr, betas=(0.5, 0.999))
+generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
+for param_group in generator_optim.param_groups:
+    param_group['lr'] = -lr
 
 
 for epoch in range(num_epochs):
