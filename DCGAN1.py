@@ -65,7 +65,6 @@ for epoch in range(num_epochs):
         reward = torch.zeros_like(Qs)
         reward[:len(obs) // 2] = 1
         Q_target = reward
-        print(Qs, Q_target)
 
         critic_loss = criterion(Qs, Q_target)
         discriminator_optim.zero_grad()
@@ -75,7 +74,6 @@ for epoch in range(num_epochs):
         # Train Generator
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
-
         Qs = discriminator(action_)
         Q_target = torch.ones_like(Qs)
 
