@@ -281,7 +281,7 @@ class AC2Agent(torch.nn.Module):
                 generated_image = (actions if self.num_actors == 1
                                    else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
 
-                action, reward, next_obs = generated_image, 0, None  # Discriminate "fake"
+                action, reward, next_obs = generated_image, torch.zeros_like(reward), None  # Discriminate "fake"
 
             # Update reward log
             if self.log:
