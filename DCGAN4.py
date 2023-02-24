@@ -49,7 +49,7 @@ generator = Generator().to(device)
 criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
+generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999), maximize=True)  # Maximize arg?
 # for param_group in generator_optim.param_groups:
 #     param_group['lr'] = -lr  # Note: lr doesn't directly act in grads in non-SGD optimizers; either custom optim or per-
 
@@ -73,8 +73,8 @@ for epoch in range(num_epochs):
         generator_optim.zero_grad()
         loss.backward()
         discriminator_optim.step()
-        for param in generator.parameters():
-            param.grad *= -1
+        # for param in generator.parameters():
+        #     param.grad *= -1
         generator_optim.step()  # Works but not as well in image quality....
 
         if i % 50 == 0:
