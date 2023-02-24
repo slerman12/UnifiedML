@@ -55,8 +55,6 @@ generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 for epoch in range(num_epochs):
     for i, (obs, *_) in enumerate(dataloader):
 
-        obs.requires_grad = True
-
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
 
@@ -67,10 +65,11 @@ for epoch in range(num_epochs):
         reward = torch.zeros_like(Qs)
         reward[:len(obs) // 2] = 1
         Q_target = reward
+        print(Qs, Q_target)
 
         critic_loss = criterion(Qs, Q_target)
         discriminator_optim.zero_grad()
-        critic_loss.backward()
+        critic_loss.backward()  # Can retain graph and maximize critic_loss below maybe
         discriminator_optim.step()
 
         # Train Generator
