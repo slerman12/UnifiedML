@@ -55,6 +55,8 @@ generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 for epoch in range(num_epochs):
     for i, (obs, *_) in enumerate(dataloader):
 
+        obs.requires_grad = True
+
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
 
