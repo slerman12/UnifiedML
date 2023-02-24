@@ -50,8 +50,8 @@ criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
 generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
-for param_group in generator_optim.param_groups:
-    param_group['lr'] = -lr
+# for param_group in generator_optim.param_groups:
+#     param_group['lr'] = -lr  # Note: lr doesn't directly act in grads in non-SGD optimizers; either custom optim or per-
 
 
 for epoch in range(num_epochs):
@@ -60,7 +60,6 @@ for epoch in range(num_epochs):
         rand = torch.randn((len(obs), z_dim, 1, 1), device=device)
         action_ = generator(rand)
 
-        # Train Discriminator
         action = torch.cat([obs.view_as(action_).to(device), action_], 0)  # Doesn't work. Hypoth. Reason: Batch norm.
 
         Qs = discriminator(action)
@@ -68,19 +67,14 @@ for epoch in range(num_epochs):
         reward[:len(obs) // 2] = 1
         Q_target = reward
 
-        critic_loss = criterion(Qs, Q_target)
-        generator_optim.zero_grad()
-        discriminator_optim.zero_grad()
-        critic_loss.backward()  # Can retain graph and maximize critic_loss below maybe
-        discriminator_optim.step()
+        loss = criterion(Qs, Q_target)
 
-        # Train Generator
-        # Qs = discriminator(action_)
-        # Q_target = torch.ones_like(Qs)
-        #
-        # actor_loss = criterion(Qs, Q_target)
-        # generator_optim.zero_grad()
-        # actor_loss.backward()
+        discriminator_optim.zero_grad()
+        generator_optim.zero_grad()
+        loss.backward()
+        discriminator_optim.step()
+        for param in generator.parameters():
+            param.grad *= -1
         generator_optim.step()  # Works but not as well in image quality....
 
         if i % 50 == 0:
