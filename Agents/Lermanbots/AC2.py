@@ -314,7 +314,7 @@ class AC2Agent(torch.nn.Module):
 
             # Update critic, dynamics
             Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
-                           epoch=self.epoch if replay.offline else self.episode)
+                           epoch=self.epoch if replay.offline else self.episode, retain_graph=self.generate)
 
         # Update encoder
         Utils.optimize(None,  # Using gradients from previous losses

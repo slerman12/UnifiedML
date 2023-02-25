@@ -67,7 +67,7 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
-        reward[:len(obs) // 2] = 1
+        reward[:len(obs)] = 1
         Q_target = reward
 
         loss = criterion(Qs, Q_target)

@@ -10,7 +10,7 @@ def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
 
     if action.requires_grad:
         for param in actor.parameters():
-            param.grad *= -2  # 2 since Batch average
+            param.grad *= -len(action) / len(obs)  # Gradient Ascent
 
         return None
 
