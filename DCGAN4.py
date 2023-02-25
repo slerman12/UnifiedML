@@ -50,7 +50,9 @@ generator = Generator().to(device)
 criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999), maximize=True)  # Maximize arg?
+generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999)
+                       # , maximize=True
+                       )  # Maximize arg?
 # Works but not as well in image quality... lr doesn't directly act in grads in non-SGD optimizers.
 # for param_group in generator_optim.param_groups:
 #     param_group['lr'] = -lr
@@ -80,8 +82,8 @@ for epoch in range(num_epochs):
         #   - Analogous to self play
         #   - Probably not, if my test on with betas works. Then I have no idea why this doesn't
         #   - Testing if separate action can be used. If yes, above intuition may not hold: Yes
-        # for param in generator.parameters():
-        #     param.grad *= -1
+        for param in generator.parameters():
+            param.grad *= -2  # 2 since Batch average
         generator_optim.step()
 
         if i % 50 == 0:
