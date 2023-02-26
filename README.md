@@ -1185,7 +1185,7 @@ Note: You can also specify an **independent test dataset** explicitly with ```Te
 
 **Save hyperparams** to ```.yaml``` files by defining them in the [./Hyperparams/task/](Hyperparams/task) directory. There are many saved examples already.
 
-If you've defined a ```.yaml``` file called ```my_recipe.yaml``` for example, you can use it via 
+If you've defined a ```.yaml``` file called ```my_recipe.yaml```, you can use it via 
 
 ```console
 python Run.py task=my_recipe
