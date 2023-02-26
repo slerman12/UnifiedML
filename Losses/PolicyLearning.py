@@ -9,7 +9,7 @@ from torch.nn.functional import binary_cross_entropy
 def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
     if action.requires_grad:
         for param in actor.parameters():
-            param.grad *= -2
+            param.grad *= -1
 
         return None
 
