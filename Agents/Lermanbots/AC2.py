@@ -271,7 +271,7 @@ class AC2Agent(torch.nn.Module):
                 actions = self.actor(obs, self.step).rsample()
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), self.step, actions).rsample()).flatten(1)
+                                   else self.creator(self.critic(obs, actions), self.step, actions).best).flatten(1)
 
                 action = torch.cat((obs, generated_image))
 
