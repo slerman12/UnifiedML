@@ -64,6 +64,7 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
+        print(len(reward), len(obs), reward.shape, obs.shape)
         reward[:len(obs)] = 1
         Q_target = reward
 
