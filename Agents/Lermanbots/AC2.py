@@ -283,6 +283,8 @@ class AC2Agent(torch.nn.Module):
 
                 action, reward, next_obs = generated_image, torch.zeros_like(reward), None  # Discriminate Fake
 
+                self.actor.optim.zero_grad()
+
             # Update reward log
             if self.log:
                 logs.update({'reward': reward})
