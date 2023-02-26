@@ -23,7 +23,7 @@ torch.manual_seed(0)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(0)
 
-batch_size = 256
+batch_size = 128
 num_epochs = 5
 z_dim = 100
 lr = 0.0002
@@ -48,8 +48,8 @@ generator = Generator().to(device)
 
 criterion = nn.BCELoss()
 
-discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.1, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
+discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
+generator_optim = Adam(generator.parameters(), lr=lr)
 # for param_group in generator_optim.param_groups:
 #     param_group['lr'] = -lr  # Note: lr doesn't directly act in grads in non-SGD optimizers; either custom optim or per-
 
@@ -64,7 +64,7 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
-        reward[:len(obs)] = 1  # Bizarrely, breaks when not divided by 2
+        reward[:len(obs)] = 1.0  # Bizarrely, breaks when not divided by 2
         Q_target = reward
 
         loss = criterion(Qs, Q_target)
