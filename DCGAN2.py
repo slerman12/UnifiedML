@@ -72,6 +72,9 @@ for epoch in range(num_epochs):
         reward = torch.zeros_like(Qs)
         Q_target = reward
 
+        # Note, with these losses separated,
+        # I can make a Discriminator that first does a Self Attention operation along the batch dimension
+        # Then A DCGAN, or a ViT-based Discriminator
         critic_loss += criterion(Qs, Q_target)
         discriminator_optim.zero_grad()
         critic_loss.backward()
