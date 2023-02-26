@@ -22,7 +22,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 
 class AC2Agent(torch.nn.Module):
-    """Actor Critic Creator (AC2) - Best of all worlds (paper link)
+    """Actor Critic Creator (AC2) (paper link)
     RL, classification, generative modeling; online, offline; self-supervised learning; critic/actor ensembles;
     action space conversions; optimization schedules; EMA"""
     def __init__(self,
