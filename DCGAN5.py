@@ -46,7 +46,7 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle
 discriminator = Discriminator().to(device)
 generator = Generator().to(device)
 
-criterion = nn.BCELoss()
+criterion = nn.MSELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
 generator_optim = Adam(generator.parameters(), lr=lr)
