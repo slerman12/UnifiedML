@@ -48,10 +48,10 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
     Qs = critic(obs, action)  # Q-ensemble
 
-    # Use BCE if Critic ends with Sigmoid
+    # Use BCE if Critic ends with Sigmoid, otherwise MSE
     criterion = binary_cross_entropy if critic.binary else mse_loss
 
-    # Temporal difference (TD) error (via MSE or BCE)
+    # Temporal difference (TD) error
     q_loss = criterion(Qs, target_Q.unsqueeze(1).expand_as(Qs))
 
     if logs is not None:
