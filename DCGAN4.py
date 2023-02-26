@@ -75,7 +75,7 @@ for epoch in range(num_epochs):
         loss.backward()
         discriminator_optim.step()
         for param in generator.parameters():
-            param.grad *= -1
+            param.grad *= -1/2
         generator_optim.step()  # Works but not as well in image quality....
 
         if i % 50 == 0:
