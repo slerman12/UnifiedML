@@ -46,12 +46,10 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle
 discriminator = Discriminator().to(device)
 generator = Generator().to(device)
 
-criterion = nn.MSELoss()
+criterion = nn.MSELoss()  # BCE sometimes causes CUDA errors. Idk why.
 
-discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr)
-# for param_group in generator_optim.param_groups:
-#     param_group['lr'] = -lr  # Note: lr doesn't directly act in grads in non-SGD optimizers; either custom optim or per-
+discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))  # Less momentum = 0.5
+generator_optim = Adam(generator.parameters(), lr=lr)  # Slowing the Actor compared to the Critic
 
 
 for epoch in range(num_epochs):
@@ -64,7 +62,7 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
-        reward[:len(obs)] = 1.0  # Bizarrely, breaks when not divided by 2
+        reward[:len(obs)] = 1.0
         Q_target = reward
 
         loss = criterion(Qs, Q_target)
@@ -74,8 +72,8 @@ for epoch in range(num_epochs):
         loss.backward()
         discriminator_optim.step()
         for param in generator.parameters():
-            param.grad *= -2
-        generator_optim.step()  # Works but not as well in image quality....
+            param.grad *= -1
+        generator_optim.step()  # Doesn't work?
         # My reason: The Actor is only as good as the Critic. If the Actor is as good as the Critic, then the Actor
         #   has nowhere to go. Those vanishing gradients lead to stagnation.
 
