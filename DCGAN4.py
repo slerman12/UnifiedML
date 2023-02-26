@@ -76,6 +76,8 @@ for epoch in range(num_epochs):
         for param in generator.parameters():
             param.grad *= -1
         generator_optim.step()  # Works but not as well in image quality....
+        # My reason: The Actor is only as good as the Critic. If the Actor is as good as the Critic, then the Actor
+        #   has nowhere to go. Those vanishing gradients lead to stagnation.
 
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
