@@ -53,7 +53,7 @@ class Generator(nn.Module):
 
             # out_channels x 64 x 64
             nn.ConvTranspose2d(hidden_dim, out_channels, 4, 2, 1, bias=False),
-            # nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adapts scale
+            nn.Identity() if self.output_shape is None else nn.AdaptiveAvgPool2d(self.output_shape[1:])  # Adapts scale
         )
 
         self.apply(weight_init)
@@ -82,7 +82,7 @@ class Discriminator(nn.Module):
 
         self.Discriminator = nn.Sequential(
             # hidden_dim x 32 x 32
-            # nn.AdaptiveAvgPool2d(64),  # Adapts from different scales
+            nn.AdaptiveAvgPool2d(64),  # Adapts from different scales
             nn.Conv2d(in_channels, hidden_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
