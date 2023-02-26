@@ -587,7 +587,7 @@ Many popular features are unified in this library and generalized across RL/CV/g
   
 * As well as [Custom Datasets](#custom-dataset). 
 
-* Ensembling is supported for some agents (e.g., ```Agent=Agents.AC2Agent +agent.num_actors=```)
+* Ensembling is supported (e.g., ```+agent.num_actors=```)
   
 * Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. 
   
