@@ -6,7 +6,13 @@ import torch
 from torch.nn.functional import binary_cross_entropy
 
 
-def deepPolicyGradient(actor, critic, obs, step, logs=None):
+def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
+    if action.requires_grad:
+        for param in actor.parameters():
+            param.grad *= -2
+
+        return None
+
     Pi = actor(obs, step)
     action = Pi.mean  # Differentiable sample via "re-parameterization" TODO undo back to sample with num actions
 

@@ -268,10 +268,10 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
-                actions = self.actor(obs).mean
+                actions = self.actor(obs, self.step).sample()
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
+                                   else self.creator(self.critic(obs, actions), self.step, actions).sample()).flatten(1)
 
                 action = torch.cat((obs, generated_image))
 
@@ -311,7 +311,7 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=self.generate,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
@@ -322,7 +322,7 @@ class AC2Agent(torch.nn.Module):
             # "Change, Grow,  Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action, self.step, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
