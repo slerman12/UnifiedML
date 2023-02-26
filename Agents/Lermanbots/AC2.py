@@ -279,7 +279,7 @@ class AC2Agent(torch.nn.Module):
 
                 reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
 
-                obs = next_obs = None
+                next_obs = None
 
             # Update reward log
             if self.log:
