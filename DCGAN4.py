@@ -64,7 +64,7 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
-        reward[:len(obs)] = 1
+        reward[:len(obs) // 2] = 1  # Bizarrely, breaks when not divided by 2
         Q_target = reward
 
         loss = criterion(Qs, Q_target)
@@ -74,7 +74,7 @@ for epoch in range(num_epochs):
         loss.backward()
         discriminator_optim.step()
         for param in generator.parameters():
-            param.grad *= -1/2
+            param.grad *= -1
         generator_optim.step()  # Works but not as well in image quality....
 
         if i % 50 == 0:
