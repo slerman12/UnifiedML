@@ -13,8 +13,8 @@ def deepPolicyGradient(actor, critic, obs, step, logs=None):
     Qs = critic(obs, action)
     q, _ = Qs.min(1)  # Min-reduced ensemble
 
-    if critic.binary:
-        q = -binary_cross_entropy(q, torch.ones_like(q))
+    # if critic.binary:
+    #     q = -binary_cross_entropy(q, torch.ones_like(q))
         # q = q.log()  # For numerical stability of maximizing Sigmoids
 
     policy_loss = -q.mean()  # Policy gradient ascent

@@ -29,7 +29,7 @@ class Discriminator(nn.Module):
 
             # 1 x 1 x 1
             nn.Conv2d(64 * 8, 1, 4, 1, 0, bias=False),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
 
         self.apply(weight_init)
