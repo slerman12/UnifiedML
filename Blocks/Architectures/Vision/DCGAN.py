@@ -10,12 +10,12 @@ from Blocks.Architectures.Vision.CNN import cnn_broadcast
 
 
 """
-Note AC2 Agent's GAN uses an efficiency optimization that doesn't support BatchNorm2d. Substituted with InstanceNorm2d. 
-
 Usage example: 
 python Run.py task=classify/mnist generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator
 
-Note: Dimensionality adaptivity is still highly experimental for GANs.
+Note: AC2 Agent's GAN uses an efficiency optimization that doesn't support BatchNorm2d. Substituted with InstanceNorm2d. 
+
+Note: Dimensionality adaptivity to input shapes is still highly experimental for GANs/DCGAN.
 """
 
 
