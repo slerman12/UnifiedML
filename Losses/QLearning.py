@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import torch
-from torch.nn.functional import mse_loss, binary_cross_entropy
+from torch.nn.functional import mse_loss
 
 import Utils
 
@@ -48,10 +48,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
     Qs = critic(obs, action)  # Q-ensemble
 
-    # Use BCE if Critic ends with Sigmoid
-    # criterion = binary_cross_entropy if critic.binary else mse_loss
-
-    # Temporal difference (TD) error (via MSE or BCE)
+    # Temporal difference (TD) error (via MSE)
     q_loss = mse_loss(Qs, target_Q.unsqueeze(1).expand_as(Qs))
 
     if logs is not None:
