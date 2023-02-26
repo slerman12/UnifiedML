@@ -25,8 +25,8 @@ if torch.cuda.is_available():
 
 batch_size = 256
 num_epochs = 5
-z_dim = 50
-lr = 1e-4
+z_dim = 100
+lr = 0.0002
 beta1 = 0.5
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -43,19 +43,15 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-# Note: these architectures are specifically fit to this dataset's data shapes
 discriminator = Discriminator().to(device)
 generator = Generator().to(device)
 
 criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999)
-                       , maximize=True
-                       )  # Maximize arg?
-# Works but not as well in image quality... lr doesn't directly act in grads in non-SGD optimizers.
+generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 # for param_group in generator_optim.param_groups:
-#     param_group['lr'] = -lr
+#     param_group['lr'] = -lr  # Note: lr doesn't directly act in grads in non-SGD optimizers; either custom optim or per-
 
 
 for epoch in range(num_epochs):
@@ -77,14 +73,9 @@ for epoch in range(num_epochs):
         generator_optim.zero_grad()
         loss.backward()
         discriminator_optim.step()
-        # Still poor image quality - Intuition - maybe the reason for this is because the actor needs to "keep up"
-        #   - Here the actor maximizes the older critic on an action that the critic hasn't tuned itself stronger to.
-        #   - Analogous to self play
-        #   - Probably not, if my test on with betas works. Then I have no idea why this doesn't
-        #   - Testing if separate action can be used. If yes, above intuition may not hold: Yes
-        # for param in generator.parameters():
-        #     param.grad *= -1
-        generator_optim.step()
+        for param in generator.parameters():
+            param.grad *= -1
+        generator_optim.step()  # Works but not as well in image quality....
 
         if i % 50 == 0:
             print('[%d/%d][%d/%d]' % (epoch, num_epochs, i, len(dataloader)))
