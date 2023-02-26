@@ -922,7 +922,7 @@ python Run.py Eyes=ViT +eyes.patch_size=7
 [comment]: <> (TODO: Eyes, Ears, etc. recipes -> hands)
 Shorthands like ```Aug```, ```Eyes```, and ```Pool``` make it easy to plug and play custom architectures. All of an agent's architectural parts can be accessed, mixed, and matched with their [corresponding recipe shorthand](Hyperparams/args.yaml#L173-L244) names.
 
-> **Generally, the rule of thumb is Capital names for paths to classes** (such as ```Eyes=Blocks.Architectures.MLP```) **and lowercase names for shortcuts to tinker with model args** (such as ```+eyes.depth=1```)**.**
+Generally, the rule of thumb is Capital names for paths to classes (such as ```Eyes=Blocks.Architectures.MLP```) and lowercase names for shortcuts to tinker with model args (such as ```+eyes.depth=1```).
 
 [comment]: <> (Let's say you define an encoder backbone called ```MyNet``` in ```Blocks/Architectures/MyNet.py```. You can use it as your model's "eyes" with ```Eyes=Blocks.Architectures.MyNet.MyNet```.)
 
