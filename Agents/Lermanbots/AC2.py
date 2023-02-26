@@ -313,8 +313,8 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
-                           epoch=self.epoch if replay.offline else self.episode, retain_graph=self.generate)
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=self.generate,
+                           epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
         Utils.optimize(None,  # Using gradients from previous losses
@@ -331,4 +331,4 @@ class AC2Agent(torch.nn.Module):
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
 
         return logs
-# __ Line 330: Death of the Actor-Critic-Creator ... Until the next resurrection in the training loop... __
+# __ Line 333: Death of the Actor-Critic-Creator ... Until the next resurrection in the training loop... __
