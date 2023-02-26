@@ -7,6 +7,7 @@ from torch.nn.functional import binary_cross_entropy
 
 
 def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
+    Pi = None
 
     if not action.requires_grad:
         Pi = actor(obs, step)
@@ -23,6 +24,7 @@ def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
 
     if logs is not None:
         logs['policy_loss'] = policy_loss
-        logs['policy_prob'] = Pi.log_prob(action).exp().mean()
+        if Pi is not None:
+            logs['policy_prob'] = Pi.log_prob(action).exp().mean()
 
     return policy_loss
