@@ -205,6 +205,9 @@ class Classify:
                          'low': low,
                          'high': high}
 
+        # Mean of empty reward should be NaN, catch acceptable usage warning
+        warnings.filterwarnings("ignore", message='.*invalid value encountered in scalar divide')
+
         self.exp = None  # Experience
 
         self.evaluate_episodes = len(self.batches)
