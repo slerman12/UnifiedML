@@ -25,8 +25,9 @@ if torch.cuda.is_available():
 
 batch_size = 256
 num_epochs = 5
-z_dim = 100
+z_dim = 50
 lr = 1e-4
+beta1 = 0.5
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -50,7 +51,7 @@ criterion = nn.BCELoss()
 
 discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
 generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999)
-                       # , maximize=True
+                       , maximize=True
                        )  # Maximize arg?
 # Works but not as well in image quality... lr doesn't directly act in grads in non-SGD optimizers.
 # for param_group in generator_optim.param_groups:
@@ -67,7 +68,7 @@ for epoch in range(num_epochs):
 
         Qs = discriminator(action)
         reward = torch.zeros_like(Qs)
-        reward[:len(obs)] = 1
+        reward[:len(obs) // 2] = 1
         Q_target = reward
 
         loss = criterion(Qs, Q_target)
@@ -81,8 +82,8 @@ for epoch in range(num_epochs):
         #   - Analogous to self play
         #   - Probably not, if my test on with betas works. Then I have no idea why this doesn't
         #   - Testing if separate action can be used. If yes, above intuition may not hold: Yes
-        for param in generator.parameters():
-            param.grad *= -2  # 2 since Batch average?
+        # for param in generator.parameters():
+        #     param.grad *= -1
         generator_optim.step()
 
         if i % 50 == 0:
