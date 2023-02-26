@@ -1255,7 +1255,7 @@ python Run.py task=classify/mnist Eyes=Identity Predictor=Perceiver +predictor.d
 python Run.py Aug=Sequential +aug._targets_="[IntensityAug, RandomShiftsAug]" +aug.scale=0.05 aug.pad=4
 ```
 
-These are also useful for testing whether I've broken things. :)
+These are also useful for testing whether I've broken things.
 
 </details>
 
