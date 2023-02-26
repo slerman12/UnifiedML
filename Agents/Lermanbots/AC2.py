@@ -268,10 +268,10 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
-                actions = self.actor(obs, self.step).sample()
+                actions = self.actor(obs, self.step).rsample()
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), self.step, actions).sample()).flatten(1)
+                                   else self.creator(self.critic(obs, actions), self.step, actions).rsample()).flatten(1)
 
                 action = torch.cat((obs, generated_image))
 
