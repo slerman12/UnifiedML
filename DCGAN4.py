@@ -26,7 +26,7 @@ if torch.cuda.is_available():
 batch_size = 256
 num_epochs = 5
 z_dim = 100
-lr = 2e-4
+lr = 1e-4
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -82,7 +82,7 @@ for epoch in range(num_epochs):
         #   - Probably not, if my test on with betas works. Then I have no idea why this doesn't
         #   - Testing if separate action can be used. If yes, above intuition may not hold: Yes
         for param in generator.parameters():
-            param.grad *= -1  # 2 since Batch average?
+            param.grad *= -2  # 2 since Batch average?
         generator_optim.step()
 
         if i % 50 == 0:
