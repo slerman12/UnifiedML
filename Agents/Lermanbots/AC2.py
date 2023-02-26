@@ -260,7 +260,7 @@ class AC2Agent(torch.nn.Module):
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
                     reward = correct if self.discrete else -error.detach()  # reward = -error
-                else:
+                else:  # Use Online action
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
@@ -328,3 +328,4 @@ class AC2Agent(torch.nn.Module):
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
 
         return logs
+# __ Line 330: Death of the Actor-Critic-Creator ... Until next resurrection in the training loop... __
