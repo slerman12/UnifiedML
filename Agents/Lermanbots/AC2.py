@@ -279,7 +279,7 @@ class AC2Agent(torch.nn.Module):
                 actions = self.actor(obs).mean
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
+                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
 
                 action, reward, next_obs = generated_image, torch.zeros_like(reward), None  # Discriminate Fake
 
@@ -324,7 +324,8 @@ class AC2Agent(torch.nn.Module):
             # "Change, Grow,  Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action, self.step,
+                                                           logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
