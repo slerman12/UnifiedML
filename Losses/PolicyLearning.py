@@ -7,7 +7,7 @@
 def deepPolicyGradient(actor, critic, obs, step, logs=None):
 
     Pi = actor(obs, step)
-    action = Pi.rsample()  # Differentiable sample via "re-parameterization" TODO undo back to rsample with num actions
+    action = Pi.mean
 
     Qs = critic(obs, action)
     q, _ = Qs.min(1)  # Min-reduced ensemble
