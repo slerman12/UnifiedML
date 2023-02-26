@@ -266,7 +266,7 @@ class AC2Agent(torch.nn.Module):
 
             critic_loss = 0
 
-            # Generative modeling  TODO Maybe undo back to concat and use InstanceNorm
+            # Generative modeling
             if self.generate:
                 # "Discriminate"
 
@@ -331,4 +331,3 @@ class AC2Agent(torch.nn.Module):
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
 
         return logs
-# __ Line 333: Death of the Actor-Critic-Creator ... Until the next resurrection in the training loop... __
