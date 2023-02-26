@@ -268,18 +268,18 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
-                next_obs = None
-
                 actions = self.actor(obs).mean
 
                 generated_image = (actions if self.num_actors == 1
                                    else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
 
-                action = obs = torch.cat((obs, generated_image))
+                action = torch.cat((obs, generated_image))
 
                 ones = torch.ones(len(obs), 1, device=self.device)  # Real
 
                 reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
+
+                obs = next_obs = None
 
             # Update reward log
             if self.log:

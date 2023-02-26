@@ -59,10 +59,10 @@ class EnsembleQCritic(nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
     def forward(self, obs, action=None, All_Qs=None):
-        batch_size = obs.shape[0]
-
-        h = torch.empty((batch_size, 0), device=action.device) if self.ignore_obs \
+        h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
+
+        batch_size = h.shape[0]
 
         if self.discrete:
             assert hasattr(self, 'action') or action is not None, 'Continuous Env: action is needed by discrete Critic.'
