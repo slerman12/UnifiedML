@@ -31,6 +31,7 @@ environment:
     high: {'null' if task == 'Custom' else 1}
     batch_size: ${{batch_size}}
     num_workers: ${{num_workers}}
+    {'transform: "transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])"' if task == 'CelebA' else ''}
 logger:
     log_actions: ${{not:${{generate}}}}
 suite: classify

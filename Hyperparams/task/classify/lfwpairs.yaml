@@ -2,7 +2,7 @@ defaults:
   - _self_
 
 Env: Datasets.Suites.Classify.Classify
-Dataset: Datasets.Suites._LFWPairs.LFWPairs
+Dataset: torchvision.datasets.LFWPairs
 environment:
     dataset: ${dataset}
     test_dataset: ${test_dataset}
@@ -10,6 +10,7 @@ environment:
     high: 1
     batch_size: ${batch_size}
     num_workers: ${num_workers}
+    
 logger:
     log_actions: ${not:${generate}}
 suite: classify
@@ -28,4 +29,4 @@ seed_steps: 0
 explore_steps: 0
 log_per_episodes: 300
 RL: false
-online: false # Same as offline: true
+online: false  # Same as offline: true
