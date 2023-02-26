@@ -280,6 +280,7 @@ class AC2Agent(torch.nn.Module):
                 ones = torch.ones(len(obs), 1, device=self.device)  # Real
 
                 reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
+                print(reward.shape)
 
             # Update reward log
             if self.log:

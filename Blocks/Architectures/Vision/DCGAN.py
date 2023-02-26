@@ -10,6 +10,8 @@ from Blocks.Architectures.Vision.CNN import cnn_broadcast
 
 
 """
+Note AC2 Agent's GAN uses an efficiency optimization that doesn't support BatchNorm2d. Substituted with InstanceNorm2d. 
+
 Usage example: 
 python Run.py task=classify/mnist generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator
 
@@ -124,6 +126,3 @@ class Discriminator(nn.Module):
 def weight_init(m):
     if isinstance(m, (nn.Conv2d, nn.Conv1d)) or isinstance(m, (nn.ConvTranspose2d, nn.ConvTranspose1d)):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
-        nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0)
