@@ -264,24 +264,22 @@ class AC2Agent(torch.nn.Module):
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
-            critic_loss = 0
-
             # Generative modeling
             if self.generate:
-                # "Discriminate"
+                # "Imagine"
 
-                action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # Real
-
-                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, logs=logs)
-
-                # "Imagine" / "Generate"
+                next_obs = None
 
                 actions = self.actor(obs).mean
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
+                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
 
-                action, reward, next_obs = generated_image, torch.zeros_like(reward), None  # Discriminate Fake
+                action = torch.cat((obs, generated_image))
+
+                ones = torch.ones(len(obs), 1, device=self.device)  # Real
+
+                reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
 
             # Update reward log
             if self.log:
@@ -290,8 +288,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
-                                                       self.step, logs=logs)
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+                                                      self.step, logs=logs)
 
             # "Foretell"
 
@@ -313,7 +311,7 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=self.generate,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
@@ -324,8 +322,7 @@ class AC2Agent(torch.nn.Module):
             # "Change, Grow,  Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action, self.step,
-                                                           logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
