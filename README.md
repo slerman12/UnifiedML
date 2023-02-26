@@ -176,8 +176,8 @@ conda activate ML
 >
 > For example, for CUDA 11.6:
 > ```console
-> pip3 uninstall torch torchvision torchaudio
-> pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+> pip uninstall torch torchvision torchaudio
+> pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 > ```
 [//]: # (>)
 
@@ -1391,6 +1391,9 @@ In progress...
 [//]: # (python Run.py   task=classify/celeba   Dataset=Datasets.Suites._CelebA.CelebA   generate=true      Discriminator=DCGAN.Discriminator      Generator=DCGAN.Generator      z_dim=100      'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"'      experiment=DCGAN     Aug=Identity '+optim.betas=[0.5, 0.999]' lr=2e-4  +agent.num_critics=1 Optim=Adam)
 
 [//]: # (```)
+
+
+[//]: # (python Run.py   task=classify/celeba   Dataset=Datasets.Suites._CelebA.CelebA   generate=true      Discriminator=DCGAN.Discriminator      Generator=DCGAN.Generator      z_dim=100      'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"'      experiment=DCGAN    '+optim.betas=[0.5, 0.999]'   Optim=Adam)
 
 # :interrobang: How is this possible
 
