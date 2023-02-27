@@ -25,6 +25,7 @@ dependencies:
       - imageio-ffmpeg==0.4.7
       - einops==0.4.1
       # Only for me
+      - kaggle==1.5.12
       - cryptography==39.0.1
       - bleak==0.19.5
       - pexpect==4.8

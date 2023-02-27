@@ -58,8 +58,8 @@ def main(args):
         args.experiment = f'"{args.experiment}"'
 
     conda = ''.join([f'*"{gpu}"*)\nsource /home/{args.username}/miniconda3/bin/activate {env}\n;;\n'
-                     for gpu, env in [('K80', 'CUDA10.2'), ('V100', 'CUDA11.3'),
-                                      ('RTX', 'CUDA11.3'), ('A100', 'CUDA11.3')]])  # Conda envs w.r.t. GPU
+                     for gpu, env in [('K80', 'CUDA10.2'), ('V100', 'AGI'),  # TODO Set up CUDA10.2 pip un-install -> in
+                                      ('RTX', 'AGI'), ('A100', 'AGI')]])  # Conda envs w.r.t. GPU
     cuda = f'GPU_TYPE' \
            f'=$(nvidia-smi --query-gpu=gpu_name --format=csv | tail  -1)\ncase $GPU_TYPE in\n{conda}esac'
 
