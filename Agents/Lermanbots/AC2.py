@@ -55,8 +55,7 @@ class AC2Agent(torch.nn.Module):
 
         # RL -> generate conversion
         if self.generate:
-            standardize = False
-            norm = True  # Normalize Obs to range [-1, 1]
+            standardize = True
 
             # Action = Imagined Obs
             action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
