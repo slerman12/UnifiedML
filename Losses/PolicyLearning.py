@@ -6,19 +6,17 @@
 
 def deepPolicyGradient(actor, critic, obs, step, logs=None):
 
-    Pi = actor(obs, step)
-    action = Pi.mean
+    action = actor(obs, step).mean
 
     Qs = critic(obs, action)
     q, _ = Qs.min(1)  # Min-reduced ensemble
 
     if critic.binary:
-        q = q.log()  # For numerical stability of maximizing Bernoulli variables
+        q = q.log()  # For numerical stability of maximizing Sigmoid variables
 
     policy_loss = -q.mean()  # Policy gradient ascent
 
     if logs is not None:
         logs['policy_loss'] = policy_loss
-        logs['policy_prob'] = Pi.log_prob(action).exp().mean()
 
     return policy_loss
