@@ -36,7 +36,8 @@ dataset = CelebA(root="Datasets/ReplayBuffer/Classify/CelebA_Train/",
                      transforms.Resize(64),
                      transforms.CenterCrop(64),
                      transforms.ToTensor(),
-                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                     transforms.Normalize([0.5083452463150024, 0.42242321372032166, 0.37688034772872925],
+                                          [0.30580446124076843, 0.2835234999656677, 0.28196951746940613]),
                  ]))
 
 
