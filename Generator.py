@@ -10,22 +10,22 @@ class Generator(nn.Module):
         self.Generator = nn.Sequential(
             # (64 * 8) x 4 x 4
             nn.ConvTranspose2d(100, 64 * 8, 4, bias=False),
-            nn.InstanceNorm2d(64 * 8),
+            nn.BatchNorm2d(64 * 8),
             nn.ReLU(inplace=True),
 
             # (64 * 4) x 8 x 8
             nn.ConvTranspose2d(64 * 8, 64 * 4, 4, 2, 1, bias=False),
-            nn.InstanceNorm2d(64 * 4),
+            nn.BatchNorm2d(64 * 4),
             nn.ReLU(inplace=True),
 
             # (64 * 2) x 16 x 16
             nn.ConvTranspose2d(64 * 4, 64 * 2, 4, 2, 1, bias=False),
-            nn.InstanceNorm2d(64 * 2),
+            nn.BatchNorm2d(64 * 2),
             nn.ReLU(inplace=True),
 
             # 64 x 32 x 32
             nn.ConvTranspose2d(64 * 2, 64, 4, 2, 1, bias=False),
-            nn.InstanceNorm2d(64),
+            nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
 
             # 3 x 64 x 64
@@ -43,6 +43,6 @@ class Generator(nn.Module):
 def weight_init(m):
     if isinstance(m, (nn.Conv2d, nn.Conv1d)) or isinstance(m, (nn.ConvTranspose2d, nn.ConvTranspose1d)):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif isinstance(m, (nn.InstanceNorm2d, nn.InstanceNorm2d)):
+    elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
