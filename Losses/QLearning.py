@@ -12,8 +12,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
     # Non-empty next_obs
     has_future = next_obs is not None and bool(next_obs.nelement())
 
-    action = action.detach()
-
     # Compute Bellman target
     with torch.no_grad():
         # Current reward
@@ -47,6 +45,8 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
             next_v = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
 
             target_Q += discount * next_v
+
+    action = action.detach()  # Don't need to differentiate Actor
 
     Qs = critic(obs, action)  # Q-ensemble
 
