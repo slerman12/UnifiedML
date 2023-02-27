@@ -278,7 +278,8 @@ class AC2Agent(torch.nn.Module):
                     logs['discriminator_real_loss'] = critic_loss
 
                 # Update discriminator
-                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
+                Utils.optimize(critic_loss, self.critic,
+                               epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
                 actions = self.actor(obs).mean
@@ -318,7 +319,7 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=True,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder

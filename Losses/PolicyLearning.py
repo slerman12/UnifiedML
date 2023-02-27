@@ -2,8 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import torch
-from torch.nn.functional import binary_cross_entropy
 
 
 def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
@@ -15,8 +13,7 @@ def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
     q, _ = Qs.min(1)  # Min-reduced ensemble
 
     if critic.binary:
-        # q = q.log()  # For numerical stability of maximizing Sigmoid variables
-        q = -binary_cross_entropy(q, torch.ones_like(q))
+        q = q.log()  # For numerical stability of maximizing Sigmoid variables
 
     policy_loss = -q.mean()  # Policy gradient ascent
 

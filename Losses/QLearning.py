@@ -46,8 +46,6 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
             target_Q += discount * next_v
 
-    action = action.detach()  # Don't need to differentiate Actor
-
     Qs = critic(obs, action)  # Q-ensemble
 
     # Use BCE if Critic ends with Sigmoid, otherwise MSE
