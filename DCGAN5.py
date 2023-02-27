@@ -96,6 +96,6 @@ plt.imshow(np.transpose(vutils.make_grid(action[:64].detach(), padding=2, normal
 
 path = Path('./Benchmarking/DCGAN/AC2Agent/classify/CelebA_1_Video_Image')
 path.mkdir(parents=True, exist_ok=True)
-plt.savefig(path / 'generated.png')
+plt.savefig(path / 'generated2.png')
 
 plt.close()
