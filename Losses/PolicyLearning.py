@@ -4,9 +4,10 @@
 # MIT_LICENSE file in the root directory of this source tree.
 
 
-def deepPolicyGradient(actor, critic, obs, step, logs=None):
+def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
 
-    action = actor(obs, step).mean
+    if not action.requires_grad:
+        action = actor(obs, step).mean  # Differentiable action
 
     Qs = critic(obs, action)
     q, _ = Qs.min(1)  # Min-reduced ensemble

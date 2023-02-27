@@ -268,18 +268,22 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
+                # Discriminate Real
+                action, reward = obs, torch.ones(len(obs), 1, device=self.device)
+
+                next_obs = None
+
+                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
+
+                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
+
                 actions = self.actor(obs).mean
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
+                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
 
-                action = torch.cat((obs, generated_image))
-
-                ones = torch.ones(len(obs), 1, device=self.device)  # Real
-
-                reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
-
-                next_obs = None
+                # Discriminate Fake
+                action, reward = generated_image, torch.zeros_like(reward)
 
             # Update reward log
             if self.log:
@@ -322,7 +326,8 @@ class AC2Agent(torch.nn.Module):
             # "Change, Grow,  Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action, self.step,
+                                                           logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
