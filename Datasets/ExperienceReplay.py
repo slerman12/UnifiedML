@@ -437,7 +437,10 @@ class Experiences:
     # Can update/write data based on piped update specs
     def worker_fetch_updates(self):
         while self.pipe.poll():
-            updates, exp_ids = self.pipe.recv()
+            try:
+                updates, exp_ids = self.pipe.recv()
+            except EOFError:
+                break
 
             # Iterate through each update spec
             for key in updates:

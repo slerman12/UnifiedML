@@ -71,9 +71,10 @@ for epoch in range(num_epochs):
         generator_optim.zero_grad()
         loss.backward()
         discriminator_optim.step()
+        # if i % 2 == 0:
         for param in generator.parameters():
             param.grad *= -2
-        generator_optim.step()  # Doesn't work?
+        generator_optim.step()  # Doesn't work?  Maybe do this step once every two updates
         # My reason: The Actor is only as good as the Critic. If the Actor is as good as the Critic, then the Actor
         #   has nowhere to go. Those vanishing gradients lead to stagnation.
 

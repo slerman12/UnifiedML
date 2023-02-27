@@ -63,7 +63,7 @@ class AC2Agent(torch.nn.Module):
                                 'low': -1, 'high': 1, 'discrete': False})
 
             # Remove encoder, replace trunk with random noise
-            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for " seeing " with Eyes
+            recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for " seeing " via Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
         self.discrete_as_continuous = action_spec.discrete and not self.discrete
@@ -268,14 +268,16 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
-                actions = self.actor(obs).mean
+                half = len(obs) // 2
+
+                actions = self.actor(obs[:half]).mean
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
+                                   else self.creator(self.critic(obs[:half], actions), 1, actions).best).flatten(1)
 
-                action = torch.cat((obs, generated_image))
+                action = torch.cat((obs[:half], generated_image))
 
-                ones = torch.ones(len(obs), 1, device=self.device)  # Real
+                ones = torch.ones(half, 1, device=self.device)  # Real
 
                 reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
 
