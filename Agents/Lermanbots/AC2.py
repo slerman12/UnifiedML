@@ -55,7 +55,7 @@ class AC2Agent(torch.nn.Module):
 
         # RL -> generate conversion
         if self.generate:
-            standardize = True
+            standardize = True  # Center-scale Obs
 
             # Action = Imagined Obs
             action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
@@ -267,10 +267,9 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
-                # Discriminate Real
-                action, reward = obs, torch.ones(len(obs), 1, device=self.device)
+                action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # Discriminate Real
 
-                # Real loss
+                # Discriminate-Real critic loss
                 critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
 
                 if self.log:
@@ -280,12 +279,13 @@ class AC2Agent(torch.nn.Module):
                 Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
+
                 actions = self.actor(obs).mean
+
                 generated_image = (actions if self.num_actors == 1
                                    else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
 
-                # Discriminate Fake
-                action, reward = generated_image, torch.zeros_like(reward)
+                action, reward = generated_image, torch.zeros_like(reward)  # Discriminate Fake
 
             # Update reward log
             if self.log:
