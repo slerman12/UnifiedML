@@ -268,15 +268,16 @@ class AC2Agent(torch.nn.Module):
             if self.generate:
                 # "Imagine"
 
-                half = len(obs) // 2
-
-                actions = self.actor(obs[:half]).mean
+                actions = self.actor(obs).mean
 
                 generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs[:half], actions), 1, actions).best).flatten(1)
+                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1).detach()
 
-                action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # "Real"
-                action[:half], reward[:half] = generated_image, 0  # Discriminate "fake"
+                action = torch.cat((obs, generated_image))
+
+                ones = torch.ones(len(obs), 1, device=self.device)  # Real
+
+                reward = torch.cat((ones, torch.zeros_like(ones)))  # Real & Fake
 
                 next_obs = None
 
