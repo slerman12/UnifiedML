@@ -48,8 +48,8 @@ generator = Generator().to(device)
 
 criterion = nn.MSELoss()  # BCE sometimes causes CUDA errors. Idk why.
 
-discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.1, 0.999))  # Less momentum = 0.5
-generator_optim = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))  # Slowing the Actor compared to the Critic
+discriminator_optim = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))  # Less momentum = 0.5
+generator_optim = Adam(generator.parameters(), lr=lr)  # Slowing the Actor compared to the Critic
 
 
 for epoch in range(num_epochs):
@@ -72,7 +72,7 @@ for epoch in range(num_epochs):
         loss.backward()
         discriminator_optim.step()
         for param in generator.parameters():
-            param.grad *= -1
+            param.grad *= -2
         generator_optim.step()  # Doesn't work?
         # My reason: The Actor is only as good as the Critic. If the Actor is as good as the Critic, then the Actor
         #   has nowhere to go. Those vanishing gradients lead to stagnation.

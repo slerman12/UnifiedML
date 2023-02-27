@@ -43,6 +43,6 @@ class Generator(nn.Module):
 def weight_init(m):
     if isinstance(m, (nn.Conv2d, nn.Conv1d)) or isinstance(m, (nn.ConvTranspose2d, nn.ConvTranspose1d)):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
+    elif isinstance(m, (nn.InstanceNorm2d, nn.InstanceNorm2d)):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)

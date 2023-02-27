@@ -65,7 +65,7 @@ class Bittle:
                          'low': None,
                          'high': None}
 
-        self.action_spec = {'shape': (16,),
+        self.action_spec = {'shape': (9,),
                             'discrete_bins': None,
                             'low': -25,
                             'high': 25,
@@ -145,6 +145,7 @@ servos = range(16)  # 16 degrees of freedom
 
 
 def encode(rotations: list):
+    rotations = np.insert(rotations, 1, [0] * 7)
     return ('i ' + ' '.join(map(str, [*sum(zip(servos, np.round(rotations)), ())]))).encode('utf-8')
 
 
@@ -202,6 +203,17 @@ class AttrDict(dict):
 
 
 if __name__ == '__main__':
+    # bittle = Bittle()
+    # while True:
+    #     command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), dtype='float32')
+    #     bittle.step(command)
+    #
+    # body = ['head',
+    #         'nothing', 'nothing', 'nothing',
+    #         'nothing', 'nothing', 'nothing', 'nothing',
+    #         'front left leg', 'front right leg', 'back right leg', 'back left leg',
+    #         'front left ankle', 'front right ankle', 'back right ankle', 'back left ankle']
+
     bittle = Bittle()
     while True:
         bittle.step()

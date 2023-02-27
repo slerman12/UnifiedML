@@ -58,7 +58,7 @@ for epoch in range(num_epochs):
         action_ = generator(rand)
 
         # Discriminate Real
-        action = obs.view_as(action_).to(device)
+        action = obs.to(device).view_as(action_)
 
         Qs = discriminator(action.detach())
         reward = torch.ones_like(Qs)
