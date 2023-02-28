@@ -56,7 +56,7 @@ class AC2Agent(torch.nn.Module):
         # RL -> generate conversion
         if self.generate:
             standardize = False
-            norm = True  # Normalize Obs to [0, 1]
+            norm = True  # Normalize Obs to range [-1, 1]
 
             # Action = Imagined Obs
             action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
@@ -277,7 +277,7 @@ class AC2Agent(torch.nn.Module):
                     logs['discriminator_real_loss'] = critic_loss
 
                 # Update discriminator
-                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
+                # Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
 
@@ -295,7 +295,7 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action.detach(), reward, discount,
+            critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action.detach(), reward, discount,
                                                       next_obs, self.step, logs=logs)
 
             # "Foretell"
