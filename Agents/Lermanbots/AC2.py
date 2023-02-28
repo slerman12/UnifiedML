@@ -264,8 +264,6 @@ class AC2Agent(torch.nn.Module):
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
-            critic_loss = 0
-
             # Generative modeling
             if self.generate:
                 # "Imagine"
@@ -277,6 +275,9 @@ class AC2Agent(torch.nn.Module):
 
                 if self.log:
                     logs['discriminator_real_loss'] = critic_loss
+
+                # Update discriminator
+                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
 
@@ -294,8 +295,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action.detach(), reward, discount,
-                                                       next_obs, self.step, logs=logs)
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+                                                      self.step, logs=logs)
 
             # "Foretell"
 
@@ -317,7 +318,7 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=self.generate,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
@@ -328,8 +329,8 @@ class AC2Agent(torch.nn.Module):
             # "Change, Grow,  Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action, self.step,
-                                                           logs=logs)
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action,
+                                                           self.step, logs=logs)
 
             # Update actor
             Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
