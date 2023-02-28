@@ -57,7 +57,7 @@ class AC2Agent(torch.nn.Module):
         if self.generate:
             # Scale Obs
             standardize = True
-            obs_spec.mean = obs_spec.stddev = [0.5, 0.5, 0.5]
+            obs_spec.mean = obs_spec.stddev = 0.5
 
             # Action = Imagined Obs
             action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
