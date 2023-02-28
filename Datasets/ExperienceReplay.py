@@ -672,18 +672,43 @@ class SharedDict:
         self.cleanup()
 
     def start_worker(self):
+        # Hacky fix for https://bugs.python.org/issue38119
         if not self.created:
+            check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
+            resource_tracker.register = check_rtype(resource_tracker.register)
+            # resource_tracker.unregister = check_rtype(resource_tracker.unregister)
+            #
+            # if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
+            #     del resource_tracker._CLEANUP_FUNCS["shared_memory"]
+
             atexit.register(self.cleanup)
 
     def cleanup(self):
         for name, method in self.created.items():
-            mem = method(name=name)
+            resource_tracker._CLEANUP_FUNCS['shared_memory'](name)
+            resource_tracker.unregister(name, 'shared_memory')
 
-            if isinstance(mem, ShareableList):
-                mem = mem.shm
+            # mem = method(name=name)
+            #
+            # if isinstance(mem, ShareableList):
+            #     mem = mem.shm
+            #
+            # mem.close()
+            # mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
 
-            mem.close()
-            mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
+
+
+# def clean():
+#     cache = {rtype: set() for rtype in resource_tracker._CLEANUP_FUNCS.keys()}
+#     assert False, cache
+#     for rtype, rtype_cache in cache.items():
+#         for name in rtype_cache:
+#             try:
+#                 resource_tracker._CLEANUP_FUNCS[rtype](name)
+#             except Exception:
+#                 pass
+#
+# atexit.register(clean)
 
 
 # A special view into shared memory or memory mapped data that handles index-based reads and writes efficiently
