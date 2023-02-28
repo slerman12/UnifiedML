@@ -672,9 +672,14 @@ class SharedDict:
         self.cleanup()
 
     def start_worker(self):
-        return
         # Hacky fix for https://bugs.python.org/issue38119
         if not self.created:
+            # return
+            # register = resource_tracker.register
+            # resource_tracker.register = lambda *args, **kwargs: [warnings.filterwarnings("ignore", message='.*resource_tracker.*'),
+            #                                                      register(*args, **kwargs)][1]
+            # resource_tracker.warnings.warn = lambda m, *args, **kwargs: None if 'resource_tracker' in m \
+            #     else resource_tracker.warnings.warn(m, *args, **kwargs)
             check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
             resource_tracker.register = check_rtype(resource_tracker.register)
             # resource_tracker.unregister = check_rtype(resource_tracker.unregister)
@@ -683,6 +688,9 @@ class SharedDict:
             #     del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
     def cleanup(self):
+        for mem in glob.glob('/dev/shm/'):
+            mem.unlink()
+
         for name, method in self.created.items():
             mem = method(name=name)
 
