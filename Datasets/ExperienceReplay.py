@@ -672,12 +672,12 @@ class SharedDict:
         # Hacky fix for https://bugs.python.org/issue38119
         if not self.created:
             check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
-            # resource_tracker.register = check_rtype(resource_tracker.register)
-            resource_tracker.unregister = check_rtype(resource_tracker.unregister)
+            resource_tracker.register = check_rtype(resource_tracker.register)
+            # resource_tracker.unregister = check_rtype(resource_tracker.unregister)
 
-            if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
-                del resource_tracker._CLEANUP_FUNCS["shared_memory"]
-        atexit.register(self.cleanup, self.created)
+            # if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
+            #     del resource_tracker._CLEANUP_FUNCS["shared_memory"]
+            atexit.register(self.cleanup, self.created)
 
     def cleanup(self, created):
         for name, method in created.items():
