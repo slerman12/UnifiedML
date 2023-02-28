@@ -55,7 +55,9 @@ class AC2Agent(torch.nn.Module):
 
         # RL -> generate conversion
         if self.generate:
-            standardize = True  # Center-scale Obs
+            # Scale Obs
+            standardize = True
+            obs_spec.mean = obs_spec.stddev = 0.5
 
             # Action = Imagined Obs
             action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
@@ -294,8 +296,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
-                                                      self.step, logs=logs)
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action.detach(), reward, discount,
+                                                      next_obs, self.step, logs=logs)
 
             # "Foretell"
 
@@ -317,7 +319,7 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=True,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
