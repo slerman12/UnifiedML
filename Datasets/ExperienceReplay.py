@@ -666,6 +666,17 @@ class SharedDict:
     def keys(self):
         return self.specs.keys() | {'id'}
 
+    # Leaving it to Python's resource-tracker to do for now
+    def cleanup(self):
+        for name, method in self.created.items():
+            mem = method(name=name)
+
+            if isinstance(mem, ShareableList):
+                mem = mem.shm
+
+            mem.close()
+            mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
+
 
 # A special view into shared memory or memory mapped data that handles index-based reads and writes efficiently
 class SharedMem:
