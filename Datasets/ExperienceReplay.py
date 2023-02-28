@@ -574,8 +574,6 @@ class SharedDict:
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))
 
     def __setitem__(self, key, value):
-        self.start_worker()
-
         assert isinstance(value, dict), 'Shared Memory must be a episode dict'
 
         num_episodes = key.stem.split('/')[-1].split('_')[1]
@@ -667,30 +665,6 @@ class SharedDict:
 
     def keys(self):
         return self.specs.keys() | {'id'}
-
-    def start_worker(self):
-        # Hacky fix for https://bugs.python.org/issue38119
-        if not self.created:
-            check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
-            resource_tracker.register = check_rtype(resource_tracker.register)
-            # resource_tracker.unregister = check_rtype(resource_tracker.unregister)
-
-            # if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
-            #     del resource_tracker._CLEANUP_FUNCS["shared_memory"]
-            atexit.register(self.cleanup, self.created)
-
-    def cleanup(self, created):
-        for name, method in created.items():
-            mem = method(name=name)
-
-            if isinstance(mem, ShareableList):
-                mem = mem.shm
-
-            mem.close()
-            try:
-                mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
-            except FileNotFoundError:
-                pass
 
 
 # A special view into shared memory or memory mapped data that handles index-based reads and writes efficiently
