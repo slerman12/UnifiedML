@@ -674,6 +674,7 @@ class SharedDict:
     def start_worker(self):
         # Hacky fix for https://bugs.python.org/issue38119
         if not self.created:
+            atexit.register(self.cleanup)
             # return
             # register = resource_tracker.register
             # resource_tracker.register = lambda *args, **kwargs: [warnings.filterwarnings("ignore", message='.*resource_tracker.*'),
@@ -682,23 +683,23 @@ class SharedDict:
             #     else resource_tracker.warnings.warn(m, *args, **kwargs)
             check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
             resource_tracker.register = check_rtype(resource_tracker.register)
-            # resource_tracker.unregister = check_rtype(resource_tracker.unregister)
+            resource_tracker.unregister = check_rtype(resource_tracker.unregister)
 
-            # if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
-            #     del resource_tracker._CLEANUP_FUNCS["shared_memory"]
+            if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
+                del resource_tracker._CLEANUP_FUNCS["shared_memory"]
 
     def cleanup(self):
-        for mem in glob.glob('/dev/shm/'):
-            mem.unlink()
-
         for name, method in self.created.items():
-            mem = method(name=name)
+            try:
+                mem = method(name=name)
 
-            if isinstance(mem, ShareableList):
-                mem = mem.shm
+                if isinstance(mem, ShareableList):
+                    mem = mem.shm
 
-            mem.close()
-            mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
+                mem.close()
+                mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
+            except:
+                pass
 
 
 # A special view into shared memory or memory mapped data that handles index-based reads and writes efficiently
