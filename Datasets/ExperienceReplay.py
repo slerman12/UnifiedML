@@ -672,6 +672,7 @@ class SharedDict:
         self.cleanup()
 
     def start_worker(self):
+        return
         # Hacky fix for https://bugs.python.org/issue38119
         if not self.created:
             check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
