@@ -67,8 +67,8 @@ class Bittle:
 
         self.action_spec = {'shape': (9,),
                             'discrete_bins': None,
-                            'low': -25,
-                            'high': 25,
+                            'low': -180,
+                            'high': 180,
                             'discrete': False}
 
         self.exp = AttrDict()  # Experience dictionary
@@ -203,11 +203,6 @@ class AttrDict(dict):
 
 
 if __name__ == '__main__':
-    # bittle = Bittle()
-    # while True:
-    #     command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), dtype='float32')
-    #     bittle.step(command)
-    #
     # body = ['head',
     #         'nothing', 'nothing', 'nothing',
     #         'nothing', 'nothing', 'nothing', 'nothing',
@@ -216,16 +211,20 @@ if __name__ == '__main__':
 
     bittle = Bittle()
     while True:
+        # Random action
         bittle.step()
+
+        # command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), dtype='float32')
+        # bittle.step(command)
 
     # Can launch custom commands
 
-    # commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [-90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    # commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0],
+    #                                                                [-90, 0, 0, 0, 0, 0, 0, 0, 0]
     #                                                                ]]
     #
     # for command in commands:
