@@ -318,7 +318,7 @@ class AC2Agent(torch.nn.Module):
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=self.generate,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=action.requires_grad,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
