@@ -1397,6 +1397,8 @@ In progress...
 
 [//]: # (python Run.py task=classify/celeba Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator generate=true z_dim=100 train_steps=10000)
 
+[//]: # (python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator train_steps=10000)
+
 # :interrobang: How is this possible
 
 We use our new Creator framework to unify RL discrete and continuous action spaces, as elaborated in our [paper](https://arxiv.com).

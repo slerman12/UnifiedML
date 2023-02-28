@@ -309,16 +309,15 @@ class AC2Agent(torch.nn.Module):
             # Dynamics loss
             dynamics_loss = 0 if self.depth == 0 or self.generate \
                 else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
-                                                             self.encoder, self.dynamics, self.projector,
-                                                             self.predictor, depth=self.depth,
-                                                             action_dim=self.action_dim, logs=logs)
+                                                             self.encoder, self.dynamics, self.projector, self.predictor,
+                                                             depth=self.depth, action_dim=self.action_dim, logs=logs)
 
             models = () if self.generate or not self.depth else (self.dynamics, self.projector, self.predictor)
 
             # "Sharpen Foresight"
 
             # Update critic, dynamics
-            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=action.requires_grad,
+            Utils.optimize(critic_loss + dynamics_loss, self.critic, *models, retain_graph=self.generate,
                            epoch=self.epoch if replay.offline else self.episode)
 
         # Update encoder
