@@ -29,3 +29,4 @@ dependencies:
       - cryptography==39.0.1
       - bleak==0.19.5
       - pexpect==4.8
+#      - SharedArray==3.2.2  # https://pypi.org/project/SharedArray/

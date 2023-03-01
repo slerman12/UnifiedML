@@ -16,9 +16,6 @@ from omegaconf import OmegaConf
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-import os
-os.environ['NUMEXPR_MAX_THREADS'] = '8'
-
 import numpy as np
 import pandas as pd
 

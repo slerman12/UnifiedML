@@ -21,7 +21,6 @@ from omegaconf import OmegaConf
 import numpy as np
 
 from multiprocessing.shared_memory import SharedMemory, ShareableList
-from multiprocessing import resource_tracker
 
 import torch
 from torch.utils.data import IterableDataset, Dataset
@@ -133,8 +132,6 @@ class ExperienceReplay:
 
         # CPU workers
         self.num_workers = max(1, min(num_workers, os.cpu_count()))
-
-        os.environ['NUMEXPR_MAX_THREADS'] = str(self.num_workers)
 
         # RAM capacity per worker. Max num experiences allotted per CPU worker
         capacity = capacity // self.num_workers if capacity not in [-1, 'inf'] else np.inf

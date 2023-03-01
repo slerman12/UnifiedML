@@ -280,3 +280,7 @@ hydra:
   sweep:
     dir: ./
     subdir: ./
+  job:
+    env_set:
+      NUMEXPR_MAX_THREADS: '8'  # Disables warning
+      PYTHONWARNINGS: 'ignore:resource_tracker'  # Disables warning
