@@ -352,6 +352,9 @@ class Experiences:
         return self.pipes[self.worker_id]
 
     def init_worker(self):
+        if isinstance(self.episodes, SharedDict):
+            atexit.register(self.episodes.cleanup)
+
         self.worker_fetch_episodes()  # Load in existing data
 
         # If Offline, share RAM across CPU workers
@@ -663,7 +666,6 @@ class SharedDict:
     def keys(self):
         return self.specs.keys() | {'id'}
 
-    # Leaving it to Python's resource-tracker to do for now
     def cleanup(self):
         for name, method in self.created.items():
             mem = method(name=name)
