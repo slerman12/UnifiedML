@@ -71,16 +71,11 @@ class Atari:
                                     )
         except gym.error.NameNotFound as e:
             # If Atari not installed
-            raise gym.error.NameNotFound(str(e) + '\nYou may have not installed the Atari ROMs.\n'
+            raise gym.error.NameNotFound(str(e) + '\nIt\'s possible you haven\'t installed the Atari ROMs.\n'
                                                   'Try the following to install them, as instructed in the README.\n'
-                                                  'Accept the license:\n'
                                                   '$ pip install autorom\n'
-                                                  '$ AutoROM --accept-license\n'
-                                                  'Now, install ROMs:\n'
-                                                  '$ mkdir ./Datasets/Suites/Atari_ROMS\n'
-                                                  '$ AutoROM --install-dir ./Datasets/Suites/Atari_ROMS\n'
-                                                  '$ ale-import-roms ./Datasets/Suites/Atari_ROMS\n'
-                                                  'You should be good to go!')
+                                                  'Now, accept the license to install the ROMs:\n'
+                                                  '$ AutoROM --accept-license')
 
         # Set random seed
         self.env.seed(seed)
