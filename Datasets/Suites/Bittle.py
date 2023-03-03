@@ -59,7 +59,7 @@ class Bittle:
         self.action_done = True
         self.action_start_time = time.time()
 
-        self.obs_spec = {'shape': (3,),  # TODO 6, currently just gyroscope. 22 with action!
+        self.obs_spec = {'shape': (3,),  # TODO (6,), currently just gyroscope. (15,) with action!
                          'mean': None,
                          'stddev': None,
                          'low': None,
