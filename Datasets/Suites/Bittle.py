@@ -218,7 +218,7 @@ if __name__ == '__main__':
     # Front leg: [-180, 65] "vertically up", "bent back"
     # Front ankle: [-45, 180] "bent slightly upwards", "bent backwards"
 
-    # Front and back leg collisions!
+    # Constraint: If Back leg < 0 and Front leg > 0, Back leg < Front leg - 80, Front ankle < 10
 
     bittle = Bittle()
     while True:
