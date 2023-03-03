@@ -67,8 +67,10 @@ class Bittle:
 
         self.action_spec = {'shape': (9,),
                             'discrete_bins': None,
-                            'low': -180,
-                            'high': 180,
+                            'low': -25,
+                            'high': 25,
+                            # 'low': -180,
+                            # 'high': 180,
                             'discrete': False}
 
         self.exp = AttrDict()  # Experience dictionary
@@ -209,12 +211,24 @@ if __name__ == '__main__':
     #         'front left leg', 'front right leg', 'back right leg', 'back left leg',
     #         'front left ankle', 'front right ankle', 'back right ankle', 'back left ankle']
 
+    # Back leg: [-90, 180] "straight forward", "vertically back"
+    # Back ankle: [-45, 180] "bent slightly upwards", "bent backwards"
+    # Constraint: If Back leg < 0, Back ankle > -Back leg
+
+    # Front leg: [-180, 65] "vertically up", "bent back"
+    # Front ankle: [-45, 180] "bent slightly upwards", "bent backwards"
+
+    # Front and back leg collisions!
+
     bittle = Bittle()
     while True:
         # Random action
         bittle.step()
 
-        # command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), dtype='float32')
+        # try:
+        #     command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), 'float32')
+        # except ValueError:
+        #     continue
         # bittle.step(command)
 
     # Can launch custom commands
