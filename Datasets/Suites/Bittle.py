@@ -104,6 +104,9 @@ class Bittle:
             action = np.random.rand(*self.action_spec['shape']) * (self.action_spec['high'] - self.action_spec['low']) \
                      + self.action_spec['low']
 
+        # Constrain action ranges to prevent collisions
+        constrain(action)
+
         self.action_done = False
         asyncio.run(self.bluetooth.write_gatt_char(self.writer, encode(action)))  # Triggers a reaction
 
@@ -242,7 +245,7 @@ constraints = [[((back_legs, lambda a: a < 0,),), ((back_ankles, lambda a: max(a
                  (front_ankles, lambda a: min(a[front_ankles], 10)))]]
 
 
-def limits(action):
+def constrain(action):
     for joint, (low, high) in ranges:
         action[joint] = (action + 180) * ((high - low) / 360) + low
 
