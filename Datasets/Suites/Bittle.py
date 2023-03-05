@@ -207,7 +207,7 @@ class AttrDict(dict):
         self.update(_dict or {})
 
 
-"""ACTION CONSTRAINTS
+"""Action constraints
 Goals:
 (a) Avoid collisions between front legs and back legs
 (b) Avoid collisions between legs and ankles with body
@@ -245,6 +245,7 @@ constraints = [[((back_legs, lambda a: a < 0,),), ((back_ankles, lambda a: max(a
                  (front_ankles, lambda a: min(a[front_ankles], 10)))]]
 
 
+# Constrains actions to reasonable ranges to avoid collisions
 def constrain(action):
     for joint, (low, high) in ranges:
         action[joint] = (action + 180) * ((high - low) / 360) + low
