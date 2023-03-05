@@ -67,10 +67,10 @@ class Bittle:
 
         self.action_spec = {'shape': (9,),
                             'discrete_bins': None,
-                            'low': -25,
-                            'high': 25,
-                            # 'low': -180,
-                            # 'high': 180,
+                            # 'low': -25,
+                            # 'high': 25,
+                            'low': -180,
+                            'high': 180,
                             'discrete': False}
 
         self.exp = AttrDict()  # Experience dictionary
@@ -204,22 +204,59 @@ class AttrDict(dict):
         self.update(_dict or {})
 
 
+"""ACTION CONSTRAINTS
+Goals:
+(a) Avoid collisions between front legs and back legs
+(b) Avoid collisions between legs and ankles with body
+(c) Still allow robust movements such as needed for jumping, flipping, etc. """
+
+
+# body = ['head',
+#         'nothing', 'nothing', 'nothing',
+#         'nothing', 'nothing', 'nothing', 'nothing',
+#         'front left leg', 'front right leg', 'back right leg', 'back left leg',
+#         'front left ankle', 'front right ankle', 'back right ankle', 'back left ankle']
+
+# Back leg: [-90, 180] "straight forward", "vertically back"
+# Back ankle: [-45, 180] "bent slightly upwards", "bent backwards"
+# Constraint: If Back leg < 0, Back ankle > -Back leg
+
+# Front leg: [-180, 65] "vertically up", "bent back"
+# Front ankle: [-45, 180] "bent slightly upwards", "bent backwards"
+
+# Constraint: If Back leg < 0 and Front leg > 0, Back leg < Front leg - 80, Front ankle < 10
+
+back_legs = [3, 4]
+back_ankles = [7, 8]
+front_legs = [1, 2]
+front_ankles = [5, 6]
+
+ranges = [(back_legs, [-90, 180]),
+          (back_ankles, [-45, 180]),
+          (front_legs, [-180, 65]),
+          (front_ankles, [-45, 180])]
+
+constraints = [[(back_legs, lambda a: a < 0,), ((back_ankles, lambda a: max(a[back_ankles], -a[back_legs])),)],
+               [(back_legs, lambda a: a < 0, front_legs, lambda a: a > 0),
+                ((back_legs, lambda a: min(a[back_legs], a[front_legs] - 80)),
+                 (front_ankles, lambda a: min(a[front_ankles], 10)))]]
+
+
+def limits(action):
+    for joint, (low, high) in ranges:
+        action[joint] = (action + 180) * ((high - low) / 360) + low
+
+    for constraint in constraints:
+        conditions, norms = constraint
+
+        for condition in conditions:
+            pass
+
+        for norm in norms:
+            pass
+
+
 if __name__ == '__main__':
-    # body = ['head',
-    #         'nothing', 'nothing', 'nothing',
-    #         'nothing', 'nothing', 'nothing', 'nothing',
-    #         'front left leg', 'front right leg', 'back right leg', 'back left leg',
-    #         'front left ankle', 'front right ankle', 'back right ankle', 'back left ankle']
-
-    # Back leg: [-90, 180] "straight forward", "vertically back"
-    # Back ankle: [-45, 180] "bent slightly upwards", "bent backwards"
-    # Constraint: If Back leg < 0, Back ankle > -Back leg
-
-    # Front leg: [-180, 65] "vertically up", "bent back"
-    # Front ankle: [-45, 180] "bent slightly upwards", "bent backwards"
-
-    # Constraint: If Back leg < 0 and Front leg > 0, Back leg < Front leg - 80, Front ankle < 10
-
     bittle = Bittle()
     while True:
         # Random action

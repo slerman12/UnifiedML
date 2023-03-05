@@ -35,7 +35,7 @@ class DuelingDQNAgent(DQNAgent):
 class DuelingDQN(Module):
     """
     Dueling Architecture
-    Can use with AC2Agent as well: e.g. python Run.py task=classify/mnist Pi_head=Agents.DuelingDQN.DuelingDQN
+    Can use with AC2Agent: python Run.py task=classify/mnist Pi_head=Agents.DuelingDQN.DuelingDQN
     """
     def __init__(self, input_shape=50, output_shape=(2,), Pi_head=None, hidden_dim=1024):
         super().__init__()
