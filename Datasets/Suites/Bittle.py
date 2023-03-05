@@ -236,8 +236,8 @@ ranges = [(back_legs, [-90, 180]),
           (front_legs, [-180, 65]),
           (front_ankles, [-45, 180])]
 
-constraints = [[(back_legs, lambda a: a < 0,), ((back_ankles, lambda a: max(a[back_ankles], -a[back_legs])),)],
-               [(back_legs, lambda a: a < 0, front_legs, lambda a: a > 0),
+constraints = [[((back_legs, lambda a: a < 0,),), ((back_ankles, lambda a: max(a[back_ankles], -a[back_legs])),)],
+               [((back_legs, lambda a: a < 0), (front_legs, lambda a: a > 0)),
                 ((back_legs, lambda a: min(a[back_legs], a[front_legs] - 80)),
                  (front_ankles, lambda a: min(a[front_ankles], 10)))]]
 
@@ -249,11 +249,12 @@ def limits(action):
     for constraint in constraints:
         conditions, norms = constraint
 
-        for condition in conditions:
-            pass
+        for part, condition in conditions:
+            if not condition(action[part]):
+                continue
 
-        for norm in norms:
-            pass
+        for part, norm in norms:
+            action[part] = norm(action)
 
 
 if __name__ == '__main__':
