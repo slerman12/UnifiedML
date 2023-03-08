@@ -886,11 +886,9 @@ python Run.py replay.load=true replay.save=true
 
 [comment]: <> (```)
 
-[comment]: <> (This feature is a specific instance of ```offline=false``` and its equivalent ```online=true```, but skips the replay.)
+[comment]: <> (This feature would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets]&#40;#custom-dataset&#41;.)
 
-[comment]: <> (This would most likely only be necessary if your training dataset is too large and won't fit in RAM. Note that the ```transform=``` flag is not compatible with this feature yet, but you can pass in a custom Dataset as described in [Custom Datasets]&#40;#custom-dataset&#41;.)
-
-[comment]: <> (This feature is not yet supported for RL with ```frame_stack > 1``` and ```nstep > 0```. It can be thought of as on-policy RL.)
+[comment]: <> (While streaming does not automatically support ```frame_stack > 1``` and ```nstep > 0``` yet, it is effectively the "on-policy" training flow of RL and until automatically impplemented, Nstep can be manually tabulated in the Agent itself for batch-vectorized environments and algorithms like PPO.)
 
 [comment]: <> (</details>)
 

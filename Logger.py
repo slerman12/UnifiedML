@@ -71,6 +71,9 @@ class Logger:
                         self.predicted[name] = {'Predicted': [], 'Actual': []}
                     self.predicted[name]['Predicted'].append(np.argmax(exp.action, -2).squeeze())
                     self.predicted[name]['Actual'].append(exp.label.squeeze())
+                    # Corner case when Eval batch size is 1, batch dim gets squeezed out
+                    for key, value in self.predicted[name].items():
+                        value[-1].shape = value[-1].shape or (1,)
 
         if dump:
             self.dump_logs(name)

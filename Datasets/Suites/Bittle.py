@@ -211,7 +211,8 @@ class AttrDict(dict):
 Goals:
 (a) Avoid collisions between front legs and back legs
 (b) Avoid collisions between legs and ankles with body
-(c) Still allow robust movements such as needed for jumping, flipping, etc. """
+(c) Still allow robust movements such as needed for jumping, flipping, etc. 
+(d} Prevent wire strain"""
 
 
 # body = ['head',
@@ -222,43 +223,65 @@ Goals:
 
 # Back leg: [-90, 180] "straight forward", "vertically back"
 # Back ankle: [-45, 180] "bent slightly upwards", "bent backwards"
-# Constraint: If Back leg < 0, Back ankle > -Back leg
 
 # Front leg: [-180, 65] "vertically up", "bent back"
 # Front ankle: [-45, 180] "bent slightly upwards", "bent backwards"
 
-# Constraint: If Back leg < 0 and Front leg > 0, Back leg < Front leg - 80, Front ankle < 10
+# ---------
 
-back_legs = [3, 4]
-back_ankles = [7, 8]
-front_legs = [1, 2]
-front_ankles = [5, 6]
+# Limit: Back: ankle > -90 - 2 * leg  To avoid ankle underside collision
+# Limit: Back: leg, ankle... Due to wires, some stretches are physically impossible. TODO
+# Limit: If Back leg < 0 and Front leg > 0, Back leg < Front leg - 80, Front ankle < 10  TODO
 
-ranges = [(back_legs, [-90, 180]),
-          (back_ankles, [-45, 180]),
-          (front_legs, [-180, 65]),
-          (front_ankles, [-45, 180])]
+head = [0]
+front_legs = [1, 2]  # left, right
+back_legs = [3, 4]  # right, left
+front_ankles = [5, 6]  # left, right
+back_ankles = [7, 8]  # right, left
 
-constraints = [[((back_legs, lambda a: a < 0,),), ((back_ankles, lambda a: max(a[back_ankles], -a[back_legs])),)],
-               [((back_legs, lambda a: a < 0), (front_legs, lambda a: a > 0)),
-                ((back_legs, lambda a: min(a[back_legs], a[front_legs] - 80)),
-                 (front_ankles, lambda a: min(a[front_ankles], 10)))]]
+head, front_legs, back_legs, front_ankles, back_ankles = map(np.array, (head, front_legs, back_legs, front_ankles,
+                                                                        back_ankles))
+
+ranges = [(head, [-25, 25]), (front_legs, [-180, 65]), (back_legs, [-90, 180]), (front_ankles, [-45, 180]),
+          (back_ankles, [-45, 180])]
+
+constraints = [
+    # Avoid back ankle underside collision
+    [tuple(), ((back_ankles, lambda a: np.maximum(a[back_ankles], -90 - 2 * a[back_legs])),)],
+    #
+    # [((back_legs, lambda a: a < 0), (front_legs, lambda a: a > 0)),
+    #  ((back_legs, lambda a: np.minimum(a[back_legs], a[front_legs] - 80)),
+    #   (front_ankles, lambda a: np.minimum(a[front_ankles], 10)))]
+]
+
+# TODO RE-CALIBRATE!
 
 
 # Constrains actions to reasonable ranges to avoid collisions
 def constrain(action):
     for joint, (low, high) in ranges:
-        action[joint] = (action + 180) * ((high - low) / 360) + low
+        # action[joint] = (action[joint] + 180) * ((high - low) / 360) + low  # Changes scale of constraints...
+        action[joint] = np.minimum(action[joint], high)
+        action[joint] = np.maximum(action[joint], low)
 
     for constraint in constraints:
         conditions, norms = constraint
 
+        truth = np.array([1, 1], dtype=bool)
         for part, condition in conditions:
-            if not condition(action[part]):
-                continue
+            truth = truth & condition(action[part])
+
+        if not truth.any():
+            continue
 
         for part, norm in norms:
-            action[part] = norm(action)
+            action[part[truth]] = norm(action)
+
+
+# Useful, scales from zero-center TODO
+# def zero_scale(action):
+#     for joint, (low, high) in ranges:
+#         action[joint] -= (high - low) / 2
 
 
 if __name__ == '__main__':
@@ -267,22 +290,18 @@ if __name__ == '__main__':
         # Random action
         bittle.step()
 
-        # try:
-        #     command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), 'float32')
-        # except ValueError:
-        #     continue
-        # bittle.step(command)
+        try:
+            command = np.array(list(map(int, input('enter 16-digit command: ').strip('[]').split(', '))), 'float32')
+        except ValueError:
+            continue
+        # zero_scale(command)
+        bittle.step(command)
 
     # Can launch custom commands
 
     # commands = [np.array(command, dtype='float32') for command in [[0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [-45, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [45, 0, 0, 0, 0, 0, 0, 0, 0],
-    #                                                                [-90, 0, 0, 0, 0, 0, 0, 0, 0]
     #                                                                ]]
     #
     # for command in commands:
     #     bittle.step(command)
-    # bittle.disconnect()
+    bittle.disconnect()

@@ -245,6 +245,9 @@ class Classify:
 
         self.exp = AttrDict(exp)  # Experience
 
+        # if self.generate:
+        #     exp.obs = exp.label = np.array([batch_size, 0])  # Can disable for generative
+
         return self.exp
 
     def render(self):
