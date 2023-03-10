@@ -41,6 +41,8 @@ The magic function of our organization is to initiate AGI.
 7. Poetic
 <br>&nbsp;&nbsp;&nbsp;- it should read like poetry. Variables and classes should be intuitive and well-structured at first glance. -->
 
+${\color{red}huh}$
+
 <p>1. ${\color{white}-}$ Beautiful
 <br>2. &nbsp; Elegant minimalism 
 <br>&nbsp;&nbsp;&nbsp;- no over-the-top abstractification for the sake of minimalism
