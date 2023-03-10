@@ -2,7 +2,9 @@
 
 <img width="10%" style="border:1px solid black;"  src="https://i.imgur.com/rjwzDCe.png">
 
-Python has something called [magic methods](https://rszalski.github.io/magicmethods/). One of these is the ```__init__``` method, which initalializes a class. See below:
+Python has something called [magic methods](https://rszalski.github.io/magicmethods/). One of these is the ```__init__``` method, which initalializes a class. 
+
+[//]: # (See below:)
 
 ```python
 class AGI:
