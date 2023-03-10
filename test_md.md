@@ -17,11 +17,10 @@ print(f'{AGI.__init__} is a method for initializing class "AGI".')
 
 <!--
 ```AGI.__init__``` can also be spelled ```AGI.init``` or pronounced Agent.
--->
 
 The magic function of our organization is to initiate AGI. ∎
 
-<!--∎-->
+∎-->
 
 ---
 
@@ -59,6 +58,8 @@ The magic function of our organization is to initiate AGI. ∎
 <br>&nbsp;&nbsp;&nbsp;- boiling ideas down to their core first-principle essences.
 <br>7. &nbsp; Poetic
 <br>&nbsp;&nbsp;&nbsp;- it should read like poetry. Variables and classes should be intuitive and well-structured at first glance.</p>
+
+<!--Note: MD files are user-facing and the point is to make them look right rendered-->
 
 # These are our standards
 
