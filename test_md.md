@@ -15,7 +15,9 @@ class AGI:
 print(f'{AGI.__init__} is a method for initializing class "AGI".')
 ```
 
-<--```AGI.__init__``` can also be spelled ```AGI.init``` or pronounced Agent.-->
+<--
+```AGI.__init__``` can also be spelled ```AGI.init``` or pronounced Agent.
+-->
 
 The magic function of our organization is to initiate AGI.
 
