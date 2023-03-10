@@ -1,4 +1,4 @@
-# AGI\_\_init\_\_
+# AGI.\_\_init\_\_
 
 <img width="10%" style="border:1px solid black;"  src="https://i.imgur.com/rjwzDCe.png">
 
