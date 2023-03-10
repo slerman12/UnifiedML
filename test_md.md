@@ -63,7 +63,7 @@ The magic function of our organization is to initiate AGI. ∎
 
 <!--Note: MD files are user-facing and the point is to make them look right rendered-->
 
-# These are our standards
+### These are our standards
 
 &ensp; $\scriptstyle\bullet$ &nbsp; the environment<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; justice among all peoples<br>
