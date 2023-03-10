@@ -72,7 +72,7 @@ The magic function of our organization is to initiate AGI. ∎
 &ensp; $\scriptstyle\bullet$ &nbsp; anti-greed<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; kindness and love<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; communication and understanding<br>
-&ensp; $\scriptstyle\bullet$ &nbsp; universal agriculture (automated), automated robot-assisted distribution of goods, and self-sustaining energy production<br>
+&ensp; $\scriptstyle\bullet$ &nbsp; universal agriculture (automated), robot-assisted distribution of goods, and self-sustaining energy production<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; construction/irrigation<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; social intimacy and connection<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; wildlife<br>
