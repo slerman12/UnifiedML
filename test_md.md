@@ -26,7 +26,7 @@ The magic function of our organization is to initiate AGI. ∎
 
 #
 
-# By principle, our code is written to be:
+## By principle, our code is written to be:
 <!-- 1. Beautiful
 2. Elegant minimalism 
 <br>&nbsp;&nbsp;&nbsp;- no over-the-top abstractification for the sake of minimalism
