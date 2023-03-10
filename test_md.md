@@ -22,22 +22,6 @@ The magic function of our organization is to initiate AGI.
 ---
 
 # By principle, our code is written to be:
-<!-- 1. Beautiful
-2. Elegant minimalism 
-<br>&nbsp;&nbsp;&nbsp;- no over-the-top abstractification for the sake of minimalism
-<br>&nbsp;&nbsp;&nbsp;- less is more, sharp
-3. Flexible
-<br> &nbsp;&nbsp;&nbsp;- our code should feel alive, like we could use it in a module "plug-and-play"
-<br>&nbsp;&nbsp;&nbsp;- adaptive, inferring and broadcasting when possible
-<br>&nbsp;&nbsp;&nbsp;- Pleasing to write new code with
-4. Clear
-<br>&nbsp;&nbsp;&nbsp;- it should be as useful pedagogically as practically
-5. Powerful
-<br> &nbsp;&nbsp;&nbsp;- it should not sacrifice performance
-6. "Essential"
-<br>&nbsp;&nbsp;&nbsp;- boiling ideas down to their core first-principle essences.
-7. Poetic
-<br>&nbsp;&nbsp;&nbsp;- it should read like poetry. Variables and classes should be intuitive and well-structured at first glance. -->
 
 $${\color{red}huh}$$
 
@@ -73,21 +57,6 @@ $${\color{red}huh}$$
 &ensp; $\scriptstyle\bullet$ &nbsp; wildlife<br>
 &ensp; $\scriptstyle\bullet$ &nbsp; preservation of mother earth and humanity's relationship with it
 <br>[https://youtu.be/aRHqs8SffDo](https://youtu.be/aRHqs8SffDo)</br>
-
-<!-- * the environment
-* justice among all peoples
-* anti-militarism
-* anti-surveillance
-* anti-greed
-* kindness and love
-* communication and understanding
-* universal agriculture (automated), automated robot-assisted distribution of goods, and self-sustaining energy production
-* construction/irrigation
-* social intimacy and connection
-* wildlife
-* preservation of mother earth and humanity's relationship with it
-
-[https://youtu.be/aRHqs8SffDo](https://youtu.be/aRHqs8SffDo) -->
  
 ---
 
