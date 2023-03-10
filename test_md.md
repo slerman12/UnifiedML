@@ -30,7 +30,7 @@ The magic function of our organization is to initiate AGI. ∎
 <!-- 1. Beautiful
 2. Elegant minimalism 
 <br>&nbsp;&nbsp;&nbsp;- no over-the-top abstractification for the sake of minimalism
-<br>&nbsp;&nbsp;&nbsp;- less is more, sharp
+<br>&nbsp;&nbsp;&nbsp;- less is more: sharp
 3. Flexible
 <br> &nbsp;&nbsp;&nbsp;- our code should feel alive, like we could use it in a module "plug-and-play"
 <br>&nbsp;&nbsp;&nbsp;- adaptive, inferring and broadcasting when possible
