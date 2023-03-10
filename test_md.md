@@ -24,7 +24,7 @@ The magic function of our organization is to initiate AGI. ∎
 
 ∎-->
 
----
+#
 
 # By principle, our code is written to be:
 <!-- 1. Beautiful
@@ -94,7 +94,7 @@ The magic function of our organization is to initiate AGI. ∎
 
 [https://youtu.be/aRHqs8SffDo](https://youtu.be/aRHqs8SffDo) -->
  
----
+#
 
  <p align="left">
 <img width="40%" style="border:1px solid black;"  src="https://i.imgur.com/YWndtJc.jpeg">
