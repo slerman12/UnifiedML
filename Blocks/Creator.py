@@ -10,33 +10,55 @@ import Utils
 
 
 class MonteCarloCreator(torch.nn.Module):
-    def __init__(self, action_spec, discrete=True, stddev_schedule=1, stddev_clip=torch.inf):
+    """
+    Selects over actions based on probabilities and "goodness"
+    """
+    def __init__(self, action_spec, critic, discrete=True, stddev_schedule=1, stddev_clip=torch.inf):
         super().__init__()
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        self.Explore = MonteCarloPolicy(discrete, stddev_schedule, stddev_clip, self.low, self.high)
-        self.Exploit = BestPolicy(discrete, self.low, self.high)
+        self.Explore = MonteCarloPolicy(discrete, stddev_schedule, stddev_clip, self.low, self.high, critic)
+        self.Exploit = BestPolicy(discrete, critic)
 
-    def sample(self):
-        return self.Explore.sample()
+    def sample(self, sample_shape=1):
+        sample = self.Explore.sample(sample_shape)
+
+        # Normalize Discrete Action -> [low, high]
+        if self.discrete:
+            sample = self.normalize(sample)
+
+        return sample
 
     @property
     def best(self):
-        return self.Exploit.sample()
+        sample = self.Exploit.sample()
+
+        # Normalize Discrete Action -> [low, high]
+        if self.discrete:
+            sample = self.normalize(sample)
+
+        return sample
 
     def goodness(self, action):
         return self.Exploit.goodness(action)
 
-    def forward(self, actions, explore_rate):
-        self.Explore(actions, explore_rate)
-        self.Exploit(actions)
+    def forward(self, action, explore_rate):
+        self.Explore(action, explore_rate)
+        self.Exploit(action)
 
         return self
 
+    def normalize(self, sample):
+        # Normalize Discrete Sample -> [low, high]  TODO logits shape
+        if self.low is not None and self.high is not None:
+            sample = sample / (self.logits.shape[-1] - 1) * (self.high - self.low) + self.low
+
+        return sample
+
 
 class MonteCarloPolicy(torch.nn.Module):
-    def __init__(self, discrete, stddev_schedule, stddev_clip, low, high):
+    def __init__(self, discrete, stddev_schedule, stddev_clip, low, high, critic):
         super().__init__()
 
         self.Pi = None
@@ -48,6 +70,8 @@ class MonteCarloPolicy(torch.nn.Module):
 
         self.low, self.high = low, high
 
+        self.critic = critic  # TODO
+
     def goodness(self, action):
         pass
 
@@ -57,43 +81,30 @@ class MonteCarloPolicy(torch.nn.Module):
             stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
 
             self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
-
-            # All actions' Q-values
-            # setattr(Pi, 'All_Qs', mean)  # [b, e, n, d]  # TODO Actor must store this
         else:
-            if self.low or self.high:
-                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
-
             self.Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
-    def sample(self):
-        return self.Pi.sample()
+    def sample(self, sample_shape=1):
+        sample = self.Pi.sample(sample_shape)
+
+        return sample
 
 
 class BestPolicy(torch.nn.Module):
-    def __init__(self, discrete, stddev_schedule, stddev_clip, low, high):
+    def __init__(self, discrete, critic):
         super().__init__()
 
         self.best = None
-
         self.discrete = discrete
-
-        # Standard dev value, max cutoff clip for action sampling
-        self.stddev_schedule, self.stddev_clip = stddev_schedule, stddev_clip
-
-        self.low, self.high = low, high
+        self._goodness = torch.ones(1)
+        self.critic = critic  # TODO
 
     def goodness(self, action):
-        pass
+        return self._goodness.expand(len(action))  # ensemble dim?
 
-    def forward(self, mean):
-        if self.discrete:
-            self.best = self.normalize(mean.argmax(-1, keepdim=True).transpose(-1, self.dim))
-        else:
-            if self.low or self.high:
-                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
+    def forward(self, actions):
+        # Argmax for Discrete, Mean for Continuous
+        self.best = actions.argmax(-1, keepdim=True).transpose(-1, -2) if self.discrete else actions
 
-            self.best = mean
-
-    def sample(self):
-        return self.best
+    def sample(self, sample_shape=1):
+        return self.best  # Note: returns full ensemble!
