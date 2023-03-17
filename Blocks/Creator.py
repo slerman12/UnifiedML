@@ -81,7 +81,7 @@ class MonteCarloPolicy(torch.nn.Module):
                     If sample_shape is None, the policy returns exactly 1 action
                     Otherwise, the policy returns a factor N=prod(sample_shape) of the actor ensemble size actions
     For use in Q-learning, a policy should include a probs(·) method
-            probs: action, Qs -> probability
+            probs: action, q -> probability
     Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
     """
     def __init__(self, discrete=True, temp_schedule=1, stddev_clip=None, low=None, high=None, critic=None):
@@ -171,7 +171,7 @@ class ArgmaxPolicy(torch.nn.Module):
                     If sample_shape is None, the policy returns exactly 1 action
                     Otherwise, the policy returns a factor N=prod(sample_shape) of the actor ensemble size actions
     For use in Q-learning, a policy should include a probs(·) method
-            probs: action, Qs -> probability
+            probs: action, q -> probability
     Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
     """
     def __init__(self, discrete=True, low=None, high=None, critic=None):
