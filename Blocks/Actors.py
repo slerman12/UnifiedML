@@ -8,8 +8,6 @@ import copy
 import torch
 from torch import nn
 
-from Distributions import TruncatedNormal, NormalizedCategorical
-
 from Blocks.Architectures.MLP import MLP
 
 import Utils
@@ -50,32 +48,18 @@ class EnsemblePiActor(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    def forward(self, obs, step=1):
+    def forward(self, obs, creator=None, step=1):
         h = self.trunk(obs)
 
-        mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
+        action = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
-            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
-            stddev = log_stddev.exp()  # [b, e, n, d]
+            action, log_explore_rate = action.chunk(2, dim=-1)  # [b, e, n, d]
+            explore_rate = log_explore_rate.exp()  # [b, e, n, d]
         else:
-            stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
+            explore_rate = torch.full_like(action, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        if self.discrete:
-            logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
-
-            Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
-
-            # All actions' Q-values
-            setattr(Pi, 'All_Qs', mean)  # [b, e, n, d]    # TODO Actor indeed stores this
-        else:
-            if self.low or self.high:
-                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
-
-            Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
-
-        return Pi
+        return action if creator is None else creator(action, explore_rate, step, obs)
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. Creator
