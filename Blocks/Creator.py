@@ -31,7 +31,7 @@ class Creator(torch.nn.Module):
 
         # Exploration / Exploitation policies
         self.Explore = MonteCarloPolicy(discrete, temp_schedule, stddev_clip, self.low, self.high, critic)
-        self.Exploit = BestPolicy(discrete, critic)
+        self.Exploit = BestPolicy(discrete, self.low, self.high, critic)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -52,13 +52,7 @@ class Creator(torch.nn.Module):
             else torch.ones(1, device=action.device)
 
     def sample(self, sample_shape=None, detach=True):
-        action = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
-
-        # Normalize Discrete Action -> [low, high]
-        if self.discrete and self.low is not None and self.high is not None:
-            action = action / (self.action_dim - 1) * (self.high - self.low) + self.low
-
-        self.first_sample = action
+        action = self.first_sample = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
 
         if self.second_sample and not self.discrete:
             pass  # TODO Second sample
@@ -71,10 +65,6 @@ class Creator(torch.nn.Module):
     @property
     def best(self):
         action = self.Exploit.sample()
-
-        # Normalize Discrete Action -> [low, high]
-        if self.discrete and self.low is not None and self.high is not None:
-            action = action / (self.action_dim - 1) * (self.high - self.low) + self.low
 
         return action  # Best action
 
@@ -105,15 +95,15 @@ class MonteCarloPolicy(torch.nn.Module):
         self.step = self.obs = None
         self.critic = critic
 
-    def forward(self, mean, stddev, step, obs):
+    def forward(self, action, explore_rate, step, obs):
         if self.discrete:
             # Pessimism
-            logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
+            logits, ind = action.min(1)  # Min-reduced ensemble [b, n, d]
+            stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
 
             self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
         else:
-            self.Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+            self.Pi = TruncatedNormal(action, explore_rate, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
         # For critic-based ensemble reduction
         self.step = step
@@ -160,20 +150,28 @@ class BestPolicy(torch.nn.Module):
     For use in Q-learning, a policy should include a probs(·) method
             probs: action, Qs -> probability
     """
-    def __init__(self, discrete, critic):
+    def __init__(self, discrete, low, high, critic):
         super().__init__()
 
-        self.best = None
         self.discrete = discrete
-        self.obs = None
+        self.low, self.high = low, high
+        self.best = self.obs = None
         self.critic = critic
 
     def forward(self, action, explore_rate=None, step=None, obs=None):
         # Argmax for Discrete, Mean for Continuous
         self.best = action.argmax(-1, keepdim=True).transpose(-1, -2) if self.discrete else action
 
+        # Normalize Discrete Action -> [low, high]
+        if self.discrete and self.low is not None and self.high is not None:
+            self.best = self.best / (action.shape[-1] - 1) * (self.high - self.low) + self.low
+
         # For critic-based ensemble reduction
         self.obs = obs
+
+    def probs(self, action, Qs=None):
+        # Absolute Determinism
+        return torch.ones([1], device=action.device).expand(len(action), 1)
 
     def sample(self, sample_shape=None):
         action = self.best  # Note: sample_shape is at most (1,)
