@@ -31,7 +31,7 @@ class Creator(torch.nn.Module):
 
         # Exploration / Exploitation policies
         self.Explore = MonteCarloPolicy(discrete, temp_schedule, stddev_clip, self.low, self.high, critic)
-        self.Exploit = BestPolicy(discrete, self.low, self.high, critic)
+        self.Exploit = ArgmaxPolicy(discrete, self.low, self.high, critic)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -47,9 +47,8 @@ class Creator(torch.nn.Module):
 
         return self  # Return self as an initialized distribution
 
-    def probs(self, action, Qs=None):
-        return self.Explore.probs(action, Qs) if hasattr(self.Explore, 'probs') \
-            else torch.ones(1, device=action.device)
+    def probs(self, action, q=None):
+        return self.Explore.probs(action, q)
 
     def sample(self, sample_shape=None, detach=True):
         action = self.first_sample = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
@@ -79,6 +78,7 @@ class MonteCarloPolicy(torch.nn.Module):
                     Otherwise, the policy returns a factor N=prod(sample_shape) of the actor ensemble size actions
     For use in Q-learning, a policy should include a probs(·) method
             probs: action, Qs -> probability
+    Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
     """
     def __init__(self, discrete, temp_schedule, stddev_clip, low, high, critic):
         super().__init__()
@@ -109,8 +109,23 @@ class MonteCarloPolicy(torch.nn.Module):
         self.step = step
         self.obs = obs
 
-    def probs(self, action, Qs=None):
-        pass  # TODO
+    def probs(self, action, q=None):
+        probs = self.Pi.probs(action)
+
+        # Ensembles are reduced based on Q-value
+        if not self.discrete and q is None and action.shape[1] > 1:
+            # Pessimistic Q-values per action
+            q = self.critic(self.obs, action).min(1)[0]  # Min-reduced critic ensemble
+
+        # Ensemble-wise probability
+        if q is not None:
+            q_norm = q - q.max(-1, keepdim=True)[0]  # Normalized ensemble-wise
+
+            # Categorical distribution based on Q-value
+            temp = Utils.schedule(self.temp_schedule, self.step)  # Softmax temperature / "entropy"
+            probs *= (q_norm / temp).softmax(-1)  # Probabilities
+
+        return probs
 
     def sample(self, sample_shape=None, detach=True):
         action = self.Pi.sample(sample_shape or 1) if detach else self.Pi.rsample(sample_shape or 1)
@@ -120,7 +135,7 @@ class MonteCarloPolicy(torch.nn.Module):
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
             # Pessimistic Q-values per action
             Qs = self.critic(self.obs, action)
-            q = Qs.min(1)  # Min-reduced critic ensemble
+            q = Qs.min(1)[0]  # Min-reduced critic ensemble
 
             # Normalize
             q -= q.max(-1, keepdim=True)[0]
@@ -139,7 +154,7 @@ class MonteCarloPolicy(torch.nn.Module):
         return self.sample(sample_shape, detach=False)
 
 
-class BestPolicy(torch.nn.Module):
+class ArgmaxPolicy(torch.nn.Module):
     """
     RL policy - samples action across action space and ensemble space
 
@@ -149,6 +164,7 @@ class BestPolicy(torch.nn.Module):
                     Otherwise, the policy returns a factor N=prod(sample_shape) of the actor ensemble size actions
     For use in Q-learning, a policy should include a probs(·) method
             probs: action, Qs -> probability
+    Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
     """
     def __init__(self, discrete, low, high, critic):
         super().__init__()
@@ -169,12 +185,13 @@ class BestPolicy(torch.nn.Module):
         # For critic-based ensemble reduction
         self.obs = obs
 
-    def probs(self, action, Qs=None):
+    def probs(self, action, q=None):
         # Absolute Determinism
         return torch.ones([1], device=action.device).expand(len(action), 1)
 
     def sample(self, sample_shape=None):
         action = self.best  # Note: sample_shape is at most (1,)
+        # action = self.ActionExtractor(action)  # TODO
 
         # Reduce ensemble
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
