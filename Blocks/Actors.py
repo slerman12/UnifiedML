@@ -60,6 +60,9 @@ class EnsemblePiActor(nn.Module):
             explore_rate = torch.full_like(action, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
         return action if creator is None else creator(action, explore_rate, step, obs)
+        # TODO Maybe set All_Qs just for aesthetic
+        # TODO Maybe return Dist either way
+        # TODO step-able explore_scheduler, no step arg
 
 
 class CategoricalCriticActor(nn.Module):  # a.k.a. Creator

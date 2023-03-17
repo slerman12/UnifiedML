@@ -1,6 +1,13 @@
 from Blocks.Critics import EnsembleQCritic
 
 
+# Note: Perhaps Critic or Creator need to track agent.step. Or PRO critic defined in actor or even creator
+# Creator = Critic (or subsumes it) : perhaps just use goodness in Q learning and PGA
+# Or have creator or actor track step and do as below e.g. agent.explore_schedule.step(). Actor can have its own creator
+# Or no creator. Just policy.
+# Or creator can set a Pi attribute in critic
+# Or actor can track step via agent.explore_schedule.step(), and pass in actor and creator below; keep them separate
+# To avoid cyclical loop have to call probs with as_ensemble=False (note: log_probs)
 class PolicyRatioCritic(EnsembleQCritic):
     """
     PRO critic, employs ensemble Q learning via policy ratio, A.K.A Proportionality,
@@ -16,7 +23,7 @@ class PolicyRatioCritic(EnsembleQCritic):
             class PRO(nn.Module):  # TODO discrete actions
                 def forward(self, obs, action, context=None):
                     M, B = super().Q_head(obs, action, context)
-                    return M.abs() * actor(obs).log_prob(action) + B
+                    return M.abs() * actor(obs).log_prob(action) + B  # <- actor needs step
             PRO_heads.append(PRO())
 
         self.Q_head = PRO_heads

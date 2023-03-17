@@ -12,11 +12,11 @@ from Distributions import TruncatedNormal, NormalizedCategorical
 import Utils
 
 
-class Creator(torch.nn.Module):
+class Creator(torch.nn.Module):  # TODO instead of critic can pass in critic on forward as needed or categorical by prob
     """
     Selects over action spaces based on probabilities and over ensembles based on Critic-evaluated "goodness"
     """
-    def __init__(self, action_spec, critic, explore=None, exploit=None, second_sample=False,
+    def __init__(self, action_spec, critic=None, explore=None, exploit=None, second_sample=False,
                  discrete=False, temp_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
@@ -47,8 +47,8 @@ class Creator(torch.nn.Module):
 
         return self  # Return self as an initialized distribution
 
-    def probs(self, action, q=None):
-        return self.Explore.probs(action, q)
+    def probs(self, action, q=None, as_ensemble=True):
+        return self.Explore.probs(action, q, as_ensemble)
 
     def sample(self, sample_shape=None, detach=True):
         action = self.first_sample = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
@@ -67,6 +67,9 @@ class Creator(torch.nn.Module):
 
         return action  # Best action
 
+    # TODO goodness (instead of logits), entropy (for SAC), log_probs
+    #   Perhaps Creator should do parallel inference end-to-end
+
 
 class MonteCarloPolicy(torch.nn.Module):
     """
@@ -80,7 +83,7 @@ class MonteCarloPolicy(torch.nn.Module):
             probs: action, Qs -> probability
     Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
     """
-    def __init__(self, discrete, temp_schedule, stddev_clip, low, high, critic):
+    def __init__(self, discrete=True, temp_schedule=1, stddev_clip=None, low=None, high=None, critic=None):
         super().__init__()
 
         self.Pi = None
@@ -106,14 +109,18 @@ class MonteCarloPolicy(torch.nn.Module):
             self.Pi = TruncatedNormal(action, explore_rate, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
         # For critic-based ensemble reduction
-        self.step = step
-        self.obs = obs
+        if self.critic is not None:
+            self.step = step
+            self.obs = obs
 
-    def probs(self, action, q=None):
+    def probs(self, action, q=None, as_ensemble=True):
         probs = self.Pi.probs(action)
 
+        if not as_ensemble:
+            return probs
+
         # Ensembles are reduced based on Q-value
-        if not self.discrete and q is None and action.shape[1] > 1:
+        if not (self.critic is None or self.discrete) and q is None and action.shape[1] > 1:
             # Pessimistic Q-values per action
             q = self.critic(self.obs, action).min(1)[0]  # Min-reduced critic ensemble
 
@@ -132,7 +139,7 @@ class MonteCarloPolicy(torch.nn.Module):
         # action = self.ActionExtractor(action)  # TODO
 
         # Reduce ensemble
-        if sample_shape is None and action.shape[1] > 1 and not self.discrete:
+        if self.critic is not None and sample_shape is None and action.shape[1] > 1 and not self.discrete:
             # Pessimistic Q-values per action
             Qs = self.critic(self.obs, action)
             q = Qs.min(1)[0]  # Min-reduced critic ensemble
@@ -166,7 +173,7 @@ class ArgmaxPolicy(torch.nn.Module):
             probs: action, Qs -> probability
     Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
     """
-    def __init__(self, discrete, low, high, critic):
+    def __init__(self, discrete=True, low=None, high=None, critic=None):
         super().__init__()
 
         self.discrete = discrete
@@ -183,9 +190,10 @@ class ArgmaxPolicy(torch.nn.Module):
             self.best = self.best / (action.shape[-1] - 1) * (self.high - self.low) + self.low
 
         # For critic-based ensemble reduction
-        self.obs = obs
+        if self.critic is not None:
+            self.obs = obs
 
-    def probs(self, action, q=None):
+    def probs(self, action, q=None, as_ensemble=True):
         # Absolute Determinism
         return torch.ones([1], device=action.device).expand(len(action), 1)
 
@@ -194,7 +202,7 @@ class ArgmaxPolicy(torch.nn.Module):
         # action = self.ActionExtractor(action)  # TODO
 
         # Reduce ensemble
-        if sample_shape is None and action.shape[1] > 1 and not self.discrete:
+        if self.critic is not None and sample_shape is None and action.shape[1] > 1 and not self.discrete:
             # Q-values per action
             Qs = self.critic(self.obs, action)
             q = Qs.mean(1)  # Mean-reduced ensemble
