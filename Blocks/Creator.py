@@ -12,7 +12,7 @@ from Distributions import TruncatedNormal, NormalizedCategorical
 import Utils
 
 
-class Creator(torch.nn.Module):  # TODO instead of critic can pass in critic on forward as needed or categorical by prob
+class Creator(torch.nn.Module):
     """
     Selects over action spaces based on probabilities and over ensembles based on Critic-evaluated "goodness"
     """
