@@ -28,7 +28,7 @@ class Creator(torch.nn.Module):
 
         self.second_sample = second_sample
 
-        self.action = self.first_sample = None
+        self.first_sample = None
 
         # Exploration / Exploitation policies
         self.Explore = MonteCarloPolicy(discrete, temp_schedule, stddev_clip, self.low, self.high, critic)
