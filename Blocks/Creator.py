@@ -15,6 +15,7 @@ import Utils
 class Creator(torch.nn.Module):
     """
     Selects over action spaces based on probabilities and over ensembles based on Critic-evaluated "goodness"
+    A distribution consisting of an exploration policy and an exploitation policy
     """
     def __init__(self, action_spec, critic=None, explore=None, exploit=None, second_sample=False,
                  discrete=False, temp_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
