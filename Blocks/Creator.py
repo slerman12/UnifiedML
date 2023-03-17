@@ -52,18 +52,18 @@ class Creator(torch.nn.Module):
             else torch.ones(1, device=action.device)
 
     def sample(self, sample_shape=None, detach=True):
-        sample = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
+        action = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
 
         # Normalize Discrete Action -> [low, high]
         if self.discrete and self.low is not None and self.high is not None:
-            sample = sample / (self.action_dim - 1) * (self.high - self.low) + self.low
+            action = action / (self.action_dim - 1) * (self.high - self.low) + self.low
 
-        self.first_sample = sample
+        self.first_sample = action
 
         if self.second_sample and not self.discrete:
             pass  # TODO Second sample
 
-        return sample
+        return action
 
     def rsample(self, sample_shape=None):
         return self.sample(sample_shape, detach=False)
@@ -128,9 +128,9 @@ class MonteCarloPolicy(torch.nn.Module):
 
         # Reduce ensemble
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
-            # Q-values per action
+            # Pessimistic Q-values per action
             Qs = self.critic(self.obs, action)
-            q = Qs.mean(1)  # Mean-reduced ensemble
+            q = Qs.min(1)  # Min-reduced critic ensemble
 
             # Normalize
             q -= q.max(-1, keepdim=True)[0]
