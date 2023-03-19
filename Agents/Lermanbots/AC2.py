@@ -145,11 +145,7 @@ class AC2Agent(torch.nn.Module):
 
             obs = encoder(obs)
 
-            Pi = actor(obs, creator, self.step)
-
-            # Critic-based ensemble reduction
-            if not self.discrete and self.num_actors > 1:
-                Pi = creator(obs, critic)
+            Pi = actor(obs, creator(obs, critic), self.step)
 
             action = Pi.sample() if self.training else Pi.best
 

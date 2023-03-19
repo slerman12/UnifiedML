@@ -24,7 +24,7 @@ class Creator(torch.nn.Module):
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        # Entropy value, max cutoff clip for action sampling
+        # Entropy value for ensemble reduction, max cutoff clip for action sampling
         self.temp_schedule, self.stddev_clip = temp_schedule, stddev_clip
 
         # A mapping applied after sampling but prior to ensemble reduction
@@ -51,7 +51,7 @@ class Creator(torch.nn.Module):
         self.step = step
 
         if self.discrete:
-            logits, ind = pessimism(action)  # Reduced ensemble [b, n, d]
+            logits, ind = action.min(1)  # Reduced ensemble [b, n, d]
             stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Reduced ensemble stddev [b, n, d]
 
             self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
@@ -70,7 +70,8 @@ class Creator(torch.nn.Module):
         # If action is an ensemble, multiply probability of sampling action from the ensemble
         if as_ensemble and self.critic is not None and not self.discrete and action.shape[1] > 1:
             if q is None:
-                q, _ = pessimism(self.critic(self.obs, action))  # Reduced critic-ensemble Q-values
+                Qs = self.critic(self.obs, action)
+                q, _ = Qs.min(1)  # Reduced critic-ensemble Q-values
 
             q = q - q.max(-1, keepdim=True)[0]  # Normalize q ensemble-wise
 
@@ -82,14 +83,18 @@ class Creator(torch.nn.Module):
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
+        # Monte Carlo
+
         # Sample
-        action = self.ActionExtractor(self.Pi.sample(sample_shape or 1) if detach
-                                      else self.Pi.rsample(sample_shape or 1))
+        action = self.Pi.sample(sample_shape or 1) if detach else self.Pi.rsample(sample_shape or 1)
+
+        if not self.discrete:
+            action = self.ActionExtractor(action)
 
         # Reduce Actor ensemble
         if sample_shape is None and self.critic is not None and action.shape[1] > 1 and not self.discrete:
             Qs = self.critic(self.obs, action)
-            q, _ = pessimism(Qs)  # Reduce critic ensemble (pessimism <-> Min-reduce)
+            q, _ = Qs.min(1)  # Reduce critic ensemble (pessimism <-> Min-reduce)
 
             # Normalize
             q -= q.max(-1, keepdim=True)[0]
@@ -114,14 +119,9 @@ class Creator(torch.nn.Module):
         # Absolute Determinism
 
         if self.best_action is None:
-            # Argmax for Discrete, Raw Action for Continuous
-            action = self.action.argmax(-1, keepdim=True).transpose(-1, -2) if self.discrete else self.action
-
-            # Normalize Discrete Action -> [low, high]
-            if self.discrete and self.low is not None and self.high is not None:
-                action = action / (self.action.shape[-1] - 1) * (self.high - self.low) + self.low
-
-            action = self.ActionExtractor(action)
+            # Argmax for discrete, extract action for continuous
+            action = self.Pi.normalize(self.action.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
+                else self.ActionExtractor(self.action)
 
             # Reduce ensemble
             if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
@@ -144,8 +144,3 @@ class Creator(torch.nn.Module):
 
     def __getattr__(self, key):
         return getattr(self.Pi, key)
-
-
-# Judgement
-def pessimism(Qs):
-    return Qs.min(1)  # Pessimistic Q-value ensemble-reduction
