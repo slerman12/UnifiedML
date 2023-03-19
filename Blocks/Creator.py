@@ -6,7 +6,7 @@ import math
 import copy
 
 import torch
-from torch.nn import nn
+from torch import nn
 
 from Distributions import TruncatedNormal, NormalizedCategorical
 
