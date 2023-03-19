@@ -14,7 +14,7 @@ import Utils
 
 
 class Creator(torch.nn.Module):
-    """Creates a policy distribution for sampling actions and computing probabilistic measures."""
+    """Creates a policy distribution for sampling actions and ensembles and computing probabilistic measures."""
     def __init__(self, action_spec, ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
@@ -29,7 +29,7 @@ class Creator(torch.nn.Module):
 
         self.Dist = ExploreExploit  # Exploration and exploitation
 
-        # A mapping applied after sampling but prior to ensemble reduction
+        # A mapping that can be applied after action sampling
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
 
         # Initialize model optimizer + EMA
@@ -46,17 +46,18 @@ class Creator(torch.nn.Module):
         return self
 
     # Get policy
-    def dist(self, action, explore_rate, step=1):
-        return self.Dist(action, explore_rate, step, self.ActionExtractor, self.critic)
+    def dist(self, mean, stddev, step=1, obs=None):
+        return self.Dist(mean, stddev, step, self.ActionExtractor, obs, self.critic)
 
 
 class ExploreExploit(torch.nn.Module):
     """Exploration and exploitation distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action, explore_rate, step=1, ActionExtractor=None, critic=None):
+    def __init__(self, action, explore_rate, step=1, ActionExtractor=None, obs=None, critic=None):
         super().__init__()
 
         self.action = action  # [b, e, n, d]
         self.step = step
+        self.obs = obs
 
         if self.discrete:
             logits, ind = action.min(1)  # Reduced ensemble [b, n, d]

@@ -48,7 +48,7 @@ class EnsemblePiActor(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    def forward(self, obs, creator, step=1):
+    def forward(self, obs, creator=None, step=1):
         h = self.trunk(obs)
 
         mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
@@ -59,6 +59,7 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        Pi = creator.dist(mean, stddev, step)
+        if creator is None:
+            return mean
 
-        return Pi
+        return creator.dist(mean, stddev, step, obs)

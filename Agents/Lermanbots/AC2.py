@@ -140,13 +140,14 @@ class AC2Agent(torch.nn.Module):
             # Use exponential-moving-averages (EMA)
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
-            critic = self.critic.ema if self.ema else self.critic
-            creator = self.creator.ema if self.ema else self.creator
+            creator = self.creator.ema(self.critic.ema) if self.ema else self.creator(self.critic)
+
+            # "See"
 
             obs = encoder(obs)
 
-            Pi = actor(obs, creator(obs, critic), self.step)
-
+            # Act
+            Pi = actor(obs, creator, self.step)
             action = Pi.sample() if self.training else Pi.best
 
             if self.training:
@@ -155,10 +156,10 @@ class AC2Agent(torch.nn.Module):
                 self.frame += len(obs)
 
                 if self.step < self.explore_steps and not self.generate:
-                    # Explore
+                    # Take random action
                     action.uniform_(actor.low, actor.high)  # Env will automatically round to whole number if discrete
 
-            return action, {}  # Act
+            return action, {}
 
     # "Dream"
     def learn(self, replay):
@@ -205,8 +206,8 @@ class AC2Agent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            Pi = self.actor(obs, self.creator)
-            y_predicted = Pi.action.mean(1)  # Average over ensembles
+            action = self.actor(obs)
+            y_predicted = action.mean(1)  # Average over ensembles
 
             # Cross entropy error
             error = cross_entropy(y_predicted, label.long(),
@@ -264,10 +265,8 @@ class AC2Agent(torch.nn.Module):
 
                 next_obs = None
 
-                actions = self.actor(obs).mean
-
-                generated_image = (actions if self.num_actors == 1
-                                   else self.creator(self.critic(obs, actions), 1, actions).best).flatten(1)
+                Pi = self.actor(obs, self.creator)
+                generated_image = Pi.best.flatten(1)
 
                 action, reward = generated_image, torch.zeros_like(reward)  # Discriminate Fake
 
