@@ -15,8 +15,9 @@ import Utils
 
 from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
+from Blocks.Actors import EnsemblePiActor
 from Blocks.Critics import EnsembleQCritic
+from Blocks.Creator import Creator
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
@@ -127,40 +128,27 @@ class AC2Agent(torch.nn.Module):
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
 
-        self.creator = CategoricalCriticActor(stddev_schedule)
+        self.creator = Creator(action_spec, self.critic, *recipes.creator, self.discrete, stddev_schedule, stddev_clip)
 
         # Birth
 
+    # "Play"
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
 
-            # Exponential moving average (EMA) shadows
+            # Use exponential-moving-averages (EMA)
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
-            critic = self.critic.ema if self.ema else self.critic
+            critic = self.critic.ema if self.ema else self.critic  # TODO pass critic to creator
 
-            # See
             obs = encoder(obs)
 
-            # Act
-            Pi = actor(obs, self.step)
-
-            action = Pi.sample() if self.training \
-                else Pi.best if self.discrete \
-                else Pi.mean
-
-            # Ensemble reduction
-            if self.num_actors > 1 and not self.discrete:  # Discrete critic already min-reduces ensembles
-
-                Psi = self.creator(critic(obs, action), self.step, action)  # Creator selects/samples ensembles
-
-                # Select among candidate actions based on Q-value
-                action = Psi.sample() if self.training else Psi.best
-
-            store = {}
+            Pi = actor(obs, self.creator, self.step)
+            action = Pi.sample() if self.training else Pi.best
 
             if self.training:
+
                 self.step += 1
                 self.frame += len(obs)
 
@@ -168,16 +156,9 @@ class AC2Agent(torch.nn.Module):
                     # Explore
                     action.uniform_(actor.low, actor.high)  # Env will automatically round to whole number if discrete
 
-                # Discrete -> Continuous auxiliary conversion
-                if self.discrete_as_continuous:
-                    store = {'action': action.cpu().numpy()}  # Store learned action distribution
+            return action, {}  # Act
 
-                    # Sample discrete action from continuous distribution
-                    action = self.creator(action.transpose(-1, -2), self.step).sample()  # Note: Env will argmax if eval
-
-            return action, store
-
-    # Dream
+    # "Dream"
     def learn(self, replay):
         # "Recall"
 

@@ -51,6 +51,8 @@ class EnsembleQCritic(nn.Module):
 
             self.register_buffer('action', self.normalize(action))  # [n^d, d]
 
+        self.judgement = pessimism  # Min-reduced ensemble (Pessimism)
+
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
@@ -97,5 +99,6 @@ class EnsembleQCritic(nn.Module):
 
         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of normalize -> indices
 
-    def judgement(self, Qs):
-        return Qs.min(1)  # Pessimistic ensemble reduction
+
+def pessimism(Qs):
+    return Qs.min(1)  # Pessimistic Q-values

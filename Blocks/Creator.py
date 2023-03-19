@@ -31,7 +31,6 @@ class Creator(torch.nn.Module):
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
 
         self.Pi = self.action = self.best_action = self.step = self.obs = None
-        self.critic = critic
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -39,6 +38,8 @@ class Creator(torch.nn.Module):
         if ema_decay:
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
+
+        self.critic = critic
 
     # Sets distribution
     def forward(self, action, explore_rate, step, obs):
