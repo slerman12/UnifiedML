@@ -64,7 +64,7 @@ class EnsemblePiActor(nn.Module):
         return self.creator(mean, stddev)  # Policy
 
 
-class MonteCarlo(nn.Module):  # "Creator" policy
+class MonteCarlo(nn.Module):  # "Creator"
     """Policy distribution for sampling across action spaces."""
     def __init__(self, discrete, action_spec, ActionExtractor=None, stddev_clip=math.inf):
         super().__init__()
@@ -73,11 +73,11 @@ class MonteCarlo(nn.Module):  # "Creator" policy
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(action_spec.shape))
-
         # Max cutoff clip for action sampling
         self.stddev_clip = stddev_clip
+
+        # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(action_spec.shape))
 
     def forward(self, mean, stddev):
         if self.discrete:
@@ -102,8 +102,8 @@ class MonteCarlo(nn.Module):  # "Creator" policy
         return Psi
 
 
-class CategoricalCriticActor(nn.Module):  # "Creator" policy
-    """Policy distribution that samples over ensembles and selects actions based on Q-values."""
+class CategoricalCriticActor(nn.Module):  # "Creator"
+    """Policy distribution for sampling over ensembles and actions based on Q-values."""
     def __init__(self, temp_schedule=1):
         super().__init__()
 
