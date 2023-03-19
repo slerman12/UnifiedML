@@ -86,7 +86,7 @@ class Creator(torch.nn.Module):
 
         # Multiply probability of sampling a discrete action from a continuous-ized categorical distribution
         if self.sample_discrete_as_discrete:
-            pass  # TODO
+            pass  # TODO - And has to be reshaped to n, d rather than nd before Softmax
 
         return probs
 
@@ -115,7 +115,7 @@ class Creator(torch.nn.Module):
 
         # Can sample again from a continuous categorical distribution to get a discrete action if action continuous-ized
         if self.sample_discrete_as_discrete:
-            pass  # TODO
+            pass  # TODO - And has to be reshaped to n, d rather than nd before Softmax?
 
         return action
 
@@ -153,7 +153,7 @@ class Creator(torch.nn.Module):
 
         # Can Argmax again from a continuous categorical distribution to get a discrete action if action continuous-ized
         if self.sample_discrete_as_discrete:
-            pass  # TODO
+            pass  # TODO - And has to be reshaped to n, d rather than nd before Argmax?
 
         self.best_action = action
 
