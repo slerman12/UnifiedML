@@ -68,9 +68,6 @@ class Creator(torch.nn.Module):
 
         return action  # Best action
 
-    # TODO goodness (instead of logits), entropy (for SAC), log_probs
-    #   Perhaps Creator should do parallel inference end-to-end
-
 
 class MonteCarloPolicy(torch.nn.Module):
     """
@@ -101,7 +98,7 @@ class MonteCarloPolicy(torch.nn.Module):
 
     def forward(self, action, explore_rate, step, obs):
         if self.discrete:
-            # Pessimism
+            # Pessimism  TODO perhaps critic.judgement()
             logits, ind = action.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
 
