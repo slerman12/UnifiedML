@@ -40,15 +40,15 @@ class Creator(torch.nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
     # Enable critic-based ensemble reduction
-    def forward(self, obs, step, critic):
+    def forward(self, obs, critic):
         self.obs = obs
-        self.step = step
         self.critic = critic
         return self
 
     # Set distribution
-    def dist(self, action, explore_rate):
+    def dist(self, action, explore_rate, step=1):
         self.action = action  # [b, e, n, d]
+        self.step = step
 
         if self.discrete:
             logits, ind = pessimism(action)  # Reduced ensemble [b, n, d]

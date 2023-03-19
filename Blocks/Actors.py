@@ -59,6 +59,6 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        Pi = creator.dist(mean, stddev)
+        Pi = creator.dist(mean, stddev, step)
 
         return Pi
