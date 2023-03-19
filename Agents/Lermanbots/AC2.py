@@ -145,7 +145,7 @@ class AC2Agent(torch.nn.Module):
 
             obs = encoder(obs)
 
-            Pi = actor(obs, creator.judge(critic), self.step)
+            Pi = actor(obs, creator(obs, self.step, critic), self.step)
             action = Pi.sample() if self.training else Pi.best
 
             if self.training:

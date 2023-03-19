@@ -30,7 +30,7 @@ class Creator(torch.nn.Module):
         # A mapping applied after sampling but prior to ensemble reduction
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
 
-        self.Pi = self.action = self.best_action = self.critic = self.step = self.obs = None
+        self.Pi = self.action = self.best_action = self.critic = self.obs = self.step = None
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -39,14 +39,15 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    def judge(self, critic):
-        self.critic = critic  # Set critic for judgement
-
-        # Returns itself as policy
+    # Enable critic-based ensemble reduction
+    def forward(self, obs, step, critic):
+        self.obs = obs
+        self.step = step
+        self.critic = critic
         return self
 
-    # Sets distribution
-    def forward(self, action, explore_rate, step, obs):
+    # Set distribution
+    def dist(self, action, explore_rate):
         self.action = action  # [b, e, n, d]
 
         if self.discrete:
@@ -56,11 +57,6 @@ class Creator(torch.nn.Module):
             self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
         else:
             self.Pi = TruncatedNormal(action, explore_rate, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
-
-        # For critic-based ensemble reduction
-        if self.critic is not None:
-            self.step = step
-            self.obs = obs
 
         self.best_action = None
 
