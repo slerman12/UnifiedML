@@ -21,9 +21,16 @@ class Creator(torch.nn.Module):
 
         self.Pi = Pi  # Exploration and exploitation policy recipe
 
-        # Args to instantiate Pi
-        self.spec = dict(action_spec=action_spec, ActionExtractor=ActionExtractor, discrete=discrete,
-                         temp_schedule=temp_schedule, stddev_clip=stddev_clip)
+        action_dim = math.prod(action_spec.shape)
+
+        # A mapping that can be applied after action sampling
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=action_dim) or nn.Identity()
+
+        # Args to instantiate Pi recipe
+        self.spec = dict(
+            action_spec=action_spec, ActionExtractor=ActionExtractor, discrete=discrete,
+            temp_schedule=temp_schedule, stddev_clip=stddev_clip
+        )
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -51,7 +58,6 @@ class ExploreExploitPi(torch.nn.Module):
         super().__init__()
 
         self.discrete = discrete
-        self.action_dim = math.prod(action_spec.shape)
 
         self.low, self.high = action_spec.low, action_spec.high
 
@@ -68,7 +74,7 @@ class ExploreExploitPi(torch.nn.Module):
             self.Psi = TruncatedNormal(self.action, explore_rate, low=self.low, high=self.high, stddev_clip=stddev_clip)
 
         # A mapping that can be applied after action sampling
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
+        self.ActionExtractor = ActionExtractor
 
         self.critic = critic
 
