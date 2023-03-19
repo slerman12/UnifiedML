@@ -39,16 +39,14 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-        self.critic = None  # Critic can be used to reduce continuous-action ensembles
-
     def forward(self, critic):
-        self.critic = critic  # Enable critic-based ensemble reduction
+        self.spec['critic'] = critic  # Enable critic-based ensemble reduction
         return self
 
     # Get policy
     def dist(self, mean, stddev, step=1, obs=None):
-        return Utils.instantiate(self.Pi, action=mean, explore_rate=stddev, step=step, obs=obs, critic=self.critic,
-                                 **self.spec) or MonteCarlo(mean, stddev, step, obs, self.critic, **self.spec)
+        return Utils.instantiate(self.Pi, action=mean, explore_rate=stddev, step=step, obs=obs, **self.spec) or \
+            MonteCarlo(mean, stddev, step, obs, **self.spec)
 
 
 class MonteCarlo(torch.nn.Module):
