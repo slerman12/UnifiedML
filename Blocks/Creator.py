@@ -15,7 +15,7 @@ import Utils
 
 class Creator(torch.nn.Module):
     """Policy distribution and probabilistic measures for sampling across action spaces and ensembles."""
-    def __init__(self, action_spec, critic, ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf,
+    def __init__(self, action_spec, ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
@@ -30,7 +30,7 @@ class Creator(torch.nn.Module):
         # A mapping applied after sampling but prior to ensemble reduction
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
 
-        self.Pi = self.action = self.best_action = self.step = self.obs = None
+        self.Pi = self.action = self.best_action = self.critic = self.step = self.obs = None
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -39,18 +39,18 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-        self.critic = critic
+    def judge(self, critic):
+        self.critic = critic  # Set critic for judgement
+
+        # Returns itself as policy
+        return self
 
     # Sets distribution
     def forward(self, action, explore_rate, step, obs):
-        self.action = action
+        self.action = action  # [b, e, n, d]
 
         if self.discrete:
-            # All actions' Q-values  TODO
-            setattr(self, 'All_Qs', action)  # [b, e, n, d]
-
-        if self.discrete:
-            logits, ind = self.critic.judgement(action)  # Reduced ensemble [b, n, d]
+            logits, ind = pessimism(action)  # Reduced ensemble [b, n, d]
             stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Reduced ensemble stddev [b, n, d]
 
             self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
@@ -58,28 +58,29 @@ class Creator(torch.nn.Module):
             self.Pi = TruncatedNormal(action, explore_rate, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
         # For critic-based ensemble reduction
-        self.step = step
-        self.obs = obs
+        if self.critic is not None:
+            self.step = step
+            self.obs = obs
 
         self.best_action = None
 
         # Returns itself as policy
         return self
 
-    def probs(self, action, judgement=None, as_ensemble=True):
+    def probs(self, action, q=None, as_ensemble=True):
         # Individual action probability
         probs = self.Pi.probs(action)
 
         # If action is an ensemble, multiply probability of sampling action from the ensemble
-        if as_ensemble and not self.discrete and action.shape[1] > 1:
-            if judgement is None:
-                judgement, _ = self.critic.judgement(self.critic(self.obs, action))  # Reduced critic-ensemble Q-values
+        if as_ensemble and self.critic is not None and not self.discrete and action.shape[1] > 1:
+            if q is None:
+                q, _ = pessimism(self.critic(self.obs, action))  # Reduced critic-ensemble Q-values
 
-            judgement = judgement - judgement.max(-1, keepdim=True)[0]  # Normalize critic's judgement ensemble-wise
+            q = q - q.max(-1, keepdim=True)[0]  # Normalize q ensemble-wise
 
-            # Categorical distribution based on critic's judgement
+            # Categorical distribution based on q
             temp = Utils.schedule(self.temp_schedule, self.step)  # Softmax temperature / "entropy"
-            probs *= (judgement / temp).softmax(-1)  # Actor-ensemble-wise probabilities
+            probs *= (q / temp).softmax(-1)  # Actor-ensemble-wise probabilities
 
         return probs
 
@@ -90,18 +91,18 @@ class Creator(torch.nn.Module):
                                       else self.Pi.rsample(sample_shape or 1))
 
         # Reduce Actor ensemble
-        if sample_shape is None and action.shape[1] > 1 and not self.discrete:
+        if sample_shape is None and self.critic is not None and action.shape[1] > 1 and not self.discrete:
             Qs = self.critic(self.obs, action)
-            judgement, _ = self.critic.judgement(Qs)  # Reduce critic ensemble (e.g. Pessimism <--> Min-reduce)
+            q, _ = pessimism(Qs)  # Reduce critic ensemble (pessimism <-> Min-reduce)
 
             # Normalize
-            judgement -= judgement.max(-1, keepdim=True)[0]
+            q -= q.max(-1, keepdim=True)[0]
 
             # Softmax temperature
             temp = Utils.schedule(self.temp_schedule, self.step) if self.step else 1
 
             # Categorical dist
-            Psi = torch.distributions.Categorical(logits=judgement / temp)
+            Psi = torch.distributions.Categorical(logits=q / temp)
 
             # Sample again ensemble-wise
             action = Utils.gather(action, Psi.sample().unsqueeze(-1), 1).squeeze(1)
@@ -113,7 +114,7 @@ class Creator(torch.nn.Module):
 
     # Exploitation policy
     @property
-    def best(self):
+    def best(self, sample_shape=None):
         # Absolute Determinism
 
         if self.best_action is None:
@@ -127,10 +128,10 @@ class Creator(torch.nn.Module):
             action = self.ActionExtractor(action)
 
             # Reduce ensemble
-            if not self.discrete and action.shape[1] > 1:
+            if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
                 # Q-values per action
                 Qs = self.critic(self.obs, action)
-                q = Qs.mean(1)  # Mean-reduced ensemble. Note: Not using self.critic.judgement(Qs) for best
+                q = Qs.mean(1)  # Mean-reduced ensemble. Note: Not using pessimism for best
 
                 # Normalize
                 q -= q.max(-1, keepdim=True)[0]
@@ -147,3 +148,8 @@ class Creator(torch.nn.Module):
 
     def __getattr__(self, key):
         return getattr(self.Pi, key)
+
+
+# Judgement
+def pessimism(Qs):
+    return Qs.min(1)  # Pessimistic Q-value ensemble-reduction

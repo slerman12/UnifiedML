@@ -140,11 +140,12 @@ class AC2Agent(torch.nn.Module):
             # Use exponential-moving-averages (EMA)
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
-            critic = self.critic.ema if self.ema else self.critic  # TODO pass critic to creator
+            critic = self.critic.ema if self.ema else self.critic
+            creator = self.creator.ema if self.ema else self.creator
 
             obs = encoder(obs)
 
-            Pi = actor(obs, self.creator, self.step)
+            Pi = actor(obs, creator.judge(critic), self.step)
             action = Pi.sample() if self.training else Pi.best
 
             if self.training:
@@ -203,8 +204,8 @@ class AC2Agent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            Pi = self.actor(obs)
-            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
+            Pi = self.actor(obs, self.creator)
+            y_predicted = Pi.action.mean(1)  # Average over ensembles
 
             # Cross entropy error
             error = cross_entropy(y_predicted, label.long(),
