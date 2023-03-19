@@ -15,14 +15,15 @@ import Utils
 
 class Creator(torch.nn.Module):
     """Creates a policy distribution for sampling actions and ensembles and computing probabilistic measures."""
-    def __init__(self, action_spec, ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf,
+    def __init__(self, action_spec, Pi=None, ActionExtractor=None, discrete=True, temp_schedule=1, stddev_clip=math.inf,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.Dist = ExploreExploit  # Exploration and exploitation
+        self.Pi = Pi  # Exploration and exploitation policy recipe
 
-        # Args to pass into ExploreExploit
-        self.specs = discrete, action_spec, temp_schedule, stddev_clip, ActionExtractor
+        # Args to instantiate Pi
+        self.spec = dict(action_spec=action_spec, ActionExtractor=ActionExtractor, discrete=discrete,
+                         temp_schedule=temp_schedule, stddev_clip=stddev_clip)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -39,13 +40,14 @@ class Creator(torch.nn.Module):
 
     # Get policy
     def dist(self, mean, stddev, step=1, obs=None):
-        return self.Dist(*self.specs, mean, stddev, step, obs, self.critic)
+        return Utils.instantiate(self.Pi, action=mean, explore_rate=stddev, step=step, obs=obs, critic=self.critic,
+                                 **self.spec) or ExploreExploitPi(mean, stddev, step, obs, self.critic, **self.spec)
 
 
-class ExploreExploit(torch.nn.Module):
-    """Exploration and exploitation distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, discrete, action_spec, temp_schedule, stddev_clip, ActionExtractor,
-                 action, explore_rate, step=1, obs=None, critic=None):
+class ExploreExploitPi(torch.nn.Module):
+    """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
+    def __init__(self, action, explore_rate, step, obs, critic, action_spec,
+                 ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf):
         super().__init__()
 
         self.discrete = discrete
