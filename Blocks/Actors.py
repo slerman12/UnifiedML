@@ -73,10 +73,10 @@ class MonteCarlo(nn.Module):  # "Creator"
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        # Max cutoff clip for action sampling
+        # Max cutoff clip for continuous-action sampling
         self.stddev_clip = stddev_clip
 
-        # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
+        # A mapping that can be applied after continuous-action sampling
         self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(action_spec.shape))
 
     def forward(self, mean, stddev):
