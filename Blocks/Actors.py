@@ -110,16 +110,16 @@ class CategoricalCriticActor(nn.Module):  # "Creator"
         self.temp_schedule = temp_schedule
 
     def forward(self, Qs, step=None, action=None):
-        # Q-values per action
-        q = Qs.min(1)[0] if self.training else Qs.mean(1)  # Pessimistic-Min or Mean-reduced ensemble
-
         # Check if probabilities
-        dist = (q.sum(-1) == 1).all()
+        dist = Qs.shape[1] == 1 and (Qs.sum(-1) == 1).all()
 
         if dist:
             # Categorical dist from probabilities
             Psi = torch.distributions.Categorical(probs=q)
         else:
+            # Q-values per action
+            q = Qs.min(1)[0] if self.training else Qs.mean(1)  # Pessimistic-Min or Mean-reduced ensemble
+
             # Normalize
             q -= q.max(-1, keepdim=True)[0]
 
