@@ -76,8 +76,9 @@ class MonteCarlo(nn.Module):  # "Creator"
         # Max cutoff clip for continuous-action sampling
         self.stddev_clip = stddev_clip
 
-        # A mapping that can be applied after continuous-action sampling  TODO Doesn't work for Best
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(action_spec.shape))
+        # A mapping that can be applied after continuous-action sampling
+        self.ActionExtractor = Utils.instantiate(ActionExtractor,
+                                                 input_shape=math.prod(action_spec.shape)) or nn.Identity()
 
     def forward(self, mean, stddev):
         if self.discrete:
@@ -95,9 +96,9 @@ class MonteCarlo(nn.Module):  # "Creator"
             Psi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
             # Optional secondary action extraction from samples
-            if self.ActionExtractor is not None:
-                sampler = Psi.sample
-                Psi.sample = lambda sample_shape=1: self.ActionExtractor(sampler(sample_shape))
+            sampler = Psi.sample
+            Psi.sample = lambda sample_shape=1: self.ActionExtractor(sampler(sample_shape))
+            setattr(Psi, 'best', self.ActionExtractor(Psi.mean))  # TODO In agents
 
         return Psi
 
