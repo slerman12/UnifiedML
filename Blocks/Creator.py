@@ -23,7 +23,7 @@ class Creator(torch.nn.Module):
 
         action_dim = math.prod(action_spec.shape)
 
-        # A mapping that can be applied after action sampling
+        # A mapping that can be applied after or concurrently with action sampling - differentiable
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=action_dim) or nn.Identity()
 
         # Args to instantiate Pi recipe
