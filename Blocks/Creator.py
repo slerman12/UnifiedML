@@ -14,7 +14,7 @@ import Utils
 
 
 class Creator(torch.nn.Module):
-    """Policy distribution and probabilistic measures for sampling across action spaces and ensembles."""
+    """Creates a policy distribution for sampling actions and computing probabilistic measures."""
     def __init__(self, action_spec, ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
@@ -26,6 +26,8 @@ class Creator(torch.nn.Module):
 
         # Entropy value for ensemble reduction, max cutoff clip for action sampling
         self.temp_schedule, self.stddev_clip = temp_schedule, stddev_clip
+
+        self.Dist = ExploreExploit  # Exploration and exploitation
 
         # A mapping applied after sampling but prior to ensemble reduction
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
@@ -40,13 +42,20 @@ class Creator(torch.nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
     # Enable critic-based ensemble reduction
-    def forward(self, obs, critic=None):
-        self.obs = obs
+    def forward(self, critic):
         self.critic = critic
         return self
 
-    # Set distribution
+    # Get policy
     def dist(self, action, explore_rate, step=1):
+        return self.Dist(action, explore_rate, step, self.ActionExtractor, self.critic)
+
+
+class ExploreExploit(torch.nn.Module):
+    """Exploration and exploitation distribution compatible with discrete and continuous spaces and ensembles."""
+    def __init__(self, action, explore_rate, step=1, ActionExtractor=None, critic=None):
+        super().__init__()
+
         self.action = action  # [b, e, n, d]
         self.step = step
 
@@ -58,14 +67,14 @@ class Creator(torch.nn.Module):
         else:
             self.Pi = TruncatedNormal(action, explore_rate, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
-        self.best_action = None
+        self.ActionExtractor = ActionExtractor
+        self.critic = critic
 
-        # Returns itself as policy
-        return self
+        self._best = None
 
-    def probs(self, action, q=None, as_ensemble=True):
+    def log_prob(self, action, q=None, as_ensemble=True):
         # Individual action probability
-        probs = self.Pi.probs(action)
+        log_prob = self.Pi.log_prob(action)  # (Log-space is more numerically stable)
 
         # If action is an ensemble, multiply probability of sampling action from the ensemble
         if as_ensemble and self.critic is not None and not self.discrete and action.shape[1] > 1:
@@ -77,9 +86,9 @@ class Creator(torch.nn.Module):
 
             # Categorical distribution based on q
             temp = Utils.schedule(self.temp_schedule, self.step)  # Softmax temperature / "entropy"
-            probs *= (q / temp).softmax(-1)  # Actor-ensemble-wise probabilities
+            log_prob += q / temp  # Actor-ensemble-wise probabilities (Adding log-probs is equal to multiplying probs)
 
-        return probs
+        return log_prob
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
@@ -118,10 +127,9 @@ class Creator(torch.nn.Module):
     def best(self, sample_shape=None):
         # Absolute Determinism
 
-        if self.best_action is None:
+        if self._best is None:
             # Argmax for discrete, extract action for continuous
-            action = self.Pi.normalize(self.action.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
-                else self.ActionExtractor(self.action)
+            action = self.Pi.best if self.discrete else self.ActionExtractor(self.action)
 
             # Reduce ensemble
             if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
@@ -138,9 +146,6 @@ class Creator(torch.nn.Module):
                 # Action corresponding to highest Q-value
                 action = Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
-            self.best_action = action
+            self._best = action
 
         return self.best_action
-
-    def __getattr__(self, key):
-        return getattr(self.Pi, key)
