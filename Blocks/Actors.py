@@ -17,12 +17,10 @@ import Utils
 
 class EnsemblePiActor(nn.Module):
     """Ensemble of Gaussian or Categorical policies Pi, generalized for discrete or continuous action spaces."""
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
-                 discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ActionExtractor=None,
+                 ensemble_size=2, discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
-
-        self.Pi = MonteCarloCreator(discrete, action_spec.low, action_spec.high, stddev_clip)
 
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
@@ -42,6 +40,12 @@ class EnsemblePiActor(nn.Module):
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_shape=out_shape)
                                        or MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])
 
+        # Categorical policy for discrete, Normal for continuous
+        self.dist = MonteCarloCreator(discrete, action_spec.low, action_spec.high, stddev_clip)
+
+        # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=self.action_dim) or nn.Identity()
+
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
@@ -60,7 +64,20 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        return self.Pi(mean, stddev)
+        Pi = self.dist(mean, stddev)
+
+        # Secondary action extraction from samples
+        if not self.discrete:
+            sampler = Pi.sample
+
+            def new_sampler(sample_shape=1):
+                sample = sampler(sample_shape)
+
+                return self.ActionExtractor(sample.view(*sample.shape[:-1], self.num_actions, -1)).view_as(sample)
+
+            Pi.sample = new_sampler
+
+        return Pi
 
 
 class MonteCarloCreator(nn.Module):
@@ -94,7 +111,7 @@ class MonteCarloCreator(nn.Module):
 
 
 class CategoricalCriticCreator(nn.Module):
-    """Policy over actions based on Q-values."""
+    """Policy distribution that samples over ensembles and selects actions based on Q-values."""
     def __init__(self, temp_schedule=1):
         super().__init__()
 

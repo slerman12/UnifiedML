@@ -15,7 +15,7 @@ import Utils
 
 from Blocks.Augmentations import RandomShiftsAug
 from Blocks.Encoders import CNNEncoder
-from Blocks.Actors import EnsemblePiActor, CategoricalCriticActor
+from Blocks.Actors import EnsemblePiActor, CategoricalCriticCreator
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
@@ -127,7 +127,7 @@ class AC2Agent(torch.nn.Module):
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                       ema_decay=ema_decay)
 
-        self.creator = CategoricalCriticActor(stddev_schedule)
+        self.creator = CategoricalCriticCreator(stddev_schedule)
 
         # Birth
 
