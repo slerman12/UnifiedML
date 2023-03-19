@@ -63,7 +63,6 @@ class ExploreExploitPi(torch.nn.Module):
 
         self.action = action  # [b, e, n, d]
 
-        # Policy
         if self.discrete:
             # Pessimistic Q-values per action
             logits, ind = self.action.min(1)  # Min-reduced ensemble [b, n, d]
