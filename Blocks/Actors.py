@@ -66,21 +66,16 @@ class EnsemblePiActor(nn.Module):
 
         Pi = self.dist(mean, stddev)
 
-        # Secondary action extraction from samples
+        # Optional secondary action extraction from samples
         if not self.discrete:
             sampler = Pi.sample
-
-            def new_sampler(sample_shape=1):
-                sample = sampler(sample_shape)
-
-                return self.ActionExtractor(sample.view(*sample.shape[:-1], self.num_actions, -1)).view_as(sample)
-
-            Pi.sample = new_sampler
+            Pi.sample = lambda sample_shape=1: self.ActionExtractor(sampler(sample_shape))
 
         return Pi
 
 
 class MonteCarloCreator(nn.Module):
+    """Policy distribution for sampling across action spaces."""
     def __init__(self, discrete, low=None, high=None, stddev_clip=math.inf):
         super().__init__()
 
@@ -91,7 +86,6 @@ class MonteCarloCreator(nn.Module):
         # Max cutoff clip for action sampling
         self.stddev_clip = stddev_clip
 
-    """Policy distribution for sampling across action spaces."""
     def forward(self, mean, stddev):
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]

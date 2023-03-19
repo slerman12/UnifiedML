@@ -89,7 +89,7 @@ class Creator(torch.nn.Module):
         action = self.Pi.sample(sample_shape or 1) if detach else self.Pi.rsample(sample_shape or 1)
 
         if not self.discrete:
-            action = self.ActionExtractor(action)  # TODO Reshape n, d
+            action = self.ActionExtractor(action)
 
         # Reduce Actor ensemble
         if sample_shape is None and self.critic is not None and action.shape[1] > 1 and not self.discrete:
@@ -121,7 +121,7 @@ class Creator(torch.nn.Module):
         if self.best_action is None:
             # Argmax for discrete, extract action for continuous
             action = self.Pi.normalize(self.action.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
-                else self.ActionExtractor(self.action)  # TODO Reshape n, d
+                else self.ActionExtractor(self.action)
 
             # Reduce ensemble
             if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
