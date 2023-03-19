@@ -147,8 +147,7 @@ class AC2Agent(torch.nn.Module):
             Pi = actor(obs, self.step)
 
             action = Pi.sample() if self.training \
-                else Pi.best if self.discrete \
-                else Pi.mean
+                else Pi.best
 
             # Ensemble reduction
             if self.num_actors > 1 and not self.discrete:  # Discrete critic already min-reduces ensembles
