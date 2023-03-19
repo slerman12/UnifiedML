@@ -19,18 +19,15 @@ class Creator(torch.nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.discrete = discrete
-        self.action_dim = math.prod(action_spec.shape)  # d
-
-        self.low, self.high = action_spec.low, action_spec.high
-
-        # Entropy value for ensemble reduction, max cutoff clip for action sampling
-        self.temp_schedule, self.stddev_clip = temp_schedule, stddev_clip
-
         self.Dist = ExploreExploit  # Exploration and exploitation
 
+        # Args to pass into ExploreExploit
+        self.specs = discrete, action_spec, temp_schedule, stddev_clip
+
+        action_dim = math.prod(action_spec.shape)  # d
+
         # A mapping that can be applied after action sampling
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=action_dim) or nn.Identity()
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -47,28 +44,37 @@ class Creator(torch.nn.Module):
 
     # Get policy
     def dist(self, mean, stddev, step=1, obs=None):
-        return self.Dist(mean, stddev, step, self.ActionExtractor, obs, self.critic)
+        return self.Dist(*self.specs, self.ActionExtractor, mean, stddev, step, obs, self.critic)
 
 
 class ExploreExploit(torch.nn.Module):
     """Exploration and exploitation distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action, explore_rate, step=1, ActionExtractor=None, obs=None, critic=None):
+    def __init__(self, discrete, action_spec, temp_schedule, stddev_clip, ActionExtractor,
+                 action, explore_rate, step=1, obs=None, critic=None):
         super().__init__()
 
+        self.discrete = discrete
+
+        self.low, self.high = action_spec.low, action_spec.high
+
         self.action = action  # [b, e, n, d]
-        self.step = step
-        self.obs = obs
 
         if self.discrete:
-            logits, ind = action.min(1)  # Reduced ensemble [b, n, d]
-            stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Reduced ensemble stddev [b, n, d]
+            # Pessimism
+            logits, ind = self.action.min(1)  # Min-reduced ensemble [b, n, d]
+            stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
 
             self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
         else:
-            self.Pi = TruncatedNormal(action, explore_rate, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+            self.Pi = TruncatedNormal(self.action, explore_rate, low=self.low, high=self.high, stddev_clip=stddev_clip)
 
         self.ActionExtractor = ActionExtractor
-        self.critic = critic
+
+        if critic is not None:
+            self.critic = critic
+            self.temp_schedule = temp_schedule  # Entropy value for ensemble reduction
+            self.step = step
+            self.obs = obs
 
         self._best = None
 
@@ -79,8 +85,9 @@ class ExploreExploit(torch.nn.Module):
         # If action is an ensemble, multiply probability of sampling action from the ensemble
         if as_ensemble and self.critic is not None and not self.discrete and action.shape[1] > 1:
             if q is None:
+                # Pessimistic Q-values per action
                 Qs = self.critic(self.obs, action)
-                q, _ = Qs.min(1)  # Reduced critic-ensemble Q-values
+                q, _ = Qs.min(1)  # Min-reduced critic ensemble
 
             q = q - q.max(-1, keepdim=True)[0]  # Normalize q ensemble-wise
 
@@ -102,8 +109,9 @@ class ExploreExploit(torch.nn.Module):
 
         # Reduce Actor ensemble
         if sample_shape is None and self.critic is not None and action.shape[1] > 1 and not self.discrete:
+            # Pessimistic Q-values per action
             Qs = self.critic(self.obs, action)
-            q, _ = Qs.min(1)  # Reduce critic ensemble (pessimism <-> Min-reduce)
+            q, _ = Qs.min(1)  # Min-reduced critic ensemble
 
             # Normalize
             q -= q.max(-1, keepdim=True)[0]
