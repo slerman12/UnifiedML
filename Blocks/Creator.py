@@ -6,7 +6,7 @@ import math
 import copy
 
 import torch
-from torch import nn
+from torch.nn import nn
 
 from Distributions import TruncatedNormal, NormalizedCategorical
 
@@ -22,12 +22,7 @@ class Creator(torch.nn.Module):
         self.Dist = ExploreExploit  # Exploration and exploitation
 
         # Args to pass into ExploreExploit
-        self.specs = discrete, action_spec, temp_schedule, stddev_clip
-
-        action_dim = math.prod(action_spec.shape)  # d
-
-        # A mapping that can be applied after action sampling
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=action_dim) or nn.Identity()
+        self.specs = discrete, action_spec, temp_schedule, stddev_clip, ActionExtractor
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -44,7 +39,7 @@ class Creator(torch.nn.Module):
 
     # Get policy
     def dist(self, mean, stddev, step=1, obs=None):
-        return self.Dist(*self.specs, self.ActionExtractor, mean, stddev, step, obs, self.critic)
+        return self.Dist(*self.specs, mean, stddev, step, obs, self.critic)
 
 
 class ExploreExploit(torch.nn.Module):
@@ -54,33 +49,38 @@ class ExploreExploit(torch.nn.Module):
         super().__init__()
 
         self.discrete = discrete
+        self.action_dim = math.prod(action_spec.shape)
 
         self.low, self.high = action_spec.low, action_spec.high
 
         self.action = action  # [b, e, n, d]
 
+        # Policy
         if self.discrete:
-            # Pessimism
+            # Pessimistic Q-values per action
             logits, ind = self.action.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
 
-            self.Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
+            self.Psi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
         else:
-            self.Pi = TruncatedNormal(self.action, explore_rate, low=self.low, high=self.high, stddev_clip=stddev_clip)
+            self.Psi = TruncatedNormal(self.action, explore_rate, low=self.low, high=self.high, stddev_clip=stddev_clip)
 
-        self.ActionExtractor = ActionExtractor
+        # A mapping that can be applied after action sampling
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
 
-        if critic is not None:
-            self.critic = critic
+        self.critic = critic
+
+        # For critic-based ensemble reduction
+        if self.critic is not None:
+            self.obs = obs
             self.temp_schedule = temp_schedule  # Entropy value for ensemble reduction
             self.step = step
-            self.obs = obs
 
         self._best = None
 
     def log_prob(self, action, q=None, as_ensemble=True):
         # Individual action probability
-        log_prob = self.Pi.log_prob(action)  # (Log-space is more numerically stable)
+        log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
 
         # If action is an ensemble, multiply probability of sampling action from the ensemble
         if as_ensemble and self.critic is not None and not self.discrete and action.shape[1] > 1:
@@ -102,7 +102,7 @@ class ExploreExploit(torch.nn.Module):
         # Monte Carlo
 
         # Sample
-        action = self.Pi.sample(sample_shape or 1) if detach else self.Pi.rsample(sample_shape or 1)
+        action = self.Psi.sample(sample_shape or 1) if detach else self.Psi.rsample(sample_shape or 1)
 
         if not self.discrete:
             action = self.ActionExtractor(action)
@@ -137,7 +137,7 @@ class ExploreExploit(torch.nn.Module):
 
         if self._best is None:
             # Argmax for discrete, extract action for continuous
-            action = self.Pi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, self.dim)) if self.discrete \
+            action = self.Psi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, self.dim)) if self.discrete \
                 else self.ActionExtractor(self.action)
 
             # Reduce ensemble
