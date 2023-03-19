@@ -48,10 +48,10 @@ class Creator(torch.nn.Module):
     # Get policy
     def dist(self, mean, stddev, step=1, obs=None):
         return Utils.instantiate(self.Pi, action=mean, explore_rate=stddev, step=step, obs=obs, critic=self.critic,
-                                 **self.spec) or ExploreExploitPi(mean, stddev, step, obs, self.critic, **self.spec)
+                                 **self.spec) or MonteCarlo(mean, stddev, step, obs, self.critic, **self.spec)
 
 
-class ExploreExploitPi(torch.nn.Module):
+class MonteCarlo(torch.nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
     def __init__(self, action, explore_rate, step, obs, critic, action_spec,
                  ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf):
