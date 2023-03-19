@@ -76,7 +76,7 @@ class MonteCarlo(nn.Module):  # "Creator"
         # Max cutoff clip for continuous-action sampling
         self.stddev_clip = stddev_clip
 
-        # A mapping that can be applied after continuous-action sampling
+        # A mapping that can be applied after continuous-action sampling  TODO Doesn't work for Best
         self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(action_spec.shape))
 
     def forward(self, mean, stddev):
