@@ -22,14 +22,13 @@ class EnsemblePiActor(nn.Module):
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.discrete = discrete
+        self.Pi = MonteCarloCreator(discrete, action_spec.low, action_spec.high, stddev_clip)
+
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
-        self.low, self.high = action_spec.low, action_spec.high
-
-        # Standard dev value, max cutoff clip for action sampling
-        self.stddev_schedule, self.stddev_clip = stddev_schedule, stddev_clip
+        # Standard dev value
+        self.stddev_schedule = stddev_schedule
 
         in_dim = math.prod(repr_shape)
 
@@ -61,25 +60,41 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
+        return self.Pi(mean, stddev)
+
+
+class MonteCarloCreator(nn.Module):
+    def __init__(self, discrete, low=None, high=None, stddev_clip=math.inf):
+        super().__init__()
+
+        self.discrete = discrete
+
+        self.low, self.high = low, high
+
+        # Max cutoff clip for action sampling
+        self.stddev_clip = stddev_clip
+
+    """Policy distribution for sampling across action spaces."""
+    def forward(self, mean, stddev):
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
 
-            Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
+            Psi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
 
             # All actions' Q-values
-            setattr(Pi, 'All_Qs', mean)  # [b, e, n, d]
+            setattr(Psi, 'All_Qs', mean)  # [b, e, n, d]
         else:
             if self.low or self.high:
                 mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
 
-            Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+            Psi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
-        return Pi
+        return Psi
 
 
-class CategoricalCriticActor(nn.Module):  # a.k.a. Creator
-    """Selects over actions based on Q-values."""
+class CategoricalCriticCreator(nn.Module):
+    """Policy over actions based on Q-values."""
     def __init__(self, temp_schedule=1):
         super().__init__()
 
