@@ -17,7 +17,7 @@ import Utils
 
 class EnsemblePiActor(nn.Module):
     """Ensemble of Gaussian or Categorical policies Pi, generalized for discrete or continuous action spaces."""
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ActionExtractor=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None,
                  ensemble_size=2, discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
@@ -41,7 +41,7 @@ class EnsemblePiActor(nn.Module):
                                        or MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])
 
         # Categorical/Normal distribution
-        self.creator = MonteCarlo(discrete, action_spec, stddev_clip, ActionExtractor)
+        self.creator = MonteCarlo(discrete, action_spec, stddev_clip)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
