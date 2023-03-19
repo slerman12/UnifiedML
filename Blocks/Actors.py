@@ -25,6 +25,9 @@ class EnsemblePiActor(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
+        # Policy standard deviation
+        self.stddev_schedule = stddev_schedule
+
         in_dim = math.prod(repr_shape)
 
         self.trunk = Utils.instantiate(trunk, input_shape=repr_shape, output_shape=[trunk_dim]) or nn.Sequential(
@@ -36,9 +39,6 @@ class EnsemblePiActor(nn.Module):
         # Ensemble
         self.Pi_head = Utils.Ensemble([Utils.instantiate(Pi_head, i, input_shape=in_shape, output_shape=out_shape)
                                        or MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])
-
-        # Policy standard deviation
-        self.stddev_schedule = stddev_schedule
 
         # Categorical/Normal distribution
         self.creator = MonteCarlo(discrete, action_spec, ActionExtractor, stddev_clip)
