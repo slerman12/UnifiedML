@@ -40,11 +40,8 @@ class EnsemblePiActor(nn.Module):
         # Policy standard deviation
         self.stddev_schedule = stddev_schedule
 
-        # Categorical and Normal distribution
-        self.dist = MonteCarloCreator(discrete, action_spec.low, action_spec.high, stddev_clip)
-
-        # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=self.action_dim) or nn.Identity()
+        # Monte Carlo is a default Categorical/Normal policy distribution
+        self.creator = MonteCarlo(discrete, action_spec, ActionExtractor, stddev_clip)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -69,19 +66,24 @@ class EnsemblePiActor(nn.Module):
         return Pi
 
 
-class MonteCarloCreator(nn.Module):
+class MonteCarlo(nn.Module):  # "Creator"
     """Policy distribution for sampling across action spaces."""
-    def __init__(self, discrete, low=None, high=None, stddev_clip=math.inf):
+    def __init__(self, discrete, action_spec, ActionExtractor=None, stddev_clip=math.inf):
         super().__init__()
 
         self.discrete = discrete
 
-        self.low, self.high = low, high
+        action_dim = math.prod(action_spec.shape)
+
+        self.low, self.high = action_spec.low, action_spec.high
+
+        # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=action_dim) or nn.Identity()
 
         # Max cutoff clip for action sampling
         self.stddev_clip = stddev_clip
 
-    def forward(self, mean, stddev, ActionExtractor=None):
+    def forward(self, mean, stddev):
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
@@ -97,14 +99,13 @@ class MonteCarloCreator(nn.Module):
             Psi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
             # Optional secondary action extraction from samples
-            if ActionExtractor is not None:
-                sampler = Psi.sample
-                Psi.sample = lambda sample_shape=1: ActionExtractor(sampler(sample_shape))
+            sampler = Psi.sample
+            Psi.sample = lambda sample_shape=1: self.ActionExtractor(sampler(sample_shape))
 
         return Psi
 
 
-class CategoricalCriticCreator(nn.Module):
+class CategoricalCriticActor(nn.Module):  # "Creator"
     """Policy distribution that samples over ensembles and selects actions based on Q-values."""
     def __init__(self, temp_schedule=1):
         super().__init__()
