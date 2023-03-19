@@ -32,8 +32,6 @@ class Creator(torch.nn.Module):
         # A mapping applied after sampling but prior to ensemble reduction
         self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
 
-        self.Pi = self.action = self.best_action = self.critic = self.obs = self.step = None
-
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
@@ -41,9 +39,10 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    # Enable critic-based ensemble reduction
+        self.critic = None  # Critic can be used to reduce continuous-action ensembles
+
     def forward(self, critic):
-        self.critic = critic
+        self.critic = critic  # Enable critic-based ensemble reduction
         return self
 
     # Get policy
@@ -86,7 +85,7 @@ class ExploreExploit(torch.nn.Module):
 
             # Categorical distribution based on q
             temp = Utils.schedule(self.temp_schedule, self.step)  # Softmax temperature / "entropy"
-            log_prob += q / temp  # Actor-ensemble-wise probabilities (Adding log-probs is equal to multiplying probs)
+            log_prob += q / temp  # Actor-ensemble-wise probabilities (Adding log-probs equivalent to multiplying probs)
 
         return log_prob
 
@@ -129,7 +128,8 @@ class ExploreExploit(torch.nn.Module):
 
         if self._best is None:
             # Argmax for discrete, extract action for continuous
-            action = self.Pi.best if self.discrete else self.ActionExtractor(self.action)
+            action = self.Pi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, self.dim)) if self.discrete \
+                else self.ActionExtractor(self.action)
 
             # Reduce ensemble
             if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
