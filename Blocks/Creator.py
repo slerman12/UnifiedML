@@ -51,8 +51,8 @@ class Creator(torch.nn.Module):
 
 class MonteCarlo(torch.nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action, explore_rate, step, obs, critic, action_spec,
-                 ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf):
+    def __init__(self, action, explore_rate, step, obs, action_spec,
+                 ActionExtractor=None, discrete=False, temp_schedule=1, stddev_clip=math.inf, critic=None):
         super().__init__()
 
         self.discrete = discrete
