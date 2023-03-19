@@ -40,7 +40,7 @@ class Creator(torch.nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
     # Enable critic-based ensemble reduction
-    def forward(self, obs, critic):
+    def forward(self, obs, critic=None):
         self.obs = obs
         self.critic = critic
         return self
