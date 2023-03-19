@@ -40,7 +40,7 @@ class EnsemblePiActor(nn.Module):
         # Policy standard deviation
         self.stddev_schedule = stddev_schedule
 
-        # Monte Carlo is a default Categorical/Normal policy distribution
+        # Categorical/Normal distribution
         self.creator = MonteCarlo(discrete, action_spec, ActionExtractor, stddev_clip)
 
         # Initialize model optimizer + EMA
@@ -61,9 +61,7 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        Pi = self.dist(mean, stddev, self.ActionExtractor)  # Policy
-
-        return Pi
+        return self.creator(mean, stddev)  # Policy
 
 
 class MonteCarlo(nn.Module):  # "Creator" policy
