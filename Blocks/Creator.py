@@ -28,7 +28,7 @@ class Creator(torch.nn.Module):
         self.temp_schedule, self.stddev_clip = temp_schedule, stddev_clip
 
         # A mapping applied after sampling but prior to ensemble reduction
-        self.ActionExtractor = Utils.instantiate(ActionExtractor, in_shape=self.action_dim) or nn.Identity()
+        self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=self.action_dim) or nn.Identity()
 
         self.Pi = self.action = self.best_action = self.critic = self.obs = self.step = None
 
