@@ -17,7 +17,8 @@ class Creator(torch.nn.Module):
     """
     Policy distribution and probabilistic measures for sampling across action spaces and ensembles.
     """
-    def __init__(self, action_spec, critic=None, ActionExtractor=None, sample_discrete_as_discrete=True,
+
+    def __init__(self, action_spec, critic=None, ActionExtractor=None, sample_discrete_as_discrete=False,
                  discrete=False, temp_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
@@ -87,6 +88,7 @@ class Creator(torch.nn.Module):
         # Multiply probability of sampling a discrete action from a continuous-ized categorical distribution
         if self.sample_discrete_as_discrete:
             pass  # TODO - And has to be reshaped to n, d rather than nd before Softmax
+            #           The use case is really esoteric. Multinomial RL action distribution, e.g. discrete & d > 1.
 
         return probs
 
@@ -113,9 +115,12 @@ class Creator(torch.nn.Module):
             # Sample again ensemble-wise
             action = Utils.gather(action, Psi.sample().unsqueeze(-1), 1).squeeze(1)
 
+        self.first_sample = action
+
         # Can sample again from a continuous categorical distribution to get a discrete action if action continuous-ized
         if self.sample_discrete_as_discrete:
             pass  # TODO - And has to be reshaped to n, d rather than nd before Softmax?
+            #           The use case is really esoteric. Multinomial RL action distribution, e.g. discrete & d > 1.
 
         return action
 
@@ -154,6 +159,7 @@ class Creator(torch.nn.Module):
         # Can Argmax again from a continuous categorical distribution to get a discrete action if action continuous-ized
         if self.sample_discrete_as_discrete:
             pass  # TODO - And has to be reshaped to n, d rather than nd before Argmax?
+            #           The use case is really esoteric. Multinomial RL action distribution, e.g. discrete & d > 1.
 
         self.best_action = action
 
