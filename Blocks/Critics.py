@@ -96,3 +96,6 @@ class EnsembleQCritic(nn.Module):
         action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
 
         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of normalize -> indices
+
+    def judgement(self, Qs):
+        return Qs.min(1)  # Pessimistic ensemble reduction

@@ -8,8 +8,6 @@ import copy
 import torch
 from torch import nn
 
-from Distributions import TruncatedNormal, NormalizedCategorical
-
 from Blocks.Architectures.MLP import MLP
 
 import Utils
@@ -18,7 +16,7 @@ import Utils
 class EnsemblePiActor(nn.Module):
     """Ensemble of Gaussian or Categorical policies Pi, generalized for discrete or continuous action spaces."""
     def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
-                 discrete=False, stddev_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
+                 discrete=False, stddev_schedule=1, stddev_clip=math.inf, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
@@ -50,7 +48,7 @@ class EnsemblePiActor(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    def forward(self, obs, step=1):
+    def forward(self, obs, creator, step=1):
         h = self.trunk(obs)
 
         mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
@@ -61,51 +59,6 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        if self.discrete:
-            logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
-
-            Pi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
-
-            # All actions' Q-values
-            setattr(Pi, 'All_Qs', mean)  # [b, e, n, d]
-        else:
-            if self.low or self.high:
-                mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
-
-            Pi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+        Pi = creator(mean, stddev, step, obs)
 
         return Pi
-
-
-class CategoricalCriticActor(nn.Module):  # a.k.a. Creator
-    """Selects over actions based on Q-values."""
-    def __init__(self, temp_schedule=1):
-        super().__init__()
-
-        self.temp_schedule = temp_schedule
-
-    def forward(self, Qs, step=None, action=None):
-        # Q-values per action
-        q = Qs.mean(1)  # Mean-reduced ensemble
-
-        # Normalize
-        q -= q.max(-1, keepdim=True)[0]
-
-        # Softmax temperature
-        temp = Utils.schedule(self.temp_schedule, step) if step else 1
-
-        # Categorical dist
-        Psi = torch.distributions.Categorical(logits=q / temp)
-
-        # Highest Q-value
-        _, best_ind = q.max(-1)
-
-        # Action corresponding to highest Q-value
-        setattr(Psi, 'best', best_ind if action is None else Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1))
-
-        # Action sampling
-        sampler = Psi.sample
-        Psi.sample = sampler if action is None else lambda: Utils.gather(action, sampler().unsqueeze(-1), 1).squeeze(1)
-
-        return Psi
