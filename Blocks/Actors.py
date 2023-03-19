@@ -59,7 +59,4 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        if creator is None:
-            return mean
-
         return creator.dist(mean, stddev, step, obs)

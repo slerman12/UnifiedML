@@ -206,7 +206,7 @@ class AC2Agent(torch.nn.Module):
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            action = self.actor(obs)
+            action = self.actor(obs, self.creator).action
             y_predicted = action.mean(1)  # Average over ensembles
 
             # Cross entropy error
