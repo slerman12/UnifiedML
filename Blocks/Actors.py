@@ -41,7 +41,7 @@ class EnsemblePiActor(nn.Module):
                                        or MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])
 
         # Categorical/Normal distribution
-        self.creator = MonteCarlo(discrete, action_spec, ActionExtractor, stddev_clip)
+        self.creator = MonteCarlo(discrete, action_spec, stddev_clip, ActionExtractor)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -66,7 +66,7 @@ class EnsemblePiActor(nn.Module):
 
 class MonteCarlo(nn.Module):  # "Creator"
     """Policy distribution for sampling across action spaces."""
-    def __init__(self, discrete, action_spec, ActionExtractor=None, stddev_clip=math.inf):
+    def __init__(self, discrete, action_spec, stddev_clip=math.inf, ActionExtractor=None):
         super().__init__()
 
         self.discrete = discrete
@@ -98,7 +98,8 @@ class MonteCarlo(nn.Module):  # "Creator"
             # Optional secondary action extraction from samples
             sampler = Psi.sample
             Psi.sample = lambda sample_shape=1: self.ActionExtractor(sampler(sample_shape))
-            setattr(Psi, 'best', self.ActionExtractor(Psi.mean))  # TODO In agents
+
+            setattr(Psi, 'best', self.ActionExtractor(Psi.mean))
 
         return Psi
 
