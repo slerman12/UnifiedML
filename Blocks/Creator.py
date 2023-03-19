@@ -22,79 +22,19 @@ class Creator(torch.nn.Module):
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
+        self.discrete = discrete
         self.action_dim = math.prod(action_spec.shape)  # d
 
         self.low, self.high = action_spec.low, action_spec.high
+
+        # Entropy value, max cutoff clip for action sampling
+        self.temp_schedule, self.stddev_clip = temp_schedule, stddev_clip
 
         self.second_sample = second_sample
 
         self.first_sample = None
 
-        # Exploration / Exploitation policies
-        self.Explore = MonteCarloPolicy(discrete, temp_schedule, stddev_clip, self.low, self.high, critic)
-        self.Exploit = ArgmaxPolicy(discrete, self.low, self.high, critic)
-
-        # Initialize model optimizer + EMA
-        self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
-                                                          lr, lr_decay_epochs, weight_decay)
-        if ema_decay:
-            self.ema_decay = ema_decay
-            self.ema = copy.deepcopy(self).requires_grad_(False)
-
-    def forward(self, action, explore_rate, step):
-        # Initialize policies
-        self.Explore(action, explore_rate, step)
-        self.Exploit(action)
-
-        return self  # Return self as an initialized distribution
-
-    def probs(self, action, q=None, as_ensemble=True):
-        return self.Explore.probs(action, q, as_ensemble)
-
-    def sample(self, sample_shape=None, detach=True):
-        action = self.first_sample = self.Explore.sample(sample_shape) if detach else self.Explore.rsample(sample_shape)
-
-        if self.second_sample and not self.discrete:
-            pass  # TODO Second sample
-
-        return action
-
-    def rsample(self, sample_shape=None):
-        return self.sample(sample_shape, detach=False)
-
-    @property
-    def best(self):
-        action = self.Exploit.sample()
-
-        return action  # Best action
-
-    # TODO goodness (instead of logits), entropy (for SAC), log_probs
-    #   Perhaps Creator should do parallel inference end-to-end
-
-
-class MonteCarloPolicy(torch.nn.Module):
-    """
-    RL policy - samples action across action space and ensemble space
-
-    A policy must contain a sample(·) method
-            sample: sample_shape (default None) -> action(s)
-                    If sample_shape is None, the policy returns exactly 1 action
-                    Otherwise, the policy returns a factor N=prod(sample_shape) of the actor ensemble size actions
-    For use in Q-learning, a policy should include a probs(·) method
-            probs: action, q -> probability
-    Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
-    """
-    def __init__(self, discrete=True, temp_schedule=1, stddev_clip=None, low=None, high=None, critic=None):
-        super().__init__()
-
         self.Pi = None
-
-        self.discrete = discrete
-
-        # Entropy value, max cutoff clip for action sampling
-        self.temp_schedule, self.stddev_clip = temp_schedule, stddev_clip
-
-        self.low, self.high = low, high
 
         self.step = self.obs = None
         self.critic = critic
@@ -161,28 +101,10 @@ class MonteCarloPolicy(torch.nn.Module):
     def rsample(self, sample_shape=None):
         return self.sample(sample_shape, detach=False)
 
+    @property
+    def best(self):
+        # Absolute Determinism
 
-class ArgmaxPolicy(torch.nn.Module):
-    """
-    RL policy - samples action across action space and ensemble space
-
-    A policy must contain a sample(·) method
-            sample: sample_shape (default None) -> action(s)
-                    If sample_shape is None, the policy returns exactly 1 action
-                    Otherwise, the policy returns a factor N=prod(sample_shape) of the actor ensemble size actions
-    For use in Q-learning, a policy should include a probs(·) method
-            probs: action, q -> probability
-    Any post-sampling, pre-ensemble-reduction operations may be specified by ActionExtractor
-    """
-    def __init__(self, discrete=True, low=None, high=None, critic=None):
-        super().__init__()
-
-        self.discrete = discrete
-        self.low, self.high = low, high
-        self.best = self.obs = None
-        self.critic = critic
-
-    def forward(self, action, explore_rate=None, step=None, obs=None):
         # Argmax for Discrete, Mean for Continuous
         self.best = action.argmax(-1, keepdim=True).transpose(-1, -2) if self.discrete else action
 
@@ -194,16 +116,11 @@ class ArgmaxPolicy(torch.nn.Module):
         if self.critic is not None:
             self.obs = obs
 
-    def probs(self, action, q=None, as_ensemble=True):
-        # Absolute Determinism
-        return torch.ones([1], device=action.device).expand(len(action), 1)
-
-    def sample(self, sample_shape=None):
         action = self.best  # Note: sample_shape is at most (1,)
         # action = self.ActionExtractor(action)  # TODO
 
         # Reduce ensemble
-        if self.critic is not None and sample_shape is None and action.shape[1] > 1 and not self.discrete:
+        if self.critic is not None and action.shape[1] > 1 and not self.discrete:
             # Q-values per action
             Qs = self.critic(self.obs, action)
             q = Qs.mean(1)  # Mean-reduced ensemble
@@ -218,6 +135,3 @@ class ArgmaxPolicy(torch.nn.Module):
             action = Utils.gather(action, best_ind.unsqueeze(-1), 1).squeeze(1)
 
         return action
-
-    def rsample(self, sample_shape=None):
-        return self.sample(sample_shape)  # Note: Not differentiable
