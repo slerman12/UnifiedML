@@ -149,9 +149,9 @@ class MonteCarlo(torch.nn.Module):
 
             # Reduce ensemble
             if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
-                # Q-values per action
+                # Pessimistic Q-values per action
                 Qs = self.critic(self.obs, action)
-                q = Qs.mean(1)  # Mean-reduced ensemble. Note: Not using pessimism for best
+                q, _ = Qs.min(1)  # Min-reduced critic ensemble
 
                 # Normalize
                 q -= q.max(-1, keepdim=True)[0]
