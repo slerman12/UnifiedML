@@ -110,11 +110,11 @@ class CategoricalCriticActor(nn.Module):  # "Creator"
         self.temp_schedule = temp_schedule
 
     def forward(self, Qs, step=None, action=None):
-
         # Check if probabilities
         if Qs.shape[1] == 1 and (Qs.sum(-1) == 1).all():
-            # Categorical dist from probabilities
             q = Qs.squeeze(1)
+
+            # Categorical dist from probabilities
             Psi = torch.distributions.Categorical(probs=q)
         else:
             # Q-values per action
