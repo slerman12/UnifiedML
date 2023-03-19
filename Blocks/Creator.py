@@ -149,4 +149,4 @@ class ExploreExploit(torch.nn.Module):
 
             self._best = action
 
-        return self.best_action
+        return self._best
