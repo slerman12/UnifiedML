@@ -40,7 +40,7 @@ class EnsemblePiActor(nn.Module):
         # Policy standard deviation
         self.stddev_schedule = stddev_schedule
 
-        # Categorical policy for discrete, Normal for continuous
+        # Categorical and Normal distribution
         self.dist = MonteCarloCreator(discrete, action_spec.low, action_spec.high, stddev_clip)
 
         # A mapping that can be applied after continuous-action sampling but prior to ensemble reduction
@@ -64,12 +64,7 @@ class EnsemblePiActor(nn.Module):
         else:
             stddev = torch.full_like(mean, Utils.schedule(self.stddev_schedule, step))  # [b, e, n, d]
 
-        Pi = self.dist(mean, stddev)
-
-        # Optional secondary action extraction from samples
-        if not self.discrete:
-            sampler = Pi.sample
-            Pi.sample = lambda sample_shape=1: self.ActionExtractor(sampler(sample_shape))
+        Pi = self.dist(mean, stddev, self.ActionExtractor)  # Policy
 
         return Pi
 
@@ -86,7 +81,7 @@ class MonteCarloCreator(nn.Module):
         # Max cutoff clip for action sampling
         self.stddev_clip = stddev_clip
 
-    def forward(self, mean, stddev):
+    def forward(self, mean, stddev, ActionExtractor=None):
         if self.discrete:
             logits, ind = mean.min(1)  # Min-reduced ensemble [b, n, d]
             stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble stand dev [b, n, d]
@@ -100,6 +95,11 @@ class MonteCarloCreator(nn.Module):
                 mean = (torch.tanh(mean) + 1) / 2 * (self.high - self.low) + self.low  # Normalize  [b, e, n, d]
 
             Psi = TruncatedNormal(mean, stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+
+            # Optional secondary action extraction from samples
+            if ActionExtractor is not None:
+                sampler = Psi.sample
+                Psi.sample = lambda sample_shape=1: ActionExtractor(sampler(sample_shape))
 
         return Psi
 
