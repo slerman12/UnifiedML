@@ -15,7 +15,7 @@ import Utils
 
 class Creator(torch.nn.Module):
     """
-    Sampling distribution and probabilistic measures for action spaces and ensembles.
+    Policy distribution and probabilistic measures for sampling across action spaces and ensembles.
     """
     def __init__(self, action_spec, critic=None, ActionExtractor=None, sample_discrete_as_discrete=True,
                  discrete=False, temp_schedule=1, stddev_clip=torch.inf, optim=None, scheduler=None,
