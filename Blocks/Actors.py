@@ -113,14 +113,21 @@ class CategoricalCriticActor(nn.Module):  # "Creator"
         # Q-values per action
         q = Qs.mean(1)  # Mean-reduced ensemble
 
-        # Normalize
-        q -= q.max(-1, keepdim=True)[0]
+        # Check if probabilities
+        dist = (q.sum(-1) == 1).all()
 
-        # Softmax temperature
-        temp = Utils.schedule(self.temp_schedule, step) if step else 1
+        if dist:
+            # Categorical dist from probabilities
+            Psi = torch.distributions.Categorical(probs=q)
+        else:
+            # Normalize
+            q -= q.max(-1, keepdim=True)[0]
 
-        # Categorical dist
-        Psi = torch.distributions.Categorical(logits=q / temp)
+            # Softmax temperature
+            temp = Utils.schedule(self.temp_schedule, step) if step else 1
+
+            # Categorical dist from log probabilities
+            Psi = torch.distributions.Categorical(logits=q / temp)
 
         # Highest Q-value
         _, best_ind = q.max(-1)
