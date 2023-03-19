@@ -118,7 +118,7 @@ class CategoricalCriticActor(nn.Module):  # "Creator"
 
         if dist:
             # Categorical dist from probabilities
-            Psi = torch.distributions.Categorical(probs=Qs)
+            Psi = torch.distributions.Categorical(probs=q)
         else:
             # Normalize
             q -= q.max(-1, keepdim=True)[0]
