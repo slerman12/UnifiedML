@@ -111,7 +111,7 @@ class CategoricalCriticActor(nn.Module):  # "Creator"
 
     def forward(self, Qs, step=None, action=None):
         # Q-values per action
-        q = Qs.mean(1)  # Mean-reduced ensemble
+        q = Qs.min(1)[0] if self.training else Qs.mean(1)  # Pessimistic-Min or Mean-reduced ensemble
 
         # Check if probabilities
         dist = (q.sum(-1) == 1).all()
