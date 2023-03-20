@@ -91,7 +91,7 @@ class MonteCarlo(nn.Module):
             logits, ind = self.All_Qs.min(1)  # Min-reduced ensemble [b, n, d]
 
             # Corresponding entropy temperature
-            stddev = torch.tensor(self.stddev) if isinstance(self.stddev, float) \
+            stddev = self.stddev if isinstance(self.stddev, float) \
                 else Utils.gather(self.stddev, ind.unsqueeze(1), 1, 1).flatten(1).sum(1)  # Min-reduced ensemble std [b]
 
             try:

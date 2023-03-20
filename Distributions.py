@@ -18,7 +18,7 @@ class TruncatedNormal(Normal):
         super().__init__(loc, scale)
 
         self.low, self.high = low, high  # Clamp range
-        self.eps = eps
+        self.eps = eps  # Clamp fringes
 
         # Max cutoff clip for standard deviation
         self.stddev_clip = stddev_clip
@@ -73,13 +73,13 @@ class NormalizedCategorical(Categorical):
             probs = probs.movedim(dim, -1)
 
         if logits is not None:
-            temp = temp.expand_as(logits).movedim(dim, -1)
+            temp = torch.as_tensor(temp, device=logits.device, dtype=logits.dtype).expand_as(logits).movedim(dim, -1)
 
             logits = logits.movedim(dim, -1) / temp
 
         self.low, self.high = low, high  # Range to normalize to
 
-        super().__init__(probs, logits.to('cpu'))
+        super().__init__(probs, logits)
 
     def rsample(self, sample_shape=1, batch_first=True):
         sample = self.sample(sample_shape, batch_first)  # Note: not differentiable
