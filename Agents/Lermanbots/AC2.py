@@ -28,7 +28,7 @@ class AC2Agent(torch.nn.Module):
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
-                 rand_steps, stddev_schedule, stddev_clip,  # Exploration
+                 rand_steps, stddev_schedule,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  num_critics=2, num_actors=1, depth=0
                  ):
