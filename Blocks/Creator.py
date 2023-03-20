@@ -109,8 +109,9 @@ class MonteCarlo(torch.nn.Module):
         if not self.discrete:
             action = self.ActionExtractor(action)
 
+        # Reduce continuous-action ensemble
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
-            return action[:, torch.randint(action.shape[1], [])]  # Uniform sample across ensemble
+            return action[:, torch.randint(action.shape[1], [])]  # Uniform sample again across ensemble
 
         # TODO 2nd sample
 
