@@ -89,12 +89,12 @@ class MonteCarlo(torch.nn.Module):
             return TruncatedNormal(self.mean, self.stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
 
     def log_prob(self, action):
-        # Individual action probability
+        # Log-probability
         log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
 
-        # If sampled continuous-action is a discrete distribution
+        # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
-            log_prob += action
+            log_prob += action  # (Adding log-probs is equal to multiplying probs)
 
         return log_prob
 
