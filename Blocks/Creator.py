@@ -39,7 +39,7 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    def Pi(self, mean, stddev, step=1):  # TODO Rename maybe
+    def Omega(self, mean, stddev, step=1):  # TODO Rename maybe
         # Optionally create policy from recipe
         return Utils.instantiate(self.policy, mean=mean, stddev=stddev, action_spec=self.action_spec, step=step,
                                  ActionExtractor=self.ActionExtractor, discrete=self.discrete,
@@ -92,7 +92,9 @@ class MonteCarlo(torch.nn.Module):
         # Individual action probability
         log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
 
-        # TODO 2nd sample
+        # If sampled continuous-action is a discrete distribution
+        if self.discrete_as_continuous:
+            log_prob += action
 
         return log_prob
 
@@ -113,7 +115,10 @@ class MonteCarlo(torch.nn.Module):
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
             return action[:, torch.randint(action.shape[1], [])]  # Uniform sample again across ensemble
 
-        # TODO 2nd sample
+        # If sampled action is a discrete distribution, sample again
+        if self.discrete_as_continuous:
+            # Sample
+            action = torch.distributions.Categorical(logits=action).sample()
 
         return action
 
@@ -126,5 +131,11 @@ class MonteCarlo(torch.nn.Module):
         # Absolute Determinism
 
         # Argmax for discrete, extract action for continuous
-        return self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
+        action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean)
+
+        # If continuous-action is a discrete distribution
+        if self.discrete_as_continuous:
+            action = action.argmax(-1)  # Argmax
+
+        return action
