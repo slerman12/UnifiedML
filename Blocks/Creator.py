@@ -62,8 +62,8 @@ class MonteCarlo(torch.nn.Module):
 
             self.Psi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
             self.All_Qs = mean  # [b, e, n, d]
-            self.logits = self.Psi.logits
-            self.normalize = self.Psi.normalize
+            self.logits = self.Psi.logits  # [b, e, n, d] After log-sum-exp trick
+            self.normalize = self.Psi.normalize  # Normalize -> [low, high]
         else:
             self.Psi = TruncatedNormal(self.action, stddev, low=self.low, high=self.high, stddev_clip=stddev_clip)
             self.mean = mean  # [b, e, n, d]
