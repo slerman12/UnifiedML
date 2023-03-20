@@ -43,7 +43,7 @@ class EnsembleQCritic(nn.Module):
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_shape=out_shape) or
                                       MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
-        self.binary = isinstance(list(self.Q_head.modules())[-1], nn.Sigmoid)  # Whether Sigmoid-activated e.g. GANs
+        self.binary = isinstance(list(self.Q_head.modules())[-1], nn.Sigmoid)  # Whether Sigmoid-activated e.g. in GANs
 
         # Discrete actions are known a priori
         if discrete and action_spec.discrete:
