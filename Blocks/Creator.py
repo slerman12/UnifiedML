@@ -51,7 +51,7 @@ class Creator(nn.Module):
 # Policy
 class MonteCarlo(nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action_spec, mean, stddev, step=1, discrete=False, temp_schedule=None, ActionExtractor=None):
+    def __init__(self, action_spec, mean, stddev, step=1, discrete=False, temp_schedule=1, ActionExtractor=None):
         super().__init__()
 
         self.discrete = discrete
@@ -66,12 +66,13 @@ class MonteCarlo(nn.Module):
 
         self.stddev = stddev
 
-        self.ActionExtractor = ActionExtractor
+        # A secondary mapping that is applied after sampling an continuous-action
+        self.ActionExtractor = ActionExtractor or nn.Identity()
 
         if self.discrete_as_continuous:
             self.temp = Utils.schedule(temp_schedule, step)  # Temp for controlling entropy of re-sample
 
-    # Policy
+    # SubPolicy
     @cached_property
     def Psi(self):
         if self.discrete:
@@ -109,7 +110,7 @@ class MonteCarlo(nn.Module):
     def entropy(self, action=None):
         # If continuous-action is a discrete distribution, 2nd sample also has entropy
         if self.discrete_as_continuous:
-            # Approximate joint entropy  TODO Might need to align dims
+            # Approximate joint entropy
             return self._entropy + torch.distributions.Categorical(logits=action / self.temp).entropy()
 
         return self._entropy  # [b, e]
@@ -141,11 +142,11 @@ class MonteCarlo(nn.Module):
     # Exploitation policy
     @cached_property
     def best(self):
-        # Absolute Determinism
+        # Absolute Determinism (kind of)
 
-        # Argmax for discrete, extract action for continuous  (Note: Ensemble reduce somewhat random; should use critic)
+        # Argmax for discrete, extract action for continuous  (Note: Ensemble reduce somewhat random; could use critic)
         action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
-            else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])
+            else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])  # Extract ensemble-reduce
 
         # If continuous-action is a discrete distribution
         if self.discrete_as_continuous:

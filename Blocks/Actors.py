@@ -25,7 +25,7 @@ class EnsemblePiActor(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
-        # Standard deviation ("Uncertainty" / "Randomness") scheduler
+        # Standard deviation ("Uncertainty" / "Randomness") scheduler for exploratory agents A.K.A. entropy temperature
         self.stddev_schedule = stddev_schedule
 
         in_dim = math.prod(repr_shape)
