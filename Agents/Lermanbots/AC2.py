@@ -262,7 +262,7 @@ class AC2Agent(torch.nn.Module):
                 next_obs = None
 
                 Pi = self.actor(obs)
-                generated_image = Pi.best.flatten(1)
+                generated_image = Pi.best.flatten(1)  # Imagined
 
                 action, reward = generated_image, torch.zeros_like(reward)  # Discriminate Fake
 
