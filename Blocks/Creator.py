@@ -36,10 +36,12 @@ class Creator(torch.nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
     def Pi(self, mean, stddev, discrete=False, stddev_clip=torch.inf):  # TODO Rename: action, explore_rate
-        # Return policy distribution
-        return Utils.instantiate(self.policy, mean=mean, stddev=stddev, action_spec=self.action_spec,
-                                 ActionExtractor=self.ActionExtractor, discrete=discrete, stddev_clip=stddev_clip) or \
-            MonteCarlo(mean, stddev, self.action_spec, self.ActionExtractor, discrete, stddev_clip)
+        # Optionally create policy from recipe
+        policy = Utils.instantiate(self.policy, mean=mean, stddev=stddev, action_spec=self.action_spec,
+                                   ActionExtractor=self.ActionExtractor, discrete=discrete, stddev_clip=stddev_clip)
+
+        # Return policy distribution, default: MonteCarlo
+        return policy or MonteCarlo(mean, stddev, self.action_spec, self.ActionExtractor, discrete, stddev_clip)
 
 
 # Policy
