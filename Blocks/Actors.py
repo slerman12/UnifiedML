@@ -25,7 +25,7 @@ class EnsemblePiActor(nn.Module):
         self.num_actions = action_spec.discrete_bins or 1  # n
         self.action_dim = math.prod(action_spec.shape) * (1 if stddev_schedule else 2)  # d, or d * 2
 
-        # Standard deviation ("Uncertainty" / "Randomness") scheduler for exploratory agents A.K.A. entropy temperature
+        # Standard deviation ("Uncertainty" / "Randomness") scheduler for exploratory acting A.K.A. entropy temperature
         self.stddev_schedule = stddev_schedule
 
         in_dim = math.prod(repr_shape)
@@ -53,7 +53,7 @@ class EnsemblePiActor(nn.Module):
     def forward(self, obs, step=1):
         h = self.trunk(obs)
 
-        # "Belief"
+        # Action data or "Belief"
         mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
         if self.stddev_schedule is None:
