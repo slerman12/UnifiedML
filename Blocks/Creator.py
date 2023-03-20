@@ -105,7 +105,7 @@ class MonteCarlo(torch.nn.Module):
         return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean(-1)
 
     def entropy(self, action=None):
-        # If continuous-action is a discrete distribution, it gets double-sampled
+        # If continuous-action is a discrete distribution, 2nd sample also has entropy
         if self.discrete_as_continuous:
             # Approximate joint entropy
             return self._entropy + torch.distributions.Categorical(logits=action).entropy()
