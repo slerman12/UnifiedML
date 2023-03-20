@@ -72,7 +72,7 @@ class MonteCarlo(torch.nn.Module):
 
         self.ActionExtractor = ActionExtractor
 
-    #     self.critic = None
+    #     self.critic = None  TODO
     #
     # # Can enable critic-based ensemble reduction (optional)
     # def forward(self, critic):
@@ -102,25 +102,25 @@ class MonteCarlo(torch.nn.Module):
 
     def log_prob(self, action):
         # Log-probability
-        log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
+        log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)  TODO critic
 
         # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
             log_prob += action  # (Adding log-probs is equal to multiplying probs)  TODO Temp
 
-        return log_prob  # TODO Might need to align dims
+        return log_prob  # [b, e] TODO Might need to align dims
 
     @cached_property
     def _entropy(self):
-        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean(-1)
+        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean(-1)  # [b, e]
 
     def entropy(self, action=None):
         # If continuous-action is a discrete distribution, 2nd sample also has entropy
         if self.discrete_as_continuous:
-            # Approximate joint entropy  TODO Might need to align dims and reduce action ensemble
+            # Approximate joint entropy  TODO Might need to align dims
             return self._entropy + torch.distributions.Categorical(logits=action).entropy()  # TODO Temp
 
-        return self._entropy
+        return self._entropy  # [b, e]  TODO critic
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
