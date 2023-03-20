@@ -40,7 +40,7 @@ dataset:
   _recursive_: false
 test_dataset:
   _target_: ${TestDataset}
-  _recursive_: false  # TODO when no TestDataset provided, THEN test_dataset should _default_ to ${dataset}
+  _recursive_: false  # Note: When no TestDataset provided, THEN test_dataset should _default_ to ${dataset}  TODO
 suite: ???  # To be specified later, defaults per respective task
 task_name: ???  # To be specified later, defaults per respective task
 frame_stack: 3
@@ -191,6 +191,9 @@ Predictor: ${Generator}  # Shorthand for Pi_head --> recipes.actor.Pi_head._targ
 Pi_head: ${Predictor}  # Shorthand for recipes.actor.Pi_head._target_
 Q_head: ${Discriminator}  # Shorthand for recipes.critic.Q_head._target_
 
+Policy: null  # Shorthand for recipes.creator.policy._target_
+ActionExtractor: null  # Shorthand for recipes.creator.action_extractor._target_
+
 Optim: null  # Shorthand for recipes.<block>.optim._target_ ,  e.g. python Run.py Optim=Utils.torch.optim.SGD
 Scheduler: null  # Shorthand for recipes.<block>.scheduler._target_
 
@@ -215,6 +218,10 @@ discriminator:  # Shorthand for q_head
   _target_: ${Q_head}
 q_head:
   _default_: ${discriminator}
+policy:
+  _target_: ${Policy}
+action_extractor:
+  _target_: ${ActionExtractor}
 
 # Global optimizers and schedulers
 optim:
@@ -250,6 +257,15 @@ critic:
   scheduler:
     _target_: ${critic.Scheduler}
     _default_: ${scheduler}
+creator:
+  Optim: ${optim._target_}
+  Scheduler: ${scheduler._target_}
+  optim:
+    _target_: ${creator.Optim}
+    _default_: ${optim}
+  scheduler:
+    _target_: ${creator.Scheduler}
+    _default_: ${scheduler}
 
 # Recipes
 _recipes:
@@ -269,6 +285,11 @@ _recipes:
     Q_head: ${q_head}
     optim: ${critic.optim}
     scheduler: ${critic.scheduler}
+  creator:
+    policy: ${policy}
+    ActionExtractor: ${action_extractor}
+    optim: ${creator.optim}
+    scheduler: ${creator.scheduler}
 
 recipes: ${allow_objects:${_recipes}}
 
