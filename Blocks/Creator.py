@@ -19,18 +19,16 @@ class Creator(torch.nn.Module):
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
-        self.Pi = Pi  # Exploration and exploitation policy recipe
-
         action_dim = math.prod(action_spec.shape)
+
+        self.Pi = Pi  # Exploration and exploitation policy recipe
 
         # A mapping that can be applied after or concurrently with action sampling
         self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=action_dim) or nn.Identity()
 
         # Args to instantiate Pi recipe
-        self.spec = dict(
-            action_spec=action_spec, ActionExtractor=ActionExtractor, discrete=discrete,
-            temp_schedule=temp_schedule, stddev_clip=stddev_clip
-        )
+        self.spec = dict(action_spec=action_spec, ActionExtractor=ActionExtractor, discrete=discrete,
+                         temp_schedule=temp_schedule, stddev_clip=stddev_clip)
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -49,6 +47,7 @@ class Creator(torch.nn.Module):
             MonteCarlo(mean, stddev, step, obs, **self.spec)
 
 
+# TODO Maybe just use this as Creator and call in actor forward automatically. If critic None, sample uniformly.
 class MonteCarlo(torch.nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
     def __init__(self, action, explore_rate, step, obs, action_spec,
@@ -59,7 +58,7 @@ class MonteCarlo(torch.nn.Module):
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        self.action = action  # [b, e, n, d]
+        self.action = action  # [b, e, n, d]  TODO Call it best if discrete else mean
 
         if self.discrete:
             # Pessimistic Q-values per action
@@ -87,7 +86,7 @@ class MonteCarlo(torch.nn.Module):
         # Individual action probability
         log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
 
-        # If action is an ensemble, multiply probability of sampling action from the ensemble
+        # If action is an ensemble, multiply probability of sampling action from the ensemble  TODO 2nd sample.
         if as_ensemble and self.critic is not None and not self.discrete and action.shape[1] > 1:
             if q is None:
                 # Pessimistic Q-values per action
@@ -112,7 +111,7 @@ class MonteCarlo(torch.nn.Module):
         if not self.discrete:
             action = self.ActionExtractor(action)
 
-        # Reduce Actor ensemble
+        # Reduce Actor ensemble  TODO If critic None, uniform sample (index via rand int). Also, 2nd sample.
         if sample_shape is None and self.critic is not None and action.shape[1] > 1 and not self.discrete:
             # Pessimistic Q-values per action
             Qs = self.critic(self.obs, action)
@@ -145,7 +144,7 @@ class MonteCarlo(torch.nn.Module):
             action = self.Psi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, self.dim)) if self.discrete \
                 else self.ActionExtractor(self.action)
 
-            # Reduce ensemble
+            # Reduce ensemble  TODO If critic None, uniform sample (index via rand int). Also, 2nd sample.
             if sample_shape is None and self.critic is not None and not self.discrete and action.shape[1] > 1:
                 # Pessimistic Q-values per action
                 Qs = self.critic(self.obs, action)
