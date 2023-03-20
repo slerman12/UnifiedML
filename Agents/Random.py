@@ -15,7 +15,7 @@ class RandomAgent(torch.nn.Module):
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
-                 explore_steps, stddev_schedule, stddev_clip,  # Exploration
+                 rand_steps, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  ):
         super().__init__()

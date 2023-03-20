@@ -22,7 +22,7 @@ class DQNAgent(torch.nn.Module):
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
-                 explore_steps, stddev_schedule, stddev_clip,  # Exploration
+                 rand_steps, stddev_schedule,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  ):
         super().__init__()
@@ -32,7 +32,6 @@ class DQNAgent(torch.nn.Module):
         self.birthday = time.time()
         self.step = self.frame = 0
         self.episode = self.epoch = 1
-        self.explore_steps = explore_steps
 
         # Discrete RL
         assert discrete and RL, f'{type(self).__name__} only supports discrete RL. Set "discrete=true RL=true".'
@@ -51,7 +50,7 @@ class DQNAgent(torch.nn.Module):
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, **recipes.encoder, parallel=parallel, lr=lr)
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     discrete=True, stddev_schedule=stddev_schedule)
+                                     discrete=True, stddev_schedule=stddev_schedule, rand_steps=rand_steps)
 
         # Since discrete, Critic <- Actor
         recipes.critic.trunk = self.actor.trunk
@@ -74,10 +73,6 @@ class DQNAgent(torch.nn.Module):
                 self.step += 1
                 self.frame += len(obs)
 
-                if self.step < self.explore_steps:
-                    # Explore
-                    action.uniform_(self.actor.low, self.actor.high)  # Env will automatically round to whole number
-
             return action, {}
 
     def learn(self, replay):
@@ -90,10 +85,10 @@ class DQNAgent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *_ = Utils.to_torch(
             batch, self.device)
 
-        # Supervised -> RL conversion
-        instruct = ~torch.isnan(label)
+        instruct = label.nelement()  # Are labels present?
 
-        if instruct.any():
+        # Supervised -> RL conversion
+        if instruct:
             reward = (action.squeeze(1) == label).float()  # reward = correct, Note: Classify Env already sets this
 
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,

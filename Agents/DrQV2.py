@@ -23,7 +23,7 @@ class DrQV2Agent(torch.nn.Module):
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
-                 explore_steps, stddev_schedule, stddev_clip,  # Exploration
+                 rand_steps, stddev_schedule,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  ):
         super().__init__()
@@ -33,7 +33,6 @@ class DrQV2Agent(torch.nn.Module):
         self.birthday = time.time()
         self.step = self.frame = 0
         self.episode = self.epoch = 1
-        self.explore_steps = explore_steps
 
         # Continuous RL
         assert not discrete and RL, f'{type(self).__name__} only supports continuous RL. Set "discrete=false RL=true".'
@@ -50,7 +49,7 @@ class DrQV2Agent(torch.nn.Module):
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, **recipes.encoder, parallel=parallel, lr=lr)
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     ensemble_size=1, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip, lr=lr)
+                                     ensemble_size=1, stddev_schedule=stddev_schedule, rand_steps=rand_steps, lr=lr)
 
         self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
                                       ensemble_size=2, lr=lr, ema_decay=ema_decay)
@@ -69,10 +68,6 @@ class DrQV2Agent(torch.nn.Module):
                 self.step += 1
                 self.frame += len(obs)
 
-                if self.step < self.explore_steps:
-                    # Explore
-                    action.uniform_(self.actor.low, self.actor.high)
-
             # If environment's action space is discrete, environment will argmax action
             return action, {}
 
@@ -86,10 +81,10 @@ class DrQV2Agent(torch.nn.Module):
         obs, action, reward, discount, next_obs, label, *_ = Utils.to_torch(
             batch, self.device)
 
-        # Supervised -> RL conversion
-        instruct = ~torch.isnan(label)
+        instruct = label.nelement()  # Are labels present?
 
-        if instruct.any():
+        # Supervised -> RL conversion
+        if instruct:
             reward = -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
         logs = {'time': time.time() - self.birthday, 'step': self.step, 'frame': self.frame,
@@ -113,7 +108,7 @@ class DrQV2Agent(torch.nn.Module):
         Utils.optimize(critic_loss, self.encoder, self.critic)
 
         # Actor loss
-        actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), self.step, logs=logs)
+        actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), step=self.step, logs=logs)
 
         # Update actor
         Utils.optimize(actor_loss, self.actor)

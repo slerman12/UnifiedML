@@ -4,14 +4,14 @@
 # MIT_LICENSE file in the root directory of this source tree.
 
 
-def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
+def deepPolicyGradient(actor, critic, obs, action=None, step=1, logs=None):
 
-    if not action.requires_grad:  # If not differentiable
+    if action is None or not action.requires_grad:  # If None or not differentiable
         action = actor(obs, step).mean  # Differentiable action ensemble
 
     Qs = critic(obs, action)
 
-    # Pessimistic Q-values per action
+    # Pessimistic Q-values
     q, _ = Qs.min(1)  # Min-reduced critic ensemble
 
     if critic.binary:  # When Sigmoid-activated
