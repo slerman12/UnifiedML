@@ -75,7 +75,20 @@ class NormalizedCategorical(Categorical):
 
             logits = logits.movedim(dim, -1) / temp
 
-        super().__init__(probs, logits)
+            # TODO M1 Mac throws ValueError when continuous -> discrete with logsumexp
+            # print(logits, torch.isnan(logits.logsumexp(dim=-1, keepdim=True)).any(), ' (7)')
+
+            # device = logits.device.type
+            #
+            # if device == 'mps':
+            #     # M1 Macs may raise errors on gather
+            #     warnings.warn('torch.gather not fully supported on M1 Mac MPS by Pytorch. Temporarily using CPU.')
+            #
+            #     logits = logits.to('cpu')
+
+        super().__init__(probs, logits.to('cpu'))
+
+        # self.logits = self.logits.to(device)
 
         self.low, self.high = low, high  # Range to normalize to
         self.dim = dim
