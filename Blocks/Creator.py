@@ -63,6 +63,7 @@ class MonteCarlo(torch.nn.Module):
             self.Psi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
             self.All_Qs = mean  # [b, e, n, d]
             self.logits = self.Psi.logits
+            self.normalize = self.Psi.normalize
         else:
             self.Psi = TruncatedNormal(self.action, stddev, low=self.low, high=self.high, stddev_clip=stddev_clip)
             self.mean = mean  # [b, e, n, d]
@@ -106,5 +107,5 @@ class MonteCarlo(torch.nn.Module):
         # Absolute Determinism
 
         # Argmax for discrete, extract action for continuous
-        return self.Psi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
+        return self.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean)
