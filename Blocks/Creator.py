@@ -119,6 +119,7 @@ class MonteCarlo(torch.nn.Module):
         # Sample
         action = self.Psi.sample(sample_shape or 1) if detach else self.Psi.rsample(sample_shape or 1)
 
+        # Can optionally map a continuous-action after sampling
         if not self.discrete:
             action = self.ActionExtractor(action)
 
@@ -128,8 +129,7 @@ class MonteCarlo(torch.nn.Module):
 
         # If sampled action is a discrete distribution, sample again
         if self.discrete_as_continuous:
-            # Sample
-            action = torch.distributions.Categorical(logits=action).sample()
+            action = torch.distributions.Categorical(logits=action).sample()  # Sample again
 
         return action
 
