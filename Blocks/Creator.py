@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
-from functools import cached_property
+from functools import cached_property, cache
 import copy
 
 import torch
@@ -39,6 +39,7 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
+    # Creates actor policy Pi
     def Omega(self, mean, stddev, step=1):  # TODO Rename maybe
         # Optionally create policy from recipe
         return Utils.instantiate(self.policy, mean=mean, stddev=stddev, action_spec=self.action_spec, step=step,
@@ -98,8 +99,17 @@ class MonteCarlo(torch.nn.Module):
 
         return log_prob
 
-    def entropy(self, action):
-        pass  # TODO
+    @cached_property
+    def _entropy(self):
+        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean(-1)
+
+    def entropy(self, action=None):
+        # If continuous-action is a discrete distribution, it gets double-sampled
+        if self.discrete_as_continuous:
+            # Approximate joint entropy
+            return self._entropy + torch.distributions.Categorical(logits=action).entropy()
+
+        return self._entropy
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
