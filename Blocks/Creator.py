@@ -14,7 +14,7 @@ from Distributions import TruncatedNormal, NormalizedCategorical
 import Utils
 
 
-class Creator(torch.nn.Module):
+class Creator(nn.Module):
     """Creates a policy distribution for sampling actions and ensembles and computing probabilistic measures."""
     def __init__(self, action_spec, policy=None, ActionExtractor=None, discrete=False, temp_schedule=None,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
@@ -49,7 +49,7 @@ class Creator(torch.nn.Module):
 
 
 # Policy
-class MonteCarlo(torch.nn.Module):
+class MonteCarlo(nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
     def __init__(self, action_spec, mean, stddev, step=1, discrete=False, temp_schedule=None, ActionExtractor=None):
         super().__init__()
@@ -59,7 +59,6 @@ class MonteCarlo(torch.nn.Module):
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        # Policy
         if self.discrete:
             self.All_Qs = mean  # [b, e, n, d]
         else:
@@ -78,7 +77,10 @@ class MonteCarlo(torch.nn.Module):
         if self.discrete:
             # Pessimistic Q-values per action
             logits, ind = self.All_Qs.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(self.stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
+
+            # Corresponding entropy temperature
+            stddev = torch.tensor(self.stddev) if isinstance(self.stddev, float) \
+                else Utils.gather(self.stddev, ind.unsqueeze(1), 1, 1).flatten(1).sum(1)  # Min-reduced ensemble std [b]
 
             try:
                 return NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
@@ -141,7 +143,7 @@ class MonteCarlo(torch.nn.Module):
     def best(self):
         # Absolute Determinism
 
-        # Argmax for discrete, extract action for continuous  (Note: Ensembles somewhat random; should use critic)
+        # Argmax for discrete, extract action for continuous  (Note: Ensemble reduce somewhat random; should use critic)
         action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])
 

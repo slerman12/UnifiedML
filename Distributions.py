@@ -17,8 +17,10 @@ class TruncatedNormal(Normal):
     def __init__(self, loc, scale, low=None, high=None, eps=1e-6, stddev_clip=None):
         super().__init__(loc, scale)
 
-        self.low, self.high = low, high
+        self.low, self.high = low, high  # Clamp range
         self.eps = eps
+
+        # Max cutoff clip for standard deviation
         self.stddev_clip = stddev_clip
 
     def log_prob(self, value, keptdim=True):
@@ -75,12 +77,9 @@ class NormalizedCategorical(Categorical):
 
             logits = logits.movedim(dim, -1) / temp
 
-        super().__init__(probs, logits.to('cpu'))
-
         self.low, self.high = low, high  # Range to normalize to
-        self.dim = dim
 
-        self._best = None
+        super().__init__(probs, logits.to('cpu'))
 
     def rsample(self, sample_shape=1, batch_first=True):
         sample = self.sample(sample_shape, batch_first)  # Note: not differentiable
@@ -97,13 +96,6 @@ class NormalizedCategorical(Categorical):
             sample = sample.transpose(0, len(sample_shape))  # Batch dim first
 
         return self.normalize(sample)
-
-    @property
-    def best(self):
-        # Determinism
-        if self._best is None:
-            self._best = self.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, self.dim))  # Argmax
-        return self._best  # Highest probability index
 
     def normalize(self, sample):
         # Normalize -> [low, high]
