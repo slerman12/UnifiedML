@@ -35,15 +35,17 @@ class Creator(torch.nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
-    def Pi(self, mean, stddev, **kwargs):
+    def Pi(self, mean, stddev, discrete=False, stddev_clip=torch.inf):
         # Return policy distribution
-        return Utils.instantiate(self.policy, action=mean, explore_rate=stddev, action_spec=self.action_spec, **kwargs
-                                 ) or MonteCarlo(mean, stddev, self.action_spec, **kwargs)
+        return Utils.instantiate(self.policy, mean=mean, stddev=stddev, action_spec=self.action_spec,
+                                 ActionExtractor=self.ActionExtractor, discrete=discrete, stddev_clip=stddev_clip) or \
+            MonteCarlo(mean, stddev, self.action_spec, self.ActionExtractor, discrete, stddev_clip)
 
 
+# Policy
 class MonteCarlo(torch.nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action, explore_rate, action_spec, discrete=False, stddev_clip=math.inf):
+    def __init__(self, mean, stddev, action_spec, ActionExtractor=None, discrete=False, stddev_clip=torch.inf):
         super().__init__()
 
         self.discrete = discrete
@@ -54,13 +56,16 @@ class MonteCarlo(torch.nn.Module):
         if self.discrete:
             # Pessimistic Q-values per action
             logits, ind = self.action.min(1)  # Min-reduced ensemble [b, n, d]
-            stddev = Utils.gather(explore_rate, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
+            stddev = Utils.gather(stddev, ind.unsqueeze(1), 1, 1).squeeze(1)  # Min-reduced ensemble std [b, n, d]
 
             self.Psi = NormalizedCategorical(logits=logits, low=self.low, high=self.high, temp=stddev, dim=-2)
-            self.All_Qs = action  # [b, e, n, d]
+            self.All_Qs = mean  # [b, e, n, d]
+            self.logits = self.Psi.logits
         else:
-            self.Psi = TruncatedNormal(self.action, explore_rate, low=self.low, high=self.high, stddev_clip=stddev_clip)
-            self.mean = action  # [b, e, n, d]
+            self.Psi = TruncatedNormal(self.action, stddev, low=self.low, high=self.high, stddev_clip=stddev_clip)
+            self.mean = mean  # [b, e, n, d]
+
+        self.ActionExtractor = ActionExtractor
 
     def log_prob(self, action):
         # Individual action probability
@@ -80,10 +85,13 @@ class MonteCarlo(torch.nn.Module):
         # Sample
         action = self.Psi.sample(sample_shape or 1) if detach else self.Psi.rsample(sample_shape or 1)
 
+        if not self.discrete:
+            action = self.ActionExtractor(action)
+
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
             pass  # TODO Uniform sample (index via rand int)
 
-        #  TODO Also, 2nd sample
+        # TODO 2nd sample
 
         return action
 
@@ -95,6 +103,6 @@ class MonteCarlo(torch.nn.Module):
     def best(self):
         # Absolute Determinism
 
-        # Argmax for D
-        return self.Psi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, self.dim)) if self.discrete \
+        # Argmax for discrete, extract action for continuous
+        return self.Psi.normalize(self.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean)
