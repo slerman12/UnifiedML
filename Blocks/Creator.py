@@ -16,15 +16,15 @@ import Utils
 
 class Creator(torch.nn.Module):
     """Creates a policy distribution for sampling actions and ensembles and computing probabilistic measures."""
-    def __init__(self, action_spec, policy=None, ActionExtractor=None, discrete=False, stddev_clip=torch.inf,
+    def __init__(self, action_spec, policy=None, ActionExtractor=None, discrete=False, temp_schedule=None,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
         self.action_spec = action_spec
 
-        # Max cutoff clip for continuous-action sampling
-        self.stddev_clip = stddev_clip  # TODO Make this default/automatic. Include kwargs maybe for below.
+        # Standard dev value
+        self.temp_schedule = temp_schedule
 
         self.policy = policy  # Exploration and exploitation policy recipe
 
@@ -40,27 +40,24 @@ class Creator(torch.nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
     # Creates actor policy Pi
-    def Omega(self, mean, stddev, step=1):  # TODO Rename maybe (act, explore)
+    def Omega(self, mean, stddev, step=1):
         # Optionally create policy from recipe
-        return Utils.instantiate(self.policy, mean=mean, stddev=stddev, action_spec=self.action_spec, step=step,
-                                 ActionExtractor=self.ActionExtractor, discrete=self.discrete,
-                                 stddev_clip=self.stddev_clip) or \
-            MonteCarlo(mean, stddev, self.action_spec, self.ActionExtractor, self.discrete, self.stddev_clip)  # Default
+        return Utils.instantiate(self.policy, mean=mean, stddev=stddev, step=step, action_spec=self.action_spec,
+                                 discrete=self.discrete, temp_schedule=self.temp_schedule,
+                                 ActionExtractor=self.ActionExtractor) or \
+            MonteCarlo(self.action_spec, mean, stddev, step, self.discrete, self.temp_schedule, self.ActionExtractor)
 
 
 # Policy
 class MonteCarlo(torch.nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, mean, stddev, action_spec, ActionExtractor=None, discrete=False, stddev_clip=torch.inf):
+    def __init__(self, action_spec, mean, stddev, step=1, discrete=False, temp_schedule=None, ActionExtractor=None):
         super().__init__()
 
         self.discrete = discrete
         self.discrete_as_continuous = action_spec.discrete and not self.discrete
 
         self.low, self.high = action_spec.low, action_spec.high
-
-        # Max cutoff clip for action sampling
-        self.stddev_clip = stddev_clip
 
         # Policy
         if self.discrete:
@@ -72,15 +69,8 @@ class MonteCarlo(torch.nn.Module):
 
         self.ActionExtractor = ActionExtractor
 
-    #     self.critic = None  TODO
-    #
-    # # Can enable critic-based ensemble reduction (optional)
-    # def forward(self, critic):
-    #     # This policy can accept a critic for non-random ensemble reduction
-    #     self.critic = critic
-    #
-    #     # Returns itself
-    #     return self
+        if self.discrete_as_continuous:
+            self.temp = Utils.schedule(temp_schedule, step)  # Temp for controlling entropy of re-sample
 
     # Policy
     @cached_property
@@ -98,17 +88,17 @@ class MonteCarlo(torch.nn.Module):
                 Psi.logits = Psi.logits.to(logits.device)
                 return Psi
         else:
-            return TruncatedNormal(self.mean, self.stddev, low=self.low, high=self.high, stddev_clip=self.stddev_clip)
+            return TruncatedNormal(self.mean, self.stddev, low=self.low, high=self.high, stddev_clip=0.3)
 
     def log_prob(self, action):
         # Log-probability
-        log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)  TODO critic
+        log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
 
         # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
-            log_prob += action  # (Adding log-probs is equal to multiplying probs)  TODO Temp
+            log_prob += action / self.temp  # (Adding log-probs is equivalent to multiplying probs)
 
-        return log_prob  # [b, e] TODO Might need to align dims
+        return log_prob  # [b, e]
 
     @cached_property
     def _entropy(self):
@@ -118,9 +108,9 @@ class MonteCarlo(torch.nn.Module):
         # If continuous-action is a discrete distribution, 2nd sample also has entropy
         if self.discrete_as_continuous:
             # Approximate joint entropy  TODO Might need to align dims
-            return self._entropy + torch.distributions.Categorical(logits=action).entropy()  # TODO Temp
+            return self._entropy + torch.distributions.Categorical(logits=action / self.temp).entropy()
 
-        return self._entropy  # [b, e]  TODO critic
+        return self._entropy  # [b, e]
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
@@ -135,11 +125,11 @@ class MonteCarlo(torch.nn.Module):
 
         # Reduce continuous-action ensemble
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
-            return action[:, torch.randint(action.shape[1], [])]  # Uniform sample again across ensemble  TODO critic
+            return action[:, torch.randint(action.shape[1], [])]  # Uniform sample again across ensemble
 
         # If sampled action is a discrete distribution, sample again
         if self.discrete_as_continuous:
-            action = torch.distributions.Categorical(logits=action).sample()  # Sample again  TODO Temp
+            action = torch.distributions.Categorical(logits=action / self.temp).sample()  # Sample again
 
         return action
 
@@ -151,9 +141,9 @@ class MonteCarlo(torch.nn.Module):
     def best(self):
         # Absolute Determinism
 
-        # Argmax for discrete, extract action for continuous  Note: Ensembles somewhat random; should use critic
+        # Argmax for discrete, extract action for continuous  (Note: Ensembles somewhat random; should use critic)
         action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
-            else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])  # TODO critic
+            else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])
 
         # If continuous-action is a discrete distribution
         if self.discrete_as_continuous:
