@@ -69,6 +69,8 @@ class MonteCarlo(nn.Module):
         # A secondary mapping that is applied after sampling an continuous-action
         self.ActionExtractor = ActionExtractor or nn.Identity()
 
+        self.store = None
+
         if self.discrete_as_continuous:
             self.temp = Utils.schedule(temp_schedule, step)  # Temp for controlling entropy of re-sample
 
@@ -132,6 +134,7 @@ class MonteCarlo(nn.Module):
 
         # If sampled action is a discrete distribution, sample again
         if self.discrete_as_continuous:
+            self.store = action
             action = torch.distributions.Categorical(logits=action / self.temp).sample()  # Sample again
 
         return action

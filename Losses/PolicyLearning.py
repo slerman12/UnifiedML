@@ -6,14 +6,16 @@
 
 def deepPolicyGradient(actor, critic, obs, action, step, logs=None):
 
-    if not action.requires_grad:
-        action = actor(obs, step).mean  # Differentiable action
+    if not action.requires_grad:  # If not differentiable
+        action = actor(obs, step).mean  # Differentiable action ensemble
 
     Qs = critic(obs, action)
-    q, _ = Qs.min(1)  # Min-reduced ensemble
 
-    if critic.binary:
-        q = q.log()  # For numerical stability of maximizing Sigmoid variables
+    # Pessimistic Q-values per action
+    q, _ = Qs.min(1)  # Min-reduced critic ensemble
+
+    if critic.binary:  # When Sigmoid-activated
+        q = q.log()  # (Log-space is more numerically stable)
 
     policy_loss = -q.mean()  # Policy gradient ascent
 

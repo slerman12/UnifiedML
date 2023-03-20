@@ -5,8 +5,6 @@
 import torch
 from torch.nn.functional import mse_loss, binary_cross_entropy
 
-import Utils
-
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=None, step=0, logs=None):
     # Non-empty next_obs
@@ -29,22 +27,22 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
             all_actions_known = hasattr(critic, 'action')
 
             if not all_actions_known:
-                next_action = next_Pi.sample()  # Sample actions  TODO undo back to num actions
+                next_action = next_Pi.sample(1)  # Sample actions
 
             if actor.discrete:
                 All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
 
             # Q-values per action
             next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy of Critic: Q(obs, a)
-            next_q = next_Qs.min(1)[0]  # Min-reduced ensemble
-            next_q_norm = next_q - next_q.max(-1, keepdim=True)[0]  # Normalized
 
-            # Weigh each action's Q-value by its probability
-            temp = Utils.schedule(actor.stddev_schedule, step)  # Softmax temperature / "entropy"
-            next_action_probs = (next_q_norm / temp).softmax(-1)  # Action probabilities
-            next_v = (next_q * next_action_probs).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+            # Pessimistic Q-values per action
+            next_q = next_Qs.min(1)[0]  # Min-reduced critic ensemble
 
-            target_Q += discount * next_v
+            # Weigh each action's pessimistic Q-value by its probability
+            next_action_prob = next_Pi.log_prob().softmax(-1)  # Action probability
+            next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+
+            target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
 
     Qs = critic(obs, action)  # Q-ensemble
 

@@ -48,7 +48,7 @@ class EnsemblePiActor(nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
         # Can create a policy distribution
-        self.creator = Creator(action_spec, *creator, self.discrete, self.stddev_schedule)
+        self.creator = Creator(action_spec, **creator, discrete=self.discrete, temp_schedule=self.stddev_schedule)
 
     def forward(self, obs, step=1):
         h = self.trunk(obs)
