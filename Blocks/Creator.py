@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
-from functools import cached_property, cache
+from functools import cached_property
 import copy
 
 import torch
@@ -24,7 +24,7 @@ class Creator(torch.nn.Module):
         self.action_spec = action_spec
 
         # Max cutoff clip for continuous-action sampling
-        self.stddev_clip = stddev_clip  # TODO Make this default/automatic. Pass in schedule for log_prob of 2nd sample.
+        self.stddev_clip = stddev_clip  # TODO Make this default/automatic
 
         self.policy = policy  # Exploration and exploitation policy recipe
 
@@ -55,6 +55,7 @@ class MonteCarlo(torch.nn.Module):
         super().__init__()
 
         self.discrete = discrete
+        self.discrete_as_continuous = action_spec.discrete and not self.discrete
 
         self.low, self.high = action_spec.low, action_spec.high
 
