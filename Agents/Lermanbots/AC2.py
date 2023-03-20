@@ -28,7 +28,7 @@ class AC2Agent(torch.nn.Module):
     def __init__(self,
                  obs_spec, action_spec, num_actions, trunk_dim, hidden_dim, standardize, norm, recipes,  # Architecture
                  lr, lr_decay_epochs, weight_decay, ema_decay, ema,  # Optimization
-                 explore_steps, stddev_schedule, stddev_clip,  # Exploration
+                 rand_steps, stddev_schedule, stddev_clip,  # Exploration
                  discrete, RL, supervise, generate, device, parallel, log,  # On-boarding
                  num_critics=2, num_actors=1, depth=0
                  ):
@@ -43,7 +43,6 @@ class AC2Agent(torch.nn.Module):
         self.birthday = time.time()
         self.step = self.frame = 0
         self.episode = self.epoch = 1
-        self.explore_steps = explore_steps
         self.ema = ema  # Can use an exponential moving average evaluation model
 
         self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
@@ -57,6 +56,7 @@ class AC2Agent(torch.nn.Module):
         if self.generate:
             standardize = False
             norm = True  # Normalize Obs to range [-1, 1]
+            rand_steps = 0
 
             # Action = Imagined Obs
             action_spec.update({'shape': obs_spec.shape, 'discrete_bins': None,
@@ -84,8 +84,8 @@ class AC2Agent(torch.nn.Module):
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
-                                     creator=recipes.creator, ensemble_size=self.num_actors,
-                                     discrete=self.discrete, stddev_schedule=stddev_schedule, stddev_clip=stddev_clip,
+                                     ensemble_size=self.num_actors, discrete=self.discrete,
+                                     stddev_schedule=stddev_schedule, creator=recipes.creator, rand_steps=rand_steps,
                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
                                      ema_decay=ema_decay * ema)
 
@@ -129,6 +129,7 @@ class AC2Agent(torch.nn.Module):
 
         # Birth
 
+    # "Play"
     def act(self, obs):
         with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
             obs = torch.as_tensor(obs, device=self.device).float()
@@ -137,7 +138,7 @@ class AC2Agent(torch.nn.Module):
             encoder = self.encoder.ema if self.ema else self.encoder
             actor = self.actor.ema if self.ema else self.actor
 
-            # See
+            # "See"
             obs = encoder(obs)
 
             # Act
@@ -147,20 +148,19 @@ class AC2Agent(torch.nn.Module):
                 else Pi.best if self.discrete \
                 else Pi.mean
 
-            # Creator may store distribution as action rather than sampled action
-            store = {} if Pi.store is None else {'action': Pi.store.cpu().numpy()}
+            store = {}
 
             if self.training:
                 self.step += 1
                 self.frame += len(obs)
 
-                if self.step < self.explore_steps and not self.generate:
-                    # Explore
-                    action.uniform_(actor.low, actor.high)  # Env will automatically round to whole number if discrete
+                # Creator may store distribution as action rather than sampled action
+                if Pi.store is not None:
+                    store = {'action': Pi.store.cpu().numpy()}
 
             return action, store
 
-    # Dream
+    # "Dream"
     def learn(self, replay):
         # "Recall"
 

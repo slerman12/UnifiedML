@@ -16,17 +16,19 @@ import Utils
 
 class Creator(nn.Module):
     """Creates a policy distribution for sampling actions and ensembles and computing probabilistic measures."""
-    def __init__(self, action_spec, policy=None, ActionExtractor=None, discrete=False, temp_schedule=None,
+    def __init__(self, action_spec, discrete=False, rand_steps=0, temp_schedule=None, policy=None, ActionExtractor=None,
                  optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
         self.discrete = discrete
         self.action_spec = action_spec
 
+        self.policy = policy  # Exploration and exploitation policy recipe
+
         # Standard dev value
         self.temp_schedule = temp_schedule
 
-        self.policy = policy  # Exploration and exploitation policy recipe
+        self.rand_steps = rand_steps
 
         # A mapping that can be applied after or concurrently with action sampling
         self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(self.action_spec.shape)
@@ -41,17 +43,20 @@ class Creator(nn.Module):
 
     # Creates actor policy Pi
     def Omega(self, mean, stddev, step=1):
+        # Take random action
+        rand = step < self.rand_steps
+
         # Optionally create policy from recipe
         return Utils.instantiate(self.policy, mean=mean, stddev=stddev, step=step, action_spec=self.action_spec,
-                                 discrete=self.discrete, temp_schedule=self.temp_schedule,
+                                 discrete=self.discrete, temp_schedule=self.temp_schedule, rand=rand,
                                  ActionExtractor=self.ActionExtractor) or \
-            MonteCarlo(self.action_spec, mean, stddev, step, self.discrete, self.temp_schedule, self.ActionExtractor)
+            MonteCarlo(self.action_spec, self.discrete, mean, stddev, rand, self.temp_schedule, self.ActionExtractor)
 
 
 # Policy
 class MonteCarlo(nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action_spec, mean, stddev, step=1, discrete=False, temp_schedule=1, ActionExtractor=None):
+    def __init__(self, action_spec, discrete, mean, stddev, step=1, temp_schedule=1, rand=False, ActionExtractor=None):
         super().__init__()
 
         self.discrete = discrete
@@ -59,12 +64,16 @@ class MonteCarlo(nn.Module):
 
         self.low, self.high = action_spec.low, action_spec.high
 
+        self.step = step
+
         if self.discrete:
             self.All_Qs = mean  # [b, e, n, d]
         else:
             self.mean = mean  # [b, e, n, d]
 
+        # Randomness
         self.stddev = stddev
+        self.rand = rand
 
         # A secondary mapping that is applied after sampling an continuous-action
         self.ActionExtractor = ActionExtractor or nn.Identity()
@@ -72,7 +81,7 @@ class MonteCarlo(nn.Module):
         self.store = None
 
         if self.discrete_as_continuous:
-            self.temp = Utils.schedule(temp_schedule, step)  # Temp for controlling entropy of re-sample
+            self.temp = Utils.schedule(temp_schedule, self.step)  # Temp for controlling entropy of re-sample
 
     # SubPolicy
     @cached_property
@@ -131,6 +140,10 @@ class MonteCarlo(nn.Module):
         # Reduce continuous-action ensemble
         if sample_shape is None and action.shape[1] > 1 and not self.discrete:
             return action[:, torch.randint(action.shape[1], [])]  # Uniform sample again across ensemble
+
+        # Take random action  (Note: Due to rand_steps duration usually being short, efficiency is not optimized)
+        if self.rand:
+            action = action.uniform_(self.low, self.high)
 
         # If sampled action is a discrete distribution, sample again
         if self.discrete_as_continuous:

@@ -12,7 +12,7 @@ norm: true  # Note: ignored / mutually exclusive if standardize
 z_dim: 50  # Shorthand for trunk_dim (Generator input dim)
 trunk_dim: ${z_dim}
 hidden_dim: 1024
-explore_steps: 2000
+rand_steps: 2000
 lr: 1e-4
 lr_decay_epochs: null
 weight_decay: 0
@@ -114,9 +114,8 @@ agent:
   weight_decay: ${weight_decay}
   ema_decay: ${ema_decay}
   ema: ${ema}
-  explore_steps: ${explore_steps}
+  rand_steps: ${rand_steps}
   stddev_schedule: ${stddev_schedule} # Specified per task
-  stddev_clip: 0.3
   discrete: ${discrete}
   RL: ${RL}
   supervise: ${supervise}

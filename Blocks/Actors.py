@@ -16,8 +16,8 @@ from Blocks.Creator import Creator
 
 class EnsemblePiActor(nn.Module):
     """Ensemble of Gaussian or Categorical policies Pi, generalized for discrete or continuous action spaces."""
-    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, creator=None,
-                 ensemble_size=2, discrete=False, stddev_schedule=1, optim=None, scheduler=None,
+    def __init__(self, repr_shape, trunk_dim, hidden_dim, action_spec, trunk=None, Pi_head=None, ensemble_size=2,
+                 discrete=False, stddev_schedule=1, creator=None, rand_steps=0, optim=None, scheduler=None,
                  lr=None, lr_decay_epochs=None, weight_decay=None, ema_decay=None):
         super().__init__()
 
@@ -48,7 +48,7 @@ class EnsemblePiActor(nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False)
 
         # Can create a policy distribution
-        self.creator = Creator(action_spec, **creator, discrete=self.discrete, temp_schedule=self.stddev_schedule)
+        self.creator = Creator(action_spec, self.discrete, self.stddev_schedule, rand_steps, **creator)
 
     def forward(self, obs, step=1):
         h = self.trunk(obs)
