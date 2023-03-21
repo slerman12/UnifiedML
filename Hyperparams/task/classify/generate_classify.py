@@ -37,7 +37,7 @@ logger:
     log_actions: ${{not:${{generate}}}}
 suite: classify
 task_name: {'${format:${Dataset}}' if task == 'Custom' else task}
-discrete: false
+discrete: true
 train_steps: 200000
 stddev_schedule: 'linear(1.0,0.1,100000)'
 frame_stack: null

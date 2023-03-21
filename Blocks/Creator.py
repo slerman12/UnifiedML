@@ -44,13 +44,13 @@ class Creator(nn.Module):
     # Creates actor policy Pi
     def Omega(self, mean, stddev, step=1):
 
-        rand = step < self.rand_steps  # Whether to sample uniformly random actions
+        r = step < self.rand_steps  # Whether to sample uniformly random actions
 
         # Optionally create policy from recipe
         return Utils.instantiate(self.policy, mean=mean, stddev=stddev, step=step,
                                  action_spec=self.action_spec, discrete=self.discrete,
-                                 temp_schedule=self.temp_schedule, rand=rand, ActionExtractor=self.ActionExtractor) or \
-            MonteCarlo(self.action_spec, self.discrete, mean, stddev, rand, self.temp_schedule, self.ActionExtractor)
+                                 temp_schedule=self.temp_schedule, rand=r, ActionExtractor=self.ActionExtractor) or \
+            MonteCarlo(self.action_spec, self.discrete, mean, stddev, step, self.temp_schedule, r, self.ActionExtractor)
 
 
 # Policy
