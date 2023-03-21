@@ -82,10 +82,6 @@ class NormalizedCategorical(Categorical):
 
         super().__init__(probs, logits)
 
-        validate_sample = self._validate_sample
-        # MacBook MPS compatibility
-        self._validate_sample = lambda value: value if value.device.name == 'mps' else validate_sample(value)
-
     def log_prob(self, value=None):
         if value is None:
             return self.logits
