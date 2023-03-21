@@ -311,9 +311,10 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on "ind_dim".
     The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
 
-    Relative coordinates, assume "dim" = "ind_dim":
-    item: [0, ..., N, "dim", N + 2, ..., M], ind: [i, ..., N, "ind_dim", N + 2, ..., j], i ≤ N + 1, j ≤ M + 1
-    --> [0, ..., N, "ind_dim", N + 2, ..., M]
+    Automatically batches/broadcasts batch and tail shapes depending on i and j:
+        item: [item.size(0), ..., item.size(N), item.size(dim), item.size(N + 2), ..., item.size(M)],
+        ind: [item.size(i), ..., item.size(N), ind.size(ind_dim), item.size(N + 2), ..., item.size(j)] where i ≤ N j ≤ M
+        --> [item.size(0), ..., item.size(N), ind.size(ind_dim), item.size(N + 2), ..., item.size(M)]
     """
 
     ind_shape = ind.shape[ind_dim:]  # ["ind_dim", ..., j]

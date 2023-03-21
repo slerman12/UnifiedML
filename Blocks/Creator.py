@@ -110,13 +110,13 @@ class MonteCarlo(nn.Module):
 
         # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
-            log_prob += action / self.temp  # (Adding log-probs is equivalent to multiplying probs)
+            log_prob = (log_prob + action / self.temp).sum(-1)  # (Adding log-probs is equivalent to multiplying probs)
 
         return log_prob.sum(-1).flatten(1)  # [b, e*n']
 
     @cached_property
     def _entropy(self):
-        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean((2, 3))  # [b, e or 1]
+        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean((2, 3))  # [b, e]
 
     def entropy(self):
         # If continuous-action is a discrete distribution, 2nd sample also has entropy
@@ -124,7 +124,7 @@ class MonteCarlo(nn.Module):
             # Approximate joint entropy
             return self._entropy + torch.distributions.Categorical(logits=self.mean.mean(-1) / self.temp).entropy()
 
-        return self._entropy  # [b, e or 1]
+        return self._entropy  # [b, e]
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
@@ -146,9 +146,9 @@ class MonteCarlo(nn.Module):
             action = action.uniform_(self.low, self.high)
 
         # If sampled action is a discrete distribution, sample again
-        if self.discrete_as_continuous:
+        if sample_shape is None and self.discrete_as_continuous:
             self.store = action
-            action = torch.distributions.Categorical(logits=action.transpose(1, 2) / self.temp).sample()  # Sample again
+            action = torch.distributions.Categorical(logits=action.movedim(-2, -1) / self.temp).sample()  # Sample again
 
         return action
 
