@@ -86,11 +86,11 @@ class NormalizedCategorical(Categorical):
         if value is None:
             return self.logits
         elif value.shape[-self.logits.dim():] == self.logits.shape:
-            return super().log_prob(value)
+            return super().log_prob(self.to_indices(value))
         else:
             # To account for batch_first=True
             b, *shape = self.logits.shape  # Assumes a single batch dim
-            return super().log_prob(value.view(b, -1, *shape[:-1]).transpose(0, 1)).transpose(0, 1)
+            return super().log_prob(self.to_indices(value.view(b, -1, *shape[:-1]).transpose(0, 1))).transpose(0, 1)
 
     def rsample(self, sample_shape=1, batch_first=True):
         sample = self.sample(sample_shape, batch_first)  # Note: not differentiable
@@ -112,3 +112,8 @@ class NormalizedCategorical(Categorical):
         # Normalize -> [low, high]
         return sample / (self.logits.shape[-1] - 1) * (self.high - self.low) + self.low if self.low or self.high \
             else sample
+
+    def to_indices(self, value):  # TODO Critic redundancy?
+        # Inverse of normalize -> indices
+        return (value - self.low) / (self.high - self.low) * (self.logits.shape[-1] - 1) if self.low or self.high \
+            else value

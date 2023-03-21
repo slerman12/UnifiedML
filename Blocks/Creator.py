@@ -107,10 +107,10 @@ class MonteCarlo(nn.Module):
     def log_prob(self, action=None):  # (Log-space is more numerically stable)
         print('action', action.shape)
         # Log-probability
-        if self.discrete:  # Action is [b, n, 1]
-            log_prob = self.Psi.log_prob(action)  # [b, n, 1]
-        else:  # Action is [b, e*n, 1, d]
-            log_prob = self.Psi.log_prob(action)  # [b, e*n, 1, d]
+        if self.discrete:  # Action is [b, n', d]
+            log_prob = self.Psi.log_prob(action)  # [b, n', d]
+        else:  # Action is [b, e*n', n=1, d]
+            log_prob = self.Psi.log_prob(action)  # [b, e*n', n=1, d]
         print('log prob', log_prob.shape, self.Psi.logits.shape if self.discrete else self.mean.shape)
         log_prob = log_prob.prod(-1)
 
