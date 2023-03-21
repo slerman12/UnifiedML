@@ -308,7 +308,7 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     """
     Generalizes torch.gather indexing to multi-dim indexing.
 
-    Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on "ind_dim".
+    Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on ind.
     The index "ind" can share consecutive dimensions with "item" prior to "dim" or will be batched automatically.
 
     Automatically batches/broadcasts batch and tail shapes depending on i and j:
