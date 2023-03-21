@@ -322,15 +322,7 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     ind = ind.long().expand(*item.shape[:dim], *ind_shape)  # Assumes ind.shape[ind_dim] is desired num indices
     ind = ind.reshape(ind.shape + (1,) * len(tail_shape)).expand(*ind.shape, *tail_shape)  # [0, ..., "ind_dim", ... M]
 
-    device = ind.device.type
-
-    if device == 'mps':
-        # M1 Macs may raise errors on gather TODO Test again if needed
-        warnings.warn('torch.gather not fully supported on M1 Mac MPS by Pytorch. Temporarily using CPU.')
-
-        item, ind = item.to('cpu'), ind.to('cpu')
-
-    return torch.gather(item, dim, ind).to(device)
+    return torch.gather(item, dim, ind)
 
 
 # (Multi-dim) cartesian product
