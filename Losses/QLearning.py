@@ -26,8 +26,11 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
             # Discrete Critic tabulates all actions for discrete envs a priori, no need to sample subset
             all_actions_known = hasattr(critic, 'action')
 
+            next_action = next_Pi.sample(4)
+            # print('next action', next_action.shape)
+
             if not all_actions_known:
-                next_action = next_Pi.sample(1)  # Sample actions
+                next_action = next_Pi.sample(4)  # Sample actions
 
             if actor.discrete:
                 All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
@@ -39,7 +42,8 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
             next_q = next_Qs.min(1)[0]  # Min-reduced critic ensemble
 
             # Weigh each action's pessimistic Q-value by its probability
-            next_action_prob = next_Pi.log_prob(next_action).softmax(-1)  # Action probability
+            next_action_prob = next_Pi.log_prob(next_action).softmax(-1).flatten(1) if next_q.shape[1] > 1 \
+                else 1  # Action probability  TODO Call prob
             next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
 
             target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward

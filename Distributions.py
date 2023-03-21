@@ -23,7 +23,7 @@ class TruncatedNormal(Normal):
         # Max cutoff clip for standard deviation
         self.stddev_clip = stddev_clip
 
-    def log_prob(self, value, keptdim=True):
+    def log_prob(self, value):
         if value.shape[-len(self.loc.shape):] == self.loc.shape:
             return super().log_prob(value)
         else:
@@ -78,8 +78,19 @@ class NormalizedCategorical(Categorical):
             logits = logits.movedim(dim, -1) / temp
 
         self.low, self.high = low, high  # Range to normalize to
+        self.dim = dim
 
         super().__init__(probs, logits)
+
+    def log_prob(self, value=None):
+        if value is None:
+            return self.logits
+        elif value.shape[-self.logits.dim():] == self.logits.shape:
+            return super().log_prob(value)
+        else:
+            # To account for batch_first=True
+            b, *shape = self.logits.shape  # Assumes a single batch dim
+            return super().log_prob(value.view(b, -1, *shape[:-1]).transpose(0, 1)).transpose(0, 1)
 
     def rsample(self, sample_shape=1, batch_first=True):
         sample = self.sample(sample_shape, batch_first)  # Note: not differentiable

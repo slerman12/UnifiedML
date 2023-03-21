@@ -145,8 +145,7 @@ class AC2Agent(torch.nn.Module):
             Pi = actor(obs, self.step)
 
             action = Pi.sample() if self.training \
-                else Pi.best if self.discrete \
-                else Pi.mean
+                else Pi.best
 
             store = {}
 

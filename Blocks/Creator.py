@@ -104,9 +104,15 @@ class MonteCarlo(nn.Module):
         else:
             return TruncatedNormal(self.mean, self.stddev, low=self.low, high=self.high, stddev_clip=0.3)
 
-    def log_prob(self, action):
+    def log_prob(self, action=None):  # (Log-space is more numerically stable)
+        print('action', action.shape)
         # Log-probability
-        log_prob = self.Psi.log_prob(action)  # (Log-space is more numerically stable)
+        if self.discrete:  # Action is [b, n, 1]
+            log_prob = self.Psi.log_prob(action)  # [b, n, 1]
+        else:  # Action is [b, e*n, 1, d]
+            log_prob = self.Psi.log_prob(action)  # [b, e*n, 1, d]
+        print('log prob', log_prob.shape, self.Psi.logits.shape if self.discrete else self.mean.shape)
+        log_prob = log_prob.prod(-1)
 
         # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
