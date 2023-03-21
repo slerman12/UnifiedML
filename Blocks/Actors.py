@@ -63,7 +63,7 @@ class EnsemblePiActor(nn.Module):
             stddev = log_stddev.exp()  # [b, e, n, d]  # Learnable entropy temperature
         else:
             # "Uncertainty"
-            stddev = Utils.schedule(self.stddev_schedule, step)  # Single float entropy temperature
+            stddev = Utils.schedule(self.stddev_schedule, step)  # [1] Single float entropy temperature
 
         # Returns policy distribution Pi
         return self.creator.Omega(mean, stddev, step)  # Creates policy distribution Pi
