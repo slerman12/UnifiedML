@@ -23,7 +23,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
             # Discrete Critic tabulates all actions for single-dim discrete envs a priori, no need to sample
             next_action = None if critic.all_actions_known else next_Pi.sample(1)  # Sample
 
-            # Discrete Actor already computed Q-values and Policy knows
+            # Discrete Actor already computed Q-values and they're already known by Policy
             All_Next_Qs = next_Pi.All_Qs if actor.discrete else None
 
             # Q-values per action
