@@ -26,6 +26,8 @@ class EnsembleQCritic(nn.Module):
 
         self.low, self.high = action_spec.low, action_spec.high
 
+        self.all_actions_known = self.discrete and self.action_dim == 1
+
         # Discrete critic always requires observation
         self.ignore_obs = ignore_obs and not discrete
 
@@ -45,12 +47,6 @@ class EnsembleQCritic(nn.Module):
 
         self.binary = isinstance(list(self.Q_head.modules())[-1], nn.Sigmoid)  # Whether Sigmoid-activated e.g. in GANs
 
-        # Discrete actions are known a priori
-        if discrete and action_spec.discrete:
-            action = torch.cartesian_prod(*[torch.arange(self.num_actions)] * self.action_dim).view(-1, self.action_dim)
-
-            self.register_buffer('action', self.normalize(action))  # [n^d, d]
-
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
@@ -62,24 +58,22 @@ class EnsembleQCritic(nn.Module):
         h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
             else self.trunk(obs)
 
+        assert self.all_actions_known or action is not None, 'Action is needed by critic.'
+
         batch_size = h.shape[0]
 
         if self.discrete:
-            assert hasattr(self, 'action') or action is not None, 'Continuous Env: action is needed by discrete Critic.'
-
             if All_Qs is None:
                 # All actions' Q-values
                 All_Qs = self.Q_head(h).view(batch_size, -1, self.num_actions, self.action_dim)  # [b, e, n, d]
 
             if action is None:
-                # All actions
-                action = self.action.expand(batch_size, -1, self.action_dim)  # [b, n^d, d]
-
-            # Q values for discrete action(s)
-            Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n' or n^d]
+                # Return Q-values for all actions
+                Qs = All_Qs.squeeze(-1)  # [b, e, n]
+            else:
+                # Q values for discrete action(s)
+                Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n' or n^d]
         else:
-            assert action is not None, f'action is needed by continuous action-space Critic.'
-
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
             h = h.unsqueeze(1).expand(*action.shape[:-1], -1)  # One for each action
@@ -88,9 +82,6 @@ class EnsembleQCritic(nn.Module):
             Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
 
         return Qs
-
-    def normalize(self, action):
-        return action / (self.num_actions - 1) * (self.high - self.low) + self.low  # Normalize -> [low, high]
 
     def to_indices(self, action):
         action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]

@@ -25,10 +25,10 @@ class Creator(nn.Module):
 
         self.policy = policy  # Exploration and exploitation policy recipe
 
-        # Standard dev value  TODO Perhaps passed in only through policy recipe
-        self.temp_schedule = temp_schedule
-
         self.rand_steps = rand_steps
+
+        # Entropy temperature for re-sampling
+        self.temp_schedule = temp_schedule
 
         # A mapping that can be applied after or concurrently with action sampling
         self.ActionExtractor = Utils.instantiate(ActionExtractor, input_shape=math.prod(self.action_spec.shape)
@@ -49,14 +49,14 @@ class Creator(nn.Module):
         # Optionally create policy from recipe
         return Utils.instantiate(self.policy, mean=mean, stddev=stddev, step=step,
                                  action_spec=self.action_spec, discrete=self.discrete,
-                                 temp_schedule=self.temp_schedule, rand=r, ActionExtractor=self.ActionExtractor) or \
-            MonteCarlo(self.action_spec, self.discrete, mean, stddev, step, self.temp_schedule, r, self.ActionExtractor)
+                                 rand=r, temp_schedule=self.temp_schedule, ActionExtractor=self.ActionExtractor) or \
+            MonteCarlo(self.action_spec, self.discrete, mean, stddev, step, r, self.temp_schedule, self.ActionExtractor)
 
 
 # Policy
 class MonteCarlo(nn.Module):
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
-    def __init__(self, action_spec, discrete, mean, stddev, step=1, temp_schedule=1, rand=False, ActionExtractor=None):
+    def __init__(self, action_spec, discrete, mean, stddev, step=1, rand=False, temp_schedule=1, ActionExtractor=None):
         super().__init__()
 
         self.discrete = discrete
@@ -105,20 +105,14 @@ class MonteCarlo(nn.Module):
             return TruncatedNormal(self.mean, self.stddev, low=self.low, high=self.high, stddev_clip=0.3)
 
     def log_prob(self, action=None):  # (Log-space is more numerically stable)
-        print('action', action.shape)
         # Log-probability
-        if self.discrete:  # Action is [b, n', d]
-            log_prob = self.Psi.log_prob(action)  # [b, n', d]
-        else:  # Action is [b, e*n', n=1, d]
-            log_prob = self.Psi.log_prob(action)  # [b, e*n', n=1, d]
-        print('log prob', log_prob.shape, self.Psi.logits.shape if self.discrete else self.mean.shape)
-        log_prob = log_prob.prod(-1)
+        log_prob = self.Psi.log_prob(action)  # [b, n', d] if discrete, [b, e*n', n, d] if continuous
 
         # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
             log_prob += action / self.temp  # (Adding log-probs is equivalent to multiplying probs)
 
-        return log_prob  # [b, e]
+        return log_prob.sum(-1).flatten(1)  # [b, e*n']
 
     @cached_property
     def _entropy(self):
