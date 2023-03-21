@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import math
+from math import inf
 
 from Blocks.Creator import MonteCarlo
 
@@ -21,13 +21,15 @@ class HardDQNAgent(DQNAgent):
 
 class HardDQNPolicy(MonteCarlo):
     """
-    A policy where returned probabilities correspond to hard exploitation policy rather than exploration for Q-learning
+    A policy where returned probabilities correspond to hard exploitation policy, rather than exploration for Q-learning
     Can use with AC2Agent: python Run.py Policy=Agents.HardDQN.HardDQNPolicy
     """
     # Log-probability to multiply each action's Q-value by to estimate expected future Q-value
     def log_prob(self, action=None):
-        if self.discrete:
-            num_actions = self.Psi.logits.size(-1)
-            return one_hot(self.best.sum(-1), num_actions, null_value=-math.inf)  # Learn exploitative Q-value-target
+        if action is None:
+            num_actions = self.All_Qs.size(-2)
+            log_prob = one_hot(self.best.squeeze(-1), num_actions, null_value=-inf)  # Learn exploitative Q-value-target
+
+            return log_prob  # One-hot prob
 
         return super().log_prob(action)  # For compatibility with continuous spaces/Agents

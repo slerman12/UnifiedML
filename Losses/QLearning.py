@@ -15,20 +15,16 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
         # Current reward
         target_Q = reward
 
-        # Future action and Q-values
-        next_action = All_Next_Qs = None
-
         # Discounted future reward
         if has_future:
             # Get actions for next_obs
             next_Pi = actor(next_obs, step)
 
             # Discrete Critic tabulates all actions for single-dim discrete envs a priori, no need to sample
-            if not critic.all_actions_known:
-                next_action = next_Pi.sample(1)  # Sample
+            next_action = None if critic.all_actions_known else next_Pi.sample(1)  # Sample
 
-            if actor.discrete:
-                All_Next_Qs = next_Pi.All_Qs  # Discrete Actor policy already knows all Q-values
+            # Discrete Actor already computed Q-values and Policy knows
+            All_Next_Qs = next_Pi.All_Qs if actor.discrete else None
 
             # Q-values per action
             next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy of Critic: Q(obs, a)
@@ -44,7 +40,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
     Qs = critic(obs, action)  # Q-ensemble
 
-    # Use BCE if Critic ends with Sigmoid, otherwise MSE
+    # Use BCE if Critic is Sigmoid-activated, else MSE
     criterion = binary_cross_entropy if critic.binary else mse_loss
 
     # Temporal difference (TD) error
