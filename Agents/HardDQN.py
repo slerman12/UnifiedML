@@ -21,7 +21,7 @@ class HardDQNAgent(DQNAgent):
 
 class HardDQNPolicy(MonteCarlo):
     """
-    A policy where returned probabilities correspond to hard exploitation policy, rather than exploration for Q-learning
+    A policy where returned probabilities for Q-learning correspond to a hard exploitation policy
     Can use with AC2Agent: python Run.py Policy=Agents.HardDQN.HardDQNPolicy
     """
     # Log-probability to multiply each action's Q-value by to estimate expected future Q-value
