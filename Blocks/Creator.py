@@ -25,7 +25,7 @@ class Creator(nn.Module):
 
         self.policy = policy  # Exploration and exploitation policy recipe
 
-        # Standard dev value
+        # Standard dev value  TODO Perhaps passed in only through policy recipe
         self.temp_schedule = temp_schedule
 
         self.rand_steps = rand_steps
