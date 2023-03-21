@@ -312,10 +312,10 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     The index "ind" can share consecutive batch dimensions with "item" prior to "dim" or will be batched automatically.
     Multiple dims across arbitrary axes can be indexed with automatic batching and unambiguously.
 
-    |ind.shape| ≤ |item.shape| and ind and item relatively align on all dims except ind_dim and dim respectively:
+    |ind.shape| ≤ |item.shape| and ind and item relatively align on all dims up to ind_dim and dim respectively:
         item: [item.size(0), ..., item.size(N), item.size(dim), item.size(N + 2), ..., item.size(M)],
-        ind: [item.size(i), ..., item.size(N), ind.size(ind_dim), item.size(N + 2), ..., item.size(j)] where i ≤ N j ≤ M
-        --> [item.size(0), ..., item.size(N), ind.size(ind_dim), item.size(N + 2), ..., item.size(M)]
+        ind: [item.size(i), ..., item.size(N), ind.size(ind_dim), ..., ind.size(j)], where i ≤ N, ind_dim ≤ j ≤ M
+        --> [item.size(0), ..., item.size(N), ind.size(ind_dim), ..., ind.size(j), ..., item.size(M)]
     """
 
     ind_shape = ind.shape[ind_dim:]  # ["ind_dim", ..., j]
