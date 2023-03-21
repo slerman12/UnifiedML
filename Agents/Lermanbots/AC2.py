@@ -146,6 +146,7 @@ class AC2Agent(torch.nn.Module):
 
             action = Pi.sample() if self.training \
                 else Pi.best
+            Pi.entropy()
 
             store = {}
 

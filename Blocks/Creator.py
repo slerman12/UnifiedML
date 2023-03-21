@@ -116,15 +116,15 @@ class MonteCarlo(nn.Module):
 
     @cached_property
     def _entropy(self):
-        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean(-1)  # [b, e]
+        return self.Psi.entropy() if self.discrete else self.Psi.entropy().mean((2, 3))  # [b, e or 1]
 
-    def entropy(self, action=None):
+    def entropy(self):
         # If continuous-action is a discrete distribution, 2nd sample also has entropy
         if self.discrete_as_continuous:
             # Approximate joint entropy
-            return self._entropy + torch.distributions.Categorical(logits=action / self.temp).entropy()
+            return self._entropy + torch.distributions.Categorical(logits=self.mean.mean(-1) / self.temp).entropy()
 
-        return self._entropy  # [b, e]
+        return self._entropy  # [b, e or 1]
 
     # Exploration policy
     def sample(self, sample_shape=None, detach=True):
@@ -148,7 +148,7 @@ class MonteCarlo(nn.Module):
         # If sampled action is a discrete distribution, sample again
         if self.discrete_as_continuous:
             self.store = action
-            action = torch.distributions.Categorical(logits=action / self.temp).sample()  # Sample again
+            action = torch.distributions.Categorical(logits=action.transpose(1, 2) / self.temp).sample()  # Sample again
 
         return action
 
@@ -166,6 +166,6 @@ class MonteCarlo(nn.Module):
 
         # If continuous-action is a discrete distribution
         if self.discrete_as_continuous:
-            action = action.argmax(-1)  # Argmax
+            action = action.argmax(1)  # Argmax
 
         return action
