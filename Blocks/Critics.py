@@ -26,10 +26,9 @@ class EnsembleQCritic(nn.Module):
 
         self.low, self.high = action_spec.low, action_spec.high
 
-        self.all_actions_known = self.discrete and self.action_dim == 1
+        self.ignore_obs = ignore_obs and not discrete  # Discrete critic always requires observation
 
-        # Discrete critic always requires observation
-        self.ignore_obs = ignore_obs and not discrete
+        self.all_actions_known = self.discrete and self.action_dim == 1  # Whether Q-values correspond to all actions
 
         in_dim = math.prod(repr_shape)
         out_shape = [self.num_actions, *action_spec.shape] if discrete else [1]
@@ -45,7 +44,8 @@ class EnsembleQCritic(nn.Module):
         self.Q_head = Utils.Ensemble([Utils.instantiate(Q_head, i, input_shape=in_shape, output_shape=out_shape) or
                                       MLP(in_shape, out_shape, hidden_dim, 2) for i in range(ensemble_size)])  # e
 
-        self.binary = isinstance(list(self.Q_head.modules())[-1], nn.Sigmoid)  # Whether Sigmoid-activated e.g. in GANs
+        self.binary = isinstance(tuple(self.Q_head.modules())[-1],
+                                 nn.Sigmoid)  # Whether Sigmoid-activated e.g. in GANs
 
         # Initialize model optimizer + EMA
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
@@ -71,6 +71,8 @@ class EnsembleQCritic(nn.Module):
                 # Return Q-values for all actions
                 Qs = All_Qs.squeeze(-1)  # [b, e, n]
             else:
+                action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
+
                 # Q values for discrete action(s)
                 Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n' or n^d]
         else:
@@ -84,6 +86,5 @@ class EnsembleQCritic(nn.Module):
         return Qs
 
     def to_indices(self, action):
-        action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
-
-        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of normalize -> indices
+        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
+            else action  # Inverse of normalize -> indices

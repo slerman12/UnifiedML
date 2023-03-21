@@ -27,7 +27,7 @@ class Creator(nn.Module):
 
         self.rand_steps = rand_steps
 
-        # Entropy temperature for re-sampling
+        # Entropy temperature for sampling
         self.temp_schedule = temp_schedule
 
         # A mapping that can be applied after or concurrently with action sampling

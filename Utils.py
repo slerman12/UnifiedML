@@ -325,7 +325,7 @@ def gather(item, ind, dim=-1, ind_dim=-1):
     device = ind.device.type
 
     if device == 'mps':
-        # M1 Macs may raise errors on gather
+        # M1 Macs may raise errors on gather TODO Test again if needed
         warnings.warn('torch.gather not fully supported on M1 Mac MPS by Pytorch. Temporarily using CPU.')
 
         item, ind = item.to('cpu'), ind.to('cpu')

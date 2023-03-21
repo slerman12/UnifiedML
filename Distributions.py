@@ -17,21 +17,21 @@ class TruncatedNormal(Normal):
     def __init__(self, loc, scale, low=None, high=None, eps=1e-6, stddev_clip=None):
         super().__init__(loc, scale)
 
-        self.low, self.high = low, high  # Clamp range
-        self.eps = eps  # Clamp fringes
+        # Clip range of samples
+        self.low, self.high = low, high  # Ranges
+        self.eps = eps  # Fringes
 
-        # Max cutoff clip for standard deviation
+        # Clip range of standard deviation
         self.stddev_clip = stddev_clip
 
     def log_prob(self, value):
         if value.shape[-len(self.loc.shape):] == self.loc.shape:
-            return super().log_prob(value)
+            return super().log_prob(value)  # Inherit log_prob(•)
         else:
             # To account for batch_first=True
             b, *shape = self.loc.shape  # Assumes a single batch dim
             return super().log_prob(value.view(b, -1, *shape).transpose(0, 1)).transpose(0, 1).view(value.shape)
 
-    # No grad, defaults to no clip, batch dim first
     def sample(self, sample_shape=1, to_clip=False, batch_first=True, keepdim=True):
         with torch.no_grad():
             return self.rsample(sample_shape, to_clip, batch_first, keepdim)
@@ -47,7 +47,7 @@ class TruncatedNormal(Normal):
         dev = rand * self.scale.expand(shape)  # Deviate
 
         if to_clip:
-            dev = Utils.rclamp(dev, -self.stddev_clip, self.stddev_clip)  # Don't explore /too/ much
+            dev = Utils.rclamp(dev, -self.stddev_clip, self.stddev_clip)  # Don't explore /too/ much, clip std
         x = self.loc.expand(shape) + dev
 
         if batch_first:
@@ -58,7 +58,7 @@ class TruncatedNormal(Normal):
 
         if self.low is not None and self.high is not None:
             # Differentiable truncation
-            return Utils.rclamp(x, self.low + self.eps, self.high - self.eps)
+            return Utils.rclamp(x, self.low + self.eps, self.high - self.eps)  # Clip sample
 
         return x
 
@@ -86,16 +86,11 @@ class NormalizedCategorical(Categorical):
         if value is None:
             return self.logits
         elif value.shape[-self.logits.dim():] == self.logits.shape:
-            return super().log_prob(self.to_indices(value))
+            return super().log_prob(self.to_indices(value))  # Inherit log_prob(•)
         else:
             # To account for batch_first=True
             b, *shape = self.logits.shape  # Assumes a single batch dim
             return super().log_prob(self.to_indices(value.view(b, -1, *shape[:-1]).transpose(0, 1))).transpose(0, 1)
-
-    def rsample(self, sample_shape=1, batch_first=True):
-        sample = self.sample(sample_shape, batch_first)  # Note: not differentiable
-
-        return sample
 
     def sample(self, sample_shape=1, batch_first=True):
         if isinstance(sample_shape, int):
@@ -108,12 +103,15 @@ class NormalizedCategorical(Categorical):
 
         return self.normalize(sample)
 
+    def rsample(self, *args, **kwargs):
+        return self.sample(*args, **kwargs)  # Non-differentiable
+
     def normalize(self, sample):
         # Normalize -> [low, high]
         return sample / (self.logits.shape[-1] - 1) * (self.high - self.low) + self.low if self.low or self.high \
             else sample
 
-    def to_indices(self, value):  # TODO Critic redundancy?
+    def to_indices(self, value):
         # Inverse of normalize -> indices
         return (value - self.low) / (self.high - self.low) * (self.logits.shape[-1] - 1) if self.low or self.high \
             else value
