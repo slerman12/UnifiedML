@@ -13,13 +13,10 @@ runs.UnifiedML.sweep = [
     generate=true 
     Discriminator=DCGAN.Discriminator 
     Generator=DCGAN.Generator 
-    z_dim=100 
-    'env.transform="transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])"' 
     experiment=DCGAN
-    capacity=0
+    train_steps=10000
     time="5-00:00:00"
-    mem=5
-    reservation_id=20221217
+    lab=true
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]
 
@@ -29,6 +26,6 @@ runs.UnifiedML.plots = [
 ]
 
 runs.UnifiedML.sftp = True
-runs.UnifiedML.bluehive = False
-runs.UnifiedML.lab = True
+runs.UnifiedML.bluehive = True
+runs.UnifiedML.lab = False
 runs.UnifiedML.title = 'DCGAN'
