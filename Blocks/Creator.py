@@ -39,7 +39,7 @@ class Creator(nn.Module):
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
             self.ema_decay = ema_decay
-            self.ema = copy.deepcopy(self).requires_grad_(False)
+            self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
     # Creates actor policy Pi
     def Omega(self, mean, stddev, step=1):
@@ -69,7 +69,9 @@ class MonteCarlo(nn.Module):
         if self.discrete:
             self.All_Qs = mean  # [b, e, n, d]
         else:
-            self.mean = mean  # [b, e, n, d]
+            # Normalized
+            self.mean = mean if not (self.low or self.high) else mean.tanh() if self.low == -1 and self.high == 1 \
+                else (mean.tanh() + 1) / 2 * (self.high - self.low) + self.low  # [b, e, n, d]
 
         # Randomness
         self.stddev = stddev

@@ -52,7 +52,7 @@ class EnsembleQCritic(nn.Module):
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
             self.ema_decay = ema_decay
-            self.ema = copy.deepcopy(self).requires_grad_(False)
+            self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
     def forward(self, obs, action=None, All_Qs=None):
         h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
@@ -74,7 +74,7 @@ class EnsembleQCritic(nn.Module):
                 action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
 
                 # Q values for discrete action(s)
-                Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n' or n^d]
+                Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n']
         else:
             action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
@@ -86,5 +86,38 @@ class EnsembleQCritic(nn.Module):
         return Qs
 
     def to_indices(self, action):
-        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
-            else action  # Inverse of normalize -> indices
+        # Action to indices
+        if None in (self.low, self.high) or (self.low, self.high) == (0, self.num_actions - 1):
+            return action
+
+        return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of low/high normalize
+
+    # # Action to indices
+    # def to_indices(self, action):
+    #     # Inverse of low/high normalize
+    #     return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if (self.low or self.high) and \
+    #                                                                                     (self.low, self.high) != \
+    #                                                                                     (0, self.num_actions - 1) \
+    #         else action
+
+    # def to_indices(self, action):
+    #     return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
+    #         else action  # Inverse of normalize -> indices
+
+    # def to_indices(self, action):
+    #     invert = (self.low or self.high) and (self.low, self.high) != (0, self.num_actions - 1)
+    #
+    #     # Action to indices -> Inverse of low/high normalize
+    #     return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if invert \
+    #         else action
+    #
+    # def to_indices(self, action):
+    #     # Action to indices
+    #     if (self.low or self.high) and (self.low, self.high) != (0, self.num_actions - 1):
+    #         action.sub_(self.low).div_(self.high - self.low).mul_(self.num_actions - 1)  # Inverse of low-high normalize
+    #
+    # def to_indices(self, action):
+    #     # Action to indices
+    #     if (self.low or self.high) and (self.low, self.high) != (0, self.num_actions - 1):
+    #         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of low/high normalize
+    #     return action

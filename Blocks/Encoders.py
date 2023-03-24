@@ -52,7 +52,7 @@ class CNNEncoder(nn.Module):
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
             self.ema_decay = ema_decay
-            self.ema = copy.deepcopy(self).requires_grad_(False)
+            self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
     def forward(self, obs, *context, pool=True):
         # Operate on non-batch dims, then restore

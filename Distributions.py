@@ -77,7 +77,7 @@ class NormalizedCategorical(Categorical):
 
             logits = logits.movedim(dim, -1) / temp
 
-        self.low, self.high = low, high  # Range to normalize to
+        self.low, self.high = (None, None) if low == 0 and high == logits.shape[-1] else (low, high)
         self.dim = dim
 
         super().__init__(probs, logits)

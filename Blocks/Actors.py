@@ -45,10 +45,13 @@ class EnsemblePiActor(nn.Module):
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
             self.ema_decay = ema_decay
-            self.ema = copy.deepcopy(self).requires_grad_(False)
+            self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
-        # Can create a policy distribution
-        self.creator = Creator(action_spec, self.discrete, rand_steps, **creator or {})
+        # Creates the policy distribution
+        self.creator = Creator(action_spec, self.discrete, rand_steps, **creator or {},
+                               lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
+        if ema_decay:
+            setattr(self.ema, 'creator', self.creator.ema)  # Creator EMA
 
     def forward(self, obs, step=1):
         h = self.trunk(obs)
@@ -63,7 +66,7 @@ class EnsemblePiActor(nn.Module):
             stddev = log_stddev.exp()  # [b, e, n, d]  # Learnable entropy temperature
         else:
             # "Uncertainty"
-            stddev = Utils.schedule(self.stddev_schedule, step)  # [1] Single float entropy temperature
+            stddev = Utils.schedule(self.stddev_schedule, step)  # Single float entropy temperature
 
         # Returns policy distribution Pi
-        return self.creator.Omega(mean, stddev, step)  # Creates policy distribution Pi
+        return self.creator.Omega(mean, stddev, step).train(self.training)  # Creates policy distribution Pi

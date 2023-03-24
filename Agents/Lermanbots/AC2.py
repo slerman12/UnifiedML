@@ -146,7 +146,6 @@ class AC2Agent(torch.nn.Module):
 
             action = Pi.sample() if self.training \
                 else Pi.best
-            Pi.entropy()
 
             store = {}
 
@@ -240,7 +239,7 @@ class AC2Agent(torch.nn.Module):
             if instruct:
                 # "Via Feedback" / "Test Score" / "Letter Grade"
 
-                if replay.offline:
+                if replay.offline:  # TODO maybe set self.mean to self.Psi.mean when Psi
                     action = (index if self.discrete else y_predicted).detach()
                     reward = correct if self.discrete else -error.detach()  # reward = -error
                 else:  # Use Online action
@@ -264,6 +263,7 @@ class AC2Agent(torch.nn.Module):
                 Pi = self.actor(obs)
                 generated_image = Pi.best.flatten(1)  # Imagined
 
+                # action, reward = torch.cat([action, generated_image], 0), torch.cat([reward, torch.zeros_like(reward)], 0)  # Discriminate Fake
                 action, reward = generated_image, torch.zeros_like(reward)  # Discriminate Fake
 
             # Update reward log

@@ -998,7 +998,18 @@ The parser automatically registers the imports/class paths in ```Utils.``` in bo
 
 [comment]: <> (Of course, it's always possible to just modify the library code itself, which may be easier depending on your use case. The code is designed to be clear for educational and innovational purposes alike.)
 
-To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_shape```, as in the architectures in [```./Blocks/Architectures```](Blocks/Architectures).
+To ***make*** a custom architecture, you can use any Pytorch module which outputs a tensor. Woohoo, done.
+
+To make it mix-and-matchable throughout UnfiedML for arbitrary dimensionalities and domains, to generalize as much as possible, you can add:
+1. ```input_shape``` and ```output_shape``` arguments to the \_\_init\_\_ method, such that your architecture can have a defined adaptation scheme for different possible shapes.
+2. Support arbitrary many inputs (such as by concatenating them) of weird shapes (broadcasting them).
+3. A ```repr_shape(*_)``` method that pre-computes the output shape given a varying-number of input shape dimensions as arguments.
+
+None of these add-ons are *necessary*, but if you include all of them, then your architecture can adapt to everything. There are lazy ways to hack all of these features into any architecture, or you can follow the pretty basic templates used in our existing array of architectures. Most of our architectures can probably be used to build whatever architecture you’re trying to build, honestly, or at least something similar enough that you could have a good jumping-off point.
+
+In short: To make your own architecture mix-and-matchable, just put it in a pytorch module with initialization options for ```input_shape``` and ```output_shape```, as in the architectures in [```./Blocks/Architectures```](Blocks/Architectures).
+
+The Encoder Eyes automatically adapt 2d conv to 1d conv by the way (if data is 1d).
 
 </details>
 

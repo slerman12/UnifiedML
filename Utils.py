@@ -43,7 +43,8 @@ def init(args):
     mps = getattr(torch.backends, 'mps', None)  # M1 MacBook speedup
 
     args.device = args.device or ('cuda' if torch.cuda.is_available()
-                                  else 'mps' if mps and mps.is_available() else 'cpu')
+                                  else 'mps' if mps and mps.is_available() else 'cpu')  # TODO No MPS default, but allow
+    # TODO MPS Pytorch behavior can be unpredictable. I don't recommend it for continuous RL or generative modeling.
 
     print('Device:', args.device)
 
