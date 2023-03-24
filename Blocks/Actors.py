@@ -47,7 +47,7 @@ class EnsemblePiActor(nn.Module):
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
-        # Creates the policy distribution
+        # Can create the policy distribution
         self.creator = Creator(action_spec, self.discrete, rand_steps, **creator or {},
                                lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay, ema_decay=ema_decay)
         if ema_decay:
