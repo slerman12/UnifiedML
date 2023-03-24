@@ -22,7 +22,7 @@ from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 
 class AC2Agent(torch.nn.Module):
-    """Actor Critic Creator (AC2) (paper link)
+    """Actor Critic Creator (AC2)
     RL, classification, generative modeling; online, offline; self-supervised learning; critic/actor ensembles;
     action space conversions; optimization schedules; EMA"""
     def __init__(self,
@@ -136,7 +136,7 @@ class AC2Agent(torch.nn.Module):
 
             # Exponential moving average (EMA) shadows
             encoder = self.encoder.ema if self.ema else self.encoder
-            actor = self.actor.ema if self.ema else self.actor
+            actor = self.actor.ema if self.ema and not (self.RL and self.discrete) else self.actor
 
             # "See"
             obs = encoder(obs)
@@ -261,7 +261,7 @@ class AC2Agent(torch.nn.Module):
                 next_obs = None
 
                 Pi = self.actor(obs)
-                generated_image = Pi.best.flatten(1)  # Imagined
+                generated_image = Pi.best.flatten(1)  # Imagined image
 
                 action, reward = generated_image, torch.zeros_like(reward)  # Discriminate Fake
 

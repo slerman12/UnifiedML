@@ -290,8 +290,8 @@ _recipes:
     temp_schedule: ${creator.temp_schedule}
     policy: ${policy}
     ActionExtractor: ${action_extractor}
-#    optim: ${creator.optim}
-#    scheduler: ${creator.scheduler}
+    optim: ${creator.optim}
+    scheduler: ${creator.scheduler}
 
 recipes: ${allow_objects:${_recipes}}
 
