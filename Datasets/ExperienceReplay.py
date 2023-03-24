@@ -47,7 +47,7 @@ class ExperienceReplay:
                 standard = f'./Datasets/ReplayBuffer/Classify/{task}_Buffer'
                 if len(exists) == 0:
                     exists = [standard + '/']
-                    print('All data loaded. Training of classifier underway.')
+                    print('All data loaded. Training underway.')
                 else:
                     if path != standard:
                         warnings.warn(f'Loading a saved replay of a classify task from a previous online session. '
