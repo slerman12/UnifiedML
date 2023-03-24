@@ -11,13 +11,14 @@ def deepPolicyGradient(actor, critic, obs, action=None, step=1, logs=None):
 
     Qs = critic(obs, action)
 
-    # Pessimistic Q-values
     q, _ = Qs.min(1)  # Min-reduced critic ensemble
 
-    if critic.binary:  # When Sigmoid-activated
-        q = q.log()  # (Log-space is more numerically stable)
+    # When Sigmoid-activated
+    if critic.binary:
+        q = q.log()
 
-    policy_loss = -q.mean()  # Policy gradient ascent
+    # Policy gradient ascent
+    policy_loss = -q.mean()
 
     if logs is not None:
         logs['policy_loss'] = policy_loss

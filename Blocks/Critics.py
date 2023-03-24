@@ -85,39 +85,9 @@ class EnsembleQCritic(nn.Module):
 
         return Qs
 
-    def to_indices(self, action):
+    def to_indices(self, action):  # Same as un-normalize
         # Action to indices
         if None in (self.low, self.high) or (self.low, self.high) == (0, self.num_actions - 1):
             return action
 
         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of low/high normalize
-
-    # # Action to indices
-    # def to_indices(self, action):
-    #     # Inverse of low/high normalize
-    #     return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if (self.low or self.high) and \
-    #                                                                                     (self.low, self.high) != \
-    #                                                                                     (0, self.num_actions - 1) \
-    #         else action
-
-    # def to_indices(self, action):
-    #     return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if self.low or self.high \
-    #         else action  # Inverse of normalize -> indices
-
-    # def to_indices(self, action):
-    #     invert = (self.low or self.high) and (self.low, self.high) != (0, self.num_actions - 1)
-    #
-    #     # Action to indices -> Inverse of low/high normalize
-    #     return (action - self.low) / (self.high - self.low) * (self.num_actions - 1) if invert \
-    #         else action
-    #
-    # def to_indices(self, action):
-    #     # Action to indices
-    #     if (self.low or self.high) and (self.low, self.high) != (0, self.num_actions - 1):
-    #         action.sub_(self.low).div_(self.high - self.low).mul_(self.num_actions - 1)  # Inverse of low-high normalize
-    #
-    # def to_indices(self, action):
-    #     # Action to indices
-    #     if (self.low or self.high) and (self.low, self.high) != (0, self.num_actions - 1):
-    #         return (action - self.low) / (self.high - self.low) * (self.num_actions - 1)  # Inverse of low/high normalize
-    #     return action
