@@ -484,22 +484,17 @@ class GradScaler:
 
     # Optimize
     def step(self, optim):
-        # return optim.step() if self.scaler is None else self.scaler.step(optim)
-
-        # TODO Maybe:  or scaler per block
-
-        try:
-            return optim.step() if self.scaler is None else self.scaler.step(optim)
-        except RuntimeError as e:
-            if 'step() has already been called since the last update().' in str(e):
-                self.update(self.scaler._scale)
-                return self.scaler.step(optim)
-            else:
-                raise e
+        if self.scaler is None:
+            return optim.step()
+        else:
+            # Unscale if scaler already stepped
+            if self.scaler._per_optimizer_states[id(optimizer)]['stage'] == 2:
+                self.scaler.unscale_()
+            return self.scaler.step(optim)
 
     # Update scaler
-    def update(self, scale=None):
-        return None if self.scaler is None else self.scaler.update(scale)
+    def update(self):
+        return None if self.scaler is None else self.scaler.update()
 
 
 scaler = None
