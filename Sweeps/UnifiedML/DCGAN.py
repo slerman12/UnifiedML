@@ -18,7 +18,6 @@ runs.UnifiedML.sweep = [
     Generator=DCGAN.Generator 
     experiment=DCGAN
     train_steps=10000
-    capacity=10000
     time="5-00:00:00"
     lab=true
     mem=160

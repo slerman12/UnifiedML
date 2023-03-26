@@ -525,6 +525,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 update_ema_target(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
+                print(type(model))
                 optim.step(model.optim)  # Step optimizer
 
                 if loss is None and clear_grads:
