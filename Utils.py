@@ -45,7 +45,7 @@ def init(args):
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
 
-    if args.device == 'cuda':
+    if 'cuda' in args.device:
         global scaler
 
         if args.mixed_precision:
@@ -460,7 +460,6 @@ class AutoCast:
         global scaler
 
         self.AutoCast = torch.autocast('cuda', dtype=torch.float16) if 'cuda' in str(device) and scaler else None
-        print(self.AutoCast)
 
     def __enter__(self):
         if self.AutoCast is not None:
