@@ -152,9 +152,12 @@ def instantiate(args, i=0, **kwargs):
             args = args.replace(f'kwargs.{key}', f'kwargs["{key}"]')  # Interpolation
         args = eval(args)  # Direct code execution
 
+    # Signature matching
+    if isinstance(args, type):
+        _args = signature(args).parameters
+        args = args(**kwargs if 'kwargs' in _args else {key: kwargs[key] for key in kwargs.keys() & _args})
+
     return None if hasattr(args, '_target_') \
-        else args(**{key: kwargs[key]
-                     for key in kwargs.keys() & signature(args).parameters}) if isinstance(args, type) \
         else args[i] if isinstance(args, (list, nn.ModuleList)) \
         else args  # Additional useful ones
 
@@ -172,7 +175,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-# Initializes model optimizer & scheduler. Default: AdamW
+# Initializes model optimizer. Default: AdamW
 def optimizer_init(params, optim=None, scheduler=None, lr=None, lr_decay_epochs=None, weight_decay=None):
     params = list(params)
 
@@ -462,8 +465,11 @@ class AutoCast:
         self.AutoCast = torch.autocast(str(device), dtype=torch.bfloat16) if str(device) == 'cuda' else None
 
     def __enter__(self):
-        if self.AutoCast is not None:
-            self.AutoCast.__enter__()
+        try:
+            if self.AutoCast is not None:
+                self.AutoCast.__enter__()
+        except:
+            self.AutoCast = None
 
     def __exit__(self, *args):
         if self.AutoCast is not None:

@@ -2,9 +2,11 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import math
+
 import torch
 
-import Utils
+from Blocks.Creator import MonteCarlo
 
 from Agents import DrQV2Agent
 
@@ -14,43 +16,39 @@ class DDPGAgent(DrQV2Agent):
     Deep Deterministic Policy Gradient
     (https://arxiv.org/pdf/1509.02971.pdf)
     """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    def __init__(self, recipes, stddev_schedule, **kwargs):
-        recipes.aug = torch.nn.Identity()
-
-        super().__init__(recipes=recipes, stddev_schedule=None, **kwargs)  # Use specified start sched
+        self.actor.creator.policy = DDPGPolicy
 
 
-class OUNoiseSchedule(torch.nn.Module):
+dev = None
+
+
+class DDPGPolicy(MonteCarlo):
     """
-    Ornstein-Uhlenbeck Process: https://github.com/vitchyr/rlkit/blob/master/rlkit/exploration_strategies/ou_strategy.py
+    Generalized DDPG policy compatible with discrete spaces and even learnable stddev/entropy.
+
+    AC2 example:
+    python Run.py Policy=Agents.DDPG.DDPGPolicy
     """
+    def __init__(self, action_spec, discrete, mean, *args, max_sigma=0.3, min_sigma=0.3, theta=0.15, **kwargs):
+        super().__init__(action_spec, discrete, mean, *args, **kwargs)
 
-    def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.3, min_sigma=0.3, decay_period=100000):
-        super().__init__()
+        """
+        Ornstein-Uhlenbeck Process
+        """
+        sigma = max_sigma - (max_sigma - min_sigma) * (1 - self.stddev)  # Constant at max_sigma by default
 
-        self.x = None
-        self.mu = mu
-        self.theta = theta
-        self.sigma = max_sigma
-        self.max_sigma = max_sigma
-        self.min_sigma = min_sigma
-        self.decay_period = decay_period
-        self.action_dim = action_space.shape[0]
-        self.low = action_space.low
-        self.high = action_space.high
-        self.reset()
+        action_dim = math.prod(action_spec.shape)
 
-    def reset(self):
-        self.x = torch.ones(self.action_dim) * self.mu
+        global dev
 
-    def evolve_state(self):
-        x = self.x
-        dx = self.theta * (self.mu - x) + self.sigma * torch.randn(self.action_dim)
-        self.x = x + dx
-        return self.x
+        if dev is None:
+            dev = 1 if self.discrete else torch.ones([action_dim], device=mean.device)
 
-    def get_action(self, action, t=0):
-        ou_state = self.evolve_state()
-        self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(1.0, t / self.decay_period)
-        return torch.clip(action + ou_state, self.low, self.high)
+        # Technically, only sigma should be rand of distribution, e.g. should be rand_clip = 0 in Distribution  TODO
+        # And scale must be positive should be... I don't know, for entropy, prob etc. maybe self.dev = and inexact prob
+        dev -= theta * dev + sigma * torch.randn(action_dim, device=mean.device)
+
+        self.stddev = dev

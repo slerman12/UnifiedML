@@ -69,13 +69,17 @@ class MonteCarlo(nn.Module):
         if self.discrete:
             self.All_Qs = mean  # [b, e, n, d]
         else:
-            # Normalized
+            # Normalized  TODO perhaps normalize after sampling for stddev consistency across scales (DrQV2 to best)
             self.mean = mean if not (self.low or self.high) else mean.tanh() if self.low == -1 and self.high == 1 \
                 else (mean.tanh() + 1) / 2 * (self.high - self.low) + self.low  # [b, e, n, d]
 
         # Randomness
         self.stddev = stddev
         self.rand = rand
+        # TODO
+        # self.rand_clip = 1
+        # self.stddev_clip = 0.3  # TODO Should include in Categorical?
+        # Or self.dev = None  # Can directly set the deviation  Note: Discrete uses dev then defaults to stddev
 
         # A secondary mapping that is applied after sampling an continuous-action
         self.ActionExtractor = ActionExtractor or nn.Identity()
@@ -93,7 +97,7 @@ class MonteCarlo(nn.Module):
             logits, ind = self.All_Qs.min(1)  # Min-reduced ensemble [b, n, d]
 
             # Corresponding entropy temperature
-            stddev = self.stddev if isinstance(self.stddev, float) \
+            stddev = self.stddev if isinstance(self.stddev, float) or self.stddev.nelement() == 1 \
                 else Utils.gather(self.stddev, ind.unsqueeze(1), 1, 1).flatten(1).sum(1)  # Min-reduced ensemble std [b]
 
             try:
@@ -147,7 +151,7 @@ class MonteCarlo(nn.Module):
         if self.rand:
             action = action.uniform_(self.low, self.high)
 
-        # If sampled action is a discrete distribution, sample again
+        # If sampled action is a discrete distribution, sample again  TODO Discrete norm?
         if sample_shape is None and self.discrete_as_continuous:
             self.store = action
             action = torch.distributions.Categorical(logits=action.movedim(-2, -1) / self.temp).sample()  # Sample again
@@ -166,8 +170,13 @@ class MonteCarlo(nn.Module):
         action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])  # Extract ensemble-reduce
 
-        # If continuous-action is a discrete distribution
+        # If continuous-action is a discrete distribution  TODO Discrete norm?
         if self.discrete_as_continuous:
             action = action.argmax(1)  # Argmax
 
         return action
+
+    # TODO
+    def judgement(self, obs, action, critic):
+        # Pessimism
+        return critic(obs, action).min(1)[0]  # Reduce critic ensemble pessimistically
