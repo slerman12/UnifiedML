@@ -459,7 +459,7 @@ class AutoCast:
 
         global scaler
 
-        self.AutoCast = None if scaler is None else torch.autocast(str(device), dtype=torch.bfloat16)
+        self.AutoCast = scaler and torch.autocast(str(device), dtype=torch.bfloat16) if str(device) == 'cuda' else None
 
     def __enter__(self):
         if self.AutoCast is not None:
