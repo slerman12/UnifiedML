@@ -460,6 +460,7 @@ class AutoCast:
         global scaler
 
         self.AutoCast = torch.autocast('cuda', dtype=torch.float16) if 'cuda' in str(device) and scaler else None
+        print(self.AutoCast)
 
     def __enter__(self):
         if self.AutoCast is not None:
@@ -490,8 +491,8 @@ class GradScaler:
         if self.scaler is None:
             return optim.step()
         else:
-            # Scale gradients if scaler has already been stepped
             if self.scaler._per_optimizer_states[id(optim)]['stage'] is torch.cuda.amp.grad_scaler.OptState.STEPPED:
+                # Allow the same optimizer to be stepped multiple times (algorithmically equivalent?) TODO
                 self.scaler._per_optimizer_states[id(optim)]['stage'] = torch.cuda.amp.grad_scaler.OptState.READY
             return self.scaler.step(optim)
 
