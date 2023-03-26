@@ -259,7 +259,7 @@ class AC2Agent(torch.nn.Module):
                 critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
 
                 # Update discriminator
-                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
+                # Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
 
