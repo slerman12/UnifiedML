@@ -486,6 +486,14 @@ class GradScaler:
     def step(self, optim):
         return optim.step() if self.scaler is None else self.scaler.step(optim)
 
+        # TODO Maybe:  but shouldn't scaler update before the second call?
+
+        try:
+            return optim.step() if self.scaler is None else self.scaler.step(optim)
+        except RuntimeError("step() has already been called since the last update()."):
+            self.update()
+            return self.scaler.step(optim)
+
     # Update scaler
     def update(self):
         return None if self.scaler is None else self.scaler.update()
@@ -525,8 +533,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 update_ema_target(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
-                print(type(model))
-                optim.step(model.optim)  # Step optimizer
+                optim.step(model.optim)  # Step optimizer  TODO Discriminator steps critic twice, need to update.
 
                 if loss is None and clear_grads:
                     model.optim.zero_grad(set_to_none=True)
