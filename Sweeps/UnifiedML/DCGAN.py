@@ -31,6 +31,6 @@ runs.UnifiedML.plots = [
 ]
 
 runs.UnifiedML.sftp = True
-runs.UnifiedML.bluehive = True
-runs.UnifiedML.lab = False
+runs.UnifiedML.bluehive = False
+runs.UnifiedML.lab = True
 runs.UnifiedML.title = 'DCGAN'
