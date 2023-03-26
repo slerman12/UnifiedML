@@ -56,7 +56,6 @@ class CNNEncoder(nn.Module):
 
     def forward(self, obs, *context, pool=True):
         with Utils.AutoCast(obs.device):
-
             # Operate on non-batch dims, then restore
 
             dims = len(self.obs_shape)
