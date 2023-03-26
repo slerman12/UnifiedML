@@ -488,7 +488,7 @@ class GradScaler:
             return optim.step()
         else:
             # Unscale if scaler already stepped
-            if self.scaler._per_optimizer_states[id(optimizer)]['stage'] == 2:
+            if self.scaler._per_optimizer_states[id(optim)]['stage'] == 2:
                 self.scaler.unscale_()
             return self.scaler.step(optim)
 
