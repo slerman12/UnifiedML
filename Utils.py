@@ -491,7 +491,7 @@ class GradScaler:
         try:
             return optim.step() if self.scaler is None else self.scaler.step(optim)
         except RuntimeError as e:
-            if 'step() has already been called since the last update().' in e:
+            if 'step() has already been called since the last update().' in str(e):
                 self.update(self.scaler._scale)
                 return self.scaler.step(optim)
             else:
