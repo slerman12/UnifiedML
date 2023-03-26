@@ -460,7 +460,6 @@ class AutoCast:
         global scaler
 
         self.AutoCast = torch.autocast('cuda', dtype=torch.float16) if 'cuda' in str(device) and scaler else None
-        print(self.AutoCast)
 
     def __enter__(self):
         if self.AutoCast is not None:
@@ -487,14 +486,15 @@ class GradScaler:
             else self.scaler.scale(loss).backward(retain_graph=retain_graph)
 
     # Optimize
-    def step(self, optim):
+    def step(self, model):
         if self.scaler is None:
-            return optim.step()
+            return model.optim.step()
+        elif self.scaler._per_optimizer_states[id(model.optim)]['stage'] is torch.cuda.amp.grad_scaler.OptState.STEPPED:
+            raise RuntimeError(f'The {type(model)} optimizer is being stepped twice while "autocast=true" is enabled. '
+                               f'Currently, Pytorch automatic mixed precision only supports stepping an optimizer '
+                               f'once per learning update. Try running again with the "autocast=false" hyperparam.')
         else:
-            if self.scaler._per_optimizer_states[id(optim)]['stage'] is torch.cuda.amp.grad_scaler.OptState.STEPPED:
-                # Allow the same optimizer to be stepped multiple times (algorithmically equivalent?) TODO
-                self.scaler._per_optimizer_states[id(optim)]['stage'] = torch.cuda.amp.grad_scaler.OptState.READY
-            return self.scaler.step(optim)
+            return self.scaler.step(model.optim)
 
     # Update scaler
     def update(self):
@@ -535,7 +535,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 update_ema_target(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
-                optim.step(model.optim)  # Step optimizer  TODO Discriminator steps critic twice, need to update.
+                optim.step(model)  # Step optimizer
 
                 if loss is None and clear_grads:
                     model.optim.zero_grad(set_to_none=True)
