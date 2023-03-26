@@ -459,11 +459,8 @@ class AutoCast:
         self.AutoCast = torch.autocast(str(device), dtype=torch.bfloat16) if str(device) == 'cuda' else None
 
     def __enter__(self):
-        try:
-            if self.AutoCast is not None:
-                self.AutoCast.__enter__()
-        except:
-            self.AutoCast = None  # Some CUDA devices fail with automatic mixed precision
+        if self.AutoCast is not None:
+            self.AutoCast.__enter__()
 
     def __exit__(self, *args):
         if self.AutoCast is not None:
