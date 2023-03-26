@@ -53,6 +53,7 @@ def init(args):
         print(scaler)
 
         torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
+    print(args.device == 'cuda', args.device, type(args.device))
 
     print('Device:', args.device)
 
