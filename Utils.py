@@ -48,7 +48,8 @@ def init(args):
     if args.device == 'cuda':
         global scaler
 
-        scaler = torch.cuda.amp.GradScaler()  # Training speedup via automatic mixed precision
+        if args.mixed_precision:
+            scaler = torch.cuda.amp.GradScaler()  # Training speedup via automatic mixed precision
 
         torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
 
@@ -456,7 +457,9 @@ class AutoCast:
     def __init__(self, device):
         super().__init__()
 
-        self.AutoCast = torch.autocast(str(device), dtype=torch.bfloat16) if str(device) == 'cuda' else None
+        global scaler
+
+        self.AutoCast = None if scaler is None else torch.autocast(str(device), dtype=torch.bfloat16)
 
     def __enter__(self):
         if self.AutoCast is not None:

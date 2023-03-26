@@ -20,6 +20,7 @@ runs.UnifiedML.sweep = [
     train_steps=10000
     time="5-00:00:00"
     lab=true
+    autocast=false
     mem=160
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]
