@@ -48,7 +48,7 @@ def init(args):
     if 'cuda' in args.device:
         global scaler
 
-        if args.mixed_precision:
+        if args.autocast:
             scaler = torch.cuda.amp.GradScaler()  # Training speedup via automatic mixed precision
 
         torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
