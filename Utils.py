@@ -487,13 +487,7 @@ class GradScaler:
 
     # Optimize
     def step(self, optim):
-        if self.scaler is None:
-            return optim.step()
-        else:
-            # Scale gradients if scaler has already been stepped
-            if self.scaler._per_optimizer_states[id(optim)]['stage'] is torch.cuda.amp.grad_scaler.OptState.STEPPED:
-                self.scaler.update(self.scaler._scale)
-            return self.scaler.step(optim)
+        return optim.step() if self.scaler is None else self.scaler.step(optim)
 
     # Update scaler
     def update(self):
