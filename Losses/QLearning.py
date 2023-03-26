@@ -5,51 +5,55 @@
 import torch
 from torch.nn.functional import mse_loss, binary_cross_entropy
 
+from Utils import AutoCast
+
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=None, step=0, logs=None):
-    # Non-empty next_obs
-    has_future = next_obs is not None and bool(next_obs.nelement())
+    with AutoCast(obs.device):
 
-    # Compute Bellman target
-    with torch.no_grad():
-        # Current reward
-        target_Q = reward
+        # Non-empty next_obs
+        has_future = next_obs is not None and bool(next_obs.nelement())
 
-        # Discounted future reward
-        if has_future:
-            # Get actions for next_obs
-            next_Pi = actor(next_obs, step)
+        # Compute Bellman target
+        with torch.no_grad():
+            # Current reward
+            target_Q = reward
 
-            # Discrete Critic tabulates all actions for single-dim discrete envs a priori, no need to sample
-            next_action = None if critic.all_actions_known else next_Pi.sample(1)  # Sample
+            # Discounted future reward
+            if has_future:
+                # Get actions for next_obs
+                next_Pi = actor(next_obs, step)
 
-            # Discrete Actor already computed Q-values and they're already known by Policy
-            All_Next_Qs = next_Pi.All_Qs if actor.discrete else None
+                # Discrete Critic tabulates all actions for single-dim discrete envs a priori, no need to sample
+                next_action = None if critic.all_actions_known else next_Pi.sample(1)  # Sample
 
-            # Q-values per action
-            next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy of Critic: Q(obs, a)
+                # Discrete Actor already computed Q-values and they're already known by Policy
+                All_Next_Qs = next_Pi.All_Qs if actor.discrete else None
 
-            # Pessimistic Q-values per action
-            next_q = next_Qs.min(1)[0]  # Min-reduced critic ensemble
+                # Q-values per action
+                next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy Critic: Q(obs, a)
 
-            # Weigh each action's pessimistic Q-value by its probability
-            next_action_prob = next_q.size(1) < 2 or next_Pi.log_prob(next_action).softmax(-1)  # Action probability
-            next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+                # Pessimistic Q-values per action
+                next_q = next_Qs.min(1)[0]  # Min-reduced critic ensemble
 
-            target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
+                # Weigh each action's pessimistic Q-value by its probability
+                next_action_prob = next_q.size(1) < 2 or next_Pi.log_prob(next_action).softmax(-1)  # Action probability
+                next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
 
-    Qs = critic(obs, action)  # Q-ensemble
+                target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
 
-    # Use BCE if Critic is Sigmoid-activated, else MSE
-    criterion = binary_cross_entropy if critic.binary else mse_loss
+        Qs = critic(obs, action)  # Q-ensemble
 
-    # Temporal difference (TD) error
-    q_loss = criterion(Qs, target_Q.unsqueeze(1).expand_as(Qs))
+        # Use BCE if Critic is Sigmoid-activated, else MSE
+        criterion = binary_cross_entropy if critic.binary else mse_loss
 
-    if logs is not None:
-        logs['temporal_difference_error'] = q_loss
-        logs.update({f'q{i}': Qs[:, i].to('cpu' if Qs.device.type == 'mps' else Qs).median()  # torch.median not on mps
-                     for i in range(Qs.shape[1])})
-        logs['target_q'] = target_Q.mean()
+        # Temporal difference (TD) error
+        q_loss = criterion(Qs, target_Q.unsqueeze(1).expand_as(Qs))
 
-    return q_loss
+        if logs is not None:
+            logs['temporal_difference_error'] = q_loss
+            logs.update({f'q{i}': Qs[:, i].to('cpu' if Qs.device.type == 'mps' else Qs).median()  # median not on MPS
+                         for i in range(Qs.shape[1])})
+            logs['target_q'] = target_Q.mean()
+
+        return q_loss

@@ -46,6 +46,14 @@ def init(args):
                                   else 'mps' if mps and mps.is_available() else 'cpu')  # TODO No MPS default, but allow
     # TODO MPS Pytorch behavior can be unpredictable. I don't recommend it for continuous RL or generative modeling.
 
+    global scaler
+
+    if args.device == 'cuda':
+        # Training speedup via automatic mixed precision
+        scaler = torch.cuda.amp.GradScaler()
+
+        torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
+
     print('Device:', args.device)
 
 
@@ -391,6 +399,12 @@ class ChannelSwap(nn.Module):
 ChSwap = ChannelSwap()
 
 
+# Converts data to torch Tensors and moves them to the specified device as floats
+def to_torch(xs, device=None):
+    return tuple(None if x is None
+                 else torch.as_tensor(x, dtype=torch.float32, device=device) for x in xs)
+
+
 # Converts lists or scalars to tuple, preserving NoneType
 def to_tuple(items: (int, float, bool, list, tuple)):
     return None if items is None else (items,) if isinstance(items, (int, float, bool)) else tuple(items)
@@ -418,7 +432,10 @@ class Norm(nn.Module):
 class act_mode:
     def __init__(self, *models):
         super().__init__()
+
         self.models = models
+
+        self.AutoCast = AutoCast(next(models[0].parameters()).device)  # Training speedup via automatic mixed precision
 
     def __enter__(self):
         self.start_modes = []
@@ -429,21 +446,65 @@ class act_mode:
                 self.start_modes.append(model.training)
                 model.eval()  # Disables things like dropout, etc.
 
+        self.AutoCast.__enter__()
+
     def __exit__(self, *args):
         for model, mode in zip(self.models, self.start_modes):
             if model is not None:
                 model.train(mode)
-        return False
+
+        self.AutoCast.__exit__(*args)
 
 
-# Converts data to torch Tensors and moves them to the specified device as floats
-def to_torch(xs, device=None):
-    return tuple(None if x is None
-                 else torch.as_tensor(x, dtype=torch.float32, device=device) for x in xs)
+# Simple context manager for training speedup via automatic mixed precision
+class AutoCast:
+    def __init__(self, device):
+        super().__init__()
+
+        self.AutoCast = torch.autocast(str(device), dtype=torch.bfloat16) if str(device) in ['cuda'] else None
+
+    def __enter__(self):
+        if self.AutoCast is not None:
+            self.AutoCast.__enter__()
+
+    def __exit__(self, *args):
+        if self.AutoCast is not None:
+            self.AutoCast.__exit__(*args)
 
 
 # Pytorch incorrect (in this case) warning suppression
 warnings.filterwarnings("ignore", message='.* skipping the first value of the learning rate schedule')
+
+
+scaler = None
+
+
+# Scales gradients for automatic mixed precision training speedup
+class GradScaler:
+    @property
+    def scaler(self):
+        return globals()['scaler']
+
+    # Backward pass
+    def backward(self, loss, retain_graph=False):
+        return loss.backward(retain_graph=retain_graph) if self.scaler is None \
+            else self.scaler.scale(loss).backward(retain_graph=retain_graph)
+
+    # Optimize
+    def step(self, optim):
+        return optim.step() if self.scaler is None else self.scaler.step(optim)
+
+    # Update scaler
+    def update(self):
+        return None if self.scaler is None else self.scaler.update()
+
+
+optim = GradScaler()  # GradScaler scales gradients for automatic mixed precision training speedup
+
+
+# Update scaler
+def update():
+    return optim.update()
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers
@@ -456,7 +517,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
 
     # Backward
     if backward and loss is not None:
-        loss.backward(retain_graph=retain_graph)
+        optim.backward(loss, retain_graph)  # Backward pass
 
     # Optimize
     if step_optim:
@@ -471,7 +532,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 update_ema_target(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
-                model.optim.step()  # Step optimizer
+                optim.step(model.optim)  # Step optimizer
 
                 if loss is None and clear_grads:
                     model.optim.zero_grad(set_to_none=True)

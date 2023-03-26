@@ -2,25 +2,27 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+from Utils import AutoCast
 
 
 def deepPolicyGradient(actor, critic, obs, action=None, step=1, logs=None):
+    with AutoCast(obs.device):
 
-    if action is None or not action.requires_grad:  # If None or not differentiable
-        action = actor(obs, step).mean  # Differentiable action ensemble
+        if action is None or not action.requires_grad:  # If None or not differentiable
+            action = actor(obs, step).mean  # Differentiable action ensemble
 
-    Qs = critic(obs, action)
+        Qs = critic(obs, action)
 
-    q, _ = Qs.min(1)  # Min-reduced critic ensemble
+        q, _ = Qs.min(1)  # Min-reduced critic ensemble
 
-    # When Sigmoid-activated
-    if critic.binary:
-        q = q.log()
+        # When Sigmoid-activated
+        if critic.binary:
+            q = q.log()
 
-    # Policy gradient ascent
-    policy_loss = -q.mean()
+        # Policy gradient ascent
+        policy_loss = -q.mean()
 
-    if logs is not None:
-        logs['policy_loss'] = policy_loss
+        if logs is not None:
+            logs['policy_loss'] = policy_loss
 
-    return policy_loss
+        return policy_loss

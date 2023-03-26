@@ -9,12 +9,16 @@ runs = template('UnifiedML')
 
 runs.UnifiedML.sweep = [
     f"""
-    task=classify/celeba 
+    task=classify/celeba
+    Dataset=Datasets.Suites._CelebA.CelebA 
+    +dataset.username=slerman
+    +dataset.key=a55142727f5fbd5029de3e7597902ff9
     generate=true 
     Discriminator=DCGAN.Discriminator 
     Generator=DCGAN.Generator 
     experiment=DCGAN
     train_steps=10000
+    capacity=50000
     time="5-00:00:00"
     lab=true
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml

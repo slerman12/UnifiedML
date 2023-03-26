@@ -13,18 +13,18 @@ runs = template('UnifiedML')
 
 runs.UnifiedML.sweep = [
     # Longer Exploration
-    f"""
-    task={join(atari)}
-    train_steps=1000000
-    save_per_steps=200000
-    replay.save=true
-    'stddev_schedule="linear(1.0,0.1,800000)"'
-    Agent=Agents.AC2Agent
-    experiment=Atari26-MoreExplore
-    time="5-00:00:00"
-    mem=50
-    reservation_id=20221217
-    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
+    # f"""
+    # task={join(atari)}
+    # train_steps=1000000
+    # save_per_steps=200000
+    # replay.save=true
+    # 'stddev_schedule="linear(1.0,0.1,800000)"'
+    # Agent=Agents.AC2Agent
+    # experiment=Atari26-MoreExplore
+    # time="5-00:00:00"
+    # mem=50
+    # reservation_id=20221217
+    # """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 
     # Less Exploration
     f"""
@@ -36,31 +36,31 @@ runs.UnifiedML.sweep = [
     Agent=Agents.AC2Agent
     experiment=Atari26-LessExplore
     time="5-00:00:00"
-    mem=50
-    reservation_id=20221217
-    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
+    mem=25
+    reservation_id=20230321
+    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml    # TODO Might need mem=50
 
     # Medium Exploration
-    f"""
-    task={join(atari)}
-    train_steps=1000000 
-    save_per_steps=200000 
-    replay.save=true
-    'stddev_schedule="linear(1.0,0.1,200000)"'
-    Agent=Agents.AC2Agent 
-    experiment=Atari26-MediumExplore
-    time="5-00:00:00"
-    mem=50
-    reservation_id=20221217
-    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
+    # f"""
+    # task={join(atari)}
+    # train_steps=1000000
+    # save_per_steps=200000
+    # replay.save=true
+    # 'stddev_schedule="linear(1.0,0.1,200000)"'
+    # Agent=Agents.AC2Agent
+    # experiment=Atari26-MediumExplore
+    # time="5-00:00:00"
+    # mem=50
+    # reservation_id=20221217
+    # """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]  # Replay capacity is  1000000
 
 
 runs.UnifiedML.plots = [
-    ['Atari26-MoreExplore'],
+    # ['Atari26-MoreExplore'],
     ['Atari26-LessExplore'],
-    ['Atari26-MediumExplore'],
-    ['Atari26-LessExplore', 'Atari26-MediumExplore', 'Atari26-MoreExplore']
+    # ['Atari26-MediumExplore'],
+    # ['Atari26-LessExplore', 'Atari26-MediumExplore', 'Atari26-MoreExplore']
 ]
 
 runs.UnifiedML.sftp = True

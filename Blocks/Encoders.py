@@ -55,49 +55,51 @@ class CNNEncoder(nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
     def forward(self, obs, *context, pool=True):
-        # Operate on non-batch dims, then restore
+        with Utils.AutoCast(obs.device):
 
-        dims = len(self.obs_shape)
+            # Operate on non-batch dims, then restore
 
-        batch_dims = obs.shape[:-dims]  # Preserve leading dims
-        axes = (1,) * (dims - 1)  # Spatial axes, useful for dynamic input shapes
+            dims = len(self.obs_shape)
 
-        # Standardize/normalize pixels
-        if self.standardize:
-            obs = (obs - self.mean.to(obs.device).view(-1, *axes)) / self.stddev.to(obs.device).view(-1, *axes)
-        elif self.normalize:
-            obs = 2 * (obs - self.low) / (self.high - self.low) - 1
+            batch_dims = obs.shape[:-dims]  # Preserve leading dims
+            axes = (1,) * (dims - 1)  # Spatial axes, useful for dynamic input shapes
 
-        try:
-            channel_dim = (1,) * (not axes)  # At least 1 channel dim and spatial dim
-            obs = obs.reshape(-1, *channel_dim, *self.obs_shape)  # Validate shape, collapse batch dims
-        except RuntimeError:
-            raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
-                               f'{tuple(obs.shape[1:])}, ≠ {self.obs_shape}')
+            # Standardize/normalize pixels
+            if self.standardize:
+                obs = (obs - self.mean.to(obs.device).view(-1, *axes)) / self.stddev.to(obs.device).view(-1, *axes)
+            elif self.normalize:
+                obs = 2 * (obs - self.low) / (self.high - self.low) - 1
 
-        # Optionally append a 1D context to channels, broadcasting
-        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes or (1,)).expand(-1, -1, *obs.shape[2:])
-                                for c in context]], 1)
-
-        # CNN encode
-        h = self.Eyes(obs)
-
-        try:
-            h = h.view(h.shape[0], *self.feature_shape)  # Validate shape
-        except RuntimeError:
-            raise RuntimeError('\nFeature shape cannot broadcast to pre-computed feature_shape '
-                               f'{tuple(h.shape[1:])}≠{self.feature_shape}')
-
-        if pool:
-            h = self.pool(h)
             try:
-                h = h.view(h.shape[0], *self.repr_shape)  # Validate shape
+                channel_dim = (1,) * (not axes)  # At least 1 channel dim and spatial dim
+                obs = obs.reshape(-1, *channel_dim, *self.obs_shape)  # Validate shape, collapse batch dims
             except RuntimeError:
-                raise RuntimeError('\nOutput shape after pooling does not match pre-computed repr_shape '
-                                   f'{tuple(h.shape[1:])}≠{self.repr_shape}')
+                raise RuntimeError('\nObs shape does not broadcast to pre-defined obs shape '
+                                   f'{tuple(obs.shape[1:])}, ≠ {self.obs_shape}')
 
-        h = h.view(*batch_dims, *h.shape[1:])  # Restore leading dims
-        return h
+            # Optionally append a 1D context to channels, broadcasting
+            obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes or (1,)).expand(-1, -1, *obs.shape[2:])
+                                    for c in context]], 1)
+
+            # CNN encode
+            h = self.Eyes(obs)
+
+            try:
+                h = h.view(h.shape[0], *self.feature_shape)  # Validate shape
+            except RuntimeError:
+                raise RuntimeError('\nFeature shape cannot broadcast to pre-computed feature_shape '
+                                   f'{tuple(h.shape[1:])}≠{self.feature_shape}')
+
+            if pool:
+                h = self.pool(h)
+                try:
+                    h = h.view(h.shape[0], *self.repr_shape)  # Validate shape
+                except RuntimeError:
+                    raise RuntimeError('\nOutput shape after pooling does not match pre-computed repr_shape '
+                                       f'{tuple(h.shape[1:])}≠{self.repr_shape}')
+
+            h = h.view(*batch_dims, *h.shape[1:])  # Restore leading dims
+            return h
 
 
 # Adaptive Eyes

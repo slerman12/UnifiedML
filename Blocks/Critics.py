@@ -55,35 +55,37 @@ class EnsembleQCritic(nn.Module):
             self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 
     def forward(self, obs, action=None, All_Qs=None):
-        h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
-            else self.trunk(obs)
+        with Utils.AutoCast(obs.device):
 
-        assert self.all_actions_known or action is not None, 'Action is needed by critic.'
+            h = torch.empty((action.shape[0], 0), device=action.device) if self.ignore_obs \
+                else self.trunk(obs)
 
-        batch_size = h.shape[0]
+            assert self.all_actions_known or action is not None, 'Action is needed by critic.'
 
-        if self.discrete:
-            if All_Qs is None:
-                # All actions' Q-values
-                All_Qs = self.Q_head(h).view(batch_size, -1, self.num_actions, self.action_dim)  # [b, e, n, d]
+            batch_size = h.shape[0]
 
-            if action is None:
-                # Return Q-values for all actions
-                Qs = All_Qs.squeeze(-1)  # [b, e, n]
+            if self.discrete:
+                if All_Qs is None:
+                    # All actions' Q-values
+                    All_Qs = self.Q_head(h).view(batch_size, -1, self.num_actions, self.action_dim)  # [b, e, n, d]
+
+                if action is None:
+                    # Return Q-values for all actions
+                    Qs = All_Qs.squeeze(-1)  # [b, e, n]
+                else:
+                    action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
+
+                    # Q values for discrete action(s)
+                    Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n']
             else:
-                action = action.view(action.shape[0], 1, -1, self.action_dim)  # [b, 1, n', d]
+                action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
 
-                # Q values for discrete action(s)
-                Qs = Utils.gather(All_Qs, self.to_indices(action), -2, -2).mean(-1)  # [b, e, n']
-        else:
-            action = action.reshape(batch_size, -1, self.num_actions * self.action_dim)  # [b, n', n * d]
+                h = h.unsqueeze(1).expand(*action.shape[:-1], -1)  # One for each action
 
-            h = h.unsqueeze(1).expand(*action.shape[:-1], -1)  # One for each action
+                # Q-values for continuous action(s)
+                Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
 
-            # Q-values for continuous action(s)
-            Qs = self.Q_head(h, action).squeeze(-1)  # [b, e, n']
-
-        return Qs
+            return Qs
 
     def to_indices(self, action):  # Same as un-normalize
         # Action to indices

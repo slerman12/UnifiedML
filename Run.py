@@ -7,9 +7,6 @@ from hydra.utils import instantiate, call
 
 import Utils
 
-import torch
-torch.backends.cudnn.benchmark = True
-
 
 # Hydra conveniently and cleanly manages sys args
 # Hyper-param arg files located in ./Hyperparams
@@ -86,6 +83,9 @@ def main(args):
 
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
                 logs = agent.learn(replay)  # Learn
+
+                Utils.update()  # For training speedup via automatic mixed precision
+
                 if args.log_per_episodes:
                     logger.log(logs, 'Train')
 
