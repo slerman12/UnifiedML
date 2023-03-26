@@ -108,7 +108,7 @@ class MonteCarlo(nn.Module):
 
     def log_prob(self, action=None):  # (Log-space is more numerically stable)
         # Log-probability
-        log_prob = self.Psi.log_prob(action)  # [b, n', d] if discrete, [b, e*n', n, d] if continuous
+        log_prob = self.Psi.log_prob(action)  # [b, n', d] if discrete, [b, e*n', 1, d] if continuous
 
         # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:

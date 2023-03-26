@@ -84,7 +84,7 @@ class NormalizedCategorical(Categorical):
 
     def log_prob(self, value=None):
         if value is None:
-            return self.logits
+            return self.logits.movedim(self.dim, -1)
         elif value.shape[-self.logits.dim():] == self.logits.shape:
             return super().log_prob(self.un_normalize(value))  # Un-normalized log_prob(•)
         else:
