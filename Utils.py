@@ -436,8 +436,6 @@ class act_mode:
 
         self.models = models
 
-        self.AutoCast = AutoCast(next(models[0].parameters()).device)  # Training speedup via automatic mixed precision
-
     def __enter__(self):
         self.start_modes = []
         for model in self.models:
@@ -447,14 +445,10 @@ class act_mode:
                 self.start_modes.append(model.training)
                 model.eval()  # Disables things like dropout, etc.
 
-        self.AutoCast.__enter__()
-
     def __exit__(self, *args):
         for model, mode in zip(self.models, self.start_modes):
             if model is not None:
                 model.train(mode)
-
-        self.AutoCast.__exit__(*args)
 
 
 # Simple context manager for training speedup via automatic mixed precision
@@ -469,7 +463,7 @@ class AutoCast:
             if self.AutoCast is not None:
                 self.AutoCast.__enter__()
         except:
-            self.AutoCast = None
+            self.AutoCast = None  # Some CUDA devices fail with automatic mixed precision
 
     def __exit__(self, *args):
         if self.AutoCast is not None:

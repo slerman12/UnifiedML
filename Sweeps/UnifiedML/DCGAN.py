@@ -21,6 +21,7 @@ runs.UnifiedML.sweep = [
     capacity=10000
     time="5-00:00:00"
     lab=true
+    mem=160
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml
 ]
 
