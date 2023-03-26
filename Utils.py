@@ -43,14 +43,12 @@ def init(args):
     mps = getattr(torch.backends, 'mps', None)  # M1 MacBook speedup
 
     args.device = args.device or ('cuda' if torch.cuda.is_available()
-                                  else 'mps' if mps and mps.is_available() else 'cpu')  # TODO No MPS default, but allow
-    # TODO MPS Pytorch behavior can be unpredictable. I don't recommend it for continuous RL or generative modeling.
-
-    global scaler
+                                  else 'mps' if mps and mps.is_available() else 'cpu')
 
     if args.device == 'cuda':
-        # Training speedup via automatic mixed precision
-        scaler = torch.cuda.amp.GradScaler()
+        global scaler
+
+        scaler = torch.cuda.amp.GradScaler()  # Training speedup via automatic mixed precision
 
         torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
 
@@ -461,7 +459,7 @@ class AutoCast:
     def __init__(self, device):
         super().__init__()
 
-        self.AutoCast = torch.autocast(str(device), dtype=torch.bfloat16) if str(device) in ['cuda'] else None
+        self.AutoCast = torch.autocast(str(device), dtype=torch.bfloat16) if str(device) == 'cuda' else None
 
     def __enter__(self):
         if self.AutoCast is not None:
@@ -474,9 +472,6 @@ class AutoCast:
 
 # Pytorch incorrect (in this case) warning suppression
 warnings.filterwarnings("ignore", message='.* skipping the first value of the learning rate schedule')
-
-
-scaler = None
 
 
 # Scales gradients for automatic mixed precision training speedup
@@ -499,6 +494,7 @@ class GradScaler:
         return None if self.scaler is None else self.scaler.update()
 
 
+scaler = None
 optim = GradScaler()  # GradScaler scales gradients for automatic mixed precision training speedup
 
 
