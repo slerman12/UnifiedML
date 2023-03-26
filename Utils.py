@@ -484,19 +484,19 @@ class GradScaler:
 
     # Optimize
     def step(self, optim):
-        return optim.step() if self.scaler is None else self.scaler.step(optim)
+        # return optim.step() if self.scaler is None else self.scaler.step(optim)
 
-        # TODO Maybe:  but shouldn't scaler update before the second call?
+        # TODO Maybe:  or scaler per block
 
         try:
             return optim.step() if self.scaler is None else self.scaler.step(optim)
         except RuntimeError("step() has already been called since the last update()."):
-            self.update()
+            self.update(self.scaler._scale)
             return self.scaler.step(optim)
 
     # Update scaler
-    def update(self):
-        return None if self.scaler is None else self.scaler.update()
+    def update(self, scale=None):
+        return None if self.scaler is None else self.scaler.update(scale)
 
 
 scaler = None
