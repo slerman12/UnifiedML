@@ -34,7 +34,7 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Initializes run state
+# Initializes random seeds, device, and training acceleration
 def init(args):
     # Set seeds
     set_seeds(args.seed)
