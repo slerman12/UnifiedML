@@ -498,7 +498,7 @@ class MixedPrecision:
             forward = model.forward
 
             # Enable Pytorch AutoCast context
-            model.forward = torch.autocast(next(model.parameters()).device.name, dtype=torch.float16)(forward)
+            model.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
 
             self.models.add(id(model))
 
