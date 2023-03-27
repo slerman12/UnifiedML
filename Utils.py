@@ -492,7 +492,7 @@ class GradScaler:
         elif self.scaler._per_optimizer_states[id(model.optim)]['stage'] is torch.cuda.amp.grad_scaler.OptState.STEPPED:
             raise RuntimeError(f'The {type(model)} optimizer is being stepped twice while "autocast=true" is enabled. '
                                f'Currently, Pytorch automatic mixed precision only supports stepping an optimizer '
-                               f'once per learning update. Try running again with the "autocast=false" hyperparam.')
+                               f'once per learning update. Try running again with "autocast=false".')
         else:
             return self.scaler.step(model.optim)
 
