@@ -511,11 +511,6 @@ class MixedPrecision:
 
                 model.ema.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
 
-                for module in model.ema.children():
-                    forward = module.forward
-
-                    module.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
-
             self.models.add(id(model))
 
         model.optim.step()  # Optimize
