@@ -500,7 +500,7 @@ class MixedPrecision:
             # Enable Pytorch AutoCast context
             model.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
 
-            if model.ema:
+            if hasattr(model, 'ema'):
                 forward = model.ema.forward
 
                 model.ema.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
