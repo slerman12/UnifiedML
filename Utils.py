@@ -479,7 +479,7 @@ class MixedPrecision:
     def step(self, model):
         if self.mixed_precision_enabled:
             if self.ready:
-                # Models need to have been AutoCast-initialized before first call to update
+                # Mix-precision must AutoCast-initialize before first call to model update
                 assert id(model) in self.models, 'A new model or block is being optimized after the initial learning ' \
                                                  'update while "mixed_precision=true". ' \
                                                  'Not supported by lazy-AutoCast. Try "mixed_precision=false".'
