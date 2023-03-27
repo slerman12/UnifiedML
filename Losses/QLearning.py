@@ -38,7 +38,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
             target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
 
-    Qs = critic(obs, action).float()  # Q-ensemble
+    Qs = critic(obs.float(), action.float()).float()  # Q-ensemble
 
     # Use BCE if Critic is Sigmoid-activated, else MSE
     criterion = binary_cross_entropy if critic.binary else mse_loss

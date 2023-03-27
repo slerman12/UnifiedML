@@ -240,7 +240,7 @@ class AC2Agent(torch.nn.Module):
                 # "Via Feedback" / "Test Score" / "Letter Grade"
 
                 if replay.offline:
-                    action = (index if self.discrete else y_predicted).float().detach()
+                    action = (index if self.discrete else y_predicted).detach()
                     reward = correct if self.discrete else -error.detach()  # reward = -error
                 else:  # Use Online action
                     reward = (action.squeeze(1) == label).float() if self.discrete \
