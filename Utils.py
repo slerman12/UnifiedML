@@ -495,15 +495,18 @@ class MixedPrecision:
 
             # Lazy-initialize AutoCast context
 
-            forward = model.forward
+            for module in model.children():
+                forward = module.forward
 
-            # Enable Pytorch AutoCast context
-            model.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
+                # Enable Pytorch AutoCast context
+                module.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
+                print(module)
 
             if hasattr(model, 'ema'):
-                forward = model.ema.forward
+                for module in model.ema.children():
+                    forward = module.forward
 
-                model.ema.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
+                    module.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
 
             self.models.add(id(model))
 
