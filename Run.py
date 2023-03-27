@@ -83,8 +83,8 @@ def main(args):
 
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
                 logs = agent.learn(replay)  # Learn
-
-                Utils.update()  # For training speedup via automatic mixed precision
+                if args.mixed_precision:
+                    Utils.MP.update()  # For training speedup via automatic mixed precision
 
                 if args.log_per_episodes:
                     logger.log(logs, 'Train')

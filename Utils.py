@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import math
 import random
+from functools import cached_property
 import re
 import warnings
 from inspect import signature
@@ -46,11 +47,10 @@ def init(args):
                                   else 'mps' if mps and mps.is_available() else 'cpu')
 
     # CUDA speedup via automatic mixed precision
-    global optim
+    MP.enable(args)
 
-    optim.mixed_precision_enabled = 'cuda' in args.device and args.mixed_precision
-
-    torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
+    # CUDA speedup when input sizes don't vary
+    torch.backends.cudnn.benchmark = True
 
     print('Device:', args.device)
 
@@ -456,18 +456,18 @@ warnings.filterwarnings("ignore", message='.* skipping the first value of the le
 
 
 # Scales gradients for automatic mixed precision training speedup, or updates gradients normally
-class AutoCast:
+class MixedPrecision:
     def __init__(self):
         self.mixed_precision_enabled = False  # Corresponds to mixed_precision=true
-        self._scaler = None
         self.ready = False
         self.models = set()
 
-    @property
+    @cached_property
     def scaler(self):
-        if self.mixed_precision_enabled and self._scaler is None:
-            self._scaler = torch.cuda.amp.GradScaler()
-        return self._scaler  # Gradient scaler to magnify imprecise Float16 gradients
+        return torch.cuda.amp.GradScaler()  # Gradient scaler to magnify imprecise Float16 gradients
+
+    def enable(self, args):
+        self.mixed_precision_enabled = args.mixed_precision and 'cuda' in args.device
 
     # Backward pass
     def backward(self, loss, retain_graph=False):
@@ -479,17 +479,18 @@ class AutoCast:
     def step(self, model):
         if self.mixed_precision_enabled:
             if self.ready:
-                already_enabled = id(model) in self.models
-
-                assert already_enabled, 'A new model or block is being optimized after the initial learning update ' \
-                                        'while "autocast=true". Not supported by lazy-AutoCast. Try "autocast=false".'
+                # Models need to have been initialized before first call to update
+                assert id(model) in self.models, 'A new model or block is being optimized after the initial learning ' \
+                                                 'update while "mixed_precision=true". ' \
+                                                 'Not supported by lazy-AutoCast. Try "mixed_precision=false".'
                 try:
                     return self.scaler.step(model.optim)  # Optimize
                 except RuntimeError as e:
                     if 'step() has already been called since the last update().' in str(e):
-                        e = RuntimeError(f'The {type(model)} optimizer is being stepped twice while "autocast=true" is '
-                                         'enabled. Currently, Pytorch automatic mixed precision only supports stepping '
-                                         'an optimizer once per update. Try running with "autocast=false".')
+                        e = RuntimeError(
+                            f'The {type(model)} optimizer is being stepped twice while "mixed_precision=true" is '
+                            'enabled. Currently, Pytorch automatic mixed precision only supports stepping an optimizer '
+                            'once per update. Try running with "mixed_precision=false".')
                     raise e
 
             # Lazy-initialize AutoCast context
@@ -503,16 +504,12 @@ class AutoCast:
 
         model.optim.step()  # Optimize
 
+    def update(self):
+        self.scaler.update()  # Update gradient scaler
+        self.ready = True
 
-optim = AutoCast()  # AutoCast + GradScaler scales gradients for automatic mixed precision training speedup
 
-
-# Update scaler
-def update():
-    if optim.scaler is None:
-        return
-    optim.ready = True
-    optim.scaler.update()
+MP = MixedPrecision()  # AutoCast + GradScaler scales gradients for automatic mixed precision training speedup
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers
@@ -525,7 +522,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
 
     # Backward
     if backward and loss is not None:
-        optim.backward(loss, retain_graph)  # Backward pass
+        MP.backward(loss, retain_graph)  # Backward pass
 
     # Optimize
     if step_optim:
@@ -540,7 +537,7 @@ def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False,
                 update_ema_target(source=model, target=model.ema, ema_decay=model.ema_decay)
 
             if model.optim:
-                optim.step(model)  # Step optimizer
+                MP.step(model)  # Step optimizer
 
                 if loss is None and clear_grads:
                     model.optim.zero_grad(set_to_none=True)
