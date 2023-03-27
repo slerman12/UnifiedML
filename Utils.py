@@ -472,7 +472,7 @@ class MixedPrecision:
     # Backward pass
     def backward(self, loss, retain_graph=False):
         if self.ready:
-            loss = self.scaler.scale(loss.float())
+            loss = self.scaler.scale(loss)
         loss.backward(retain_graph=retain_graph)  # Backward
 
     # Optimize
