@@ -68,19 +68,15 @@ class NormalizedCategorical(Categorical):
     A Categorical that normalizes samples, allows sampling along specific "dim"s, and can temperature-weigh the softmax.
     Consistent with torch.distributions.Categorical
     """
-    def __init__(self, probs=None, logits=None, low=None, high=None, temp=torch.ones(()), dim=-1):
-        if probs is not None:
-            probs = probs.movedim(dim, -1)
+    def __init__(self, logits, low=None, high=None, temp=torch.ones(()), dim=-1):
+        super().__init__(logits=logits.movedim(dim, -1))
 
-        if logits is not None:
-            temp = torch.as_tensor(temp, device=logits.device, dtype=logits.dtype).expand_as(logits).movedim(dim, -1)
+        temp = torch.as_tensor(temp, device=logits.device, dtype=logits.dtype).expand_as(logits).movedim(dim, -1)
 
-            logits = logits.movedim(dim, -1) / temp
+        self.logits /= temp
 
         self.low, self.high = (None, None) if low == 0 and high == logits.shape[-1] else (low, high)
         self.dim = dim
-
-        super().__init__(probs, logits)
 
     def log_prob(self, value=None):
         if value is None:
