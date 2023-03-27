@@ -496,9 +496,10 @@ class MixedPrecision:
             # Lazy-initialize AutoCast context
 
             forward = model.forward
+            device = str(next(model.parameters()).device)
 
             # Enable Pytorch AutoCast context
-            model.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
+            model.forward = torch.autocast(device, dtype=torch.float16)(forward)
 
             self.models.add(id(model))
 
