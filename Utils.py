@@ -499,12 +499,12 @@ class MixedPrecision:
 
             # Enable Pytorch AutoCast context
             model.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
-            print(model.children())
 
             for module in model.children():  # In case parts are shared across blocks e.g. discrete Critic <- Actor
                 forward = module.forward
 
                 module.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
+                print(module)
 
             # EMA
             if hasattr(model, 'ema'):
