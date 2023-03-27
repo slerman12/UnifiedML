@@ -506,7 +506,8 @@ class MixedPrecision:
         model.optim.step()  # Optimize
 
     def update(self):
-        self.scaler.update()  # Update gradient scaler
+        if self.ready:
+            self.scaler.update()  # Update gradient scaler
         self.ready = True
 
 
