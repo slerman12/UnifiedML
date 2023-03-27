@@ -274,7 +274,7 @@ class AC2Agent(torch.nn.Module):
 
             # Critic loss
             critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
-                                                      self.step, logs=logs)
+                                                       self.step, logs=logs)
 
             # "Foretell"
 
