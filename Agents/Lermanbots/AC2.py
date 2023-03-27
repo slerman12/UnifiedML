@@ -247,6 +247,8 @@ class AC2Agent(torch.nn.Module):
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
+            critic_loss = 0
+
             # Generative modeling
             if self.generate:
                 # "Imagine"
@@ -254,10 +256,10 @@ class AC2Agent(torch.nn.Module):
                 action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # Discriminate Real
 
                 # Critic loss
-                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
+                critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
 
                 # Update discriminator
-                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
+                # Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
 
@@ -273,7 +275,7 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+            critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
                                                       self.step, logs=logs)
 
             # "Foretell"

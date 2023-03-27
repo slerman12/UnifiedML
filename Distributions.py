@@ -12,7 +12,6 @@ import Utils
 class TruncatedNormal(Normal):
     """
     A Gaussian Normal distribution generalized to multi-action sampling and the option to clip standard deviation.
-    Consistent with torch.distributions.Normal
     """
     def __init__(self, loc, scale, low=None, high=None, eps=1e-6, stddev_clip=None):
         super().__init__(loc, scale)
@@ -66,7 +65,6 @@ class TruncatedNormal(Normal):
 class NormalizedCategorical(Categorical):
     """
     A Categorical that normalizes samples, allows sampling along specific "dim"s, and can temperature-weigh the softmax.
-    Consistent with torch.distributions.Categorical
     """
     def __init__(self, logits, low=None, high=None, temp=torch.ones(()), dim=-1):
         super().__init__(logits=logits.movedim(dim, -1))
