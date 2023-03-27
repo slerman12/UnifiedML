@@ -79,7 +79,7 @@ plot_per_steps: 50000
 device: null
 parallel: false
 num_workers: 8
-autocast: false
+mixed_precision: false
 # Experiment
 Agent: Agents.AC2Agent
 seed: 1

@@ -34,7 +34,7 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Initializes random seeds, device, and training acceleration
+# Initializes seeds, device, and CUDA acceleration
 def init(args):
     # Set seeds
     set_seeds(args.seed)
@@ -45,13 +45,12 @@ def init(args):
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
 
-    if 'cuda' in args.device:
-        global scaler
+    # CUDA speedup via automatic mixed precision
+    global optim
 
-        if args.autocast:
-            scaler = torch.cuda.amp.GradScaler()  # Training speedup via automatic mixed precision
+    optim.mixed_precision_enabled = 'cuda' in args.device and args.mixed_precision
 
-        torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
+    torch.backends.cudnn.benchmark = True  # CUDA speedup when input sizes don't vary
 
     print('Device:', args.device)
 
@@ -452,62 +451,68 @@ class act_mode:
                 model.train(mode)
 
 
-# Simple context manager for training speedup via automatic mixed precision
-class AutoCast:
-    def __init__(self, device):
-        super().__init__()
-
-        global scaler
-
-        self.AutoCast = torch.autocast('cuda', dtype=torch.float16) if 'cuda' in str(device) and scaler else None
-
-    def __enter__(self):
-        if self.AutoCast is not None:
-            self.AutoCast.__enter__()
-
-    def __exit__(self, *args):
-        if self.AutoCast is not None:
-            self.AutoCast.__exit__(*args)
-
-
 # Pytorch incorrect (in this case) warning suppression
 warnings.filterwarnings("ignore", message='.* skipping the first value of the learning rate schedule')
 
 
-# Scales gradients for automatic mixed precision training speedup
-class GradScaler:
+# Scales gradients for automatic mixed precision training speedup, or updates gradients normally
+class AutoCast:
+    def __init__(self):
+        self.mixed_precision_enabled = False  # Corresponds to mixed_precision=true
+        self._scaler = None
+        self.ready = False
+        self.models = set()
+
     @property
     def scaler(self):
-        return globals()['scaler']
+        if self.mixed_precision_enabled and self._scaler is None:
+            self._scaler = torch.cuda.amp.GradScaler()
+        return self._scaler  # Gradient scaler to magnify imprecise Float16 gradients
 
     # Backward pass
     def backward(self, loss, retain_graph=False):
-        return loss.backward(retain_graph=retain_graph) if self.scaler is None \
-            else self.scaler.scale(loss).backward(retain_graph=retain_graph)
+        if self.ready:
+            loss = self.scaler.scale(loss)
+        loss.backward(retain_graph=retain_graph)  # Backward
 
     # Optimize
     def step(self, model):
-        if self.scaler is None:
-            return model.optim.step()
-        elif self.scaler._per_optimizer_states[id(model.optim)]['stage'] is torch.cuda.amp.grad_scaler.OptState.STEPPED:
-            raise RuntimeError(f'The {type(model)} optimizer is being stepped twice while "autocast=true" is enabled. '
-                               f'Currently, Pytorch automatic mixed precision only supports stepping an optimizer '
-                               f'once per learning update. Try running again with "autocast=false".')
-        else:
-            return self.scaler.step(model.optim)
+        if self.mixed_precision_enabled:
+            if self.ready:
+                already_enabled = id(model) in self.models
 
-    # Update scaler
-    def update(self):
-        return None if self.scaler is None else self.scaler.update()
+                assert already_enabled, 'A new model or block is being optimized after the initial learning update ' \
+                                        'while "autocast=true". Not supported by lazy-AutoCast. Try "autocast=false".'
+                try:
+                    return self.scaler.step(model.optim)  # Optimize
+                except RuntimeError as e:
+                    if 'step() has already been called since the last update().' in str(e):
+                        e = RuntimeError(f'The {type(model)} optimizer is being stepped twice while "autocast=true" is '
+                                         'enabled. Currently, Pytorch automatic mixed precision only supports stepping '
+                                         'an optimizer once per update. Try running with "autocast=false".')
+                    raise e
+
+            # Lazy-initialize AutoCast context
+
+            forward = model.forward
+
+            # Enable Pytorch AutoCast context
+            model.forward = torch.autocast(next(model.parameters()).device, dtype=torch.float16)(forward)
+
+            self.models.add(id(model))
+
+        model.optim.step()  # Optimize
 
 
-scaler = None
-optim = GradScaler()  # GradScaler scales gradients for automatic mixed precision training speedup
+optim = AutoCast()  # AutoCast + GradScaler scales gradients for automatic mixed precision training speedup
 
 
 # Update scaler
 def update():
-    return optim.update()
+    if optim.scaler is None:
+        return
+    optim.ready = True
+    optim.scaler.update()
 
 
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers

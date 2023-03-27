@@ -54,21 +54,20 @@ class EnsemblePiActor(nn.Module):
             setattr(self.ema, 'creator', self.creator.ema)  # Creator EMA
 
     def forward(self, obs, step=1):
-        with Utils.AutoCast(obs.device):
 
-            h = self.trunk(obs)
+        h = self.trunk(obs)
 
-            # Action data or "Belief"
-            mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
+        # Action data or "Belief"
+        mean = self.Pi_head(h).view(h.shape[0], -1, self.num_actions, self.action_dim)  # [b, e, n, d or 2 * d]
 
-            if self.stddev_schedule is None:
-                mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
+        if self.stddev_schedule is None:
+            mean, log_stddev = mean.chunk(2, dim=-1)  # [b, e, n, d]
 
-                # "Uncertainty"
-                stddev = log_stddev.exp()  # [b, e, n, d]  # Learnable entropy temperature
-            else:
-                # "Uncertainty"
-                stddev = Utils.schedule(self.stddev_schedule, step)  # Single float entropy temperature
+            # "Uncertainty"
+            stddev = log_stddev.exp()  # [b, e, n, d]  # Learnable entropy temperature
+        else:
+            # "Uncertainty"
+            stddev = Utils.schedule(self.stddev_schedule, step)  # Single float entropy temperature
 
-            # Returns policy distribution Pi
-            return self.creator.Omega(mean, stddev, step).train(self.training)  # Creates policy distribution Pi
+        # Returns policy distribution Pi
+        return self.creator.Omega(mean, stddev, step).train(self.training)  # Creates policy distribution Pi
