@@ -507,6 +507,8 @@ class MixedPrecision:
 
             # EMA
             if hasattr(model, 'ema'):
+                forward = model.ema.forward
+
                 model.ema.forward = torch.autocast('cuda', dtype=torch.float16)(forward)
 
             self.models.add(id(model))

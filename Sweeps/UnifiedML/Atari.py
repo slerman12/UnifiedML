@@ -36,7 +36,8 @@ runs.UnifiedML.sweep = [
     Agent=Agents.AC2Agent
     experiment=Atari26-LessExplore
     time="5-00:00:00"
-    mem=25
+    mem=50
+    autocast=true
     reservation_id=20230321
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml    # TODO Might need mem=50
 
