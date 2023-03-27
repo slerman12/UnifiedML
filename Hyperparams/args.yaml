@@ -79,7 +79,8 @@ plot_per_steps: 50000
 device: null
 parallel: false
 num_workers: 8
-mixed_precision: false
+autocast: false  # Shorthand for mixed_precision
+mixed_precision: ${autocast}
 # Experiment
 Agent: Agents.AC2Agent
 seed: 1

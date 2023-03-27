@@ -479,7 +479,7 @@ class MixedPrecision:
     def step(self, model):
         if self.mixed_precision_enabled:
             if self.ready:
-                # Models need to have been initialized before first call to update
+                # Models need to have been AutoCast-initialized before first call to update
                 assert id(model) in self.models, 'A new model or block is being optimized after the initial learning ' \
                                                  'update while "mixed_precision=true". ' \
                                                  'Not supported by lazy-AutoCast. Try "mixed_precision=false".'
@@ -498,7 +498,7 @@ class MixedPrecision:
             forward = model.forward
 
             # Enable Pytorch AutoCast context
-            model.forward = torch.autocast(next(model.parameters()).device, dtype=torch.float16)(forward)
+            model.forward = torch.autocast(next(model.parameters()).device.name, dtype=torch.float16)(forward)
 
             self.models.add(id(model))
 
