@@ -203,13 +203,14 @@ class AC2Agent(torch.nn.Module):
         if (self.supervise or replay.offline) and instruct:
             # "Via Example" / "Parental Support" / "School"
 
-            # Inference
-            Pi = self.actor(obs)
-            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
+            with Utils.AutoCast(obs.device):
+                # Inference
+                Pi = self.actor(obs)
+                y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
-            # Cross entropy error
-            error = cross_entropy(y_predicted, label.long(),
-                                  reduction='none' if self.RL and replay.offline else 'mean')
+                # Cross entropy error
+                error = cross_entropy(y_predicted, label.long(),
+                                      reduction='none' if self.RL and replay.offline else 'mean')
 
             # Accuracy computation
             if self.log or self.RL and replay.offline:
@@ -246,8 +247,6 @@ class AC2Agent(torch.nn.Module):
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 
-            critic_loss = 0
-
             # Generative modeling
             if self.generate:
                 # "Imagine"
@@ -255,10 +254,10 @@ class AC2Agent(torch.nn.Module):
                 action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # Discriminate Real
 
                 # Critic loss
-                critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
+                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
 
                 # Update discriminator
-                # Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
+                Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
 
@@ -274,8 +273,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
-                                                       self.step, logs=logs)
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+                                                      self.step, logs=logs)
 
             # "Foretell"
 
