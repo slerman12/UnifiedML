@@ -5,44 +5,40 @@
 import torch
 from torch.nn.functional import mse_loss, binary_cross_entropy
 
-from Utils import AutoCast
-
 
 def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=None, step=0, logs=None):
-    with AutoCast(obs.device):
+    # Non-empty next_obs
+    has_future = next_obs is not None and bool(next_obs.nelement())
 
-        # Non-empty next_obs
-        has_future = next_obs is not None and bool(next_obs.nelement())
+    # Compute Bellman target
+    with torch.no_grad():
+        # Current reward
+        target_Q = reward
 
-        # Compute Bellman target
-        with torch.no_grad():
-            # Current reward
-            target_Q = reward
+        # Discounted future reward
+        if has_future:
+            # Get actions for next_obs
+            next_Pi = actor(next_obs, step)
 
-            # Discounted future reward
-            if has_future:
-                # Get actions for next_obs
-                next_Pi = actor(next_obs, step)
+            # Discrete Critic tabulates all actions for single-dim discrete envs a priori, no need to sample
+            next_action = None if critic.all_actions_known else next_Pi.sample(1)  # Sample
 
-                # Discrete Critic tabulates all actions for single-dim discrete envs a priori, no need to sample
-                next_action = None if critic.all_actions_known else next_Pi.sample(1)  # Sample
+            # Discrete Actor already computed Q-values and they're already known by Policy
+            All_Next_Qs = next_Pi.All_Qs if actor.discrete else None
 
-                # Discrete Actor already computed Q-values and they're already known by Policy
-                All_Next_Qs = next_Pi.All_Qs if actor.discrete else None
+            # Q-values per action
+            next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy Critic: Q(obs, a)
 
-                # Q-values per action
-                next_Qs = critic.ema.eval()(next_obs, next_action, All_Next_Qs)  # Call a delayed-copy Critic: Q(obs, a)
+            # Pessimistic Q-values per action
+            next_q = next_Qs.min(1)[0]  # Min-reduced critic ensemble
 
-                # Pessimistic Q-values per action
-                next_q = next_Qs.min(1)[0]  # Min-reduced critic ensemble
+            # Weigh each action's pessimistic Q-value by its probability
+            next_action_prob = next_q.size(1) < 2 or next_Pi.log_prob(next_action).softmax(-1)  # Action probability
+            next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
 
-                # Weigh each action's pessimistic Q-value by its probability
-                next_action_prob = next_q.size(1) < 2 or next_Pi.log_prob(next_action).softmax(-1)  # Action probability
-                next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+            target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
 
-                target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
-
-        Qs = critic(obs, action)  # Q-ensemble
+    Qs = critic(obs, action)  # Q-ensemble
 
     # Use BCE if Critic is Sigmoid-activated, else MSE
     criterion = binary_cross_entropy if critic.binary else mse_loss

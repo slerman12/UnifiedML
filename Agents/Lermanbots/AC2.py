@@ -203,14 +203,13 @@ class AC2Agent(torch.nn.Module):
         if (self.supervise or replay.offline) and instruct:
             # "Via Example" / "Parental Support" / "School"
 
-            with Utils.AutoCast(obs.device):
-                # Inference
-                Pi = self.actor(obs)
-                y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
+            # Inference
+            Pi = self.actor(obs)
+            y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
-                # Cross entropy error
-                error = cross_entropy(y_predicted, label.long(),
-                                      reduction='none' if self.RL and replay.offline else 'mean')
+            # Cross entropy error
+            error = cross_entropy(y_predicted, label.long(),
+                                  reduction='none' if self.RL and replay.offline else 'mean')
 
             # Accuracy computation
             if self.log or self.RL and replay.offline:
@@ -276,7 +275,7 @@ class AC2Agent(torch.nn.Module):
 
             # Critic loss
             critic_loss += QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
-                                                      self.step, logs=logs)
+                                                       self.step, logs=logs)
 
             # "Foretell"
 
