@@ -44,16 +44,16 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
         Qs = critic(obs, action)  # Q-ensemble
 
-        # Use BCE if Critic is Sigmoid-activated, else MSE
-        criterion = binary_cross_entropy if critic.binary else mse_loss
+    # Use BCE if Critic is Sigmoid-activated, else MSE
+    criterion = binary_cross_entropy if critic.binary else mse_loss
 
-        # Temporal difference (TD) error
-        q_loss = criterion(Qs, target_Q.unsqueeze(1).expand_as(Qs))
+    # Temporal difference (TD) error
+    q_loss = criterion(Qs, target_Q.unsqueeze(1).expand_as(Qs))
 
-        if logs is not None:
-            logs['temporal_difference_error'] = q_loss
-            logs.update({f'q{i}': Qs[:, i].to('cpu' if Qs.device.type == 'mps' else Qs).median()  # median not on MPS
-                         for i in range(Qs.shape[1])})
-            logs['target_q'] = target_Q.mean()
+    if logs is not None:
+        logs['temporal_difference_error'] = q_loss
+        logs.update({f'q{i}': Qs[:, i].to('cpu' if Qs.device.type == 'mps' else Qs).median()  # median not on MPS
+                     for i in range(Qs.shape[1])})
+        logs['target_q'] = target_Q.mean()
 
-        return q_loss
+    return q_loss
