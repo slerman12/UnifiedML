@@ -31,8 +31,9 @@ env:
   _target_: ${Env}
   _recursive_: false
   subset: null
+  Transform: null
   transform:
-    _target_: null
+    _target_: ${env.Transform}
 Dataset: null  # Defaults per respective Classify task
 TestDataset: null
 dataset:
