@@ -242,7 +242,7 @@ class AC2Agent(torch.nn.Module):
                 if replay.offline:
                     action = (index if self.discrete else y_predicted).detach()
                     reward = correct if self.discrete else -error.detach()  # reward = -error
-                else:  # Use Online action
+                else:  # Use Replay action from Online training
                     reward = (action.squeeze(1) == label).float() if self.discrete \
                         else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
 

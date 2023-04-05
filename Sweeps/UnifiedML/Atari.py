@@ -28,7 +28,7 @@ runs.UnifiedML.sweep = [
 
     # Less Exploration
     f"""
-    task={join(atari)}
+    task={join(atari[:-3])}
     train_steps=1000000
     save_per_steps=200000
     replay.save=true
@@ -38,7 +38,24 @@ runs.UnifiedML.sweep = [
     time="5-00:00:00"
     mem=50
     autocast=true
+    capacity=500000
     reservation_id=20230321
+    """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml    # TODO Might need mem=50
+
+    # Less Exploration
+    f"""
+    task={join(atari[-3:])}
+    train_steps=1000000
+    save_per_steps=200000
+    replay.save=true
+    'stddev_schedule="linear(1.0,0.1,20000)"'
+    Agent=Agents.AC2Agent
+    experiment=Atari26-LessExplore
+    time="5-00:00:00"
+    mem=50
+    autocast=true
+    capacity=500000
+    lab=true
     """,  # Note: Manually set "pseudonym" to task_name in sbatch.yaml    # TODO Might need mem=50
 
     # Medium Exploration

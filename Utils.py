@@ -299,7 +299,7 @@ def one_hot(x, num_classes, null_value=0, one_value=1):
     x = x.squeeze(-1).unsqueeze(-1)  # Or do this
     x = x.long()
     shape = x.shape[:-1]
-    nulls = torch.full([*shape, num_classes], null_value, dtype=x.dtype, device=x.device)
+    nulls = torch.full([*shape, num_classes], null_value, dtype=torch.float32, device=x.device)
     return nulls.scatter(len(shape), x, one_value).float()
 
 
