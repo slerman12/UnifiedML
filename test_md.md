@@ -14,7 +14,7 @@ class AGI:
         ...
 
 
-print(f'{AGI.__init__} is a method for initializing class "AGI".')
+print(f'{AGI.__init__} is a method for initializing the class "AGI".')
 ```
 
 “AGI.\_\_init\_\_”, the name of our organization, is therefore a magic method in legal Python syntax for initializing the class called AGI. As an acronym, “AGI” for us stands simply for “A General Intelligence.” It can mean Artificial General Intelligence, biological, or a broader intelligence among people through accessible education tools and resources.

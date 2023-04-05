@@ -22,14 +22,14 @@ class HardDQNAgent(DQNAgent):
 class HardDQNPolicy(MonteCarlo):
     """
     A policy where returned probabilities for Q-learning correspond to a hard exploitation policy
+    In Q Learning, the expected future Q-value depends on the probability of future actions; can be deterministic
     Can use with AC2Agent: python Run.py Policy=Agents.HardDQN.HardDQNPolicy
     """
-    # Log-probability to multiply each action's Q-value by to estimate expected future Q-value
     def log_prob(self, action=None):
         if action is None:
             num_actions = self.All_Qs.size(-2)
-            log_prob = one_hot(self.best.squeeze(-1), num_actions, null_value=-inf)  # Learn exploitative Q-value-target
+            log_prob = one_hot(self.best.squeeze(-1), num_actions, null_value=-inf)  # One-hot prob [0, ..., 1, ..., 0]
 
-            return log_prob  # One-hot prob
-
-        return super().log_prob(action)  # For compatibility with continuous spaces/Agents
+            return log_prob  # Learn deterministic Q-value-target
+        else:
+            return super().log_prob(action)  # For compatibility with continuous spaces/Agents
