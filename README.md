@@ -1468,7 +1468,7 @@ Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
 
-Also be sure to star the library :star:
+Also be sure to star the library. :star:
 
 [comment]: <> (# Note)
 
