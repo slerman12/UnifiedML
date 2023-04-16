@@ -1438,7 +1438,7 @@ All files are designed for pedagogical clarity and extendability for research, t
 [comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
 Please support financially by Sponsoring. <br>
 
-Donate here: [![Donate](https://img.shields.io/badge/Please_Donate._Thank_You.-PayPal-blue.svg?style=flat-square)](https://www.paypal.com/cgi-bin/)
+Donate here: [![Donate](https://img.shields.io/badge/Please_Donate.-Thank_You.-blue.svg?style=flat-square)](https://www.paypal.com/cgi-bin/)
 
 
 [//]: # (Donate via :)
