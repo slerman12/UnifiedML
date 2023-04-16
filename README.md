@@ -1440,7 +1440,7 @@ Please support financially by
 * [**Sponsoring**](https://github.com/sponsors/agi-init) 
 * or donate [![Donate](https://img.shields.io/badge/here_via_PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/).
 
-Thank you.
+[//]: # (Thank you.)
 
 [//]: # (Donate via :)
 
@@ -1468,7 +1468,7 @@ Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
 
-Also be sure to star the library. :star:
+[//]: # (Also be sure to star the library. :star:)
 
 [comment]: <> (# Note)
 
