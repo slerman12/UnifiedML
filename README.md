@@ -1465,7 +1465,7 @@ Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
 
-Donations are welcome: [![Donate](https://img.shields.io/badge/Please_Donate-Thank_You.-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/)
+Donations are welcome: [![Donate](https://img.shields.io/badge/Please_Donate.-Thank_You.-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/)
 
 [comment]: <> (# Note)
 
