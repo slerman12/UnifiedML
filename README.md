@@ -1436,7 +1436,7 @@ All files are designed for pedagogical clarity and extendability for research, t
 [comment]: <> (Please support financially: <br>)
 
 [comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
-[Please support financially by **Sponsoring**](https://github.com/sponsors/agi-init) or donate [![Donate](https://img.shields.io/badge/here-via_PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/).
+Please support financially by [**Sponsoring**](https://github.com/sponsors/agi-init) or donate [![Donate](https://img.shields.io/badge/here-via_PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/).
 
 [//]: # (Donate via :)
 
