@@ -1438,6 +1438,7 @@ All files are designed for pedagogical clarity and extendability for research, t
 [comment]: <> ([![Donate]&#40;https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square&#41;]&#40;https://www.paypal.com/cgi-bin/&#41; <br>)
 Please support financially by Sponsoring. <br>
 
+Donate [![Donate](https://img.shields.io/badge/here-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/)
 
 [//]: # (Donate via :)
 
@@ -1464,8 +1465,6 @@ We are a nonprofit, single-PhD student team. If possible, compute resources appr
 Feel free to [contact **agi.\_\_init\_\_**](mailto:agi.init@gmail.com).
 
 I am always looking for collaborators. Don't hesitate to volunteer in any way to help realize the full potential of this library.
-
-Donations are welcome: [![Donate](https://img.shields.io/badge/Please_Donate.-Thank_You.-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/)
 
 [comment]: <> (# Note)
 
