@@ -290,9 +290,7 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
         original_predicted_vs_actual = predicted_vs_actual.copy()
 
-        # step = predicted_vs_actual[['Task', 'Step']].groupby('Task').max().reset_index() \
-        #     if 'Step' in predicted_vs_actual.columns else None
-        step = predicted_vs_actual[['Task', 'Step']].groupby('Task').max().reset_index()  # TODO Use this after XRD
+        step = predicted_vs_actual[['Task', 'Step']].groupby('Task').max().reset_index()
 
         predicted_vs_actual['Accuracy'] = 0
         predicted_vs_actual.loc[predicted_vs_actual['Predicted'] == predicted_vs_actual['Actual'], 'Accuracy'] = 1
@@ -316,7 +314,6 @@ def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_t
 
             #  Post-processing
             step_ = f' (@{int(step.loc[step["Task"] == cell[0], "Step"])} Steps)'
-            # step_ = ' (@500000 Steps)'  # TODO This is just for XRD
             ax.set_title(f'{ax_title}{step_}')
             ax.set_ybound(-0.05, 1.05)
             ax.yaxis.set_major_formatter(FuncFormatter('{:.0%}'.format))
@@ -395,7 +392,7 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
             if length == 0:
                 continue
 
-            # Min number of max steps over all tasks/experiments  TODO per task/suite or range
+            # Min number of max steps over all tasks/experiments
             # Assumes data available for a single shared step across tasks - may not be true when log steps inconsistent
             min_steps = min(min_steps, length)
 
@@ -483,7 +480,7 @@ def general_plot(data, path, plot_name, palette, make_func, per='Task', title='U
         # Unique colors for this cell
         hue_names = cell_data[hue].unique()
 
-        # No need to show Agent name in legend if all same - TODO perhaps across the whole plot, not per cell
+        # No need to show Agent name in legend if all same
         if len((data if universal_legend else cell_data)[hue].str.split('(').str[0].unique()) == 1:  # Unique Agent name
             # Remove Agent name from data columns
             cell_data[hue] = cell_data[hue].str.split('(').str[1:].str.join('(').str.split(')'

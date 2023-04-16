@@ -229,7 +229,7 @@ class ExperienceReplay:
                 # Add the experience
                 self.episode[name].append(exp[name])
 
-            if self.stream:  # TODO Save obs from nstep ago, action from step - 1 ago and cumulate reward from nstep - 1
+            if self.stream:
                 self.stream = exp  # For streaming directly from Environment
 
         # Count experiences in episode
@@ -245,7 +245,7 @@ class ExperienceReplay:
 
         for name, spec in self.specs.items():
             # Concatenate into one big episode batch. Presumes a pre-existing batch dimension in each experience
-            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)  # TODO SharedDict dtype
+            self.episode[name] = np.concatenate(self.episode[name], axis=0).astype(np.float32)
 
         self.episode_len = len(self.episode['obs'])
 

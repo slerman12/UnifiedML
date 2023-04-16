@@ -69,17 +69,13 @@ class MonteCarlo(nn.Module):
         if self.discrete:
             self.All_Qs = mean  # [b, e, n, d]
         else:
-            # Normalized  TODO perhaps normalize after sampling for stddev consistency across scales (DrQV2 to best)
+            # Normalized
             self.mean = mean if not (self.low or self.high) else mean.tanh() if self.low == -1 and self.high == 1 \
                 else (mean.tanh() + 1) / 2 * (self.high - self.low) + self.low  # [b, e, n, d]
 
         # Randomness
         self.stddev = stddev
         self.rand = rand
-        # TODO
-        # self.rand_clip = 1
-        # self.stddev_clip = 0.3  # TODO Should include in Categorical?
-        # Or self.dev = None  # Can directly set the deviation  Note: Discrete uses dev then defaults to stddev
 
         # A secondary mapping that is applied after sampling an continuous-action
         self.ActionExtractor = ActionExtractor or nn.Identity()
@@ -114,7 +110,7 @@ class MonteCarlo(nn.Module):
         # Log-probability
         log_prob = self.Psi.log_prob(action)  # [b, n', d] if discrete, [b, e*n', 1, d] if continuous
 
-        # If continuous-action is a discrete distribution, it gets double-sampled  TODO logsumexp
+        # If continuous-action is a discrete distribution, it gets double-sampled
         if self.discrete_as_continuous:
             log_prob = (log_prob + action / self.temp).sum(-1)  # (Adding log-probs is equivalent to multiplying probs)
 
@@ -127,7 +123,7 @@ class MonteCarlo(nn.Module):
     def entropy(self):
         # If continuous-action is a discrete distribution, 2nd sample also has entropy
         if self.discrete_as_continuous:
-            # Approximate joint entropy  TODO NormalizedCategorical which logsumexps first then weighs temp
+            # Approximate joint entropy
             return self._entropy + torch.distributions.Categorical(logits=self.mean.mean(-1) / self.temp).entropy()
 
         return self._entropy  # [b, e]
@@ -151,9 +147,9 @@ class MonteCarlo(nn.Module):
         if self.rand:
             action = action.uniform_(self.low, self.high)
 
-        # If sampled action is a discrete distribution, sample again  TODO Discrete norm?
+        # If sampled action is a discrete distribution, sample again
         if sample_shape is None and self.discrete_as_continuous:
-            self.store = action  # TODO NormalizedCategorical which logsumexps first then weighs temp
+            self.store = action
             action = torch.distributions.Categorical(logits=action.movedim(-2, -1) / self.temp).sample()  # Sample again
 
         return action
@@ -170,13 +166,8 @@ class MonteCarlo(nn.Module):
         action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])  # Extract ensemble-reduce
 
-        # If continuous-action is a discrete distribution  TODO Discrete norm?
+        # If continuous-action is a discrete distribution
         if self.discrete_as_continuous:
             action = action.argmax(1)  # Argmax
 
         return action
-
-    # TODO
-    def judgement(self, obs, action, critic):
-        # Pessimism
-        return critic(obs, action).min(1)[0]  # Reduce critic ensemble pessimistically
