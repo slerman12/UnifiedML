@@ -1440,6 +1440,7 @@ Please support financially by
 * [**Sponsoring**](https://github.com/sponsors/agi-init) 
 * or donate [![Donate](https://img.shields.io/badge/here_via_PayPal-green.svg?style=flat-square)](https://www.paypal.com/cgi-bin/).
 
+Thank you.
 [//]: # (Donate via :)
 
 [//]: # (<br>)
