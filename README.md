@@ -79,11 +79,11 @@ For detailed documentation, [see our :scroll:](https://arxiv.com).
 [comment]: <> (```)
 
 ```bibtex
-@article{cool,
+@article{in-progress,
   title   = {UnifiedML: A Unified Framework For Intelligence Training},
-  author  = {Lerman, Sam and Xu, Chenliang},
-  journal = {arXiv preprint arXiv:2203.08913},
-  year    = {2022}
+  author  = {Sam Lerman, Chenliang Xu},
+  journal = {arXiv preprint},
+  year    = {2023}
 }
 ```
 
