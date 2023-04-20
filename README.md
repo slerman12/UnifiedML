@@ -1409,7 +1409,7 @@ python Run.py task=atari/pong,atari/breakout -m
 
 The results are reported for all 26 games and 3 different agents:
 
-<img width="60%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
+<img width="40%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
 
 <details>
 <summary>
