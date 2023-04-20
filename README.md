@@ -1413,10 +1413,6 @@ The results are reported for all 26 games and 3 different agents:
 
 We found these results to be pretty stable across a range of exploration rates as well:
 
-```console
-python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 Aug=Identity Optim=Adam '+optim.betas=[0.5, 0.999]' lr=2e-4 +agent.num_critics=1 train_steps=5000
-```
-
 <img width="40%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
 
 <details>
