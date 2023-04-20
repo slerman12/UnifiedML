@@ -1411,10 +1411,6 @@ The results are reported for all 26 games and 3 different agents:
 
 <img width="40%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
 
-We found these results to be pretty stable across a range of exploration rates as well:
-
-<img width="40%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
-
 <details>
 <summary>
 Click here to see per-task results.
@@ -1424,6 +1420,10 @@ Click here to see per-task results.
 <img width="40%" alt="flowchart" src="https://i.imgur.com/DVIcwtV.jpg">
 
 </details>
+
+We found these results to be pretty stable across a range of exploration rates as well:
+
+<img width="40%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
 
 Each time point averages over 10 evaluation episodes.
 
