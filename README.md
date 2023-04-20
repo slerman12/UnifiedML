@@ -1409,7 +1409,7 @@ python Run.py task=atari/pong,atari/breakout -m
 
 The results are reported for all 26 games and 3 different agents:
 
-<img width="40%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
+<img width="60%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
 
 <details>
 <summary>
@@ -1423,7 +1423,7 @@ Click here to see per-task results.
 
 We found these results to be pretty stable across a range of exploration rates as well:
 
-<img width="40%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
+<img width="60%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
 
 Each time point averages over 10 evaluation episodes.
 
