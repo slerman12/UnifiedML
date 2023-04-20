@@ -76,12 +76,12 @@ runs.UnifiedML.sweep = [
 
 runs.UnifiedML.plots = [
     # ['Atari26-MoreExplore'],
-    ['Atari26-LessExplore'],
+    # ['Atari26-LessExplore'],
     # ['Atari26-MediumExplore'],
-    # ['Atari26-LessExplore', 'Atari26-MediumExplore', 'Atari26-MoreExplore']
+    ['Atari26-LessExplore', 'Atari26-MediumExplore', 'Atari26-MoreExplore']
 ]
 
-runs.UnifiedML.sftp = True
+runs.UnifiedML.sftp = False
 runs.UnifiedML.lab = False
 runs.UnifiedML.title = 'Atari-26'
 runs.UnifiedML.steps = 1e6

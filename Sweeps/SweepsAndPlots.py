@@ -40,7 +40,7 @@ from Sweeps.UnifiedML.Atari import runs
 # from Sweeps.UnifiedML.ClassifyRL2 import runs
 # from Sweeps.UnifiedML.DuelingDQN import runs
 # from Sweeps.UnifiedML.ActionSpaces import runs
-# from Sweeps.UnifiedML.DCGAN import runs
+from Sweeps.UnifiedML.DCGAN import runs
 # from Sweeps.UnifiedML.ClassifyRL3 import runs
 # from Sweeps.UnifiedML.Speed import runs
 

@@ -650,7 +650,7 @@ Assumes a replay [is saved](#saving).
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
 
-Is true by default for classification, where replays are automatically downloaded.
+Is true by default for classification, where datasets are automatically downloaded and created into replays.
 
 </details>
 
@@ -1393,14 +1393,67 @@ Feel free to use our UnifiedML templates and figures in your work, citing [us](#
 
 # :bar_chart: Agents & Performances
 
-In progress...
+<details>
+<summary>
+Atari
+</summary>
+<br>
 
-[//]: # (```console)
+We can attain 100% mean human-normalized score across the Atari-26 benchmark suite in about 1m environment steps. 
 
-[//]: # (python Run.py   task=classify/celeba   Dataset=Datasets.Suites._CelebA.CelebA   generate=true      Discriminator=DCGAN.Discriminator      Generator=DCGAN.Generator      z_dim=100      'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"'      experiment=DCGAN     Aug=Identity '+optim.betas=[0.5, 0.999]' lr=2e-4  +agent.num_critics=1 Optim=Adam train_steps=10000)
+The below example script shows how to launch training for just Pong and Breakout with Ac2Agent, but the results are reported for all 26 games and 3 different agents. 
 
-[//]: # (```)
+```console
+python Run.py task=atari/pong,atari/breakout -m
+```
 
+<img width="40%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
+
+We found these results to be pretty stable across a range of exploration rates as well:
+
+```console
+python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 Aug=Identity Optim=Adam '+optim.betas=[0.5, 0.999]' lr=2e-4 +agent.num_critics=1 train_steps=5000
+```
+
+<img width="40%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
+
+<details>
+<summary>
+Click here to see per-task results.
+</summary>
+<br>
+
+<img width="40%" alt="flowchart" src="https://i.imgur.com/DVIcwtV.jpg">
+
+</details>
+
+Each time point averages over 10 evaluation episodes.
+
+</details>
+
+<details>
+<summary>
+DCGAN
+</summary>
+<br>
+
+The simplest way to do DCGAN is to use the DCGAN architecture:
+
+```console
+python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator train_steps=50000
+```
+
+<img width="40%" alt="flowchart" src="https://i.imgur.com/12tsPGN.png">
+
+We can then improve the results, and speed up training tenfold, by modifying the hyperparameters:
+
+```console
+python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 Aug=Identity Optim=Adam '+optim.betas=[0.5, 0.999]' lr=2e-4 +agent.num_critics=1 train_steps=5000
+```
+
+<img width="60%" alt="flowchart" src="https://i.imgur.com/1yMmpIw.png">
+
+</details>
 
 [//]: # (python Run.py   task=classify/celeba   Dataset=Datasets.Suites._CelebA.CelebA   generate=true      Discriminator=DCGAN.Discriminator      Generator=DCGAN.Generator      z_dim=100      'env.transform="transforms.Compose&#40;[transforms.Resize&#40;64&#41;,transforms.CenterCrop&#40;64&#41;]&#41;"'      experiment=DCGAN    '+optim.betas=[0.5, 0.999]'   Optim=Adam)
 
