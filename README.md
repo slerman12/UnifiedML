@@ -1401,11 +1401,13 @@ Atari
 
 We can attain 100% mean human-normalized score across the Atari-26 benchmark suite in about 1m environment steps. 
 
-The below example script shows how to launch training for just Pong and Breakout with Ac2Agent, but the results are reported for all 26 games and 3 different agents. 
+The below example script shows how to launch training for just Pong and Breakout with ```AC2Agent```:
 
 ```console
 python Run.py task=atari/pong,atari/breakout -m
 ```
+
+The results are reported for all 26 games and 3 different agents:
 
 <img width="40%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
 
