@@ -1417,7 +1417,7 @@ Click here to see per-task results.
 </summary>
 <br>
 
-<img width="40%" alt="flowchart" src="https://i.imgur.com/DVIcwtV.jpg">
+<img width="80%" alt="flowchart" src="https://i.imgur.com/DVIcwtV.jpg">
 
 </details>
 
