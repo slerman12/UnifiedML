@@ -33,3 +33,20 @@ Example:
     $ python MyRunner.py task=MyRecipe
 
 """
+import sys
+import os
+import inspect
+
+
+# Imports UnifiedML paths and the paths of any launching app
+def import_paths():
+    UnifiedML = os.path.dirname(__file__)
+    app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
+
+    sys.path.extend([UnifiedML, app])  # Imports UnifiedML paths and the paths of the launching app
+
+    if os.path.exists(app + '/Hyperparams'):
+        sys.argv.extend(['-cd', app + '/Hyperparams'])  # Adds an app's Hyperparams dir to Hydra's .yaml search path
+
+
+import_paths()
