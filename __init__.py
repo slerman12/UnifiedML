@@ -42,7 +42,6 @@ import inspect
 def import_paths():
     UnifiedML = os.path.dirname(__file__)
     app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
-    print(UnifiedML, app)
 
     sys.path.extend([UnifiedML, app])  # Imports UnifiedML paths and the paths of the launching app
 
