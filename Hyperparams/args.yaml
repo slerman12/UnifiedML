@@ -9,7 +9,7 @@ action_spec: ???  # To be specified later
 num_actions: 1
 standardize: true
 norm: true  # Note: ignored / mutually exclusive if standardize
-z_dim: 50  # Shorthand for trunk_dim (Generator input dim)
+z_dim: 50  # Shorthand for trunk_dim (Generator noise input dim)
 trunk_dim: ${z_dim}
 hidden_dim: 1024
 rand_steps: 2000
@@ -40,7 +40,7 @@ dataset:
   _target_: ${Dataset}
   _recursive_: false
 test_dataset:
-  _target_: ${TestDataset}
+  _target_: ${TestDataset}  # TODO Would be good if defaulted to Dataset if other sub-args non-empty
   _recursive_: false
 suite: ???  # To be specified later, defaults per respective task
 task_name: ???  # To be specified later, defaults per respective task
