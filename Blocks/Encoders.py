@@ -33,8 +33,10 @@ class CNNEncoder(nn.Module):
         obs_shape = [*(1,) * (len(self.obs_shape) < 2), *self.obs_shape]  # Create at least 1 channel dim & spatial dim
         obs_shape[0] += context_dim
 
-        # CNN
-        self.Eyes = Utils.instantiate(Eyes, input_shape=obs_shape) or CNN(obs_shape)
+        # CNN TODO Auto-infer how to broadcast input shape based on whether signature arg 0 is in_features, in_channels,
+        self.Eyes = Utils.instantiate(Eyes, input_shape=obs_shape) or CNN(obs_shape)            # TODO input_shape, etc.
+        #     TODO e.g. dynamically support output_dim vs output_shape, or "out_features" and common names. Maybe just a
+        #           conversion method in instantiate based on signature try-catch
 
         adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
