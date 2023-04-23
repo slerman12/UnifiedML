@@ -896,7 +896,7 @@ We found these results to be pretty stable across a range of exploration rates a
 
 <img width="60%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
 
-Each time point averages over 10 evaluation episodes per 26 games.
+Each time point averages over 10 evaluation episodes (and 26 games).
 
 </details>
 
