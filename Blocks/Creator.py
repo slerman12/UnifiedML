@@ -170,7 +170,7 @@ class MonteCarlo(nn.Module):
         action = self.Psi.normalize(self.Psi.logits.argmax(-1, keepdim=True).transpose(-1, -2)) if self.discrete \
             else self.ActionExtractor(self.mean[:, torch.randint(self.mean.shape[1], [])])  # Extract ensemble-reduce
 
-        # If continuous-action is a discrete distribution  TODO Discrete norm?
+        # If continuous-action is a discrete distribution  TODO Discrete norm? Also, can do env-rounding here if needed
         if self.discrete_as_continuous:
             action = action.argmax(1)  # Argmax
 
