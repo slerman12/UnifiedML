@@ -392,8 +392,8 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
         # Track max step total across all csvs
         if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower():
             length = int(csv.loc[csv['step'] <= steps, 'step'].max())
-            if length == 0:
-                continue
+            # if length == 0:
+            #     continue
 
             # Min number of max steps over all tasks/experiments  TODO per task/suite or range
             # Assumes data available for a single shared step across tasks - may not be true when log steps inconsistent

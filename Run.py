@@ -41,26 +41,26 @@ def main(args):
     vlogger = instantiate(args.vlogger) if args.log_media else None
 
     # Start
-    converged = training = False
+    converged = training = args.train_steps == 0
     while True:
         # Evaluate
-        if converged or args.evaluate_per_steps and agent.step % args.evaluate_per_steps == 0 or args.train_steps == 0:
+        if converged or args.evaluate_per_steps and agent.step % args.evaluate_per_steps == 0:
 
             for _ in range(args.generate or args.evaluate_episodes):
                 exp, logs, vlogs = generalize.rollout(agent.eval(),  # agent.eval() just sets agent.training to False
                                                       vlog=args.log_media)
 
-                logger.log(logs, 'Eval', exp if converged or args.train_steps == 0 else None)
+                logger.log(logs, 'Eval', exp if converged else None)
 
             logger.dump_logs('Eval')
 
             if args.log_media:
                 vlogger.dump(vlogs, f'{agent.step}')
 
-        if args.plot_per_steps and (agent.step + 1) % args.plot_per_steps == 0 and not args.generate:
+        if args.plot_per_steps and (agent.step + 1) % args.plot_per_steps == 0 and not args.generate or converged:
             call(args.plotting)
 
-        if converged or args.train_steps == 0:
+        if converged:
             break
 
         # Rollout
