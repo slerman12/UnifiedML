@@ -761,8 +761,6 @@ Replays are recommended for RL because on-policy algorithmic support is currentl
 
 * Online tasks may create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set).
 * By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
-* Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
-* Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
 #
 
