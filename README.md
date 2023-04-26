@@ -808,8 +808,7 @@ Think of them as Pytorch DataLoaders/Datasets but with extra features (truly-sha
 
 By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
-You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment.
-* In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations. 
+You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations. 
 
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
