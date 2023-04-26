@@ -727,7 +727,7 @@ python Run.py task=classify/mnist generate=true Discriminator=CNN +agent.num_cri
 Or a ResNet18:
 
 ```console
-python Run.py task=classify/mnist generate=true Discriminator=Resnet18
+python Run.py task=classify/mnist generate=true Discriminator=ResNet18
 ```
 
 Let's speed up training by turning off the default image augmentation, which is overkill anyway for this simple case:
