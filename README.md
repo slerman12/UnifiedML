@@ -758,7 +758,7 @@ Click here to learn more about replays
 
 **In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
 
-**Think of them as Pytorch DataLoaders/Datasets but with extra features** (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes and re-writable memory, as well as saving stats about the data for standardization, normalization, etc.). Saving them at the end of training means saving an in-disk buffer.
+**Think of them as Pytorch DataLoaders/Datasets but with extra features.** Saving them at the end of training means saving an in-disk buffer.
 
 You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations.
 
@@ -785,7 +785,7 @@ You can change the Agent load/save path with ```load_path=```/```save_path=``` a
 </summary>
 <br>
 
-Offline, generally speaking, means the dataset size doesn't grow.
+Offline means the dataset size doesn't grow.
 
 From a saved experience replay, sans additional rollouts:
 
@@ -795,7 +795,7 @@ python Run.py task=atari/breakout offline=true
 
 Assumes a replay [is saved](#saving).
 
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does learning updates and evaluation rollouts.
 
 ```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
 
