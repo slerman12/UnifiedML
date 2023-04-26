@@ -375,6 +375,8 @@ python Run.py save_per_steps=100000
 python Run.py load=true
 ```
 
+**Agents** may be trained without saving by adding the ```save=false``` flag.
+
 An **experience replay** can be saved and/or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
 
 ```console
@@ -385,29 +387,34 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
-Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively.
+Online tasks, such as online RL, will create a new replay if ```replay.load=false```, or — careful — potentially delete the current replay at the end of training if ```replay.save=false```.
 
-You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
-
-Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
+By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. Since the dataset is static, creating/loading is handled automatically.
 
 <details>
 <summary>
-Click here for more details about replays
+Click here to learn more about replays
 </summary>
 <br>
 
+<img width="25%" alt="flowchart" src="https://i.imgur.com/9qYLS0n.png"><br><br>
+
 **In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
-
-**Think of them as Pytorch DataLoaders/Datasets but with extra features** (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes and re-writable memory, as well as saving stats about the data for standardization, normalization, etc.).
-
-> &#9432; By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly (see below for how to disable). Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
 You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations.
 
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
+~
+
 </details>
+
+Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per *a unique experiment*, otherwise overriding.
+
+*A unique experiment* is distinguished by the flags: ```experiment=```, ```Agent=```, ```task=```, and ```seed=```.
+
+You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
+
 
 </details>
 
@@ -419,6 +426,8 @@ Replays are recommended for RL because on-policy algorithmic support is currentl
 </summary>
 <br>
 
+Offline means the dataset size doesn't grow.
+
 From a saved experience replay, sans additional rollouts:
 
 ```console
@@ -427,7 +436,7 @@ python Run.py task=atari/breakout offline=true
 
 Assumes a replay [is saved](#saving).
 
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does learning updates and evaluation rollouts.
 
 ```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
 
