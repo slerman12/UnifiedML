@@ -709,6 +709,28 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 
 [comment]: <> (Kim et al. &#40;2018&#41; and iterative VAE &#40;IVAE&#41; by Marino et al. &#40;2018&#41;.)
 
+### Offline RL
+
+<details>
+<summary>
+:mag: <i>Click to play retroactively</i>
+</summary>
+<br>
+
+From a saved experience replay, sans additional rollouts:
+
+```console
+python Run.py task=atari/breakout offline=true
+```
+
+Assumes a replay [is saved](#saving).
+
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+
+```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
+
+</details>
+
 ### Saving
 <details>
 <summary>
@@ -765,28 +787,6 @@ You can disable the use of replays with ```stream=true```, which just sends data
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
 </details>
-
-</details>
-
-### Offline RL
-
-<details>
-<summary>
-:mag: <i>Click to play retroactively</i>
-</summary>
-<br>
-
-From a saved experience replay, sans additional rollouts:
-
-```console
-python Run.py task=atari/breakout offline=true
-```
-
-Assumes a replay [is saved](#saving).
-
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
-
-```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
 
 </details>
 
@@ -1043,7 +1043,7 @@ python Run.py task=classify/mnist lr_decay_epochs=100
 
 </details>
 
-### Custom Env
+### Custom Environments
 
 <details>
 <summary>
