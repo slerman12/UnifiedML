@@ -776,7 +776,7 @@ python Run.py train_steps=2
 # Saves periodically
 python Run.py save_per_steps=100000
 
-# Loads
+# Load
 python Run.py load=true
 ```
 
