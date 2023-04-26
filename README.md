@@ -742,6 +742,10 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
+Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively.
+
+You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
+
 Online tasks, such as online RL, will create a new replay if ```replay.load=false```, or — careful — potentially delete the current replay at the end of training if ```replay.save=false```. 
 
 By default, classify tasks are Offline, so you don't have to worry about manually loading or saving replays.
@@ -761,12 +765,6 @@ You can disable the use of replays with ```stream=true```, which just sends data
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
 </details>
-
-#
-
-Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively.
-
-You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
 
 </details>
 
