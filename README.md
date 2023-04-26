@@ -742,9 +742,9 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
-Online tasks, such as online RL, create new replays if ```replay.load=true``` is not set, or -- careful -- potentially delete the current replay at the end of training if ```replay.save=true``` is not set.
-* By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
+Online tasks, such as online RL, will create a new replay if ```replay.load=false```, or — careful — potentially delete the current replay at the end of training if ```replay.save=false```. 
 
+By default, classify tasks are Offline, so you don't have to worry about manually loading or saving replays.
 
 <details>
 <summary>
