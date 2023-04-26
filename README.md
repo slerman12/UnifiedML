@@ -742,6 +742,9 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
+* Online tasks may create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set).
+* By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
+
 
 <details>
 <summary>
@@ -758,9 +761,6 @@ You can disable the use of replays with ```stream=true```, which just sends data
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
 </details>
-
-* Online tasks may create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set).
-* By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
 
 #
 
