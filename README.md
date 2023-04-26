@@ -748,7 +748,8 @@ You can change the Agent load/save path with ```load_path=```/```save_path=``` a
 
 Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
 
-> &#9432; By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly (see below for how to disable). Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
+> &#9432; By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly (see below for how to disable).  
+> Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
 <details>
 <summary>
