@@ -800,6 +800,8 @@ You can change the Agent load/save path with ```load_path=```/```save_path=``` a
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the offline classification replays.
 
+Replays are automatically loaded and saved non-redundantly for classification and [Offline](#offline-rl) mode.
+
 </details>
 
 ### Distributed
