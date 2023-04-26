@@ -744,7 +744,7 @@ python Run.py replay.load=true
 
 Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively.
 
-You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
+You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
 
 Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
 
