@@ -758,7 +758,7 @@ Click here to learn more about replays
 
 **In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
 
-**Think of them as Pytorch DataLoaders/Datasets but with extra features.** Saving them at the end of training means saving an in-disk buffer.
+**Think of them as Pytorch DataLoaders/Datasets but with extra features.** Saving them at the end of training means saving an in-disk buffer e.g. all the data collected during an RL training session.
 
 You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations.
 
