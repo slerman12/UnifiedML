@@ -794,21 +794,27 @@ Agents and RL replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer
 
 *A unique experiment* is distinguished by the flags: ```experiment=```, ```Agent=```, ```task=```, and ```seed=```.
 
+RL replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+
 You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the offline classification replays.
 
 <details>
 <summary>
-More details on replays
+Click here if you're confused about replays
 </summary>
 <br>
 
-In UnifiedML, replays are an efficient storage format for data that support both static and dynamic (changing/growing) datasets. 
+In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets. 
 
-By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). 
+By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set).
 
-RL replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+Think of them as Pytorch Datasets but with extra features (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data lengths, as well as saving stats about the data for standardization, normalization, etc.).
+
+You can disable the use of replays with ```stream=true```. 
+
+In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations.
 
 </details>
 
