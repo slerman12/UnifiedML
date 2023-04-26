@@ -764,9 +764,9 @@ You can disable the use of replays with ```stream=true```, which just sends data
 
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
-#
-
 </details>
+
+#
 
 Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively.
 
