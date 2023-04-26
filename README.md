@@ -746,7 +746,7 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 
 You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
 
-> &#9432; By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.  
+> &#9432; By default, classify tasks are offline (meaning the data size doesn't grow), so you don't have to worry about manually loading or saving replays.  
 > 
 > Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
 > 
