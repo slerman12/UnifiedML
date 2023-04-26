@@ -742,10 +742,6 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
-* By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
-* Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
-* Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set).
-* Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
 <details>
 <summary>
@@ -753,15 +749,20 @@ Click here for more details about replays
 </summary>
 <br>
 
-**In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.** 
+**In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
 
 **Think of them as Pytorch DataLoaders/Datasets but with extra features** (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes and re-writable memory, as well as saving stats about the data for standardization, normalization, etc.).
 
-You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations. 
+You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations.
 
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
 </details>
+
+* By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
+* Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
+* Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set).
+* Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
 #
 
