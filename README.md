@@ -732,7 +732,7 @@ python Run.py save_per_steps=100000
 python Run.py load=true
 ```
 
-You may disable saving by adding ```save=false```.
+You may disable saving Agents by adding ```save=false```.
 
 An **experience replay** can be saved and/or loaded with the ```replay.save=true``` or ```replay.load=true``` flags.
 
