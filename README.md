@@ -632,54 +632,6 @@ This library is meant to be useful for academic research, and out of the box sup
 
 </details>
 
-### Offline RL
-
-<details>
-<summary>
-:mag: <i>Click to play retroactively</i>
-</summary>
-<br>
-
-From a saved experience replay, sans additional rollouts:
-
-```console
-python Run.py task=atari/breakout offline=true
-```
-
-Assumes a replay [is saved](#saving).
-
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
-
-Is true by default for classification, where datasets are automatically downloaded and created into replays.
-
-</details>
-
-[comment]: <> (### Imitation Learning)
-
-[comment]: <> (<details>)
-
-[comment]: <> (<summary>)
-
-[comment]: <> (:mag: <i>Click to recall</i>)
-
-[comment]: <> (</summary>)
-
-[comment]: <> (<br>)
-
-[comment]: <> (The conversion to imitation is really simple. The action gets set as the label and is either argmaxed or one-hotted depending on whether the environment is discrete or continuous, or whether classifying &#40;overriding with ```classify=true```&#41; or doing regression &#40;```classify=false```&#41;.)
-
-[comment]: <> (```console)
-
-[comment]: <> (python Run.py task=atari/breakout imitate=true)
-
-[comment]: <> (```)
-
-[comment]: <> (Assumes a replay [is saved]&#40;#saving&#41; to load and imitate based on.)
-
-[comment]: <> (Implicitly treats ```replay.load=true``` and ```replay.save=true```. The load path can of course be configured &#40;```replay.path```&#41;.)
-
-[comment]: <> (</details>)
-
 ### Generative Modeling
 
 <details>
@@ -813,6 +765,28 @@ You can disable the use of replays with ```stream=true```, which just sends data
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
 </details>
+
+</details>
+
+### Offline RL
+
+<details>
+<summary>
+:mag: <i>Click to play retroactively</i>
+</summary>
+<br>
+
+From a saved experience replay, sans additional rollouts:
+
+```console
+python Run.py task=atari/breakout offline=true
+```
+
+Assumes a replay [is saved](#saving).
+
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+
+```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
 
 </details>
 
