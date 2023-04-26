@@ -754,7 +754,7 @@ Click here to learn more about replays
 </summary>
 <br>
 
-<center><img width="40%" alt="flowchart" src="https://i.imgur.com/9qYLS0n.png"></center>
+<img align="center" width="40%" alt="flowchart" src="https://i.imgur.com/9qYLS0n.png">
 <br><i>Diagram of replays and datasets.</i><br><br>
 
 **In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
