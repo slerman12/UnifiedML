@@ -754,7 +754,7 @@ Click here for more details about replays
 </summary>
 <br>
 
-In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets. 
+**In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.** 
 
 **Think of them as Pytorch DataLoaders/Datasets but with extra features** (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes, as well as saving stats about the data for standardization, normalization, etc.).
 
