@@ -750,7 +750,7 @@ By default, classify tasks are offline, so you don't have to worry about manuall
 
 <details>
 <summary>
-Click here to learn more about **replays**
+Click here to learn more about <bf>replays</bf>
 </summary>
 <br>
 
