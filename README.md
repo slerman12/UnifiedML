@@ -750,7 +750,7 @@ By default, classify tasks are offline, so you don't have to worry about manuall
 
 <details>
 <summary>
-<b>:hourglass: Click here to learn more about replays</b>
+<b>:hourglass_flowing_sand: Click here to learn more about replays</b>
 </summary>
 <br>
 
