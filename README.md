@@ -742,7 +742,7 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
-Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively.
+Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively. Your experiments will be automatically organized.
 
 You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
 
