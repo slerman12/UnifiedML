@@ -298,28 +298,6 @@ This library is meant to be useful for academic research, and out of the box sup
 
 </details>
 
-### Offline RL
-
-<details>
-<summary>
-:mag: <i>Click to play retroactively</i>
-</summary>
-<br>
-
-From a saved experience replay, sans additional rollouts:
-
-```console
-python Run.py task=atari/breakout offline=true
-```
-
-Assumes a replay [is saved](#saving).
-
-Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
-
-Is true by default for classification, where datasets are automatically downloaded and created into replays.
-
-</details>
-
 ### Generative Modeling
 
 <details>
@@ -430,6 +408,28 @@ You can disable the use of replays with ```stream=true```, which just sends data
 Replays are recommended for RL because on-policy algorithmic support is currently limited.
 
 </details>
+
+</details>
+
+### Offline RL
+
+<details>
+<summary>
+:mag: <i>Click to play retroactively</i>
+</summary>
+<br>
+
+From a saved experience replay, sans additional rollouts:
+
+```console
+python Run.py task=atari/breakout offline=true
+```
+
+Assumes a replay [is saved](#saving).
+
+Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does evaluation rollouts.
+
+```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
 
 </details>
 
