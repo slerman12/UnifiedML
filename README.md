@@ -722,6 +722,8 @@ Make sure you have [saved a replay](#saving) that can be loaded before doing thi
 python Run.py train_steps=2
 ```
 
+You may disable saving by adding ```save=false```.
+
 **Agents** can be saved periodically and/or loaded with the ```save_per_steps=``` or ```load=true``` flags respectively:
 
 ```console
@@ -748,7 +750,7 @@ By default, classify tasks are offline, so you don't have to worry about manuall
 
 <details>
 <summary>
-Click here if you're confused about replays
+Click here to learn more about replays
 </summary>
 <br>
 
