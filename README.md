@@ -804,7 +804,7 @@ Click here for more details about replays
 
 In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets. 
 
-Think of them as Pytorch DataLoaders/Datasets but with extra features (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes, as well as saving stats about the data for standardization/normalization, and more).
+Think of them as Pytorch DataLoaders/Datasets but with extra features (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes and re-writable data, as well as saving stats about the data for standardization, normalization, etc.).
 
 By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time and the most recent will be loaded if ```replay.load=true```.
 
