@@ -1043,7 +1043,7 @@ python Run.py task=classify/mnist lr_decay_epochs=100
 
 </details>
 
-### Custom Envs
+### Custom Env
 
 <details>
 <summary>
@@ -1099,7 +1099,7 @@ python Run.py task=mario +env.stage=2
 
 </details>
 
-### Custom Datasets
+### Custom Dataset
 
 <details>
 <summary>
