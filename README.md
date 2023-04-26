@@ -794,13 +794,22 @@ Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer```
 
 *A unique experiment* is distinguished by the flags: ```experiment=```, ```Agent=```, ```task=```, and ```seed=```.
 
-Replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
-
 You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/DQNAgent/classify/MNIST_1.pt'```.
 
 Careful, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate, except for the offline classification replays.
 
-Replays are automatically loaded and saved non-redundantly for classification and [Offline](#offline-rl) mode.
+<details>
+<summary>
+More details on replays
+</summary>
+
+In UnifiedML, replays are an efficient storage format for data that support both static and dynamic (changing/growing) datasets. 
+
+By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). 
+
+RL replays also save uniquely w.r.t. a date-time. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+
+</details>
 
 </details>
 
