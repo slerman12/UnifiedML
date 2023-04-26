@@ -802,6 +802,7 @@ Careful, without ```replay.save=true``` a replay, whether new or loaded, will be
 <summary>
 More details on replays
 </summary>
+<br>
 
 In UnifiedML, replays are an efficient storage format for data that support both static and dynamic (changing/growing) datasets. 
 
