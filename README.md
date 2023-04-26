@@ -742,7 +742,7 @@ python Run.py replay.save=true
 python Run.py replay.load=true
 ```
 
-> &#9432; By default, classify tasks are offline (meaning the data size doesn't grow), so you don't have to worry about manually loading or saving replays.  
+> &#9432; By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.  
 > 
 > Careful, in online RL training, without ```replay.save=true``` a replay, whether new or loaded, will be deleted upon terminate.
 > 
@@ -781,6 +781,8 @@ You can change the Agent load/save path with ```load_path=```/```save_path=``` a
 :mag: <i>Click to play retroactively</i>
 </summary>
 <br>
+
+Offline, generally speaking, means the dataset size doesn't grow.
 
 From a saved experience replay, sans additional rollouts:
 
