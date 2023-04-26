@@ -806,7 +806,7 @@ In UnifiedML, replays are an efficient accelerated storage format for data that 
 
 Think of them as Pytorch DataLoaders/Datasets but with extra features (truly-shared RAM with adaptive hard-disk memory-mapping and support for both static and expanding data sizes, as well as saving stats about the data for standardization, normalization, etc.).
 
-By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time non-destructively. In case of multiple saved replays per a unique experiment, the most recent is loaded.
+By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays. This is done automatically and non-redundantly. Only online tasks may redundantly create new replays (if ```replay.load=true``` is not set) or potentially delete existing replays (if ```replay.save=true``` is not set). Newly created RL replays save uniquely w.r.t. a date-time so the most recent can be loaded.
 
 You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. 
 
