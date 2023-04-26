@@ -748,7 +748,7 @@ You can change the Agent load/save path with ```load_path=```/```save_path=``` a
 
 Online tasks, such as online RL, will create a new replay if ```replay.load=false```, or — careful — potentially delete the current replay at the end of training if ```replay.save=false```.  Since the dataset is static, creating/loading is handled automatically.
 
-By default, classify tasks are Offline, so you don't have to worry about manually loading or saving replays.
+By default, classify tasks are offline, so you don't have to worry about manually loading or saving replays.
 
 <details>
 <summary>
