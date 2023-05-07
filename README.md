@@ -438,7 +438,7 @@ Assumes a replay [is saved](#saving).
 
 Implicitly treats ```replay.load=true``` and ```replay.save=true```, and only does learning updates and evaluation rollouts.
 
-```offline=true``` is the default for classification, where datasets are automatically downloaded and created into replays.
+```offline=true``` is the default for classification, where datasets are automatically downloaded and created into offline replays.
 
 </details>
 
