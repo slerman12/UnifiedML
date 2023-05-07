@@ -409,11 +409,11 @@ Replays are recommended for RL because on-policy algorithmic support is currentl
 
 </details>
 
-Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per *a unique experiment*, otherwise overriding.
+Agents and replays save to ```./Checkpoints``` and ```./Datasets/ReplayBuffer``` respectively per *a unique experiment*, otherwise overwriting.
 
 *A unique experiment* is distinguished by the flags: ```experiment=```, ```Agent=```, ```suite=```, ```task_name=```, and ```seed=```.
 
-You can change the Agent load/save path with ```load_path=```/```save_path=``` and ```replay.path=``` for experience replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
+You can change the Agent load/save path with ```load_path=```/```save_path=```, and ```replay.path=``` for replays. All three accept string paths e.g. ```load_path='./Checkpoints/Exp/AC2Agent/classify/MNIST_1.pt'```.
 
 
 </details>
