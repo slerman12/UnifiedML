@@ -1,4 +1,4 @@
-![alt text](https://i.imgur.com/Ya9FpIJ.png)
+![UnifiedMLBanner](https://github.com/AGI-init/UnifiedML/assets/92597756/bb15fbbc-fa80-4f28-9f39-06d93bef1b8b)
 
 ### Quick Links
 
@@ -24,7 +24,7 @@ Defaults:
 
 Plots, logs, generated images, and videos are automatically stored in: ```./Benchmarking```.
 
-![alt text](https://github.com/slerman12/UnifiedML/assets/92597756/bcc313da-caf2-4353-92c5-b612e173e00c)
+![ApeMan](https://github.com/AGI-init/UnifiedML/assets/92597756/712c38a0-6f62-4acd-8786-82b37146621e)
 
 Welcome ye, weary Traveller.
 
@@ -36,10 +36,10 @@ Drink up! :beers:
 
 # :pen: Paper & Citing
 
-For detailed documentation, [see our :scroll:](https://github.com/AGI-init/UnifiedML).
+For detailed documentation, [see our :scroll:](https://docs.google.com/presentation/d/1JpT09GMN0xa81J1h88urRklcOZkJ704s58LHHikmUG8/edit?usp=sharing).
 
 ```bibtex
-@misc{UnifiedML,
+@article{UnifiedML,
   title   = {UnifiedML: A Unified Framework For Intelligence Training},
   author  = {Sam Lerman, Chenliang Xu},
   howpublished = {https://github.com/AGI-init/UnifiedML},
@@ -99,7 +99,7 @@ conda activate ML
 ## 1. Atari Arcade
 
 <p align="left">
-<img src="https://i.imgur.com/ppm4LJw.jpg" width="320">
+<img src="https://github.com/AGI-init/UnifiedML/assets/92597756/edd97ab0-55b4-4cc4-942f-dbfd45d5b544" width="320">
 <br><i>A collection of retro Atari games.</i>
 </p>
 
@@ -122,7 +122,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 <p align="left">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank"><i>:arrow_forward: Click to play</i></a><br>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=rAai4QzcYbs" target="_blank">
-<img src="https://i.imgur.com/vzNmMMQ.png" alt="Play video" width="310" />
+<img src="https://github.com/AGI-init/UnifiedML/assets/92597756/98634902-77d1-4e7e-b0ae-51ca30d9e3c2" alt="Play video" width="310" />
 </a>
 <br><i>Video of different tasks in action.</i>
 </p>
@@ -131,7 +131,7 @@ Comes pre-installed! For any issues, consult the [DMC repo](https://github.com/d
 
 <p align="left">
 
-<img src="https://i.imgur.com/N1st6uO.png" width="320">
+<img src="https://github.com/AGI-init/UnifiedML/assets/92597756/0bd9ddc2-4482-4b27-9ccd-f181d8242a05" width="320">
 <br><i>Eight different ladybug species in the iNaturalist dataset.</i>
 
 </p>
@@ -203,7 +203,7 @@ python Run.py
 * ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for a number of timesteps ahead, similar to [Dreamer](https://arxiv.org/pdf/2301.04104v1.pdf) and [SPR](https://arxiv.org/abs/2007.05929).
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
-**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](https://github.com/AGI-init/UnifiedML), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
+**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](https://docs.google.com/presentation/d/1JpT09GMN0xa81J1h88urRklcOZkJ704s58LHHikmUG8/edit?usp=sharing), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
@@ -212,14 +212,14 @@ Save videos with ```vlog=true```.
 :clapper: :movie_camera: -> ```Benchmarking/<experiment>/<agent>/<suite>/<task>_<seed>_Video_Image/```
 
 <p>
-<img src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" data-canonical-src="https://qiita-image-store.s3.amazonaws.com/0/3180/8c235a00-cd55-41a2-a605-a4a2e9b0240f.gif" width="64" height="84" />
+<img src="https://github.com/AGI-init/UnifiedML/assets/92597756/014e33d3-adab-459e-98e3-641f12b07b4e" width="64" height="84"/>
 </p>
 
 Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable options available, including
 * N-step rewards (```nstep=```)
 * Frame stack (```frame_stack=```)
 * Action repeat (```action_repeat=```)
-* & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions/3) if you discover new or better ones!
+* & more, with [per-task](Hyperparams/task) defaults in ```/Hyperparams/task``` — please [share your hyperparams](https://github.com/agi-init/UnifiedML/discussions/11) if you discover new or better ones!
 
 
 &#9432; If you'd like to **discretize** a continuous domain, pass in ```discrete=true``` and specify the number of discrete bins per action dimension via ```num_actions=```. If you'd like to **continuous-ize** a discrete domain, pass in ```discrete=false```. *Action space conversions are experimental*.
@@ -227,12 +227,12 @@ Check out [args.yaml](Hyperparams/args.yaml) for the full array of configurable 
 #
 
 > :bulb: *The below sections describe many features in other domains, but chances are those features will work in RL as well. For example, a cosine annealing learning rate schedule can be toggled with: ```lr_decay_epochs=100```. It will anneal per-episode rather than per-epoch. Different model architectures, image transforms, EMAs, and more are all supported across domains!*
-> 
+>
 > The vast majority of this hasn't been tested outside of its respective domain (CV, RL, etc.), so the research opportunity is a lot!
 
 </details>
 
-### Classification 
+### Classification
 
 <details>
 <summary>
@@ -260,26 +260,26 @@ Classify environments can actually be great testbeds for certain RL problems sin
 
 *Ignore these variations for doing standard classification.*
 
-**Important features** 
+**Important features**
 
-Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added: 
+Many popular features are unified in this library and generalized across RL/CV/generative domains, with more being added:
 
-* Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```. 
-  
-* See [Custom Architectures](#custom-architectures) for mix-and-matching custom or pre-defined (*e.g.* ViT, ResNet50) architectures via the command line syntax. 
-  
+* Evaluation with [exponential moving average (EMA)](https://arxiv.org/pdf/1803.05407.pdf) of params can be toggled with the ```ema=true``` flag; customize the decay rate with ```ema_decay=```.
+
+* See [Custom Architectures](#custom-architectures) for mix-and-matching custom or pre-defined (*e.g.* ViT, ResNet50) architectures via the command line syntax.
+
 * Different optimizations [can be configured](#custom-optimization) too.
-  
-* As well as [Custom Datasets](#custom-dataset). 
+
+* As well as [Custom Datasets](#custom-dataset).
 
 * Ensembling is supported (e.g., ```+agent.num_actors=```)
-  
-* Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```. 
-  
-* A [cosine annealing learning rate schedule](https://arxiv.org/abs/1608.03983) can be applied for $N$ epochs (or episodes in RL) with ```lr_decay_epochs=```. 
 
-* And [TorchVision transforms](https://pytorch.org/vision/stable/transforms.html) can be passed in as dicts via ```transform=```. 
-  
+* Training with [weight decay](https://arxiv.org/abs/1711.05101) can be toggled via ```weight_decay=```.
+
+* A [cosine annealing learning rate schedule](https://arxiv.org/abs/1608.03983) can be applied for $N$ epochs (or episodes in RL) with ```lr_decay_epochs=```.
+
+* And [TorchVision transforms](https://pytorch.org/vision/stable/transforms.html) can be passed in as dicts via ```transform=```.
+
 For example,
 
 ```console
@@ -288,12 +288,12 @@ python Run.py task=classify/cifar10 weight_decay=0.01 transform="{RandomHorizont
 
 The above returns a $94$% on CIFAR-10 with a ResNet18, which is pretty good. Changing datasets/architectures is as easy as modifying the corresponding parts ```task=``` and ```Eyes=``` of the above script.
 
-And if you set ```supervise=false RL=true```, we get about the same score... vis-à-vis pure-RL. 
+And if you set ```supervise=false RL=true```, we get about the same score... vis-à-vis pure-RL.
 
-This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including 
-* Tiny-ImageNet (```task=classify/tinyimagenet```), 
+This library is meant to be useful for academic research, and out of the box supports [many datasets](Hyperparams/task/classify), including
+* Tiny-ImageNet (```task=classify/tinyimagenet```),
 * iNaturalist, (```task=classify/inaturalist```),
-* CIFAR-100 (```task=classify/cifar100```), 
+* CIFAR-100 (```task=classify/cifar100```),
 * & [more](Hyperparams/task/classify), normalized and no manual preparation needed
 
 </details>
@@ -312,7 +312,7 @@ python Run.py task=classify/mnist generate=true
 ```
 
 <p align="left">
-<img src="https://i.imgur.com/HEudCOX.png" width="180">
+<img src="https://github.com/AGI-init/UnifiedML/assets/92597756/001d9883-a6b0-4649-aef8-987bea6a73cf" width="180">
 <br><i>Synthesized MNIST images, conjured up and imagined by a simple MLP.</i>
 </p>
 
@@ -324,7 +324,7 @@ Defaults can be easily modified with custom architectures or even datasets as el
 python Run.py task=classify/mnist generate=true Discriminator=CNN +agent.num_critics=1
 ```
 
-```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. See [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification. 
+```+agent.num_critics=1``` uses only a single Discriminator rather than ensembling as is done in RL. See [How Is This Possible?](#interrobang-how-is-this-possible) for more details on the unification.
 
 Or a ResNet18:
 
@@ -340,7 +340,7 @@ python Run.py task=classify/mnist generate=true Aug=Identity +agent.num_critics=
 
 ```Aug=Identity``` substitutes the default random cropping image-augmentation with the Identity function, thereby disabling it.
 
-Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. As long as a dataset is available or a replay has [been saved](#saving), ```generate=true``` will work for any defined visual task, making it a powerful hyper-parameter that can just work. For now, only visual (image) tasks are compatible. 
+Generative mode implicitly treats training as [offline](#offline-rl), and assumes a replay [is saved](#saving) that can be loaded. As long as a dataset is available or a replay has [been saved](#saving), ```generate=true``` will work for any defined visual task, making it a powerful hyper-parameter that can just work. For now, only visual (image) tasks are compatible.
 
 Can even work with RL tasks (due to frame stack, the generated images are technically multi-frame videos).
 
@@ -397,7 +397,7 @@ Click here to learn more about replays
 </summary>
 <br>
 
-<img width="25%" alt="flowchart" src="https://i.imgur.com/9qYLS0n.png"><br><br>
+<img width="25%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/4376c74f-b0d9-4b0c-b853-255494514ec7"><br><br>
 
 **In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
 
@@ -654,7 +654,7 @@ python Run.py Env=Datasets.Suites.SuperMario.SuperMario suite=SuperMario task_na
 ```
 
 <p align="left">
-<a href="https://imgur.com/12cLAs4"><img src="https://i.imgur.com/12cLAs4.gif" width="180" title="source: imgur.com" /></a>
+<img src="https://github.com/AGI-init/UnifiedML/assets/92597756/2a7270b3-581a-4467-9483-e24bacb6be8b" width="180"/>
 <br><i>Mario trained via DQN.</i>
 </p>
 
@@ -725,7 +725,7 @@ Thanks to dimensionality adaptivity ([slide 12](https://docs.google.com/presenta
 python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.SpeechCommands Aug=Identity
 ```
 
-Gets a perfect score on speech command classification from raw 1D audio with the default CNN setting.  
+Gets a perfect score on speech command classification from raw 1D audio with the default CNN setting.
 
 <details>
 <summary>
@@ -739,7 +739,7 @@ For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://
 
 ---
 
-Note: You can also specify an **independent test dataset** explicitly with ```TestDataset=```. 
+Note: You can also specify an **independent test dataset** explicitly with ```TestDataset=```.
 
 </details>
 
@@ -753,13 +753,13 @@ Note: You can also specify an **independent test dataset** explicitly with ```Te
 
 **Save hyperparams** to ```.yaml``` files by defining them in the [./Hyperparams/task/](Hyperparams/task) directory. There are many saved examples already.
 
-If you've defined a ```.yaml``` file called ```my_recipe.yaml``` for example, you can use it via 
+If you've defined a ```.yaml``` file called ```my_recipe.yaml``` for example, you can use it via
 
 ```console
 python Run.py task=my_recipe
 ```
 
-Please [share your recipes](https://github.com/agi-init/UnifiedML/discussions/3) in our Discussions page if you discover new or better hyperparams for a problem.
+Please [share your recipes](https://github.com/agi-init/UnifiedML/discussions/11) in our Discussions page if you discover new or better hyperparams for a problem.
 
 **Recipes can also be defined temporarily via command line without saving them to .yaml files.**
 
@@ -881,7 +881,7 @@ We have released our slide deck!
 
 Feel free to use our UnifiedML templates and figures in your work, citing [us](#pen-paper--citing) of course.
 
-**Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here](https://github.com/agi-init/UnifiedML/discussions/2) in the discussion board. Read the rules to keep citations and credit attribution fair.**
+**Open-source research for minimal redundancy and optimal standardization is the way to go, balancing privacy and de-centrality, and streamlining successive works that depend on ours in good faith. Post your own designs and assets [here](https://github.com/agi-init/UnifiedML/discussions/12) in the discussion board. Read the rules to keep citations and credit attribution fair.**
 
 </details>
 
@@ -893,7 +893,7 @@ Atari
 </summary>
 <br>
 
-We can attain 100% mean human-normalized score across the Atari-26 benchmark suite in about 1m environment steps. 
+We can attain 100% mean human-normalized score across the Atari-26 benchmark suite in about 1m environment steps.
 
 The below example script shows how to launch training for just Pong and Breakout with ```AC2Agent```:
 
@@ -903,7 +903,7 @@ python Run.py task=atari/pong,atari/breakout -m
 
 The results are reported for all 26 games and 3 different agents:
 
-<img width="40%" alt="flowchart" src="https://i.imgur.com/4c70wla.png">
+<img width="40%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/de3d1a15-a01a-47ea-b6d3-f98ac8f1593b">
 
 <details>
 <summary>
@@ -911,13 +911,13 @@ Click here to see per-task results.
 </summary>
 <br>
 
-<img width="80%" alt="flowchart" src="https://i.imgur.com/DVIcwtV.jpg">
+<img width="80%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/b99b1ad4-3588-413f-a387-86023a499731">
 
 </details>
 
 We found these results to be pretty stable across a range of exploration rates as well:
 
-<img width="60%" alt="flowchart" src="https://i.imgur.com/RUZcg70.png">
+<img width="60%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/fcb17628-1640-4df2-a62c-a1f416dd43d8">
 
 Each time point averages over 10 evaluation episodes (and 26 games).
 
@@ -935,7 +935,7 @@ The simplest way to do DCGAN is to use the DCGAN architecture:
 python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator train_steps=50000
 ```
 
-<img width="40%" alt="flowchart" src="https://i.imgur.com/12tsPGN.png">
+<img width="40%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/31bfbf9b-be66-458b-83a0-3ad3e66f6aa5">
 
 We can then improve the results, and speed up training tenfold, by modifying the hyperparameters:
 
@@ -943,7 +943,7 @@ We can then improve the results, and speed up training tenfold, by modifying the
 python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminator Generator=DCGAN.Generator z_dim=100 Aug=Identity Optim=Adam '+optim.betas=[0.5, 0.999]' lr=2e-4 +agent.num_critics=1 train_steps=5000
 ```
 
-<img width="60%" alt="flowchart" src="https://i.imgur.com/1yMmpIw.png">
+<img width="60%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/51dc30d9-cf25-4be7-88a2-775792c735bf">
 
 </details>
 
@@ -955,7 +955,7 @@ Then we frame actions as "predictions" in supervised learning. We can even augme
 
 For generative modeling, well, it turns out that the difference between a Generator-Discriminator and Actor-Critic is rather nominal.
 
-<img width="80%" alt="flowchart" src="https://i.imgur.com/4Ziarr0.gif">
+<img width="80%" alt="flowchart" src="https://github.com/AGI-init/UnifiedML/assets/92597756/d6e8e99d-4e87-44e8-8d2e-7b615fc61b3d">
 
 # :mortar_board: Pedagogy and Research
 
