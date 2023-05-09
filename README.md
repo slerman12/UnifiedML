@@ -24,7 +24,7 @@ Defaults:
 
 Plots, logs, generated images, and videos are automatically stored in: ```./Benchmarking```.
 
-![alt text](https://i.imgur.com/2jhOPib.gif)
+![alt text](https://github.com/slerman12/UnifiedML/assets/92597756/bcc313da-caf2-4353-92c5-b612e173e00c)
 
 Welcome ye, weary Traveller.
 
@@ -397,7 +397,7 @@ Click here to learn more about replays
 </summary>
 <br>
 
-<img width="25%" alt="flowchart" src="https://github.com/slerman12/UnifiedML/assets/92597756/23825caf-28ba-44b9-91fd-a11129b0e2ee"><br><br>
+<img width="25%" alt="flowchart" src="https://i.imgur.com/9qYLS0n.png"><br><br>
 
 **In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
 
