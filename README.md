@@ -36,13 +36,13 @@ Drink up! :beers:
 
 # :pen: Paper & Citing
 
-For detailed documentation, [see our :scroll:](https://arxiv.com).
+For detailed documentation, [see our :scroll:](https://github.com/AGI-init/UnifiedML).
 
 ```bibtex
-@article{in-progress,
+@misc{UnifiedML,
   title   = {UnifiedML: A Unified Framework For Intelligence Training},
   author  = {Sam Lerman, Chenliang Xu},
-  journal = {arXiv preprint},
+  howpublished = {https://github.com/AGI-init/UnifiedML},
   year    = {2023}
 }
 ```
@@ -203,7 +203,7 @@ python Run.py
 * ```+agent.depth=5``` can activate a self-supervisor to predict temporal dynamics for a number of timesteps ahead, similar to [Dreamer](https://arxiv.org/pdf/2301.04104v1.pdf) and [SPR](https://arxiv.org/abs/2007.05929).
 * ```+agent.num_actors=5 +agent.num_critics=5``` can activate actor-critic ensembling.
 
-**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](paper), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
+**In addition to RL**, this agent supports classification, generative modeling, and various modes.  Therefore we refer to it [as a framework](https://github.com/AGI-init/UnifiedML), not just an agent. The full array of the library's features and cross-domain compatibilities are supported by this agent.
 
 ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽
 
@@ -719,7 +719,7 @@ You can change the task name as it's saved for benchmarking and plotting, with `
 
 **UnifiedML is compatible with datasets & domains besides Vision.**
 
-Thanks to dimensionality adaptivity ([paper 3.6](paper)) for example, train the default CNN architecture on raw 1D Audio:
+Thanks to dimensionality adaptivity ([slide 12](https://docs.google.com/presentation/d/1JpT09GMN0xa81J1h88urRklcOZkJ704s58LHHikmUG8/edit?usp=sharing)) for example, train the default CNN architecture on raw 1D Audio:
 
 ```console
 python Run.py task=classify/custom Dataset=Datasets.Suites._SpeechCommands.SpeechCommands Aug=Identity
@@ -733,7 +733,7 @@ Gets a perfect score on speech command classification from raw 1D audio with the
 </summary>
 <br>
 
-For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://www.github.com/agi-init/XRD) in Crystal classification, reproducing [classifying crystal structures and space groups from X-ray diffraction patterns]().
+For a non-Vision/Audio tutorial, we provide a full [end-to-end example](https://www.github.com/agi-init/XRDs) in Crystal classification, reproducing [classifying crystal structures and space groups from X-ray diffraction patterns]().
 
 </details>
 
@@ -949,7 +949,7 @@ python Run.py task=classify/celeba generate=true Discriminator=DCGAN.Discriminat
 
 # :interrobang: How is this possible
 
-We use our new Creator framework to unify RL discrete and continuous action spaces, as elaborated in our [paper](https://arxiv.com).
+We use our new Creator framework to unify RL discrete and continuous action spaces, as elaborated in our [paper](https://docs.google.com/presentation/d/1JpT09GMN0xa81J1h88urRklcOZkJ704s58LHHikmUG8/edit?usp=sharing).
 
 Then we frame actions as "predictions" in supervised learning. We can even augment supervised learning with an RL phase, treating reward as negative error.
 
