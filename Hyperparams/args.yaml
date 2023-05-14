@@ -272,7 +272,7 @@ creator:
     _default_: ${scheduler}
 
 # Recipes
-_recipes:
+recipes:
   aug: ${aug}
   encoder:
     Eyes: ${eyes}
@@ -295,8 +295,6 @@ _recipes:
     ActionExtractor: ${action_extractor}
     optim: ${creator.optim}
     scheduler: ${creator.scheduler}
-
-recipes: ${allow_objects:${_recipes}}
 
 hydra:
   output_subdir: ${logger.path}${task_name}_${seed}_Hydra

@@ -37,12 +37,14 @@ import sys
 import os
 import inspect
 
+import omegaconf
+
+UnifiedML = os.path.dirname(__file__)
+app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
+
 
 # Imports UnifiedML paths and the paths of any launching app
 def import_paths():
-    UnifiedML = os.path.dirname(__file__)
-    app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
-
     sys.path.extend([UnifiedML, app])  # Imports UnifiedML paths and the paths of the launching app
 
     if os.path.exists(app + '/Hyperparams'):
@@ -50,3 +52,29 @@ def import_paths():
 
 
 import_paths()
+
+
+launch_args, task_args, command_line_args = {}, {}, {}
+
+
+# Launches UnifiedML with specified args
+def launch(**kwargs):
+    global launch_args, task_args, command_line_args
+    launch_args = kwargs
+
+    if 'task' in kwargs:
+        sys.argv.append('task=' + launch_args.pop('task'))
+
+    task = [arg.split('=')[1] for arg in sys.argv if arg.split('=')[0] == 'task']
+    if len(task):
+        task = task[0]
+
+        for path in [UnifiedML, app]:
+            path = f'{path}/Hyperparams/task/{task}.yaml'
+            if os.path.exists(path):
+                task_args = omegaconf.OmegaConf.load(path)
+
+    command_line_args = {arg.split('=')[0]: arg.split('=')[1] for arg in sys.argv if '=' in arg and 'task=' not in arg}
+
+    from .Run import main
+    main()

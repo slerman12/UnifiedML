@@ -12,6 +12,7 @@ from pathlib import Path
 
 import hydra
 from omegaconf import OmegaConf, DictConfig
+from omegaconf.errors import InterpolationToMissingValueError
 
 import numpy as np
 
@@ -35,14 +36,43 @@ def set_seeds(seed):
     random.seed(seed)
 
 
+# Allow objects/classes as config parameters in Hydra - somewhat hacky
+def allow_objects(args):
+    if isinstance(args, DictConfig):
+        args._set_flag("allow_objects", True)
+
+        for key in args:
+            try:
+                value = args.get(key)
+                if isinstance(value, DictConfig):
+                    allow_objects(value)
+            except InterpolationToMissingValueError:
+                continue
+
+
+# Import args from an app, prioritizing command-line and task-specific args
+def set_app_args(args):
+    # from UnifiedML import launch_args, task_args, command_line_args
+    # def common_items(d1, d2):
+    #     return {k: common_items(d1[k], d2[k]) if isinstance(d1[k], DictConfig) else d1[k]
+    #             for k in d1.viewkeys() & d2.viewkeys()}
+    pass
+
+
 # Initializes seeds, device, and CUDA acceleration
 def init(args):
+    # Allow objects/classes in Hydra
+    allow_objects(args)
+
+    # For launching via an external app
+    set_app_args(args)
+
     # Set seeds
     set_seeds(args.seed)
 
-    # Set device
     mps = getattr(torch.backends, 'mps', None)  # M1 MacBook speedup
 
+    # Set device
     args.device = args.device or ('cuda' if torch.cuda.is_available()
                                   else 'mps' if mps and mps.is_available() else 'cpu')
 
@@ -57,10 +87,7 @@ def init(args):
 
 # Format path names
 # e.g. "Checkpoints/Agents.DQNAgent" -> "Checkpoints/DQNAgent"
-OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
-
-# Allow recipes config to accept objects as args
-OmegaConf.register_new_resolver("allow_objects", lambda config: config._set_flag("allow_objects", True))
+OmegaConf.register_new_resolver("format", lambda name: (name if isinstance(name, str) else name.__name__).split('.')[-1])
 
 # A boolean "not" operation for config
 OmegaConf.register_new_resolver("not", lambda bool: not bool)
@@ -124,7 +151,13 @@ def instantiate(args, i=0, **kwargs):
         kwargs.update(args.pop('_override_'))  # For loading old models with new, overridden args
 
     while hasattr(args, '_default_'):  # Allow inheritance between shorthands
-        args = args['_default_'] if isinstance(args['_default_'], str) else DictConfig(dict(args.pop('_default_'), **args))
+        if isinstance(args['_default_'], str):
+            args = args['_default_']
+        else:
+            args._set_flag("allow_objects", True)
+            args_ = args.pop('_default_')
+            args_.update(args)  # Prioritize higher-level if conflicting
+            args = args_
 
     if hasattr(args, '_target_') and args._target_:
         try:
