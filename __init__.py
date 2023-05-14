@@ -37,7 +37,6 @@ import sys
 import os
 import inspect
 
-import omegaconf
 
 UnifiedML = os.path.dirname(__file__)
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
@@ -54,27 +53,24 @@ def import_paths():
 import_paths()
 
 
-launch_args, task_args, command_line_args = {}, {}, {}
+launch_args = {}
 
 
-# Launches UnifiedML with specified args
+# Launches UnifiedML from inside a launching app with specified args
 def launch(**kwargs):
-    global launch_args, task_args, command_line_args
-    launch_args = kwargs
+    command_line_args = {arg.split('=')[0] for arg in sys.argv if '=' in arg}
+    original = sys.argv
+    added = set()
 
-    if 'task' in kwargs:
-        sys.argv.append('task=' + launch_args.pop('task'))
+    for key, value in kwargs.items():
+        if isinstance(value, (str, bool)):
+            if key not in command_line_args:
+                sys.argv.append(f'{key}={value}')
+                added.add(key)
 
-    task = [arg.split('=')[1] for arg in sys.argv if arg.split('=')[0] == 'task']
-    if len(task):
-        task = task[0]
-
-        for path in [UnifiedML, app]:
-            path = f'{path}/Hyperparams/task/{task}.yaml'
-            if os.path.exists(path):
-                task_args = omegaconf.OmegaConf.load(path)
-
-    command_line_args = {arg.split('=')[0]: arg.split('=')[1] for arg in sys.argv if '=' in arg and 'task=' not in arg}
+    global launch_args
+    launch_args.update({key: kwargs[key] for key in kwargs.keys() - command_line_args - added})
 
     from .Run import main
     main()
+    sys.argv = original

@@ -26,6 +26,8 @@ from torchvision import transforms  # For direct accessibility via command line
 from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 
+from UnifiedML import launch_args
+
 
 # Sets all Pytorch and Numpy random seeds
 def set_seeds(seed):
@@ -50,22 +52,13 @@ def allow_objects(args):
                 continue
 
 
-# Import args from an app, prioritizing command-line and task-specific args
-def set_app_args(args):
-    # from UnifiedML import launch_args, task_args, command_line_args
-    # def common_items(d1, d2):
-    #     return {k: common_items(d1[k], d2[k]) if isinstance(d1[k], DictConfig) else d1[k]
-    #             for k in d1.viewkeys() & d2.viewkeys()}
-    pass
-
-
 # Initializes seeds, device, and CUDA acceleration
 def init(args):
     # Allow objects/classes in Hydra
     allow_objects(args)
 
     # For launching via an external app
-    set_app_args(args)
+    args.update(launch_args)
 
     # Set seeds
     set_seeds(args.seed)
@@ -154,31 +147,33 @@ def instantiate(args, i=0, **kwargs):
         if isinstance(args['_default_'], str):
             args = args['_default_']
         else:
-            args._set_flag("allow_objects", True)
             args_ = args.pop('_default_')
-            args_.update(args)  # Prioritize higher-level if conflicting
+            args_.update(args)
             args = args_
 
     if hasattr(args, '_target_') and args._target_:
-        try:
-            return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
-        except ImportError as e:
-            if '(' in args._target_ and ')' in args._target_:  # Direct code execution
-                args = args._target_
-            else:
-                if 'Utils.' in args._target_:
-                    raise ImportError
-                args._target_ = 'Utils.' + args._target_  # Portal into Utils
-                try:
-                    return instantiate(args, i, **kwargs)
-                except ImportError:
-                    raise e  # Original error if all that doesn't work
-        except TypeError as e:
-            kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
-            if kwarg and kwarg.group(1) not in args:
-                kwargs = {key: kwargs[key] for key in kwargs if key != kwarg.group(1)}
-                return instantiate(args, i, **kwargs)  # Signature matching, only for kwargs not args
-            raise e  # Original error
+        if isinstance(args._target_, nn.Module):  # Allow objects as _target_
+            args = args._target_
+        else:
+            try:
+                return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
+            except ImportError as e:
+                if '(' in args._target_ and ')' in args._target_:  # Direct code execution
+                    args = args._target_
+                else:
+                    if 'Utils.' in args._target_:
+                        raise ImportError
+                    args._target_ = 'Utils.' + args._target_  # Portal into Utils
+                    try:
+                        return instantiate(args, i, **kwargs)
+                    except ImportError:
+                        raise e  # Original error if all that doesn't work
+            except TypeError as e:
+                kwarg = re.search('got an unexpected keyword argument \'(.+?)\'', str(e))
+                if kwarg and kwarg.group(1) not in args:
+                    kwargs = {key: kwargs[key] for key in kwargs if key != kwarg.group(1)}
+                    return instantiate(args, i, **kwargs)  # Signature matching, only for kwargs not args
+                raise e  # Original error
 
     if isinstance(args, str):
         for key in kwargs:
