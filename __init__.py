@@ -13,24 +13,32 @@ Example:
 
     Turn a project file into a UnifiedML-style Run-script that can support all UnifiedML command-line syntax:
 
-    > from UnifiedML.Run import main   Imports UnifiedML
+    > import UnifiedML   Imports UnifiedML
     >
     > if __name__ == '__main__':
-    >    main()  # For launching UnifiedML
-
-    Now you can launch your project file with UnifiedML.
+    >    UnifiedML.launch()  # Launches UnifiedML
 
     -------------------------------
 
-    Examples:
-
     Say your file is called MyRunner.py and includes an architecture called MyEyes as a class. You can run:
 
-    $ python MyRunner.py Eyes=MyRunner.MyEyes
+        $ python MyRunner.py Eyes=MyRunner.MyEyes
 
-    or even define your own recipe MyRecipe.yaml in your local Hyperparams/task/ directory:
+    or even define your own recipe MyRecipe.yaml in your app's local Hyperparams/task/ directory:
 
-    $ python MyRunner.py task=MyRecipe
+        $ python MyRunner.py task=MyRecipe
+
+    You could also specify hyperparams in-code:
+
+        e.g. directly pass a class to the launcher as such:
+
+        > if __name__ == '__main__':
+        >    UnifiedML.launch(Eyes=MyEyes)
+
+        or specify a default recipe:
+
+        > if __name__ == '__main__':
+        >    UnifiedML.launch(task='MyRecipe')
 
 """
 import sys
