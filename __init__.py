@@ -40,6 +40,8 @@ Example:
         > if __name__ == '__main__':
         >    UnifiedML.launch(task='MyRecipe')
 
+    You could do whatever you want and I will still love you.
+
 """
 import sys
 import os

@@ -344,11 +344,7 @@ def rclamp(x, min, max):
 # (Multi-dim) indexing
 def gather(item, ind, dim=-1, ind_dim=-1):
     """
-    Generalizes torch.gather indexing to multi-dim indexing.
-
-    Indexes a specific dimension "dim" in "item"  and any number of subsequent dimensions depending on ind.
-
-    Automatically batches/broadcasts batch and tail shapes depending on i and j:
+    Same as torch.gather, but automatically batches/broadcasts ind:
         item: [item.size(0), ..., item.size(N), item.size(dim), item.size(N + 2), ..., item.size(M)],
         ind: [item.size(i), ..., item.size(N), ind.size(ind_dim), item.size(N + 2), ..., item.size(j)] where i ≤ N j ≤ M
         --> [item.size(0), ..., item.size(N), ind.size(ind_dim), item.size(N + 2), ..., item.size(M)]
