@@ -99,9 +99,11 @@ ML task=cifar_recipe accelerate=true
 
 This recipe exactly trains CIFAR-10 to 94% accuracy in 5 minutes on 1 GPU. 
 
+* You can find the ResNet18 architecture example [here]().
+
 ### Hyperparams
 
-All hyperparams can be passed in via command-line, code, or recipe.
+Hyperparams can be passed in via command-line, code, or recipe.
 
 **Here's how to write the same program in 3 different ways:**
 
@@ -118,7 +120,6 @@ ML task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
 import UnifiedML
 UnifiedML.launch('+eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 ```
-**Run it:**
 
 ```console
 python App.py
@@ -127,8 +128,6 @@ python App.py
 #### 3. Recipe
 
 **Recipe.yaml:**
-
-**Run it:**
 
 ```console
 ML task=Recipe
@@ -140,12 +139,13 @@ ML task=Recipe
 
 The order of priority is command-line > code > recipe. 
 
+#### 4. Mix
+
 **App.py:**
 ```python
 import UnifiedML
 UnifiedML.launch(task='recipe', Dataset='MNIST')
 ```
-**Run it:**
 
 ```console
 python App.py Eyes=CNN +eyes.depth=5
@@ -155,25 +155,35 @@ The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam`
 
 ### Plotting
 
-Let's consider our [CIFAR-10](#recipes-example---training-cifar-10-with-resnet18) example from earlier.
+Let's consider our [CIFAR-10 example from earlier](#recipes-example---training-cifar-10-with-resnet18):
 
 ```console
 ML task=cifar_recipe accelerate=true
 ```
 
-We can plot the results of this as follows:
+We can plot the results as follows:
 
 ```console
 Plot task=cifar_recipe
 ```
 
-The following plots save in ```Benchmarking/```:
+Corresponding plots save in ```Benchmarking/```:
 
-We can use flags like ```experiment=``` to distinguish experiments. The recipe ```cifar_recipe``` includes such a flag.
+We can use flags like ```experiment=``` to distinguish experiments. The recipe ```cifar_recipe``` includes such a flag ("```experiment: cifar```") and passes it to ```Plot``` above.
+
+* Another option is to use [WandB]():
+
+    ```console
+    ML task=cifar_recipe accelerate=true logger.wandb=true
+    ```
 
 ### Recipes - Train a humanoid to walk from images, 1.2x faster than the SOTA DrQV2
 
 Define your own recipe in a ```.yaml``` file like this one:
+
+**humanoid_from_images.yaml:**
+
+[//]: # (Maybe mention that default: RL@global imports the RL pre-defined recipe from UnifiedML/Hyperparams/task)
 
 **App.py:**
 
@@ -188,25 +198,37 @@ python App.py
 
 **Generate plots:**
 
-SOTA scores at 1.2x the speed.
+SOTA reinforcement learning scores at 1.2x the speed. ✓
+
+* You can find our implementation of DrQV2Agent [here]().
 
 ### Recipes - Atari to human-normalized score in 1m steps
 
 **Train:**
 
 ```console
-ML -m task=RL +env.game=...,pong,...
+ML -m experiment=ALE task=RL Env=Atari +env.game=...,pong,...
 ```
 
-The ```-m``` flag sweeps over comma-separated hyperparams. For more sophisticated sweeps, check out [SweepsAndPlots]().
+The ```-m``` flag enables sweeping over comma-separated hyperparams, in this case a standard benchmark 26 games in the Atari ALE. For more sophisticated sweep tools, check out [SweepsAndPlots]().
 
 **Plot:**
 
 ```console
-Plot task=RL +env.game=...,pong,...
+Plot experiment=ALE
 ```
 
-```task=RL``` refers to one of the pre-defined recipes/tasks in [UnifiedML/Hyperparams/task](). These can be accessed from outside apps, as well as any other UnifiedML search paths and features.
+We can also plot it side by side with the DeepMind Control Suite RL benchmark:
+
+```console
+ML -m experiment=DMC task=RL Env=Atari +env.game=...,walker_walk,...
+```
+
+```console
+Plot experiments=[ALE,DMC]
+```
+
+* You can find our implementation of DQNAgent [here]().
 
 ### Recipes - DCGAN in 5 minutes
 
@@ -218,3 +240,15 @@ ML task=dcgan
 
 [//]: # (Plots, reel)
 [//]: # (caption: something .. as saved in ```Benchmarking/```.)
+
+```task=dcgan``` refers to one of the pre-defined recipes/tasks in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
+
+* You can find our implementation of DCGAN [here]().
+
+### Useful flags
+
+* ```norm=true```: enables normalization 
+
+### When to use Eyes? When to use Predictor?
+
+### Saving/loading
