@@ -202,6 +202,8 @@ SOTA reinforcement learning scores at 1.2x the speed. ✓
 
 * You can find our implementation of DrQV2Agent [here]().
 
+**Render a video:**
+
 ### Recipes - Atari to human-normalized score in 1m steps
 
 **Train:**
