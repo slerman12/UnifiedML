@@ -30,7 +30,7 @@ Example:
 
     You could also specify hyperparams in-code:
 
-        e.g. directly pass a class to the launcher as such:
+        Directly pass a class to the launcher as such:
 
         > if __name__ == '__main__':
         >    UnifiedML.launch(Eyes=MyEyes)
@@ -46,7 +46,6 @@ Example:
 import sys
 import os
 import inspect
-
 
 UnifiedML = os.path.dirname(__file__)
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
@@ -67,20 +66,23 @@ launch_args = {}
 
 
 # Launches UnifiedML from inside a launching app with specified args
-def launch(**kwargs):
+def launch(**hyperparams):
+    original = list(sys.argv)
+
     command_line_args = {arg.split('=')[0] for arg in sys.argv if '=' in arg}
-    original = sys.argv
     added = set()
 
-    for key, value in kwargs.items():
+    for key, value in hyperparams.items():
         if isinstance(value, (str, bool)):
             if key not in command_line_args:
-                sys.argv.append(f'{key}={value}')
+                sys.argv.insert(-2, f'{key}={value}')  # For Hydra registered resolvers in Utils
                 added.add(key)
 
     global launch_args
-    launch_args.update({key: kwargs[key] for key in kwargs.keys() - command_line_args - added})
+    launch_args = {key: hyperparams[key] for key in hyperparams.keys() - command_line_args - added}
 
     from .Run import main
-    main()
+    main()  # Run
+
+    launch_args = {}
     sys.argv = original

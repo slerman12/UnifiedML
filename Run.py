@@ -14,6 +14,10 @@ import Utils
 @hydra.main(config_path='Hyperparams', config_name='args')
 def main(args):
 
+    if args.multi_task:
+        # Handover to multi-task launcher
+        return Utils.MT.launch(args.multi_task)
+
     # Set random seeds, device
     Utils.init(args)
 
@@ -28,6 +32,9 @@ def main(args):
     # Agent
     agent = Utils.load(args.load_path, args.device, args.agent) if args.load \
         else instantiate(args.agent).to(args.device)
+
+    # Unify multi-task models (if exist)
+    agent = Utils.MT.unify_agent_models(agent, args.agent, args.device, args.load and args.load_path)
 
     train_steps = args.train_steps + agent.step
 

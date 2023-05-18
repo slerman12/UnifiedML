@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import math
 import random
+import time
 from functools import cached_property
 import re
 import warnings
@@ -11,6 +12,7 @@ from inspect import signature
 from pathlib import Path
 
 import hydra
+from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf, DictConfig
 from omegaconf.errors import InterpolationToMissingValueError
 
@@ -135,9 +137,171 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
     return model
 
 
+import sys
+from multiprocessing.pool import ThreadPool
+from UnifiedML import launch
+
+
+# Launches and synchronizes multiple tasks
+class MultiTask:
+    def __init__(self):
+        self.multi_task_enabled = False
+        self.num_tasks = 0
+        self.agents = []
+        self.union = {'encoder': {'Eyes': [], 'pool': []},
+                      'actor': {'trunk': [], 'Pi_head': []}, 'critic': {'trunk': [], 'Q_head': []}}
+        self.unified_parts = set()
+        self.synced = None
+
+    def launch(self, multi_task):
+        self.multi_task_enabled = True
+        self.num_tasks = len(multi_task)
+
+        if 'multi_task' in launch_args:
+            launch_args.pop('multi_task')
+        original_sys_args = sys.argv
+
+        worker_start_times = [0.0] * self.num_tasks
+
+        def create_thread(worker_task):
+            worker, task = worker_task
+            # Launch workers sequentially
+            while worker and (time.time() - worker_start_times[worker - 1] < 1 or not worker_start_times[worker - 1]):
+                time.sleep(1)
+
+            worker_start_times[worker] = time.time()
+
+            # With task-specific args
+            task_args = [arg for arg in original_sys_args[1:-2] if arg.split('=')[0]
+                         not in [task_arg.split('=')[0] for task_arg in task.split()] + ['multi_task']] + task.split()
+            sys.argv = [sys.argv[0], *task_args, *sys.argv[-2:]]
+            GlobalHydra.instance().clear()
+            launch(**launch_args)  # Run
+
+        print(f'Launching {self.num_tasks} tasks among Unified Agents!')
+
+        with ThreadPool() as p:
+            p.map(create_thread, enumerate(multi_task))  # Launch multi-tasks
+
+    # Share multi-task architecture parts across agents when unifiable (if part names match & state dicts are copyable)
+    def unify_agent_models(self, agent, args, device, path=None):
+        if self.multi_task_enabled:
+            print(f'Unifying agent models across {self.num_tasks} tasks...')
+
+            agent = self._unify_agent_models(agent, args, device, path)  # Unify model parts
+
+            self.agents.append(agent)
+
+            # When all agents unified, log to console
+            if self.agents.index(agent) == 0:
+                while len(self.agents) < self.num_tasks:
+                    time.sleep(1)
+
+                print('Done. ✓\nThe following model parts were successfully unified among agents: '
+                      f'{", ".join(self.unified_parts)}.' if len(self.unified_parts) > 0
+                      else 'Our analysis did not find unifiable parts between multi-task agents.')
+
+            self.sync_blocking(agent)  # Thread-safe atomic learn operations
+
+        return agent
+
+    # Uniquely identify multi-task architecture parts and unify equivalents
+    def _unify_agent_models(self, agent, args, device, path=None):
+        # Iterate through all blocks
+        for block in self.union:
+            for part in self.union[block]:
+                # Analogous parts check
+                if hasattr(agent, block):
+                    agent_part = getattr(getattr(agent, block), part)
+
+                    # See if parameters can be copied over. If not, don't unify
+                    unifiable = False
+
+                    for unified_part in self.union[block][part]:
+                        # if part == 'Q_head':  # TODO ???
+                        #     print([name for name, _ in agent_part.named_modules()], \
+                        #           [name for name, _ in unified_part.named_modules()])
+                        # Same modules check
+                        if [name for name, _ in agent_part.named_modules()] != \
+                                [name for name, _ in unified_part.named_modules()]:
+                            continue
+                        # Compatible params check
+                        try:
+                            update_ema_target(unified_part, agent_part)
+                            unifiable = unified_part  # Confirm unifiable
+                            break
+                        except RuntimeError:
+                            continue
+
+                    # Unify
+                    if unifiable:
+                        self.unified_parts.add(f'{block}.{part}')
+
+                        # Re-instantiate/load agent with new recipe
+                        setattr(getattr(args.recipes, block), part, unifiable)
+                        agent = load(path, device, args) if path else instantiate(args).to(device)
+                    else:
+                        self.union[block][part].append(agent_part)  # ! Can also add recipe and do a recipe check above
+
+        return agent
+
+    # Prevent learning steps from conflicting across multi-task threads
+    def sync_blocking(self, agent):
+        if self.synced is None:
+            self.synced = [False] * len(self.agents)
+            self.synced[-1] = True
+
+        learn = agent.learn
+
+        def sync_block_learn(replay):
+            self.block(agent)
+            logs = learn(replay)
+            self.sync(agent)
+
+            return logs
+
+        agent.learn = sync_block_learn
+
+    # Prevent thread conflicts
+    def block(self, agent):
+        i = self.agents.index(agent)
+        if i == 0:
+            while not self.synced[-1]:
+                time.sleep(0.1)
+        else:
+            while not self.synced[i - 1]:
+                time.sleep(0.1)
+
+    # Synchronize threads
+    def sync(self, agent):
+        i = self.agents.index(agent)
+        if i == 0:
+            self.synced[-1] = False
+        else:
+            self.synced[i - 1] = False
+        self.synced[i] = True
+
+
+MT = MultiTask()
+
+
+# TODO Delete, just for MLP CNN on MNIST
+# assert self.agents[0].actor.Pi_head == self.agents[1].actor.Pi_head
+# assert torch.allclose(list(self.agents[0].actor.Pi_head.parameters())[0],
+#                       list(self.agents[1].actor.Pi_head.parameters())[0])
+# python XRD.py multi_task='["task=classify/mnist Trunk=Identity Predictor=MLP +predictor.depth=0 experiment=1", "task=classify/mnist Eyes=MLP experiment=2 +eyes.depth=0 Trunk=Identity Predictor=MLP +predictor.depth=0"]'
+# python XRD.py multi_task='["task=classify/mnist experiment=1", "task=classify/mnist Eyes=MLP experiment=2 +eyes.depth=0"]'
+# python XRD.py multi_task='["task=classify/mnist experiment=1", "task=classify/mnist Eyes=MLP experiment=2"]'
+# python XRD.py multi_task='["task=classify/mnist", "task=classify/mnist Eyes=MLP"]'
+# python XRD.py multi_task='["task=NPCNN Eyes=XRD.Eyes","task=NPCNN num_classes=230 Eyes=XRD.Eyes"]'
+# python XRD.py multi_task='["task=NPCNN Eyes=XRD.Eyes","task=SCNN Eyes=XRD.Eyes"]'
+
+
 # Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
     if isinstance(args, (DictConfig, dict)):
+        if isinstance(args, DictConfig):
+            OmegaConf.resolve(args)
         args = DictConfig(args)  # Non-destructive copy
 
     if hasattr(args, '_override_'):

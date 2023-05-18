@@ -254,3 +254,7 @@ ML task=dcgan
 ### When to use Eyes? When to use Predictor?
 
 ### Saving/loading
+
+### Example publication
+
+### Example generalist agent

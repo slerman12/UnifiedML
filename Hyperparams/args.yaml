@@ -25,6 +25,7 @@ stream: false
 RL: true  # Defaults to false for classify tasks
 supervise: true
 generate: false
+multi_task: null
 # Environment
 Env: ???  # To be specified later, defaults per respective task
 env:
