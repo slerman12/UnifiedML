@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import math
+import sys
 import random
 import time
 from functools import cached_property
@@ -10,6 +11,7 @@ import re
 import warnings
 from inspect import signature
 from pathlib import Path
+from multiprocessing.pool import ThreadPool
 
 import hydra
 from hydra.core.global_hydra import GlobalHydra
@@ -28,7 +30,7 @@ from torchvision import transforms  # For direct accessibility via command line
 from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 
-from UnifiedML import launch_args
+from UnifiedML import launch_args, launch
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -137,11 +139,6 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
     return model
 
 
-import sys
-from multiprocessing.pool import ThreadPool
-from UnifiedML import launch
-
-
 # Launches and synchronizes multiple tasks
 class MultiTask:
     def __init__(self):
@@ -214,13 +211,13 @@ class MultiTask:
                 if hasattr(agent, block):
                     agent_part = getattr(getattr(agent, block), part)
 
+                    if isinstance(agent_part, Ensemble):
+                        agent_part = agent_part.ensemble
+
                     # See if parameters can be copied over. If not, don't unify
                     unifiable = False
 
                     for unified_part in self.union[block][part]:
-                        # if part == 'Q_head':  # TODO ???
-                        #     print([name for name, _ in agent_part.named_modules()], \
-                        #           [name for name, _ in unified_part.named_modules()])
                         # Same modules check
                         if [name for name, _ in agent_part.named_modules()] != \
                                 [name for name, _ in unified_part.named_modules()]:
@@ -283,18 +280,6 @@ class MultiTask:
 
 
 MT = MultiTask()
-
-
-# TODO Delete, just for MLP CNN on MNIST
-# assert self.agents[0].actor.Pi_head == self.agents[1].actor.Pi_head
-# assert torch.allclose(list(self.agents[0].actor.Pi_head.parameters())[0],
-#                       list(self.agents[1].actor.Pi_head.parameters())[0])
-# python XRD.py multi_task='["task=classify/mnist Trunk=Identity Predictor=MLP +predictor.depth=0 experiment=1", "task=classify/mnist Eyes=MLP experiment=2 +eyes.depth=0 Trunk=Identity Predictor=MLP +predictor.depth=0"]'
-# python XRD.py multi_task='["task=classify/mnist experiment=1", "task=classify/mnist Eyes=MLP experiment=2 +eyes.depth=0"]'
-# python XRD.py multi_task='["task=classify/mnist experiment=1", "task=classify/mnist Eyes=MLP experiment=2"]'
-# python XRD.py multi_task='["task=classify/mnist", "task=classify/mnist Eyes=MLP"]'
-# python XRD.py multi_task='["task=NPCNN Eyes=XRD.Eyes","task=NPCNN num_classes=230 Eyes=XRD.Eyes"]'
-# python XRD.py multi_task='["task=NPCNN Eyes=XRD.Eyes","task=SCNN Eyes=XRD.Eyes"]'
 
 
 # Simple-sophisticated instantiation of a class or module by various semantics
