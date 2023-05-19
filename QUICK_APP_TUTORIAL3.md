@@ -309,6 +309,14 @@ ML task=dcgan
 
 ```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
 
+---
+
+<details>
+<summary>
+More docs
+</summary>
+<br>
+
 ## Useful flags
 
 * ```norm=true```: enables normalization 
@@ -329,14 +337,6 @@ Model: MLP
 ```
 
 Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. [Each may serve different optimization purposes.]()
-
----
-
-<details>
-<summary>
-More docs
-</summary>
-<br>
 
 ## Saving/loading
 
