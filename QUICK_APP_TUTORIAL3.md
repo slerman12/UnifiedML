@@ -46,7 +46,7 @@ ML.launch(Model=model, Dataset='CIFAR10')
 python Run.py
 ```
 
-## Adaptive shaping
+## Architecture shapes
 
 UnifiedML automatically detects the shape signature of your model.
 
