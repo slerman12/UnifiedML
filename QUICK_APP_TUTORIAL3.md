@@ -302,7 +302,7 @@ Eyes: Identity
 Model: MLP
 ```
 
-Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. Each may serve different optimization purposes and have different shorthand pseudonyms depending on domain.
+Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. Each may serve different optimization purposes and have different shorthand pseudonyms depending on domain preference.
 
 ### Saving/loading
 
