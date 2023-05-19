@@ -1,6 +1,6 @@
 # Use it in an app
 
-### Install
+## Install
 
 ```console
 pip install UnifiedML
