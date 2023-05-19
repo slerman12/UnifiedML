@@ -264,7 +264,7 @@ SOTA scores at 1.2x the speed.
 **Train:**
 
 ```console
-ML -m experiment=ALE task=RL Env=Atari +env.game=Alien,Amidar,Assault,Asterix,BankHeist,BattleZone,Boxing,Breakout,ChopperCommand,CrazyClimber,DemonAttack,Freeway,Frostbite,Gopher,Hero,Jamesbond,Kangaroo,Krull,KungFuMaster,MsPacman,Pong,PrivateEye,Qbert,RoadRunner,Seaquest,UpNDown
+ML -m experiment=ALE task=RL Env=Atari +env.game=alien,amidar,assault,asterix,bankheist,battlezone,boxing,breakout,choppercommand,crazyclimber,demonattack,freeway,frostbite,gopher,hero,jamesbond,kangaroo,krull,kungfumaster,mspacman,pong,privateeye,qbert,roadrunner,seaquest,upndown
 ```
 * ```task=RL``` points [here]().
 
