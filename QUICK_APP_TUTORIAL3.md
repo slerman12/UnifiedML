@@ -110,8 +110,6 @@ This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU.
 
 ### Hyperparams
 
-> Note: we often use the terms "```task```" and "```recipe```" in similar ways. We consider ```recipe``` to be a ```task``` that's fully self-contained and requires no additional hyperparams.
-
 **Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
 
 #### 1. Purely command-line
@@ -174,6 +172,8 @@ python Run.py Eyes=CNN +eyes.depth=5
 ---
 
 **The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in the example above.**
+
+> Note: we often use the terms "```task```" and "```recipe```" in similar ways. We consider ```recipe``` to be a ```task``` that's fully self-contained and requires no additional hyperparams.
 
 ### Plotting
 
