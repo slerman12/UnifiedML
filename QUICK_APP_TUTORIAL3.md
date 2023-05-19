@@ -9,7 +9,7 @@
   - [Hyperparams](#hyperparams)
   - [ResNet18 example and plotting](#example--training-a-resnet18-on-cifar10)
   - [Saving/Loading]()
-- Recipes
+- [Recipes](#rl-recipe---train-a-humanoid-to-walk-from-images-12x-faster-than-the-sota-drqv2)
   - [RL recipe - DrQV2](#rl-recipe---train-a-humanoid-to-walk-from-images-12x-faster-than-the-sota-drqv2)
   - [RL recipe - Atari](#rl-recipe---atari-to-human-normalized-score-in-1m-steps)
   - [DCGAN in 5 minutes](#generative-recipe---dcgan-in-5-minutes)
