@@ -197,7 +197,7 @@ python Run.py task=recipe
 ### Syntax
 
 1. The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in ```+eyes.depth=5``` [in 1, 2, and 3](#1-purely-command-line).
-2. Note: we often use "```task```" and "```recipe```" interchangeably. 
+2. Note: we often say "task" and "recipe" interchangeably. 
 
 ## Example: Training a ResNet18 on CIFAR10
 
