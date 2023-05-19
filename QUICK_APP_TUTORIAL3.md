@@ -1,4 +1,4 @@
-# Use it in an app
+<img width="35%" alt="flowchart" src="https://i.imgur.com/Ya9FpIJ.png"><br><br>
 
 ## Install
 
