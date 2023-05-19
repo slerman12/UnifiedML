@@ -263,7 +263,7 @@ ML -m experiment=ALE task=RL Env=Atari +env.game=...,pong,...
 
 The ```-m``` flag enables sweeping over comma-separated hyperparams, in this case a standard benchmark 26 games in the Atari ALE. For more sophisticated sweep tools, check out [SweepsAndPlots]().
 
-**Plot:**
+**Generate plots:**
 
 ```console
 Plot experiment=ALE
@@ -277,7 +277,7 @@ We can also plot it side by side with the DeepMind Control Suite RL benchmark:
 ML -m experiment=DMC task=RL Env=Atari +env.game=...,walker_walk,...
 ```
 
-**Plot:*
+**Generate plots:**
 
 ```console
 Plot experiments=[ALE,DMC]
