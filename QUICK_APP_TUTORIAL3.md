@@ -54,7 +54,7 @@ from torch import nn
 import ML
 
 class Model(nn.Module): 
-    def __init__(self, in_features, out_features):
++   def __init__(self, in_features, out_features):
         super().__init__()
         
         self.model = nn.Sequential(nn.Linear(in_features, 128), nn.Linear(128, out_features))
