@@ -106,6 +106,8 @@ For image classification, extra hard disk memory is used to store the re-formatt
 ML task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
 ```
 
+**The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering.**
+
 ### 2. Command line
 
 **Run.py:**
@@ -159,7 +161,6 @@ ML task=Recipe
 
 The order of hyperparam priority is command-line > code > recipe.
 
-
 **Recipe.yaml:**
 
 ```yaml
@@ -183,8 +184,6 @@ python Run.py task=recipe
 ```
 
 ---
-
-**The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in the example above.**
 
 > Note: we often use "```task```" and "```recipe```" in similar ways. We consider ```recipe``` to be a ```task``` that's fully self-contained and requires no additional hyperparams.
 
