@@ -245,7 +245,7 @@ Define your own recipe in a ```.yaml``` file like this one:
 
 **humanoid_from_images.yaml:**
 
-* [```DrQV2Agent``` points here]().
+* ```DrQV2Agent``` points [here]().
 
 **Train:**
 
@@ -268,7 +268,7 @@ The ```-m``` flag enables sweeping over comma-separated hyperparams, in this cas
 ```console
 ML -m experiment=ALE task=RL Env=Atari +env.game=alien,amidar,assault,asterix,bankheist,battlezone,boxing,breakout,choppercommand,crazyclimber,demonattack,freeway,frostbite,gopher,hero,jamesbond,kangaroo,krull,kungfumaster,mspacman,pong,privateeye,qbert,roadrunner,seaquest,upndown
 ```
-* [```task=RL``` points here](), [```Env=Atari``` points here]().
+* ```task=RL``` points [here](), ```Env=Atari``` points [here]().
 
 **Generate plots:**
 
@@ -293,7 +293,7 @@ Plot experiments=[ALE,DMC]
 ### Generative Recipe - DCGAN in 5 minutes
 
 **humanoid_from_images.yaml:**
-* [```DCGAN``` points here]().
+* ```DCGAN``` points [here]().
 
 **Train:**
 
