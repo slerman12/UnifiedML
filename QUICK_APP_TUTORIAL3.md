@@ -110,7 +110,7 @@ This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU.
 
 ### Hyperparams
 
-> Note: we use the terms "```task```" and "```recipe```" interchangably.
+> Note: we use the terms "```task```" and "```recipe```" interchangeably. We consider "```recipe```" to be a fully self-contained task.
 
 **Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
 
