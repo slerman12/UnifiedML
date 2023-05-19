@@ -104,7 +104,7 @@ Then use ```task=``` to select the recipe:
 ML task=cifar_recipe accelerate=true
 ```
 
-This recipe exactly trains CIFAR-10 to $94%$ accuracy in 5 minutes on 1 GPU. 
+This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU. 
 
 * ```ResNet18``` points to this architecture [here]().
 
