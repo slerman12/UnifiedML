@@ -287,7 +287,13 @@ ML task=dcgan
 
 * ```norm=true```: enables normalization 
 
-### When to use Eyes? When to use Predictor?
+### When to use Eyes? When to use Model?
+
+Use Eyes if your architecture only has a body, and not a head. Use Model when your architecture has a head.
+
+```Eyes → Model```
+
+You can combine both.
 
 ### Saving/loading
 
