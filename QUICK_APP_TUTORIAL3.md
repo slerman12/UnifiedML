@@ -3,6 +3,9 @@
 # Welcome 
 
 - [Quickstart](#quick-start)
+
+Examples:
+- [Accelerations](#acceleration)
 - [94% on CIFAR10 example](#example--training-a-resnet18-on-cifar10)
 
 Recipes:
