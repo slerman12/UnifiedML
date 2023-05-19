@@ -6,6 +6,8 @@
 pip install UnifiedML
 ```
 
+## Quick start
+
 ### Purely command-line example
 
 **Run.py:**
@@ -71,7 +73,7 @@ Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_fe
 python Run.py
 ```
 
-### Acceleration
+## Acceleration
 
 With ```accelerate=True```, you get:
 * Memory mapping
@@ -93,21 +95,6 @@ ML.launch(accelerate=True)
 ```
 
 For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
-
-### Image Classification Recipe - Training a ResNet18 on CIFAR10
-
-Define recipes in a ```.yaml``` file like this one:
-
-Then use ```task=``` to select the recipe:
-
-```console
-ML task=cifar_recipe accelerate=true
-```
-
-This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU. 
-
-* ```ResNet18``` points to this architecture [here]().
-* We could have also written a direct path: ```UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```.
 
 ## Hyperparams
 
@@ -192,9 +179,22 @@ python Run.py Eyes=CNN +eyes.depth=5
 
 > Note: we often use "```task```" and "```recipe```" in similar ways. We consider ```recipe``` to be a ```task``` that's fully self-contained and requires no additional hyperparams.
 
-## Plotting
+## Image Classification Recipe - Training a ResNet18 on CIFAR10
 
-Let's consider our [CIFAR-10 example from earlier](#image-classification-recipe---training-a-resnet18-on-cifar10):
+Define recipes in a ```.yaml``` file like this one:
+
+Then use ```task=``` to select the recipe:
+
+```console
+ML task=cifar_recipe accelerate=true
+```
+
+This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU.
+
+* ```ResNet18``` points to this architecture [here]().
+* We could have also written a direct path: ```UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```.
+
+### Plotting
 
 ```console
 ML task=cifar_recipe accelerate=true
@@ -215,6 +215,8 @@ We can use flags like ```experiment=``` to distinguish experiments.
     ```console
     ML task=cifar_recipe accelerate=true logger.wandb=true
     ```
+
+## Recipes
 
 ### RL Recipe - Train a humanoid to walk from images, 1.2x faster than the SOTA DrQV2
 
