@@ -309,7 +309,7 @@ ML task=dcgan
 
 ```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
 
----
+## More docs
 
 <details>
 <summary>
