@@ -278,10 +278,10 @@ Plot experiment=ALE
 
 We can also plot it side by side with the DeepMind Control Suite RL benchmark:
 
-**Train some tasks in the [DMC]() suite:**
+**Train some tasks in the DMC suite:**
 
 ```console
-ML -m experiment=DMC task=RL Env=Atari +env.game=cartpole_balance,quadruped_walk,walker_walk,cheetah_run
+ML -m experiment=DMC task=RL Env=DMC +env.task=cartpole_balance,quadruped_walk,walker_walk,cheetah_run
 ```
 
 **Generate plots:**
