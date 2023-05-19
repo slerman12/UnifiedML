@@ -220,7 +220,7 @@ We can use flags like ```experiment=``` to distinguish experiments.
 * Another option is to use [WandB]():
 
     ```console
-    ML task=cifar_recipe accelerate=true logger.wandb=true
+    ML task=cifar_recipe accelerate=true wandb=true
     ```
 
 ## Recipes
