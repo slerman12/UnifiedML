@@ -152,6 +152,16 @@ python Run.py
 
 **Recipe.yaml:**
 
+```yaml
+defaults:
+  - classify@_global_
+  - _self_
+Dataset: MNIST 
+Eyes: CNN
+eyes:
+  depth:5
+```
+
 **Run it:**
 
 ```console
