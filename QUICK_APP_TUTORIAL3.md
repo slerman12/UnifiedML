@@ -261,14 +261,14 @@ SOTA scores at 1.2x the speed.
 
 ### RL Recipe - Atari to human-normalized score in 1m steps
 
+The ```-m``` flag enables sweeping over comma-separated hyperparams, in this case a standard benchmark 26 games in the Atari ALE. For more sophisticated sweep tools, check out [SweepsAndPlots]().
+
 **Train:**
 
 ```console
 ML -m experiment=ALE task=RL Env=Atari +env.game=alien,amidar,assault,asterix,bankheist,battlezone,boxing,breakout,choppercommand,crazyclimber,demonattack,freeway,frostbite,gopher,hero,jamesbond,kangaroo,krull,kungfumaster,mspacman,pong,privateeye,qbert,roadrunner,seaquest,upndown
 ```
 * ```task=RL``` points [here]().
-
-The ```-m``` flag enables sweeping over comma-separated hyperparams, in this case a standard benchmark 26 games in the Atari ALE. For more sophisticated sweep tools, check out [SweepsAndPlots]().
 
 **Generate plots:**
 
