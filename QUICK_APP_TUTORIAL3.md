@@ -65,11 +65,11 @@ class Model(nn.Module):
 ML.launch(Model=Model, Dataset='CIFAR10')
 ```
 
+Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```.
+
 ```console
 python Run.py
 ```
-
-Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```.
 
 ### Acceleration
 
