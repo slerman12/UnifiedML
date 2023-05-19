@@ -108,6 +108,8 @@ This recipe exactly trains CIFAR-10 to $94%$ accuracy in 5 minutes on 1 GPU.
 
 * ```ResNet18``` points to this architecture [here]().
 
+> Note: we use the terms "```task```" and "```recipe```" interchangably. A task is defined by a recipe card such as the ones in [```UnifiedML/Hyperparams/task```]().
+
 ### Hyperparams
 
 **Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
@@ -222,7 +224,7 @@ python Run.py
 
 SOTA scores at 1.2x the speed.
 
-* You can find our implementation of DrQV2Agent [here]().
+* DrQV2Agent points [here]().
 
 **Render a video:**
 
@@ -244,19 +246,19 @@ Plot experiment=ALE
 
 We can also plot it side by side with the DeepMind Control Suite RL benchmark:
 
-*Train some tasks in the suite*:
+**Train some tasks in the suite*:*
 
 ```console
 ML -m experiment=DMC task=RL Env=Atari +env.game=...,walker_walk,...
 ```
 
-*Plot*:
+**Plot:*
 
 ```console
 Plot experiments=[ALE,DMC]
 ```
 
-* You can find our implementation of DQNAgent [here]().
+* DQNAgent points [here]().
 
 ### Generative Recipe - DCGAN in 5 minutes
 
@@ -271,7 +273,7 @@ ML task=dcgan
 
 ```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
 
-* You can find our implementation of DCGAN [here]().
+* DCGAN points [here]().
 
 ### Useful flags
 
