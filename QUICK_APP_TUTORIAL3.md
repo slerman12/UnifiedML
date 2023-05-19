@@ -173,6 +173,9 @@ The order of hyperparam priority is command-line > code > recipe.
 **Recipe.yaml:**
 
 ```yaml
+defaults:
+  - classify@_global_
+  - _self_
 Eyes: CNN
 eyes:
   depth: 5
