@@ -74,7 +74,7 @@ python Run.py
 ### Acceleration
 
 With ```accelerate=True```, you get:
-* Hard-disk memory mapping
+* Memory mapping
 * Adaptive RAM caching
 * Truly-shared RAM parallelism
 * Automatic 16-bit mixed precision
