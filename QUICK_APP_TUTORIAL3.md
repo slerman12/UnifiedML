@@ -94,7 +94,7 @@ ML.launch(accelerate=True)
 
 For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
 
-### Image Classification Recipe - Training CIFAR-10 with ResNet18
+### Image Classification Recipe - Training a ResNet18 on CIFAR10
 
 Define recipes in a ```.yaml``` file like this one:
 
@@ -104,15 +104,17 @@ Then use ```task=``` to select the recipe:
 ML task=cifar_recipe accelerate=true
 ```
 
-This recipe exactly trains CIFAR-10 to 94% accuracy in 5 minutes on 1 GPU. 
+This recipe exactly trains CIFAR-10 to $94%$ accuracy in 5 minutes on 1 GPU. 
 
-* ```ResNet18``` points to this architecture example [here]().
+* ```ResNet18``` points to this architecture [here]().
 
 ### Hyperparams
 
-Hyperparams can be passed in via command-line, code, or recipe.
+Hyperparams can be passed in via command-line, code, recipe, or any combination thereof.
 
 **Here's how to write the same program 5 different ways:**
+
+Training a 5-layer deep CNN on MNIST:
 
 #### 1. Purely command-line
 
