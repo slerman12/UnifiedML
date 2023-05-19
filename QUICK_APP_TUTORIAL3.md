@@ -141,6 +141,8 @@ import ML
 ML.launch('+eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 ```
 
+**Run it:**
+
 ```console
 python Run.py
 ```
@@ -148,6 +150,8 @@ python Run.py
 #### 4. Recipe
 
 **Recipe.yaml:**
+
+**Run it:**
 
 ```console
 ML task=Recipe
@@ -164,6 +168,8 @@ from torchvision.datasets import MNIST
 
 ML.launch(task='recipe', Dataset=MNIST)  # Note: Can directly pass in classes
 ```
+
+**Run it:**
 
 ```console
 python Run.py Eyes=CNN +eyes.depth=5
