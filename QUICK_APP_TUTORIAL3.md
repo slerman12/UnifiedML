@@ -163,8 +163,6 @@ The order of hyperparam priority is command-line > code > recipe.
 
 #### 5. All of the above
 
-A mix of direct code, command-line, and recipe:
-
 **Run.py:**
 ```python
 import ML
