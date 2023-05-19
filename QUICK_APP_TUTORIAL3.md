@@ -338,7 +338,7 @@ Model: MLP
 
 Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. [Each may serve different optimization purposes.]()
 
-By organizing these parts into Blocks (```encoder```, ```actor```, ```critic```), UnifiedMl is able to unify them via the multi-task framework and API.
+By organizing these parts into Blocks (```encoder```, ```actor```, ```critic```), UnifiedMl is able to unify them via the multi-task framework and API, even across vast domains.
 
 ## Saving/loading
 
