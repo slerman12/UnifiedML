@@ -161,7 +161,7 @@ ML task=Recipe
 
 The order of hyperparam priority is command-line > code > recipe. 
 
-#### 5. Mix
+#### 5. All of the above
 
 A mix of direct code, command-line, and recipe:
 
