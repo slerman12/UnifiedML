@@ -1,5 +1,7 @@
 <img width="20%" alt="flowchart" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
 
+# Welcome 
+
 ## Install
 
 ```console
@@ -44,7 +46,7 @@ ML.launch(Model=model, Dataset='CIFAR10')
 python Run.py
 ```
 
-### Adaptive shaping
+## Adaptive shaping
 
 UnifiedML automatically detects the shape signature of your model.
 
