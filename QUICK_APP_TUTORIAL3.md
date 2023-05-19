@@ -98,7 +98,7 @@ For image classification, extra hard disk memory is used to store the re-formatt
 
 ## Hyperparams
 
-**Write the same program 5 different ways:** 
+**Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
 
 ### 1. Purely command-line
 
