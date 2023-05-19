@@ -110,9 +110,7 @@ This recipe exactly trains CIFAR-10 to $94%$ accuracy in 5 minutes on 1 GPU.
 
 ### Hyperparams
 
-Hyperparams can be passed in via command-line, code, recipe, or any combination thereof.
-
-**Here's how to write the same program 5 different ways:** (training a 5-layer deep CNN on MNIST)
+**Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
 
 #### 1. Purely command-line
 
