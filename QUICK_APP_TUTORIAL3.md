@@ -207,10 +207,6 @@ This recipe exactly trains CIFAR-10 to 94% accuracy in 5 minutes on 1 GPU.
 
 ### Plotting it
 
-```console
-ML task=cifar_recipe accelerate=true
-```
-
 We can plot the results as follows:
 
 ```console
