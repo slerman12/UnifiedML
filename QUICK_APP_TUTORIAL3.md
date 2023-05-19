@@ -146,7 +146,7 @@ defaults:
 Dataset: MNIST 
 Eyes: CNN
 eyes:
-  depth:5
+  depth: 5
 ```
 
 **Run it:**
@@ -163,8 +163,9 @@ The order of hyperparam priority is command-line > code > recipe.
 **Recipe.yaml:**
 
 ```yaml
+Eyes: CNN
 eyes:
-  depth:5
+  depth: 5
 ```
 
 **Run.py:**
@@ -172,13 +173,13 @@ eyes:
 import ML
 from torchvision.datasets import MNIST
 
-ML.launch(task='recipe', Dataset=MNIST)  # Note: Can directly pass in classes
+ML.launch(Dataset=MNIST)  # Note: Can directly pass in classes
 ```
 
 **Run it:**
 
 ```console
-python Run.py Eyes=CNN 
+python Run.py task=recipe 
 ```
 
 ---
