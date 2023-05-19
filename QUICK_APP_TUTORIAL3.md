@@ -141,6 +141,8 @@ python Run.py
 
 ### 4. Recipe
 
+Define recipes in a ```.yaml``` file like this one:
+
 **Recipe.yaml:**
 
 ```yaml
@@ -196,6 +198,8 @@ python Run.py task=recipe
 ## Example: Training a ResNet18 on CIFAR10
 
 Define recipes in a ```.yaml``` file like this one:
+
+**cifar_recipe.yaml:**
 
 Then use ```task=``` to select the recipe:
 
