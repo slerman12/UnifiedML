@@ -213,7 +213,7 @@ ML task=cifar_recipe accelerate=true
 
 This recipe exactly trains CIFAR10 to 94% accuracy in 5 minutes on 1 GPU.
 
-* ```ResNet18``` points to the architecture [here]().
+* [```ResNet18``` points to the architecture here]().
 * We could have also written the direct path: 
 ```diff
 + Eyes: UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18
@@ -245,7 +245,7 @@ Define your own recipe in a ```.yaml``` file like this one:
 
 **humanoid_from_images.yaml:**
 
-* ```DrQV2Agent``` points [here]().
+* [```DrQV2Agent``` points here]().
 
 **Train:**
 
@@ -268,7 +268,7 @@ The ```-m``` flag enables sweeping over comma-separated hyperparams, in this cas
 ```console
 ML -m experiment=ALE task=RL Env=Atari +env.game=alien,amidar,assault,asterix,bankheist,battlezone,boxing,breakout,choppercommand,crazyclimber,demonattack,freeway,frostbite,gopher,hero,jamesbond,kangaroo,krull,kungfumaster,mspacman,pong,privateeye,qbert,roadrunner,seaquest,upndown
 ```
-* ```task=RL``` points [here](), ```Env=Atari``` points [here]().
+* [```task=RL``` points here](), [```Env=Atari``` points here]().
 
 **Generate plots:**
 
@@ -293,7 +293,7 @@ Plot experiments=[ALE,DMC]
 ### Generative Recipe - DCGAN in 5 minutes
 
 **humanoid_from_images.yaml:**
-* ```DCGAN``` points [here]().
+* [```DCGAN``` points here]().
 
 **Train:**
 
