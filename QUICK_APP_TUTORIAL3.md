@@ -332,3 +332,7 @@ Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```.
 ## Example publication
 
 ## Example generalist agent
+
+<hr class="solid">
+
+[MIT license](MIT_LICENSE)
