@@ -107,7 +107,7 @@ ML task=cifar_recipe accelerate=true
 This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU. 
 
 * ```ResNet18``` points to this architecture [here]().
-* We could have also written a direct path: ```UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```
+* We could have also written a direct path: ```UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```.
 
 ### Hyperparams
 
