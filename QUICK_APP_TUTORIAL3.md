@@ -73,7 +73,7 @@ python Run.py
 
 ### Acceleration
 
-With ```accelerate=True```:
+With ```accelerate=True```, you get:
 * Memory mapped hard-disk reformatting
 * Adaptive RAM caching
 * Truly-shared RAM parallelism
@@ -92,7 +92,7 @@ python Run.py accelerate=true
 ML.launch(accelerate=True)
 ```
 
-For image classification, extra hard disk memory is needed to store the re-formatted dataset. For RL, there's no downside.
+For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
 
 ### Image Classification Recipe - Training CIFAR-10 with ResNet18
 
