@@ -1,4 +1,4 @@
-<img width="25%" alt="flowchart" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
+<img width="20%" alt="flowchart" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
 
 ## Install
 
