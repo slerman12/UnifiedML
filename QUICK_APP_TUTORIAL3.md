@@ -112,6 +112,8 @@ Hyperparams can be passed in via command-line, code, recipe, or any combination 
 ML task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
 ```
 
+Trains a 5-layer CNN end-to-end on MNIST.
+
 ### 2. Command line
 
 **Run.py:**
