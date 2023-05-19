@@ -175,7 +175,7 @@ ML.launch(task='recipe', Dataset=MNIST)
 python Run.py Eyes=CNN +eyes.depth=5
 ```
 
-The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in the example above.
+**The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in the example above.**
 
 ### Plotting
 
