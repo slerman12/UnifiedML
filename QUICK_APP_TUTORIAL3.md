@@ -291,9 +291,16 @@ ML task=dcgan
 
 Use Eyes if your architecture only has a body, and not a head. Use Model when your architecture has a head.
 
-```Eyes → Model```
+```input → Eyes → Model → output```
 
 You can combine both.
+
+The defaults are:
+
+```yaml
+Eyes: Identity
+Model: MLP
+```
 
 ### Saving/loading
 
