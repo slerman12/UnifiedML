@@ -211,13 +211,13 @@ class MultiTask:
                 if hasattr(agent, block):
                     agent_part = getattr(getattr(agent, block), part)
 
-                    if isinstance(agent_part, Ensemble):
-                        agent_part = agent_part.ensemble
+                    if part in ['Pi_head', 'Q_head'] and isinstance(agent_part, Ensemble):
+                        agent_part = agent_part.ensemble  # Instantiate ensembles from ModuleLists
 
                     # See if parameters can be copied over. If not, don't unify
                     unifiable = False
 
-                    for unified_part in self.union[block][part]:
+                    for unified_part in self.union[block][part]:  # TODO Recipe same ID check
                         # Same modules check
                         if [name for name, _ in agent_part.named_modules()] != \
                                 [name for name, _ in unified_part.named_modules()]:
@@ -280,6 +280,18 @@ class MultiTask:
 
 
 MT = MultiTask()
+
+
+# TODO Delete, just for MLP CNN on MNIST
+# assert self.agents[0].actor.Pi_head == self.agents[1].actor.Pi_head
+# assert torch.allclose(list(self.agents[0].actor.Pi_head.parameters())[0],
+#                       list(self.agents[1].actor.Pi_head.parameters())[0])
+# python XRD.py multi_task='["task=classify/mnist Trunk=Identity Predictor=MLP +predictor.depth=0 experiment=1", "task=classify/mnist Eyes=MLP experiment=2 +eyes.depth=0 Trunk=Identity Predictor=MLP +predictor.depth=0"]'
+# python XRD.py multi_task='["task=classify/mnist experiment=1", "task=classify/mnist Eyes=MLP experiment=2 +eyes.depth=0"]'
+# python XRD.py multi_task='["task=classify/mnist experiment=1", "task=classify/mnist Eyes=MLP experiment=2"]'
+# python XRD.py multi_task='["task=classify/mnist", "task=classify/mnist Eyes=MLP"]'
+# python XRD.py multi_task='["task=NPCNN Eyes=XRD.Eyes","task=NPCNN num_classes=230 Eyes=XRD.Eyes"]'
+# python XRD.py multi_task='["task=NPCNN Eyes=XRD.Eyes","task=SCNN Eyes=XRD.Eyes"]'
 
 
 # Simple-sophisticated instantiation of a class or module by various semantics
