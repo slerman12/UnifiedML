@@ -289,7 +289,7 @@ ML task=dcgan
 
 ### When to use ```Eyes```? When to use ```Model```?
 
-Use Eyes if your architecture only has a body, and not a head. Use Model when your architecture has a head.
+Use ```Eyes``` if your architecture only has a body, and not a head. Use ```Model``` when your architecture has a head.
 
 ```input → Eyes → Model → output```
 
