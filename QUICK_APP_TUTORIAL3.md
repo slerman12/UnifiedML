@@ -2,7 +2,7 @@
 
 # Welcome 
 
-- [Quickstart](#quick-start)
+[Quickstart](#quick-start)
 
 Examples:
 - [Accelerations](#acceleration)
