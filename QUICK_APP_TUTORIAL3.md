@@ -207,7 +207,9 @@ Define your own recipe in a ```.yaml``` file like this one:
 
 **humanoid_from_images.yaml:**
 
-**Run it:**
+* DrQV2Agent points [here]().
+
+**Train:**
 
 ```console
 ML task=humanoid_from_images
@@ -216,8 +218,6 @@ ML task=humanoid_from_images
 **Generate plots:**
 
 SOTA scores at 1.2x the speed.
-
-* DrQV2Agent points [here]().
 
 **Render a video:**
 
@@ -228,6 +228,7 @@ SOTA scores at 1.2x the speed.
 ```console
 ML -m experiment=ALE task=RL Env=Atari +env.game=...,pong,...
 ```
+* ```task=RL``` points [here]().
 
 The ```-m``` flag enables sweeping over comma-separated hyperparams, in this case a standard benchmark 26 games in the Atari ALE. For more sophisticated sweep tools, check out [SweepsAndPlots]().
 
@@ -251,9 +252,10 @@ ML -m experiment=DMC task=RL Env=Atari +env.game=...,walker_walk,...
 Plot experiments=[ALE,DMC]
 ```
 
-* DQNAgent points [here]().
-
 ### Generative Recipe - DCGAN in 5 minutes
+
+**humanoid_from_images.yaml:**
+* DCGAN points [here]().
 
 **Train:**
 
@@ -265,8 +267,6 @@ ML task=dcgan
 [//]: # (caption: something .. as saved in ```Benchmarking/```.)
 
 ```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
-
-* DCGAN points [here]().
 
 ### Useful flags
 
