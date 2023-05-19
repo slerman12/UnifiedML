@@ -162,7 +162,7 @@ The order of hyperparam priority is command-line > code > recipe.
 import ML
 from torchvision.datasets import MNIST
 
-ML.launch(task='recipe', Dataset=MNIST)
+ML.launch(task='recipe', Dataset=MNIST)  # Note: Can directly pass in classes
 ```
 
 ```console
