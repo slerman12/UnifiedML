@@ -2,6 +2,13 @@
 
 # Welcome 
 
+- [Quick start](#quick-start)
+- [Architecture shapes](#architecture-shapes)
+- [Acceleration](#acceleration)
+- [Hyper](#hyperparams)
+- [Agents and performances](#example--training-a-resnet18-on-cifar10)
+- [Agents and performances](#recipes)
+
 ## Install
 
 ```console
