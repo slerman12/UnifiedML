@@ -108,7 +108,7 @@ This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU.
 
 * ```ResNet18``` points to this architecture [here]().
 
-> Note: we use the terms "```task```" and "```recipe```" interchangably. A task is defined by a recipe card such as the ones in [```UnifiedML/Hyperparams/task```]().
+> Note: we use the terms "```task```" and "```recipe```" interchangably.
 
 ### Hyperparams
 
