@@ -197,7 +197,7 @@ python Run.py task=recipe
 ### Syntax
 
 1. The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in ```+eyes.depth=5``` [in 1, 2, and 3](#1-purely-command-line).
-2. Note: we often use "```task```" and "```recipe```" in similar ways. 
+2. Note: we often use "```task```" and "```recipe```" interchangeably. 
 
 ## Example: Training a ResNet18 on CIFAR10
 
@@ -213,8 +213,8 @@ ML task=cifar_recipe accelerate=true
 
 This recipe exactly trains CIFAR10 to 94% accuracy in 5 minutes on 1 GPU.
 
-* ```ResNet18``` points to this architecture [here]().
-* We could have also written the direct path ```Eyes: UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```.
+* ```ResNet18``` points to the architecture [here]().
+* We could have also written the direct path: ```Eyes: UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```.
 
 ### Plot it:
 
