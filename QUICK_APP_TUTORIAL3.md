@@ -335,4 +335,4 @@ Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```.
 
 <hr class="solid">
 
-[MIT license](MIT_LICENSE)
+[MIT license Included.](MIT_LICENSE)
