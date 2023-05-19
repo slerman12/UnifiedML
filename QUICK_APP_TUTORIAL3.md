@@ -82,7 +82,7 @@ With ```accelerate=True```, you get:
 * Adaptive RAM caching
 * Truly-shared RAM parallelism
 * Automatic 16-bit mixed precision
-* Multi-GPU automatic detection and training
+* Multi-GPU automatic detection and parallel training
 
 ```console
 python Run.py accelerate=true
