@@ -194,7 +194,7 @@ python Run.py Eyes=CNN +eyes.depth=5
 
 ### Plotting
 
-Let's consider our [CIFAR-10 example from earlier](#recipes-example---training-cifar-10-with-resnet18):
+Let's consider our [CIFAR-10 example from earlier](#image-classification-recipe---training-a-resnet18-on-cifar10):
 
 ```console
 ML task=cifar_recipe accelerate=true
