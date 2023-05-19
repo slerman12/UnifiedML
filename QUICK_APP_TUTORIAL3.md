@@ -330,6 +330,8 @@ Model: MLP
 
 Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. [Each may serve different optimization purposes.]()
 
+---
+
 <details>
 <summary>
 More docs
