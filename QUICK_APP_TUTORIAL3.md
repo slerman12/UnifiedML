@@ -3,6 +3,9 @@
 # Welcome 
 
 - [Quickstart](#quick-start)
+
+Recipes:
+
 - [94% on CIFAR10](#example--training-a-resnet18-on-cifar10)
 - [RL recipe - DrQV2](#rl-recipe---train-a-humanoid-to-walk-from-images-12x-faster-than-the-sota-drqv2)
 - [RL recipe - Atari](#rl-recipe---atari-to-human-normalized-score-in-1m-steps)
