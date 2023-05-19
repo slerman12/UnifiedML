@@ -48,7 +48,7 @@ UnifiedML automatically detects the shape signature of your model.
 
 **Run.py:**
 
-```python
+```diff
 from torch import nn
 
 import ML
