@@ -207,7 +207,7 @@ Define your own recipe in a ```.yaml``` file like this one:
 
 **humanoid_from_images.yaml:**
 
-##Run it:**
+**Run it:**
 
 ```console
 ML task=humanoid_from_images
