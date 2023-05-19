@@ -295,7 +295,7 @@ Use Eyes if your architecture only has a body, and not a head. Use Model when yo
 
 You can combine both.
 
-The defaults are:
+**The defaults are:**
 
 ```yaml
 Eyes: Identity
