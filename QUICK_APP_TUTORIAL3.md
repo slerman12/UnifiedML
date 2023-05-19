@@ -1,4 +1,4 @@
-<img width="15%" alt="flowchart" src="https://i.imgur.com/Ya9FpIJ.png"><br><br>
+<img width="25%" alt="flowchart" src="https://i.imgur.com/Ya9FpIJ.png"><br><br>
 
 ## Install
 
