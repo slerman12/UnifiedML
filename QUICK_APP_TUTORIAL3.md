@@ -8,7 +8,7 @@ pip install UnifiedML
 
 ### Purely command-line example
 
-**App.py:**
+**Run.py:**
 
 ```python
 from torch import nn
