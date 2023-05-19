@@ -293,7 +293,7 @@ ML -m experiment=DMC task=RL Env=DMC +env.task=cartpole_balance,quadruped_walk,w
 Plot experiments=[ALE,DMC]
 ```
 
-### Generative Recipe - DCGAN in 5 minutes
+### Generative Recipe - DCGAN celebrity faces in 5 minutes
 
 **humanoid_from_images.yaml:**
 * ```DCGAN``` points [here]().
