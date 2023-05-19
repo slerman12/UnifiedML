@@ -3,11 +3,7 @@
 # Welcome 
 
 [Quickstart](#quick-start)
-
-Examples:
-- [Accelerations](#acceleration)
 - [94% on CIFAR10 example](#example--training-a-resnet18-on-cifar10)
-
 Recipes:
 
 - [RL recipe - DrQV2](#rl-recipe---train-a-humanoid-to-walk-from-images-12x-faster-than-the-sota-drqv2)
