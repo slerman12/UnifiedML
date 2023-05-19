@@ -242,7 +242,7 @@ Define your own recipe in a ```.yaml``` file like this one:
 
 **humanoid_from_images.yaml:**
 
-* DrQV2Agent points [here]().
+* ```DrQV2Agent``` points [here]().
 
 **Train:**
 
@@ -290,7 +290,7 @@ Plot experiments=[ALE,DMC]
 ### Generative Recipe - DCGAN in 5 minutes
 
 **humanoid_from_images.yaml:**
-* DCGAN points [here]().
+* ```DCGAN``` points [here]().
 
 **Train:**
 
