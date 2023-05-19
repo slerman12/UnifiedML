@@ -109,17 +109,17 @@ This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU.
 * ```ResNet18``` points to this architecture [here]().
 * We could have also written a direct path: ```UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18```.
 
-### Hyperparams
+## Hyperparams
 
 **Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
 
-#### 1. Purely command-line
+### 1. Purely command-line
 
 ```console
 ML task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
 ```
 
-#### 2. Command line
+### 2. Command line
 
 **Run.py:**
 
@@ -134,7 +134,7 @@ ML.launch()
 python Run.py task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
 ```
 
-#### 3. Code
+### 3. Code
 
 **Run.py:**
 ```python
@@ -148,7 +148,7 @@ ML.launch('+eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 python Run.py
 ```
 
-#### 4. Recipe
+### 4. Recipe
 
 **Recipe.yaml:**
 
@@ -168,7 +168,7 @@ eyes:
 ML task=Recipe
 ```
 
-#### 5. All of the above
+### 5. All of the above
 
 The order of hyperparam priority is command-line > code > recipe.
 
@@ -192,7 +192,7 @@ python Run.py Eyes=CNN +eyes.depth=5
 
 > Note: we often use "```task```" and "```recipe```" in similar ways. We consider ```recipe``` to be a ```task``` that's fully self-contained and requires no additional hyperparams.
 
-### Plotting
+## Plotting
 
 Let's consider our [CIFAR-10 example from earlier](#image-classification-recipe---training-a-resnet18-on-cifar10):
 
