@@ -207,15 +207,10 @@ Define your own recipe in a ```.yaml``` file like this one:
 
 **humanoid_from_images.yaml:**
 
-**Run.py:**
-
-```python
-import ML
-ML.launch(task='humanoid_from_images')
-```
+##Run it:**
 
 ```console
-python Run.py
+ML task=humanoid_from_images
 ```
 
 **Generate plots:**
