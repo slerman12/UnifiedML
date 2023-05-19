@@ -108,9 +108,9 @@ This recipe exactly trains CIFAR-10 to $94\%$ accuracy in 5 minutes on 1 GPU.
 
 * ```ResNet18``` points to this architecture [here]().
 
-> Note: we use the terms "```task```" and "```recipe```" interchangably.
-
 ### Hyperparams
+
+> Note: we use the terms "```task```" and "```recipe```" interchangably.
 
 **Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. Here's how to write the same program 5 different ways:** 
 
