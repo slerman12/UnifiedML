@@ -313,7 +313,7 @@ ML task=dcgan
 
 <details>
 <summary>
-More docs
+For more docs
 </summary>
 <br>
 
