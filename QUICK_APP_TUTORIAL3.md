@@ -159,6 +159,14 @@ ML task=Recipe
 
 The order of hyperparam priority is command-line > code > recipe.
 
+
+**Recipe.yaml:**
+
+```yaml
+eyes:
+  depth:5
+```
+
 **Run.py:**
 ```python
 import ML
@@ -170,7 +178,7 @@ ML.launch(task='recipe', Dataset=MNIST)  # Note: Can directly pass in classes
 **Run it:**
 
 ```console
-python Run.py Eyes=CNN +eyes.depth=5
+python Run.py Eyes=CNN 
 ```
 
 ---
