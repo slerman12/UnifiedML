@@ -306,11 +306,11 @@ ML task=dcgan
 
 ```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
 
-### Useful flags
+## Useful flags
 
 * ```norm=true```: enables normalization 
 
-### When to use ```Eyes```? When to use ```Model```?
+## When to use ```Eyes```? When to use ```Model```?
 
 Use ```Eyes``` if your architecture only has a body, and not a head. Use ```Model``` when your architecture has a head.
 
@@ -327,8 +327,8 @@ Model: MLP
 
 Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. Each may serve different optimization purposes.
 
-### Saving/loading
+## Saving/loading
 
-### Example publication
+## Example publication
 
-### Example generalist agent
+## Example generalist agent
