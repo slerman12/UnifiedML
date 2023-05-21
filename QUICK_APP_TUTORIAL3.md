@@ -1,4 +1,4 @@
-<img width="20%" alt="flowchart" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
+<img width="20%" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
 
 # Welcome 
 
@@ -200,7 +200,7 @@ python Run.py task=recipe
 ### Syntax
 
 1. The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in ```+eyes.depth=5``` [in 1, 2, and 3](#1-purely-command-line).
-2. Note: we often use "```task```" and "```recipe```" interchangeably. 
+2. Note: we often use "```task```" and "```recipe```" terms interchangeably. ```recipe=``` is syntactically equivalent to ```task=```. 
 
 ## Example: Training a ResNet18 on CIFAR10
 
@@ -230,7 +230,7 @@ We can plot the result as follows:
 Plot task=cifar_recipe
 ```
 
-Corresponding plots save in ```Benchmarking/```:
+Corresponding plots save in ```Benchmarking/Experiment-Name/Plots/```:
 
 We can use flags like ```experiment=``` to distinguish experiments. 
 
@@ -320,6 +320,7 @@ Click to expand
 ## Useful flags
 
 * ```norm=true```: enables normalization 
+* ```offline=true```: ...
 
 ## When to use ```Eyes```? When to use ```Model```?
 
@@ -341,6 +342,84 @@ Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```.
 By organizing these parts into Blocks (```encoder```, ```actor```, ```critic```), UnifiedMl is able to unify them via the multi-task framework and API, even across vast domains.
 
 ## Saving/loading
+
+### Saving
+
+Checkpoints will automatically save to ```Checkpoints/Experiment-Name/Agent/Task-Name_Seed.pt``` at the end of training.
+
+Disable automatic saving with ```save=false```.
+
+Save periodically with ```save_per_steps=```:
+
+```console
+# Saves periodically every 10000 steps
+python Run.py save_per_steps=10000
+```
+
+### Loading
+
+#### By exact match
+
+```console
+# Loads the agent/model that matches the current hyperparams
+python Run.py load=true
+```
+
+#### Searching checkpoint paths
+
+Let's say you have an explicit load path that is different from your current hyperparams: ```Checkpoints/MyExp/Dataset/GANAgent/MNIST_0.pt```.
+
+There are two ways to load it:
+
+```console
+# 1. Via sufficiently-identifying string keywords (nearest match):
+python Run.py load='MyExp MNIST'
+
+# 2. Or, explicit path:
+python Run.py load=Checkpoints/MyExp/Dataset/GANAgent/MNIST_0.pt
+```
+
+#### In-code
+
+Load in-code via the same syntax or with ```ML.load_agent(path)```.
+
+```python
+import ML
+
+# Load 
+agent = ML.load_agent('MyExp')
+
+# Resume training, potentially W/ different hyperparams
+agent = ML.launch(experiment='MyExp', Agent=agent, Dataset='MNIST')
+```
+
+The launcher also returns the agent.
+
+### Replays
+
+An experience replay can be saved and/or loaded with the ```replay.save=true``` or ```replay.load=true``` flags, and the same analogous syntax.
+
+By default, replays in reinforcement learning temporarily save to ```/Datasets/ReplayBuffer/Experiment-Name/Agent/Task-Name_Seed``` and are deleted at the end of training unless ```replay.save=true```.
+
+By default, classify tasks are offline, meaning you don't have to worry about loading or saving replays. Since the dataset is static, creating/loading is non-optional and handled entirely automatically.
+
+<details>
+<summary>
+Click here to learn more about replays
+</summary>
+<br>
+
+<img width="25%" alt="flowchart" src="https://github.com/AGI-init/Assets/assets/92597756/15f749d8-1fcf-4075-bc0d-99fc98f0429d"><br><br>
+
+**In UnifiedML, replays are an efficient accelerated storage format for data that support both static and dynamic (changing/growing) datasets.**
+
+You can disable the use of replays with ```stream=true```, which just sends data to the Agent directly from the environment. In RL, this is equivalent to on-policy training. In classification, it means you'll just directly use the Pytorch Dataset, without all the fancy replay features and accelerations.
+
+Replays are recommended for RL because on-policy algorithmic support is currently limited.
+
+~
+
+</details>
 
 ## Example publication
 
