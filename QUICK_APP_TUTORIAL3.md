@@ -2,6 +2,14 @@
 
 # Welcome 
 
+[//]: # (From [basics]&#40;#quick-start&#41; to [CIFAR10]&#40;#example--training-a-resnet18-on-cifar10&#41; to [RL]&#40;#rl-recipe---train-a-humanoid-to-walk-from-images-12x-faster-than-the-sota-drqv2&#41; to [GANs]&#40;#generative-recipe---dcgan-celebrity-faces-in-5-minutes&#41; to ***[general-purpose AGI]&#40;#example-generalist-agent&#41;***.)
+
+[//]: # ()
+[//]: # (It's the beginning of a great holiday.)
+
+[//]: # ()
+[//]: # (### Install)
+
 ## Install
 
 ```console
@@ -200,7 +208,7 @@ python Run.py task=recipe
 ### Syntax
 
 1. The ```+hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```+lowercase.key=value``` for argument tinkering, as in ```+eyes.depth=5``` [in 1, 2, and 3](#1-purely-command-line).
-2. Note: we often use "```task```" and "```recipe```" terms interchangeably. ```recipe=``` is syntactically equivalent to ```task=```. 
+2. Note: we often use "```task```" and "```recipe```" terms interchangeably.
 
 ## Example: Training a ResNet18 on CIFAR10
 
@@ -307,7 +315,7 @@ ML task=dcgan
 [//]: # (Plots, reel)
 [//]: # (caption: something .. as saved in ```Benchmarking/```.)
 
-```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from outside apps.
+```task=dcgan``` refers to one of the pre-defined task recipes in [UnifiedML/Hyperparams/task](). These — like all UnifiedML recipes, search paths, and features — can be accessed from anywhere.
 
 ## More docs
 
@@ -315,7 +323,6 @@ ML task=dcgan
 <summary>
 Click to expand
 </summary>
-<br>
 
 ## Useful flags
 
@@ -339,7 +346,22 @@ Model: MLP
 
 Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. [Each may serve different optimization purposes.]()
 
-By organizing these parts into Blocks (```encoder```, ```actor```, ```critic```), UnifiedMl is able to unify them via the multi-task framework and API, even across vast domains.
+By organizing these parts into Blocks (```encoder```, ```actor```, ```critic```), UnifiedML is able to unify them via the multi-task framework and API, even across vast domains.
+
+
+## Sequentials and direct code
+
+Sequentials and direct code can be passed in as follows:
+
+```console
+# Sequential ViT construction
+ML task=classify Dataset=MNIST Eyes=[CNN,Transformer] +eyes.1.depth=5
+
+# End-to-end model
+ML task=classify Dataset=MNIST Model=[CNN,nn.Flatten(),nn.Linear] +model.depth=5
+```
+
+Tinkering arguments can be explicitly indexed or inferred.
 
 ## Saving/loading
 
@@ -389,13 +411,13 @@ import ML
 # Load 
 agent = ML.load_agent('MyExp')
 
-# Resume training, potentially W/ different hyperparams
+# Resume training, potentially w/ different hyperparams
 agent = ML.launch(experiment='MyExp', Agent=agent, Dataset='MNIST')
 ```
 
 The launcher also returns the agent.
 
-### Replays
+### Saving/loading experience replays
 
 An experience replay can be saved and/or loaded with the ```replay.save=true``` or ```replay.load=true``` flags, and the same analogous syntax.
 
