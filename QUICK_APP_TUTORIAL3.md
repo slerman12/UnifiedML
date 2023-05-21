@@ -2,14 +2,6 @@
 
 # Welcome 
 
-[//]: # (From [basics]&#40;#quick-start&#41; to [CIFAR10]&#40;#example--training-a-resnet18-on-cifar10&#41; to [RL]&#40;#rl-recipe---train-a-humanoid-to-walk-from-images-12x-faster-than-the-sota-drqv2&#41; to [GANs]&#40;#generative-recipe---dcgan-celebrity-faces-in-5-minutes&#41; to ***[general-purpose AGI]&#40;#example-generalist-agent&#41;***.)
-
-[//]: # ()
-[//]: # (It's the beginning of a great holiday.)
-
-[//]: # ()
-[//]: # (### Install)
-
 ## Install
 
 ```console
@@ -328,6 +320,7 @@ Click to expand
 
 * ```norm=true```: enables normalization 
 * ```offline=true```: ...
+* ```Optim=```
 
 ## When to use ```Eyes```? When to use ```Model```?
 
@@ -346,8 +339,9 @@ Model: MLP
 
 Other parts include ```Aug```, ```Pool```, ```Trunk```, and ```Discriminator```. [Each may serve different optimization purposes.]()
 
-By organizing these parts into Blocks (```encoder```, ```actor```, ```critic```), UnifiedML is able to unify them via the multi-task framework and API, even across vast domains.
+By organizing these parts into blocks (```encoder```, ```actor```, ```critic```), UnifiedML is able to unify them via the multi-task framework and API, even across vast domains.
 
+* An architecture "has a head" when it can adapt to one or more of: ```out_shape```, ```out_features```, ```out_channels```, ```out_dim``` as signature arguments.
 
 ## Sequentials and direct code
 
@@ -403,7 +397,16 @@ python Run.py load=Checkpoints/MyExp/Dataset/GANAgent/MNIST_0.pt
 
 #### In-code
 
-Load in-code via the same syntax or with ```ML.load_agent(path)```.
+Load in-code via the same syntax:
+
+```python
+import ML
+
+# Resume training, potentially w/ different hyperparams
+agent = ML.launch(load='MyExp', experiment='MyExp', Agent='GANAgent', Dataset='MNIST')  # The launcher also returns the agent.
+```
+
+or with ```ML.load_agent(path)```:
 
 ```python
 import ML
@@ -412,10 +415,16 @@ import ML
 agent = ML.load_agent('MyExp')
 
 # Resume training, potentially w/ different hyperparams
-agent = ML.launch(experiment='MyExp', Agent=agent, Dataset='MNIST')
+agent = ML.launch(experiment='MyExp', Agent=agent, Dataset='MNIST')  # The launcher also returns the agent.
 ```
 
-The launcher also returns the agent.
+## Building an agent
+
+We recommend using UnifiedML blocks for wrapping architectures and optimizing them with Utils.optimize.
+
+## Building environments
+
+## Defining datasets
 
 ### Saving/loading experience replays
 
