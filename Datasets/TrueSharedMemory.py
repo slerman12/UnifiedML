@@ -38,6 +38,7 @@
             - Dataset=<online>, stored as offline <- no such thing
             - Dataset=<online>, stored as online, offline=True, is loaded as offline / no copy.
                 - Or shared via Memory multi-task
+            If a Dataset=<offline>, not stored, offline=True, make sure to mmap all of it.
         - ReplayBuffer stores .yaml cards describing the uniqueness / stats of the Dataset
             - Stats may be updated when needed; uniqueness includes command line / recipe flags via "+dataset.".
         - Functions are supported datums and are called at __getitem__ and are treated like mmaps. Dataset= can support.
@@ -63,113 +64,142 @@
     2. Don't forget to jit element-wise operations
     3. GPU-vectorized augmentations
     """
+import os
 import time
 
 import numpy as np
 
+import torch
 import torch.multiprocessing as mp
+
+from tensordict.memmap import MemmapTensor
 
 
 def f1(a):
     while True:
         _start = time.time()
-        print(a[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get')
+        print(a[0][0]['hi'][0, 0, 0].item(), time.time() - _start, 'get', len(a))
         time.sleep(3)
 
 
 def f2(a):
     while True:
         _start = time.time()
-        print(a[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get')
+        print(a[0][0]['hi'][0, 0, 0].item(), time.time() - _start, 'get', len(a))
         time.sleep(3)
 
 
 class Memory:
     def __init__(self, device=None, device_capacity=None, ram_capacity=None, cache_capacity=None, hd_capacity=None):
+        self.path = os.getcwd() + '/ReplayBuffer'
+
+        # if not os.path.exists(self.path):
+        #     os.mkdir(self.path)
+
         manager = mp.Manager()
-        self.exps = [manager.list()]
-        self.episode = manager.list()
-        # self.exps = []
-        # self.episode = []
 
-        self.done = True
+        self.index = manager.list()
+        self.episode_batches = manager.list()
 
-    def add(self, exp):
-        # Truly shared memory
-        for key in exp:
-            exp[key] = torch.as_tensor(exp[key]).share_memory_()  # .to(non_blocking=True)
+    def add(self, batch):
+        if batch['done'] or not self.episode_batches:
+            self.episode_batches.append(())
 
-        batch_size = max(len(mem) for mem in exp.values() if getattr(mem, 'shape', None))
+        for key in batch:
+            batch[key] = torch.as_tensor(batch[key]).share_memory_()  # .to(non_blocking=True)
 
-        if exp['done']:
-            # index = torch.as_tensor(tuple(enumerate([len(self.exps)] * batch_size)), dtype=torch.int).share_memory_()
-            index = enumerate([len(self.exps)] * batch_size)  # Faster I think
-            self.episode.extend(index)
+        # for key in exp:
+        #     # Just creates np; maybe saves some torch-accessed variables in _init_shape like _device, _shape, _dtype
+        #     exp[key] = MemmapTensor.from_tensor(torch.as_tensor(exp[key]),
+        #                                         filename=f'{self.path}/'
+        #                                                  f'{len(self.index)}_{key}.dat')  # .to(non_blocking=True)
 
-        # self.lengths
+        self.episode_batches[-1] = self.episode_batches[-1] + (batch,)
 
-        self.done = exp['done']
+        batch_size = 1
 
-        self.exps.append(exp)
+        for mem in batch.values():
+            if mem.shape and len(mem) > 1:
+                batch_size = len(mem)
+                break
 
-    def initialize_worker(self):
-        # if self.offline:  # Can cache locally
-        #     self.exps, self.episode = map(list, (self.exps, self.episode))
-        #     or self.cache = by index and corresponding episode index that indexes into it  TODO
-        pass
+        episode_batches_ind = len(self.episode_batches) - 1
 
-    # def sample(self):
-    #     return self[random.randint(0, len(self))]  # Maybe just leave to sampler
+        self.index.extend(enumerate([episode_batches_ind] * batch_size))
 
     def __getitem__(self, ind):
-        exp_ind, episode_ind = self.index(ind)
-        episode = self.episodes[episode_ind]
+        ind, episode_batches_ind = self.index[ind]
+        batches = self.episode_batches[episode_batches_ind]
 
-        return [{key: value[exp_ind] if getattr(value, 'shape', None) else value
-                for key, value in exp.items()} for exp in episode]  # Return list of exps in episode
-
-        mem_ind, exp_ind = self.episode[ind]
-
-        # Sample across episode lengths - what about as seq lengths per batches vary? - sparse tensors?
-
-        return {key: value[mem_ind] if getattr(value, 'shape', None) else value
-                for key, value in self.exps[exp_ind].items()}
-
-    def __setitem__(self, ind, value):
-        mem_ind, exp_ind = self.episode[ind]
-
-        for mem in self.exps[exp_ind].values():
-            if getattr(mem, 'shape', None):
-                mem[mem_ind] = value
+        return Episode(batches, ind)  # Return list of exps in episode
 
     def __len__(self):
-        return len(self.episode)
+        return len(self.index)
+
+
+# Just make a single uniform Mem class for storing batch-datums within exps
+# Cache independent. Just store as tensor. Then call .share(), .mmap(), .gpu(), .tensor().
+# Episodes consist of Batches consist of dicts consist of Sub-Batches (experiences) consist of dicts
+# Batches consist of Mems consist of datums
+# Sub-Batches consist of Mems consist of datums
+# Mems consist of Sub-Mems consist of datums
+# Episode can store .__add__ method
+class MMAP:
+    def __init__(self, datum, path=None):
+        if isinstance(datum, np.memmap):
+            self.datum = datum
+        else:
+            datum = torch.as_tensor(datum).numpy()
+
+    def __getitem__(self, item):
+        return MMAP(item)
+
+    def __setitem__(self, key, value):
+        pass
+
+    def as_tensor(self):
+        pass
+
+
+class Episode:
+    def __init__(self, batches, ind):
+        self.batches = batches
+        self.ind = ind
+
+    def __getitem__(self, step):
+        return Experience(self.batches, step, self.ind)
+
+
+class Experience:
+    def __init__(self, batches, step, ind):
+        self.batches = batches
+        self.step = step
+        self.ind = ind
+
+    def __getitem__(self, key):
+        return self.batches[self.step][key][self.ind]
+
+    def __setitem__(self, key, value):
+        self.batches[self.step][key][self.ind] = value
+
+
 
 
 if __name__ == '__main__':
     m = Memory()
-    # Ignore this:
-    # Maybe can unbind exps, no index, then episode index can index to these (per datum key)
-    # with zipped sequences of indices
-    # Can sequentiate all datums in a list (tape) and add corresponding indexes to higher-level constructs
-    # Datums can be mmap objects, shared tensors, ints, or links -- maybe ints can be part of index and not indexed
-    # Str names can also be part of index
-    # Done must be global or per batch item
-
-    # Since shared memory, maybe no cost to concat and restore in manager - same as indices
-    # So just replace manager index with concatenated episode; maybe tensordict for quick concat/mmap or unbind all
-
-    # For batch-level not-dones may need extra considerations about efficiency of concatenating after unbinding
-    d = {'hi': np.ones([2560, 3, 32, 32]), 'done': True}
+    d1 = {'hi': np.ones([2560, 3, 32, 32]), 'done': [False]}
+    d2 = {'hi': np.ones([2560, 3, 32, 32]), 'done': [True]}
     start = time.time()
-    m.add(d)
+    m.add(d1)
+    m.add(d2)
     print(time.time() - start, 'add')
     p1 = mp.Process(name='p1', target=f1, args=(m,))
     p2 = mp.Process(name='p', target=f2, args=(m,))
     p1.start()
     p2.start()
     start = time.time()
-    m[0] = 0
+    # e = m[0]
+    # e[0]['hi'] = 5
     print(time.time() - start, 'set')
     p1.join()
     p2.join()
@@ -212,7 +242,6 @@ if __name__ == '__main__':
 import collections
 import contextlib
 import re
-import torch
 
 from typing import Callable, Dict, Optional, Tuple, Type, Union
 
@@ -348,3 +377,18 @@ default_collate_fn_map[bytes] = collate_str_fn
 
 def default_collate(batch):
     return collate(batch, collate_fn_map=default_collate_fn_map)
+
+    # Ignore this:
+    # Maybe can unbind exps, no index, then episode index can index to these (per datum key)
+    # with zipped sequences of indices
+    # Can sequentiate all datums in a list (tape) and add corresponding indexes to higher-level constructs
+    # Datums can be mmap objects, shared tensors, ints, or links -- maybe ints can be part of index and not indexed
+    # Str names can also be part of index
+    # Done must be global or per batch item
+
+    # Since shared memory, maybe no cost to concat and restore in manager - same as indices
+    # So just replace manager index with concatenated episode; maybe tensordict for quick concat/mmap or unbind all
+
+    # For batch-level not-dones may need extra considerations about efficiency of concatenating after unbinding
+
+    # Episodes consist of batch-exps (AttrDicts/Batches) consist of dicts consist of Mems consist of exps

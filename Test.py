@@ -161,3 +161,20 @@ if __name__ == '__main__':
     print(time.time() - start, 'set')
     p1.join()
     p2.join()
+
+
+from functools import reduce
+from operator import getitem
+
+
+users = {
+    'freddy': {
+        'name': {
+            'first': 'fred',
+            'last': 'smith'
+        },
+        'postIds': [1, 2, 3]
+    }
+}
+reduce(getitem, ['freddy', 'name', 'last'], initial=users)
+reduce(getitem, ['freddy', 'postIds', 1], initial=users)
