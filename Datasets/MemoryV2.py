@@ -52,7 +52,7 @@ class Mem:
         return self
 
     def shared(self):
-        self.mem = self.tensor().cpu().share_memory_()
+        self.mem = self.tensor().cpu().share_memory_()  # Perhaps this serializes... slower than MMAP
         self.is_mmap = False  # TODO Update in multiproc?
 
         return self
@@ -93,7 +93,7 @@ class Memory:
 
         for key in batch:
             batch[key] = Mem(batch[key], f'{self.path}/{episode_batches_ind}_{step}_{key}')
-            batch[key].shared()
+            batch[key].mmap()
 
         batch_size = 1
 
@@ -175,7 +175,7 @@ def f2(m):
 
 
 if __name__ == '__main__':
-    M = Memory()
+    M = Memory()  # Have to compare with numpy shared_memory implementation
     adds = 0
     for _ in range(5):  # Episodes
         for _ in range(128 - 1):  # Steps
