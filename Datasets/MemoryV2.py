@@ -43,7 +43,7 @@ class Mem:
         mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape) if self.is_mmap \
             else self.mem
 
-        return torch.as_tensor(mem)
+        return torch.as_tensor(mem).to(non_blocking=True)
 
     def gpu(self):
         self.mem = self.tensor().cuda().share_memory_()
@@ -92,7 +92,7 @@ class Memory:
         step = len(self.episode_batches[-1])
 
         for key in batch:
-            batch[key] = Mem(batch[key], f'{self.path}/{episode_batches_ind}_{step}_{key}')  # .to(non_blocking=True)
+            batch[key] = Mem(batch[key], f'{self.path}/{episode_batches_ind}_{step}_{key}')
             batch[key].shared()
 
         batch_size = 1
@@ -177,19 +177,19 @@ def f2(m):
 if __name__ == '__main__':
     M = Memory()
     adds = 0
-    for _ in range(2):
-        for _ in range(128 - 1):
-            d = {'hi': np.ones([2560, 3, 32, 32]), 'done': False}
+    for _ in range(5):  # Episodes
+        for _ in range(128 - 1):  # Steps
+            d = {'hi': np.ones([256, 3, 32, 32]), 'done': False}  # Batches
             start = time.time()
             M.add(d)
             adds += time.time() - start
-        done = {'hi': np.ones([2560, 3, 32, 32]), 'done': True}
+        done = {'hi': np.ones([256, 3, 32, 32]), 'done': True}  # Last batch
         start = time.time()
         M.add(done)
         adds += time.time() - start
     print(adds, 'adds')
     p1 = mp.Process(name='p1', target=f1, args=(M,))
-    p2 = mp.Process(name='p', target=f2, args=(M,))
+    p2 = mp.Process(name='p2', target=f2, args=(M,))
     p1.start()
     p2.start()
     start = time.time()
