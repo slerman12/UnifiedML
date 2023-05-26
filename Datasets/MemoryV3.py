@@ -2,7 +2,9 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import atexit
 import time
+from multiprocessing.shared_memory import SharedMemory
 
 import numpy as np
 
@@ -14,67 +16,93 @@ class Mem:
     def __init__(self, mem, path=None):
         self.path = path
         self.mem = torch.as_tensor(mem)
-        self.is_mmap = False
+        self.mode = 'tensor'
 
+        # These could be tuple elements in self.mem when mmap or shared
         self.shape = self.mem.shape
         _, self.dtype = str(self.mem.dtype).split('.')
 
+        atexit.register(self.cleanup)
+
+    def get(self):
+        if self.mode == 'mmap':
+            return np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+        elif self.mode == 'shared':
+            return np.ndarray(self.shape, dtype=self.dtype, buffer=self.mem.buf)
+        else:
+            return self.mem
+
     def __getitem__(self, ind):
         assert self.shape
+        mem = self.get()[ind]
 
-        if self.is_mmap:
-            mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+        if self.mode == 'shared':
+            # Note: Nested sets won't work
+            return mem.copy()
 
-            return mem[ind]
-
-        return self.mem[ind]
+        return mem
 
     def __setitem__(self, ind, value):
         assert self.shape
 
-        if self.is_mmap:
-            mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+        if self.mode == 'mmap':
+            mem = self.get()
             mem[ind] = value
             mem.flush()  # Write to hard disk
+        elif self.mode == 'shared':
+            self.get()[ind] = value
         else:
             self.mem[ind] = value
 
     def tensor(self):
-        mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape) if self.is_mmap \
-            else self.mem
-
-        return torch.as_tensor(mem).to(non_blocking=True)
+        return torch.as_tensor(self.get()).to(non_blocking=True)
 
     def gpu(self):
-        self.mem = self.tensor().cuda().share_memory_()
-        self.is_mmap = False  # TODO Update in multiproc?
+        self.mem = self.tensor().cuda().share_memory_()  # TODO Update in multiproc?
+        self.mode = 'gpu'  # TODO Update in multiproc?
 
         return self
 
     def shared(self):
-        self.mem = self.tensor().cpu().share_memory_()  # Perhaps this serializes... slower than MMAP
-        self.is_mmap = False  # TODO Update in multiproc?
+        if self.mode != 'shared':
+            name = '_'.join(self.path.rsplit('/', 2)[1:]) + '_' + str(id(self))
+            mem = self.tensor().numpy()
+            link = SharedMemory(create=True, name=name,  size=mem.nbytes)
+            mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+            if self.shape:
+                mem_[:] = mem[:]
+            else:
+                mem_[...] = mem  # In case of 0-dim array
+
+            self.mem = link  # TODO Update in multiproc?
+            self.mode = 'shared'  # TODO Update in multiproc?
 
         return self
 
     def mmap(self):
-        if not self.is_mmap:
+        if self.mode != 'mmap':
             mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
             if self.shape:
-                mmap_file[:] = self.mem[:]
+                mmap_file[:] = self.get()[:]
             else:
-                mmap_file[...] = self.mem  # In case of 0-dim array
+                mmap_file[...] = self.get()  # In case of 0-dim array
             mmap_file.flush()  # Write to hard disk
+
             self.mem = None  # TODO Update in multiproc?
-            self.is_mmap = True  # TODO Update in multiproc?
+            self.mode = 'mmap'  # TODO Update in multiproc?
 
         return self
 
     def __bool__(self):
-        return bool(np.memmap(self.path, self.dtype, 'r+', shape=self.shape) if self.is_mmap else self.mem)
+        return bool(self.get())
 
     def __len__(self):
         return self.shape[0]
+
+    def cleanup(self):
+        if self.mode == 'shared':  # TODO Should do in between switches too
+            self.mem.close()
+            self.mem.unlink()
 
 
 class Memory:
@@ -88,6 +116,7 @@ class Memory:
         self.episode_batches = manager.list([()])
 
     def add(self, batch):
+        done = batch['done']
         episode_batches_ind = len(self.episode_batches) - 1
         step = len(self.episode_batches[-1])
 
@@ -106,7 +135,7 @@ class Memory:
 
         self.episode_batches[-1] = self.episode_batches[-1] + (batch,)
 
-        if batch['done']:
+        if done:
             self.episode_batches.append(())
 
     def episode(self, ind):
@@ -156,14 +185,14 @@ class Experience:
     def __setitem__(self, step, experience):
         self.batches[step][self.key][self.ind] = experience
 
-    def len(self):
+    def __len__(self):
         return len(self.batches)
 
 
 def f1(m):
     while True:
         _start = time.time()
-        print(m.episode(0)['hi'][0][0, 0, 0].item(), time.time() - _start, 'get2', len(m))
+        print(m.episode(0)['hi'][0][0, 0, 0].item(), time.time() - _start, 'get1', len(m))
         time.sleep(3)
 
 
@@ -179,13 +208,13 @@ if __name__ == '__main__':
     adds = 0
     for _ in range(5):  # Episodes
         for _ in range(128 - 1):  # Steps
-            d = {'hi': np.ones([256, 3, 32, 32]), 'done': False}  # Batches
+            d = {'hi': np.random.rand(256, 3, 32, 32), 'done': False}  # Batches
             start = time.time()
             M.add(d)
             adds += time.time() - start
-        done = {'hi': np.ones([256, 3, 32, 32]), 'done': True}  # Last batch
+        dN = {'hi': np.random.rand(256, 3, 32, 32), 'done': True}  # Last batch
         start = time.time()
-        M.add(done)
+        M.add(dN)
         adds += time.time() - start
     print(adds, 'adds')
     p1 = mp.Process(name='p1', target=f1, args=(M,))
@@ -194,7 +223,7 @@ if __name__ == '__main__':
     p2.start()
     start = time.time()
     e = M.episode(0)
-    e['hi'][0][0] = 5
+    e['hi'][0] = 5
     print(time.time() - start, 'set')
     p1.join()
     p2.join()
