@@ -2,723 +2,349 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import uuid
-import resource
-from time import sleep
+"""
+    1. Unbind
+    2.  ̶I̶f̶ ̶t̶h̶e̶ ̶l̶a̶s̶t̶ ̶o̶n̶e̶ ̶w̶a̶s̶ ̶d̶o̶n̶e̶,̶ ̶a̶p̶p̶e̶n̶d̶
+    3.  ̶I̶f̶ ̶t̶h̶e̶ ̶l̶a̶s̶t̶ ̶o̶n̶e̶ ̶w̶a̶s̶ ̶n̶o̶t̶ ̶d̶o̶n̶e̶ ̶o̶r̶ ̶t̶h̶i̶s̶ ̶o̶n̶e̶ ̶i̶s̶ ̶n̶o̶t̶ ̶d̶o̶n̶e̶,̶ ̶a̶n̶d̶ ̶n̶o̶ ̶t̶e̶m̶p̶o̶r̶a̶l̶_̶d̶i̶m̶,̶ ̶c̶r̶e̶a̶t̶e̶ ̶a̶ ̶t̶e̶m̶p̶o̶r̶a̶l̶ ̶d̶i̶m̶
+    4.  ̶I̶f̶ ̶t̶h̶e̶ ̶l̶a̶s̶t̶ ̶o̶n̶e̶ ̶w̶a̶s̶ ̶n̶o̶t̶ ̶d̶o̶n̶e̶,̶ ̶c̶o̶n̶c̶a̶t̶e̶n̶a̶t̶e̶ ̶o̶n̶ ̶t̶e̶m̶p̶o̶r̶a̶l̶ ̶d̶i̶m̶
+    2. If Done, append new list - Note tuple prob more efficient
+        Else: set last list to last list + [exp]
+
+    Note: Exps consist of batches of batch_size, for now assuming episode lengths uniform across each element
+
+    self.episodes = [[Exp_1, Exp_2, ..., Exp_Done], ..., [Exp_A, Exp_B, ..., Exp_Zed]]
+    self.index = zip([0, ..., batch_size_1 - 1, ..., 0, ..., batch_size_z - 1],
+                     [episode_ind_1, ..., episode_ind_1, ..., episode_ind_z, ..., episode_ind_z])
+
+    exp_ind, episode_ind = self.index(ind)
+    episode = self.episodes[episode_ind][exp_ind]
+
+    3. Episodes can be periodically concatenated along temporal_dim if specified by exp or stacked on new temporal_dim
+        - If temporal_dim present, sampling intra-episode if rstep < inf requires prioritizing exps by sequence length
+        - Sequences lengths batched arrays can be stored with episode for exp sample, then uniform time point sample
+    4. Perhaps store per-element lengths in index if dones provided batch_wise, then include ID'd sub-batches in episode
+    5. If IDs dict present, then: episode = self.episodes[episode_ind][IDs[exp_ind]] .
+    6. Check capacities regarding device placement
+    7. Dataset as argument: map(self.add, Dataset) where Dataset = load(dataset) supports replays, torchvision, etc
+        - etc means for example custom datasets, like those defined in World/Datasets/__init__.py
+        - checks if already exists in replay and if not, atomizes download -> mmap
+        - World/ReplayBuffer stores Online and Offline Datasets.
+            - Dataset=<offline>, stored as offline, online=True: is copied as online.
+            - Dataset=<offline>, stored as online, online=True: is loaded as online.
+            - Dataset=<offline>, stored as offline, offline=True, is loaded as offline.
+            - Dataset=<offline>, stored as online, offline=True, is newly created as offline.
+            - Dataset=<online>, stored as offline <- no such thing
+            - Dataset=<online>, stored as online, online=True: is loaded as online.
+            - Dataset=<online>, stored as offline <- no such thing
+            - Dataset=<online>, stored as online, offline=True, is loaded as offline / no copy.
+                - Or shared via Memory multi-task
+        - ReplayBuffer stores .yaml cards describing the uniqueness / stats of the Dataset
+            - Stats may be updated when needed; uniqueness includes command line / recipe flags via "+dataset.".
+        - Functions are supported datums and are called at __getitem__ and are treated like mmaps. Dataset= can support.
+            - Example usage: web links
+    8. Dataset: Send indices when RAM shared memory and no Transform, else cached mmap or loaded mmap
+    9. Collate fn collects indexed shared memories, sends all memories to device, and collates
+    10. MMAPs save in ReplayBuffer and their paths can be loaded via Dataset=
+    11. Online or offline, Dataset= works
+    12. Images should be uint8? Labels int64? (Conserve dtype)
+
+    Env: load (train=train), then Transform + DataLoader or Replay (stream=False).
+    Replay: load (train=True) + Dataset with Memory + Transform + DataLoader with no pin_memory if device_capacity > 0.
+    Memory can be passed to Samplers who can arrange index into bins, passed to collate who accelerates.
+        - Actually, better if parallel workers arrange bins (Prioritizers / priority_fn).
+        - Samplers can be dynamically built based on priority=.
+        - Bins tell workers to periodically divide f(mem) into n bins or f=no-op. Each do so just for their portion,
+            and store "bins" (lists) in a list assigned to them by Memory. Samplers treat these equally. Params: f, n.
+        - Bins=Path.To.Bin can be list or individual. priority= tells the sampler which bin to sample based on. Sampler
+            selects over worker clusters uniformly, then samples a bin uniformly, then samples again uniformly.
+        - Memory can also have a Queue for rewrites and dict for toggling trajectories.
+
+    1. .to(memory_format=torch.channels_last) if B, C, H, W format (Encoder with "image" modality")
+    2. Don't forget to jit element-wise operations
+    3. GPU-vectorized augmentations
+    """
+import time
 
 import numpy as np
 
-from multiprocessing.shared_memory import SharedMemory, ShareableList
-from multiprocessing import resource_tracker
+import torch.multiprocessing as mp
 
 
-# Truly-shared RAM and memory-mapped hard disk data usable across parallel CPU workers
-class SharedDict:
-    def __init__(self, specs):
-        self.specs = specs
-
-        self.dict_id = str(uuid.uuid4())[:8]
-
-        self.created = {}
-
-        # Shared memory can create a lot of file descriptors
-        _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
-
-        # Increase soft limit to hard limit just in case
-        resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))
-
-    def __setitem__(self, key, value):
-        self.start_worker()
-
-        assert isinstance(value, dict), 'Shared Memory must be a episode dict'
-
-        num_episodes = key.stem.split('/')[-1].split('_')[1]
-
-        for spec, data in value.items():
-            name = self.dict_id + num_episodes + spec
-
-            mmap = isinstance(data, np.memmap)  # Whether to memory map
-
-            # Shared integers
-            if spec == 'id':
-                mem = self.create([data], name)
-                mem[0] = data
-                mem.shm.close()
-            # Shared numpy
-            elif data.nbytes > 0:
-                # Hard disk memory-map link
-                if mmap:
-                    mem = self.create(list(str(data.filename)), name + 'mmap')
-                    mem.shm.close()
-                # Shared RAM memory
-                else:
-                    mem = self.create(data, name)  # Create
-                    mem_ = np.ndarray(data.shape, dtype=data.dtype, buffer=mem.buf)
-                    mem_[:] = data[:]  # Set data
-                    mem.close()
-                    mem = self.create([0], name + 'mmap')  # Set to False, no memory mapping
-                    mem.shm.close()
-
-            # Data shape
-            mem = self.create([1] if np.isscalar(data) else list(data.shape), name + 'shape')
-            mem.shm.close()
-
-    def create(self, data, name=''):
-        # Two ways to create a truly shared RAM memory in Python
-        method = (ShareableList if isinstance(data, list) else SharedMemory)
-
-        # Try to create shared memory link
-        try:
-            mem = method(data, name=name) if isinstance(data, list) \
-                else method(create=True, name=name,  size=data.nbytes)
-        except FileExistsError:
-            mem = method(name=name)  # But if exists, retrieve existing shared memory link
-
-        self.created.update({name: method})
-
-        return mem
-
-    def __getitem__(self, key):
-        # Account for potential delay
-        for _ in range(2400):
-            try:
-                return self._getitem(key)
-            except FileNotFoundError as e:
-                sleep(1)
-        raise(e)
-
-    def _getitem(self, key):
-        num_episodes = key.stem.split('/')[-1].split('_')[1]
-
-        episode = {}
-
-        for spec in self.keys():
-            name = self.dict_id + num_episodes + spec
-
-            # Integer
-            if spec == 'id':
-                mem = ShareableList(name=name)
-                episode[spec] = int(mem[0])
-                mem.shm.close()
-            # Numpy array
-            else:
-                # Shape
-                mem = ShareableList(name=name + 'shape')
-                shape = tuple(mem)
-                mem.shm.close()
-
-                if 0 in shape:
-                    episode[spec] = np.zeros(shape)  # Empty array
-                else:
-                    # Whether memory mapped
-                    mem = ShareableList(name=name + 'mmap')
-                    is_mmap = list(mem)
-                    mem.shm.close()
-                    # View of memory
-                    episode[spec] = Mem(name, shape, mmap_name=None if 0 in is_mmap else ''.join(is_mmap))
-
-        return episode
-
-    def keys(self):
-        return self.specs.keys() | {'id'}
-
-    def __del__(self):
-        self.cleanup()
-
-    def start_worker(self):
-        # Hacky fix for https://bugs.python.org/issue38119
-        if not self.created:
-            check_rtype = lambda func: lambda name, rtype: None if rtype == 'shared_memory' else func(name, rtype)
-            resource_tracker.register = check_rtype(resource_tracker.register)
-            resource_tracker.unregister = check_rtype(resource_tracker.unregister)
-
-            if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
-                del resource_tracker._CLEANUP_FUNCS["shared_memory"]
-
-    def cleanup(self):
-        for name, method in self.created.items():
-            mem = method(name=name)
-
-            if isinstance(mem, ShareableList):
-                mem = mem.shm
-
-            mem.close()
-            mem.unlink()  # Unlink shared memory, assumes each worker is uniquely assigned the episodes to create()
+def f1(a):
+    while True:
+        _start = time.time()
+        print(a[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get')
+        time.sleep(3)
 
 
-# A special view into shared memory or memory mapped data that handles index-based reads and writes
-class Mem:
-    def __init__(self, name, shape, mmap_name=None):
-        self.name, self.shape, self.mmap_name = name, shape, mmap_name
+def f2(a):
+    while True:
+        _start = time.time()
+        print(a[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get')
+        time.sleep(3)
 
-    def __getitem__(self, idx):
-        if self.mmap_name is None:
-            # Truly-shared RAM access
-            mem = SharedMemory(name=self.name)
 
-            value = np.ndarray(shape=self.shape, dtype=np.float32, buffer=mem.buf)[idx].copy()
+class Memory:
+    def __init__(self, device=None, device_capacity=None, ram_capacity=None, cache_capacity=None, hd_capacity=None):
+        manager = mp.Manager()
+        self.exps = [manager.list()]
+        self.episode = manager.list()
+        # self.exps = []
+        # self.episode = []
 
-            mem.close()
+        self.done = True
 
-            return value
-        else:
-            # Read from memory-mapped hard disk file rather than shared RAM
-            return np.memmap(self.mmap_name, np.float32, 'r+', shape=self.shape)[idx]
+    def add(self, exp):
+        # Truly shared memory
+        for key in exp:
+            exp[key] = torch.as_tensor(exp[key]).share_memory_()  # .to(non_blocking=True)
 
-    def __setitem__(self, idx, value):
-        if self.mmap_name is None:
-            # Shared RAM memory
-            mem = SharedMemory(name=self.name)
+        batch_size = max(len(mem) for mem in exp.values() if getattr(mem, 'shape', None))
 
-            value = np.ndarray(shape=self.shape, dtype=np.float32, buffer=mem.buf)  # Un-mutable shape!
-            value[idx] = value
+        if exp['done']:
+            # index = torch.as_tensor(tuple(enumerate([len(self.exps)] * batch_size)), dtype=torch.int).share_memory_()
+            index = enumerate([len(self.exps)] * batch_size)  # Faster I think
+            self.episode.extend(index)
 
-            mem.close()
-        else:
-            # Hard disk memory-map link
-            mem = np.memmap(self.mmap_name, np.float32, 'r+', shape=self.shape)
-            mem[idx] = value
-            mem.flush()  # Write to hard disk
+        # self.lengths
+
+        self.done = exp['done']
+
+        self.exps.append(exp)
+
+    def initialize_worker(self):
+        # if self.offline:  # Can cache locally
+        #     self.exps, self.episode = map(list, (self.exps, self.episode))
+        #     or self.cache = by index and corresponding episode index that indexes into it  TODO
+        pass
+
+    # def sample(self):
+    #     return self[random.randint(0, len(self))]  # Maybe just leave to sampler
+
+    def __getitem__(self, ind):
+        exp_ind, episode_ind = self.index(ind)
+        episode = self.episodes[episode_ind]
+
+        return [{key: value[exp_ind] if getattr(value, 'shape', None) else value
+                for key, value in exp.items()} for exp in episode]  # Return list of exps in episode
+
+        mem_ind, exp_ind = self.episode[ind]
+
+        # Sample across episode lengths - what about as seq lengths per batches vary? - sparse tensors?
+
+        return {key: value[mem_ind] if getattr(value, 'shape', None) else value
+                for key, value in self.exps[exp_ind].items()}
+
+    def __setitem__(self, ind, value):
+        mem_ind, exp_ind = self.episode[ind]
+
+        for mem in self.exps[exp_ind].values():
+            if getattr(mem, 'shape', None):
+                mem[mem_ind] = value
 
     def __len__(self):
-        mem = ShareableList(name=self.name + 'shape')  # Shape
-        size = mem[0]  # Batch dim
-        mem.shm.close()
-        return size
+        return len(self.episode)
 
 
+if __name__ == '__main__':
+    m = Memory()
+    # Ignore this:
+    # Maybe can unbind exps, no index, then episode index can index to these (per datum key)
+    # with zipped sequences of indices
+    # Can sequentiate all datums in a list (tape) and add corresponding indexes to higher-level constructs
+    # Datums can be mmap objects, shared tensors, ints, or links -- maybe ints can be part of index and not indexed
+    # Str names can also be part of index
+    # Done must be global or per batch item
 
-"""Provides shared memory for direct access across processes.
+    # Since shared memory, maybe no cost to concat and restore in manager - same as indices
+    # So just replace manager index with concatenated episode; maybe tensordict for quick concat/mmap or unbind all
 
-The API of this package is currently provisional. Refer to the
-documentation for details.
-"""
-
-
-__all__ = [ 'SharedMemory', 'ShareableList' ]
-
-
-from functools import partial
-import mmap
-import os
-import errno
-import struct
-import secrets
-import types
-
-if os.name == "nt":
-    import _winapi
-    _USE_POSIX = False
-else:
-    import _posixshmem
-    _USE_POSIX = True
-
-from multiprocessing import resource_tracker
-
-_O_CREX = os.O_CREAT | os.O_EXCL
-
-# FreeBSD (and perhaps other BSDs) limit names to 14 characters.
-_SHM_SAFE_NAME_LENGTH = 14
-
-# Shared memory block name prefix
-if _USE_POSIX:
-    _SHM_NAME_PREFIX = '/psm_'
-else:
-    _SHM_NAME_PREFIX = 'wnsm_'
+    # For batch-level not-dones may need extra considerations about efficiency of concatenating after unbinding
+    d = {'hi': np.ones([2560, 3, 32, 32]), 'done': True}
+    start = time.time()
+    m.add(d)
+    print(time.time() - start, 'add')
+    p1 = mp.Process(name='p1', target=f1, args=(m,))
+    p2 = mp.Process(name='p', target=f2, args=(m,))
+    p1.start()
+    p2.start()
+    start = time.time()
+    m[0] = 0
+    print(time.time() - start, 'set')
+    p1.join()
+    p2.join()
 
 
-def _make_filename():
-    "Create a random filename for the shared memory object."
-    # number of random bytes to use for name
-    nbytes = (_SHM_SAFE_NAME_LENGTH - len(_SHM_NAME_PREFIX)) // 2
-    assert nbytes >= 2, '_SHM_NAME_PREFIX too long'
-    name = _SHM_NAME_PREFIX + secrets.token_hex(nbytes)
-    assert len(name) <= _SHM_SAFE_NAME_LENGTH
-    return name
+# Collate GPU:
+
+# import torch
+# import torchvision
+#
+# def collate_gpu(batch):
+#     x, t = torch.utils.data.dataloader.default_collate(batch)
+#     return x.to(device="cuda:0"), t.to(device="cuda:0")
+#
+# train_dataset = torchvision.datasets.MNIST(
+#     './data',
+#     train=True,
+#     download=True,
+#     transform=torchvision.transforms.ToTensor(),
+# )
+# train_loader = torch.utils.data.DataLoader(
+#     dataset=train_dataset,
+#     batch_size=4,
+#     shuffle=True,
+#     num_workers=1,
+#     prefetch_factor=2,
+#     persistent_workers=True,
+#     collate_fn=collate_gpu,
+# )
+#
+# if __name__ == "__main__":
+#     x, t = next(iter(train_loader))
+#     print(type(x), x.device, type(t), t.device)
+
+# Or all the way https://github.com/ste362/WrappedDataloader
+
+# Maybe some can be adaptively sent to GPU - in Dataset - before collate (and live there) - then collate can send rest
 
 
-class SharedMemory:
-    """Creates a new shared memory block or attaches to an existing
-    shared memory block.
+import collections
+import contextlib
+import re
+import torch
 
-    Every shared memory block is assigned a unique name.  This enables
-    one process to create a shared memory block with a particular name
-    so that a different process can attach to that same shared memory
-    block using that same name.
+from typing import Callable, Dict, Optional, Tuple, Type, Union
 
-    As a resource for sharing data across processes, shared memory blocks
-    may outlive the original process that created them.  When one process
-    no longer needs access to a shared memory block that might still be
-    needed by other processes, the close() method should be called.
-    When a shared memory block is no longer needed by any process, the
-    unlink() method should be called to ensure proper cleanup."""
+np_str_obj_array_pattern = re.compile(r'[SaUO]')
 
-    # Defaults; enables close() and unlink() to run without errors.
-    _name = None
-    _fd = -1
-    _mmap = None
-    _buf = None
-    _flags = os.O_RDWR
-    _mode = 0o600
-    _prepend_leading_slash = True if _USE_POSIX else False
 
-    def __init__(self, name=None, create=False, size=0):
-        if not size >= 0:
-            raise ValueError("'size' must be a positive integer")
-        if create:
-            self._flags = _O_CREX | os.O_RDWR
-            if size == 0:
-                raise ValueError("'size' must be a positive number different from zero")
-        if name is None and not self._flags & os.O_EXCL:
-            raise ValueError("'name' can only be None if create=True")
+def default_convert(data):
+    elem_type = type(data)
+    if isinstance(data, torch.Tensor):
+        return data
+    elif elem_type.__module__ == 'numpy' and elem_type.__name__ != 'str_' \
+            and elem_type.__name__ != 'string_':
+        # array of string classes and object
+        if elem_type.__name__ == 'ndarray' \
+                and np_str_obj_array_pattern.search(data.dtype.str) is not None:
+            return data
+        return torch.as_tensor(data)
+    elif isinstance(data, collections.abc.Mapping):
+        try:
+            return elem_type({key: default_convert(data[key]) for key in data})
+        except TypeError:
+            # The mapping type may not support `__init__(iterable)`.
+            return {key: default_convert(data[key]) for key in data}
+    elif isinstance(data, tuple) and hasattr(data, '_fields'):  # namedtuple
+        return elem_type(*(default_convert(d) for d in data))
+    elif isinstance(data, tuple):
+        return [default_convert(d) for d in data]  # Backwards compatibility.
+    elif isinstance(data, collections.abc.Sequence) and not isinstance(data, (str, bytes)):
+        try:
+            return elem_type([default_convert(d) for d in data])
+        except TypeError:
+            # The sequence type may not support `__init__(iterable)` (e.g., `range`).
+            return [default_convert(d) for d in data]
+    else:
+        return data
 
-        if _USE_POSIX:
 
-            # POSIX Shared Memory
+default_collate_err_msg_format = (
+    "default_collate: batch must contain tensors, numpy arrays, numbers, "
+    "dicts or lists; found {}")
 
-            if name is None:
-                while True:
-                    name = _make_filename()
-                    try:
-                        self._fd = _posixshmem.shm_open(
-                            name,
-                            self._flags,
-                            mode=self._mode
-                        )
-                    except FileExistsError:
-                        continue
-                    self._name = name
-                    break
-            else:
-                name = "/" + name if self._prepend_leading_slash else name
-                self._fd = _posixshmem.shm_open(
-                    name,
-                    self._flags,
-                    mode=self._mode
-                )
-                self._name = name
+
+def collate(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    elem = batch[0]
+    elem_type = type(elem)
+
+    if collate_fn_map is not None:
+        if elem_type in collate_fn_map:
+            return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+
+        for collate_type in collate_fn_map:
+            if isinstance(elem, collate_type):
+                return collate_fn_map[collate_type](batch, collate_fn_map=collate_fn_map)
+
+    if isinstance(elem, collections.abc.Mapping):
+        try:
+            return elem_type({key: collate([d[key] for d in batch], collate_fn_map=collate_fn_map) for key in elem})
+        except TypeError:
+            # The mapping type may not support `__init__(iterable)`.
+            return {key: collate([d[key] for d in batch], collate_fn_map=collate_fn_map) for key in elem}
+    elif isinstance(elem, tuple) and hasattr(elem, '_fields'):  # namedtuple
+        return elem_type(*(collate(samples, collate_fn_map=collate_fn_map) for samples in zip(*batch)))
+    elif isinstance(elem, collections.abc.Sequence):
+        # check to make sure that the elements in batch have consistent size
+        it = iter(batch)
+        elem_size = len(next(it))
+        if not all(len(elem) == elem_size for elem in it):
+            raise RuntimeError('each element in list of batch should be of equal size')
+        transposed = list(zip(*batch))  # It may be accessed twice, so we use a list.
+
+        if isinstance(elem, tuple):
+            return [collate(samples, collate_fn_map=collate_fn_map) for samples in transposed]  # Backwards compatibility.
+        else:
             try:
-                if create and size:
-                    os.ftruncate(self._fd, size)
-                stats = os.fstat(self._fd)
-                size = stats.st_size
-                self._mmap = mmap.mmap(self._fd, size)
-            except OSError:
-                self.unlink()
-                raise
+                return elem_type([collate(samples, collate_fn_map=collate_fn_map) for samples in transposed])
+            except TypeError:
+                # The sequence type may not support `__init__(iterable)` (e.g., `range`).
+                return [collate(samples, collate_fn_map=collate_fn_map) for samples in transposed]
 
-            resource_tracker.register(self._name, "shared_memory")
-
-        else:
-
-            # Windows Named Shared Memory
-
-            if create:
-                while True:
-                    temp_name = _make_filename() if name is None else name
-                    # Create and reserve shared memory block with this name
-                    # until it can be attached to by mmap.
-                    h_map = _winapi.CreateFileMapping(
-                        _winapi.INVALID_HANDLE_VALUE,
-                        _winapi.NULL,
-                        _winapi.PAGE_READWRITE,
-                        (size >> 32) & 0xFFFFFFFF,
-                        size & 0xFFFFFFFF,
-                        temp_name
-                    )
-                    try:
-                        last_error_code = _winapi.GetLastError()
-                        if last_error_code == _winapi.ERROR_ALREADY_EXISTS:
-                            if name is not None:
-                                raise FileExistsError(
-                                    errno.EEXIST,
-                                    os.strerror(errno.EEXIST),
-                                    name,
-                                    _winapi.ERROR_ALREADY_EXISTS
-                                )
-                            else:
-                                continue
-                        self._mmap = mmap.mmap(-1, size, tagname=temp_name)
-                    finally:
-                        _winapi.CloseHandle(h_map)
-                    self._name = temp_name
-                    break
-
-            else:
-                self._name = name
-                # Dynamically determine the existing named shared memory
-                # block's size which is likely a multiple of mmap.PAGESIZE.
-                h_map = _winapi.OpenFileMapping(
-                    _winapi.FILE_MAP_READ,
-                    False,
-                    name
-                )
-                try:
-                    p_buf = _winapi.MapViewOfFile(
-                        h_map,
-                        _winapi.FILE_MAP_READ,
-                        0,
-                        0,
-                        0
-                    )
-                finally:
-                    _winapi.CloseHandle(h_map)
-                try:
-                    size = _winapi.VirtualQuerySize(p_buf)
-                finally:
-                    _winapi.UnmapViewOfFile(p_buf)
-                self._mmap = mmap.mmap(-1, size, tagname=name)
-
-        self._size = size
-        self._buf = memoryview(self._mmap)
-
-    def __del__(self):
-        try:
-            self.close()
-        except OSError:
-            pass
-
-    def __reduce__(self):
-        return (
-            self.__class__,
-            (
-                self.name,
-                False,
-                self.size,
-            ),
-        )
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.name!r}, size={self.size})'
-
-    @property
-    def buf(self):
-        "A memoryview of contents of the shared memory block."
-        return self._buf
-
-    @property
-    def name(self):
-        "Unique name that identifies the shared memory block."
-        reported_name = self._name
-        if _USE_POSIX and self._prepend_leading_slash:
-            if self._name.startswith("/"):
-                reported_name = self._name[1:]
-        return reported_name
-
-    @property
-    def size(self):
-        "Size in bytes."
-        return self._size
-
-    def close(self):
-        """Closes access to the shared memory from this instance but does
-        not destroy the shared memory block."""
-        if self._buf is not None:
-            self._buf.release()
-            self._buf = None
-        if self._mmap is not None:
-            self._mmap.close()
-            self._mmap = None
-        if _USE_POSIX and self._fd >= 0:
-            os.close(self._fd)
-            self._fd = -1
-
-    def unlink(self):
-        """Requests that the underlying shared memory block be destroyed.
-
-        In order to ensure proper cleanup of resources, unlink should be
-        called once (and only once) across all processes which have access
-        to the shared memory block."""
-        if _USE_POSIX and self._name:
-            _posixshmem.shm_unlink(self._name)
-            resource_tracker.unregister(self._name, "shared_memory")
+    raise TypeError(default_collate_err_msg_format.format(elem_type))
 
 
-_encoding = "utf8"
+def collate_tensor_fn(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    elem = batch[0]
+    out = None
+    if torch.utils.data.get_worker_info() is not None:
+        # If we're in a background process, concatenate directly into a
+        # shared memory tensor to avoid an extra copy
+        numel = sum(x.numel() for x in batch)
+        storage = elem._typed_storage()._new_shared(numel, device=elem.device)
+        out = elem.new(storage).resize_(len(batch), *list(elem.size()))
+    return torch.stack(batch, 0, out=out)
 
-class ShareableList:
-    """Pattern for a mutable list-like object shareable via a shared
-    memory block.  It differs from the built-in list type in that these
-    lists can not change their overall length (i.e. no append, insert,
-    etc.)
 
-    Because values are packed into a memoryview as bytes, the struct
-    packing format for any storable value must require no more than 8
-    characters to describe its format."""
+def collate_numpy_array_fn(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    elem = batch[0]
+    # array of string classes and object
+    if np_str_obj_array_pattern.search(elem.dtype.str) is not None:
+        raise TypeError(default_collate_err_msg_format.format(elem.dtype))
 
-    # The shared memory area is organized as follows:
-    # - 8 bytes: number of items (N) as a 64-bit integer
-    # - (N + 1) * 8 bytes: offsets of each element from the start of the
-    #                      data area
-    # - K bytes: the data area storing item values (with encoding and size
-    #            depending on their respective types)
-    # - N * 8 bytes: `struct` format string for each element
-    # - N bytes: index into _back_transforms_mapping for each element
-    #            (for reconstructing the corresponding Python value)
-    _types_mapping = {
-        int: "q",
-        float: "d",
-        bool: "xxxxxxx?",
-        str: "%ds",
-        bytes: "%ds",
-        None.__class__: "xxxxxx?x",
-    }
-    _alignment = 8
-    _back_transforms_mapping = {
-        0: lambda value: value,                   # int, float, bool
-        1: lambda value: value.rstrip(b'\x00').decode(_encoding),  # str
-        2: lambda value: value.rstrip(b'\x00'),   # bytes
-        3: lambda _value: None,                   # None
-    }
+    return collate([torch.as_tensor(b) for b in batch], collate_fn_map=collate_fn_map)
 
-    @staticmethod
-    def _extract_recreation_code(value):
-        """Used in concert with _back_transforms_mapping to convert values
-        into the appropriate Python objects when retrieving them from
-        the list as well as when storing them."""
-        if not isinstance(value, (str, bytes, None.__class__)):
-            return 0
-        elif isinstance(value, str):
-            return 1
-        elif isinstance(value, bytes):
-            return 2
-        else:
-            return 3  # NoneType
 
-    def __init__(self, sequence=None, *, name=None):
-        if name is None or sequence is not None:
-            sequence = sequence or ()
-            _formats = [
-                self._types_mapping[type(item)]
-                if not isinstance(item, (str, bytes))
-                else self._types_mapping[type(item)] % (
-                    self._alignment * (len(item) // self._alignment + 1),
-                )
-                for item in sequence
-            ]
-            self._list_len = len(_formats)
-            assert sum(len(fmt) <= 8 for fmt in _formats) == self._list_len
-            offset = 0
-            # The offsets of each list element into the shared memory's
-            # data area (0 meaning the start of the data area, not the start
-            # of the shared memory area).
-            self._allocated_offsets = [0]
-            for fmt in _formats:
-                offset += self._alignment if fmt[-1] != "s" else int(fmt[:-1])
-                self._allocated_offsets.append(offset)
-            _recreation_codes = [
-                self._extract_recreation_code(item) for item in sequence
-            ]
-            requested_size = struct.calcsize(
-                "q" + self._format_size_metainfo +
-                "".join(_formats) +
-                self._format_packing_metainfo +
-                self._format_back_transform_codes
-            )
+def collate_numpy_scalar_fn(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    return torch.as_tensor(batch)
 
-            self.shm = SharedMemory(name, create=True, size=requested_size)
-        else:
-            self.shm = SharedMemory(name)
 
-        if sequence is not None:
-            _enc = _encoding
-            struct.pack_into(
-                "q" + self._format_size_metainfo,
-                self.shm.buf,
-                0,
-                self._list_len,
-                *(self._allocated_offsets)
-            )
-            struct.pack_into(
-                "".join(_formats),
-                self.shm.buf,
-                self._offset_data_start,
-                *(v.encode(_enc) if isinstance(v, str) else v for v in sequence)
-            )
-            struct.pack_into(
-                self._format_packing_metainfo,
-                self.shm.buf,
-                self._offset_packing_formats,
-                *(v.encode(_enc) for v in _formats)
-            )
-            struct.pack_into(
-                self._format_back_transform_codes,
-                self.shm.buf,
-                self._offset_back_transform_codes,
-                *(_recreation_codes)
-            )
+def collate_float_fn(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    return torch.tensor(batch, dtype=torch.float64)
 
-        else:
-            self._list_len = len(self)  # Obtains size from offset 0 in buffer.
-            self._allocated_offsets = list(
-                struct.unpack_from(
-                    self._format_size_metainfo,
-                    self.shm.buf,
-                    1 * 8
-                )
-            )
 
-    def _get_packing_format(self, position):
-        "Gets the packing format for a single value stored in the list."
-        position = position if position >= 0 else position + self._list_len
-        if (position >= self._list_len) or (self._list_len < 0):
-            raise IndexError("Requested position out of range.")
+def collate_int_fn(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    return torch.tensor(batch)
 
-        v = struct.unpack_from(
-            "8s",
-            self.shm.buf,
-            self._offset_packing_formats + position * 8
-        )[0]
-        fmt = v.rstrip(b'\x00')
-        fmt_as_str = fmt.decode(_encoding)
 
-        return fmt_as_str
+def collate_str_fn(batch, *, collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None):
+    return batch
 
-    def _get_back_transform(self, position):
-        "Gets the back transformation function for a single value."
 
-        if (position >= self._list_len) or (self._list_len < 0):
-            raise IndexError("Requested position out of range.")
+default_collate_fn_map: Dict[Union[Type, Tuple[Type, ...]], Callable] = {torch.Tensor: collate_tensor_fn}
+with contextlib.suppress(ImportError):
+    import numpy as np
+    # For both ndarray and memmap (subclass of ndarray)
+    default_collate_fn_map[np.ndarray] = collate_numpy_array_fn
+    # See scalars hierarchy: https://numpy.org/doc/stable/reference/arrays.scalars.html
+    # Skip string scalars
+    default_collate_fn_map[(np.bool_, np.number, np.object_)] = collate_numpy_scalar_fn
+default_collate_fn_map[float] = collate_float_fn
+default_collate_fn_map[int] = collate_int_fn
+default_collate_fn_map[str] = collate_str_fn
+default_collate_fn_map[bytes] = collate_str_fn
 
-        transform_code = struct.unpack_from(
-            "b",
-            self.shm.buf,
-            self._offset_back_transform_codes + position
-        )[0]
-        transform_function = self._back_transforms_mapping[transform_code]
 
-        return transform_function
-
-    def _set_packing_format_and_transform(self, position, fmt_as_str, value):
-        """Sets the packing format and back transformation code for a
-        single value in the list at the specified position."""
-
-        if (position >= self._list_len) or (self._list_len < 0):
-            raise IndexError("Requested position out of range.")
-
-        struct.pack_into(
-            "8s",
-            self.shm.buf,
-            self._offset_packing_formats + position * 8,
-            fmt_as_str.encode(_encoding)
-        )
-
-        transform_code = self._extract_recreation_code(value)
-        struct.pack_into(
-            "b",
-            self.shm.buf,
-            self._offset_back_transform_codes + position,
-            transform_code
-        )
-
-    def __getitem__(self, position):
-        position = position if position >= 0 else position + self._list_len
-        try:
-            offset = self._offset_data_start + self._allocated_offsets[position]
-            (v,) = struct.unpack_from(
-                self._get_packing_format(position),
-                self.shm.buf,
-                offset
-            )
-        except IndexError:
-            raise IndexError("index out of range")
-
-        back_transform = self._get_back_transform(position)
-        v = back_transform(v)
-
-        return v
-
-    def __setitem__(self, position, value):
-        position = position if position >= 0 else position + self._list_len
-        try:
-            item_offset = self._allocated_offsets[position]
-            offset = self._offset_data_start + item_offset
-            current_format = self._get_packing_format(position)
-        except IndexError:
-            raise IndexError("assignment index out of range")
-
-        if not isinstance(value, (str, bytes)):
-            new_format = self._types_mapping[type(value)]
-            encoded_value = value
-        else:
-            allocated_length = self._allocated_offsets[position + 1] - item_offset
-
-            encoded_value = (value.encode(_encoding)
-                             if isinstance(value, str) else value)
-            if len(encoded_value) > allocated_length:
-                raise ValueError("bytes/str item exceeds available storage")
-            if current_format[-1] == "s":
-                new_format = current_format
-            else:
-                new_format = self._types_mapping[str] % (
-                    allocated_length,
-                )
-
-        self._set_packing_format_and_transform(
-            position,
-            new_format,
-            value
-        )
-        struct.pack_into(new_format, self.shm.buf, offset, encoded_value)
-
-    def __reduce__(self):
-        return partial(self.__class__, name=self.shm.name), ()
-
-    def __len__(self):
-        return struct.unpack_from("q", self.shm.buf, 0)[0]
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({list(self)}, name={self.shm.name!r})'
-
-    @property
-    def format(self):
-        "The struct packing format used by all currently stored items."
-        return "".join(
-            self._get_packing_format(i) for i in range(self._list_len)
-        )
-
-    @property
-    def _format_size_metainfo(self):
-        "The struct packing format used for the items' storage offsets."
-        return "q" * (self._list_len + 1)
-
-    @property
-    def _format_packing_metainfo(self):
-        "The struct packing format used for the items' packing formats."
-        return "8s" * self._list_len
-
-    @property
-    def _format_back_transform_codes(self):
-        "The struct packing format used for the items' back transforms."
-        return "b" * self._list_len
-
-    @property
-    def _offset_data_start(self):
-        # - 8 bytes for the list length
-        # - (N + 1) * 8 bytes for the element offsets
-        return (self._list_len + 2) * 8
-
-    @property
-    def _offset_packing_formats(self):
-        return self._offset_data_start + self._allocated_offsets[-1]
-
-    @property
-    def _offset_back_transform_codes(self):
-        return self._offset_packing_formats + self._list_len * 8
-
-    def count(self, value):
-        "L.count(value) -> integer -- return number of occurrences of value."
-
-        return sum(value == entry for entry in self)
-
-    def index(self, value):
-        """L.index(value) -> integer -- return first index of value.
-        Raises ValueError if the value is not present."""
-
-        for position, entry in enumerate(self):
-            if value == entry:
-                return position
-        else:
-            raise ValueError(f"{value!r} not in this container")
-
-    __class_getitem__ = classmethod(types.GenericAlias)
+def default_collate(batch):
+    return collate(batch, collate_fn_map=default_collate_fn_map)
