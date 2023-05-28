@@ -31,12 +31,13 @@ class Memory:
         self.in_episode_batches = []
         self.episodes = []
 
-        self.abs_num_batches = 0
         self.num_batches = 0
+        self.num_batches_deleted = 0
         self.num_experiences = 0
         self.num_experiences_mmapped = 0
         self.num_episodes_mmapped = 0
-        self.num_batches_deleted = 0
+        self.num_episodes_deleted = 0
+        self.last_mmapped = (0, 0)
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -62,7 +63,6 @@ class Memory:
                     self.in_episode_batches = []
 
                 self.num_batches += 1
-                self.abs_num_batches += 1
 
                 if self.main_worker != os.getpid():
                     self.num_experiences += batch_size
@@ -87,7 +87,8 @@ class Memory:
             self.mmap_oldest_episodes()
 
             mode = 'gpu' if self.num_experiences < self.gpu_capacity else 'shared'
-            batch = Batch({key: Mem(batch[key], f'{self.path}/{self.abs_num_batches}_{key}').to(mode)
+            absolute_num_batches = self.num_batches + self.num_batches_deleted
+            batch = Batch({key: Mem(batch[key], f'{self.path}/{absolute_num_batches}_{key}').to(mode)
                            for key in batch})
 
             self.batches.append(batch)
@@ -97,10 +98,44 @@ class Memory:
             for batch, ind, step in zip(batch, ind, step):
                 self.queues[int(ind % self.worker)].put((batch, ind, step))
 
+    def delete_oldest_batches(self):
+        while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
+            batch_size = self.episodes[0][0].size()
+
+            self.num_experiences -= batch_size
+            self.num_batches -= 1
+            self.num_batches_deleted += 1
+
+            if self.main_worker == os.getpid():
+                del self.batches[0]
+                for mem in self.episodes[0][0].values():
+                    mem.delete()  # TODO
+
+            del self.episodes[0][0]
+            if not len(self.episodes[0]):
+                del self.episodes[:batch_size]
+                self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
+
+    def mmap_oldest_batches(self):  # Better if last batch position was stored and oldest batches were mmapped
+        while self.num_experiences - self.num_experiences_mmapped > self.gpu_capacity + self.ram_capacity:
+            episode_ind, step = self.last_mmapped
+
+            batch = self.episode(episode_ind)[step]
+            batch_size = batch.size()
+            while self.num_experiences - self.num_experiences_mmapped > self.gpu_capacity + self.ram_capacity:
+                for mem in batch.values():
+                    mem.mmap()
+                self.num_experiences_mmapped += batch_size
+
+            if episode_ind < len(self.episode(episode_ind)) - 1:
+                self.last_mmapped[1] += 1
+            else:
+                self.last_mmapped = (episode_ind + batch_size, 0)
+
     def delete_oldest_episodes(self):
         while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
-            self.num_batches -= len(self.episodes[0])
             self.num_experiences -= sum(step.size() for step in self.episodes[0])
+            self.num_batches -= len(self.episodes[0])
             self.num_batches_deleted += len(self.episodes[0])  # getitem ind = mem.index - self.num_deleted
 
             if self.main_worker == os.getpid():
@@ -181,6 +216,9 @@ class Episode:
 
     def __iter__(self):
         return (self.step(i) for i in range(len(self)))
+
+    def __delitem__(self, ind):
+        self.in_episode_batches.pop(ind)
 
 
 class Experience:
