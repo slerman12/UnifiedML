@@ -63,6 +63,10 @@
     1. .to(memory_format=torch.channels_last) if B, C, H, W format (Encoder with "image" modality")
     2. Don't forget to jit element-wise operations
     3. GPU-vectorized augmentations
+
+    For stream, Nstep is always 1 (previous as current, current as next-obs/reward
+
+    If Nstep > 0 not stream, can be set as NaN datum in replay, then computed and cached by workers.
     """
 import os
 import time

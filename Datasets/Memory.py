@@ -163,10 +163,15 @@ def f2(m):
 if __name__ == '__main__':
     M = Memory()
     adds = 0
-    for _ in range(10):
-        d = {'hi': np.ones([256, 3, 32, 32]), 'done': False}
+    for _ in range(5):  # Episodes
+        for _ in range(128 - 1):  # Steps
+            d = {'hi': np.ones([256, 3, 32, 32]), 'done': False}  # Batches
+            start = time.time()
+            M.add(d)
+            adds += time.time() - start
+        done = {'hi': np.ones([256, 3, 32, 32]), 'done': True}  # Last batch
         start = time.time()
-        M.add(d)
+        M.add(done)
         adds += time.time() - start
     print(adds, 'adds')
     p1 = mp.Process(name='p1', target=f1, args=(M,))
