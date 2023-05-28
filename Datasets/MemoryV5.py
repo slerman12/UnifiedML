@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+from math import inf
 import atexit
 import contextlib
 import os
@@ -15,11 +16,14 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, device=None, cache_capacity=None, gpu_capacity=None, ram_capacity=None, hd_capacity=None):
-        self.path = './ReplayBuffer'  # /DatasetUniqueIdentifier
+    def __init__(self, gpu_capacity=0, ram_capacity=1000000, hd_capacity=inf, num_workers=1):
+        self.worker = 0
+        self.main_worker = os.getpid()
+
+        self.path = './ReplayBuffer'  # +/DatasetUniqueIdentifier
         self.path += '/Test'
 
-        self.num_batches = 0
+        self.queues = [Queue()] + [mp.Queue() for _ in range(num_workers - 1)]
 
         manager = mp.Manager()
 
@@ -27,10 +31,49 @@ class Memory:
         self.in_episode_batches = []
         self.episodes = []
 
+        self.abs_num_batches = 0
+        self.num_batches = 0
+        self.num_experiences = 0
+        self.num_experiences_mmapped = 0
+        self.num_episodes_mmapped = 0
+        self.num_batches_deleted = 0
+        self.gpu_capacity = gpu_capacity
+        self.ram_capacity = ram_capacity
+        self.hd_capacity = hd_capacity
+
         atexit.register(self.cleanup)
 
-    def update(self):  # Maybe truly-shared list variable can tell workers when to do this
-        for batch in self.batches[self.num_batches:]:
+    def update(self, rewrite=True, add=True):  # Maybe truly-shared list variable can tell workers when to do this
+        if rewrite:
+            while not self.queue.empty():
+                experience, episode, step = self.queue.get()
+
+                for key in experience:
+                    self.episode(episode)[step][key] = experience
+
+        if add:
+            for batch in self.batches[self.num_batches:]:
+                batch_size = batch.size()
+
+                self.in_episode_batches.append(batch)
+                self.episodes.extend([Episode(self.in_episode_batches, i) for i in range(batch_size)])
+
+                if batch['done']:
+                    self.in_episode_batches = []
+
+                self.num_batches += 1
+                self.abs_num_batches += 1
+
+                if self.main_worker != os.getpid():
+                    self.num_experiences += batch_size
+
+                self.delete_oldest_episodes()
+                self.mmap_oldest_episodes()
+
+    def add(self, batch, ind=None, step=None):
+        assert not self.worker
+
+        if ind is None or step is None:
             batch_size = 1
 
             for mem in batch.values():
@@ -38,19 +81,51 @@ class Memory:
                     batch_size = len(mem)
                     break
 
-            self.in_episode_batches.append(batch)
-            self.episodes.extend([Episode(self.in_episode_batches, i) for i in range(batch_size)])
+            self.num_experiences += batch_size
 
-            if batch['done']:
-                self.in_episode_batches = []
+            self.delete_oldest_episodes()
+            self.mmap_oldest_episodes()
 
-            self.num_batches += 1
+            mode = 'gpu' if self.num_experiences < self.gpu_capacity else 'shared'
+            batch = Batch({key: Mem(batch[key], f'{self.path}/{self.abs_num_batches}_{key}').to(mode)
+                           for key in batch})
 
-    def add(self, batch):
-        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}').shared()
-                       for key in batch})
-        self.batches.append(batch)
-        self.update()  # Each worker must update
+            self.batches.append(batch)
+            self.update()  # Each worker must update
+        else:
+            # Writable tape
+            for batch, ind, step in zip(batch, ind, step):
+                self.queues[int(ind % self.worker)].put((batch, ind, step))
+
+    def delete_oldest_episodes(self):
+        while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
+            self.num_batches -= len(self.episodes[0])
+            self.num_experiences -= sum(step.size() for step in self.episodes[0])
+            self.num_batches_deleted += len(self.episodes[0])  # getitem ind = mem.index - self.num_deleted
+
+            if self.main_worker == os.getpid():
+                del self.batches[0:len(self.episodes[0])]
+                for step in self.episodes[0]:
+                    for mem in step.values():
+                        mem.delete()  # TODO
+
+            del self.episodes[:self.episodes[0][0].size()]
+
+    def mmap_oldest_episodes(self):  # Better if last batch position was stored and oldest batches were mmapped
+        while self.num_experiences - self.num_experiences_mmapped > self.gpu_capacity + self.ram_capacity:
+            episode = iter(self.episode(self.num_episodes_mmapped))
+            while self.num_experiences > self.gpu_capacity + self.ram_capacity:
+                step = next(episode)
+                for mem in step.values():
+                    mem.mmap()
+                self.num_experiences_mmapped += step.size()
+            self.num_episodes_mmapped += 1
+
+    def load(self):
+        pass
+
+    def save(self):
+        pass
 
     def episode(self, ind):
         return self.episodes[ind]
@@ -67,6 +142,27 @@ class Memory:
                 if mem.mode == 'shared':
                     mem.mem.close()
                     mem.mem.unlink()
+
+    def set_worker(self, worker):
+        self.worker = worker
+
+    @property
+    def queue(self):
+        return self.queues[self.worker]
+
+
+class Queue:
+    def __init__(self):
+        self.queue = []
+
+    def get(self):
+        return self.queue.pop()
+
+    def put(self, item):
+        self.queue.append(item)
+
+    def empty(self):
+        return not len(self.queue)
 
 
 class Episode:
@@ -116,10 +212,17 @@ class Experience:
 
 
 class Batch(dict):
-    def __init__(self, _dict, **kwargs):
+    def __init__(self, _dict=None, **kwargs):
         super().__init__()
-        self.__dict__ = self
-        self.update({**_dict, **kwargs})
+        self.__dict__ = self  # Allows access via attributes
+        self.update({**(_dict or {}), **kwargs})
+
+    def size(self):
+        for mem in self.values():
+            if hasattr(mem, '__len__') and len(mem) > 1:
+                return len(mem)
+
+        return 1
 
 
 class Mem:
@@ -213,6 +316,16 @@ class Mem:
             self.mode = 'mmap'
 
         return self
+
+    def to(self, mode):
+        if mode == 'gpu':
+            return self.gpu()
+        elif mode == 'shared':
+            return self.shared()
+        elif mode == 'mmap':
+            return self.mmap()
+        else:
+            assert False, f'Mode "{mode}" not supported."'
 
     @contextlib.contextmanager
     def cleanup(self):
