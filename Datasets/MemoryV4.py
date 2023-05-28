@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import atexit
+import contextlib
 import os
 import time
 from multiprocessing.shared_memory import SharedMemory
@@ -172,41 +173,52 @@ class Mem:
         return torch.as_tensor(self.get()).to(non_blocking=True)
 
     def gpu(self):
-        self.mem = self.tensor().cuda().share_memory_().to(non_blocking=True)
+        with self.cleanup() as mem:
+            self.mem = torch.as_tensor(mem).cuda().to(non_blocking=True)
         self.mode = 'gpu'
 
         return self
 
     def shared(self):
         if self.mode != 'shared':
-            name = '_'.join(self.path.rsplit('/', 2)[1:]) + '_' + str(id(self))
-            mem = self.tensor().numpy()
-            link = SharedMemory(create=True, name=name,  size=mem.nbytes)
-            mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-            if self.shape:
-                mem_[:] = mem[:]
-            else:
-                mem_[...] = mem  # In case of 0-dim array
+            with self.cleanup() as mem:
+                name = '_'.join(self.path.rsplit('/', 2)[1:]) + '_' + str(id(self))
+                mem = torch.as_tensor(mem).numpy()
+                link = SharedMemory(create=True, name=name,  size=mem.nbytes)
+                mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+                if self.shape:
+                    mem_[:] = mem[:]
+                else:
+                    mem_[...] = mem  # In case of 0-dim array
 
             self.mem = link
             self.mode = 'shared'
 
         return self
 
-    def mmap(self):  # TODO Create context for cleaning up shared memory
+    def mmap(self):
         if self.mode != 'mmap':
             if self.main_worker == os.getpid():
-                mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
-                if self.shape:
-                    mmap_file[:] = self.get()[:]
-                else:
-                    mmap_file[...] = self.get()  # In case of 0-dim array
-                mmap_file.flush()  # Write to hard disk
+                with self.cleanup() as mem:
+                    mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+                    if self.shape:
+                        mmap_file[:] = mem[:]
+                    else:
+                        mmap_file[...] = mem  # In case of 0-dim array
+                    mmap_file.flush()  # Write to hard disk
 
             self.mem = None
             self.mode = 'mmap'
 
         return self
+
+    @contextlib.contextmanager
+    def cleanup(self):
+        mem = self.get()
+        yield mem
+        if self.mode == 'shared':
+            mem.close()
+            mem.unlink()
 
     def __bool__(self):
         return bool(self.get())
