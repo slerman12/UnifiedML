@@ -7,7 +7,7 @@ import atexit
 import contextlib
 import os
 import time
-from multiprocessing.shared_memory import SharedMemory
+from multiprocessing.shared_memory import SharedMemory, ShareableList
 import resource
 
 import numpy as np
@@ -120,10 +120,9 @@ class Memory:
                 for mem in self.episodes[0].batch(0).values():
                     mem.delete()  # TODO
 
-            del self.episodes[0][0]
+            del self.episodes[0][0]  # TODO last_mmapped_ind updated
             if not len(self.episodes[0]):
                 del self.episodes[:batch_size]
-                self.last_mmapped_ind[0] -= batch_size
                 self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
 
         # MMAP oldest batch
@@ -144,8 +143,6 @@ class Memory:
 
             for mem in batch.values():
                 mem.mmap()
-            absolute_batch_index = int(mem.path.split('/')[-1].split('_')[0])
-            self.batches[absolute_batch_index - self.num_batches_deleted] = batch
             self.num_experiences_mmapped += batch_size
 
     def load(self):
@@ -167,8 +164,12 @@ class Memory:
         for batch in self.batches:
             for mem in batch.values():
                 if mem.mode == 'shared':
-                    mem.mem.close()
-                    mem.mem.unlink()
+                    mem = SharedMemory(name=mem.name)
+                    mem.close()
+                    mem.unlink()
+                mem = ShareableList(name=mem.name + '_mode').shm
+                mem.close()
+                mem.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
@@ -262,12 +263,22 @@ class Mem:
     def __init__(self, mem, path=None):
         self.path = path
         self.mem = np.array(mem)
-        self.mode = 'tensor'
+        self.name = '_'.join(self.path.rsplit('/', 2)[1:])
+
+        ShareableList(['tensor'], name=self.name + '_mode')
 
         self.shape = self.mem.shape
         self.dtype = self.mem.dtype
 
         self.main_worker = os.getpid()
+
+    @property
+    def mode(self):
+        return str(ShareableList(name=self.name + '_mode')[0]).strip('_')
+
+    def set_mode(self, mode):
+        mem = ShareableList(name=self.name + '_mode')
+        mem[0] = mode + ''.join(['_' for _ in range(6 - len(mode))])
 
     def get(self):
         if self.mode == 'mmap':
@@ -278,7 +289,8 @@ class Mem:
                     if self.main_worker == os.getpid():
                         raise e
         elif self.mode == 'shared':
-            return np.ndarray(self.shape, dtype=self.dtype, buffer=self.mem.buf)
+            link = SharedMemory(name=self.name)
+            return np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
         else:
             return self.mem
 
@@ -311,7 +323,7 @@ class Mem:
         if self.mode != 'gpu':
             with self.cleanup():
                 self.mem = torch.as_tensor(self.get()).cuda().to(non_blocking=True)
-            self.mode = 'gpu'
+            self.set_mode('gpu')
 
         return self
 
@@ -319,18 +331,17 @@ class Mem:
         if self.mode != 'shared':
             with self.cleanup():
                 mem = self.get()
-                name = '_'.join(self.path.rsplit('/', 2)[1:])
                 if isinstance(mem, torch.Tensor):
                     mem = mem.numpy()
-                link = SharedMemory(create=True, name=name, size=mem.nbytes)
+                link = SharedMemory(create=True, name=self.name, size=mem.nbytes)
                 mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
                 if self.shape:
                     mem_[:] = mem[:]
                 else:
                     mem_[...] = mem  # In case of 0-dim array
 
-            self.mem = link
-            self.mode = 'shared'
+            self.mem = None
+            self.set_mode('shared')
 
         return self
 
@@ -346,7 +357,7 @@ class Mem:
                     mmap_file.flush()  # Write to hard disk
 
             self.mem = None
-            self.mode = 'mmap'
+            self.set_mode('mmap')
 
         return self
 
@@ -362,11 +373,11 @@ class Mem:
 
     @contextlib.contextmanager
     def cleanup(self):
-        mem = self.mem
         yield
         if self.mode == 'shared':
-            mem.close()
-            mem.unlink()
+            link = SharedMemory(name=self.name)
+            link.close()
+            link.unlink()
 
     def __bool__(self):
         return bool(self.get())
@@ -379,6 +390,7 @@ def f1(m):
     while True:
         _start = time.time()
         m.update()
+        print(m.episode(0).batch(0)['hi'].mode, m.episode(-1).batch(-1)['hi'].mode)
         print(m.episode(0)[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get1', m.num_batches)
         time.sleep(3)
 
@@ -387,6 +399,7 @@ def f2(m):
     while True:
         _start = time.time()
         m.update()
+        print(m.episode(0).batch(0)['hi'].mode, m.episode(256 * 64 - 5).batch(-1)['hi'].mode, len(m), 256 * 64)
         print(m.episode(-1)[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get2', m.num_batches)
         time.sleep(3)
 
