@@ -121,9 +121,11 @@ class Memory:
                     mem.delete()  # TODO
 
             del self.episodes[0][0]
+            self.last_mmapped_ind[1] -= 1
             if not len(self.episodes[0]):
                 del self.episodes[:batch_size]
                 self.last_mmapped_ind[0] -= batch_size
+                self.last_mmapped_ind[1] = 0
                 self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
 
         # MMAP oldest batch
