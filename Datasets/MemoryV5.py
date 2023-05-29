@@ -17,8 +17,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=0,
-                 hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=0, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -28,10 +27,6 @@ class Memory:
 
         self.path = save_path
 
-        # Counters
-        self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_batches_deleted = \
-            self.num_episodes_deleted = self.last_non_mmap_episode_ind = self.last_non_mmap_step = 0
-
         manager = mp.Manager()
 
         self.batches = manager.list()
@@ -40,6 +35,10 @@ class Memory:
 
         # Rewrite tape
         self.queues = [Queue()] + [mp.Queue() for _ in range(num_workers - 1)]
+
+        # Counters
+        self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_batches_deleted = \
+            self.num_episodes_deleted = self.last_non_mmap_episode_ind = self.last_non_mmap_step = 0
 
         atexit.register(self.cleanup)
 
