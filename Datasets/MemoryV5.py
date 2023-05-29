@@ -17,7 +17,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=0, hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=700, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -100,24 +100,28 @@ class Memory:
         self.enforce_hd_capacity()
         self.enforce_memory_capacity()
 
-    def enforce_hd_capacity(self):
+    def enforce_hd_capacity(self):  # Only works offline if 0 < hd_capacity < inf (see below TODO)
         while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
-            batch_size = self.episodes[0].batch(0).size()
+            batch = self.episodes[0].batch(0)
+            batch_size = batch.size()
 
             self.num_experiences -= batch_size
             self.num_batches -= 1
             self.num_batches_deleted += 1
 
             if self.main_worker == os.getpid():
-                del self.batches[0]
-                for mem in self.episodes[0].batch(0).values():
+                del self.batches[0]  # TODO For online, need to wait for workers to collect; wait until they're synced
+                for i, mem in enumerate(batch.values()):
                     mem.delete()  # Delete oldest batch
 
+            if next(iter(batch.values())).mode == 'mmap':
+                self.num_experiences_mmapped -= batch_size
+
             del self.episodes[0][0]
-            self.last_non_mmap_step -= 1
+            self.last_non_mmap_step = max(0, self.last_non_mmap_step - 1)
             if not len(self.episodes[0]):
                 del self.episodes[:batch_size]
-                self.last_non_mmap_episode_ind -= batch_size
+                self.last_non_mmap_episode_ind = max(0, self.last_non_mmap_episode_ind - batch_size)
                 self.last_non_mmap_step = 0
                 self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
 
@@ -128,7 +132,7 @@ class Memory:
                     self.last_non_mmap_step += 1
                 else:
                     last_mmap_batch = self.episodes[self.last_non_mmap_episode_ind].batch(self.last_non_mmap_step)
-                    self.last_non_mmap_episode_ind += last_mmap_batch.size()
+                    self.last_non_mmap_episode_ind = min(last_mmap_batch.size(), len(self.episodes) - 1)
                     self.last_non_mmap_step = 0
 
             last_non_mmap_batch = self.episodes[self.last_non_mmap_episode_ind].batch(self.last_non_mmap_step)
@@ -226,6 +230,9 @@ class Experience:
         return zip(self.keys(), self.values())
 
     def __getitem__(self, key):
+        return self.datum(key)
+
+    def __getattr__(self, key):
         return self.datum(key)
 
     def __setitem__(self, key, experience):
@@ -365,20 +372,24 @@ class Mem:
     def __len__(self):
         return self.shape[0]
 
+    def delete(self):
+        if self.mode == 'mmap':
+            os.remove(self.path)
 
-def f1(m):
+
+def offline(m):
     while True:
         _start = time.time()
         m.update()
-        print(m.episode(0)[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get1', m.num_batches)
+        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline', m.num_batches)
         time.sleep(3)
 
 
-def f2(m):
+def online(m):
     while True:
         _start = time.time()
         m.update()
-        print(m.episode(-1)[0]['hi'][0, 0, 0].item(), time.time() - _start, 'get2', m.num_batches)
+        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'online', m.num_batches)
         time.sleep(3)
 
 
@@ -400,13 +411,14 @@ if __name__ == '__main__':
     print(adds, 'adds')
 
     start = time.time()
-    M.episode(0).experience(0)['hi'] = 5
+    M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set')
 
-    p1 = mp.Process(name='p1', target=f1, args=(M,))
-    p2 = mp.Process(name='p2', target=f2, args=(M,))
+    p1 = mp.Process(name='offline', target=offline, args=(M,))
+    p2 = mp.Process(name='online', target=online, args=(M,))
     p1.start()
     p2.start()
+    time.sleep(3)  # Online hd_capacity requires a moment! (Before any additional updates) (for mp to copy/spawn)
 
     adds = 0
     episodes, steps = 1, 5
@@ -423,7 +435,21 @@ if __name__ == '__main__':
     print(adds, 'adds another')
 
     start = time.time()
-    M.episode(-1).experience(0)['hi'] = 5
+    M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set another')
+
+    import random
+
+    while True:
+        for _ in range(random.randint(0, 5)):
+            d = {'hi': np.random.rand(256, 3, 32, 32), 'done': False}  # Batches
+            M.add(d)
+            M.episode(-1).experience(-1)['hi'] = 7
+            time.sleep(3)
+        d = {'hi': np.random.rand(256, 3, 32, 32), 'done': True}  # Last batch
+        M.add(d)
+        # M.episode(-1).experience(-1)['hi'] = 7
+        time.sleep(3)
+
     p1.join()
     p2.join()
