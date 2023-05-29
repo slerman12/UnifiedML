@@ -17,7 +17,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=700, hd_capacity=0):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=700, hd_capacity=700):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -36,9 +36,10 @@ class Memory:
         # Rewrite tape
         self.queues = [Queue()] + [mp.Queue() for _ in range(num_workers - 1)]
 
-        # Counters  TODO num_batches can be a shared tensor
-        self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_batches_deleted = \
-            self.num_episodes_deleted = self.last_non_mmap_episode_ind = self.last_non_mmap_step = 0
+        # Counters
+        self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
+        self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = \
+            self.last_non_mmap_episode_ind = self.last_non_mmap_step = 0
 
         atexit.register(self.cleanup)
 
@@ -54,7 +55,10 @@ class Memory:
                 self.episode(episode)[step][key] = experience
 
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this
-        for batch in self.batches[self.num_batches:]:
+        num_batches_deleted = self.num_batches_deleted.item()
+        self.num_batches = max(self.num_batches, num_batches_deleted)
+
+        for batch in self.batches[self.num_batches - num_batches_deleted:]:
             batch_size = batch.size()
 
             if not self.episode_trace:
@@ -81,8 +85,7 @@ class Memory:
                 break
 
         mode = 'gpu' if self.num_experiences + batch_size < self.gpu_capacity else 'shared'
-        batch = Batch({key: Mem(batch[key],
-                                f'{self.path}/{self.num_batches + self.num_batches_deleted}_{key}_{id(self)}').to(mode)
+        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{id(self)}').to(mode)
                        for key in batch})
 
         self.batches.append(batch)
@@ -100,17 +103,16 @@ class Memory:
         self.enforce_hd_capacity()
         self.enforce_memory_capacity()
 
-    def enforce_hd_capacity(self):  # Only works offline if hd_capacity < inf (see below TODO)
+    def enforce_hd_capacity(self):
         while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
             batch = self.episodes[0].batch(0)
             batch_size = batch.size()
 
             self.num_experiences -= batch_size
-            self.num_batches -= 1
-            self.num_batches_deleted += 1
 
             if self.main_worker == os.getpid():
-                del self.batches[0]  # TODO For online, need to wait for workers to collect; wait until they're synced
+                self.num_batches_deleted[...] = self.num_batches_deleted + 1
+                del self.batches[0]
                 for i, mem in enumerate(batch.values()):
                     mem.delete()  # Delete oldest batch
 
@@ -140,7 +142,7 @@ class Memory:
             for mem in last_non_mmap_batch.values():
                 mem.mmap()  # mmap last non-mmap batch
 
-            self.batches[int(mem.path.split('/')[-1].split('_')[0]) - self.num_batches_deleted] = last_non_mmap_batch
+            self.batches[int(mem.path.split('/')[-1].split('_')[0]) - int(self.num_batches_deleted)] = last_non_mmap_batch
             self.num_experiences_mmapped += last_non_mmap_batch.size()
 
     def load(self):
@@ -380,8 +382,8 @@ class Mem:
 def offline(m):
     while True:
         _start = time.time()
-        m.update()
-        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline', m.num_batches)
+        # m.update()
+        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline')
         time.sleep(3)
 
 
@@ -389,12 +391,12 @@ def online(m):
     while True:
         _start = time.time()
         m.update()
-        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'online', m.num_batches)
+        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'online')
         time.sleep(3)
 
 
 if __name__ == '__main__':
-    M = Memory()
+    M = Memory(num_workers=3)
 
     adds = 0
     episodes, steps = 64, 5
@@ -440,16 +442,20 @@ if __name__ == '__main__':
 
     import random
 
+    i = 0
+
     while True:
         for _ in range(random.randint(0, 5)):
-            d = {'hi': np.random.rand(256, 3, 32, 32), 'done': False}  # Batches
+            d = {'hi': np.full([256, 3, 32, 32], i), 'done': False}  # Batches
             M.add(d)
-            M.episode(-1).experience(-1)['hi'] = 7
+            # M.episode(-1).experience(-1)['hi'] = 7
             time.sleep(3)
-        d = {'hi': np.random.rand(256, 3, 32, 32), 'done': True}  # Last batch
+            i += 1
+        d = {'hi': np.full([256, 3, 32, 32], i), 'done': True}  # Last batch
         M.add(d)
         # M.episode(-1).experience(-1)['hi'] = 7
         time.sleep(3)
+        i += 1
 
     p1.join()
     p2.join()
