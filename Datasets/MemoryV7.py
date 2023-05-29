@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-from math import inf
 import atexit
 import contextlib
 import os
@@ -17,11 +16,9 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=0,
-                 hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=0):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
-        self.hd_capacity = hd_capacity
 
         self.worker = 0
         self.main_worker = os.getpid()
@@ -29,8 +26,8 @@ class Memory:
         self.path = save_path
 
         # Counters
-        self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_batches_deleted = \
-            self.num_episodes_deleted = self.last_non_mmap_episode_ind = self.last_non_mmap_step = 0
+        self.num_batches = self.num_experiences = self.num_experiences_mmapped = 0
+        self.last_mmapped_ind = [0, 0]
 
         manager = mp.Manager()
 
@@ -47,7 +44,6 @@ class Memory:
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
     def rewrite(self):
-        # Before enforce_capacity changes index
         while not self.queue.empty():
             experience, episode, step = self.queue.get()
 
@@ -72,8 +68,6 @@ class Memory:
             self.enforce_capacity()  # Note: Last batch does enter RAM before capacity is enforced
 
     def add(self, batch):
-        assert not self.worker
-
         batch_size = 1
 
         for mem in batch.values():
@@ -82,63 +76,39 @@ class Memory:
                 break
 
         mode = 'gpu' if self.num_experiences + batch_size < self.gpu_capacity else 'shared'
-        batch = Batch({key: Mem(batch[key],
-                                f'{self.path}/{self.num_batches + self.num_batches_deleted}_{key}_{id(self)}').to(mode)
+        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{id(self)}').to(mode)
                        for key in batch})
 
         self.batches.append(batch)
         self.update()
 
     def writable_tape(self, batch, ind, step):
-        assert not self.worker
-
         for batch, ind, step in zip(batch, ind, step):
             self.queues[int(ind % self.worker)].put((batch, ind, step))
-
         self.rewrite()
 
     def enforce_capacity(self):
-        self.enforce_hd_capacity()
-        self.enforce_memory_capacity()
-
-    def enforce_hd_capacity(self):
-        while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
-            batch_size = self.episodes[0].batch(0).size()
-
-            self.num_experiences -= batch_size
-            self.num_batches -= 1
-            self.num_batches_deleted += 1
-
-            if self.main_worker == os.getpid():
-                del self.batches[0]
-                for mem in self.episodes[0].batch(0).values():
-                    mem.delete()  # Delete oldest batch
-
-            del self.episodes[0][0]
-            self.last_non_mmap_step -= 1
-            if not len(self.episodes[0]):
-                del self.episodes[:batch_size]
-                self.last_non_mmap_episode_ind -= batch_size
-                self.last_non_mmap_step = 0
-                self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
-
-    def enforce_memory_capacity(self):
         while self.num_experiences - self.num_experiences_mmapped > self.gpu_capacity + self.ram_capacity:
+            episode_ind, step = self.last_mmapped_ind
+
+            batch = self.episodes[episode_ind].batch(step)
+            batch_size = batch.size()
+
             if self.num_experiences_mmapped > 0:
-                if self.last_non_mmap_step < len(self.episodes[self.last_non_mmap_episode_ind]) - 1:
-                    self.last_non_mmap_step += 1
+                if step < len(self.episodes[episode_ind]) - 1:
+                    self.last_mmapped_ind[1] += 1
+                    batch = self.episodes[episode_ind].batch(step + 1)
+                    batch_size = batch.size()
                 else:
-                    last_mmap_batch = self.episodes[self.last_non_mmap_episode_ind].batch(self.last_non_mmap_step)
-                    self.last_non_mmap_episode_ind += last_mmap_batch.size()
-                    self.last_non_mmap_step = 0
+                    self.last_mmapped_ind = [episode_ind + batch_size, 0]
+                    batch = self.episodes[episode_ind + batch_size].batch(0)
+                    batch_size = batch.size()
 
-            last_non_mmap_batch = self.episodes[self.last_non_mmap_episode_ind].batch(self.last_non_mmap_step)
+            for mem in batch.values():
+                mem.mmap()  # mmap oldest batch
 
-            for mem in last_non_mmap_batch.values():
-                mem.mmap()  # mmap last non-mmap batch
-
-            self.batches[int(mem.path.split('/')[-1].split('_')[0]) - self.num_batches_deleted] = last_non_mmap_batch
-            self.num_experiences_mmapped += last_non_mmap_batch.size()
+            self.batches[self.num_batches] = batch
+            self.num_experiences_mmapped += batch_size
 
     def load(self):
         pass
