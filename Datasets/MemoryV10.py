@@ -18,7 +18,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=0):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -78,23 +78,20 @@ class Memory:
     def add(self, batch):  # TODO Should be its own thread  https://stackoverflow.com/questions/14234547/threads-with-decorators
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
 
-        batch_size = 1
+        batch_size = Batch(batch).size()
 
-        for mem in batch.values():
-            if mem.shape and len(mem) > 1:
-                batch_size = len(mem)
-                break
+        gpu = self.num_experiences + batch_size <= self.gpu_capacity
+        shared = self.num_experiences + batch_size <= self.gpu_capacity + self.ram_capacity
+        mmap = self.num_experiences + batch_size <= self.gpu_capacity + self.ram_capacity + self.hd_capacity
 
-        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(self.mode(batch_size))
+        mode = 'gpu' if gpu else 'shared' if shared else 'mmap' if mmap \
+            else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
+
+        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})
 
         self.batches.append(batch)
         self.update()
-
-    def mode(self, batch_size):
-        delete = self.num_experiences + batch_size > self.gpu_capacity + self.ram_capacity + self.hd_capacity
-        gpu = self.num_experiences + batch_size < self.gpu_capacity
-        return next(iter(self.episodes[0].batch(0).values())).mode if delete else 'gpu' if gpu else 'shared'
 
     def writable_tape(self, batch, ind, step):  # TODO Should be its own thread
         assert self.main_worker == os.getpid(), 'Only main worker can send rewrites across the memory tape.'
