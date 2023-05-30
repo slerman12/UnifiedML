@@ -309,7 +309,7 @@ class Mem:
                     self.mem.flush()  # Write to hard disk
                 else:
                     self.mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
-                self.shm = None
+
             self.mode = 'mmap'
 
         return self
@@ -326,7 +326,6 @@ class Mem:
     def cleanup(self):
         yield
         if self.mode == 'shared' and self.shm is not None:
-            self.mem = None
             self.shm.close()
             if self.main_worker == os.getpid():
                 self.shm.unlink()
