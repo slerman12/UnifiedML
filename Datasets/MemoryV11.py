@@ -137,10 +137,16 @@ class Memory:
         return len(self.episodes)
 
     def cleanup(self):
-        for batch in self.batches:
-            for mem in batch.values():
-                with mem.cleanup():
-                    pass
+        if self.main_worker == os.getpid():
+            for batch in self.batches:
+                for mem in batch.values():
+                    with mem.cleanup():
+                        pass
+        for episode in self.episodes:
+            for batch in episode:
+                for mem in batch.values():
+                    with mem.cleanup():
+                        pass
 
     def set_worker(self, worker):
         self.worker = worker
