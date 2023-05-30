@@ -282,7 +282,7 @@ class Mem:
 
     def shared(self):  # Would pinned memory be better? tensor.pin_memory()?  https://pytorch.org/docs/stable/data.html
         if self.mode != 'shared':
-            with self.cleanup(unlink=self.main_worker == os.getpid()):
+            with self.cleanup():
                 if isinstance(self.mem, torch.Tensor):
                     self.mem = self.mem.numpy()
                 mem = self.mem
@@ -299,7 +299,7 @@ class Mem:
 
     def mmap(self):
         if self.mode != 'mmap':
-            with self.cleanup(unlink=self.main_worker == os.getpid()):
+            with self.cleanup():
                 if self.main_worker == os.getpid():  # For online transitions
                         mem = self.mem
                         self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
@@ -322,11 +322,11 @@ class Mem:
             assert False, f'Mode "{mode}" not supported."'
 
     @contextlib.contextmanager
-    def cleanup(self, unlink=True):
+    def cleanup(self):
         yield
-        if self.mode == 'shared':
+        if self.mode == 'shared' and self.shm is not None:
             self.shm.close()
-            if unlink:
+            if self.main_worker == os.getpid():
                 self.shm.unlink()
             self.shm = None
 
