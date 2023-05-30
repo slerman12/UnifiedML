@@ -17,8 +17,11 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=inf, hd_capacity=0):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, pinned_capacity=0,
+                 tensor_ram_capacity=0, ram_capacity=inf, hd_capacity=0):
         self.gpu_capacity = gpu_capacity
+        self.pinned_capacity = pinned_capacity
+        self.tensor_ram_capacity = tensor_ram_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
 
@@ -90,11 +93,16 @@ class Memory:
 
         batch_size = Batch(batch).size()
 
-        gpu = self.num_experiences + batch_size <= self.gpu_capacity
-        shared = self.num_experiences + batch_size <= self.gpu_capacity + self.ram_capacity
-        mmap = self.num_experiences + batch_size <= self.gpu_capacity + self.ram_capacity + self.hd_capacity
+        capacities = [self.gpu_capacity, self.pinned_capacity, self.tensor_ram_capacity, self.ram_capacity,
+                      self.hd_capacity]
+        gpu = self.num_experiences + batch_size <= sum(capacities[:1])
+        pinned = self.num_experiences + batch_size <= sum(capacities[:2])
+        shared_tensor = self.num_experiences + batch_size <= sum(capacities[:3])
+        shared = self.num_experiences + batch_size <= sum(capacities[:4])
+        mmap = self.num_experiences + batch_size <= sum(capacities[:5])
 
-        mode = 'gpu' if gpu else 'shared' if shared else 'mmap' if mmap \
+        mode = 'gpu' if gpu else 'pinned' if pinned else 'shared_tensor' if shared_tensor \
+            else 'shared' if shared else 'mmap' if mmap \
             else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
 
         batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
