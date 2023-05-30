@@ -143,10 +143,6 @@ class Memory:
     def cleanup(self):
         for batch in self.batches:
             for mem in batch.values():
-                if mem.mode == 'shared':
-                    mem = SharedMemory(name=mem.name)
-                    mem.close()
-                    mem.unlink()
                 mem = ShareableList(name=mem.name + '_mode').shm
                 mem.close()
                 mem.unlink()
@@ -279,9 +275,7 @@ class Mem:
                     if self.main_worker == os.getpid():
                         raise e
         elif self.mode == 'shared':
-            link = SharedMemory(name=self.name)
-            yield np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-            link.close()
+            yield self.mem
         else:
             yield self.mem
 
@@ -289,10 +283,6 @@ class Mem:
         assert self.shape
         with self.get() as mem:
             mem = mem[ind]
-
-            if self.mode == 'shared':
-                # Note: Nested sets won't work
-                return mem.copy()
 
             return mem
 
@@ -325,17 +315,8 @@ class Mem:
         if self.mode != 'shared':
             with self.cleanup():
                 with self.get() as mem:
-                    if isinstance(mem, torch.Tensor):
-                        mem = mem.numpy()
-                    link = SharedMemory(create=True, name=self.name, size=mem.nbytes)
-                    mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-                    if self.shape:
-                        mem_[:] = mem[:]
-                    else:
-                        mem_[...] = mem  # In case of 0-dim array
-                    link.close()
+                    self.mem = torch.as_tensor(mem).share_memory_().to(non_blocking=False)
 
-            self.mem = None
             self.set_mode('shared')
 
         return self
@@ -370,10 +351,6 @@ class Mem:
     @contextlib.contextmanager
     def cleanup(self):
         yield
-        if self.mode == 'shared':
-            link = SharedMemory(name=self.name)
-            link.close()
-            link.unlink()
 
     def __bool__(self):
         with self.get() as mem:
@@ -383,11 +360,7 @@ class Mem:
         return self.shape[0]
 
     def delete(self):
-        if self.mode == 'shared':
-            link = SharedMemory(name=self.name)
-            link.close()
-            link.unlink()
-        elif self.mode == 'mmap':
+        if self.mode == 'mmap':
             os.remove(self.path)
 
 
