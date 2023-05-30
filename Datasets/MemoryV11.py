@@ -449,7 +449,7 @@ def get_obj_size(obj):
 if __name__ == '__main__':
     mp.set_start_method('spawn')
 
-    exp = torch.randn([]).to(non_blocking=True).pin_memory()
+    exp = torch.randn([]).cuda(non_blocking=True)
 
     M = Memory(num_workers=3, exp=exp)
 
