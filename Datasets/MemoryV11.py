@@ -41,6 +41,8 @@ class Memory:
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
 
+        atexit.register(self.cleanup)
+
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
@@ -53,7 +55,7 @@ class Memory:
                 self.episode(episode)[step][key] = experience
 
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
-        if self.num_experiences == 0:
+        if self.main_worker != os.getpid() and self.num_experiences == 0:
             atexit.register(self.cleanup)
 
         num_batches_deleted = self.num_batches_deleted.item()
@@ -138,16 +140,21 @@ class Memory:
         return len(self.episodes)
 
     def cleanup(self):
-        if self.main_worker == os.getpid():
-            for batch in self.batches:
-                for mem in batch.values():
-                    with mem.cleanup():
-                        pass
         for episode in self.episodes:
             for batch in episode:
                 for mem in batch.values():
-                    with mem.cleanup():
-                        pass
+                    if mem.shm is not None:
+                        mem.shm.close()
+
+        if self.main_worker == os.getpid():
+            for p in mp.active_children():
+                p.join()
+
+            for batch in self.batches:
+                for mem in batch.values():
+                    if mem.shm is not None:
+                        mem.shm.close()
+                        mem.shm.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
@@ -338,10 +345,6 @@ class Mem:
             if self.main_worker == os.getpid():
                 self.shm.unlink()
             self.shm = None
-
-    # def __del__(self):
-    #     with self.cleanup():
-    #         return
 
     def __bool__(self):
         return bool(self.mem)
