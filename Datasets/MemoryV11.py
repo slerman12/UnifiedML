@@ -58,9 +58,9 @@ class Memory:
 
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
         if self.main_worker != os.getpid() and self.num_experiences == 0:
-            atexit.register(self.cleanup)
             self.exp[...] = 55
-            print(self.exp, dd)
+            print(self.exp, 'dd')
+            atexit.register(self.cleanup)
         # print(self.exp)
 
         num_batches_deleted = self.num_batches_deleted.item()
