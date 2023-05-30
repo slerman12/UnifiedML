@@ -17,11 +17,12 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1000000, hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
 
+        self.id = id(self)
         self.worker = 0
         self.main_worker = os.getpid()
 
@@ -75,7 +76,7 @@ class Memory:
             self.enforce_capacity()  # Note: Last batch does enter RAM before capacity is enforced
 
     def add(self, batch):
-        assert not self.worker
+        assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
 
         batch_size = 1
 
@@ -85,14 +86,14 @@ class Memory:
                 break
 
         mode = 'gpu' if self.num_experiences + batch_size < self.gpu_capacity else 'shared'
-        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{id(self)}').to(mode)
+        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})
 
         self.batches.append(batch)
         self.update()
 
     def writable_tape(self, batch, ind, step):
-        assert not self.worker
+        assert self.main_worker == os.getpid(), 'Only main worker can send rewrites across the memory tape.'
 
         for batch, ind, step in zip(batch, ind, step):
             self.queues[int(ind % self.worker)].put((batch, ind, step))
