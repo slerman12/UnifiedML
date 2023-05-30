@@ -164,6 +164,6 @@ class Collate:
 
 
 if __name__ == '__main__':
-    # torch.multiprocessing.set_start_method('fork')
+    torch.multiprocessing.set_start_method('spawn')
     run()
     # print(timeit.timeit(run, number=1))
