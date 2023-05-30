@@ -156,10 +156,12 @@ def run():
 
 
 class Collate:
-    def __init__(self, queue):
+    def __init__(self, queue=None):
         self.queue = queue
 
     def __call__(self, x):
+        if self.queue is None:
+            return torch.stack(x)
         return self.queue.get()
 
 
