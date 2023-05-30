@@ -308,7 +308,7 @@ class Mem:
     def pinned(self):
         if self.mode != 'pinned':
             with self.cleanup():
-                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=False).pin_memory()  # if cuda!
+                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=True).pin_memory()  # if cuda!
             self.mode = 'pinned'
 
         return self
@@ -316,7 +316,7 @@ class Mem:
     def shared_tensor(self):
         if self.mode != 'shared_tensor':
             with self.cleanup():
-                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=False)
+                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=True)
             self.mode = 'shared_tensor'
 
         return self
@@ -324,7 +324,7 @@ class Mem:
     def gpu(self):
         if self.mode != 'gpu':
             with self.cleanup():
-                self.mem = torch.as_tensor(self.mem).cuda().to(non_blocking=True)
+                self.mem = torch.as_tensor(self.mem).cuda(non_blocking=True)
 
             self.mode = 'gpu'
 
@@ -399,7 +399,7 @@ class Mem:
                     os.remove(self.path)
 
 
-def offline(m, exp):
+def offline(m, exp=''):
     while True:
         _start = time.time()
         # m.update()
@@ -407,7 +407,7 @@ def offline(m, exp):
         time.sleep(3)
 
 
-def online(m, exp):
+def online(m, exp=''):
     while True:
         _start = time.time()
         m.update()
@@ -449,9 +449,10 @@ def get_obj_size(obj):
 if __name__ == '__main__':
     mp.set_start_method('spawn')
 
-    exp = torch.randn([]).cuda(non_blocking=True)
+    # exp = torch.randn([]).cuda(non_blocking=True)
+    # M = Memory(num_workers=3, exp=exp)
 
-    M = Memory(num_workers=3, exp=exp)
+    M = Memory(num_workers=3)
 
     adds = 0
     episodes, steps = 64, 5
@@ -471,8 +472,11 @@ if __name__ == '__main__':
     M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set')
 
-    p1 = mp.Process(name='offline', target=offline, args=(M,exp))
-    p2 = mp.Process(name='online', target=online, args=(M,exp))
+    # p1 = mp.Process(name='offline', target=offline, args=(M,exp))
+    # p2 = mp.Process(name='online', target=online, args=(M,exp))
+
+    p1 = mp.Process(name='offline', target=offline, args=(M,))
+    p2 = mp.Process(name='online', target=online, args=(M,))
     p1.start()
     p2.start()
     time.sleep(3)  # Online hd_capacity requires a moment! (Before any additional updates) (for mp to copy/spawn)
