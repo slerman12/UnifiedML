@@ -46,9 +46,6 @@ class Memory:
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
-    def __del__(self):
-        self.cleanup()
-
     def rewrite(self):  # TODO Thread w sync?
         # Before enforce_capacity changes index
         while not self.queue.empty():
@@ -139,19 +136,12 @@ class Memory:
     def __len__(self):
         return len(self.episodes)
 
-    def cleanup(self):
-        if self.main_worker == os.getpid():
-            for batch in self.batches:
-                for mem in batch.values():
-                    with mem.cleanup():
-                        pass
-
-        for episode in self.episodes:
-            for batch in episode:
-                for mem in batch.values():
-                    with mem.cleanup():
-                        pass
-
+    # def cleanup(self):
+    #     if self.main_worker == os.getpid():
+    #         for batch in self.batches:
+    #             for mem in batch.values():
+    #                 with mem.cleanup():
+    #                     pass
 
     def set_worker(self, worker):
         self.worker = worker
@@ -257,6 +247,8 @@ class Mem:
         self.dtype = self.mem.dtype
 
         self.main_worker = os.getpid()
+
+        atexit.register(self.cleanup)
 
     def __getstate__(self):
         if self.mode == 'shared':
