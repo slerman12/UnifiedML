@@ -18,7 +18,7 @@ import torch.multiprocessing as mp
 
 class Memory:
     def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, pinned_capacity=0,
-                 tensor_ram_capacity=0, ram_capacity=inf, hd_capacity=0):
+                 tensor_ram_capacity=0, ram_capacity=inf, hd_capacity=0, exp=None):
         self.gpu_capacity = gpu_capacity
         self.pinned_capacity = pinned_capacity
         self.tensor_ram_capacity = tensor_ram_capacity
@@ -44,6 +44,7 @@ class Memory:
         # https://stackoverflow.com/questions/58741872/pinning-memory-is-actually-slower-in-pytorch
         # self.exp = torch.randn([]).to(non_blocking=True).pin_memory()
         # self.exp = torch.randn([]).cuda(non_blocking=True)
+        self.exp = exp
 
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
@@ -66,11 +67,11 @@ class Memory:
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
-        # if 'online' in mp.current_process().name:
-        #     self.exp[...] = 5
-        #
-        # print(self.exp, 'sss', mp.current_process().name)
-        # print(self.exp.device)
+        if 'online' in mp.current_process().name:
+            self.exp[...] = 5
+
+        print(self.exp, 'sss', mp.current_process().name)
+        print(self.exp.device)
 
         for batch in self.batches[self.num_batches - num_batches_deleted:]:
             batch_size = batch.size()
@@ -398,19 +399,19 @@ class Mem:
                     os.remove(self.path)
 
 
-def offline(m):
+def offline(m, exp):
     while True:
         _start = time.time()
         # m.update()
-        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline')
+        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline', exp)
         time.sleep(3)
 
 
-def online(m):
+def online(m, exp):
     while True:
         _start = time.time()
         m.update()
-        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'online')
+        print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'online', exp)
         time.sleep(3)
 
 
@@ -467,8 +468,10 @@ if __name__ == '__main__':
     M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set')
 
-    p1 = mp.Process(name='offline', target=offline, args=(M,))
-    p2 = mp.Process(name='online', target=online, args=(M,))
+    exp = torch.randn([]).to(non_blocking=True).pin_memory()
+
+    p1 = mp.Process(name='offline', target=offline, args=(M,exp))
+    p2 = mp.Process(name='online', target=online, args=(M,exp))
     p1.start()
     p2.start()
     time.sleep(3)  # Online hd_capacity requires a moment! (Before any additional updates) (for mp to copy/spawn)
