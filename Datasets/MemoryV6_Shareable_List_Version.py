@@ -265,7 +265,8 @@ class Mem:
         self.mem = np.array(mem)
         self.name = '_'.join(self.path.rsplit('/', 2)[1:])
 
-        ShareableList(['tensor'], name=self.name + '_mode')
+        link = ShareableList(['tensor'], name=self.name + '_mode')
+        link.shm.close()
 
         self.shape = self.mem.shape
         self.dtype = self.mem.dtype
@@ -274,55 +275,65 @@ class Mem:
 
     @property
     def mode(self):
-        return str(ShareableList(name=self.name + '_mode')[0]).strip('_')
+        link = ShareableList(name=self.name + '_mode')
+        mode = str(link[0]).strip('_')
+        link.shm.close()
+        return mode
 
     def set_mode(self, mode):
         mem = ShareableList(name=self.name + '_mode')
         mem[0] = mode + ''.join(['_' for _ in range(6 - len(mode))])
+        mem.shm.close()
 
+    @contextlib.contextmanager
     def get(self):
         if self.mode == 'mmap':
             while True:  # Online syncing
                 try:
-                    return np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+                    yield np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+                    break
                 except FileNotFoundError as e:
                     if self.main_worker == os.getpid():
                         raise e
         elif self.mode == 'shared':
             link = SharedMemory(name=self.name)
-            return np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+            yield np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+            link.close()
         else:
-            return self.mem
+            yield self.mem
 
     def __getitem__(self, ind):
         assert self.shape
-        mem = self.get()[ind]
+        with self.get() as mem:
+            mem = mem[ind]
 
-        if self.mode == 'shared':
-            # Note: Nested sets won't work
-            return mem.copy()
+            if self.mode == 'shared':
+                # Note: Nested sets won't work
+                return mem.copy()
 
-        return mem
+            return mem
 
     def __setitem__(self, ind, value):
         assert self.shape
 
-        if self.mode == 'mmap':
-            mem = self.get()
-            mem[ind] = value
-            mem.flush()  # Write to hard disk
-        elif self.mode == 'shared':
-            self.get()[ind] = value
-        else:
-            self.mem[ind] = value
+        with self.get() as mem:
+            if self.mode == 'mmap':
+                mem[ind] = value
+                mem.flush()  # Write to hard disk
+            elif self.mode == 'shared':
+                mem[ind] = value
+            else:
+                self.mem[ind] = value
 
     def tensor(self):
-        return torch.as_tensor(self.get()).to(non_blocking=True)
+        with self.get() as mem:
+            return torch.as_tensor(mem).to(non_blocking=True)
 
     def gpu(self):
         if self.mode != 'gpu':
             with self.cleanup():
-                self.mem = torch.as_tensor(self.get()).cuda().to(non_blocking=True)
+                with self.get() as mem:
+                    self.mem = torch.as_tensor(mem).cuda().to(non_blocking=True)
             self.set_mode('gpu')
 
         return self
@@ -330,15 +341,16 @@ class Mem:
     def shared(self):
         if self.mode != 'shared':
             with self.cleanup():
-                mem = self.get()
-                if isinstance(mem, torch.Tensor):
-                    mem = mem.numpy()
-                link = SharedMemory(create=True, name=self.name, size=mem.nbytes)
-                mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-                if self.shape:
-                    mem_[:] = mem[:]
-                else:
-                    mem_[...] = mem  # In case of 0-dim array
+                with self.get() as mem:
+                    if isinstance(mem, torch.Tensor):
+                        mem = mem.numpy()
+                    link = SharedMemory(create=True, name=self.name, size=mem.nbytes)
+                    mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+                    if self.shape:
+                        mem_[:] = mem[:]
+                    else:
+                        mem_[...] = mem  # In case of 0-dim array
+                    link.close()
 
             self.mem = None
             self.set_mode('shared')
@@ -349,12 +361,13 @@ class Mem:
         if self.mode != 'mmap':
             if self.main_worker == os.getpid():  # For online transitions
                 with self.cleanup():
-                    mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
-                    if self.shape:
-                        mmap_file[:] = self.get()[:]
-                    else:
-                        mmap_file[...] = self.get()  # In case of 0-dim array
-                    mmap_file.flush()  # Write to hard disk
+                    with self.get() as mem:
+                        mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+                        if self.shape:
+                            mmap_file[:] = mem[:]
+                        else:
+                            mmap_file[...] = mem  # In case of 0-dim array
+                        mmap_file.flush()  # Write to hard disk
 
             self.mem = None
             self.set_mode('mmap')
@@ -380,7 +393,8 @@ class Mem:
             link.unlink()
 
     def __bool__(self):
-        return bool(self.get())
+        with self.get() as mem:
+            return bool(mem)
 
     def __len__(self):
         return self.shape[0]
