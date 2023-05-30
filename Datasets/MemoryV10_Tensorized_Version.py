@@ -270,7 +270,7 @@ class Mem:
 
     def shared(self):  # Would pinned memory be better? tensor.pin_memory()?  https://pytorch.org/docs/stable/data.html
         if self.mode != 'shared':
-            self.mem = torch.as_tensor(self.get()).share_memory_().to(non_blocking=False)
+            self.mem = torch.as_tensor(self.get()).share_memory_().to(non_blocking=False).pin_memory()
         self.mode = 'shared'
 
         return self

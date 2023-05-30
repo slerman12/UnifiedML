@@ -37,7 +37,10 @@ class Memory:
         # Rewrite tape
         self.queues = [Queue()] + [mp.Queue() for _ in range(num_workers - 1)]
 
-        self.exp = torch.randn([]).pin_memory()
+        # Both of these work
+        # https://stackoverflow.com/questions/58741872/pinning-memory-is-actually-slower-in-pytorch
+        # self.exp = torch.randn([]).to(non_blocking=True).pin_memory()
+        # self.exp = torch.randn([]).cuda(non_blocking=True)
 
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
@@ -60,11 +63,11 @@ class Memory:
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
-        if 'online' in mp.current_process().name:
-            self.exp[...] = 5
-
-        print(self.exp, 'sss', mp.current_process().name)
-        print(self.exp.device)
+        # if 'online' in mp.current_process().name:
+        #     self.exp[...] = 5
+        #
+        # print(self.exp, 'sss', mp.current_process().name)
+        # print(self.exp.device)
 
         for batch in self.batches[self.num_batches - num_batches_deleted:]:
             batch_size = batch.size()
