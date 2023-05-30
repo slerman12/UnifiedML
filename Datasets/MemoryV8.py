@@ -85,6 +85,7 @@ class Memory:
                 batch_size = len(mem)
                 break
 
+        # TODO Newer batches can be moved to GPU if older ones deleted and gpu-capacity
         mode = 'gpu' if self.num_experiences + batch_size < self.gpu_capacity else 'shared'
         batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})

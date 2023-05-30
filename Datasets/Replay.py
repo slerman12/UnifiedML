@@ -131,19 +131,36 @@ class SimpleDataset2(Dataset):
         return data
 
 
-def run():
+class SimpleDataset3(Dataset):
+    def __init__(self, data, device, queue):
+        self.data = data
+        self.device = device
+        self.queue = queue
 
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        data = self.data[idx]
+        self.queue.put(data.cuda(non_blocking=True))
+
+
+def run():
     d = torch.rand(1000, 50, 2)
-    dataset = SimpleDataset2(d, 'mps')
-    dataloader = DataLoader(dataset, batch_size=32, num_workers=8, collate_fn=Collate())
+    queue = mp.Queue
+    dataset = SimpleDataset3(d, 'cuda', queue)
+    dataloader = DataLoader(dataset, batch_size=32, num_workers=8, collate_fn=Collate(queue))
     print(next(iter(dataloader)).shape)
     # while not prefetch_queue.empty():
     #     print(next(iter(dataloader)).shape)
 
 
 class Collate:
+    def __init__(self, queue):
+        self.queue = queue
+
     def __call__(self, x):
-        return torch.stack(x)
+        return torch.stack(self.queue.get())
 
 
 if __name__ == '__main__':
