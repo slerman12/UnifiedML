@@ -320,6 +320,7 @@ def offline(m):
         time.sleep(3)
 
 
+# Note Version10 is faster for Online
 def online(m):
     while True:
         _start = time.time()
