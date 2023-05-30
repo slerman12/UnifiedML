@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import sys
 from math import inf
 import atexit
 import contextlib
@@ -17,7 +18,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=1000, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -47,7 +48,7 @@ class Memory:
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
-    def rewrite(self):
+    def rewrite(self):  # TODO Thread w sync?
         # Before enforce_capacity changes index
         while not self.queue.empty():
             experience, episode, step = self.queue.get()
@@ -55,7 +56,7 @@ class Memory:
             for key in experience:
                 self.episode(episode)[step][key] = experience
 
-    def update(self):  # Maybe truly-shared list variable can tell workers when to do this
+    def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
@@ -75,7 +76,7 @@ class Memory:
             self.num_experiences += batch_size
             self.enforce_capacity()  # Note: Last batch does enter RAM before capacity is enforced
 
-    def add(self, batch):
+    def add(self, batch):  # TODO Should be its own thread  https://stackoverflow.com/questions/14234547/threads-with-decorators
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
 
         batch_size = 1
@@ -85,7 +86,13 @@ class Memory:
                 batch_size = len(mem)
                 break
 
-        # TODO Newer batches can be moved to GPU if older ones deleted and gpu-capacity
+        # TODO Newer batches can be moved to GPU if older ones deleted were mode gpu
+        # @property mode maybe
+        # if self.num_experiences + batch_size > self.gpu_capacity + self.ram_capacity + self.hd_capacity \
+        #         and self.episodes[0].batch(0).mode == 'gpu':
+        #     mode = 'gpu'
+        # else:
+        # Instead of enforcing memory capacity, could just check if above and send to mmap; if delete; use same mode
         mode = 'gpu' if self.num_experiences + batch_size < self.gpu_capacity else 'shared'
         batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})
@@ -93,7 +100,7 @@ class Memory:
         self.batches.append(batch)
         self.update()
 
-    def writable_tape(self, batch, ind, step):
+    def writable_tape(self, batch, ind, step):  # TODO Should be its own thread
         assert self.main_worker == os.getpid(), 'Only main worker can send rewrites across the memory tape.'
 
         for batch, ind, step in zip(batch, ind, step):
@@ -397,6 +404,37 @@ def online(m):
         time.sleep(3)
 
 
+import gc
+import sys
+
+
+# https://stackoverflow.com/a/53705610
+# https://stackoverflow.com/questions/54361763/pytorch-why-is-the-memory-occupied-by-the-tensor-variable-so-small
+def get_obj_size(obj):
+    marked = {id(obj)}
+    obj_q = [obj]
+    sz = 0
+
+    while obj_q:
+        sz += sum(map(sys.getsizeof, obj_q))
+
+        # Lookup all the object referred to by the object in obj_q.
+        # See: https://docs.python.org/3.7/library/gc.html#gc.get_referents
+        all_refr = ((id(o), o) for o in gc.get_referents(*obj_q))
+
+        # Filter object that are already marked.
+        # Using dict notation will prevent repeated objects.
+        new_refr = {o_id: o for o_id, o in all_refr if o_id not in marked and not isinstance(o, type)}
+
+        # The new obj_q will be the ones that were not marked,
+        # and we will update marked with their ids so we will
+        # not traverse them again.
+        obj_q = new_refr.values()
+        marked.update(new_refr.keys())
+
+    return sz
+
+
 if __name__ == '__main__':
     M = Memory(num_workers=3)
 
@@ -432,6 +470,8 @@ if __name__ == '__main__':
             start = time.time()
             M.add(d)
             adds += time.time() - start
+            # setattr(M.episode(0).batch(0), 'd', d)
+            # print(get_obj_size(M.episode(0).batch(0)))
         d = {'hi': np.random.rand(256, 3, 32, 32), 'done': True}  # Last batch
         start = time.time()
         M.add(d)

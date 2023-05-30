@@ -155,7 +155,22 @@ def run():
     #     print(next(iter(dataloader)).shape)
 
 
-class Collate:
+class Collate:  # Can have a pinned memory buffer and jitted parallel/threaded? writes? trace?
+    # https://gist.github.com/rossant/7a46c18601a2577ac527f958dd4e452f
+
+    # Make 3 shared memory prefetch batches
+    # Write to them from workers using shared ... maybe each worker gets all batch elemts and just does its chunk?
+    #   Then shared prefetch index 1,2,3
+    #         Sharable np array 4 x 256 x ...
+    #         Sharable list or tensor indexing the 256 dimension
+    #         Every batch added may allocate a new datum, and a link is added to the manager dict that gets cached by w
+    # Collate  pins - does as_tensor work on un-copied shared?
+
+    # If shared cuda can be written, can sendsampler index for pre-allocated prefetch cuda tensor; Collate can just
+    # return the corresponding prefetch (based on a normal-shared variable with sampler)
+    #       Via numpy but collate can send prefetch index i to cuda and the rest to pin, incrementing i as the one after
+    #       the sampler/collate variable one - i gets sent - workers can send index if gpu else none; i can stack
+
     def __init__(self, queue=None):
         self.queue = queue
 
