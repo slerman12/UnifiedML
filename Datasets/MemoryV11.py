@@ -37,7 +37,7 @@ class Memory:
         # Rewrite tape
         self.queues = [Queue()] + [mp.Queue() for _ in range(num_workers - 1)]
 
-        self.exp = torch.randn([]).cuda().share_memory_()
+        self.exp = torch.randn([]).pin_memory()
 
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
