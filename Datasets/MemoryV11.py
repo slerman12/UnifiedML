@@ -448,7 +448,10 @@ def get_obj_size(obj):
 
 if __name__ == '__main__':
     mp.set_start_method('spawn')
-    M = Memory(num_workers=3)
+
+    exp = torch.randn([]).to(non_blocking=True).pin_memory()
+
+    M = Memory(num_workers=3, exp=exp)
 
     adds = 0
     episodes, steps = 64, 5
@@ -467,8 +470,6 @@ if __name__ == '__main__':
     start = time.time()
     M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set')
-
-    exp = torch.randn([]).to(non_blocking=True).pin_memory()
 
     p1 = mp.Process(name='offline', target=offline, args=(M,exp))
     p2 = mp.Process(name='online', target=online, args=(M,exp))
