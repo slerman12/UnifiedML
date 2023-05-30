@@ -1,5 +1,3 @@
-import timeit
-
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
@@ -38,6 +36,6 @@ def none(*x, **y):
 
 
 if __name__ == '__main__':
+    torch.multiprocessing.set_start_method('fork')
     run()
-    # torch.multiprocessing.set_start_method('fork')
     # print(timeit.timeit(run, number=1))
