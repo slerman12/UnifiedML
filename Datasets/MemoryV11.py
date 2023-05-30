@@ -137,11 +137,10 @@ class Memory:
         return len(self.episodes)
 
     def cleanup(self):
-        if self.main_worker == os.getpid():
-            for batch in self.batches:
-                for mem in batch.values():
-                    with mem.cleanup():
-                        pass
+        for batch in self.batches:
+            for mem in batch.values():
+                with mem.cleanup():
+                    pass
 
     def set_worker(self, worker):
         self.worker = worker
@@ -249,6 +248,8 @@ class Mem:
         self.main_worker = os.getpid()
 
     def __getstate__(self):
+        if self.mode == 'shared':
+            self.shm.close()
         return self.path, self.mode, self.main_worker, self.shape, self.dtype
 
     def __setstate__(self, state):
@@ -325,7 +326,7 @@ class Mem:
     @contextlib.contextmanager
     def cleanup(self):
         yield
-        if self.mode == 'shared' and self.shm is not None:
+        if self.mode == 'shared':
             self.shm.close()
             if self.main_worker == os.getpid():
                 self.shm.unlink()
