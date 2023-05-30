@@ -2,14 +2,9 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import sys
 from math import inf
-import atexit
-import contextlib
 import os
 import time
-from multiprocessing.shared_memory import SharedMemory, ShareableList
-import resource
 
 import numpy as np
 
@@ -18,7 +13,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=0):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -41,11 +36,6 @@ class Memory:
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
-
-        atexit.register(self.cleanup)
-
-        _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
-        resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
     def rewrite(self):  # TODO Thread w sync?
         # Before enforce_capacity changes index
@@ -78,23 +68,20 @@ class Memory:
     def add(self, batch):  # TODO Should be its own thread  https://stackoverflow.com/questions/14234547/threads-with-decorators
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
 
-        batch_size = 1
+        batch_size = Batch(batch).size()
 
-        for mem in batch.values():
-            if mem.shape and len(mem) > 1:
-                batch_size = len(mem)
-                break
+        gpu = self.num_experiences + batch_size <= self.gpu_capacity
+        shared = self.num_experiences + batch_size <= self.gpu_capacity + self.ram_capacity
+        mmap = self.num_experiences + batch_size <= self.gpu_capacity + self.ram_capacity + self.hd_capacity
 
-        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(self.mode(batch_size))
+        mode = 'gpu' if gpu else 'shared' if shared else 'mmap' if mmap \
+            else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
+
+        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})
 
         self.batches.append(batch)
         self.update()
-
-    def mode(self, batch_size):
-        delete = self.num_experiences + batch_size > self.gpu_capacity + self.ram_capacity + self.hd_capacity
-        gpu = self.num_experiences + batch_size < self.gpu_capacity
-        return next(iter(self.episodes[0].batch(0).values())).mode if delete else 'gpu' if gpu else 'shared'
 
     def writable_tape(self, batch, ind, step):  # TODO Should be its own thread
         assert self.main_worker == os.getpid(), 'Only main worker can send rewrites across the memory tape.'
@@ -139,13 +126,6 @@ class Memory:
 
     def __len__(self):
         return len(self.episodes)
-
-    def cleanup(self):
-        for batch in self.batches:
-            for mem in batch.values():
-                mem = ShareableList(name=mem.name + '_mode').shm
-                mem.close()
-                mem.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
@@ -242,99 +222,72 @@ class Mem:
     def __init__(self, mem, path=None):
         self.path = path
         self.mem = np.array(mem)
-        self.name = '_'.join(self.path.rsplit('/', 2)[1:])
-
-        link = ShareableList(['tensor'], name=self.name + '_mode')
-        link.shm.close()
+        self.mode = 'tensor'
 
         self.shape = self.mem.shape
         self.dtype = self.mem.dtype
 
         self.main_worker = os.getpid()
 
-    @property
-    def mode(self):
-        link = ShareableList(name=self.name + '_mode')
-        mode = str(link[0]).strip('_')
-        link.shm.close()
-        return mode
-
-    def set_mode(self, mode):
-        mem = ShareableList(name=self.name + '_mode')
-        mem[0] = mode + ''.join(['_' for _ in range(6 - len(mode))])
-        mem.shm.close()
-
-    @contextlib.contextmanager
     def get(self):
         if self.mode == 'mmap':
             while True:  # Online syncing
                 try:
-                    yield np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
-                    break
+                    return np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
                 except FileNotFoundError as e:
                     if self.main_worker == os.getpid():
                         raise e
         elif self.mode == 'shared':
-            yield self.mem
+            return self.mem
         else:
-            yield self.mem
+            return self.mem
 
     def __getitem__(self, ind):
         assert self.shape
-        with self.get() as mem:
-            mem = mem[ind]
-
-            return mem
+        return self.get()[ind]
 
     def __setitem__(self, ind, value):
         assert self.shape
 
-        with self.get() as mem:
-            if self.mode == 'mmap':
-                mem[ind] = value
-                mem.flush()  # Write to hard disk
-            elif self.mode == 'shared':
-                mem[ind] = value
-            else:
-                mem[ind] = value
+        if self.mode == 'mmap':
+            mem = self.get()
+            mem[ind] = value
+            mem.flush()  # Write to hard disk
+        elif self.mode == 'shared':
+            self.get()[ind] = value
+        else:
+            self.get()[ind] = value
 
     def tensor(self):
-        with self.get() as mem:
-            return torch.as_tensor(mem).to(non_blocking=True)
+        return torch.as_tensor(self.get()).to(non_blocking=True)
 
     def gpu(self):
         if self.mode != 'gpu':
-            with self.cleanup():
-                with self.get() as mem:
-                    self.mem = torch.as_tensor(mem).cuda().to(non_blocking=True)
-            self.set_mode('gpu')
+            self.mem = torch.as_tensor(self.get()).cuda().to(non_blocking=True)
+        self.mode = 'gpu'
 
         return self
 
     def shared(self):  # Would pinned memory be better? tensor.pin_memory()?  https://pytorch.org/docs/stable/data.html
         if self.mode != 'shared':
-            with self.cleanup():
-                with self.get() as mem:
-                    self.mem = torch.as_tensor(mem).share_memory_().to(non_blocking=False)
-
-            self.set_mode('shared')
+            self.mem = torch.as_tensor(self.get()).share_memory_().to(non_blocking=False)
+        self.mode = 'shared'
 
         return self
 
     def mmap(self):
         if self.mode != 'mmap':
             if self.main_worker == os.getpid():  # For online transitions
-                with self.cleanup():
-                    with self.get() as mem:
-                        mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
-                        if self.shape:
-                            mmap_file[:] = mem[:]
-                        else:
-                            mmap_file[...] = mem  # In case of 0-dim array
-                        mmap_file.flush()  # Write to hard disk
+                mem = self.get()
+                mmap_file = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+                if self.shape:
+                    mmap_file[:] = mem[:]
+                else:
+                    mmap_file[...] = mem  # In case of 0-dim array
+                mmap_file.flush()  # Write to hard disk
 
             self.mem = None
-            self.set_mode('mmap')
+            self.mode = 'mmap'
 
         return self
 
@@ -348,13 +301,8 @@ class Mem:
         else:
             assert False, f'Mode "{mode}" not supported."'
 
-    @contextlib.contextmanager
-    def cleanup(self):
-        yield
-
     def __bool__(self):
-        with self.get() as mem:
-            return bool(mem)
+        return bool(self.get())
 
     def __len__(self):
         return self.shape[0]
