@@ -60,7 +60,8 @@ class Memory:
         if self.main_worker != os.getpid() and self.num_experiences == 0:
             atexit.register(self.cleanup)
             self.exp[...] = 55
-        print(self.exp)
+            print(self.exp, dd)
+        # print(self.exp)
 
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
