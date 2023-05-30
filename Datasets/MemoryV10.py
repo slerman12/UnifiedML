@@ -144,8 +144,12 @@ class Memory:
         for batch in self.batches:
             for mem in batch.values():
                 if mem.mode == 'shared':
-                    mem.mem.close()
-                    mem.mem.unlink()
+                    mem = SharedMemory(name=mem.name)
+                    mem.close()
+                    mem.unlink()
+                mem = ShareableList(name=mem.name + '_mode').shm
+                mem.close()
+                mem.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
