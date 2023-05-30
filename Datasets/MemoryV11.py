@@ -139,13 +139,13 @@ class Memory:
         return len(self.episodes)
 
     def cleanup(self):
-        for episode in self.episodes:
-            for batch in episode.episode_trace:
-                for mem in batch.values():
-                    if mem.mode == 'shared':
-                        mem.shm.close()
-
-        if self.main_worker == os.getpid():
+        # for episode in self.episodes:
+        #     for batch in episode.episode_trace:
+        #         for mem in batch.values():
+        #             if mem.mode == 'shared':
+        #                 mem.shm.close()
+        #
+        # if self.main_worker == os.getpid():
 
             for batch in self.batches:
                 for mem in batch.values():
