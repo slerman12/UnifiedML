@@ -264,10 +264,11 @@ class Mem:
     def __getstate__(self):
         if self.mode == 'shared':
             self.shm.close()
-        return self.path, self.mode, self.main_worker, self.shape, self.dtype
+        return self.path, self.mode, self.main_worker, self.shape, self.dtype, \
+            *((self.mem,) if self.mode in ('pinned', 'shared_tensor') else ())
 
     def __setstate__(self, state):
-        self.path, self.mode, self.main_worker, self.shape, self.dtype = state
+        self.path, self.mode, self.main_worker, self.shape, self.dtype, *mem = state
         self.name = '_'.join(self.path.rsplit('/', 2)[1:])
 
         if self.mode == 'shared':
@@ -277,7 +278,8 @@ class Mem:
             self.shm = None
             self.mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
         else:
-            self.shm = self.mem = None
+            self.shm = None
+            self.mem = mem
 
     def __getitem__(self, ind):
         assert self.shape
@@ -294,7 +296,32 @@ class Mem:
     def tensor(self):
         return torch.as_tensor(self.mem).to(non_blocking=True)
 
-    def shared(self):  # Would pinned memory be better? tensor.pin_memory()?  https://pytorch.org/docs/stable/data.html
+    def pinned(self):
+        if self.mode != 'pinned':
+            with self.cleanup():
+                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=False).pin_memory()  # if cuda!
+            self.mode = 'pinned'
+
+        return self
+
+    def shared_tensor(self):
+        if self.mode != 'shared_tensor':
+            with self.cleanup():
+                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=False)
+            self.mode = 'shared_tensor'
+
+        return self
+
+    def gpu(self):
+        if self.mode != 'gpu':
+            with self.cleanup():
+                self.mem = torch.as_tensor(self.mem).cuda().to(non_blocking=True)
+
+            self.mode = 'gpu'
+
+        return self
+
+    def shared(self):
         if self.mode != 'shared':
             with self.cleanup():
                 if isinstance(self.mem, torch.Tensor):
@@ -330,6 +357,10 @@ class Mem:
         return self
 
     def to(self, mode):
+        if mode == 'pinned':
+            return self.pinned()
+        if mode == 'shared_tensor':
+            return self.shared_tensor()
         if mode == 'shared':
             return self.shared()
         elif mode == 'mmap':
