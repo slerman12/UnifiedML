@@ -296,9 +296,10 @@ class Mem:
                     if self.main_worker == os.getpid():
                         raise e
         elif self.mode == 'shared':
-            link = SharedMemory(name=self.name)
-            yield np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-            link.close()
+            # link = SharedMemory(name=self.name)
+            # yield np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+            # link.close()
+            yield torch.as_tensor(self.mem).share_memory_()
         else:
             yield self.mem
 
@@ -307,9 +308,9 @@ class Mem:
         with self.get() as mem:
             mem = mem[ind]
 
-            if self.mode == 'shared':
-                # Note: Nested sets won't work
-                return mem.copy()
+            # if self.mode == 'shared':
+            #     # Note: Nested sets won't work
+            #     return mem.copy()
 
             return mem
 
@@ -323,7 +324,7 @@ class Mem:
             elif self.mode == 'shared':
                 mem[ind] = value
             else:
-                self.mem[ind] = value
+                mem[ind] = value
 
     def tensor(self):
         with self.get() as mem:
@@ -342,17 +343,18 @@ class Mem:
         if self.mode != 'shared':
             with self.cleanup():
                 with self.get() as mem:
-                    if isinstance(mem, torch.Tensor):
-                        mem = mem.numpy()
-                    link = SharedMemory(create=True, name=self.name, size=mem.nbytes)
-                    mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-                    if self.shape:
-                        mem_[:] = mem[:]
-                    else:
-                        mem_[...] = mem  # In case of 0-dim array
-                    link.close()
+                    # if isinstance(mem, torch.Tensor):
+                    #     mem = mem.numpy()
+                    # link = SharedMemory(create=True, name=self.name, size=mem.nbytes)
+                    # mem_ = np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
+                    # if self.shape:
+                    #     mem_[:] = mem[:]
+                    # else:
+                    #     mem_[...] = mem  # In case of 0-dim array
+                    # link.close()
+                    self.mem = torch.as_tensor(mem).share_memory_()
 
-            self.mem = None
+            # self.mem = None
             self.set_mode('shared')
 
         return self
@@ -387,10 +389,10 @@ class Mem:
     @contextlib.contextmanager
     def cleanup(self):
         yield
-        if self.mode == 'shared':
-            link = SharedMemory(name=self.name)
-            link.close()
-            link.unlink()
+        # if self.mode == 'shared':
+        #     link = SharedMemory(name=self.name)
+        #     link.close()
+        #     link.unlink()
 
     def __bool__(self):
         with self.get() as mem:
