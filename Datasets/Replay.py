@@ -143,7 +143,6 @@ class SimpleDataset3(Dataset):
     def __getitem__(self, idx):
         data = self.data[idx]
         self.queue.put(data.cuda(non_blocking=True).share_memory_())
-        return 1
 
 
 def run():
@@ -163,7 +162,8 @@ class Collate:
     def __call__(self, x):
         if self.queue is None:
             return torch.stack(x)
-        return torch.stack([self.queue.get() for _ in range(32) if not self.queue.empty()])
+        return self.queue.get()
+        # return torch.stack([self.queue.get() for _ in range(32) if not self.queue.empty()])
 
 
 if __name__ == '__main__':
