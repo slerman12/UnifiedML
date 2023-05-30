@@ -282,7 +282,7 @@ class Mem:
 
     def shared(self):  # Would pinned memory be better? tensor.pin_memory()?  https://pytorch.org/docs/stable/data.html
         if self.mode != 'shared':
-            with self.cleanup():
+            with self.cleanup(unlink=self.main_worker == os.getpid()):
                 if isinstance(self.mem, torch.Tensor):
                     self.mem = self.mem.numpy()
                 mem = self.mem
@@ -299,15 +299,15 @@ class Mem:
 
     def mmap(self):
         if self.mode != 'mmap':
-            if self.main_worker == os.getpid():  # For online transitions
-                with self.cleanup():
-                    mem = self.mem
-                    self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
-                    if self.shape:
-                        self.mem[:] = mem[:]
-                    else:
-                        self.mem[...] = mem  # In case of 0-dim array
-                    self.mem.flush()  # Write to hard disk
+            with self.cleanup(unlink=self.main_worker == os.getpid()):
+                if self.main_worker == os.getpid():  # For online transitions
+                        mem = self.mem
+                        self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+                        if self.shape:
+                            self.mem[:] = mem[:]
+                        else:
+                            self.mem[...] = mem  # In case of 0-dim array
+                        self.mem.flush()  # Write to hard disk
 
             self.mode = 'mmap'
 
@@ -322,11 +322,12 @@ class Mem:
             assert False, f'Mode "{mode}" not supported."'
 
     @contextlib.contextmanager
-    def cleanup(self):
+    def cleanup(self, unlink=True):
         yield
         if self.mode == 'shared':
             self.shm.close()
-            self.shm.unlink()
+            if unlink:
+                self.shm.unlink()
             self.shm = None
 
     def __bool__(self):
