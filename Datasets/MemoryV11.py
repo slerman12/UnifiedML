@@ -358,7 +358,7 @@ class Mem:
 def offline(m):
     while True:
         _start = time.time()
-        # m.update()
+        m.update()
         print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline')
         time.sleep(3)
 
