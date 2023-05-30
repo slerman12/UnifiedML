@@ -55,6 +55,9 @@ class Memory:
                 self.episode(episode)[step][key] = experience
 
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
+        if not self.num_experiences and self.main_worker != os.getpid():
+            atexit.register(self.cleanup)
+
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
