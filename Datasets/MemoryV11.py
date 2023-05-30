@@ -146,11 +146,6 @@ class Memory:
                         mem.shm.close()
 
         if self.main_worker == os.getpid():
-            for p in mp.active_children():
-                if 'SyncManager' not in p.name:  # TODO Maybe check pid more rigorously
-                    p.join()
-                    print(p)
-                print('joined', mp.current_process())
 
             for batch in self.batches:
                 for mem in batch.values():
