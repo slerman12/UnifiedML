@@ -19,6 +19,7 @@ class SimpleDataset(Dataset):
         if self.device == 'cuda':
             data.to(self.device).share_memory_()
         self.queue.put(data)
+        return None
 
 
 def run():
@@ -36,6 +37,6 @@ def none(*x, **y):
 
 
 if __name__ == '__main__':
-    torch.multiprocessing.set_start_method('spawn')
+    # torch.multiprocessing.set_start_method('spawn')
     run()
     # print(timeit.timeit(run, number=1))
