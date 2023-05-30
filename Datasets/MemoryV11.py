@@ -60,6 +60,11 @@ class Memory:
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
+        if 'online' in mp.current_process().name:
+            self.exp[...] = 5
+
+        print(self.exp, 'sss')
+
         for batch in self.batches[self.num_batches - num_batches_deleted:]:
             batch_size = batch.size()
 
