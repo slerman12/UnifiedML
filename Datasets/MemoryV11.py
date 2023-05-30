@@ -141,23 +141,27 @@ class Memory:
 
     def cleanup(self):
         for episode in self.episodes:
-            for batch in episode:
+            for batch in episode.episode_trace:
                 for mem in batch.values():
-                    if mem.shm is not None:
+                    if mem.mode == 'shared':
                         mem.shm.close()
 
         if self.main_worker == os.getpid():
+            print(mp.active_children())
             for p in mp.active_children():
-                p.join()
+                if 'SyncManager' not in p.name:  # TODO Maybe check pid more rigorously
+                    p.join()
 
             for batch in self.batches:
                 for mem in batch.values():
-                    if mem.shm is not None:
+                    if mem.mode == 'shared':
                         mem.shm.close()
                         mem.shm.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
+        process = mp.current_process()
+        process.name = f'{self.worker}_{self.id}'  # TODO Can set worker
 
     @property
     def queue(self):
