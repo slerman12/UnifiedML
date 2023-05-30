@@ -64,6 +64,7 @@ class Memory:
             self.exp[...] = 5
 
         print(self.exp, 'sss')
+        print(self.exp.device)
 
         for batch in self.batches[self.num_batches - num_batches_deleted:]:
             batch_size = batch.size()
@@ -358,7 +359,7 @@ class Mem:
 def offline(m):
     while True:
         _start = time.time()
-        m.update()
+        # m.update()
         print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'offline')
         time.sleep(3)
 
