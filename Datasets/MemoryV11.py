@@ -41,8 +41,6 @@ class Memory:
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
 
-        atexit.register(self.cleanup)
-
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
@@ -55,6 +53,9 @@ class Memory:
                 self.episode(episode)[step][key] = experience
 
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
+        if self.num_experiences == 0:
+            atexit.register(self.cleanup)
+
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
