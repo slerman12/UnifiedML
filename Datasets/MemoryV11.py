@@ -56,7 +56,7 @@ class Memory:
             for key in experience:
                 self.episode(episode)[step][key] = experience
 
-    def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
+    def update(self):  # Maybe truly-shared list variable can tell workers when to do this / lock  TODO Thread
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
