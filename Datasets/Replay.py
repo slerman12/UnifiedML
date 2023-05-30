@@ -160,7 +160,7 @@ class Collate:
         self.queue = queue
 
     def __call__(self, x):
-        return torch.stack(self.queue.get())
+        return self.queue.get()
 
 
 if __name__ == '__main__':
