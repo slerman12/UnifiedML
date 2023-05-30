@@ -17,7 +17,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=700, hd_capacity=0):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -41,7 +41,7 @@ class Memory:
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
 
-        # atexit.register(self.cleanup)
+        atexit.register(self.cleanup)
 
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
@@ -136,12 +136,12 @@ class Memory:
     def __len__(self):
         return len(self.episodes)
 
-    # def cleanup(self):
-    #     if self.main_worker == os.getpid():
-    #         for batch in self.batches:
-    #             for mem in batch.values():
-    #                 with mem.cleanup():
-    #                     pass
+    def cleanup(self):
+        if self.main_worker == os.getpid():
+            for batch in self.batches:
+                for mem in batch.values():
+                    with mem.cleanup():
+                        pass
 
     def set_worker(self, worker):
         self.worker = worker
@@ -248,7 +248,12 @@ class Mem:
 
         self.main_worker = os.getpid()
 
-        atexit.register(self.cleanup)
+        def clean():
+            if self.main_worker != os.getpid():
+                with self.cleanup():
+                    pass
+
+        atexit.register(clean)
 
     def __getstate__(self):
         if self.mode == 'shared':
