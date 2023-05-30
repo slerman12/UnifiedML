@@ -17,7 +17,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=700, hd_capacity=0):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=inf, hd_capacity=0):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -248,13 +248,6 @@ class Mem:
 
         self.main_worker = os.getpid()
 
-        def clean():
-            if self.main_worker != os.getpid():
-                with self.cleanup():
-                    pass
-
-        atexit.register(clean)
-
     def __getstate__(self):
         return self.path, self.mode, self.main_worker, self.shape, self.dtype
 
@@ -314,7 +307,9 @@ class Mem:
                     else:
                         self.mem[...] = mem  # In case of 0-dim array
                     self.mem.flush()  # Write to hard disk
-
+                else:
+                    self.mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+                self.shm = None
             self.mode = 'mmap'
 
         return self
@@ -331,10 +326,15 @@ class Mem:
     def cleanup(self):
         yield
         if self.mode == 'shared' and self.shm is not None:
+            self.mem = None
             self.shm.close()
             if self.main_worker == os.getpid():
                 self.shm.unlink()
             self.shm = None
+
+    # def __del__(self):
+    #     with self.cleanup():
+    #         return
 
     def __bool__(self):
         return bool(self.mem)
