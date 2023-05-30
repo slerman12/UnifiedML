@@ -256,8 +256,6 @@ class Mem:
         atexit.register(clean)
 
     def __getstate__(self):
-        if self.mode == 'shared':
-            self.shm.close()
         return self.path, self.mode, self.main_worker, self.shape, self.dtype
 
     def __setstate__(self, state):
