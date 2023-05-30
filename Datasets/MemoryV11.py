@@ -339,7 +339,8 @@ class Mem:
     def delete(self):
         with self.cleanup():
             if self.mode == 'mmap':
-                os.remove(self.path)
+                if self.main_worker == os.getpid():
+                    os.remove(self.path)
 
 
 def offline(m):
