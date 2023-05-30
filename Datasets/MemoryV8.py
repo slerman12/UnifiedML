@@ -311,12 +311,12 @@ class Mem:
     def gpu(self):
         if self.mode != 'gpu':
             with self.cleanup():
-                self.mem = torch.as_tensor(self.get()).cuda().to(non_blocking=True)
+                self.mem = torch.as_tensor(self.get()).cuda(non_blocking=True)
             self.mode = 'gpu'
 
         return self
 
-    def shared(self):
+    def shared(self):  # Would pinned memory be better? tensor.pin_memory()?  https://pytorch.org/docs/stable/data.html
         if self.mode != 'shared':
             with self.cleanup():
                 mem = self.get()
