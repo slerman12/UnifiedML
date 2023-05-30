@@ -63,7 +63,7 @@ class Memory:
         if 'online' in mp.current_process().name:
             self.exp[...] = 5
 
-        print(self.exp, 'sss')
+        print(self.exp, 'sss', mp.current_process().name)
         print(self.exp.device)
 
         for batch in self.batches[self.num_batches - num_batches_deleted:]:
