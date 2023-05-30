@@ -137,10 +137,18 @@ class Memory:
         return len(self.episodes)
 
     def cleanup(self):
-        for batch in self.batches:
-            for mem in batch.values():
-                with mem.cleanup():
-                    pass
+        if self.main_worker == os.getpid():
+            for batch in self.batches:
+                for mem in batch.values():
+                    with mem.cleanup():
+                        pass
+
+        for episode in self.episodes:
+            for batch in episode:
+                for mem in batch.values():
+                    with mem.cleanup():
+                        pass
+
 
     def set_worker(self, worker):
         self.worker = worker
@@ -301,13 +309,13 @@ class Mem:
         if self.mode != 'mmap':
             with self.cleanup():
                 if self.main_worker == os.getpid():  # For online transitions
-                        mem = self.mem
-                        self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
-                        if self.shape:
-                            self.mem[:] = mem[:]
-                        else:
-                            self.mem[...] = mem  # In case of 0-dim array
-                        self.mem.flush()  # Write to hard disk
+                    mem = self.mem
+                    self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+                    if self.shape:
+                        self.mem[:] = mem[:]
+                    else:
+                        self.mem[...] = mem  # In case of 0-dim array
+                    self.mem.flush()  # Write to hard disk
 
             self.mode = 'mmap'
 
