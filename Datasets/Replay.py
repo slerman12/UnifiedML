@@ -143,7 +143,7 @@ class SimpleDataset3(Dataset):
     def __getitem__(self, idx):
         data = self.data[idx]
         self.queue.put(data.cuda(non_blocking=True).share_memory_())
-        return None
+        return 1
 
 
 def run():
