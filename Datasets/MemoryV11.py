@@ -43,7 +43,7 @@ class Memory:
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
 
-        atexit.register(self.cleanup)
+        # atexit.register(self.cleanup)
 
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
@@ -139,19 +139,11 @@ class Memory:
         return len(self.episodes)
 
     def cleanup(self):
-        # for episode in self.episodes:
-        #     for batch in episode.episode_trace:
-        #         for mem in batch.values():
-        #             if mem.mode == 'shared':
-        #                 mem.shm.close()
-        #
-        # if self.main_worker == os.getpid():
-
-            for batch in self.batches:
-                for mem in batch.values():
-                    if mem.mode == 'shared':
-                        mem.shm.close()
-                        mem.shm.unlink()
+        for batch in self.batches:
+            for mem in batch.values():
+                if mem.mode == 'shared':
+                    mem.shm.close()
+                    mem.shm.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
