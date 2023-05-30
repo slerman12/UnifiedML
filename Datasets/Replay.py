@@ -1,10 +1,8 @@
 import timeit
 
 import torch
-import torch.nn as nn
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
-from tensordict import TensorDict
 
 
 class SimpleDataset(Dataset):
