@@ -19,11 +19,9 @@ class SimpleDataset(Dataset):
         if self.device == 'cuda':
             data.to(self.device).share_memory_()
         self.queue.put(data)
-        return None
 
 
 def run():
-    prefetch_queue = mp.Queue()
     d = torch.rand(1000, 50, 2)
     dataset = SimpleDataset(d, 'mps', prefetch_queue)
     dataloader = DataLoader(dataset, batch_size=32, num_workers=8, collate_fn=none)
@@ -37,6 +35,7 @@ def none(*x, **y):
 
 
 if __name__ == '__main__':
+    prefetch_queue = mp.Queue()
     # torch.multiprocessing.set_start_method('spawn')
     run()
     # print(timeit.timeit(run, number=1))
