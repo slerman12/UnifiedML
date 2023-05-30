@@ -411,6 +411,7 @@ def get_obj_size(obj):
 
 
 if __name__ == '__main__':
+    mp.set_start_method('spawn')
     M = Memory(num_workers=3)
 
     adds = 0
