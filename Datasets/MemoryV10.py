@@ -18,7 +18,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=1000, ram_capacity=1e6, hd_capacity=inf):
+    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.ram_capacity = ram_capacity
         self.hd_capacity = hd_capacity
@@ -494,7 +494,9 @@ if __name__ == '__main__':
             time.sleep(3)
             i += 1
         d = {'hi': np.full([256, 3, 32, 32], i), 'done': True}  # Last batch
+        start = time.time()
         M.add(d)
+        print(time.time() - start, 'add another')
         # M.episode(-1).experience(-1)['hi'] = 7
         time.sleep(3)
         i += 1

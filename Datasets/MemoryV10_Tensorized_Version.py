@@ -418,7 +418,9 @@ if __name__ == '__main__':
             time.sleep(3)
             i += 1
         d = {'hi': np.full([256, 3, 32, 32], i), 'done': True}  # Last batch
+        start = time.time()
         M.add(d)
+        print(time.time() - start, 'add another')
         # M.episode(-1).experience(-1)['hi'] = 7
         time.sleep(3)
         i += 1
