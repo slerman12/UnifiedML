@@ -144,9 +144,6 @@ class Memory:
                     mem = SharedMemory(name=mem.name)
                     mem.close()
                     mem.unlink()
-                mem = ShareableList(name=mem.name + '_mode').shm
-                mem.close()
-                mem.unlink()
 
     def set_worker(self, worker):
         self.worker = worker
@@ -245,25 +242,12 @@ class Mem:
         self.mem = np.array(mem)
         self.name = '_'.join(self.path.rsplit('/', 2)[1:])
 
-        link = ShareableList(['tensor'], name=self.name + '_mode')
-        link.shm.close()
+        self.mode = 'tensor'
 
         self.shape = self.mem.shape
         self.dtype = self.mem.dtype
 
         self.main_worker = os.getpid()
-
-    @property
-    def mode(self):
-        link = ShareableList(name=self.name + '_mode')
-        mode = str(link[0]).strip('_')
-        link.shm.close()
-        return mode
-
-    def set_mode(self, mode):
-        mem = ShareableList(name=self.name + '_mode')
-        mem[0] = mode + ''.join(['_' for _ in range(6 - len(mode))])
-        mem.shm.close()
 
     @contextlib.contextmanager
     def get(self):
@@ -314,7 +298,7 @@ class Mem:
             with self.cleanup():
                 with self.get() as mem:
                     self.mem = torch.as_tensor(mem).cuda().to(non_blocking=True)
-            self.set_mode('gpu')
+            self.mode = 'gpu'
 
         return self
 
@@ -333,7 +317,7 @@ class Mem:
                     link.close()
 
             self.mem = None
-            self.set_mode('shared')
+            self.mode = 'shared'
 
         return self
 
@@ -350,7 +334,7 @@ class Mem:
                         mmap_file.flush()  # Write to hard disk
 
             self.mem = None
-            self.set_mode('mmap')
+            self.mode = 'mmap'
 
         return self
 
