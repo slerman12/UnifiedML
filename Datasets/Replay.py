@@ -147,7 +147,7 @@ class SimpleDataset3(Dataset):
 
 def run():
     d = torch.rand(1000, 50, 2)
-    queue = mp.Queue
+    queue = mp.Queue()
     dataset = SimpleDataset3(d, 'cuda', queue)
     dataloader = DataLoader(dataset, batch_size=32, num_workers=8, collate_fn=Collate(queue))
     print(next(iter(dataloader)).shape)
