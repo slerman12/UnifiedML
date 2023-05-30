@@ -65,6 +65,10 @@ class Memory:
             if not self.episode_trace:
                 self.episodes.extend([Episode(self.episode_trace, i) for i in range(batch_size)])
 
+            for mem in batch.values():
+                if mem.mode == 'shared':
+                    mem.mem = SharedMemory(name=mem.name)
+
             self.episode_trace.append(batch)
 
             self.num_batches += 1
@@ -276,9 +280,10 @@ class Mem:
                     if self.main_worker == os.getpid():
                         raise e
         elif self.mode == 'shared':
-            link = SharedMemory(name=self.name)
+            link = SharedMemory(name=self.name) if self.mem is None else self.mem
             yield np.ndarray(self.shape, dtype=self.dtype, buffer=link.buf)
-            link.close()
+            if self.mem is None:
+                link.close()
         else:
             yield self.mem
 
@@ -368,7 +373,7 @@ class Mem:
     def cleanup(self):
         yield
         if self.mode == 'shared':
-            link = SharedMemory(name=self.name)
+            link = SharedMemory(name=self.name) if self.mem is None else self.mem
             link.close()
             link.unlink()
 
@@ -381,7 +386,7 @@ class Mem:
 
     def delete(self):
         if self.mode == 'shared':
-            link = SharedMemory(name=self.name)
+            link = SharedMemory(name=self.name) if self.mem is None else self.mem
             link.close()
             link.unlink()
         elif self.mode == 'mmap':
