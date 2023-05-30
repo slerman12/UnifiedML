@@ -47,6 +47,7 @@ class Memory:
 
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
+        assert False, hard_limit
 
     def rewrite(self):  # TODO Thread w sync?
         # Before enforce_capacity changes index
