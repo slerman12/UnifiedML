@@ -37,6 +37,8 @@ class Memory:
         # Rewrite tape
         self.queues = [Queue()] + [mp.Queue() for _ in range(num_workers - 1)]
 
+        self.exp = torch.randn([]).cuda().share_memory_()
+
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
@@ -57,6 +59,8 @@ class Memory:
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this  TODO Thread
         if self.main_worker != os.getpid() and self.num_experiences == 0:
             atexit.register(self.cleanup)
+            self.exp[...] = 55
+        print(self.exp)
 
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
