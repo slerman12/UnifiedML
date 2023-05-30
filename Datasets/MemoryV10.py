@@ -489,7 +489,9 @@ if __name__ == '__main__':
     while True:
         for _ in range(random.randint(0, 5)):
             d = {'hi': np.full([256, 3, 32, 32], i), 'done': False}  # Batches
+            start = time.time()
             M.add(d)
+            print(time.time() - start, 'add another')
             # M.episode(-1).experience(-1)['hi'] = 7
             time.sleep(3)
             i += 1
