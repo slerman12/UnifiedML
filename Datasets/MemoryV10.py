@@ -408,7 +408,11 @@ class Mem:
         return self.shape[0]
 
     def delete(self):
-        if self.mode == 'mmap':
+        if self.mode == 'shared':
+            link = SharedMemory(name=self.name)
+            link.close()
+            link.unlink()
+        elif self.mode == 'mmap':
             os.remove(self.path)
 
 
