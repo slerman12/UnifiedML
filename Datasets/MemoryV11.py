@@ -197,7 +197,7 @@ class Memory:
                     self.add(batch)
                     batch = {}
 
-            batch[key] = Mem(mmap_path).load().mem
+            batch[key] = Mem(None, path=mmap_path).load().mem
 
             previous_num_batches = self.num_batches
 
@@ -299,16 +299,20 @@ class Batch(dict):
 class Mem:
     def __init__(self, mem, path=None):
         self.shm = None
-        self.mem = mem if isinstance(mem, (str, Path)) else np.array(mem)
-        self.name = '_'.join(self.path.rsplit('/', 2)[1:])
+        self.mem = None if mem is None else np.array(mem)
+        self.path = path
         self.saved = False
 
-        self.mode = 'tensor'
+        self.mode = None if mem is None else 'ndarray'
 
-        self.shape = self.mem.shape
-        self.dtype = self.mem.dtype
+        if mem is None:
+            self.shape, self.dtype = (), None
+        else:
+            self.shape = self.mem.shape
+            self.dtype = self.mem.dtype
+            self.path += '_' + str(tuple(self.shape)) + '_' + self.dtype.name
 
-        self.path = path + '_' + tuple(self.shape) + '_' + self.dtype.name
+        self.name = '_'.join(self.path.rsplit('/', 4)[1:])
 
         self.main_worker = os.getpid()
 
@@ -320,7 +324,7 @@ class Mem:
 
     def __setstate__(self, state):
         self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, *mem = state
-        self.name = '_'.join(self.path.rsplit('/', 2)[1:])
+        self.name = '_'.join(self.path.rsplit('/', 4)[1:])
 
         if self.mode == 'shared':
             self.shm = SharedMemory(name=self.name)
@@ -444,14 +448,15 @@ class Mem:
     def load(self):
         if not self.saved:
             _, shape, dtype = self.path.rsplit('_', 2)
-
             mem = np.memmap(self.path, dtype, 'r+', shape=eval(shape))
 
-            if isinstance(self.mem, (str, Path)):
+            if self.mem is None:
                 self.mem = mem
                 self.shm = None
                 self.mode = 'mmap'
             else:
+                if isinstance(self.mem, torch.Tensor):
+                    mem = torch.as_tensor(mem)
                 if self.shape:
                     self.mem[:] = mem[:]
                 else:
