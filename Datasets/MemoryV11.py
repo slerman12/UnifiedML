@@ -6,7 +6,7 @@ from math import inf
 import atexit
 import contextlib
 import os
-import time
+import warnings
 from multiprocessing.shared_memory import SharedMemory
 import resource
 from pathlib import Path
@@ -143,6 +143,13 @@ class Memory:
                 del self.episodes[:batch_size]
                 self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
 
+    def trace(self, ind):
+        return self.episodes[ind][0].episode_trace
+
+    @property
+    def traces(self):
+        yield from (self.trace(i) for i in range(len(self.episodes)))
+
     def episode(self, ind):
         return self.episodes[ind]
 
@@ -154,7 +161,7 @@ class Memory:
 
     def cleanup(self):
         for batch in self.batches:
-            for mem in batch.values():
+            for mem in batch.mems:
                 if mem.mode == 'shared':
                     mem.shm.close()
                     mem.shm.unlink()
@@ -177,13 +184,21 @@ class Memory:
         previous_num_batches = 0
 
         for i, mmap_path in enumerate(mmap_paths):
-            _, self.num_batches, key, self.id = mmap_path.stem.rsplit('_', 3)
+            _, num_batches, key, identifier = mmap_path.stem.rsplit('_', 3)
 
             if i == 0:
+                self.id = identifier
                 self.num_batches_deleted[...] = self.num_batches
-            elif self.num_batches > previous_num_batches:
-                self.add(batch)
-                batch = {}
+            else:
+                if self.id != identifier:
+                    warnings.warn(f'Found Mems with multiple identifiers in load path {load_path}. Using id={self.id}.')
+                    continue
+
+                self.num_batches = num_batches
+
+                if self.num_batches > previous_num_batches:
+                    self.add(batch)
+                    batch = {}
 
             batch[key] = Mem(mmap_path).load().mem
 
@@ -192,10 +207,9 @@ class Memory:
     def save(self):
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
 
-        for episode in self.episodes:
-            for batch in episode.episode_trace:
-                for mem in batch.values():
-                    mem.save()
+        for batch in self.traces:
+            for mem in batch.mems:
+                mem.save()
 
 
 class Queue:
@@ -273,6 +287,10 @@ class Batch(dict):
         self.__dict__ = self  # Allows access via attributes
         self.update({**(_dict or {}), **kwargs})
 
+    @property
+    def mems(self):  # An element can be Mem or datums
+        yield from self.values()
+
     def size(self):
         for mem in self.values():
             if hasattr(mem, '__len__') and len(mem) > 1:
@@ -330,6 +348,10 @@ class Mem:
             self.mem.flush()  # Write to hard disk
 
         self.saved = False
+
+    @property
+    def datums(self):
+        return self.mem
 
     def tensor(self):
         return torch.as_tensor(self.mem).to(non_blocking=True)
@@ -463,6 +485,12 @@ class Mem:
         self.saved = False
 
 
+import time
+import random
+import gc
+import sys
+
+
 def offline(m, exp=''):
     while True:
         _start = time.time()
@@ -477,10 +505,6 @@ def online(m, exp=''):
         m.update()
         print(m.episode(-1)[-1].hi[0, 0, 0].item(), time.time() - _start, 'online', exp)
         time.sleep(3)
-
-
-import gc
-import sys
 
 
 # https://stackoverflow.com/a/53705610
@@ -564,8 +588,6 @@ if __name__ == '__main__':
     start = time.time()
     M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set another')
-
-    import random
 
     i = 0
 
