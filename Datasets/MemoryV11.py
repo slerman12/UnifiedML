@@ -56,36 +56,6 @@ class Memory:
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
-    def load(self, load_path=None):
-        assert self.main_worker == os.getpid(), 'Only main worker can call load.'
-
-        if load_path is None:
-            load_path = self.save_path
-
-        mmap_paths = sorted(Path(load_path).glob('*'))
-
-        for i, mmap_path in enumerate(mmap_paths):
-            _, self.num_batches, key, self.id = mmap_path.stem.rsplit('_', 3)
-
-            if i == 0:
-                previous_num_batch = self.num_batches
-                self.num_batches_deleted[...] = self.num_batches
-
-            if self.num_batches > previous_num_batch:
-                self.add(batch)
-                batch = {}
-            else:
-                batch[key] = Mem(mmap_path).load().mem
-
-    def save(self):
-        assert self.main_worker == os.getpid(), 'Only main worker can call save.'
-
-        for episode in self.episodes:
-            for batch in episode.episode_trace:
-                for mem in batch.values():
-                    if not mem.saved:
-                        mem.save()
-
     def rewrite(self):  # TODO Thread w sync?
         # Before enforce_capacity changes index
         while not self.queue.empty():
@@ -172,12 +142,6 @@ class Memory:
                 del self.episodes[:batch_size]
                 self.num_episodes_deleted += batch_size  # getitem ind = mem.index - self.num_episodes_deleted
 
-    def load(self):
-        pass
-
-    def save(self):
-        pass
-
     def episode(self, ind):
         return self.episodes[ind]
 
@@ -202,6 +166,37 @@ class Memory:
     @property
     def queue(self):
         return self.queues[self.worker]
+
+    def load(self, load_path=None):
+        assert self.main_worker == os.getpid(), 'Only main worker can call load.'
+
+        if load_path is None:
+            load_path = self.save_path
+
+        mmap_paths = sorted(Path(load_path).glob('*'))
+        batch = {}
+        previous_num_batches = 0
+
+        for i, mmap_path in enumerate(mmap_paths):
+            _, self.num_batches, key, self.id = mmap_path.stem.rsplit('_', 3)
+
+            if i == 0:
+                self.num_batches_deleted[...] = self.num_batches
+            elif self.num_batches > previous_num_batches:
+                self.add(batch)
+                batch = {}
+
+            batch[key] = Mem(mmap_path).load().mem
+
+            previous_num_batches = self.num_batches
+
+    def save(self):
+        assert self.main_worker == os.getpid(), 'Only main worker can call save.'
+
+        for episode in self.episodes:
+            for batch in episode.episode_trace:
+                for mem in batch.values():
+                    mem.save()
 
 
 class Queue:
