@@ -44,7 +44,7 @@ class Memory:
         # Both of these work
         # https://stackoverflow.com/questions/58741872/pinning-memory-is-actually-slower-in-pytorch
         # self.exp = torch.randn([]).to(non_blocking=True).pin_memory()
-        # self.exp = torch.randn([]).cuda(non_blocking=True)
+        self.exp = torch.randn([]).cuda(non_blocking=True)
         self.exp = exp
 
         # Counters
@@ -70,9 +70,6 @@ class Memory:
 
         if 'online' in mp.current_process().name:
             self.exp[...] = 5
-
-        print(self.exp, 'sss', mp.current_process().name)
-        print(self.exp.device)
 
         for batch in self.batches[self.num_batches - num_batches_deleted:]:
             batch_size = batch.size()
@@ -537,10 +534,10 @@ def get_obj_size(obj):
 if __name__ == '__main__':
     mp.set_start_method('spawn')
 
-    # exp = torch.randn([]).cuda(non_blocking=True)
-    # M = Memory(num_workers=3, exp=exp)
+    exp = torch.randn([]).cuda(non_blocking=True)
+    M = Memory(num_workers=3, exp=exp)
 
-    M = Memory(num_workers=3)
+    # M = Memory(num_workers=3)
 
     adds = 0
     episodes, steps = 64, 5
@@ -560,11 +557,11 @@ if __name__ == '__main__':
     M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set')
 
-    # p1 = mp.Process(name='offline', target=offline, args=(M,exp))
-    # p2 = mp.Process(name='online', target=online, args=(M,exp))
+    p1 = mp.Process(name='offline', target=offline, args=(M,exp))
+    p2 = mp.Process(name='online', target=online, args=(M,exp))
 
-    p1 = mp.Process(name='offline', target=offline, args=(M,))
-    p2 = mp.Process(name='online', target=online, args=(M,))
+    # p1 = mp.Process(name='offline', target=offline, args=(M,))
+    # p2 = mp.Process(name='online', target=online, args=(M,))
     p1.start()
     p2.start()
     time.sleep(3)  # Online hd_capacity requires a moment! (Before any additional updates) (for mp to copy/spawn)
@@ -603,7 +600,7 @@ if __name__ == '__main__':
         d = {'hi': np.full([256, 3, 32, 32], i), 'done': True}  # Last batch
         start = time.time()
         M.add(d)
-        print(time.time() - start, 'add another')
+        print(time.time() - start, 'add another', 'Exp:', exp)
         # M.episode(-1).experience(-1)['hi'] = 7
         time.sleep(3)
         i += 1
