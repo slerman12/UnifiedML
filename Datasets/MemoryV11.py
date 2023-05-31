@@ -9,6 +9,7 @@ import os
 import time
 from multiprocessing.shared_memory import SharedMemory
 import resource
+from pathlib import Path
 
 import numpy as np
 
@@ -29,7 +30,7 @@ class Memory:
         self.worker = 0
         self.main_worker = os.getpid()
 
-        self.path = save_path
+        self.save_path = save_path
 
         manager = mp.Manager()
 
@@ -54,6 +55,36 @@ class Memory:
 
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
+
+    def load(self, load_path=None):
+        assert self.main_worker == os.getpid(), 'Only main worker can call load.'
+
+        if load_path is None:
+            load_path = self.save_path
+
+        mmap_paths = sorted(Path(load_path).glob('*'))
+
+        for i, mmap_path in enumerate(mmap_paths):
+            _, self.num_batches, key, self.id = mmap_path.stem.rsplit('_', 3)
+
+            if i == 0:
+                previous_num_batch = self.num_batches
+                self.num_batches_deleted[...] = self.num_batches
+
+            if self.num_batches > previous_num_batch:
+                self.add(batch)
+                batch = {}
+            else:
+                batch[key] = Mem(mmap_path).load().mem
+
+    def save(self):
+        assert self.main_worker == os.getpid(), 'Only main worker can call save.'
+
+        for episode in self.episodes:
+            for batch in episode.episode_trace:
+                for mem in batch.values():
+                    if not mem.saved:
+                        mem.save()
 
     def rewrite(self):  # TODO Thread w sync?
         # Before enforce_capacity changes index
@@ -106,7 +137,7 @@ class Memory:
             else 'shared' if shared else 'mmap' if mmap \
             else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
 
-        batch = Batch({key: Mem(batch[key], f'{self.path}/{self.num_batches}_{key}_{self.id}').to(mode)
+        batch = Batch({key: Mem(batch[key], f'{self.save_path}/{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})
 
         self.batches.append(batch)
@@ -258,26 +289,28 @@ class Batch(dict):
 
 class Mem:
     def __init__(self, mem, path=None):
-        self.path = path
         self.shm = None
-        self.mem = np.array(mem)
+        self.mem = mem if isinstance(mem, (str, Path)) else np.array(mem)
         self.name = '_'.join(self.path.rsplit('/', 2)[1:])
+        self.saved = False
 
         self.mode = 'tensor'
 
         self.shape = self.mem.shape
         self.dtype = self.mem.dtype
 
+        self.path = path + '_' + tuple(self.shape) + '_' + self.dtype.name
+
         self.main_worker = os.getpid()
 
     def __getstate__(self):
         if self.mode == 'shared':
             self.shm.close()
-        return self.path, self.mode, self.main_worker, self.shape, self.dtype, \
+        return self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, \
             *((self.mem,) if self.mode in ('pinned', 'shared_tensor') else ())
 
     def __setstate__(self, state):
-        self.path, self.mode, self.main_worker, self.shape, self.dtype, *mem = state
+        self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, *mem = state
         self.name = '_'.join(self.path.rsplit('/', 2)[1:])
 
         if self.mode == 'shared':
@@ -301,6 +334,8 @@ class Mem:
 
         if self.mode == 'mmap':
             self.mem.flush()  # Write to hard disk
+
+        self.saved = False
 
     def tensor(self):
         return torch.as_tensor(self.mem).to(non_blocking=True)
@@ -362,6 +397,7 @@ class Mem:
                     self.mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
 
             self.mode = 'mmap'
+            self.saved = True
 
         return self
 
@@ -392,11 +428,48 @@ class Mem:
     def __len__(self):
         return self.shape[0]
 
+    def load(self):
+        if not self.saved:
+            _, shape, dtype = self.path.rsplit('_', 2)
+
+            mem = np.memmap(self.path, dtype, 'r+', shape=eval(shape))
+
+            if isinstance(self.mem, (str, Path)):
+                self.mem = mem
+                self.shm = None
+                self.mode = 'mmap'
+            else:
+                if self.shape:
+                    self.mem[:] = mem[:]
+                else:
+                    self.mem[...] = mem  # In case of 0-dim array
+
+            self.saved = True
+
+        return self
+
+    def save(self):
+        if not self.saved:
+            mem = self.mem
+
+            self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+
+            if self.shape:
+                self.mem[:] = mem[:]
+            else:
+                self.mem[...] = mem  # In case of 0-dim array
+
+            self.mem.flush()  # Write to hard disk
+
+            self.saved = True
+
     def delete(self):
         with self.cleanup():
             if self.mode == 'mmap':
                 if self.main_worker == os.getpid():
                     os.remove(self.path)
+
+        self.saved = False
 
 
 def offline(m, exp=''):
