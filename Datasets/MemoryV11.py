@@ -95,8 +95,9 @@ class Memory:
 
         batch_size = Batch(batch).size()
 
-        capacities = [self.gpu_capacity, self.pinned_capacity, self.tensor_ram_capacity, self.ram_capacity,
-                      self.hd_capacity]
+        capacities = [inf if capacity == 'inf' else capacity for capacity in [self.gpu_capacity, self.pinned_capacity,
+                                                                              self.tensor_ram_capacity,
+                                                                              self.ram_capacity, self.hd_capacity]]
         gpu = self.num_experiences + batch_size <= sum(capacities[:1])
         pinned = self.num_experiences + batch_size <= sum(capacities[:2])
         shared_tensor = self.num_experiences + batch_size <= sum(capacities[:3])
@@ -160,8 +161,6 @@ class Memory:
 
     def set_worker(self, worker):
         self.worker = worker
-        process = mp.current_process()
-        process.name = f'{self.worker}_{self.id}'  # TODO Can set worker
 
     @property
     def queue(self):
@@ -445,17 +444,14 @@ class Mem:
 
     def save(self):
         if not self.saved:
-            mem = self.mem
-
-            self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+            mmap = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
 
             if self.shape:
-                self.mem[:] = mem[:]
+                mmap[:] = self.mem[:]
             else:
-                self.mem[...] = mem  # In case of 0-dim array
+                mmap[...] = self.mem  # In case of 0-dim array
 
-            self.mem.flush()  # Write to hard disk
-
+            mmap.flush()  # Write to hard disk
             self.saved = True
 
     def delete(self):
