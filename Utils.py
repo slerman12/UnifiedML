@@ -765,16 +765,20 @@ class Parallelize(nn.Module):
 
     def forward(self, *args):
         if len(self.replicas) > 1:
-            quotient = tuple(len(arg) // len(self.devices) for arg in args)
-            remainder = tuple(len(arg) % len(self.devices) for arg in args)
+            inputs = [[]] * len(self.devices)
 
-            splits = tuple([quotient[i]] * (quotient[i] + bool(remainder[i])) for i, arg in enumerate(args))
+            for i, arg in enumerate(args):
+                quotient = len(arg) // len(self.devices)
+                remainder = len(arg) % len(self.devices)
 
-            for i, split in enumerate(splits):
-                split[-1] += remainder[i]
+                split = [quotient] * len(self.devices)
+                split[-1] += remainder
 
-            args = tuple(torch.split(arg, splits[i]) for i, arg in enumerate(args))
-            args = tuple(tuple(arg[device] for arg in args) for device in range(len(self.devices)))
+                arg = torch.split(arg, split)
+
+                for device in range(len(self.devices)):
+                    inputs[device].append(arg[device])
+
             print(torch.concat([module(*args[i]).to(self.devices[0])
                                 for i, module in enumerate(self.replicas)]).shape)
 
