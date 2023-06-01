@@ -772,8 +772,8 @@ class Parallelize(nn.Module):
 
             for i, split in enumerate(splits):
                 split[-1] += remainder[i]
-            print(splits)
-            args = tuple(torch.split(arg, splits) for arg in args)
+
+            args = tuple(torch.split(arg, splits[i]) for i, arg in enumerate(args))
             args = tuple(tuple(arg[device] for arg in args) for device in range(len(self.devices)))
             print(torch.concat([module(*args[i]).to(self.devices[0])
                                 for i, module in enumerate(self.replicas)]).shape)
