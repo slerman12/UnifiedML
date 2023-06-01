@@ -30,7 +30,7 @@ from torchvision import transforms  # For direct accessibility via command line
 from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 
-from UnifiedML import launch_args, launch
+# from UnifiedML import launch_args, launch
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -62,7 +62,7 @@ def init(args):
     allow_objects(args)
 
     # For launching via an external app
-    args.update(launch_args)
+    # args.update(launch_args)
 
     # Set seeds
     set_seeds(args.seed)
