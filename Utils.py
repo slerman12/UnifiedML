@@ -30,7 +30,7 @@ from torchvision import transforms  # For direct accessibility via command line
 from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 
-from UnifiedML import launch_args, launch
+# from UnifiedML import launch_args, launch
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -62,7 +62,7 @@ def init(args):
     allow_objects(args)
 
     # For launching via an external app
-    args.update(launch_args)
+    # args.update(launch_args)
 
     # Set seeds
     set_seeds(args.seed)
@@ -750,3 +750,18 @@ def schedule(schedule, step):
             start, stop, duration = [float(g) for g in match.groups()]
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * start + mix * stop
+
+
+class Parallelize(nn.Module):
+    def __init__(self, module):
+        super().__init__()
+
+        devices = torch._utils._get_all_device_indices()
+
+        self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
+                                      for device in devices] if devices else [module])
+
+    def forward(self, *args, **kwargs):
+        return torch.nested.nested_tensor([module(*args, *kwargs)
+                                           for module in self.replicas]) if len(self.replicas) > 1 \
+            else self.replicas[0](*args, **kwargs)

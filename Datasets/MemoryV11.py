@@ -87,7 +87,8 @@ class Memory:
             self.num_experiences += batch_size
             self.enforce_capacity()  # Note: Last batch does enter RAM before capacity is enforced
 
-    def add(self, batch):  # TODO Should be its own thread  https://stackoverflow.com/questions/14234547/threads-with-decorators
+    def add(self, batch):  # TODO Should be its own thread
+        #                       https://stackoverflow.com/questions/14234547/threads-with-decorators
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
 
         batch_size = Batch(batch).size()
@@ -493,7 +494,8 @@ import gc
 import sys
 
 
-def offline(m, exp=''):
+def offline(m, exp='', worker=0):
+    m.set_worker(worker)
     while True:
         _start = time.time()
         # m.update()
@@ -501,7 +503,8 @@ def offline(m, exp=''):
         time.sleep(3)
 
 
-def online(m, exp=''):
+def online(m, exp='', worker=1):
+    m.set_worker(worker)
     while True:
         _start = time.time()
         m.update()
@@ -539,8 +542,8 @@ def get_obj_size(obj):
 if __name__ == '__main__':
     mp.set_start_method('spawn')
 
-    exp = torch.randn([]).cuda(non_blocking=True)
-    M = Memory(num_workers=3, exp=exp)
+    exp = torch.randn([2, 5]).cuda(non_blocking=True)
+    M = Memory(num_workers=2, exp=exp)
 
     # M = Memory(num_workers=3)
 
@@ -562,8 +565,8 @@ if __name__ == '__main__':
     M.episode(-1).experience(-1)['hi'] = 5
     print(time.time() - start, 'set')
 
-    p1 = mp.Process(name='offline', target=offline, args=(M,exp))
-    p2 = mp.Process(name='online', target=online, args=(M,exp))
+    p1 = mp.Process(name='offline', target=offline, args=(M,exp,0))
+    p2 = mp.Process(name='online', target=online, args=(M,exp,1))
 
     # p1 = mp.Process(name='offline', target=offline, args=(M,))
     # p2 = mp.Process(name='online', target=online, args=(M,))
