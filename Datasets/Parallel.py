@@ -11,6 +11,8 @@ class Parallelize(nn.Module):  # Nope.
         self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
                                        for device in self.devices] if self.devices else [module])
 
+        self.streams = [torch.cuda.current_stream(device) for device in self.devices]
+
         print(f'Parallelizing across {len(self.replicas) if self.devices else 0} cuda devices.')
 
     def forward(self, *args):
@@ -29,13 +31,12 @@ class Parallelize(nn.Module):  # Nope.
             splits = [torch.split(arg, split) for arg, split in zip(args, splits)]
             args = [[split[device] for split in splits] for device in range(len(self.devices))]
 
-            streams = [torch.cuda.current_stream(device) for device in self.devices]
             outs = []
 
             torch.cuda.synchronize()
 
             for i, module in enumerate(self.replicas):
-                with torch.cuda.stream(streams[i]):
+                with torch.cuda.stream(self.streams[i]):
                     outs.append(module(*args[i]).to(self.devices[0]))
 
             torch.cuda.synchronize()
