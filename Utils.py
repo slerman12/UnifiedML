@@ -764,6 +764,8 @@ class Parallelize(nn.Module):
         print(f'Parallelizing across {len(self.devices)} cuda devices.')
 
     def forward(self, *args, **kwargs):
+        print(torch.concat([module(*args, *kwargs).to(self.devices[0])
+                            for module in self.replicas]).shape)
         return torch.concat([module(*args, *kwargs).to(self.devices[0])
                              for module in self.replicas]) if len(self.replicas) > 1 \
             else self.replicas[0](*args, **kwargs)
