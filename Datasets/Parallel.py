@@ -33,7 +33,7 @@ class Parallelize(nn.Module):  # Note: Slower than DataParallel; would probably 
             splits = [torch.split(arg, split) for arg, split in zip(args, splits)]
             args = [[split[device] for split in splits] for device in range(len(self.devices))]
 
-            streams = [torch.cuda.Stream() for _ in splits]
+            streams = [torch.cuda.Stream() for _ in args]
             outs = []
 
             torch.cuda.synchronize()
