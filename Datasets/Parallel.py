@@ -27,8 +27,7 @@ from torch import nn
 #
 #             if not splits:
 #                 for i, arg in enumerate(args):
-#                     quotient = len(arg) // len(self.devices)
-#                     remainder = len(arg) % len(self.devices)
+#                     quotient, remainder = divmod(len(arg), len(self.devices))
 #
 #                     split = [quotient] * (len(self.devices) + bool(remainder))
 #                     split[-1] += remainder
@@ -78,8 +77,7 @@ class Parallelize(nn.Module):  # Slightly faster than DataParallel
             splits = []
 
             for i, arg in enumerate(args):
-                quotient = len(arg) // len(self.devices)
-                remainder = len(arg) % len(self.devices)
+                quotient, remainder = divmod(len(arg), len(self.devices))
 
                 split = [quotient] * (len(self.devices) + bool(remainder))
                 split[-1] += remainder
