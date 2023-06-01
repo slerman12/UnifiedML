@@ -759,11 +759,11 @@ class Parallelize(nn.Module):
         devices = torch._utils._get_all_device_indices()
 
         self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
-                                      for device in devices] if devices else [module])
+                                       for device in devices] if devices else [module])
 
-        print(f'Parallelizing across {len(devices)} {devices[0]} devices.')
+        print(f'Parallelizing across {len(devices)} cuda devices.')
 
     def forward(self, *args, **kwargs):
-        return torch.nested.nested_tensor([module(*args, *kwargs)
-                                           for module in self.replicas]) if len(self.replicas) > 1 \
+        return torch.as_tensor(torch.nested.nested_tensor([module(*args, *kwargs)
+                                                           for module in self.replicas])) if len(self.replicas) > 1 \
             else self.replicas[0](*args, **kwargs)
