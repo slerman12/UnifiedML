@@ -2,19 +2,34 @@ import torch
 from torch import nn
 
 
-class Parallelize(nn.Module):
-    def __init__(self, model):
+# https://github.com/pytorch/pytorch/blob/main/torch/nn/parallel/parallel_apply.py
+class Parallelize(nn.Module):  # Note: Slower than DataParallel; would probably need cuda.stream
+    def __init__(self, module):
         super().__init__()
 
-        self.replicas = tuple(model.to(torch._utils._get_device_index(device, True))
-                              for device in torch._utils._get_all_device_indices())
+        self.devices = torch._utils._get_all_device_indices()
 
-    def forward(self, *args, **kwargs):
-        return torch.nested.nested_tensor([model(*args, *kwargs) for model in self.models])
+        self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
+                                       for device in self.devices] if self.devices else [module])
 
-    def __getattr__(self, key):
-        return getattr(self.replicas[0], key)
+        print(f'Parallelizing across {len(self.replicas) if self.devices else 0} cuda devices.')
 
-    def __setattr__(self, key, value):
-        for replica in self.replicas:
-            return setattr(replica, key, value)
+    def forward(self, *args):
+        if len(self.replicas) > 1:
+            splits = []
+
+            for i, arg in enumerate(args):
+                quotient = len(arg) // len(self.devices)
+                remainder = len(arg) % len(self.devices)
+
+                split = [quotient] * (len(self.devices) + bool(remainder))
+                split[-1] += remainder
+
+                splits.append(split)
+
+            splits = [torch.split(arg, split) for arg, split in zip(args, splits)]
+            args = [[split[device] for split in splits] for device in range(len(self.devices))]
+
+        return torch.concat([module(*args[i]).to(self.devices[0])
+                             for i, module in enumerate(self.replicas)]) if len(self.replicas) > 1 \
+            else self.replicas[0](*args)

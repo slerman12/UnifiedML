@@ -30,7 +30,7 @@ from torchvision import transforms  # For direct accessibility via command line
 from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct accessibility via command line
 from Blocks.Architectures import *  # For direct accessibility via command line
 
-# from UnifiedML import launch_args, launch
+from UnifiedML import launch_args, launch
 
 
 # Sets all Pytorch and Numpy random seeds
@@ -62,7 +62,7 @@ def init(args):
     allow_objects(args)
 
     # For launching via an external app
-    # args.update(launch_args)
+    args.update(launch_args)
 
     # Set seeds
     set_seeds(args.seed)
@@ -750,39 +750,3 @@ def schedule(schedule, step):
             start, stop, duration = [float(g) for g in match.groups()]
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * start + mix * stop
-
-
-class Parallelize(nn.Module):
-    def __init__(self, module):
-        super().__init__()
-
-        self.devices = torch._utils._get_all_device_indices()
-
-        self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
-                                       for device in self.devices] if self.devices else [module])
-
-        print(f'Parallelizing across {len(self.replicas) if self.devices else 0} cuda devices.')
-
-    def forward(self, *args):
-        if len(self.replicas) > 1:
-            inputs = [[]] * len(self.devices)
-
-            for i, arg in enumerate(args):
-                quotient = len(arg) // len(self.devices)
-                remainder = len(arg) % len(self.devices)
-
-                split = [quotient] * (len(self.devices) + bool(remainder))
-                split[-1] += remainder
-
-                # splits.append(split)
-
-                arg = torch.split(arg, split)
-
-                for device in range(len(self.devices)):
-                    inputs[device].append(arg[device])
-
-            args = inputs
-
-        return torch.concat([module(*args[i]).to(self.devices[0])
-                             for i, module in enumerate(self.replicas)]) if len(self.replicas) > 1 \
-            else self.replicas[0](*args)
