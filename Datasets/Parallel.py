@@ -79,8 +79,7 @@ class Parallelize(nn.Module):  # Slightly faster than DataParallel
             for i, arg in enumerate(args):
                 quotient, remainder = divmod(len(arg), len(self.devices))
 
-                split = [quotient] * (len(self.devices) + bool(remainder))
-                split[-1] += remainder
+                split = (quotient,) * (len(self.devices) + bool(remainder) - 1) + (quotient + remainder,)
 
                 splits.append(torch.split(arg, split))
 
