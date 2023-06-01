@@ -761,6 +761,8 @@ class Parallelize(nn.Module):
         self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
                                       for device in devices] if devices else [module])
 
+        print(f'Parallelizing across {len(devices)} {devices[0]} devices.')
+
     def forward(self, *args, **kwargs):
         return torch.nested.nested_tensor([module(*args, *kwargs)
                                            for module in self.replicas]) if len(self.replicas) > 1 \
