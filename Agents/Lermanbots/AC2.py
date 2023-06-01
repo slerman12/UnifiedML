@@ -80,9 +80,10 @@ class AC2Agent(torch.nn.Module):
 
             action_spec.discrete_bins = num_actions  # Continuous env has no discrete bins by default, must specify
 
+        # Note: Slower unnecessary EMA updates when not RL or EMA
         self.encoder = CNNEncoder(obs_spec, standardize=standardize, norm=norm, **recipes.encoder, parallel=parallel,
                                   lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                  ema_decay=ema_decay * ema)
+                                  ema_decay=ema_decay * (RL and not generate or ema))
 
         self.actor = EnsemblePiActor(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.actor,
                                      ensemble_size=self.num_actors, discrete=self.discrete,
@@ -126,7 +127,7 @@ class AC2Agent(torch.nn.Module):
                                       ensemble_size=self.num_actors if self.discrete else num_critics,
                                       discrete=self.discrete, ignore_obs=self.generate,
                                       lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                      ema_decay=ema_decay)  # Note: EMA enabled by default for generative discriminator
+                                      ema_decay=ema_decay * (RL and not generate or ema))
 
         # "Birth"
 
