@@ -54,7 +54,6 @@ class CNNEncoder(nn.Module):
         self.optim, self.scheduler = Utils.optimizer_init(self.parameters(), optim, scheduler,
                                                           lr, lr_decay_epochs, weight_decay)
         if ema_decay:
-            print(ema_decay)
             self.ema_decay = ema_decay
             self.ema = copy.deepcopy(self).requires_grad_(False).eval()
 

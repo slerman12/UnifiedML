@@ -49,6 +49,7 @@ learn_per_steps: 1
 learn_steps_after: 0
 seed_steps: 0
 rand_steps: 0
+ema_decay: null
 log_per_episodes: 300
 RL: false
 online: false  # Same as offline: true
