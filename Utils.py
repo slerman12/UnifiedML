@@ -765,6 +765,7 @@ class Parallelize(nn.Module):
 
     def forward(self, *args):
         args = tuple(arg.split(len(self.devices)) for arg in args) if len(self.replicas) > 1 else [args]
+        print(len(args), args[0].shape)
 
         return torch.concat([module(*args[i]).to(self.devices[0])
                              for i, module in enumerate(self.replicas)]) if len(self.replicas) > 1 \
