@@ -2,11 +2,7 @@ import torch
 from torch import nn
 
 
-import torch
-from torch import nn
-
-
-class Parallelize(nn.Module):  # Note: Slower than DataParallel; would probably need cuda.stream
+class Parallelize(nn.Module):  # Nope.
     def __init__(self, module):
         super().__init__()
 
@@ -33,7 +29,7 @@ class Parallelize(nn.Module):  # Note: Slower than DataParallel; would probably 
             splits = [torch.split(arg, split) for arg, split in zip(args, splits)]
             args = [[split[device] for split in splits] for device in range(len(self.devices))]
 
-            streams = [torch.cuda.Stream() for _ in args]
+            streams = [torch.cuda.current_stream(device) for device in self.devices]
             outs = []
 
             torch.cuda.synchronize()
