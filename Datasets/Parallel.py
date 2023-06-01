@@ -29,8 +29,7 @@ from torch import nn
 #                 for i, arg in enumerate(args):
 #                     quotient, remainder = divmod(len(arg), len(self.devices))
 #
-#                     split = [quotient] * (len(self.devices) + bool(remainder))
-#                     split[-1] += remainder
+#                     split = [quotient] * (len(self.devices) + bool(remainder) - 1) + [quotient + remainder]
 #
 #                     splits.append(torch.split(arg, split))
 #
@@ -79,14 +78,14 @@ class Parallelize(nn.Module):  # Slightly faster than DataParallel
             for i, arg in enumerate(args):
                 quotient, remainder = divmod(len(arg), len(self.devices))
 
-                split = (quotient,) * (len(self.devices) + bool(remainder) - 1) + (quotient + remainder,)
+                split = [quotient] * (len(self.devices) + bool(remainder) - 1) + [quotient + remainder]
 
                 splits.append(torch.split(arg, split))
 
             outs = []
 
             for i, module in enumerate(self.replicas):
-                with torch.cuda.stream(self.streams[i]):
+                # with torch.cuda.stream(self.streams[i]):
                     outs.append(module(*[split[i] for split in splits]).to(self.devices[0]))
 
             outs = torch.concat(outs)
