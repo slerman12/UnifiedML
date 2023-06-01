@@ -771,7 +771,7 @@ class Parallelize(nn.Module):
             splits = tuple([quotient[i]] * (quotient[i] + bool(remainder[i])) for i, arg in enumerate(args))
 
             for i, split in enumerate(splits):
-                splits[-1] += remainder[i]
+                split[-1] += remainder[i]
 
             args = tuple(torch.split(arg, splits) for arg in args)
             args = tuple(tuple(arg[device] for arg in args) for device in range(len(self.devices)))
