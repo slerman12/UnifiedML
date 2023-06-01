@@ -63,15 +63,9 @@ class Parallelize(nn.Module):  # Slightly faster than DataParallel
         self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
                                        for device in self.devices] if self.devices else [module])
 
-        self.streams = None
-
         print(f'Parallelizing across {len(self.replicas) if self.devices else 0} cuda devices.')
 
     def forward(self, *args):
-        if self.streams is None:
-            # Just-in-time since can't be pickled for EMA
-            self.streams = [torch.cuda.current_stream(device) for device in self.devices]
-
         if len(self.replicas) > 1:
             splits = []
 
@@ -85,8 +79,7 @@ class Parallelize(nn.Module):  # Slightly faster than DataParallel
             outs = []
 
             for i, module in enumerate(self.replicas):
-                # with torch.cuda.stream(self.streams[i]):
-                    outs.append(module(*[split[i] for split in splits]).to(self.devices[0]))
+                outs.append(module(*[split[i] for split in splits]).to(self.devices[0]))
 
             outs = torch.concat(outs)
         else:
