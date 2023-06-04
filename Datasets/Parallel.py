@@ -1,7 +1,36 @@
 import torch
 from torch import nn
 
+# import os
+# from timeit import timeit
+#
+#
+# def func1():
+#     arrays = [torch.ones([100000, 10]).to(device=f'cpu:{cpu}') for cpu in range(1, os.cpu_count())]
+#     return list(map(torch.sum, arrays))
+#
+#
+# def func2():
+#     arrays = [torch.ones([100000, 10]).to(device=f'cpu:1') for _ in range(1, os.cpu_count())]
+#     return list(map(torch.sum, arrays))
+#
+#
+# print('Num workers', os.cpu_count() - 1)
+# trials = 100
+# timeit(func2, number=trials)
+# print(timeit(func1, number=trials), 'parallel')
+# print(timeit(func2, number=trials), 'not parallel')
+# print(timeit(func1, number=trials), 'parallel')
+# print(timeit(func2, number=trials), 'not parallel')
+# print(timeit(func1, number=trials), 'parallel')
+# print(timeit(func2, number=trials), 'not parallel')
+# print(timeit(func1, number=trials), 'parallel')
+# print(timeit(func2, number=trials), 'not parallel')
+# Result: doesn't seem to work
 
+
+# https://pytorch.org/docs/stable/notes/extending.html Extending torch with a Tensor-like type
+# https://jaketae.github.io/study/pytorch-tensor/
 # class Parallelize(nn.Module):
 #     def __init__(self, module, coalesce=False):
 #         super().__init__()
@@ -11,16 +40,11 @@ from torch import nn
 #         self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
 #                                        for device in self.devices] if self.devices else [module])
 #
-#         self.streams = None
 #         self.coalesce = coalesce
 #
 #         print(f'Parallelizing across {len(self.replicas) if self.devices else 0} cuda devices.')
 #
 #     def forward(self, *args):
-#         if self.streams is None:
-#             # Just-in-time since can't be pickled for EMA
-#             self.streams = [torch.cuda.current_stream(device) for device in self.devices]
-#
 #         if len(self.replicas) > 1:
 #             splits = [getattr(arg, 'splits') for arg in args] if hasattr(args[0], 'splits') \
 #                 else []
@@ -36,8 +60,7 @@ from torch import nn
 #             outs = []
 #
 #             for i, module in enumerate(self.replicas):
-#                 with torch.cuda.stream(self.streams[i]):
-#                     outs.append(module(*[split[i] for split in splits]).to(self.devices[0]))
+#                 outs.append(module(*[split[i] for split in splits]).to(self.devices[0]))
 #
 #             if self.coalesce:
 #                 return torch.concat(outs)
@@ -70,9 +93,9 @@ class Parallelize(nn.Module):  # Slightly faster than DataParallel
             splits = []
 
             for i, arg in enumerate(args):
-                quotient, remainder = divmod(len(arg), len(self.devices))
+                quotient, remainder = divmod(len(arg), len(self.replicas))
 
-                split = [quotient] * (len(self.devices) + bool(remainder) - 1) + [quotient + remainder]
+                split = [quotient] * (len(self.replicas) - 1) + [quotient + remainder]
 
                 splits.append(torch.split(arg, split))
 
