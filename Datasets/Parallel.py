@@ -77,14 +77,15 @@ from torch import nn
 # 3. Syncing on this shared pool across hog-wild nodes - RPC uploader
 
 
-class Parallelize(nn.Module):  # Slightly faster than DataParallel
+class Parallelize(nn.Module):  # Slightly faster than DataParallel  TODO Are the replicas independent?? Separate optim
     def __init__(self, module):
         super().__init__()
 
         self.devices = torch._utils._get_all_device_indices()
 
+        # TODO is .to even in-place?
         self.replicas = nn.ModuleList([module.to(torch._utils._get_device_index(device, True))
-                                       for device in self.devices] if self.devices else [module])
+                                       for device in self.devices] if self.devices else [module])  # In-place, useless
 
         print(f'Parallelizing across {len(self.replicas) if self.devices else 0} cuda devices.')
 

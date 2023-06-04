@@ -41,8 +41,7 @@ class CNNEncoder(nn.Module):
         adapt_cnn(self.Eyes, obs_shape)  # Adapt 2d CNN kernel sizes for 1d or small-d compatibility
 
         if parallel:
-            from Datasets.Parallel import Parallelize
-            self.Eyes = Parallelize(self.Eyes)  # ParallelEyes on visible GPUs
+            self.Eyes = nn.DataParallel(self.Eyes)  # Parallel on visible GPUs
 
         self.feature_shape = Utils.cnn_feature_shape(obs_shape, self.Eyes)  # Feature map shape
 
