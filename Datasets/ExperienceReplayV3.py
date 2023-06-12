@@ -7,7 +7,9 @@ from math import inf
 
 import numpy as np
 
+import torch
 from torch.utils.data import IterableDataset, Dataset, DataLoader
+import torch.multiprocessing as mp
 
 from Datasets.Memory import Memory
 from Datasets.Datasets import load_dataset
@@ -89,8 +91,9 @@ class Replay:
                                   batch_size=batch_size,
                                   num_workers=num_workers,
                                   shuffle=offline,
-                                  worker_init_fn=InitializeWorker(self.memory),
+                                  worker_init_fn=Initialize(self.memory),
                                   collate_fn=lambda *_: None,
+                                  sampler=Sampler(worker) if offline else None,
                                   persistent_workers=True)
 
 
@@ -101,6 +104,9 @@ class ParallelWorker:
 
         # Write to shared prefetch tape
 
+    def __len__(self):
+        pass
+
 
 class Online(ParallelWorker, IterableDataset):
     ...
@@ -110,7 +116,7 @@ class Offline(ParallelWorker, Dataset):
     ...
 
 
-class InitializeWorker:
+class Initialize:
     def __init__(self, memory):
         self.memory = memory
 
@@ -121,4 +127,32 @@ class InitializeWorker:
         self.memory.set_worker(worker_id)
 
 
-# Custom sampler for prefetch-tape
+class Sampler:
+    def __init__(self, data_source):
+        self.data_source = data_source
+
+        self.generator = torch.Generator()
+        self.generator.manual_seed(torch.empty((), dtype=torch.int64).random_().item())
+
+    def __iter__(self):
+        yield from torch.randperm(len(self), generator=self.generator).tolist()
+
+    def __len__(self):
+        return len(self.data_source)
+
+
+class PrefetchTape:
+    def __init__(self):
+        self.cap = 0
+
+        self.tape = ...
+
+        self.index = torch.zeros([], dtype=torch.int16)
+        self.lock = mp.Lock()
+
+    def read(self):
+        self.lock.acquire()
+        index = self.index
+        self.index[...] = (index + 1) % self.cap
+        self.lock.release()
+        return index
