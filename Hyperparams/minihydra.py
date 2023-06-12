@@ -32,20 +32,36 @@ def instantiate(args, **kwargs):
         args.pop('_recursive_')
 
     args = deepcopy(args)
+    args.update(kwargs)
+
     file, module = args.pop('_target_').rsplit('.', 1)
     file = file.replace('.', '/')
-    spec = importlib.util.spec_from_file_location(module, file + '.py')
-    foo = importlib.util.module_from_spec(spec)
-    sys.modules[module] = foo
-    spec.loader.exec_module(foo)
-    args.update(kwargs)
-    return getattr(foo, module)(**args)
-
-
-def open_yaml(source, task=False):
     for path in yaml_search_paths:
         try:
-            with open(path + '/' + ('task/' if task else '') + source, 'r') as file:
+            # Reuse cached imports
+            if module + '_inst' in sys.modules:
+                return getattr(sys.modules[module + '_inst'], module)(**args)
+
+            # Reuse cached imports
+            for key, value in sys.modules.items():
+                if hasattr(value, '__file__') and value.__file__ and path + '/' + file + '.py' in value.__file__:
+                    return getattr(value, module)(**args)
+
+            # Import
+            spec = importlib.util.spec_from_file_location(module, path + '/' + file + '.py')
+            foo = importlib.util.module_from_spec(spec)
+            sys.modules[module + '_inst'] = foo
+            spec.loader.exec_module(foo)
+            return getattr(foo, module)(**args)
+        except (FileNotFoundError, AttributeError):
+            continue
+    raise FileNotFoundError(f'Could not find {module} in /{file}.py. Search paths include: {yaml_search_paths}')
+
+
+def open_yaml(source):
+    for path in yaml_search_paths:
+        try:
+            with open(path + '/' + source, 'r') as file:
                 args = yaml.safe_load(file)
             return recursive_Args(args)
         except FileNotFoundError:
@@ -80,28 +96,33 @@ def recursive_update(args, args2):
     return args
 
 
-def read(source):
+def read(source, parse_task=True):
     args = open_yaml(source)
 
-    # Need to allow imports
+    # Need to allow imports  TODO Might have to add to yaml_search_paths
     if 'imports' in args:
         imports = args.pop('imports')
 
         self = deepcopy(args)
 
         for module in imports:
-            module = self if module == 'self' else open_yaml(module + '.yaml')
+            module = self if module == 'self' else read(module + '.yaml', parse_task=False)
             recursive_update(args, module)
 
     # Parse task
-    for sys_arg in sys.argv[1:]:
-        key, value = sys_arg.split('=', 1)
-        if key == 'task':
-            args['task'] = value
+    if parse_task:  # Not needed in imports recursions
+        for sys_arg in sys.argv[1:]:
+            key, value = sys_arg.split('=', 1)
+            if key == 'task':
+                args['task'] = value
 
-    # Command-line task import
-    if 'task' in args and args.task not in [None, 'null']:
-        recursive_update(args, open_yaml(args.task + '.yaml', task=True))
+        # Command-line task import
+        if 'task' in args and args.task not in [None, 'null']:
+            try:
+                task = read('task/' + args.task + '.yaml', parse_task=False)
+            except FileNotFoundError:
+                task = read(args.task + '.yaml', parse_task=False)
+            recursive_update(args, task)
 
     return args
 
@@ -130,7 +151,7 @@ def get(args, keys):
     keys = keys.split('.')
     for key in keys:
         args = getattr(args, key)
-    return interpolate(args)  # Interpolate to make sure gotten value is resolved  TODO Still resolves old value
+    return interpolate(args)  # Interpolate to make sure gotten value is resolved
 
 
 # minihydra.grammar.append(rule)
@@ -169,9 +190,10 @@ def multirun(args):
 
 
 def decorate(func, source):
-    yaml_search_paths.append(app + '/' + source.split('/', 1)[0])
+    if source is not None:
+        yaml_search_paths.append(app + '/' + source.split('/', 1)[0])
 
-    args = None if source is None else read(source)
+    args = Args() if source is None else read(source)
     args = parse(args)
     args = interpolate(args)  # Command-line requires quotes for interpolation
     # args = multirun(args)

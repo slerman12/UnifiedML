@@ -19,7 +19,7 @@ import torch.multiprocessing as mp
 
 class Memory:
     def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, pinned_capacity=0,
-                 tensor_ram_capacity=0, ram_capacity=inf, hd_capacity=0):
+                 tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.pinned_capacity = pinned_capacity
         self.tensor_ram_capacity = tensor_ram_capacity
