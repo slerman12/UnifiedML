@@ -2,6 +2,8 @@
 
 # Welcome 
 
+[//]: # (Small scale &#40;horizontally below&#41;, medium scale, large scale)
+
 ## Install
 
 ```console

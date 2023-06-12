@@ -9,12 +9,11 @@ import numpy as np
 
 from torch.utils.data import IterableDataset, Dataset, DataLoader
 
-from Hyperparams.minihydra import Args, valid_path
-
 from Datasets.Memory import Memory
+from Datasets.Datasets import load_dataset
 
 
-class ExperienceReplay:
+class Replay:
     def __init__(self, path=None, num_workers=1, offline=True, stream=False, batch_size=1, dataset=None, transform=None,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
                  gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False,
@@ -35,33 +34,18 @@ class ExperienceReplay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
-        data = dataset
-
-        # Extract data by config
-        if isinstance(data, Args):
-            if valid_path(data._target_):
-                data = data._target_
-            else:
-                assert valid_path(data._target_, instantiation_path=True)
-                data = load_dataset(data)  # data = Pytorch Dataset or string path
-
-        # Extract data by string
-        if isinstance(data, str):
-            if valid_path(data, instantiation_path=True):
-                data = load_dataset(data)  # data = Pytorch Dataset or string path
-            else:
-                assert valid_path(data)
+        dataset = load_dataset('Offline', dataset)
 
         # Load data into memory
-        if isinstance(data, Dataset):
+        if isinstance(dataset, Dataset):
             # Add into memory
             pass
         else:
             # Load into memory
-            self.memory.load(data)
+            self.memory.load(dataset)
 
         # Separate Offline and Online, and save to hard disk if Offline
-        if isinstance(data, Dataset):
+        if isinstance(dataset, Dataset):
             if offline:
                 save_path = ''
                 # Save .yaml in save_path
@@ -72,7 +56,7 @@ class ExperienceReplay:
                 # Save .yaml in save_path
                 self.memory.set_save_path(save_path)
         else:
-            if '/Offline/' in data and not offline:
+            if '/Offline/' in dataset and not offline:
                 save_path = ''
                 # Copy .yaml in save_path
                 self.memory.set_save_path(save_path)  # Copy to Online
