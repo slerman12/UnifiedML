@@ -44,7 +44,7 @@ class Memory:
         # Both of these work
         # https://stackoverflow.com/questions/58741872/pinning-memory-is-actually-slower-in-pytorch
         # self.exp = torch.randn([]).to(non_blocking=True).pin_memory()
-        self.exp = torch.randn([]).cuda(non_blocking=True)
+        # self.exp = torch.randn([]).cuda(non_blocking=True)
         self.exp = exp
 
         # Counters

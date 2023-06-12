@@ -42,10 +42,10 @@ def instantiate(args, **kwargs):
     return getattr(foo, module)(**args)
 
 
-def open_yaml(source):
+def open_yaml(source, task=False):
     for path in yaml_search_paths:
         try:
-            with open(path + '/' + source, 'r') as file:
+            with open(path + '/' + ('task/' if task else '') + source, 'r') as file:
                 args = yaml.safe_load(file)
             return recursive_Args(args)
         except FileNotFoundError:
@@ -76,7 +76,7 @@ def recursive_Args(args):
 
 def recursive_update(args, args2):
     for key, value in args2.items():
-        args[key] = recursive_update(args.get(key, {}), value) if isinstance(value, type(args)) else value
+        args[key] = recursive_update(args.get(key, {}), value) if isinstance(value, type(args2)) else value
     return args
 
 
@@ -87,13 +87,21 @@ def read(source):
     if 'imports' in args:
         imports = args.pop('imports')
 
+        self = deepcopy(args)
+
         for module in imports:
-            module = args if module == 'self' else open_yaml(module + '.yaml')
+            module = self if module == 'self' else open_yaml(module + '.yaml')
             recursive_update(args, module)
 
-    # Command-line import
-    if 'task' in args:
-        recursive_update(args, open_yaml(args.task + '.yaml'))
+    # Parse task
+    for sys_arg in sys.argv[1:]:
+        key, value = sys_arg.split('=', 1)
+        if key == 'task':
+            args['task'] = value
+
+    # Command-line task import
+    if 'task' in args and args.task not in [None, 'null']:
+        recursive_update(args, open_yaml(args.task + '.yaml', task=True))
 
     return args
 
@@ -129,25 +137,28 @@ def get(args, keys):
 grammar = []  # List of funcs
 
 
-def interpolate(args):
+def interpolate(arg, args=None):
+    if args is None:
+        args = arg
+
     def _interpolate(match_obj):
         if match_obj.group() is not None:
             return str(get(args, match_obj.group()[2:][:-1]))
 
-    items = enumerate(args) if isinstance(args, (list, tuple)) \
-        else args.items() if isinstance(args, Args) else ()  # Iterate through lists, tuples, or dicts
+    items = enumerate(arg) if isinstance(arg, (list, tuple)) \
+        else arg.items() if isinstance(arg, Args) else ()  # Iterate through lists, tuples, or dicts
 
     for key, value in items:
-        if isinstance(args[key], str):
-            if re.compile(r'.+\$\{[^[\$\{]+\}.+').match(args[key]):
-                args[key] = re.sub(r'\$\{[^[\$\{]+\}', _interpolate, args[key])  # Strings
-            elif re.compile(r'\$\{[^[\$\{]+\}').match(args[key]):
-                args[key] = get(args, args[key][2:][:-1])  # Objects
+        if isinstance(arg[key], str):
+            if re.compile(r'.+\$\{[^[\$\{]+\}.+').match(arg[key]):
+                arg[key] = re.sub(r'\$\{[^[\$\{]+\}', _interpolate, arg[key])  # Strings
+            elif re.compile(r'\$\{[^[\$\{]+\}').match(arg[key]):
+                arg[key] = get(args, arg[key][2:][:-1])  # Objects
 
         for rule in grammar:
-            args[key] = rule(args[key])
+            arg[key] = rule(arg[key])
 
-        interpolate(value)  # Recurse through inner values
+        interpolate(value, args)  # Recurse through inner values
 
     return args
 
@@ -157,14 +168,18 @@ def multirun(args):
     return args
 
 
+def decorate(func, source):
+    yaml_search_paths.append(app + '/' + source.split('/', 1)[0])
+
+    args = None if source is None else read(source)
+    args = parse(args)
+    args = interpolate(args)  # Command-line requires quotes for interpolation
+    # args = multirun(args)
+
+    return func(args)
+
+
 def get_args(source=None):
     def decorator_func(func):
-        yaml_search_paths.append(app + '/' + source.split('/', 1)[0])
-
-        args = None if source is None else read(source)
-        args = parse(args)
-        args = interpolate(args)
-        # args = multirun(args)
-
-        return partial(func, args)
+        return partial(decorate, func, source)
     return decorator_func
