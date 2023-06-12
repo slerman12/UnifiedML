@@ -18,7 +18,7 @@ import torch.multiprocessing as mp
 
 
 class Memory:
-    def __init__(self, save_path='./ReplayBuffer/Test', num_workers=1, gpu_capacity=0, pinned_capacity=0,
+    def __init__(self, save_path=None, num_workers=1, gpu_capacity=0, pinned_capacity=0,
                  tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf):
         self.gpu_capacity = gpu_capacity
         self.pinned_capacity = pinned_capacity
@@ -80,6 +80,7 @@ class Memory:
 
     def add(self, batch):  # TODO Be own thread https://stackoverflow.com/questions/14234547/threads-with-decorators
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
+        assert self.save_path is not None, 'Memory save_path must be set to add memories.'
 
         batch_size = Batch(batch).size()
 
@@ -97,7 +98,7 @@ class Memory:
             else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
 
         batch = Batch({key: Mem(batch[key], f'{self.save_path}/{self.num_batches}_{key}_{self.id}').to(mode)
-                       for key in batch})
+                       for key in batch})  # TODO a meta key for special save_path
 
         self.batches.append(batch)
         self.update()
@@ -153,6 +154,9 @@ class Memory:
                 if mem.mode == 'shared':
                     mem.shm.close()
                     mem.shm.unlink()
+
+    def set_save_path(self, save_path):
+        self.save_path = save_path
 
     def set_worker(self, worker):
         self.worker = worker
