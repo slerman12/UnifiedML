@@ -2,47 +2,10 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-"""This file makes it possible to import UnifiedML as a package.
-
-Example:
-    In your project, Download the UnifiedML directory:
-
-    $ git clone git@github.com:agi-init/UnifiedML.git
-
-    -------------------------------
-
-    Turn a project file into a UnifiedML-style Run-script that can support all UnifiedML command-line syntax:
-
-    > import UnifiedML   Imports UnifiedML
-    >
-    > if __name__ == '__main__':
-    >    UnifiedML.launch()  # Launches UnifiedML
-
-    -------------------------------
-
-    Say your file is called MyRunner.py and includes an architecture called MyEyes as a class. You can run:
-
-        $ python MyRunner.py Eyes=MyRunner.MyEyes
-
-    or even define your own recipe MyRecipe.yaml in your app's local Hyperparams/task/ directory:
-
-        $ python MyRunner.py task=MyRecipe
-
-    You could also specify hyperparams in-code:
-
-        Directly pass a class to the launcher as such:
-
-        > if __name__ == '__main__':
-        >    UnifiedML.launch(Eyes=MyEyes)
-
-        or specify a default recipe:
-
-        > if __name__ == '__main__':
-        >    UnifiedML.launch(task='MyRecipe')
-
-    You could do whatever you want and I will still love you.
-
 """
+This file makes it possible to import UnifiedML as a package.
+"""
+
 import sys
 import os
 import inspect
