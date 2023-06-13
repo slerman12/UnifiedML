@@ -103,19 +103,31 @@ class Replay:
 
 
 class ParallelWorker:
-    def __init__(self, memory, offline, sampler,  prefetch_tape, gpu_prefetch_factor, prefetch_factor, pin_memory,
-                 transform, frame_stack, nstep, discount):
+    def __init__(self, memory, sampler,  prefetch_tape, transform, frame_stack, nstep, discount):
         self.memory = memory
+        self.sampler = sampler
+        self.prefetch_tape = prefetch_tape
 
-        # Get index from sampler
-        # Add to prefetch tape until full
+        self.transform = transform
+
+        self.frame_stack = frame_stack
+        self.nstep = nstep
+        self.discount = discount
 
     # Worker initialization
-    def __call__(self, worker_id):
-        seed = np.random.get_state()[1][0] + worker_id
+    def __call__(self, worker):
+        seed = np.random.get_state()[1][0] + worker
         np.random.seed(seed)
         random.seed(int(seed))
-        self.memory.set_worker(worker_id)
+        self.memory.set_worker(worker)
+
+        while True:
+            # 1. Get index from sampler
+            # 2. Transform / N-step
+            # 3. Add to prefetch tape
+            # 4. If prefetch_tape add returns True, repeat from 1., otherwise repeat from 3.
+            # Note this stores 1 extra per worker if transform + N-Step
+            pass
 
 
 # Index sampler works in multiprocessing
@@ -179,21 +191,21 @@ class PrefetchTape:
 
         self.start_index = torch.zeros([], dtype=torch.int16).share_memory_()  # Int16
         self.end_index = torch.ones([], dtype=torch.int16).share_memory_()  # Int16
-        self.lock = mp.Lock()
-
-    def check_if_full(self):
-        if self.end_index > self.start_index:
-            return self.end_index - self.start_index + self.batch_size > self.cap
-        else:
-            return self.cap - self.start_index + self.end_index + self.batch_size > self.cap
+        self.add_lock = mp.Lock()
+        self.index_lock = mp.Lock()
 
     def add(self, experience):  # Currently assumes all experiences consist of the same keys
         if not len(self.prefetch_tape):
-            for _ in range(self.cap):
-                self.prefetch_tape.add(experience)
+            with self.add_lock:
+                if not len(self.prefetch_tape):
+                    for _ in range(self.cap):
+                        self.prefetch_tape.add(experience)
 
         device = None
-        index = self.index.item()
+        index = self.index()
+
+        if index is None:
+            return False
 
         for datum in self.prefetch_tape[index].values():
             if hasattr(datum, 'device'):
@@ -204,12 +216,20 @@ class PrefetchTape:
                                                                                             torch.Tensor) else datum
                                      for key, datum in experience.items()}
 
-    @property
+        return True
+
+    def full(self):
+        if self.end_index > self.start_index:
+            return self.end_index - self.start_index + self.batch_size > self.cap
+        else:
+            return self.cap - self.start_index + self.end_index + self.batch_size > self.cap
+
     def index(self):
-        with self.lock:
-            index = self.end_index.item() - 1
-            self.end_index[...] = (index + 1) % self.cap
-            return index
+        with self.index_lock:
+            if not self.full:
+                index = self.end_index.item() - 1
+                self.end_index[...] = (index + 1) % self.cap
+                return index
 
     def get_batch(self):
         end_index = (self.start_index + self.batch_size) % self.end_index
