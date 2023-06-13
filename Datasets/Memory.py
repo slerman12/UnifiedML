@@ -78,7 +78,8 @@ class Memory:
             self.num_experiences += batch_size
             self.enforce_capacity()  # Note: Last batch does enter RAM before capacity is enforced
 
-    def add(self, batch):  # TODO Be own thread https://stackoverflow.com/questions/14234547/threads-with-decorators
+    # TODO Be own thread https://stackoverflow.com/questions/14234547/threads-with-decorators
+    def add(self, batch):
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
         assert self.save_path is not None, 'Memory save_path must be set to add memories.'
 
@@ -146,7 +147,10 @@ class Memory:
         stored_experience = self.episode(ind)
 
         for key, datum in experience.items():
-            stored_experience[key] = datum
+            if getattr(datum, 'shape', None):
+                stored_experience[key][:] = datum[:]
+            else:
+                stored_experience[key][...] = datum  # In case of 0-dim array
 
     def __getitem__(self, ind):
         return self.episode(ind)

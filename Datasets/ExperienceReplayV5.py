@@ -5,6 +5,7 @@
 import os
 import random
 import threading
+from functools import cached_property
 from math import inf
 
 import numpy as np
@@ -97,18 +98,13 @@ class Replay:
         if num_workers == 0:
             threading.Thread(target=worker, args=(0,)).start()
 
-    def __next__(self):
-        # Get batch from prefetch tape
-        pass
-
 
 class ParallelWorker:
-    def __init__(self, memory, offline, sampler,  prefetch_tape, gpu_prefetch_factor, prefetch_factor, pin_memory,
+    def __init__(self, memory, offline,sampler,  prefetch_tape, gpu_prefetch_factor, prefetch_factor, pin_memory,
                  transform, frame_stack, nstep, discount):
         self.memory = memory
 
-        # Get index from sampler
-        # Add to prefetch tape until full
+        # Write to shared prefetch tape
 
     # Worker initialization
     def __call__(self, worker_id):
@@ -116,6 +112,9 @@ class ParallelWorker:
         np.random.seed(seed)
         random.seed(int(seed))
         self.memory.set_worker(worker_id)
+
+    def __len__(self):
+        pass
 
 
 # Index sampler works in multiprocessing
@@ -165,21 +164,57 @@ class Sampler:
 
 class PrefetchTape:
     def __init__(self, batch_size, device, gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False):
+        assert gpu_prefetch_factor + prefetch_factor > 0
+
         self.batch_size = batch_size
-        self.cap = batch_size * (gpu_prefetch_factor + prefetch_factor)
         self.device = device
 
-        self.prefetch_tape = Memory(gpu_capacity=batch_size * gpu_prefetch_factor,
-                                    pinned_capacity=batch_size * prefetch_factor * pin_memory,
-                                    tensor_ram_capacity=batch_size * prefetch_factor * (not pin_memory),
-                                    ram_capacity=0,
-                                    hd_capacity=0)
+        self.cap = batch_size * (gpu_prefetch_factor + prefetch_factor)
+        self.gpu_prefetch_factor = gpu_prefetch_factor
+        self.prefetch_factor = prefetch_factor
+        self.pin_memory = pin_memory
 
         self.batches = [torch.zeros([], dtype=torch.int16)]
 
         self.start_index = torch.zeros([], dtype=torch.int16).share_memory_()  # Int16
         self.end_index = torch.ones([], dtype=torch.int16).share_memory_()  # Int16
-        self.lock = mp.Lock()
+        self.index_lock = mp.Lock()
+
+        self.cuda_prefetch_tape = mp.Manager().dict()
+        self.ram_prefetch_tape = mp.Manager().dict()
+
+        self.init_lock = mp.Lock()
+
+        self.initialized = torch.tensor(False).share_memory_()
+
+    def create(self, experience):
+        if not self.initialized:
+            with self.init_lock:
+                if not self.initialized:
+                    if self.gpu_prefetch_factor:
+                        for key, datum in experience.items():
+                            self.cuda_prefetch_tape[key] = list(torch.zeros(self.batch_size * self.gpu_prefetch_factor,
+                                                                            *datum.shape).cuda(non_blocking=True
+                                                                                               ).unbind())
+
+                    if self.prefetch_factor:
+                        ram_prefetch_tape = {key: list(torch.zeros(self.batch_size * self.prefetch_factor,
+                                                                   *datum.shape).unbind())
+                                             for key, datum in experience.items()}
+
+                        for key, datum in ram_prefetch_tape.items():
+                            if self.pin_memory:
+                                self.ram_prefetch_tape[key] = [datum.to(non_blocking=True).pin_memory()
+                                                               for datum in ram_prefetch_tape[key]]
+                            else:
+                                self.ram_prefetch_tape[key] = ram_prefetch_tape[key]
+
+                    self.initialized[...] = True
+                    self.initialized = True
+
+    @cached_property
+    def prefetch_tape(self):
+        return dict(self.cuda_prefetch_tape), dict(self.ram_prefetch_tape)
 
     def check_if_full(self):
         if self.end_index > self.start_index:
@@ -188,33 +223,26 @@ class PrefetchTape:
             return self.cap - self.start_index + self.end_index + self.batch_size > self.cap
 
     def add(self, experience):  # Currently assumes all experiences consist of the same keys
-        if not len(self.prefetch_tape):
-            for _ in range(self.cap):
-                self.prefetch_tape.add(experience)
-
-        device = None
+        cuda_prefetch_tape, ram_prefetch_tape = self.prefetch_tape
         index = self.index.item()
 
-        for datum in self.prefetch_tape[index].values():
-            if hasattr(datum, 'device'):
-                device = datum.device
-                break
+        if index >
 
-        self.prefetch_tape[index] = {key: datum.to(device, non_blocking=True) if isinstance(datum,
-                                                                                            torch.Tensor) else datum
-                                     for key, datum in experience.items()}
+        self.prefetch_tape[self.index] = experience
 
     @property
     def index(self):
-        with self.lock:
+        with self.index_lock:
             index = self.end_index.item() - 1
             self.end_index[...] = (index + 1) % self.cap
             return index
 
     def get_batch(self):
+        # Get tape if needed
+
         end_index = (self.start_index + self.batch_size) % self.end_index
 
-        if end_index > self.start_index:
+        if self.end_index > self.start_index:
             experiences = self.prefetch_tape[self.start_index:end_index]
         else:
             experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
