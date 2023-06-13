@@ -142,6 +142,12 @@ class Memory:
     def episode(self, ind):
         return self.episodes[ind]
 
+    def __setitem__(self, ind, experience):
+        stored_experience = self.episode(ind)
+
+        for key, datum in experience.items():
+            stored_experience[key] = datum
+
     def __getitem__(self, ind):
         return self.episode(ind)
 

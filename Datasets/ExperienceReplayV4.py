@@ -13,8 +13,8 @@ import torch
 from torch.utils.data import Dataset
 import torch.multiprocessing as mp
 
-from Datasets.Memory import Memory
-from Datasets.Datasets import load_dataset, to_batch, make_card
+from Datasets.Memory import Memory, Batch
+from Datasets.Datasets import load_dataset, to_experience, make_card
 
 
 class Replay:
@@ -48,7 +48,7 @@ class Replay:
         else:
             # Add Dataset into Memory
             for data in dataset:
-                self.memory.add(to_batch(data))
+                self.memory.add(to_experience(data))
 
         # Memory save-path TODO
         if '/Offline/' in dataset and not offline:  # Copy to Online
@@ -68,14 +68,19 @@ class Replay:
         # Add for online (including placeholder meta), writable_tape, clear, sample, length, warnings
         # Iterate/next
 
-        # Initialize prefetch tape and transform
+        # Initialize sampler, prefetch tape, and transform
+        sampler = Sampler(size=len(self.memory)) if offline else None
+        prefetch_tape = PrefetchTape(batch_size=batch_size,
+                                     gpu_prefetch_factor=gpu_prefetch_factor,
+                                     prefetch_factor=prefetch_factor,
+                                     pin_memory=pin_memory)
         transform = transform  # TODO
-        prefetch_tape = PrefetchTape()
 
         # Parallel worker for batch loading
 
         worker = ParallelWorker(memory=self.memory,
                                 offline=offline,
+                                sampler=sampler,
                                 prefetch_tape=prefetch_tape,
                                 gpu_prefetch_factor=gpu_prefetch_factor,
                                 prefetch_factor=prefetch_factor,
@@ -89,11 +94,11 @@ class Replay:
             mp.Process(target=worker, args=(i,)).start()
 
         if num_workers == 0:
-            threading.Thread(target=worker).start()
+            threading.Thread(target=worker, args=(0,)).start()
 
 
 class ParallelWorker:
-    def __init__(self, memory, offline, prefetch_tape, gpu_prefetch_factor, prefetch_factor, pin_memory,
+    def __init__(self, memory, offline,sampler,  prefetch_tape, gpu_prefetch_factor, prefetch_factor, pin_memory,
                  transform, frame_stack, nstep, discount):
         self.memory = memory
 
@@ -155,20 +160,57 @@ class Sampler:
         return next(self.iterator)
 
 
-class PrefetchTape:  # Can have workers just incrementing this until filled to cap, lowering index w/ each next(replay)
-    def __init__(self):
-        self.cap = 0
+class PrefetchTape:
+    def __init__(self, batch_size, device, gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False):
+        self.batch_size = batch_size
+        self.cap = batch_size * (gpu_prefetch_factor + prefetch_factor)
+        self.device = device
 
-        self.tape = ...
+        self.prefetch_tape = Memory(gpu_capacity=batch_size * gpu_prefetch_factor,
+                                    pinned_capacity=batch_size * prefetch_factor * pin_memory,
+                                    ram_capacity=batch_size * prefetch_factor * (not pin_memory))
 
-        self.index = torch.zeros([], dtype=torch.int16).share_memory_()  # Int16
+        self.batches = [torch.zeros([], dtype=torch.int16)]
+
+        self.start_index = torch.zeros([], dtype=torch.int16).share_memory_()  # Int16
+        self.end_index = torch.ones([], dtype=torch.int16).share_memory_()  # Int16
         self.lock = mp.Lock()
 
-    def read(self):
+    def check_if_full(self):
+        if self.end_index > self.start_index:
+            return self.end_index - self.start_index + self.batch_size > self.cap
+        else:
+            return self.cap - self.start_index + self.end_index + self.batch_size > self.cap
+
+    def add(self, experience):  # Currently assumes all experiences consist of the same keys
+        if not len(self.prefetch_tape):
+            for _ in range(self.cap):
+                self.prefetch_tape.add(experience)
+
+        self.prefetch_tape[self.index] = experience
+
+    @property
+    def index(self):
         with self.lock:
-            index = self.index.item()
-            self.index[...] = (index + 1) % self.cap
+            index = self.end_index.item() - 1
+            self.end_index[...] = (index + 1) % self.cap
             return index
+
+    def get_batch(self):
+        end_index = (self.start_index + self.batch_size) % self.end_index
+
+        if self.end_index > self.start_index:
+            experiences = self.prefetch_tape[self.start_index:end_index]
+        else:
+            experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
+
+        self.start_index[...] = end_index
+
+        # Collate
+        batch = {key: torch.stack([datum.to(self.device) for datum in [experience[key] for experience in experiences]])
+                 for key in experiences[0]}
+
+        return Batch(batch)
 
 
 mp.set_start_method('spawn')

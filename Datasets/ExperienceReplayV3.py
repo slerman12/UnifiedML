@@ -12,7 +12,7 @@ from torch.utils.data import IterableDataset, Dataset, DataLoader
 import torch.multiprocessing as mp
 
 from Datasets.Memory import Memory
-from Datasets.Datasets import load_dataset, to_batch, make_card
+from Datasets.Datasets import load_dataset, to_experience, make_card
 
 
 class Replay:
@@ -46,7 +46,7 @@ class Replay:
         else:
             # Add Dataset into Memory
             for data in dataset:
-                self.memory.add(to_batch(data))
+                self.memory.add(to_experience(data))
 
         # Memory save-path TODO
         if '/Offline/' in dataset and not offline:  # Copy to Online

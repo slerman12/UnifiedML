@@ -132,7 +132,7 @@ class Lock:
         self.file.close()
 
 
-def to_batch(data):
+def to_experience(data):
     if not isinstance(data, (dict, Batch)):
         pass
 
