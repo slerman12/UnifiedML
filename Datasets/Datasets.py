@@ -7,6 +7,7 @@ import os
 
 import torchvision
 
+from Datasets.Memory import Batch
 from Hyperparams.minihydra import instantiate, Args, added_modules
 
 
@@ -129,3 +130,12 @@ class Lock:
     def __exit__(self, _type, value, tb):
         self.unlock(self.file)
         self.file.close()
+
+
+def to_batch(data):
+    if not isinstance(data, (dict, Batch)):
+        pass
+
+
+def make_card(dataset):
+    pass

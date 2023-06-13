@@ -2,13 +2,15 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import os
 import random
+import threading
 from math import inf
 
 import numpy as np
 
 import torch
-from torch.utils.data import IterableDataset, Dataset, DataLoader
+from torch.utils.data import Dataset
 import torch.multiprocessing as mp
 
 from Datasets.Memory import Memory
@@ -72,27 +74,22 @@ class Replay:
 
         # Parallel worker for batch loading
 
-        worker = (Offline if offline else Online)(memory=self.memory,
-                                                  offline=offline,
-                                                  prefetch_tape=prefetch_tape,
-                                                  gpu_prefetch_factor=gpu_prefetch_factor,
-                                                  prefetch_factor=prefetch_factor,
-                                                  pin_memory=pin_memory,
-                                                  transform=transform,
-                                                  frame_stack=frame_stack,
-                                                  nstep=nstep,
-                                                  discount=discount)
+        worker = ParallelWorker(memory=self.memory,
+                                offline=offline,
+                                prefetch_tape=prefetch_tape,
+                                gpu_prefetch_factor=gpu_prefetch_factor,
+                                prefetch_factor=prefetch_factor,
+                                pin_memory=pin_memory,
+                                transform=transform,
+                                frame_stack=frame_stack,
+                                nstep=nstep,
+                                discount=discount)
 
-        # Batch loading
+        for i in range(num_workers):
+            mp.Process(target=worker, args=(i,)).start()
 
-        self.batches = DataLoader(dataset=worker,
-                                  batch_size=batch_size,
-                                  num_workers=num_workers,
-                                  shuffle=offline,
-                                  worker_init_fn=Initialize(self.memory),
-                                  collate_fn=lambda *_: None,
-                                  sampler=Sampler(worker) if offline else None,
-                                  persistent_workers=True)
+        if num_workers == 0:
+            threading.Thread(target=worker).start()
 
 
 class ParallelWorker:
@@ -102,41 +99,60 @@ class ParallelWorker:
 
         # Write to shared prefetch tape
 
-    def __len__(self):
-        pass
-
-
-# class Online(ParallelWorker, IterableDataset):
-#     ...
-
-
-# class Offline(ParallelWorker, Dataset):
-#     ...
-
-
-class Initialize:
-    def __init__(self, memory):
-        self.memory = memory
-
+    # Worker initialization
     def __call__(self, worker_id):
         seed = np.random.get_state()[1][0] + worker_id
         np.random.seed(seed)
         random.seed(int(seed))
         self.memory.set_worker(worker_id)
 
-
-class Sampler:
-    def __init__(self, data_source):
-        self.data_source = data_source
-
-        self.generator = torch.Generator()
-        self.generator.manual_seed(torch.empty((), dtype=torch.int64).random_().item())
-
-    def __iter__(self):
-        yield from torch.randperm(len(self), generator=self.generator).tolist()  # Can make this as below
-
     def __len__(self):
-        return len(self.data_source)
+        pass
+
+
+# Index sampler works in multiprocessing
+class Sampler:
+    def __init__(self, size):
+        self.size = size
+
+        self.main_worker = os.getpid()
+
+        self.index = torch.zeros([], dtype=torch.int64).share_memory_()  # Int64
+
+        self.read_lock = mp.Lock()
+        self.read_condition = mp.Condition()
+        self.index_condition = mp.Condition()
+
+        self.iterator = iter(torch.randperm(self.size))
+
+        threading.Thread(target=self.publish).start()
+
+    # Sample index publisher
+    def publish(self):
+        assert os.getpid() == self.main_worker, 'Only main worker can feed sample indices.'
+
+        while True:
+            with self.read_condition:
+                self.read_condition.wait()  # Wait until read is called in a process
+                with self.index_condition:
+                    self.index[...] = self.next()
+                    self.index_condition.notify()  # Notify that index has been updated
+
+    # Sample index subscriber
+    def get_index(self):
+        with self.read_lock:
+            with self.read_condition:
+                self.read_condition.notify()  # Notify that read has been called
+            with self.index_condition:
+                self.index_condition.wait()  # Wait until index has been updated
+                return self.index
+
+    def next(self):
+        try:
+            return next(self.iterator)
+        except StopIteration:
+            self.iterator = iter(torch.randperm(self.size))
+        return next(self.iterator)
 
 
 class PrefetchTape:  # Can have workers just incrementing this until filled to cap, lowering index w/ each next(replay)
@@ -145,15 +161,14 @@ class PrefetchTape:  # Can have workers just incrementing this until filled to c
 
         self.tape = ...
 
-        self.index = torch.zeros([], dtype=torch.int16).share_memory_()
+        self.index = torch.zeros([], dtype=torch.int16).share_memory_()  # Int16
         self.lock = mp.Lock()
 
     def read(self):
-        self.lock.acquire()
-        index = self.index
-        self.index[...] = (index + 1) % self.cap
-        self.lock.release()
-        return index
+        with self.lock:
+            index = self.index.item()
+            self.index[...] = (index + 1) % self.cap
+            return index
 
 
 mp.set_start_method('spawn')
