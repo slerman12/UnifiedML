@@ -80,12 +80,8 @@ class Replay:
         # Parallel worker for batch loading
 
         worker = ParallelWorker(memory=self.memory,
-                                offline=offline,
                                 sampler=sampler,
                                 prefetch_tape=prefetch_tape,
-                                gpu_prefetch_factor=gpu_prefetch_factor,
-                                prefetch_factor=prefetch_factor,
-                                pin_memory=pin_memory,
                                 transform=transform,
                                 frame_stack=frame_stack,
                                 nstep=nstep,
@@ -125,8 +121,8 @@ class ParallelWorker:
             # 1. Get index from sampler
             # 2. Transform / N-step
             # 3. Add to prefetch tape
-            # 4. If prefetch_tape add returns True, repeat from 1., otherwise repeat from 3.
-            # Note this stores 1 extra per worker if transform + N-Step
+            # 4. Repeat
+            # Note this stores 1 extra per worker if transform + N-Step and prefetch tape full
             pass
 
 
@@ -204,9 +200,6 @@ class PrefetchTape:
         device = None
         index = self.index()
 
-        if index is None:
-            return False
-
         for datum in self.prefetch_tape[index].values():
             if hasattr(datum, 'device'):
                 device = datum.device
@@ -216,20 +209,21 @@ class PrefetchTape:
                                                                                             torch.Tensor) else datum
                                      for key, datum in experience.items()}
 
-        return True
-
-    def full(self):
-        if self.end_index > self.start_index:
-            return self.end_index - self.start_index + self.batch_size > self.cap
+    def full(self, index):
+        if index > self.start_index:
+            return index - self.start_index + self.batch_size > self.cap
         else:
-            return self.cap - self.start_index + self.end_index + self.batch_size > self.cap
+            return self.cap - self.start_index + index + self.batch_size > self.cap
 
     def index(self):
         with self.index_lock:
-            if not self.full:
-                index = self.end_index.item() - 1
-                self.end_index[...] = (index + 1) % self.cap
-                return index
+            index = self.end_index.item() - 1
+
+            while self.full(index + 1):
+                pass
+
+            self.end_index[...] = (index + 1) % self.cap
+            return index
 
     def get_batch(self):
         end_index = (self.start_index + self.batch_size) % self.end_index
