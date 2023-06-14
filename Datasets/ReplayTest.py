@@ -1,3 +1,5 @@
+import time
+
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
@@ -181,7 +183,30 @@ class Collate:  # Can have a pinned memory buffer and jitted parallel/threaded? 
         # return torch.stack([self.queue.get() for _ in range(32) if not self.queue.empty()])
 
 
+class Worker:
+    def __init__(self):
+        self.t = 7
+
+    def __call__(self, i):
+        if i == 0:
+            self.t = 2
+        else:
+            time.sleep(2)
+        print(self.t, i)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return 5
+
+
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
-    run()
+    # run()
     # print(timeit.timeit(run, number=1))
+    worker = Worker()
+    # for i in range(2):
+    #     mp.Process(target=worker, args=(i,)).start()
+    for x in worker:
+        print(x)

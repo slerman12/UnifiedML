@@ -15,6 +15,7 @@ import torch.multiprocessing as mp
 
 from Datasets.Memory import Memory, Batch
 from Datasets.Datasets import load_dataset, to_experience, make_card
+from Hyperparams.minihydra import instantiate
 
 
 class Replay:
@@ -26,9 +27,9 @@ class Replay:
         # Future steps to compute cumulative reward from
         self.nstep = nstep
 
-        self.epoch = 1
+        self.stream = stream
 
-        if stream:
+        if self.stream:
             return
 
         self.memory = Memory(num_workers=num_workers,
@@ -63,24 +64,23 @@ class Replay:
         if isinstance(dataset, Dataset) and offline:
             self.memory.save()
 
-        # DataLoader
-        # At exit, maybe save
-        # Add for online (including placeholder meta), writable_tape, clear, sample, length, warnings
-        # Iterate/next
+        # TODO At exit, maybe save
+
+        # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
         # Initialize sampler, prefetch tape, and transform
-        sampler = Sampler(size=len(self.memory)) if offline else None
+        self.sampler = Sampler(size=len(self.memory)) if offline else None
         self.prefetch_tape = PrefetchTape(batch_size=batch_size,
                                           device=device,
                                           gpu_prefetch_factor=gpu_prefetch_factor,
                                           prefetch_factor=prefetch_factor,
                                           pin_memory=pin_memory)
-        transform = transform  # TODO
+        transform = instantiate(transform)
 
         # Parallel worker for batch loading
 
         worker = ParallelWorker(memory=self.memory,
-                                sampler=sampler,
+                                sampler=self.sampler,
                                 prefetch_tape=self.prefetch_tape,
                                 transform=transform,
                                 frame_stack=frame_stack,
@@ -93,9 +93,40 @@ class Replay:
         if num_workers == 0:
             threading.Thread(target=worker, args=(0,)).start()
 
+    def __iter__(self):
+        return self
+
     def __next__(self):
-        # Get batch from prefetch tape
-        return self.prefetch_tape.get_batch()
+        return self.sample()
+
+    @property
+    def epoch(self):
+        return self.sampler.epoch
+
+    def sample(self, trajectories=False):
+        if self.stream:
+            # Streaming
+            return [self.stream.get(key, torch.empty([1, 0]))
+                    for key in ['obs', 'action', 'reward', 'discount', 'next_obs', 'label', *[None] * 4 * trajectories,
+                                'step', 'ids', 'meta']]  # Return contents of the data stream
+        else:
+            # Get batch from prefetch tape
+            batch = self.prefetch_tape.get_batch()
+            return *batch[:10 if trajectories else 6], *batch[10:]  # Return batch, w(/o) future-trajectories
+
+    def add(self, batch):
+        if self.stream:
+            self.stream = batch  # For streaming directly from Environment  TODO N-step in {0, 1}
+        else:
+            self.memory.add(batch)
+
+    def writable_tape(self, batch, ind, step):
+        assert isinstance(batch, (dict, Batch)), f'expected \'batch\' to be dict or Batch, got {type(batch)}.'
+        self.memory.writable_tape(batch, ind, step)
+
+    def __len__(self):
+        # Infinite if stream, else num episodes in Memory
+        return int(5e11) if self.stream else len(self.memory)
 
 
 class ParallelWorker:
@@ -118,33 +149,34 @@ class ParallelWorker:
         self.memory.set_worker(worker)
 
         while True:
-            # 1. Get index from sampler
+            # Get index from sampler
             if self.sampler is None:
                 index = random.randint(0, len(self.memory))  # Random sample an episode
             else:
                 index = self.sampler.get_index()
 
-            # 2. Retrieve experience from Memory
+            # Retrieve experience from Memory
             episode = self.memory[index]
             index = random.randint(0, len(episode) - self.nstep)  # Randomly sample sub-episode
             experience = episode[index]
 
-            # 3. Transform / N-step / frame stack
+            # Transform / N-step / frame stack
             experience = self.compute_RL(episode, experience, index)
-            experience.obs = self.transform(experience.obs)
+            experience.obs = self.transform(torch.as_tensor(experience.obs))
 
-            # 4. Add to prefetch tape
-            # Note this stores 1 extra per worker if transform + N-Step and prefetch tape full
+            # Add to prefetch tape (halts if full)
             self.prefetch_tape.add(experience)
 
     def compute_RL(self, episode, experience, index):
-        return index
+        return experience
 
 
 # Index sampler works in multiprocessing
 class Sampler:
     def __init__(self, size):
         self.size = size
+
+        self.epoch = torch.zeros([], dtype=torch.int32).share_memory_()  # Int32
 
         self.main_worker = os.getpid()
 
@@ -183,6 +215,7 @@ class Sampler:
             return next(self.iterator)
         except StopIteration:
             self.iterator = iter(torch.randperm(self.size))
+            self.epoch[...] = self.epoch + 1
         return next(self.iterator)
 
 

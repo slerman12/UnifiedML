@@ -55,8 +55,7 @@ class Memory:
         while not self.queue.empty():
             experience, episode, step = self.queue.get()
 
-            for key in experience:
-                self.episode(episode)[step][key] = experience
+            self.episode(episode)[step] = experience
 
     def update(self):  # Maybe truly-shared list variable can tell workers when to do this / lock  TODO Thread
         num_batches_deleted = self.num_batches_deleted.item()
@@ -107,8 +106,17 @@ class Memory:
     def writable_tape(self, batch, ind, step):  # TODO Should be its own thread
         assert self.main_worker == os.getpid(), 'Only main worker can send rewrites across the memory tape.'
 
-        for batch, ind, step in zip(batch, ind, step):
-            self.queues[int(ind % self.worker)].put((batch, ind, step))
+        batch_size = 1
+
+        for datum in batch.values():
+            if getattr(datum, 'shape', None):
+                batch_size = len(datum)
+
+        experiences = [Batch({key: batch[key][i] if getattr(batch[key], 'shape', None) else batch[key]
+                              for key in batch}) for i in range(batch_size)]
+
+        for experience, ind, step in zip(experiences, ind, step):
+            self.queues[int(ind % self.worker)].put((experience, ind, step))
 
         self.rewrite()
 
