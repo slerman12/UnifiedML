@@ -15,7 +15,7 @@ from torch.utils.data import Dataset
 import torch.multiprocessing as mp
 
 from Datasets.Memory import Memory, Batch
-from Datasets.Datasets import load_dataset, to_experience, make_card
+from Datasets.Dataset import load_dataset, to_experience, make_card
 
 
 class Replay:

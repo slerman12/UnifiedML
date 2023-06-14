@@ -57,6 +57,7 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
         try:
             root_spec, train_spec, download_spec, transform_spec = all_specs
             specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
+            specs = {key: specs[key] for key in set(specs) - set(dataset)}
             specs.update(kwargs)
             with Lock(path):  # System-wide mutex-lock
                 dataset = instantiate(dataset, **specs)

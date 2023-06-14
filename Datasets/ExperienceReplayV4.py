@@ -8,20 +8,21 @@ import random
 import threading
 from math import inf
 
+from tqdm import tqdm
+
 import numpy as np
 
 import torch
 from torch.utils.data import Dataset
 import torch.multiprocessing as mp
-from tqdm import tqdm
 
 from Datasets.Memory import Memory, Batch
-from Datasets.Datasets import load_dataset, to_experience, get_dataset_path, make_card, is_valid_path
-from Hyperparams.minihydra import instantiate, yaml_search_paths, Args
+from Datasets.Dataset import load_dataset, to_experience, get_dataset_path, make_card
+from Hyperparams.minihydra import instantiate
 
 
 class Replay:
-    def __init__(self, path=None, batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
+    def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
                  gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False,
                  dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,)):
@@ -41,11 +42,15 @@ class Replay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
+        # TODO System-wide lock perhaps, w.r.t. Offline Dataset save path if load_dataset is Dataset and Offline
         if dataset is not None:
             dataset_config = dataset
 
             # Pytorch Dataset or Memory path
-            dataset = load_dataset('Offline/' if offline else 'Online/' + path, dataset_config)
+            dataset = load_dataset(('World/ReplayBuffer/Offline/' if offline
+                                   else 'World/ReplayBuffer/Online/') + path, dataset_config)
+
+            # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
 
             # Fill Memory
             if isinstance(dataset, str):
@@ -60,11 +65,11 @@ class Replay:
             save_path = None
 
             if isinstance(dataset, Dataset) and offline:
-                save_path = '/Offline/' + get_dataset_path(dataset_config)
+                save_path = 'World/ReplayBuffer/Offline/' + get_dataset_path(dataset_config)
             elif not offline:
-                if isinstance(dataset, str) and '/Offline/' in dataset and not offline:  # Copy to Online
-                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Dataset to False.')
-                save_path = '/Online/' + path
+                if isinstance(dataset, str) and dataset != 'World/ReplayBuffer/Online/' + path:
+                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False.')
+                save_path = 'World/ReplayBuffer/Online/' + path
 
             if save_path:
                 self.memory.set_save_path(save_path)
@@ -72,12 +77,12 @@ class Replay:
 
                 # Save to hard disk if Offline
                 if isinstance(dataset, Dataset) and offline:
-                    self.memory.save(desc='Memory-mapping dataset for training acceleration. '
+                    self.memory.save(desc='Memory-mapping Dataset for training acceleration. '
                                           'This only has to be done once.')
 
         # Save Online replay on terminate
         if not offline:
-            atexit.register(lambda: (print('Saving replay memory... please hold...'), self.memory.save()))
+            atexit.register(lambda: (print('Saving Replay Memory...'), self.memory.save()))
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
@@ -114,7 +119,7 @@ class Replay:
 
     @property
     def epoch(self):
-        return self.sampler.epoch
+        return self.sampler.epoch.item()
 
     def sample(self, trajectories=False):
         if self.stream:
