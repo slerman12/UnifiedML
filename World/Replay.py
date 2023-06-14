@@ -170,7 +170,7 @@ class ParallelWorker:
         random.seed(int(seed))
         self.memory.set_worker(worker)
 
-        while True:
+        while True:  # TODO workers should periodically update if online
             # Sample index
             if self.sampler is None:
                 index = random.randint(0, len(self.memory))  # Random sample an episode
@@ -333,23 +333,29 @@ class PrefetchTape:
 
     def index(self):
         with self.index_lock:
-            index = self.end_index.item() - 1
+            index = self.end_index.item()
 
-            while self.full(index + 1):
-                pass
+            while self.full(index):
+                pass  # Pause worker
 
             self.end_index[...] = (index + 1) % self.cap
-            return index
+            return index - 1
 
     def get_batch(self):
+        while len(self.prefetch_tape) < self.cap:
+            self.prefetch_tape.update()
+
         end_index = (self.start_index + self.batch_size) % self.end_index
+
+        while end_index == self.start_index:
+            # Avoid race condition when prefetch tape depleted
+            end_index = (self.start_index + self.batch_size) % self.end_index
 
         if end_index > self.start_index:
             experiences = self.prefetch_tape[self.start_index:end_index]
         else:
             experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
-
-        self.start_index[...] = end_index
+        print(len(self.prefetch_tape))
 
         # Collate
         batch = {key: torch.concat([torch.as_tensor(datum).to(self.device, non_blocking=True)

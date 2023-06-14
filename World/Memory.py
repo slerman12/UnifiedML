@@ -195,33 +195,29 @@ class Memory:
                             key=lambda path: int(path.stem.split('_', 1)[0]))
 
         batch = {}
-        previous_num_batches = 0
+        previous_num_batches = inf
 
         for i, mmap_path in enumerate(tqdm(mmap_paths, desc=desc)):
-            try:
-                num_batches, key, identifier, _ = mmap_path.stem.split('_', 3)
-            except ValueError:
-                continue
+            num_batches, key, identifier, _ = mmap_path.stem.split('_', 3)\
 
             if i == 0:
                 self.id = identifier
-                self.num_batches_deleted[...] = self.num_batches
+                self.num_batches_deleted[...] = self.num_batches = int(num_batches)
             else:
                 if self.id != identifier:
                     warnings.warn(f'Found Mems with multiple identifiers in load path {load_path}. Using id={self.id}.')
                     continue
 
-                self.num_batches = int(num_batches)
-
-                if self.num_batches > previous_num_batches:
+                if int(num_batches) > previous_num_batches:
                     self.add(batch)
                     batch = {}
 
             batch[key] = Mem(None, path=mmap_path).load().mem
 
-            previous_num_batches = self.num_batches
+            previous_num_batches = int(num_batches)
 
-        self.add(batch)
+        if batch:
+            self.add(batch)
 
     def save(self, desc='Saving Memory...', card=None):
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
