@@ -14,7 +14,7 @@ from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
 
 
 # Returns a path to an existing Memory directory or an instantiated Pytorch Dataset
-def load_dataset(path, dataset, allow_memory=True, **kwargs):
+def load_dataset(path, dataset, allow_memory=True, train=True, **kwargs):
     # Allow config as string path
     if isinstance(dataset, str):
         dataset = Args({'_target_': dataset})
@@ -22,6 +22,9 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
     # If dataset is a directory path, return the string directory path
     if allow_memory and is_valid_path(dataset._target_, dir_path=True):
         return dataset._target_  # Note: stream=false if called in Env
+
+    # Add torchvision, torchvision.datasets to module search during dataset config instantiation
+    added_modules.update({'torchvision': torchvision, 'datasets': torchvision.datasets})
 
     # Return a Dataset based on a module path or non-default modules like torchvision
     assert is_valid_path(dataset._target_, module_path=True, module=True), 'Not a valid Dataset instantiation argument.'
@@ -37,12 +40,8 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
     if is_valid_path(dataset._target_, module_path=True):
         return instantiate(dataset)
 
-    # Add torchvision, torchvision.datasets to module search during dataset config instantiation
-    added_modules.update({'torchvision': torchvision, 'datasets': torchvision.datasets})
-
-    train = getattr(dataset, 'train', None)
     if train is not None:
-        path += ('Downloaded_Train' if train else 'Downloaded_Eval')
+        path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
     os.makedirs(path, exist_ok=True)
 
     # Different datasets have different specs
@@ -61,7 +60,7 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
             specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
             specs = {key: specs[key] for key in set(specs) - set(dataset)}
             specs.update(kwargs)
-            with Lock(path):  # System-wide mutex-lock
+            with Lock(path + 'lock'):  # System-wide mutex-lock
                 dataset = instantiate(dataset, **specs)
         except (TypeError, ValueError):
             continue
@@ -87,13 +86,17 @@ def is_valid_path(path, dir_path=False, module_path=False, module=False):
             pass
 
     if module and not truth:
-        for m in added_modules:
+        sub_module, *sub_modules = path.split('.')
+
+        if sub_module in added_modules:
+            sub_module = added_modules[sub_module]
+
             try:
-                for key in path.split('.'):
-                    m = getattr(m, key)
+                for key in sub_modules:
+                    sub_module = getattr(sub_module, key)
                 truth = True
             except AttributeError:
-                continue
+                pass
 
     return truth
 

@@ -348,6 +348,3 @@ class PrefetchTape:
                  for key in experiences[0]}
 
         return Batch(batch)
-
-
-mp.set_start_method('spawn')
