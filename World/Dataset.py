@@ -27,7 +27,8 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
         dataset_config = Args({'_target_': dataset_config})
 
     # If dataset is a directory path, return the string directory path
-    if allow_memory and is_valid_path(dataset_config._target_, dir_path=True):
+    if allow_memory and is_valid_path(dataset_config._target_, dir_path=True) \
+            and glob.glob(dataset_config._target_ + 'card.yaml'):
         return dataset_config._target_  # Note: stream=false if called in Env
 
     # Add torchvision datasets to module search for config instantiation

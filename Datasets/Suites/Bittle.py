@@ -304,4 +304,4 @@ if __name__ == '__main__':
     #
     # for command in commands:
     #     bittle.step(command)
-    bittle.disconnect()
+    bittle.disconnect()  # Daemon threads https://stackoverflow.com/a/2564282/22002059

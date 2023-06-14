@@ -6,6 +6,8 @@ import atexit
 import os
 import random
 import threading
+import time
+import warnings
 from math import inf
 
 from tqdm import tqdm
@@ -24,13 +26,16 @@ from Hyperparams.minihydra import instantiate, Args
 class Replay:
     def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
-                 gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False, mem_size=None,
+                 gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False, mem_size=None, reload=True,
                  dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), **kwargs):
 
         # Future steps to compute cumulative reward from
         self.nstep = nstep or 0
 
         self.stream = stream
+
+        self.reload = reload  # Whether to cycle at the end of an epoch or raise StopIteration
+        self._epoch = 0
 
         if self.stream:
             return
@@ -119,6 +124,14 @@ class Replay:
         return self
 
     def __next__(self):
+        if not self.reload:
+            epoch = self.epoch
+
+            if epoch > self._epoch:
+                self._epoch = epoch
+
+                raise StopIteration  # Race condition, might be somewhat early; would need final prefetch batches
+
         return self.sample()
 
     @property
@@ -252,9 +265,9 @@ class Sampler:
 
         self.iterator = iter(torch.randperm(self.size))
 
-        threading.Thread(target=self.publish).start()
+        threading.Thread(target=self.publish, daemon=True).start()
 
-    # Sample index publisher TODO Event to crash when main crashes!
+    # Sample index publisher
     def publish(self):
         assert os.getpid() == self.main_worker, 'Only main worker can feed sample indices.'
 
@@ -336,7 +349,11 @@ class PrefetchTape:
         with self.index_lock:
             index = self.end_index.item()
 
+            start = time.time()
             while self.full(index):
+                if time.time() - start > 2:
+                    # TODO Worker thinks it's full
+                    warnings.warn('Worker possessed by demonry. Waiting on full prefetch tape to be sampled from.')
                 pass  # Pause worker
 
             self.end_index[...] = (index + 1) % self.cap
@@ -346,16 +363,26 @@ class PrefetchTape:
         while len(self.prefetch_tape) < self.cap:
             self.prefetch_tape.update()
 
-        end_index = (self.start_index + self.batch_size) % self.end_index
+        end_index = self.end_index[...]  # Maybe simplify with a shift factor
 
-        while end_index == self.start_index:
-            # Avoid race condition when prefetch tape depleted
-            end_index = (self.start_index + self.batch_size) % self.end_index
+        if end_index > 0:
+            end_index = (self.start_index + self.batch_size) % end_index
+        else:
+            end_index = min(self.start_index, end_index)
+
+        # while end_index == self.start_index:  # TODO Check if start index jumped over end index
+        #     # Avoid race condition when prefetch tape depleted
+        #     end_index = self.end_index
+        #
+        #     if end_index > 0:
+        #         end_index = (self.start_index + self.batch_size) % end_index
 
         if end_index > self.start_index:
             experiences = self.prefetch_tape[self.start_index:end_index]
         else:
             experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
+
+        self.start_index[...] = end_index
 
         # Collate
         batch = {key: torch.stack([torch.as_tensor(datum).to(self.device, non_blocking=True)
