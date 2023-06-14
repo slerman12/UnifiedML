@@ -119,11 +119,21 @@ class ParallelWorker:
 
         while True:
             # 1. Get index from sampler
-            # 2. Transform / N-step
-            # 3. Add to prefetch tape
-            # 4. Repeat
+            index = self.sampler.get_index()
+
+            # 2. Retrieve experience from Memory
+            experience = self.memory[index]   # TODO
+
+            # 3. Transform / N-step
+            experience['nstep'] = self.compute_nstep(index)
+            experience.obs = self.transform(experience.obs)
+
+            # 4. Add to prefetch tape
             # Note this stores 1 extra per worker if transform + N-Step and prefetch tape full
-            pass
+            self.prefetch_tape.add(experience)
+
+    def compute_nstep(self, index):
+        return index
 
 
 # Index sampler works in multiprocessing
