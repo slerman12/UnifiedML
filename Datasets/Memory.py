@@ -155,10 +155,7 @@ class Memory:
         stored_experience = self.episode(ind)
 
         for key, datum in experience.items():
-            if getattr(datum, 'shape', None):
-                stored_experience[key][:] = datum[:]
-            else:
-                stored_experience[key][...] = datum  # In case of 0-dim array
+            stored_experience[key][...] = datum
 
     def __getitem__(self, ind):
         return self.episode(ind)
@@ -354,9 +351,7 @@ class Mem:
         return self.mem[ind]
 
     def __setitem__(self, ind, value):
-        assert self.shape
-
-        self.mem[ind] = value
+        self.mem[ind if self.shape else ...] = value
 
         if self.mode == 'mmap':
             self.mem.flush()  # Write to hard disk

@@ -168,6 +168,58 @@ class ParallelWorker:
             self.prefetch_tape.add(experience)
 
     def compute_RL(self, episode, experience, index):
+        # offset = self.nstep or 0
+        # episode_len = len(episode['obs']) - offset
+        # if idx is None:
+        #     idx = np.random.randint(episode_len)
+        #
+        # # Frame stack
+        # def frame_stack(traj_o, idx):
+        #     frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
+        #     for _ in range(self.frame_stack - idx - 1):  # If not enough frames, reuse the first
+        #         frames = np.concatenate([traj_o[:1], frames], 0)
+        #     frames = frames.reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
+        #     return frames
+        #
+        # # Present
+        # obs = frame_stack(episode['obs'], idx)
+        # label = episode['label'][idx]
+        # step = episode['step'][idx]
+        #
+        # exp_id, worker_id = episode['id'] + idx, self.worker_id
+        # ids = np.array([exp_id, worker_id])
+        #
+        # meta = episode['meta'][idx]  # Agent-writable Metadata
+        #
+        # # Future
+        # if self.nstep:
+        #     # Transition
+        #     action = episode['action'][idx + 1]
+        #     next_obs = frame_stack(episode['obs'], idx + self.nstep)
+        #
+        #     # Trajectory
+        #     traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
+        #                              for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
+        #     traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
+        #     traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
+        #     traj_l = episode['label'][idx:idx + self.nstep + 1]
+        #
+        #     # Cumulative discounted reward
+        #     discounts = self.discount ** np.arange(self.nstep + 1)
+        #     reward = np.dot(discounts[:-1], traj_r)
+        #     discount = discounts[-1:]
+        # else:
+        #     action, reward = episode['action'][idx], episode['reward'][idx]
+        #
+        #     next_obs = traj_o = traj_a = traj_r = traj_l = np.zeros(0)
+        #     discount = np.array([1.0])
+        #
+        # # Transform
+        # if self.transform is not None:
+        #     obs = self.transform(torch.as_tensor(obs))
+        #
+        # return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
+
         return experience
 
 
@@ -284,7 +336,7 @@ class PrefetchTape:
 
         # Collate
         batch = {key: torch.concat([torch.as_tensor(datum).to(self.device, non_blocking=True)
-                                    for datum in [experience[key] for experience in experiences]])
+                                    for datum in [experience[0][key][...] for experience in experiences]])
                  for key in experiences[0]}
 
         return Batch(batch)

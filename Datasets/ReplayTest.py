@@ -185,7 +185,7 @@ class Collate:  # Can have a pinned memory buffer and jitted parallel/threaded? 
 
 class Worker:
     def __init__(self):
-        self.t = 7
+        self.t = torch.ones([2, 2])
 
     def __call__(self, i):
         if i == 0:
@@ -193,6 +193,14 @@ class Worker:
         else:
             time.sleep(2)
         print(self.t, i)
+
+    def __setitem__(self, ind, value):
+        print(ind)
+        if self.t.shape:
+            self.t[ind] = value
+        else:
+            self.t[...] = value
+        print(self.t)
 
     def __iter__(self):
         return self
@@ -208,5 +216,6 @@ if __name__ == '__main__':
     worker = Worker()
     # for i in range(2):
     #     mp.Process(target=worker, args=(i,)).start()
-    for x in worker:
-        print(x)
+    # for x in worker:
+    #     print(x)
+    worker[...] = 5
