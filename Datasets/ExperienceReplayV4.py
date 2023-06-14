@@ -70,18 +70,18 @@ class Replay:
 
         # Initialize sampler, prefetch tape, and transform
         sampler = Sampler(size=len(self.memory)) if offline else None
-        prefetch_tape = PrefetchTape(batch_size=batch_size,
-                                     device=device,
-                                     gpu_prefetch_factor=gpu_prefetch_factor,
-                                     prefetch_factor=prefetch_factor,
-                                     pin_memory=pin_memory)
+        self.prefetch_tape = PrefetchTape(batch_size=batch_size,
+                                          device=device,
+                                          gpu_prefetch_factor=gpu_prefetch_factor,
+                                          prefetch_factor=prefetch_factor,
+                                          pin_memory=pin_memory)
         transform = transform  # TODO
 
         # Parallel worker for batch loading
 
         worker = ParallelWorker(memory=self.memory,
                                 sampler=sampler,
-                                prefetch_tape=prefetch_tape,
+                                prefetch_tape=self.prefetch_tape,
                                 transform=transform,
                                 frame_stack=frame_stack,
                                 nstep=nstep,
@@ -95,7 +95,7 @@ class Replay:
 
     def __next__(self):
         # Get batch from prefetch tape
-        pass
+        return self.prefetch_tape.get_batch()
 
 
 class ParallelWorker:
@@ -119,12 +119,14 @@ class ParallelWorker:
 
         while True:
             # 1. Get index from sampler
-            index = random.randint(0, len(self.memory)) if self.sampler is None \
-                else self.sampler.get_index()
+            if self.sampler is None:
+                index = random.randint(0, len(self.memory))  # Random sample an episode
+            else:
+                index = self.sampler.get_index()
 
             # 2. Retrieve experience from Memory
             episode = self.memory[index]
-            index = random.randint(0, len(episode) - self.nstep)  # Randomly sample experience from episode
+            index = random.randint(0, len(episode) - self.nstep)  # Randomly sample sub-episode
             experience = episode[index]
 
             # 3. Transform / N-step / frame stack
