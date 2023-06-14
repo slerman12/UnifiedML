@@ -24,6 +24,8 @@ app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 # minihydra.yaml_search_paths.append(path)
 yaml_search_paths = [app]  # List of paths
 
+added_modules = {}
+
 
 # Something like this
 def instantiate(args, **kwargs):
@@ -35,6 +37,21 @@ def instantiate(args, **kwargs):
     args.update(kwargs)
 
     file, module = args.pop('_target_').rsplit('.', 1)
+
+    sub_module, *sub_modules = file.split('.')
+
+    # Can instantiate based on added modules
+    if sub_module in added_modules:
+        try:
+            sub_module = added_modules[sub_module]
+
+            for sub in sub_modules:
+                sub_module = getattr(sub_module, sub)
+
+            return sub_module(**args)
+        except AttributeError:
+            pass
+
     file = file.replace('.', '/')
     for path in yaml_search_paths:
         try:
@@ -59,7 +76,7 @@ def instantiate(args, **kwargs):
 
 
 def open_yaml(source):
-    for path in yaml_search_paths:
+    for path in yaml_search_paths + ['']:
         try:
             with open(path + '/' + source, 'r') as file:
                 args = yaml.safe_load(file)

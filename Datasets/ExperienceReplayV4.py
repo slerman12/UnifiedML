@@ -22,13 +22,13 @@ from Hyperparams.minihydra import instantiate
 
 
 class Replay:
-    def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
+    def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
                  gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False,
                  dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,)):
 
         # Future steps to compute cumulative reward from
-        self.nstep = nstep
+        self.nstep = nstep or 0
 
         self.stream = stream
 
@@ -65,7 +65,8 @@ class Replay:
             save_path = None
 
             if isinstance(dataset, Dataset) and offline:
-                save_path = 'World/ReplayBuffer/Offline/' + get_dataset_path(dataset_config)
+                root = 'World/ReplayBuffer/Offline/'
+                save_path = root + get_dataset_path(dataset_config, root)
             elif not offline:
                 if isinstance(dataset, str) and dataset != 'World/ReplayBuffer/Online/' + path:
                     self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False.')
@@ -73,16 +74,16 @@ class Replay:
 
             if save_path:
                 self.memory.set_save_path(save_path)
-                make_card(save_path)
+                make_card({} if isinstance(dataset_config, str) else dataset_config, save_path)
 
                 # Save to hard disk if Offline
-                if isinstance(dataset, Dataset) and offline:
-                    self.memory.save(desc='Memory-mapping Dataset for training acceleration. '
+                if isinstance(dataset, Dataset) and offline and save:
+                    self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
                                           'This only has to be done once.')
 
         # Save Online replay on terminate
-        if not offline:
-            atexit.register(lambda: (print('Saving Replay Memory...'), self.memory.save()))
+        if not offline and save:
+            atexit.register(lambda: self.memory.save(desc='Saving Replay Memory...'))
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
@@ -167,76 +168,65 @@ class ParallelWorker:
         self.memory.set_worker(worker)
 
         while True:
-            # Get index from sampler
+            # Sample index
             if self.sampler is None:
                 index = random.randint(0, len(self.memory))  # Random sample an episode
             else:
                 index = self.sampler.get_index()
 
-            # Retrieve experience from Memory
+            # Retrieve from Memory
             episode = self.memory[index]
-            index = random.randint(0, len(episode) - self.nstep)  # Randomly sample sub-episode
-            experience = episode[index]
+            step = random.randint(0, len(episode) - self.nstep)  # Randomly sample sub-episode
+            experience = episode[step]
 
-            # Transform / N-step / frame stack
-            experience = self.compute_RL(episode, experience, index)
-            experience.obs = self.transform(torch.as_tensor(experience.obs))
+            # Frame stack / N-step
+            experience = self.compute_RL(episode, experience, step)
+
+            # Transform
+            if self.transform is not None:
+                experience.obs = self.transform(torch.as_tensor(experience.obs))
+
+            # Add metadata
+            experience['episode_index'] = index
+            experience['episode_step'] = step
 
             # Add to prefetch tape (halts if full)
             self.prefetch_tape.add(experience)
 
-    def compute_RL(self, episode, experience, index):
-        # offset = self.nstep or 0
-        # episode_len = len(episode['obs']) - offset
-        # if idx is None:
-        #     idx = np.random.randint(episode_len)
-        #
-        # # Frame stack
-        # def frame_stack(traj_o, idx):
-        #     frames = traj_o[max([0, idx + 1 - self.frame_stack]):idx + 1]
-        #     for _ in range(self.frame_stack - idx - 1):  # If not enough frames, reuse the first
-        #         frames = np.concatenate([traj_o[:1], frames], 0)
-        #     frames = frames.reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
-        #     return frames
-        #
-        # # Present
-        # obs = frame_stack(episode['obs'], idx)
-        # label = episode['label'][idx]
-        # step = episode['step'][idx]
-        #
-        # exp_id, worker_id = episode['id'] + idx, self.worker_id
-        # ids = np.array([exp_id, worker_id])
-        #
-        # meta = episode['meta'][idx]  # Agent-writable Metadata
-        #
-        # # Future
-        # if self.nstep:
-        #     # Transition
-        #     action = episode['action'][idx + 1]
-        #     next_obs = frame_stack(episode['obs'], idx + self.nstep)
-        #
-        #     # Trajectory
-        #     traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
-        #                              for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
-        #     traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
-        #     traj_r = episode['reward'][idx + 1:idx + self.nstep + 1]
-        #     traj_l = episode['label'][idx:idx + self.nstep + 1]
-        #
-        #     # Cumulative discounted reward
-        #     discounts = self.discount ** np.arange(self.nstep + 1)
-        #     reward = np.dot(discounts[:-1], traj_r)
-        #     discount = discounts[-1:]
-        # else:
-        #     action, reward = episode['action'][idx], episode['reward'][idx]
-        #
-        #     next_obs = traj_o = traj_a = traj_r = traj_l = np.zeros(0)
-        #     discount = np.array([1.0])
-        #
-        # # Transform
-        # if self.transform is not None:
-        #     obs = self.transform(torch.as_tensor(obs))
-        #
-        # return obs, action, reward, discount, next_obs, label, traj_o, traj_a, traj_r, traj_l, step, ids, meta
+    def compute_RL(self, episode, experience, step):
+        # Frame stack
+        def frame_stack(traj, key, idx):
+            frames = traj[max([0, idx + 1 - self.frame_stack]):idx + 1]
+            for _ in range(self.frame_stack - idx - 1):  # If not enough frames, reuse the first
+                frames = traj[:1] + frames
+            frames = torch.concat([torch.as_tensor(frame[key])
+                                   for frame in frames]).reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
+            return frames
+
+        # Present
+        if self.frame_stack > 1:
+            experience.obs = frame_stack(experience, 'obs', step)
+
+        # Future
+        if self.nstep:
+            # Transition
+            experience.action = episode[step + 1].action
+            experience['next_obs'] = frame_stack(episode, 'obs', step + self.nstep)
+
+            # Trajectory TODO
+            # traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
+            #                          for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
+            # traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
+            traj_r = torch.as_tensor([experience.reward
+                                      for experience in episode[step + 1:step + self.nstep + 1]])
+            # traj_l = episode['label'][idx:idx + self.nstep + 1]
+
+            # Cumulative discounted reward
+            discounts = self.discount ** np.arange(self.nstep + 1)
+            experience.reward = np.dot(discounts[:-1], traj_r)
+            experience['discount'] = discounts[-1:]
+        else:
+            experience['discount'] = 1.0
 
         return experience
 

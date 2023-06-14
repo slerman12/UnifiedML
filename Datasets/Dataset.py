@@ -2,13 +2,15 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import glob
 import itertools
 import os
+import yaml
 
 import torchvision
 
 from Datasets.Memory import Batch
-from Hyperparams.minihydra import instantiate, Args, added_modules
+from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
 
 
 # Returns a path to an existing Memory directory or an instantiated Pytorch Dataset
@@ -24,7 +26,7 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
     # Return a Dataset based on a module path or non-default modules like torchvision
     assert is_valid_path(dataset._target_, module_path=True, module=True), 'Not a valid Dataset instantiation argument.'
 
-    path += get_dataset_path(dataset)  # DatasetClassName/Count/
+    path += get_dataset_path(dataset, path)  # DatasetClassName/Count/
 
     # Return directory path if Dataset module has already been saved in Memory
     if allow_memory:
@@ -36,7 +38,7 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
         return instantiate(dataset)
 
     # Add torchvision, torchvision.datasets to module search during dataset config instantiation
-    added_modules.update({torchvision, torchvision.datasets})
+    added_modules.update({'torchvision': torchvision, 'datasets': torchvision.datasets})
 
     train = getattr(dataset, 'train', None)
     if train is not None:
@@ -135,12 +137,29 @@ class Lock:
 def to_experience(data):
     if not isinstance(data, (dict, Batch)):
         # Potentially extract by variable name
-        pass  # obs, label -> Batch({'obs': obs, 'label': label})
+        # For now assuming obs, label
+        obs, label, *_ = data
+        data = Batch({'obs': obs, 'label': label})
+
+    return data
 
 
-def get_dataset_path(dataset):
-    pass  # Return DatasetClassName/Count/
+def get_dataset_path(dataset, path):
+    dataset_class_name = dataset._target_.rsplit('.', 1)[-1]
+
+    count = 0
+
+    for file in sorted(glob.glob(path + dataset_class_name + '/*/*.yaml')):
+        if dataset == open_yaml(file):
+            count = int(file.rsplit('/', 2)[-2])
+        else:
+            count += 1
+
+    return f'{dataset_class_name}/{count}/'
 
 
-def make_card(dataset):
-    pass  # Make DatasetTailName/Count/dataset_card.yaml
+def make_card(dataset, path):
+    path += get_dataset_path(dataset, path) + 'dataset_card.yaml'
+
+    with open(path, 'w') as file:
+        yaml.dump(dataset, file)
