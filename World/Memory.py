@@ -216,7 +216,7 @@ class Memory:
                     warnings.warn(f'Found Mems with multiple identifiers in load path {load_path}. Using id={self.id}.')
                     continue
 
-                self.num_batches = num_batches
+                self.num_batches = int(num_batches)
 
                 if self.num_batches > previous_num_batches:
                     self.add(batch)
@@ -339,7 +339,7 @@ class Mem:
     def __init__(self, mem, path=None):
         self.shm = None
         self.mem = None if mem is None else np.array(mem)
-        self.path = path
+        self.path = str(path)
         self.saved = False
 
         self.mode = None if mem is None else 'ndarray'
@@ -352,7 +352,7 @@ class Mem:
             self.path += '_' + str(tuple(self.shape)) + '_' + self.dtype.name
 
         # Note: Hash is rounded to 16 places
-        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10**16)
+        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
 
         self.main_worker = os.getpid()
 
@@ -360,11 +360,11 @@ class Mem:
         if self.mode == 'shared':
             self.shm.close()
         return self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, \
-            *((self.mem,) if self.mode in ('pinned', 'shared_tensor') else ())
+            self.mem if self.mode in ('pinned', 'shared_tensor', 'gpu') else None
 
     def __setstate__(self, state):
-        self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, *mem = state
-        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10**16)
+        self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, mem = state
+        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
 
         if self.mode == 'shared':
             self.shm = SharedMemory(name=self.name)

@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import atexit
-import math
 import os
 import random
 import threading
@@ -18,14 +17,14 @@ from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 
 from World.Memory import Memory, Batch
-from World.Dataset import load_dataset, datums_to_batch, get_dataset_path, Transform
+from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform
 from Hyperparams.minihydra import instantiate
 
 
 class Replay:
     def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
-                 gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False,
+                 gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False, mem_size=None,
                  dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), **kwargs):
 
         # Future steps to compute cumulative reward from
@@ -73,17 +72,17 @@ class Replay:
                 if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
                     self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False.')
             else:
-                batches = DataLoader(Transform(dataset), batch_size=batch_size)
+                batches = DataLoader(Transform(dataset), batch_size=mem_size or batch_size)
 
                 # Add Dataset into Memory in batch-size chunks
                 for data in tqdm(batches, desc='Loading Dataset into accelerated Memory...'):
-                    self.memory.add(datums_to_batch(data))
+                    self.memory.add(datums_as_batch(data))
 
             if save_path:
                 # Save to hard disk if Offline
                 if isinstance(dataset, Dataset) and offline:
                     self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
-                                          'This only has to be done once.', card=card)
+                                          'This only has to be done once', card=card)
 
         # Save Online replay on terminate  Maybe delete if not save
         if not offline and save:

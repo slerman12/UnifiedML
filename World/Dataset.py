@@ -155,16 +155,23 @@ class Lock:
         self.file.close()  # Perhaps delete
 
 
-def datums_to_batch(data):
-    if not isinstance(data, (dict, Batch)):
+def datums_as_batch(datums):
+    if isinstance(datums, Batch):
+        return datums
+
+    if isinstance(datums, dict):
+        return Batch(datums)
+
+    if not isinstance(datums, Batch):
         # Potentially extract by variable name
         # For now assuming obs, label
-        obs, label, *_ = data
-        dtype = torch.uint8 if len(obs.shape) == 3 and len(obs) in [0, 3] else torch.float32  # May assume image uint8
-        data = Batch({'obs': torch.as_tensor(obs, dtype=dtype),
-                      'label': torch.as_tensor(label), 'done': True})
+        obs, label, *_ = datums
 
-    return data
+        # May assume image uint8
+        dtype = torch.uint8 if len(obs.shape) == 3 and len(obs) in [0, 3] else torch.float32
+
+        return Batch({'obs': torch.as_tensor(obs, dtype=dtype),
+                      'label': torch.as_tensor(label), 'done': True})
 
 
 class Transform(Dataset):
