@@ -1,7 +1,5 @@
 # Template created by Sam Lerman, slerman@ur.rochester.edu.
 
-from torchvision.datasets import mnist  # Dataset
-from torch.utils.data import DataLoader  # Gets batches, parallel workers can speed up hard disk data reads
 from torchvision.transforms import ToTensor, Normalize, Compose  # Can pre-process images
 
 import torch  # Pytorch!
@@ -9,7 +7,7 @@ from torch import nn  # Neural networks
 from torch.optim import SGD  # Stochastic gradient descent -- optimize the neural networks
 import torch.multiprocessing as mp
 
-from Datasets.Replay import Replay
+from World.Replay import Replay
 
 # Start learning and evaluating
 if __name__ == '__main__':
@@ -28,7 +26,7 @@ if __name__ == '__main__':
     # test_dataset = mnist.MNIST(root='./', train=False, transform=data_transform, download=True)
 
     # Divide data into batches
-    train_loader = Replay(batch_size=batch_size, dataset='datasets.MNIST')
+    train_loader = Replay(batch_size=batch_size, dataset='MNIST')
     # test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
     # The neural network

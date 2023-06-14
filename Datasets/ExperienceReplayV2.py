@@ -11,7 +11,7 @@ from torch.utils.data import IterableDataset, Dataset, DataLoader
 
 from Hyperparams.minihydra import Args, valid_path
 
-from Datasets.Memory import Memory
+from World.Memory import Memory
 
 
 class ExperienceReplay:

@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import atexit
+import math
 import os
 import random
 import threading
@@ -13,19 +14,19 @@ from tqdm import tqdm
 import numpy as np
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 
-from Datasets.Memory import Memory, Batch
-from Datasets.Dataset import load_dataset, to_experience, get_dataset_path, make_card
+from World.Memory import Memory, Batch
+from World.Dataset import load_dataset, datums_to_batch, get_dataset_path, Transform
 from Hyperparams.minihydra import instantiate
 
 
 class Replay:
     def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
-                 gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
+                 gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
                  gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False,
-                 dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,)):
+                 dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), **kwargs):
 
         # Future steps to compute cumulative reward from
         self.nstep = nstep or 0
@@ -42,24 +43,15 @@ class Replay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
+        dataset_config = dataset
+        card = {'_target_': dataset_config} if isinstance(dataset_config, str) else dataset_config
+
         # TODO System-wide lock perhaps, w.r.t. Offline Dataset save path if load_dataset is Dataset and Offline
         if dataset is not None:
-            dataset_config = dataset
-
             # Pytorch Dataset or Memory path
-            dataset = load_dataset(('World/ReplayBuffer/Offline/' if offline
-                                   else 'World/ReplayBuffer/Online/') + path, dataset_config)
+            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config, **kwargs)
 
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
-
-            # Fill Memory
-            if isinstance(dataset, str):
-                # Load Memory from path
-                self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
-            else:
-                # Add Dataset into Memory
-                for data in tqdm(dataset, desc='Loading Dataset into Memory...'):
-                    self.memory.add(to_experience(data))
 
             # Memory save-path
             save_path = None
@@ -68,22 +60,34 @@ class Replay:
                 root = 'World/ReplayBuffer/Offline/'
                 save_path = root + get_dataset_path(dataset_config, root)
             elif not offline:
-                if isinstance(dataset, str) and dataset != 'World/ReplayBuffer/Online/' + path:
-                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False.')
                 save_path = 'World/ReplayBuffer/Online/' + path
 
             if save_path:
                 self.memory.set_save_path(save_path)
-                make_card({} if isinstance(dataset_config, str) else dataset_config, save_path)
 
+            # Fill Memory
+            if isinstance(dataset, str):
+                # Load Memory from path
+                self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
+
+                if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
+                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False.')
+            else:
+                batches = DataLoader(Transform(dataset), batch_size=batch_size)
+
+                # Add Dataset into Memory in batch-size chunks
+                for data in tqdm(batches, desc='Loading Dataset into accelerated Memory...'):
+                    self.memory.add(datums_to_batch(data))
+
+            if save_path:
                 # Save to hard disk if Offline
-                if isinstance(dataset, Dataset) and offline and save:
+                if isinstance(dataset, Dataset) and offline:
                     self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
-                                          'This only has to be done once.')
+                                          'This only has to be done once.', card=card)
 
-        # Save Online replay on terminate
+        # Save Online replay on terminate  Maybe delete if not save
         if not offline and save:
-            atexit.register(lambda: self.memory.save(desc='Saving Replay Memory...'))
+            atexit.register(lambda: self.memory.save(desc='Saving Replay Memory...', card=card))
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
@@ -250,7 +254,7 @@ class Sampler:
 
         threading.Thread(target=self.publish).start()
 
-    # Sample index publisher
+    # Sample index publisher TODO Event to crash when main crashes!
     def publish(self):
         assert os.getpid() == self.main_worker, 'Only main worker can feed sample indices.'
 

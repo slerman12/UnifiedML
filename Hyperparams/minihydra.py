@@ -29,6 +29,9 @@ added_modules = {}
 
 # Something like this
 def instantiate(args, **kwargs):
+    if args is None:
+        return
+
     # For compatibility with old Hydra syntax
     if '_recursive_' in args:
         args.pop('_recursive_')
@@ -36,17 +39,17 @@ def instantiate(args, **kwargs):
     args = deepcopy(args)
     args.update(kwargs)
 
-    file, module = args.pop('_target_').rsplit('.', 1)
+    file, *module = args.pop('_target_').rsplit('.', 1)
 
     sub_module, *sub_modules = file.split('.')
 
     # Can instantiate based on added modules
     if sub_module in added_modules:
-        try:
-            sub_module = added_modules[sub_module]
+        sub_module = added_modules[sub_module]
 
-            for sub in sub_modules:
-                sub_module = getattr(sub_module, sub)
+        try:
+            for key in sub_modules + module:
+                sub_module = getattr(sub_module, key)
 
             return sub_module(**args)
         except AttributeError:

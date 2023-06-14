@@ -8,11 +8,11 @@ from math import inf
 import numpy as np
 
 import torch
-from torch.utils.data import IterableDataset, Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 
-from Datasets.Memory import Memory
-from Datasets.Dataset import load_dataset, to_experience, make_card
+from World.Memory import Memory
+from World import load_dataset, to_experience, make_card
 
 
 class Replay:

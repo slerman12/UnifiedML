@@ -3,42 +3,56 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import glob
+import inspect
 import itertools
 import os
-import yaml
+
+import torch
+from torch.utils.data import Dataset
+
+from PIL.Image import Image
 
 import torchvision
+from torchvision.transforms import transforms
+from torchvision.transforms import functional as F
 
-from Datasets.Memory import Batch
+from World.Memory import Batch
 from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
 
 
 # Returns a path to an existing Memory directory or an instantiated Pytorch Dataset
-def load_dataset(path, dataset, allow_memory=True, train=True, **kwargs):
+def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
     # Allow config as string path
-    if isinstance(dataset, str):
-        dataset = Args({'_target_': dataset})
+    if isinstance(dataset_config, str):
+        dataset_config = Args({'_target_': dataset_config})
 
     # If dataset is a directory path, return the string directory path
-    if allow_memory and is_valid_path(dataset._target_, dir_path=True):
-        return dataset._target_  # Note: stream=false if called in Env
+    if allow_memory and is_valid_path(dataset_config._target_, dir_path=True):
+        return dataset_config._target_  # Note: stream=false if called in Env
 
-    # Add torchvision, torchvision.datasets to module search during dataset config instantiation
-    added_modules.update({'torchvision': torchvision, 'datasets': torchvision.datasets})
+    # Add torchvision datasets to module search for config instantiation
+    pytorch_datasets = {m: getattr(torchvision.datasets, m)
+                        for m in dir(torchvision.datasets) if inspect.isclass(getattr(torchvision.datasets, m))
+                        and issubclass(getattr(torchvision.datasets, m), Dataset)}
+    added_modules.update(pytorch_datasets)
+
+    if dataset_config._target_[:len('torchvision.datasets.')] == 'torchvision.datasets.':
+        dataset_config._target_ = dataset_config._target_[len('torchvision.datasets.'):]  # Allow torchvision. syntax
 
     # Return a Dataset based on a module path or non-default modules like torchvision
-    assert is_valid_path(dataset._target_, module_path=True, module=True), 'Not a valid Dataset instantiation argument.'
+    assert is_valid_path(dataset_config._target_, module_path=True, module=True), \
+        'Not a valid Dataset instantiation argument.'
 
-    path += get_dataset_path(dataset, path)  # DatasetClassName/Count/
+    path += get_dataset_path(dataset_config, path)  # DatasetClassName/Count/
 
     # Return directory path if Dataset module has already been saved in Memory
     if allow_memory:
-        if os.path.exists(path):
+        if glob.glob(path + '*.yaml'):
             return path
 
     # Return the Dataset module
-    if is_valid_path(dataset._target_, module_path=True):
-        return instantiate(dataset)
+    if is_valid_path(dataset_config._target_, module_path=True):
+        return instantiate(dataset_config)
 
     if train is not None:
         path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
@@ -53,18 +67,22 @@ def load_dataset(path, dataset, allow_memory=True, train=True, **kwargs):
     download_specs = [dict(download=True), {}]
     transform_specs = [dict(transform=None), {}]
 
+    dataset = None
+
     # Instantiate dataset
     for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
         try:
             root_spec, train_spec, download_spec, transform_spec = all_specs
             specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
-            specs = {key: specs[key] for key in set(specs) - set(dataset)}
+            specs = {key: specs[key] for key in set(specs) - set(dataset_config)}
             specs.update(kwargs)
             with Lock(path + 'lock'):  # System-wide mutex-lock
-                dataset = instantiate(dataset, **specs)
+                dataset = instantiate(dataset_config, **specs)
         except (TypeError, ValueError):
             continue
         break
+
+    assert dataset, 'Could not find Dataset.'
 
     return dataset
 
@@ -109,60 +127,78 @@ class Lock:
 
         if os.name == "nt":
             import msvcrt
-    
+
             def lock(file):
                 file.seek(0)
                 msvcrt.locking(file.fileno(), msvcrt.LK_LOCK, 1)
-        
+
             def unlock(file):
                 file.seek(0)
                 msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)
         else:
             import fcntl
-        
+
             def lock(file):
                 fcntl.flock(file.fileno(), fcntl.LOCK_EX)
-        
+
             def unlock(file):
                 fcntl.flock(file.fileno(), fcntl.LOCK_UN)
-                
+
         self.lock, self.unlock = lock, unlock
 
     def __enter__(self):
-        self.file = open(self.path)
+        self.file = open(self.path, 'w')
         self.lock(self.file)
 
     def __exit__(self, _type, value, tb):
         self.unlock(self.file)
-        self.file.close()
+        self.file.close()  # Perhaps delete
 
 
-def to_experience(data):
+def datums_to_batch(data):
     if not isinstance(data, (dict, Batch)):
         # Potentially extract by variable name
         # For now assuming obs, label
         obs, label, *_ = data
-        data = Batch({'obs': obs, 'label': label})
+        dtype = torch.uint8 if len(obs.shape) == 3 and len(obs) in [0, 3] else torch.float32  # May assume image uint8
+        data = Batch({'obs': torch.as_tensor(obs, dtype=dtype),
+                      'label': torch.as_tensor(label), 'done': True})
 
     return data
 
 
-def get_dataset_path(dataset, path):
-    dataset_class_name = dataset._target_.rsplit('.', 1)[-1]
+class Transform(Dataset):
+    def __init__(self, dataset, transform=None):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Map inputs
+        self.__dataset, self.__transform = dataset, transform
+
+    def __getitem__(self, idx):
+        x, y = self.__dataset.__getitem__(idx)
+        x, y = F.to_tensor(x) if isinstance(x, Image) else x, y
+        x = (self.__transform or (lambda _: _))(x)  # Transform
+        return x, y
+
+    def __len__(self):
+        return self.__dataset.__len__()
+
+
+def add_batch_dim(datum):
+    return datum[None, ...] if datum.shape else datum.view(1, 1)
+
+
+def get_dataset_path(dataset_config, path):
+    dataset_class_name = getattr(dataset_config, '_target_',
+                                 dataset_config).rsplit('.', 1)[-1] + '/' if dataset_config else ''
 
     count = 0
 
-    for file in sorted(glob.glob(path + dataset_class_name + '/*/*.yaml')):
-        if dataset == open_yaml(file):
+    for file in sorted(glob.glob(path + dataset_class_name + '*/*.yaml')):
+        if dataset_config == open_yaml(file):
             count = int(file.rsplit('/', 2)[-2])
         else:
             count += 1
 
-    return f'{dataset_class_name}/{count}/'
-
-
-def make_card(dataset, path):
-    path += get_dataset_path(dataset, path) + 'dataset_card.yaml'
-
-    with open(path, 'w') as file:
-        yaml.dump(dataset, file)
+    return f'{dataset_class_name}{count}/'

@@ -9,8 +9,11 @@ import os
 import warnings
 from multiprocessing.shared_memory import SharedMemory
 import resource
-from tqdm import tqdm
+import hashlib
 from pathlib import Path
+import yaml
+
+from tqdm import tqdm
 
 import numpy as np
 
@@ -81,7 +84,9 @@ class Memory:
     # TODO Be own thread https://stackoverflow.com/questions/14234547/threads-with-decorators
     def add(self, batch):
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
-        assert self.save_path is not None, 'Memory save_path must be set to add memories.'
+
+        if self.hd_capacity > 0:
+            assert self.save_path is not None, 'Memory save_path must be set to add memories.'
 
         batch_size = Batch(batch).size()
 
@@ -98,7 +103,7 @@ class Memory:
             else 'shared' if shared else 'mmap' if mmap \
             else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
 
-        batch = Batch({key: Mem(batch[key], f'{self.save_path}/{self.num_batches}_{key}_{self.id}').to(mode)
+        batch = Batch({key: Mem(batch[key], f'{self.save_path}{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})  # TODO a meta key for special save_path
 
         self.batches.append(batch)
@@ -147,7 +152,13 @@ class Memory:
 
     @property
     def traces(self):
-        yield from (self.trace(i) for i in range(len(self.episodes)))
+        trace = None
+
+        for i in range(len(self.episodes)):
+            if self.trace(i) != trace:
+                trace = self.trace(i)
+                yield trace
+        # yield from (self.trace(i) for i in range(len(self.episodes)))
 
     def episode(self, ind):
         return self.episodes[ind]
@@ -192,7 +203,10 @@ class Memory:
         previous_num_batches = 0
 
         for i, mmap_path in enumerate(tqdm(mmap_paths, desc=desc)):
-            _, num_batches, key, identifier = mmap_path.stem.rsplit('_', 3)
+            try:
+                _, num_batches, key, identifier = mmap_path.stem.rsplit('_', 3)
+            except ValueError:
+                continue
 
             if i == 0:
                 self.id = identifier
@@ -212,19 +226,27 @@ class Memory:
 
             previous_num_batches = self.num_batches
 
-    def save(self, desc='Saving Memory...'):
+    def save(self, desc='Saving Memory...', card=None):
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
+        assert self.save_path is not None, 'Memory save_path must be set to save memories.'
 
-        for batch in tqdm(self.traces, desc=desc):
-            for mem in batch.mems:
-                mem.save()
+        for trace in tqdm(self.traces, desc=desc):
+            for batch in trace:
+                for mem in batch.mems:
+                    mem.save()
+
+        if card:
+            with open(self.save_path + 'card.yaml', 'w') as file:
+                yaml.dump(card, file)
 
     def saved(self, saved=True, desc='Setting saved flag in Mems...'):
         assert self.main_worker == os.getpid(), 'Only main worker can call saved.'
+        assert self.save_path is not None, 'Memory save_path must be set to save memories.'
 
-        for batch in tqdm(self.traces, desc=desc):
-            for mem in batch.mems:
-                mem.saved = saved
+        for trace in tqdm(self.traces, desc=desc):
+            for batch in trace:
+                for mem in batch.mems:
+                    mem.saved = saved
 
 class Queue:
     def __init__(self):
@@ -329,7 +351,8 @@ class Mem:
             self.dtype = self.mem.dtype
             self.path += '_' + str(tuple(self.shape)) + '_' + self.dtype.name
 
-        self.name = '_'.join(self.path.rsplit('/', 4)[1:])
+        # Note: Hash is rounded to 16 places
+        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10**16)
 
         self.main_worker = os.getpid()
 
@@ -341,7 +364,7 @@ class Mem:
 
     def __setstate__(self, state):
         self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, *mem = state
-        self.name = '_'.join(self.path.rsplit('/', 4)[1:])
+        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10**16)
 
         if self.mode == 'shared':
             self.shm = SharedMemory(name=self.name)
@@ -458,7 +481,7 @@ class Mem:
         return bool(self.mem)
 
     def __len__(self):
-        return self.shape[0]
+        return self.shape[0] if self.shape else 1
 
     def load(self):
         if not self.saved:
