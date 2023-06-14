@@ -9,6 +9,7 @@ import os
 import warnings
 from multiprocessing.shared_memory import SharedMemory
 import resource
+from tqdm import tqdm
 from pathlib import Path
 
 import numpy as np
@@ -180,7 +181,7 @@ class Memory:
     def queue(self):
         return self.queues[self.worker]
 
-    def load(self, load_path=None):
+    def load(self, load_path=None, desc='Loading Memory...'):
         assert self.main_worker == os.getpid(), 'Only main worker can call load.'
 
         if load_path is None:
@@ -190,7 +191,7 @@ class Memory:
         batch = {}
         previous_num_batches = 0
 
-        for i, mmap_path in enumerate(mmap_paths):
+        for i, mmap_path in enumerate(tqdm(mmap_paths, desc=desc)):
             _, num_batches, key, identifier = mmap_path.stem.rsplit('_', 3)
 
             if i == 0:
@@ -211,13 +212,19 @@ class Memory:
 
             previous_num_batches = self.num_batches
 
-    def save(self):
+    def save(self, desc='Saving Memory...'):
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
 
-        for batch in self.traces:
+        for batch in tqdm(self.traces, desc=desc):
             for mem in batch.mems:
                 mem.save()
 
+    def saved(self, saved=True, desc='Setting saved flag in Mems...'):
+        assert self.main_worker == os.getpid(), 'Only main worker can call saved.'
+
+        for batch in tqdm(self.traces, desc=desc):
+            for mem in batch.mems:
+                mem.saved = saved
 
 class Queue:
     def __init__(self):

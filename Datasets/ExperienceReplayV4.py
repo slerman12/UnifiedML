@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import atexit
 import os
 import random
 import threading
@@ -12,10 +13,11 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 import torch.multiprocessing as mp
+from tqdm import tqdm
 
 from Datasets.Memory import Memory, Batch
-from Datasets.Datasets import load_dataset, to_experience, make_card
-from Hyperparams.minihydra import instantiate
+from Datasets.Datasets import load_dataset, to_experience, get_dataset_path, make_card, is_valid_path
+from Hyperparams.minihydra import instantiate, yaml_search_paths, Args
 
 
 class Replay:
@@ -39,32 +41,43 @@ class Replay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
-        # Pytorch Dataset or Memory path
-        dataset = load_dataset('Offline', dataset)
+        if dataset is not None:
+            dataset_config = dataset
 
-        # Fill Memory
-        if isinstance(dataset, str):
-            # Load Memory from path
-            self.memory.load(dataset)
-        else:
-            # Add Dataset into Memory
-            for data in dataset:
-                self.memory.add(to_experience(data))
+            # Pytorch Dataset or Memory path
+            dataset = load_dataset('Offline/' if offline else 'Online/' + path, dataset_config)
 
-        # Memory save-path TODO
-        if '/Offline/' in dataset and not offline:  # Copy to Online
-            save_path = ''  # Environment will fill
-        else:
-            save_path = ''
+            # Fill Memory
+            if isinstance(dataset, str):
+                # Load Memory from path
+                self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
+            else:
+                # Add Dataset into Memory
+                for data in tqdm(dataset, desc='Loading Dataset into Memory...'):
+                    self.memory.add(to_experience(data))
 
-        self.memory.set_save_path(save_path)
-        make_card(save_path)
+            # Memory save-path
+            save_path = None
 
-        # Save to hard disk if Offline
-        if isinstance(dataset, Dataset) and offline:
-            self.memory.save()
+            if isinstance(dataset, Dataset) and offline:
+                save_path = '/Offline/' + get_dataset_path(dataset_config)
+            elif not offline:
+                if isinstance(dataset, str) and '/Offline/' in dataset and not offline:  # Copy to Online
+                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Dataset to False.')
+                save_path = '/Online/' + path
 
-        # TODO At exit, maybe save
+            if save_path:
+                self.memory.set_save_path(save_path)
+                make_card(save_path)
+
+                # Save to hard disk if Offline
+                if isinstance(dataset, Dataset) and offline:
+                    self.memory.save(desc='Memory-mapping dataset for training acceleration. '
+                                          'This only has to be done once.')
+
+        # Save Online replay on terminate
+        if not offline:
+            atexit.register(lambda: (print('Saving replay memory... please hold...'), self.memory.save()))
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 

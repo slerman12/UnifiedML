@@ -21,27 +21,26 @@ def load_dataset(path, dataset, allow_memory=True, **kwargs):
     if allow_memory and is_valid_path(dataset._target_, dir_path=True):
         return dataset._target_  # Note: stream=false if called in Env
 
-    name = ''  # Should be path like DatasetTailName/Count/
+    # Return a Dataset based on a module path or non-default modules like torchvision
+    assert is_valid_path(dataset._target_, module_path=True, module=True), 'Not a valid Dataset instantiation argument.'
+
+    path += get_dataset_path(dataset)  # DatasetClassName/Count/
 
     # Return directory path if Dataset module has already been saved in Memory
     if allow_memory:
-        # See if dataset exists in any DatasetTailName/Count/ .yamls
-        # If so, return it
-        pass
+        if os.path.exists(path):
+            return path
 
     # Return the Dataset module
     if is_valid_path(dataset._target_, module_path=True):
         return instantiate(dataset)
-
-    # Return a Dataset based on non-default modules like torchvision
-    assert is_valid_path(dataset._target_, module=True), 'Not a valid Dataset instantiation argument.'
 
     # Add torchvision, torchvision.datasets to module search during dataset config instantiation
     added_modules.update({torchvision, torchvision.datasets})
 
     train = getattr(dataset, 'train', None)
     if train is not None:
-        path += '/' + name + ('Downloaded_Train' if train else 'Downloaded_Eval')
+        path += ('Downloaded_Train' if train else 'Downloaded_Eval')
     os.makedirs(path, exist_ok=True)
 
     # Different datasets have different specs
@@ -134,8 +133,13 @@ class Lock:
 
 def to_experience(data):
     if not isinstance(data, (dict, Batch)):
-        pass
+        # Potentially extract by variable name
+        pass  # obs, label -> Batch({'obs': obs, 'label': label})
+
+
+def get_dataset_path(dataset):
+    pass  # Return DatasetClassName/Count/
 
 
 def make_card(dataset):
-    pass
+    pass  # Make DatasetTailName/Count/dataset_card.yaml
