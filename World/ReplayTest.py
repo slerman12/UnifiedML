@@ -62,7 +62,8 @@ if __name__ == '__main__':
 
         # Print scores
         if i % 1000 == 0:
-            print('Epoch: {}, Training Accuracy: {}/{} ({:.0f}%)'.format(epoch, correct, total, 100. * correct / total))
+            print('Epoch: {}, Training Accuracy: {}/{} ({:.0f}%)'.format(train_loader.epoch, correct, total,
+                                                                         100. * correct / total))
 
             correct = total = 0
 

@@ -124,6 +124,7 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
 
     # Load model's params
     model.load_state_dict(to_load['state_dict'], strict=False)
+    model.device = device
 
     # Load saved attributes as well
     for key in to_load:

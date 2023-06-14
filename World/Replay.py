@@ -134,7 +134,8 @@ class Replay:
         else:
             # Get batch from prefetch tape
             batch = self.prefetch_tape.get_batch()
-            return *batch[:10 if trajectories else 6], *batch[10:]  # Return batch, w(/o) future-trajectories
+            return batch
+            # return *batch[:10 if trajectories else 6], *batch[10:]  # Return batch, w(/o) future-trajectories
 
     def add(self, batch):
         if self.stream:
@@ -307,7 +308,7 @@ class PrefetchTape:
                 if not len(self.prefetch_tape):
                     self.prefetch_tape.main_worker = os.getpid()
                     for _ in range(self.cap):
-                        self.prefetch_tape.add(experience)
+                        self.prefetch_tape.add({key: add_batch_dim(value) for key, value in experience.items()})
 
         # TODO Note have to force them to be episode done
 
@@ -322,7 +323,7 @@ class PrefetchTape:
                 device = datum.device
                 break
 
-        self.prefetch_tape[index][0] = {key: add_batch_dim(torch.as_tensor(datum).to(device, non_blocking=True))
+        self.prefetch_tape[index][0] = {key: add_batch_dim(datum).to(device, non_blocking=True)
                                         for key, datum in experience.items()}
 
     def full(self, index):
@@ -356,11 +357,9 @@ class PrefetchTape:
         else:
             experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
 
-        print([[experience[0][key][...] for experience in experiences] for key in experiences[0][0]])
-
         # Collate
-        batch = {key: torch.concat([torch.as_tensor(datum).to(self.device, non_blocking=True)
-                                    for datum in [experience[0][key][...] for experience in experiences]])
+        batch = {key: torch.stack([torch.as_tensor(datum).to(self.device, non_blocking=True)
+                                   for datum in [experience[0][key][...] for experience in experiences]])
                  for key in experiences[0][0]}
 
         return Batch(batch)

@@ -193,7 +193,8 @@ class Transform(Dataset):
 
 
 def add_batch_dim(datum):
-    return datum[None, ...] if datum.shape else datum.view(1, 1)
+    datum = torch.as_tensor(datum)
+    return datum[None, ...] if datum.shape else datum.view([1])
 
 
 def get_dataset_path(dataset_config, path):

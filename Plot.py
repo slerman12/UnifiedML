@@ -25,6 +25,9 @@ from matplotlib.ticker import FuncFormatter, PercentFormatter
 import seaborn as sns
 
 
+# TODO Confidence/Accuracy visual on raw probas (Accuracy segment w/ vertical confidence/avg-proba segment per class)
+
+
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=None,
          write_tabular=False, plot_train=False, title='UnifiedML', x_axis='Step', verbose=False):
 
