@@ -24,11 +24,11 @@ import torch.multiprocessing as mp
 class Memory:
     def __init__(self, save_path=None, num_workers=1, gpu_capacity=0, pinned_capacity=0,
                  tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf):
-        self.gpu_capacity = gpu_capacity
-        self.pinned_capacity = pinned_capacity
-        self.tensor_ram_capacity = tensor_ram_capacity
-        self.ram_capacity = ram_capacity
-        self.hd_capacity = hd_capacity
+        self.capacities = [inf if capacity == 'inf' else capacity for capacity in [gpu_capacity,
+                                                                                   pinned_capacity,
+                                                                                   tensor_ram_capacity,
+                                                                                   ram_capacity,
+                                                                                   hd_capacity]]
 
         self.id = id(self)
         self.worker = 0
@@ -88,14 +88,11 @@ class Memory:
 
         batch_size = Batch(batch).size()
 
-        capacities = [inf if capacity == 'inf' else capacity for capacity in [self.gpu_capacity, self.pinned_capacity,
-                                                                              self.tensor_ram_capacity,
-                                                                              self.ram_capacity, self.hd_capacity]]
-        gpu = self.num_experiences + batch_size <= sum(capacities[:1])
-        pinned = self.num_experiences + batch_size <= sum(capacities[:2])
-        shared_tensor = self.num_experiences + batch_size <= sum(capacities[:3])
-        shared = self.num_experiences + batch_size <= sum(capacities[:4])
-        mmap = self.num_experiences + batch_size <= sum(capacities[:5])
+        gpu = self.num_experiences + batch_size <= sum(self.capacities[:1])
+        pinned = self.num_experiences + batch_size <= sum(self.capacities[:2])
+        shared_tensor = self.num_experiences + batch_size <= sum(self.capacities[:3])
+        shared = self.num_experiences + batch_size <= sum(self.capacities[:4])
+        mmap = self.num_experiences + batch_size <= sum(self.capacities[:5])
 
         mode = 'gpu' if gpu else 'pinned' if pinned else 'shared_tensor' if shared_tensor \
             else 'shared' if shared else 'mmap' if mmap \
@@ -129,7 +126,7 @@ class Memory:
         self.rewrite()
 
     def enforce_capacity(self):
-        while self.num_experiences > self.gpu_capacity + self.ram_capacity + self.hd_capacity:
+        while self.num_experiences > sum(self.capacities):
             batch = self.episodes[0].batch(0)
             batch_size = batch.size()
 
@@ -164,12 +161,6 @@ class Memory:
 
     def episode(self, ind):
         return self.episodes[ind]
-
-    def __setitem__(self, ind, experience):
-        stored_experience = self.episode(ind)
-
-        for key, datum in experience.items():
-            stored_experience[key][...] = datum
 
     def __getitem__(self, ind):
         return self.episode(ind)
@@ -279,6 +270,12 @@ class Episode:
     def experience(self, step):
         return Experience(self.episode_trace, step, self.ind)
 
+    def __setitem__(self, step, experience):
+        stored_experience = self.experience(step)
+
+        for key, datum in experience.items():
+            stored_experience[key] = datum
+
     def __getitem__(self, step):
         return self.experience(step)
 
@@ -386,8 +383,7 @@ class Mem:
             self.mem = mem
 
     def __getitem__(self, ind):
-        assert self.shape
-        return self.mem[ind]
+        return self.mem[ind] if self.shape else self.mem
 
     def __setitem__(self, ind, value):
         self.mem[ind if self.shape else ...] = value

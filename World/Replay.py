@@ -17,8 +17,8 @@ from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 
 from World.Memory import Memory, Batch
-from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform
-from Hyperparams.minihydra import instantiate
+from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, add_batch_dim
+from Hyperparams.minihydra import instantiate, Args
 
 
 class Replay:
@@ -179,8 +179,8 @@ class ParallelWorker:
 
             # Retrieve from Memory
             episode = self.memory[index]
-            step = random.randint(0, len(episode) - self.nstep)  # Randomly sample sub-episode
-            experience = episode[step]
+            step = random.randint(0, len(episode) - self.nstep - 1)  # Randomly sample sub-episode
+            experience = Args(episode[step])
 
             # Frame stack / N-step
             experience = self.compute_RL(episode, experience, step)
@@ -208,7 +208,7 @@ class ParallelWorker:
 
         # Present
         if self.frame_stack > 1:
-            experience.obs = frame_stack(experience, 'obs', step)
+            experience.obs = frame_stack(experience, 'obs', step)  # Need experience as own dict/Batch for this
 
         # Future
         if self.nstep:
@@ -305,19 +305,25 @@ class PrefetchTape:
         if not len(self.prefetch_tape):
             with self.add_lock:
                 if not len(self.prefetch_tape):
+                    self.prefetch_tape.main_worker = os.getpid()
                     for _ in range(self.cap):
                         self.prefetch_tape.add(experience)
+
+        # TODO Note have to force them to be episode done
+
+        if self.prefetch_tape.main_worker != os.getpid():
+            self.prefetch_tape.update()
 
         device = None
         index = self.index()
 
-        for datum in self.prefetch_tape[index].values():
+        for datum in self.prefetch_tape[index][0].values():
             if hasattr(datum, 'device'):
                 device = datum.device
                 break
 
-        self.prefetch_tape[index] = {key: torch.as_tensor(datum)[None, :].to(device, non_blocking=True)
-                                     for key, datum in experience.items()}
+        self.prefetch_tape[index][0] = {key: add_batch_dim(torch.as_tensor(datum).to(device, non_blocking=True))
+                                        for key, datum in experience.items()}
 
     def full(self, index):
         if index > self.start_index:
@@ -348,6 +354,6 @@ class PrefetchTape:
         # Collate
         batch = {key: torch.concat([torch.as_tensor(datum).to(self.device, non_blocking=True)
                                     for datum in [experience[0][key][...] for experience in experiences]])
-                 for key in experiences[0]}
+                 for key in experiences[0][0]}
 
         return Batch(batch)
