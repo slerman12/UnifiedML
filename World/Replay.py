@@ -70,7 +70,7 @@ class Replay:
                 self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
 
                 if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
-                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False.')
+                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False')
             else:
                 batches = DataLoader(Transform(dataset), batch_size=mem_size or batch_size)
 

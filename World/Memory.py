@@ -84,9 +84,7 @@ class Memory:
     # TODO Be own thread https://stackoverflow.com/questions/14234547/threads-with-decorators
     def add(self, batch):
         assert self.main_worker == os.getpid(), 'Only main worker can send new batches.'
-
-        if self.hd_capacity > 0:
-            assert self.save_path is not None, 'Memory save_path must be set to add memories.'
+        # assert self.save_path is not None, 'Memory save_path must be set to add memories.'
 
         batch_size = Batch(batch).size()
 
@@ -102,6 +100,10 @@ class Memory:
         mode = 'gpu' if gpu else 'pinned' if pinned else 'shared_tensor' if shared_tensor \
             else 'shared' if shared else 'mmap' if mmap \
             else next(iter(self.episodes[0].batch(0).values())).mode  # Oldest batch
+
+        if mode == 'mmap':
+            assert self.save_path is not None, \
+                f'Memory save_path must be set to add memory-mapped memories on hard disk. {self.num_experiences}'
 
         batch = Batch({key: Mem(batch[key], f'{self.save_path}{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})  # TODO a meta key for special save_path
@@ -198,13 +200,15 @@ class Memory:
         if load_path is None:
             load_path = self.save_path
 
-        mmap_paths = sorted(Path(load_path).glob('*'))
+        mmap_paths = sorted(Path(load_path).glob('*_*_*_*_*'),
+                            key=lambda path: int(path.stem.split('_', 1)[0]))
+
         batch = {}
         previous_num_batches = 0
 
         for i, mmap_path in enumerate(tqdm(mmap_paths, desc=desc)):
             try:
-                _, num_batches, key, identifier = mmap_path.stem.rsplit('_', 3)
+                num_batches, key, identifier, _ = mmap_path.stem.split('_', 3)
             except ValueError:
                 continue
 
@@ -226,11 +230,13 @@ class Memory:
 
             previous_num_batches = self.num_batches
 
+        self.add(batch)
+
     def save(self, desc='Saving Memory...', card=None):
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
         assert self.save_path is not None, 'Memory save_path must be set to save memories.'
 
-        for trace in tqdm(self.traces, desc=desc):
+        for trace in tqdm(self.traces, desc=desc, total=self.num_batches):
             for batch in trace:
                 for mem in batch.mems:
                     mem.save()
@@ -243,7 +249,7 @@ class Memory:
         assert self.main_worker == os.getpid(), 'Only main worker can call saved.'
         assert self.save_path is not None, 'Memory save_path must be set to save memories.'
 
-        for trace in tqdm(self.traces, desc=desc):
+        for trace in tqdm(self.traces, desc=desc, total=self.num_batches):
             for batch in trace:
                 for mem in batch.mems:
                     mem.saved = saved
@@ -329,8 +335,11 @@ class Batch(dict):
 
     def size(self):
         for mem in self.values():
-            if hasattr(mem, '__len__') and len(mem) > 1:
-                return len(mem)
+            try:
+                if hasattr(mem, '__len__') and len(mem) > 1:
+                    return len(mem)
+            except TypeError:
+                continue
 
         return 1
 
@@ -352,7 +361,7 @@ class Mem:
             self.path += '_' + str(tuple(self.shape)) + '_' + self.dtype.name
 
         # Note: Hash is rounded to 16 places
-        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
+        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[-1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
 
         self.main_worker = os.getpid()
 
@@ -364,7 +373,7 @@ class Mem:
 
     def __setstate__(self, state):
         self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, mem = state
-        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
+        self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[-1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
 
         if self.mode == 'shared':
             self.shm = SharedMemory(name=self.name)
