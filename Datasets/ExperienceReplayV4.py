@@ -119,20 +119,23 @@ class ParallelWorker:
 
         while True:
             # 1. Get index from sampler
-            index = self.sampler.get_index()
+            index = random.randint(0, len(self.memory)) if self.sampler is None \
+                else self.sampler.get_index()
 
             # 2. Retrieve experience from Memory
-            experience = self.memory[index]   # TODO
+            episode = self.memory[index]
+            index = random.randint(0, len(episode) - self.nstep)  # Randomly sample experience from episode
+            experience = episode[index]
 
-            # 3. Transform / N-step
-            experience['nstep'] = self.compute_nstep(index)
+            # 3. Transform / N-step / frame stack
+            experience = self.compute_RL(episode, experience, index)
             experience.obs = self.transform(experience.obs)
 
             # 4. Add to prefetch tape
             # Note this stores 1 extra per worker if transform + N-Step and prefetch tape full
             self.prefetch_tape.add(experience)
 
-    def compute_nstep(self, index):
+    def compute_RL(self, episode, experience, index):
         return index
 
 
@@ -215,8 +218,7 @@ class PrefetchTape:
                 device = datum.device
                 break
 
-        self.prefetch_tape[index] = {key: datum.to(device, non_blocking=True) if isinstance(datum,
-                                                                                            torch.Tensor) else datum
+        self.prefetch_tape[index] = {key: torch.as_tensor(datum)[None, :].to(device, non_blocking=True)
                                      for key, datum in experience.items()}
 
     def full(self, index):
@@ -246,8 +248,8 @@ class PrefetchTape:
         self.start_index[...] = end_index
 
         # Collate
-        batch = {key: torch.stack([torch.as_tensor(datum).to(self.device, non_blocking=True)
-                                   for datum in [experience[key] for experience in experiences]])
+        batch = {key: torch.concat([torch.as_tensor(datum).to(self.device, non_blocking=True)
+                                    for datum in [experience[key] for experience in experiences]])
                  for key in experiences[0]}
 
         return Batch(batch)
