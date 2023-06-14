@@ -355,7 +355,8 @@ class PrefetchTape:
             experiences = self.prefetch_tape[self.start_index:end_index]
         else:
             experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
-        print(len(self.prefetch_tape))
+
+        print([[experience[0][key][...] for experience in experiences] for key in experiences[0][0]])
 
         # Collate
         batch = {key: torch.concat([torch.as_tensor(datum).to(self.device, non_blocking=True)
