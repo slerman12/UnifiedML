@@ -315,18 +315,19 @@ class PrefetchTape:
         self.add_lock = mp.Lock()
         self.index_lock = mp.Lock()
 
+        self.main_worker = os.getpid()
+
     def add(self, experience):  # Currently assumes all experiences consist of the same keys
         if not len(self.prefetch_tape):
             with self.add_lock:
-                if not len(self.prefetch_tape):
+                if len(self.prefetch_tape):
+                    self.prefetch_tape.update()
+                else:
                     self.prefetch_tape.main_worker = os.getpid()
                     for _ in range(self.cap):
                         self.prefetch_tape.add({key: add_batch_dim(value) for key, value in experience.items()})
 
         # TODO Note have to force them to be episode done
-
-        if self.prefetch_tape.main_worker != os.getpid():
-            self.prefetch_tape.update()
 
         device = None
         index = self.index()
@@ -339,50 +340,43 @@ class PrefetchTape:
         self.prefetch_tape[index][0] = {key: add_batch_dim(datum).to(device, non_blocking=True)
                                         for key, datum in experience.items()}
 
-    def full(self, index):
-        if index > self.start_index:
-            return index - self.start_index + self.batch_size > self.cap
-        else:
-            return self.cap - self.start_index + index + self.batch_size > self.cap
+    def full(self):
+        return (self.end_index + 1) % len(self.prefetch_tape) == self.start_index
 
     def index(self):
         with self.index_lock:
             index = self.end_index.item()
 
-            start = time.time()
-            while self.full(index):
-                if time.time() - start > 2:
-                    # TODO Worker thinks it's full
-                    warnings.warn('Worker possessed by demonry. Waiting on full prefetch tape to be sampled from.')
-                pass  # Pause worker
+            clock = time.time()
+            while self.full():
+                if time.time() - clock > 30:
+                    warnings.warn('Replay ParallelWorker has been idle for more than 30 seconds.')
 
             self.end_index[...] = (index + 1) % self.cap
             return index - 1
 
     def get_batch(self):
+        assert os.getpid() == self.main_worker, 'Only main worker can sample batch from Prefetch Tape.'
+
         while len(self.prefetch_tape) < self.cap:
             self.prefetch_tape.update()
 
-        end_index = self.end_index[...]  # Maybe simplify with a shift factor
+        next_start_index = (self.start_index + self.batch_size) % len(self.prefetch_tape)
 
-        if end_index > 0:
-            end_index = (self.start_index + self.batch_size) % end_index
-        else:
-            end_index = min(self.start_index, end_index)
+        # Pause until batch available
+        clock = time.time()
+        while True:
+            if self.start_index < self.end_index and next_start_index < self.end_index or \
+                    self.end_index < self.start_index and next_start_index < len(self.prefetch_tape):
+                experiences = self.prefetch_tape[self.start_index:next_start_index]
+                break
+            elif next_start_index < self.end_index < self.start_index:
+                experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:next_start_index]
+                break
+            elif time.time() - clock > 30:
+                warnings.warn('Replay main worker has been idly waiting to sample a batch for more than 30 seconds.')
 
-        # while end_index == self.start_index:  # TODO Check if start index jumped over end index
-        #     # Avoid race condition when prefetch tape depleted
-        #     end_index = self.end_index
-        #
-        #     if end_index > 0:
-        #         end_index = (self.start_index + self.batch_size) % end_index
-
-        if end_index > self.start_index:
-            experiences = self.prefetch_tape[self.start_index:end_index]
-        else:
-            experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:end_index]
-
-        self.start_index[...] = end_index
+        self.start_index[...] = next_start_index
 
         # Collate
         batch = {key: torch.stack([torch.as_tensor(datum).to(self.device, non_blocking=True)
