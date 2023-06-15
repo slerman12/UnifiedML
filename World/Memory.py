@@ -61,7 +61,7 @@ class Memory:
 
             self.episode(episode)[step] = experience
 
-    def update(self):  # Maybe truly-shared list variable can tell workers when to do this / lock  TODO Thread
+    def update(self):  # Maybe truly-shared list variable can tell workers when to do this / lock
         num_batches_deleted = self.num_batches_deleted.item()
         self.num_batches = max(self.num_batches, num_batches_deleted)
 
@@ -100,7 +100,7 @@ class Memory:
 
         if mode == 'mmap':
             assert self.save_path is not None, \
-                f'Memory save_path must be set to add memory-mapped memories on hard disk. {self.num_experiences}'
+                f'Memory save_path must be set to add memory-mapped memories on hard disk.'
 
         batch = Batch({key: Mem(batch[key], f'{self.save_path}{self.num_batches}_{key}_{self.id}').to(mode)
                        for key in batch})  # TODO a meta key for special save_path
@@ -209,7 +209,7 @@ class Memory:
                     continue
 
                 if int(num_batches) > previous_num_batches:
-                    self.add(batch)
+                    self.add(batch)  # TODO More efficient to add Batch of Mems and not, for example, doubly mmap
                     batch = {}
 
             batch[key] = Mem(None, path=mmap_path).load().mem
@@ -219,6 +219,7 @@ class Memory:
         if batch:
             self.add(batch)
 
+    # TODO Some kind of lock to mark crashes or based on presence of card
     def save(self, desc='Saving Memory...', card=None):
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
         assert self.save_path is not None, 'Memory save_path must be set to save memories.'
@@ -337,10 +338,16 @@ class Batch(dict):
         return 1
 
 
+def as_numpy(data):
+    return data if isinstance(data, np.ndarray) \
+        else data.numpy() if isinstance(data, torch.Tensor) \
+        else np.array(data)
+
+
 class Mem:
     def __init__(self, mem, path=None):
         self.shm = None
-        self.mem = None if mem is None else np.array(mem)
+        self.mem = None if mem is None else as_numpy(mem)
         self.path = str(path)
         self.saved = False
 
@@ -349,9 +356,9 @@ class Mem:
         if mem is None:
             self.shape, self.dtype = (), None
         else:
-            self.shape = self.mem.shape
+            self.shape = tuple(self.mem.shape)
             self.dtype = self.mem.dtype
-            self.path += '_' + str(tuple(self.shape)) + '_' + self.dtype.name
+            self.path += '_' + str(self.shape) + '_' + self.dtype.name
 
         # Note: Hash is rounded to 16 places
         self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[-1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
@@ -441,8 +448,10 @@ class Mem:
     def mmap(self):
         if self.mode != 'mmap':
             with self.cleanup():
-                if self.main_worker == os.getpid():  # For online transitions
-                    mem = self.mem
+                if self.main_worker == os.getpid() and not self.saved:  # For online transitions
+                    mem = self.mem.copy() if isinstance(self.mem, np.memmap) \
+                        else self.mem  # If already memory mapped, copy to prevent overwrite
+
                     self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
                     if self.shape:
                         self.mem[:] = mem[:]
@@ -493,6 +502,8 @@ class Mem:
                 self.mem = mem
                 self.shm = None
                 self.mode = 'mmap'
+                self.shape = eval(shape)
+                self.dtype = self.mem.dtype
             else:
                 if isinstance(self.mem, torch.Tensor):
                     mem = torch.as_tensor(mem)

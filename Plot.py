@@ -26,6 +26,8 @@ import seaborn as sns
 
 
 # TODO Confidence/Accuracy visual on raw probas (Accuracy segment w/ vertical confidence/avg-proba segment per class)
+#   Uncertainty per class, Average accuracy and uncertainty (%), class
+#   Note: heatmap axes should match
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=None,

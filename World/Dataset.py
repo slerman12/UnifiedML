@@ -13,7 +13,6 @@ from torch.utils.data import Dataset
 from PIL.Image import Image
 
 import torchvision
-from torchvision.transforms import transforms
 from torchvision.transforms import functional as F
 
 from World.Memory import Batch
@@ -22,6 +21,9 @@ from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
 
 # Returns a path to an existing Memory directory or an instantiated Pytorch Dataset
 def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
+    if isinstance(dataset_config, Dataset):
+        return dataset_config
+
     # Allow config as string path
     if isinstance(dataset_config, str):
         dataset_config = Args({'_target_': dataset_config})
@@ -98,9 +100,11 @@ def is_valid_path(path, dir_path=False, module_path=False, module=False):
         except FileNotFoundError:
             pass
 
-    if module_path and not truth:
+    if module_path and not truth and path.count('.') > 0:
         try:
-            truth = os.path.exists(path.replace('.', '/').rsplit('/', 1)[0])  # Doesn't check all the way to module
+            *root, file, module = path.replace('.', '/').rsplit('/', 2)
+            root = (root[0] if root else '') + '/'
+            truth = os.path.exists(root + file + '.py')
         except FileNotFoundError:
             pass
 
@@ -168,11 +172,11 @@ def datums_as_batch(datums):
         # For now assuming obs, label
         obs, label, *_ = datums
 
-        # May assume image uint8
-        dtype = torch.uint8 if len(obs.shape) == 3 and len(obs) in [0, 3] else torch.float32
+        # May assume image uint8  TODO Memory still saves as float32 etc
+        dtype = {'dtype': torch.uint8} if len(obs.shape) == 4 and obs.shape[1] in [0, 3] else {}
 
-        return Batch({'obs': torch.as_tensor(obs, dtype=dtype),
-                      'label': torch.as_tensor(label), 'done': True})
+        return Batch({'obs': torch.as_tensor(obs, **dtype),
+                      'label': torch.as_tensor(label, dtype=torch.long), 'done': True})
 
 
 class Transform(Dataset):
@@ -199,14 +203,21 @@ def add_batch_dim(datum):
 
 
 def get_dataset_path(dataset_config, path):
-    dataset_class_name = getattr(dataset_config, '_target_',
-                                 dataset_config).rsplit('.', 1)[-1] + '/' if dataset_config else ''
+    dataset_class_name = dataset_config.__name__ if isinstance(dataset_config, Dataset) \
+        else getattr(dataset_config, '_target_', dataset_config).rsplit('.', 1)[-1] + '/' if dataset_config \
+        else ''
 
     count = 0
 
     for file in sorted(glob.glob(path + dataset_class_name + '*/*.yaml')):
-        if dataset_config == open_yaml(file):
+        card = open_yaml(file)
+
+        if not hasattr(dataset_config, '_target_'):
+            card.pop('_target_')
+
+        if not hasattr(dataset_config, '_target_') and not card or dataset_config == card:
             count = int(file.rsplit('/', 2)[-2])
+            break
         else:
             count += 1
 

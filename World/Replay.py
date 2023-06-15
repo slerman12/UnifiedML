@@ -3,42 +3,36 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import atexit
-import os
 import random
-import threading
-import time
-import warnings
 from math import inf
 
+from torch.utils.data.dataset import T_co
 from tqdm import tqdm
 
 import numpy as np
 
 import torch
-from torch.utils.data import Dataset, DataLoader
-import torch.multiprocessing as mp
+from torch.utils.data import Dataset, DataLoader, IterableDataset
 
 from World.Memory import Memory, Batch
-from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, add_batch_dim
+from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform
 from Hyperparams.minihydra import instantiate, Args
 
 
 class Replay:
-    def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=1, offline=True, stream=False,
-                 gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
-                 gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False, mem_size=None, reload=True,
-                 dataset=None, transform=None, frame_stack=1, nstep=0, discount=1, meta_shape=(0,), **kwargs):
+    def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
+                 gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
+                 mem_size=None, prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
+                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,), **kwargs):
 
-        # Future steps to compute cumulative reward from
-        self.nstep = nstep or 0
-
+        self.epoch = 1
+        self.nstep = nstep or 0  # Future steps to compute cumulative reward from
         self.stream = stream
-
-        self.reload = reload  # Whether to cycle at the end of an epoch or raise StopIteration
-        self._epoch = 0
 
         if self.stream:
             return
+
+        self.reload = reload
 
         self.memory = Memory(num_workers=num_workers,
                              gpu_capacity=gpu_capacity,
@@ -51,23 +45,20 @@ class Replay:
         card = {'_target_': dataset_config} if isinstance(dataset_config, str) else dataset_config
 
         # TODO System-wide lock perhaps, w.r.t. Offline Dataset save path if load_dataset is Dataset and Offline
-        if dataset is not None:
+        if dataset_config is not None:
             # Pytorch Dataset or Memory path
             dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config, **kwargs)
 
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
 
-            # Memory save-path
-            save_path = None
-
-            if isinstance(dataset, Dataset) and offline:
+            if offline:
                 root = 'World/ReplayBuffer/Offline/'
                 save_path = root + get_dataset_path(dataset_config, root)
-            elif not offline:
+            else:
                 save_path = 'World/ReplayBuffer/Online/' + path
 
-            if save_path:
-                self.memory.set_save_path(save_path)
+            # Memory save-path
+            self.memory.set_save_path(save_path)
 
             # Fill Memory
             if isinstance(dataset, str):
@@ -86,8 +77,13 @@ class Replay:
             if save_path:
                 # Save to hard disk if Offline
                 if isinstance(dataset, Dataset) and offline:
-                    self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
-                                          'This only has to be done once', card=card)
+                    # if accelerate and self.memory.num_batches <= sum(self.memory.capacities[:-1]):
+                    #     root = 'World/ReplayBuffer/Offline/'
+                    #     self.memory.set_save_path(root + get_dataset_path(dataset_config, root))
+                    #     save = True
+                    if save or self.memory.num_batches > sum(self.memory.capacities[:-1]):  # Until save-delete check
+                        self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
+                                              'This only has to be done once', card=card)
 
         # Save Online replay on terminate  Maybe delete if not save
         if not offline and save:
@@ -95,49 +91,38 @@ class Replay:
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
-        # Initialize sampler, prefetch tape, and transform
-        self.sampler = Sampler(size=len(self.memory)) if offline else None
-        self.prefetch_tape = PrefetchTape(batch_size=batch_size,
-                                          device=device,
-                                          gpu_prefetch_factor=gpu_prefetch_factor,
-                                          prefetch_factor=prefetch_factor,
-                                          pin_memory=pin_memory)
         transform = instantiate(transform)
 
         # Parallel worker for batch loading
 
-        worker = ParallelWorker(memory=self.memory,
-                                sampler=self.sampler,
-                                prefetch_tape=self.prefetch_tape,
-                                transform=transform,
-                                frame_stack=frame_stack,
-                                nstep=nstep,
-                                discount=discount)
+        create_worker = Offline if offline else Online
 
-        for i in range(num_workers):
-            mp.Process(target=worker, args=(i,)).start()
+        worker = create_worker(memory=self.memory,
+                               transform=transform,
+                               frame_stack=frame_stack,
+                               nstep=self.nstep,
+                               discount=discount)
 
-        if num_workers == 0:
-            threading.Thread(target=worker, args=(0,)).start()
+        # Batch loading
 
-    def __iter__(self):
-        return self
+        self.batches = torch.utils.data.DataLoader(dataset=worker,
+                                                   batch_size=batch_size,
+                                                   num_workers=num_workers,
+                                                   pin_memory=pin_memory and 'cuda' in device and not pin_device_memory,
+                                                   prefetch_factor=prefetch_factor if num_workers else 2,
+                                                   shuffle=shuffle and offline,
+                                                   worker_init_fn=worker_init_fn,
+                                                   persistent_workers=bool(num_workers))
 
+        # Replay
+
+        self._replay = None
+
+    # Allows iteration via "next" (e.g. batch = next(replay))
     def __next__(self):
-        if not self.reload:
-            epoch = self.epoch
-
-            if epoch > self._epoch:
-                self._epoch = epoch
-
-                raise StopIteration  # Race condition, might be somewhat early; would need final prefetch batches
-
         return self.sample()
 
-    @property
-    def epoch(self):
-        return self.sampler.epoch.item()
-
+    # Samples stored experiences or pulls from a data stream, optionally includes trajectories, returns a batch
     def sample(self, trajectories=False):
         if self.stream:
             # Streaming
@@ -145,10 +130,28 @@ class Replay:
                     for key in ['obs', 'action', 'reward', 'discount', 'next_obs', 'label', *[None] * 4 * trajectories,
                                 'step', 'ids', 'meta']]  # Return contents of the data stream
         else:
-            # Get batch from prefetch tape
-            batch = self.prefetch_tape.get_batch()
-            return batch
-            # return *batch[:10 if trajectories else 6], *batch[10:]  # Return batch, w(/o) future-trajectories
+            # Sampling
+            try:
+                sample = next(self.replay)
+            except StopIteration as stop:
+                if not self.reload:
+                    raise stop
+                self.epoch += 1
+                self._replay = None  # Reset iterator when depleted
+                sample = next(self.replay)
+            return sample
+            # return *sample[:10 if trajectories else 6], *sample[10:]  # Return batch, w(/o) future-trajectories
+
+    # Initial iterator, allows replay iteration
+    def __iter__(self):
+        self._replay = iter(self.batches)
+        return self.replay
+
+    @property
+    def replay(self):
+        if self._replay is None:
+            self._replay = iter(self.batches)  # Recreates the iterator when exhausted
+        return self._replay
 
     def add(self, batch):
         if self.stream:
@@ -161,15 +164,22 @@ class Replay:
         self.memory.writable_tape(batch, ind, step)
 
     def __len__(self):
+        if not self.reload:
+            return len(self.batches)
+
         # Infinite if stream, else num episodes in Memory
         return int(5e11) if self.stream else len(self.memory)
 
 
-class ParallelWorker:
-    def __init__(self, memory, sampler,  prefetch_tape, transform, frame_stack, nstep, discount):
+def worker_init_fn(worker_id):
+        seed = np.random.get_state()[1][0] + worker_id
+        np.random.seed(seed)
+        random.seed(int(seed))
+
+
+class Worker:
+    def __init__(self, memory, transform, frame_stack, nstep, discount):
         self.memory = memory
-        self.sampler = sampler
-        self.prefetch_tape = prefetch_tape
 
         self.transform = transform
 
@@ -177,40 +187,45 @@ class ParallelWorker:
         self.nstep = nstep
         self.discount = discount
 
-    # Worker initialization
-    def __call__(self, worker):
-        seed = np.random.get_state()[1][0] + worker
-        np.random.seed(seed)
-        random.seed(int(seed))
-        self.memory.set_worker(worker)
+        self.initialized = False
 
-        while True:  # TODO workers should periodically update if online
-            # Sample index
-            if self.sampler is None:
-                index = random.randint(0, len(self.memory))  # Random sample an episode
-            else:
-                index = self.sampler.get_index()
+    @property
+    def worker(self):
+        try:
+            return torch.utils.data.get_worker_info().id
+        except AttributeError:
+            return 0
 
-            # Retrieve from Memory
-            episode = self.memory[index]
-            step = random.randint(0, len(episode) - self.nstep - 1)  # Randomly sample sub-episode
-            experience = Args(episode[step])
+    def sample(self, index=None):
+        if not self.initialized:
+            print(len(self.memory), self.worker)
+            self.memory.set_worker(self.worker)
+            self.initialized = True
 
-            # Frame stack / N-step
-            experience = self.compute_RL(episode, experience, step)
+        # Sample index
+        if index is None:
+            index = random.randint(0, len(self.memory))  # Random sample an episode
 
-            # Transform
-            if self.transform is not None:
-                experience.obs = self.transform(torch.as_tensor(experience.obs))
+        # Retrieve from Memory
+        episode = self.memory[index]
+        step = random.randint(0, len(episode) - self.nstep - 1)  # Randomly sample sub-episode
+        experience = Args(episode[step])
 
-            # Add metadata
-            experience['episode_index'] = index
-            experience['episode_step'] = step
+        # Frame stack / N-step
+        experience = self.compute_RL(episode, experience, step)
 
-            # Add to prefetch tape (halts if full)
-            self.prefetch_tape.add(experience)
+        # Transform
+        if self.transform is not None:
+            experience.obs = self.transform(experience.obs)
+
+        # Add metadata
+        experience['episode_index'] = index
+        experience['episode_step'] = step
+
+        return experience
 
     def compute_RL(self, episode, experience, step):
+
         # Frame stack
         def frame_stack(traj, key, idx):
             frames = traj[max([0, idx + 1 - self.frame_stack]):idx + 1]
@@ -247,141 +262,31 @@ class ParallelWorker:
 
         return experience
 
+    def __len__(self):
+        return len(self.memory)
 
-# Index sampler works in multiprocessing
-class Sampler:
-    def __init__(self, size):
-        self.size = size
 
-        self.epoch = torch.zeros([], dtype=torch.int32).share_memory_()  # Int32
+class Offline(Worker, Dataset):
+    def __getitem__(self, index):
+        return self.sample(index)  # Retrieve a single experience by index
 
-        self.main_worker = os.getpid()
 
-        self.index = torch.zeros([], dtype=torch.int64).share_memory_()  # Int64
-
-        self.read_lock = mp.Lock()
-        self.read_condition = mp.Condition()
-        self.index_condition = mp.Condition()
-
-        self.iterator = iter(torch.randperm(self.size))
-
-        threading.Thread(target=self.publish, daemon=True).start()
-
-    # Sample index publisher
-    def publish(self):
-        assert os.getpid() == self.main_worker, 'Only main worker can feed sample indices.'
-
+class Online(Worker, IterableDataset):
+    def __iter__(self):
         while True:
-            with self.read_condition:
-                self.read_condition.wait()  # Wait until read is called in a process
-                with self.index_condition:
-                    self.index[...] = self.next()
-                    self.index_condition.notify()  # Notify that index has been updated
-
-    # Sample index subscriber
-    def get_index(self):
-        with self.read_lock:
-            with self.read_condition:
-                self.read_condition.notify()  # Notify that read has been called
-            with self.index_condition:
-                self.index_condition.wait()  # Wait until index has been updated
-                return self.index
-
-    def next(self):
-        try:
-            return next(self.iterator)
-        except StopIteration:
-            self.iterator = iter(torch.randperm(self.size))
-            self.epoch[...] = self.epoch + 1
-        return next(self.iterator)
+            yield self.sample()  # Yields a single experience
 
 
-class PrefetchTape:
-    def __init__(self, batch_size, device, gpu_prefetch_factor=0, prefetch_factor=3, pin_memory=False):
-        self.batch_size = batch_size
-        self.cap = batch_size * (gpu_prefetch_factor + prefetch_factor)
-        self.device = device
+# Quick parallel one-time flag
+class Flag:
+    def __init__(self):
+        self.flag = torch.tensor(False, dtype=torch.bool).share_memory_()
+        self._flag = False
 
-        self.prefetch_tape = Memory(gpu_capacity=batch_size * gpu_prefetch_factor,
-                                    pinned_capacity=batch_size * prefetch_factor * pin_memory,
-                                    tensor_ram_capacity=batch_size * prefetch_factor * (not pin_memory),
-                                    ram_capacity=0,
-                                    hd_capacity=0)
+    def set(self):
+        self.flag[...] = self._flag = True
 
-        self.batches = [torch.zeros([], dtype=torch.int16)]
-
-        self.start_index = torch.zeros([], dtype=torch.int16).share_memory_()  # Int16
-        self.end_index = torch.ones([], dtype=torch.int16).share_memory_()  # Int16
-        self.add_lock = mp.Lock()
-        self.index_lock = mp.Lock()
-
-        self.main_worker = os.getpid()
-
-    def add(self, experience):  # Currently assumes all experiences consist of the same keys
-        if not len(self.prefetch_tape):
-            with self.add_lock:
-                if len(self.prefetch_tape):
-                    self.prefetch_tape.update()
-                else:
-                    self.prefetch_tape.main_worker = os.getpid()
-                    for _ in range(self.cap):
-                        self.prefetch_tape.add({key: add_batch_dim(value) for key, value in experience.items()})
-
-        # TODO Note have to force them to be episode done
-
-        device = None
-        index = self.index()
-
-        for datum in self.prefetch_tape[index][0].values():
-            if hasattr(datum, 'device'):
-                device = datum.device
-                break
-
-        self.prefetch_tape[index][0] = {key: add_batch_dim(datum).to(device, non_blocking=True)
-                                        for key, datum in experience.items()}
-
-    @property
-    def full(self):
-        return self.end_index == self.start_index
-
-    def index(self):
-        with self.index_lock:
-            index = self.end_index.item()
-
-            clock = time.time()
-            while self.full:
-                if time.time() - clock > 30:
-                    warnings.warn('Replay ParallelWorker has been idle for more than 30 seconds.')
-
-            self.end_index[...] = (index + 1) % self.cap
-            return (index or self.cap) - 1
-
-    def get_batch(self):
-        assert os.getpid() == self.main_worker, 'Only main worker can sample batch from Prefetch Tape.'
-
-        while len(self.prefetch_tape) < self.cap:
-            self.prefetch_tape.update()
-
-        next_start_index = (self.start_index + self.batch_size) % self.cap
-
-        # Pause until batch available
-        clock = time.time()
-        while True:
-            if self.start_index <= self.end_index and next_start_index <= self.end_index or \
-                    self.end_index <= self.start_index and next_start_index < self.cap:
-                experiences = self.prefetch_tape[self.start_index:next_start_index]
-                break
-            elif next_start_index <= self.end_index <= self.start_index:
-                experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:next_start_index]
-                break
-            elif time.time() - clock > 30:
-                warnings.warn('Replay main worker has been idly waiting to sample a batch for more than 30 seconds.')
-
-        self.start_index[...] = next_start_index
-
-        # Collate
-        batch = {key: torch.stack([torch.as_tensor(datum).to(self.device, non_blocking=True)
-                                   for datum in [experience[0][key][...] for experience in experiences]])
-                 for key in experiences[0][0]}
-
-        return Batch(batch)
+    def __bool__(self):
+        if not self._flag:
+            self._flag = self.flag
+        return self._flag

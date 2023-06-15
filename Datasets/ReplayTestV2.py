@@ -1,6 +1,4 @@
 # Template created by Sam Lerman, slerman@ur.rochester.edu.
-import time
-
 from torch.utils.data import DataLoader
 from torchvision.datasets import mnist
 from torchvision.transforms import ToTensor, Normalize, Compose  # Can pre-process images
@@ -10,7 +8,6 @@ from torch import nn  # Neural networks
 from torch.optim import SGD  # Stochastic gradient descent -- optimize the neural networks
 import torch.multiprocessing as mp
 
-from World.Memory import Mem, Batch
 from World.Replay import Replay
 
 # Start learning and evaluating
@@ -30,8 +27,7 @@ if __name__ == '__main__':
     test_dataset = mnist.MNIST(root='./', train=False, transform=data_transform, download=True)
 
     # Divide data into batches
-    # train_loader = Replay(batch_size=batch_size, dataset=train_dataset, reload=False, device=device)
-    train_loader = Replay(batch_size=batch_size, dataset='MNIST', reload=False, ram_capacity=0, device=device)
+    train_loader = Replay(batch_size=batch_size, dataset='MNIST', reload=False)
     # train_loader = DataLoader(train_dataset, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
@@ -53,28 +49,13 @@ if __name__ == '__main__':
     # Here, makes no difference. Just convention
     model.train()
 
-    means = []
-    batches = mp.Manager().list()
-    clock = time.time()
-
     # Train on the training data
     for epoch in range(epochs):
         for i, batch in enumerate(train_loader):
             if isinstance(train_loader, Replay):
-                x, y = batch.obs.to(device), batch.label.to(device)
-
-                # Add norm
-                x = (x - 0.1307) / 0.3081
+                x, y = batch.obs, batch.label
             else:
-                # batches.append(Batch({str(j): Mem(m[None, :], f'./{epoch}_{i}_{j}').shared()
-                #                       for j, m in enumerate(batch)}))
-                # batch = batches.pop()
-                #
-                # x, y = torch.as_tensor(batch['0'].mem[0]).to(device), torch.as_tensor(batch['1'].mem[0]).to(device)
-
                 x, y = batch[0].to(device), batch[1].to(device)
-
-            # means.extend([(x_.mean().item(), y_.item()) for x_, y_ in zip(x, y)])
 
             y_pred = model(x)  # Predict a class
             loss = loss_fn(y_pred, y)  # Compute error
@@ -86,8 +67,8 @@ if __name__ == '__main__':
             # Print scores
             if i % 1000 == 0:
                 # Note: The epoch train_loader.epoch is out of sync towards the end for Replay
-                # print('Epoch: {}, Training Accuracy: {}/{} ({:.0f}%)'.format(epoch, correct, total,
-                #                                                              100. * correct / total))
+                print('Epoch: {}, Training Accuracy: {}/{} ({:.0f}%)'.format(epoch, correct, total,
+                                                                             100. * correct / total))
 
                 correct = total = 0
 
@@ -109,5 +90,4 @@ if __name__ == '__main__':
             correct += (torch.argmax(y_pred, dim=-1) == y).sum().item()
             total += y.shape[0]
 
-        print('Elapsed: {}, Epoch: {}, Evaluation Accuracy: {}/{} ({:.0f}%)'.format(time.time() - clock, epoch, correct,
-                                                                                    total, 100. * correct / total))
+        print('Epoch: {}, Evaluation Accuracy: {}/{} ({:.0f}%)'.format(epoch, correct, total, 100. * correct / total))
