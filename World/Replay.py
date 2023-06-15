@@ -33,6 +33,8 @@ class Replay:
         if self.stream:
             return
 
+        self.trajectory_flag = Flag()  # Tell worker to include experience trajectories as well
+
         self.reload = reload
 
         self.memory = Memory(num_workers=num_workers,
@@ -102,6 +104,7 @@ class Replay:
                                transform=transform,
                                frame_stack=frame_stack,
                                nstep=self.nstep,
+                               trajectory_flag=self.trajectory_flag,
                                discount=discount)
 
         # Batch loading
@@ -121,15 +124,9 @@ class Replay:
 
     # Allows iteration via "next" (e.g. batch = next(replay))
     def __next__(self):
-        return self.sample()
-
-    # Samples stored experiences or pulls from a data stream, optionally includes trajectories, returns a batch
-    def sample(self, trajectories=False):
         if self.stream:
             # Streaming
-            return [self.stream.get(key, torch.empty([1, 0]))
-                    for key in ['obs', 'action', 'reward', 'discount', 'next_obs', 'label', *[None] * 4 * trajectories,
-                                'step', 'ids', 'meta']]  # Return contents of the data stream
+            return self.stream
         else:
             # Sampling
             try:
@@ -141,9 +138,7 @@ class Replay:
                 self._replay = None  # Reset iterator when depleted
                 sample = next(self.replay)
             return sample.to(self.device, non_blocking=True)
-            # return *sample[:10 if trajectories else 6], *sample[10:]  # Return batch, w(/o) future-trajectories
 
-    # Initial iterator, allows replay iteration
     def __iter__(self):
         self._replay = iter(self.batches)
         return self.replay
@@ -153,6 +148,9 @@ class Replay:
         if self._replay is None:
             self._replay = iter(self.batches)  # Recreates the iterator when exhausted
         return self._replay
+
+    def include_trajectories(self):
+        self.trajectory_flag.set()
 
     def add(self, batch):
         if self.stream:
@@ -173,19 +171,20 @@ class Replay:
 
 
 def worker_init_fn(worker_id):
-        seed = np.random.get_state()[1][0] + worker_id
-        np.random.seed(seed)
-        random.seed(int(seed))
+    seed = np.random.get_state()[1][0] + worker_id
+    np.random.seed(seed)
+    random.seed(int(seed))
 
 
 class Worker:
-    def __init__(self, memory, transform, frame_stack, nstep, discount):
+    def __init__(self, memory, transform, frame_stack, nstep, trajectory_flag, discount):
         self.memory = memory
 
         self.transform = transform
 
         self.frame_stack = frame_stack
         self.nstep = nstep
+        self.trajectory_flag = trajectory_flag
         self.discount = discount
 
         self.initialized = False
@@ -247,6 +246,7 @@ class Worker:
             experience['next_obs'] = frame_stack(episode, 'obs', step + self.nstep)
 
             # Trajectory TODO
+            # if self.trajectory_flag:
             # traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
             #                          for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
             # traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
