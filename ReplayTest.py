@@ -22,28 +22,23 @@ if __name__ == '__main__':
     lr = 1e-2
     device = 'cpu'
 
-    # Pre-process
     data_transform = Compose([ToTensor(), Normalize((0.1307,), (0.3081,))])
 
-    # Get data
     train_dataset = mnist.MNIST(root='./', train=True, transform=data_transform, download=True)
     test_dataset = mnist.MNIST(root='./', train=False, transform=data_transform, download=True)
 
-    # Divide data into batches
     # train_loader = Replay(batch_size=batch_size, dataset=train_dataset, reload=False, device=device)
     train_loader = Replay(batch_size=batch_size, dataset='MNIST', reload=False, device=device)
     # train_loader = DataLoader(train_dataset, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
-    # The neural network
-    model = nn.Sequential(nn.Flatten(),  # Linear layers accept 1D inputs, so flatten the 2D RGB/or grayscale images
-                          nn.Linear(784, 128), nn.ReLU(),  # MNIST images are grayscale with height x width = 28 x 28 = 784
-                          nn.Linear(128, 64), nn.ReLU(),  # Linear layer (input size -> output size) followed by ReLU
-                          nn.Linear(64, 10))  # MNIST has 10 predicted classes
+    model = nn.Sequential(nn.Flatten(),
+                          nn.Linear(784, 128), nn.ReLU(),
+                          nn.Linear(128, 64), nn.ReLU(),
+                          nn.Linear(64, 10))
 
     model.to(device)
 
-    # The loss function and optimizer
     loss_fn = nn.CrossEntropyLoss()
     optim = SGD(model.parameters(), lr=lr)
 
@@ -58,11 +53,13 @@ if __name__ == '__main__':
     for epoch in range(epochs):
         for i, batch in enumerate(train_loader):
             if isinstance(train_loader, Replay):
-                x, y = batch.obs.to(device), batch.label.to(device)
+                x, y = batch.obs, batch.label
 
                 # Add norm
+                # x = (x / 255 - 0.1307) / 0.3081
                 x = (x - 0.1307) / 0.3081
             else:
+                # Important tea
                 # batches.append(Batch({str(j): Mem(m[None, :], f'./{epoch}_{i}_{j}').shared()
                 #                       for j, m in enumerate(batch)}))
                 # batch = batches.pop()

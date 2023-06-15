@@ -55,7 +55,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
 
     # Return the Dataset module
     if is_valid_path(dataset_config._target_, module_path=True):
-        return instantiate(dataset_config)
+        return instantiate(dataset_config)  # TODO Recursive with transform
 
     if train is not None:
         path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
@@ -68,7 +68,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
                                             dict(subset='training' if train else 'testing'),
                                             dict(split='train' if train else 'test'), {}]
     download_specs = [dict(download=True), {}]
-    transform_specs = [dict(transform=None), {}]
+    transform_specs = [dict(transform=None), {}]  # TODO Instantiate transform
 
     dataset = None
 
@@ -161,21 +161,25 @@ class Lock:
 
 
 def datums_as_batch(datums):
-    if isinstance(datums, Batch):
-        return datums
-
-    if isinstance(datums, dict):
+    if isinstance(datums, (Batch, dict)):
+        if 'done' not in datums:
+            datums['done'] = True
         return Batch(datums)
-
-    if not isinstance(datums, Batch):
+    else:
         # Potentially extract by variable name
         # For now assuming obs, label
         obs, label, *_ = datums
 
-        # May assume image uint8  TODO Memory still saves as float32 etc
-        dtype = {'dtype': torch.uint8} if len(obs.shape) == 4 and obs.shape[1] in [0, 3] else {}
+        # May assume image uint8
+        # if len(obs.shape) == 4 and int(obs.shape[1]) in [1, 3]:
+        #     obs *= 255  # Note: Assumes [0, 1] low, high
+        #     dtype = {'dtype': torch.uint8}
+        # else:
+        #     dtype = {}
 
-        return Batch({'obs': torch.as_tensor(obs, **dtype),
+        # Note: need to parse label TODO
+
+        return Batch({'obs': torch.as_tensor(obs),
                       'label': torch.as_tensor(label, dtype=torch.long), 'done': True})
 
 
@@ -213,7 +217,7 @@ def get_dataset_path(dataset_config, path):
         card = open_yaml(file)
 
         if not hasattr(dataset_config, '_target_'):
-            card.pop('_target_')
+            card.pop('_target_')  # TODO Also pop default attributes like transform if null
 
         if not hasattr(dataset_config, '_target_') and not card or dataset_config == card:
             count = int(file.rsplit('/', 2)[-2])

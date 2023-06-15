@@ -2,17 +2,20 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+"""
+A new Replay memory. Programmed by Sam Lerman.
+"""
+
 import atexit
 import random
 from math import inf
 
-from torch.utils.data.dataset import T_co
 from tqdm import tqdm
 
 import numpy as np
 
 import torch
-from torch.utils.data import Dataset, DataLoader, IterableDataset
+from torch.utils.data import IterableDataset, Dataset, DataLoader
 
 from World.Memory import Memory, Batch
 from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform
@@ -20,9 +23,9 @@ from Hyperparams.minihydra import instantiate, Args
 
 
 class Replay:
-    def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
+    def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
-                 fetch_per=1000, mem_size=None, 
+                 save=False, mem_size=None, fetch_per=1000,
                  prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
                  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,), **kwargs):
 
@@ -46,9 +49,9 @@ class Replay:
                              hd_capacity=hd_capacity)
 
         dataset_config = dataset
-        card = {'_target_': dataset_config} if isinstance(dataset_config, str) else dataset_config
+        card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
+        # TODO Mark that training if not marked, and use card universally, and don't include str handling
 
-        # TODO System-wide lock perhaps, w.r.t. Offline Dataset save path if load_dataset is Dataset and Offline
         if dataset_config is not None:
             # Pytorch Dataset or Memory path
             dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config, **kwargs)
