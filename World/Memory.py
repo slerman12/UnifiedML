@@ -434,7 +434,10 @@ class Mem:
                 if isinstance(self.mem, torch.Tensor):
                     self.mem = self.mem.numpy()
                 mem = self.mem
-                self.shm = SharedMemory(create=True, name=self.name, size=mem.nbytes)
+                try:
+                    self.shm = SharedMemory(create=True, name=self.name, size=mem.nbytes)
+                except FileExistsError:
+                    self.shm = SharedMemory(name=self.name)
                 self.mem = np.ndarray(self.shape, dtype=self.dtype, buffer=self.shm.buf)
                 if self.shape:
                     self.mem[:] = mem[:]
