@@ -25,6 +25,7 @@ class Replay:
                  mem_size=None, prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
                  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,), **kwargs):
 
+        self.device = device
         self.epoch = 1
         self.nstep = nstep or 0  # Future steps to compute cumulative reward from
         self.stream = stream
@@ -139,7 +140,7 @@ class Replay:
                 self.epoch += 1
                 self._replay = None  # Reset iterator when depleted
                 sample = next(self.replay)
-            return sample
+            return sample.to(self.device, non_blocking=True)
             # return *sample[:10 if trajectories else 6], *sample[10:]  # Return batch, w(/o) future-trajectories
 
     # Initial iterator, allows replay iteration

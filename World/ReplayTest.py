@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     # Divide data into batches
     # train_loader = Replay(batch_size=batch_size, dataset=train_dataset, reload=False, device=device)
-    train_loader = Replay(batch_size=batch_size, dataset='MNIST', reload=False, ram_capacity=1e6, device=device)
+    train_loader = Replay(batch_size=batch_size, dataset='MNIST', reload=False, device=device)
     # train_loader = DataLoader(train_dataset, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
