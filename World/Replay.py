@@ -22,7 +22,8 @@ from Hyperparams.minihydra import instantiate, Args
 class Replay:
     def __init__(self, path='Replay/', save=True, batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
-                 mem_size=None, prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
+                 fetch_per=1000, mem_size=None, 
+                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
                  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,), **kwargs):
 
         self.device = device
@@ -101,6 +102,7 @@ class Replay:
         create_worker = Offline if offline else Online
 
         worker = create_worker(memory=self.memory,
+                               fetch_per=None if offline else fetch_per,
                                transform=transform,
                                frame_stack=frame_stack,
                                nstep=self.nstep,
@@ -177,8 +179,11 @@ def worker_init_fn(worker_id):
 
 
 class Worker:
-    def __init__(self, memory, transform, frame_stack, nstep, trajectory_flag, discount):
+    def __init__(self, memory, fetch_per, transform, frame_stack, nstep, trajectory_flag, discount):
         self.memory = memory
+        self.fetch_per = fetch_per
+
+        self.samples_since_last_fetch = 0
 
         self.transform = transform
 
@@ -201,6 +206,12 @@ class Worker:
             print(len(self.memory), self.worker)
             self.memory.set_worker(self.worker)
             self.initialized = True
+
+        self.samples_since_last_fetch += 1
+
+        # Periodically update memory
+        if self.fetch_per and not self.samples_since_last_fetch % self.fetch_per:
+            self.memory.update()
 
         # Sample index
         if index is None:
