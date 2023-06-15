@@ -340,20 +340,21 @@ class PrefetchTape:
         self.prefetch_tape[index][0] = {key: add_batch_dim(datum).to(device, non_blocking=True)
                                         for key, datum in experience.items()}
 
+    @property
     def full(self):
-        return (self.end_index + 1) % len(self.prefetch_tape) == self.start_index
+        return self.end_index == self.start_index
 
     def index(self):
         with self.index_lock:
             index = self.end_index.item()
 
             clock = time.time()
-            while self.full():
+            while self.full:
                 if time.time() - clock > 30:
                     warnings.warn('Replay ParallelWorker has been idle for more than 30 seconds.')
 
             self.end_index[...] = (index + 1) % self.cap
-            return index - 1
+            return (index or self.cap) - 1
 
     def get_batch(self):
         assert os.getpid() == self.main_worker, 'Only main worker can sample batch from Prefetch Tape.'
@@ -361,16 +362,16 @@ class PrefetchTape:
         while len(self.prefetch_tape) < self.cap:
             self.prefetch_tape.update()
 
-        next_start_index = (self.start_index + self.batch_size) % len(self.prefetch_tape)
+        next_start_index = (self.start_index + self.batch_size) % self.cap
 
         # Pause until batch available
         clock = time.time()
         while True:
-            if self.start_index < self.end_index and next_start_index < self.end_index or \
-                    self.end_index < self.start_index and next_start_index < len(self.prefetch_tape):
+            if self.start_index <= self.end_index and next_start_index <= self.end_index or \
+                    self.end_index <= self.start_index and next_start_index < self.cap:
                 experiences = self.prefetch_tape[self.start_index:next_start_index]
                 break
-            elif next_start_index < self.end_index < self.start_index:
+            elif next_start_index <= self.end_index <= self.start_index:
                 experiences = self.prefetch_tape[self.start_index:] + self.prefetch_tape[:next_start_index]
                 break
             elif time.time() - clock > 30:
