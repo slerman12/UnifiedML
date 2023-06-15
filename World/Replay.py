@@ -75,6 +75,7 @@ class Replay:
                 if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
                     self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False')
             else:
+                # TODO Apply dataset.transform on this
                 batches = DataLoader(Transform(dataset), batch_size=mem_size or batch_size)
 
                 # Add Dataset into Memory in batch-size chunks
@@ -206,7 +207,6 @@ class Worker:
 
     def sample(self, index=None):
         if not self.initialized:
-            print(len(self.memory), self.worker)
             self.memory.set_worker(self.worker)
             self.initialized = True
 
@@ -239,6 +239,7 @@ class Worker:
         return experience
 
     def compute_RL(self, episode, experience, step):
+        # TODO Just apply nstep and frame stack as transforms nstep, frame_stack, transform
 
         # Frame stack
         def frame_stack(traj, key, idx):

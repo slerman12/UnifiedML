@@ -201,9 +201,17 @@ class Transform(Dataset):
         return self.__dataset.__len__()
 
 
-def add_batch_dim(datum):
-    datum = torch.as_tensor(datum)
-    return datum[None, ...] if datum.shape else datum.view([1])
+# TODO ExperienceTransform - adds nstep and transform/replay.transform, anything else - operates on specified key(s)?
+#   Perhaps DatumsTransform first - applies datums_as_batch if not using Replay
+# TODO FrameStackTransform - operates on specified key(s)
+# TODO TrajectoryTransform - operates on specified key(s)
+# Perhaps move to Transform.py
+
+
+#   TODO BatchDimTransform? (if not using Replay)
+# def add_batch_dim(datum):
+#     datum = torch.as_tensor(datum)
+#     return datum[None, ...] if datum.shape else datum.view([1])
 
 
 def get_dataset_path(dataset_config, path):
