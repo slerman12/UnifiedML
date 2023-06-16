@@ -460,6 +460,13 @@ Replays are recommended for RL because on-policy algorithmic support is currentl
 
 </details>
 
+---
+
+[//]: # (All of the code in this repo was programmed and conceived by [Sam Lerman]&#40;&#41; under the support of PhD advisor [Dr. Chenliang Xu]&#40;&#41;, project PI [Dr. Niaz Abdolrahim]&#40;&#41;, and the NSF Materials Science something-something grant [#]&#40;&#41;. )
+
+**We need funding.**
+<br>Please [Sponsor](https://github.com/sponsors/AGI-init) us.
+
 #
 
 [MIT license Included.](MIT_LICENSE)

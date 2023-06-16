@@ -56,7 +56,11 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
             pass
 
     file = file.replace('.', '/')
-    module = module[0]
+    if module:
+        module = module[0]
+    else:
+        module = file
+        file = 'Utils'
     for i, path in enumerate(yaml_search_paths):
         for j, file in enumerate([file + '/__init__', file]):
             if not os.path.exists(path + '/' + file + '.py'):

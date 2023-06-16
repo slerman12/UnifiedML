@@ -55,14 +55,19 @@ class Classify:
                  batch_size=8, num_workers=1, subset=None, low=None, high=None, transform=None, **kwargs):
         self.episode_done = False
 
-        # If the training dataset is empty, we will assume train_steps=0
-        if train and len(dataset) == 0:
-            return
+        if train and (offline or generate) and not stream:
+            return  # TODO Default for Env?
 
         if not train and test_dataset._target_ is not None:
             dataset = test_dataset
 
         dataset = load_dataset('World/ReplayBuffer/Offline/', dataset, allow_memory=False, train=train)
+
+        # If the training dataset is empty, we will assume train_steps=0
+        if train and len(dataset) == 0:
+            return
+
+        assert isinstance(dataset, Dataset), 'Classify requires a Pytorch Dataset.'
 
         classes = subset if subset is not None \
             else range(dataset.classes if isinstance(dataset.classes, int)
@@ -83,13 +88,6 @@ class Classify:
 
         # Transform
         dataset = Transform(dataset, transform)  # TODO dataset.transform in load_dataset auto / +card
-
-        assert isinstance(dataset, Dataset), 'Classify requires a Memory or Pytorch Dataset.'
-
-        # No need
-        if train and (offline or generate) and not stream:
-            del dataset
-            return
 
         # CPU workers
         num_workers = max(1, min(num_workers, os.cpu_count()))

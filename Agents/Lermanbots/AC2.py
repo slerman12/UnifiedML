@@ -163,7 +163,10 @@ class AC2Agent(torch.nn.Module):
     def learn(self, replay):
         # "Recall"
 
-        batch = replay.sample(trajectories=True)
+        if self.depth > 0:
+            replay.include_trajectories()
+
+        batch = next(replay)
         obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
             batch, self.device)
         traj_o, traj_a, traj_r, traj_l = traj

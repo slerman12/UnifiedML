@@ -29,9 +29,10 @@ class Replay:
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
                  save=False, mem_size=None, fetch_per=1000,
                  prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
-                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,), **kwargs):
+                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,)):
 
         self.device = device
+        self.offline = offline
         self.epoch = 1
         self.nstep = nstep or 0  # Future steps to compute cumulative reward from
         self.stream = stream
@@ -59,7 +60,7 @@ class Replay:
 
         if dataset_config is not None:
             # Pytorch Dataset or Memory path
-            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config, **kwargs)
+            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)
 
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
 
@@ -183,6 +184,9 @@ class Replay:
 
         # Parallel worker for batch loading
 
+        # from Hyperparams.minihydra import yaml_search_paths
+        # print(yaml_search_paths)
+
         create_worker = Offline if offline else Online
 
         worker = create_worker(memory=self.memory,
@@ -223,7 +227,7 @@ class Replay:
                 self.epoch += 1
                 self._replay = None  # Reset iterator when depleted
                 sample = next(self.replay)
-            return sample.to(self.device, non_blocking=True)
+            return Batch({key: value.to(self.device, non_blocking=True) for key, value in sample.items()})
 
     def __iter__(self):
         self._replay = iter(self.batches)
@@ -238,11 +242,15 @@ class Replay:
     def include_trajectories(self):
         self.trajectory_flag.set()
 
-    def add(self, batch):
-        if self.stream:
-            self.stream = batch  # For streaming directly from Environment  TODO N-step in {0, 1}
-        else:
-            self.memory.add(batch)
+    def add(self, trace):
+        if trace is None:
+            trace = []
+
+        for batch in trace:
+            if self.stream:
+                self.stream = batch  # For streaming directly from Environment  TODO N-step in {0, 1}
+            else:
+                self.memory.add(batch)
 
     def writable_tape(self, batch, ind, step):
         assert isinstance(batch, (dict, Batch)), f'expected \'batch\' to be dict or Batch, got {type(batch)}.'

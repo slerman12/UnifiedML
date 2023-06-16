@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import torch.multiprocessing
+
 from Hyperparams.minihydra import instantiate, get_args, interpolate  # minihydra conveniently and cleanly manages sys args
 from Utils import init, MT, MP, save, load
 
@@ -72,9 +74,6 @@ def main(args):
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
                 logger.log(logs, 'Train' if training else 'Seed', dump=True)
 
-            replay.add(store=not args.stream and env.last_episode_len > args.nstep)  # Only store full episodes
-            replay.clear()
-
         converged = agent.step >= train_steps
         training = training or agent.step > args.seed_steps and len(replay) >= args.num_workers or replay.offline
 
@@ -97,4 +96,5 @@ def main(args):
 
 
 if __name__ == '__main__':
+    torch.multiprocessing.set_start_method('spawn')
     main()

@@ -76,7 +76,7 @@ log_per_episodes: 1
 # Plotting
 plot_per_steps: 50000
 # Misc
-device: null
+device: ???
 parallel: false
 num_workers: 8
 autocast: false  # Shorthand for mixed_precision
@@ -127,26 +127,38 @@ agent:
   log: ${offline}
 
 replay:
+
+#  path='Replay/', batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
+#  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
+#  save=False, mem_size=None, fetch_per=1000,
+#  prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
+#  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,)
   _target_: World.Replay.Replay
-  _recursive_: false
+  path: ${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories/
   batch_size: ${batch_size}
+  device: ${device}
   num_workers: ${num_workers}
-  capacity: ${capacity}
-  suite: ${suite}
-  task: ${task_name}
-  obs_spec: ${obs_spec}
-  action_spec: ${action_spec}
+  offline: ${offline}
+  stream: ${stream}
+  gpu_capacity: 0
+  pinned_capacity: 0
+  tensor_ram_capacity: 0
+  ram_capacity: 1e6
+  hd_capacity: inf
+  save: false  # Maybe if online and save
+#  load: ${load}  # TODO For Online, might want to overwrite
+  mem_size: null
+  fetch_per: 1000
+  prefetch_factor: 3
+  pin_memory: false
+  pin_device_memory: false
+  reload: false
+  shuffle: true
+  dataset: ${dataset}
+  transform: ${transform}
   frame_stack: ${frame_stack}
   nstep: ${nstep}
   discount: ${discount}
-  transform: ${transform}
-  env: ${env}
-  offline: ${offline}
-  generate: ${generate}
-  stream: ${stream}
-  save: false
-  load: ${load}
-  path: ${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
 
 logger:
   _target_: Logger.Logger
