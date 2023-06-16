@@ -57,7 +57,7 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
 
     file = file.replace('.', '/')
     module = module[0]
-    for path in yaml_search_paths:
+    for i, path in enumerate(yaml_search_paths):
         try:
             # Reuse cached imports
             if file + '.' + module + '_inst' in sys.modules:
@@ -75,8 +75,8 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
             spec.loader.exec_module(foo)
             return getattr(foo, module)(**args)
         except (FileNotFoundError, AttributeError):
-            continue
-    raise FileNotFoundError(f'Could not find {module} in /{file}.py. Search paths include: {yaml_search_paths}')
+            if i == len(yaml_search_paths) - 1:
+                assert False, f'Could not find {module} in /{file}.py. Search paths include: {yaml_search_paths}'
 
 
 def open_yaml(source):
@@ -214,7 +214,6 @@ def interpolate(arg, args=None):
         if isinstance(arg[key], (list, tuple, Args)):
             interpolate(arg[key], args)  # Recurse through inner values
 
-    print(arg)
     return arg
 
 
