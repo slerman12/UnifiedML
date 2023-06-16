@@ -19,7 +19,7 @@ import torchvision.transforms as transforms
 from Blocks.Architectures.Vision.ViT import ViT, CLSPool
 
 import Utils
-from Datasets import ExperienceReplay
+from Data import ExperienceReplay
 
 try:
     _, term_width = os.popen('stty size', 'r').read().split()

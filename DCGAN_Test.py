@@ -12,7 +12,7 @@ from torch.optim import Adam
 
 from Blocks.Architectures.Vision.DCGAN import Generator, Discriminator
 
-from Datasets.Suites._CelebA import CelebA
+from Data.Suites._CelebA import CelebA
 
 import Utils
 

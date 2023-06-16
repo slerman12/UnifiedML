@@ -12,7 +12,7 @@ import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Datasets.Suites._CelebA import CelebA
+from Data.Suites._CelebA import CelebA
 from Losses import QLearning
 
 # import tensorflow as tf
@@ -239,7 +239,7 @@ from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor
 from Blocks.Critics import EnsembleQCritic
 from Utils import Rand
-from Datasets.Suites.Classify import AttrDict
+from Data.Suites.Classify import AttrDict
 
 obs_spec = AttrDict({'shape': [nc, 64, 64], 'mean': 0.5, 'stddev': 0.5, 'low': 0, 'high': 1})  # Can set mean, stddev
 action_spec = AttrDict({'shape': obs_spec.shape, 'discrete_bins': None, 'low': -1, 'high': 1, 'discrete': False})

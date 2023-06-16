@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
+import ast
 import math
 import sys
 import random
@@ -12,11 +13,6 @@ import warnings
 from inspect import signature
 from pathlib import Path
 from multiprocessing.pool import ThreadPool
-
-import hydra
-from hydra.core.global_hydra import GlobalHydra
-from omegaconf import OmegaConf, DictConfig
-from omegaconf.errors import InterpolationToMissingValueError
 
 import numpy as np
 
@@ -32,6 +28,9 @@ from Blocks.Architectures import *  # For direct accessibility via command line
 
 from UnifiedML import launch_args, launch
 
+from Hyperparams import minihydra
+from Hyperparams.minihydra import Args
+
 
 # Sets all Pytorch and Numpy random seeds
 def set_seeds(seed):
@@ -42,25 +41,8 @@ def set_seeds(seed):
     random.seed(seed)
 
 
-# Allow objects/classes as config parameters in Hydra - somewhat hacky
-def allow_objects(args):
-    if isinstance(args, DictConfig):
-        args._set_flag("allow_objects", True)
-
-        for key in args:
-            try:
-                value = args.get(key)
-                if isinstance(value, DictConfig):
-                    allow_objects(value)
-            except InterpolationToMissingValueError:
-                continue
-
-
 # Initializes seeds, device, and CUDA acceleration
 def init(args):
-    # Allow objects/classes in Hydra
-    allow_objects(args)
-
     # For launching via an external app
     args.update(launch_args)
 
@@ -82,12 +64,21 @@ def init(args):
     print('Device:', args.device)
 
 
+# Grammar rules for minihydra
+def parse(arg, key, func, resolve=lambda name: name):
+    pattern = r'\$\{' + key + r':([^(\$\{|\})]+)\}'
+    if isinstance(arg, str) and re.match(r'.*' + pattern + r'.*', arg):
+        return resolve(re.sub(pattern, lambda name: func(re.findall(pattern, name.group())[0]), arg))
+    return arg
+
+
 # Format path names
 # e.g. "Checkpoints/Agents.DQNAgent" -> "Checkpoints/DQNAgent"
-OmegaConf.register_new_resolver("format", lambda name: (name if isinstance(name, str) else name.__name__).split('.')[-1])
+minihydra.grammar.append(lambda arg: parse(arg, 'format', lambda name: name.split('.')[-1]))
 
 # A boolean "not" operation for config
-OmegaConf.register_new_resolver("not", lambda bool: not bool)
+minihydra.grammar.append(lambda arg: parse(arg, 'not', lambda bool: str(not ast.literal_eval(bool)),
+                                           lambda name: ast.literal_eval(name)))
 
 
 # Saves model + args + selected attributes
@@ -108,7 +99,7 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
     while True:
         try:
             to_load = torch.load(path, map_location=device)  # Load
-            args = args or DictConfig({})
+            args = args or Args({})
             args.update(torch.load(f'{root}/{name}.args'))  # Load
             break
         except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
@@ -118,7 +109,10 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
 
     # Overriding original args where specified
     for key, value in kwargs.items():
-        OmegaConf.update(args.recipes if attr else args, attr + f'._override_.{key}' if attr else key, value)
+        if attr:
+            args.recipes[attr + f'._override_.{key}'] = value
+        else:
+            args[key] = value
 
     model = instantiate(args).to(device)
 
@@ -173,7 +167,6 @@ class MultiTask:
             task_args = [arg for arg in original_sys_args[1:-2] if arg.split('=')[0]
                          not in [task_arg.split('=')[0] for task_arg in task.split()] + ['multi_task']] + task.split()
             sys.argv = [sys.argv[0], *task_args, *sys.argv[-2:]]
-            GlobalHydra.instance().clear()
             launch(**launch_args)  # Run
 
         print(f'Launching {self.num_tasks} tasks among Unified Agents!')
@@ -297,10 +290,8 @@ MT = MultiTask()
 
 # Simple-sophisticated instantiation of a class or module by various semantics
 def instantiate(args, i=0, **kwargs):
-    if isinstance(args, (DictConfig, dict)):
-        if isinstance(args, DictConfig):
-            OmegaConf.resolve(args)
-        args = DictConfig(args)  # Non-destructive copy
+    if isinstance(args, (Args, dict)):
+        args = Args(args)  # Non-destructive shallow copy
 
     if hasattr(args, '_override_'):
         kwargs.update(args.pop('_override_'))  # For loading old models with new, overridden args
@@ -318,7 +309,7 @@ def instantiate(args, i=0, **kwargs):
             args = args._target_
         else:
             try:
-                return hydra.utils.instantiate(args, **kwargs)  # Regular hydra
+                return minihydra.instantiate(args, **kwargs)  # Regular hydra
             except ImportError as e:
                 if '(' in args._target_ and ')' in args._target_:  # Direct code execution
                     args = args._target_
@@ -554,7 +545,7 @@ class Sequential(nn.Module):
         self.Sequence = nn.ModuleList()
 
         for _target_ in _targets_:
-            self.Sequence.append(instantiate(OmegaConf.create({'_target_': _target_}) if isinstance(_target_, str)
+            self.Sequence.append(instantiate(Args({'_target_': _target_}) if isinstance(_target_, str)
                                              else _target_, i, **kwargs))
 
             if 'input_shape' in kwargs:

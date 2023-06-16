@@ -1,7 +1,5 @@
-defaults:
-  - _self_
-  - task@_global_: atari/pong
-  - override hydra/job_logging: none
+# Default task
+task: atari/pong
 
 # Agent
 obs_spec: ???  # To be specified later
@@ -89,7 +87,7 @@ seed: 1
 experiment: Exp
 
 environment:
-  _target_: Datasets.Environment.Environment
+  _target_: World.Environment.Environment
   _recursive_: false
   env: ${env}
   suite: ${suite}
@@ -129,7 +127,7 @@ agent:
   log: ${offline}
 
 replay:
-  _target_: Datasets.ExperienceReplay.ExperienceReplay
+  _target_: World.Replay.Replay
   _recursive_: false
   batch_size: ${batch_size}
   num_workers: ${num_workers}
@@ -148,7 +146,7 @@ replay:
   stream: ${stream}
   save: false
   load: ${load}
-  path: ./Datasets/ReplayBuffer/${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
+  path: ${experiment}/${format:${Agent}}/${environment.suite}/${task_name}_${seed}_Memories
 
 logger:
   _target_: Logger.Logger

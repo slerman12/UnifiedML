@@ -5,7 +5,7 @@
 import time
 from math import inf
 
-from hydra.utils import instantiate
+from Hyperparams.minihydra import instantiate
 
 
 class Environment:

@@ -1060,7 +1060,7 @@ python Run.py task=classify/mnist lr_decay_epochs=100
 </summary>
 <br>
 
-As an example of custom environments, we provide the [Super Mario Bros.](https://github.com/Kautenja/gym-super-mario-bros) game environment in [./Datasets/Suites/SuperMario.py](Datasets/Suites/SuperMario.py).
+As an example of custom environments, we provide the [Super Mario Bros.](https://github.com/Kautenja/gym-super-mario-bros) game environment in [./Datasets/Suites/SuperMario.py](Data/Suites/SuperMario.py).
 
 To use it, you can just pass in the path to ```Env=``` and specify the ```suite``` and the ```task_name``` to your choosing:
 
@@ -1128,7 +1128,7 @@ That will launch MNIST. Another example, with a custom class and path,
 python Run.py task=classify/custom Dataset=Datasets.Suites._TinyImageNet.TinyImageNet
 ```
 
-This will initiate a classify task on the custom-defined [```TinyImageNet```](Datasets/Suites/_TinyImageNet.py#L48) Dataset.
+This will initiate a classify task on the custom-defined [```TinyImageNet```](Data/Suites/_TinyImageNet.py#L48) Dataset.
 
 [//]: # (By default, the task name will appear as the Dataset class name &#40;in the above examples, "```MNIST```" and "```TinyImageNet```"&#41;. )
 You can change the task name as it's saved for benchmarking and plotting, with ```task_name=```. The default is the class name such as ```TinyImageNet```.

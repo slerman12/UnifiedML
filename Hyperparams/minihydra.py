@@ -28,7 +28,7 @@ added_modules = {}
 
 
 # Something like this
-def instantiate(args, **kwargs):
+def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, perhaps _target_: -> Path:
     if args is None:
         return
 
@@ -56,11 +56,12 @@ def instantiate(args, **kwargs):
             pass
 
     file = file.replace('.', '/')
+    module = module[0]
     for path in yaml_search_paths:
         try:
             # Reuse cached imports
-            if module + '_inst' in sys.modules:
-                return getattr(sys.modules[module + '_inst'], module)(**args)
+            if file + '.' + module + '_inst' in sys.modules:
+                return getattr(sys.modules[file + '.' + module + '_inst'], module)(**args)
 
             # Reuse cached imports
             for key, value in sys.modules.items():
@@ -70,7 +71,7 @@ def instantiate(args, **kwargs):
             # Import
             spec = importlib.util.spec_from_file_location(module, path + '/' + file + '.py')
             foo = importlib.util.module_from_spec(spec)
-            sys.modules[module + '_inst'] = foo
+            sys.modules[file + '.' + module + '_inst'] = foo
             spec.loader.exec_module(foo)
             return getattr(foo, module)(**args)
         except (FileNotFoundError, AttributeError):
@@ -168,10 +169,11 @@ def parse(args=None):
 
 
 def get(args, keys):
+    arg = args
     keys = keys.split('.')
     for key in keys:
-        args = getattr(args, key)
-    return interpolate(args)  # Interpolate to make sure gotten value is resolved
+        arg = getattr(arg, key)
+    return interpolate([arg], args)[0]  # Interpolate to make sure gotten value is resolved
 
 
 # minihydra.grammar.append(rule)
@@ -184,24 +186,36 @@ def interpolate(arg, args=None):
 
     def _interpolate(match_obj):
         if match_obj.group() is not None:
-            return str(get(args, match_obj.group()[2:][:-1]))
+            try:
+                return str(get(args, match_obj.group()[2:][:-1]))
+            except AttributeError:
+                pass
 
     items = enumerate(arg) if isinstance(arg, (list, tuple)) \
         else arg.items() if isinstance(arg, Args) else ()  # Iterate through lists, tuples, or dicts
 
     for key, value in items:
-        if isinstance(arg[key], str):
-            if re.compile(r'.+\$\{[^[\$\{]+\}.+').match(arg[key]):
-                arg[key] = re.sub(r'\$\{[^[\$\{]+\}', _interpolate, arg[key])  # Strings
-            elif re.compile(r'\$\{[^[\$\{]+\}').match(arg[key]):
-                arg[key] = get(args, arg[key][2:][:-1])  # Objects
+        if isinstance(value, str):
+            if re.compile(r'.+\$\{[^((\$\{)|\})]+\}.*').match(value) or \
+                    re.compile(r'.*\$\{[^((\$\{)|\})]+\}.+').match(value):
+                arg[key] = re.sub(r'\$\{[^((\$\{)|\})]+\}', _interpolate, value)  # Strings
+            elif re.compile(r'\$\{[^((\$\{)|\})]+\}').match(value):
+                try:
+                    arg[key] = get(args, value[2:][:-1])  # Objects
+                except AttributeError:
+                    pass
+
+                # print(value, get(args, value[2:][:-1]), arg[key])
 
         for rule in grammar:
-            arg[key] = rule(arg[key])
+            if isinstance(value, str):
+                arg[key] = rule(arg[key])
 
-        interpolate(value, args)  # Recurse through inner values
+        if isinstance(arg[key], (list, tuple, Args)):
+            interpolate(arg[key], args)  # Recurse through inner values
 
-    return args
+    print(arg)
+    return arg
 
 
 def multirun(args):

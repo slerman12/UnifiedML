@@ -10,16 +10,18 @@ import sys
 import os
 import inspect
 
+from Hyperparams.minihydra import yaml_search_paths
+
 UnifiedML = os.path.dirname(__file__)
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 
 # Imports UnifiedML paths and the paths of any launching app
 def import_paths():
-    sys.path.extend([UnifiedML, app])  # Imports UnifiedML paths and the paths of the launching app
+    yaml_search_paths.extend([UnifiedML, app])  # Imports UnifiedML paths and the paths of the launching app
 
     if os.path.exists(app + '/Hyperparams'):
-        sys.argv.extend(['-cd', app + '/Hyperparams'])  # Adds an app's Hyperparams dir to Hydra's .yaml search path
+        yaml_search_paths.append(app + '/Hyperparams')  # Adds an app's Hyperparams dir to search path
 
 
 import_paths()

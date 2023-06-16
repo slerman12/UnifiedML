@@ -15,8 +15,8 @@ from Blocks.Encoders import CNNEncoder
 from Blocks.Actors import EnsemblePiActor
 from Blocks.Critics import EnsembleQCritic
 
-from Datasets.Suites._CelebA import CelebA
-from Datasets.Suites.Classify import AttrDict
+from Data.Suites._CelebA import CelebA
+from Data.Suites.Classify import AttrDict
 
 from Losses import QLearning
 

@@ -33,7 +33,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
             and glob.glob(dataset_config._target_ + 'card.yaml'):
         return dataset_config._target_  # Note: stream=false if called in Env
 
-    # Add torchvision datasets to module search for config instantiation
+    # Add torchvision datasets to module search for config instantiation  TODO Add World/Datasets
     pytorch_datasets = {m: getattr(torchvision.datasets, m)
                         for m in dir(torchvision.datasets) if inspect.isclass(getattr(torchvision.datasets, m))
                         and issubclass(getattr(torchvision.datasets, m), Dataset)}

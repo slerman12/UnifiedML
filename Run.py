@@ -2,16 +2,12 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-import hydra
-from hydra.utils import instantiate, call
+from Hyperparams.minihydra import instantiate, get_args  # minihydra conveniently and cleanly manages sys args
 
 import Utils
 
 
-# Hydra conveniently and cleanly manages sys args
-# Hyper-param arg files located in ./Hyperparams
-
-@hydra.main(config_path='Hyperparams', config_name='args')
+@get_args(source='Hyperparams/args.yaml')  # Hyper-param arg files located in ./Hyperparams
 def main(args):
 
     if args.multi_task:
@@ -65,7 +61,7 @@ def main(args):
                 vlogger.dump(vlogs, f'{agent.step}')
 
         if args.plot_per_steps and (agent.step + 1) % args.plot_per_steps == 0 and not args.generate or converged:
-            call(args.plotting)
+            instantiate(args.plotting)
 
         if converged:
             break
@@ -103,5 +99,4 @@ def main(args):
             agent = Utils.load(args.load_path, args.device, args.agent, ['frame', 'step', 'episode', 'epoch'], True)
 
 
-if __name__ == '__main__':
-    main()
+main()
