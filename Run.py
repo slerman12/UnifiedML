@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-from Hyperparams.minihydra import instantiate, get_args  # minihydra conveniently and cleanly manages sys args
+from Hyperparams.minihydra import instantiate, get_args, interpolate  # minihydra conveniently and cleanly manages sys args
 from Utils import init, MT, MP, save, load
 
 
@@ -21,6 +21,7 @@ def main(args):
     for arg in ('obs_spec', 'action_spec', 'evaluate_episodes'):
         if hasattr(generalize.env, arg):
             setattr(args, arg, getattr(generalize.env, arg))
+    interpolate(args)
 
     # Agent
     agent = load(args.load_path, args.device, args.agent) if args.load \
@@ -35,9 +36,8 @@ def main(args):
     replay = instantiate(args.replay,
                          meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
 
-    # Loggers
+    # Logger / Vlogger
     logger = instantiate(args.logger)
-
     vlogger = instantiate(args.vlogger) if args.log_media else None
 
     # Start

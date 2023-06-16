@@ -6,6 +6,9 @@ import glob
 import inspect
 import itertools
 import os
+import random
+
+import numpy as np
 
 import torch
 from torch.utils.data import Dataset
@@ -55,7 +58,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
 
     # Return the Dataset module
     if is_valid_path(dataset_config._target_, module_path=True):
-        return instantiate(dataset_config)  # TODO Recursive with transform
+        return instantiate(dataset_config)  # TODO Recursive with transform?
 
     if train is not None:
         path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
@@ -188,6 +191,11 @@ class Transform(Dataset):
         # Inherit attributes of given dataset
         self.__dict__.update(dataset.__dict__)
 
+        # Get transform from config
+        if isinstance(transform, (Args, dict)):
+            added_modules.update({'torchvision': torchvision})
+            transform = instantiate(transform)
+
         # Map inputs
         self.__dataset, self.__transform = dataset, transform
 
@@ -234,3 +242,74 @@ def get_dataset_path(dataset_config, path):
             count += 1
 
     return f'{dataset_class_name}{count}/'
+
+# Computes mean, stddev, low, high
+# def compute_stats(self, path):
+#     cnt = 0
+#     fst_moment, snd_moment = None, None
+#     low, high = np.inf, -np.inf
+#
+#     for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
+#                                      'This only has to be done once'):
+#
+#         b, c, *hw = obs.shape
+#         if not hw:
+#             *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
+#         obs = obs.view(b, c, *hw)
+#         fst_moment = torch.zeros(c) if fst_moment is None else fst_moment
+#         snd_moment = torch.zeros(c) if snd_moment is None else snd_moment
+#         nb_pixels = b * math.prod(hw)
+#         dim = [0, *[2 + i for i in range(len(hw))]]
+#         sum_ = torch.sum(obs, dim=dim)
+#         sum_of_square = torch.sum(obs ** 2, dim=dim)
+#         fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
+#         snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
+#
+#         cnt += nb_pixels
+#
+#         low, high = min(obs.min(), low), max(obs.max(), high)
+#
+#     stddev = torch.sqrt(snd_moment - fst_moment ** 2)
+#     stddev[stddev == 0] = 1
+#
+#     mean, stddev = fst_moment.tolist(), stddev.tolist()
+#     with open(path + f'_Stats_Mean_Stddev_Low_High', 'w') as f:
+#         f.write(f'{mean}_{stddev}_{low}_{high}')  # Save stat values for future reuse
+#
+#     return mean, stddev, low.item(), high.item()
+
+
+# # Map class labels to Tensor integers
+class ClassToIdx(Dataset):
+    def __init__(self, dataset, classes):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Map string labels to integers
+        self.__dataset, self.__map = dataset, {str(classes[i]): torch.tensor(i) for i in range(len(classes))}
+
+    def __getitem__(self, idx):
+        x, y = self.__dataset.__getitem__(idx)
+        return x, self.__map[str(y)]  # Map
+
+    def __len__(self):
+        return self.__dataset.__len__()
+
+
+# Select classes from dataset e.g. python Run.py task=classify/mnist 'env.subset=[0,2,3]'
+class ClassSubset(torch.utils.data.Subset):
+    def __init__(self, dataset, classes):
+        # Inherit attributes of given dataset
+        self.__dict__.update(dataset.__dict__)
+
+        # Find subset indices which only contain the specified classes, multi-label or single-label
+        indices = [i for i in range(len(dataset)) if str(dataset[i][1]) in map(str, classes)]
+
+        # Initialize
+        super().__init__(dataset=dataset, indices=indices)
+
+
+def worker_init_fn(worker_id):
+    seed = np.random.get_state()[1][0] + worker_id
+    np.random.seed(seed)
+    random.seed(int(seed))

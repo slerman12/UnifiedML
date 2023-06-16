@@ -9,7 +9,9 @@ A new Replay memory. Programmed by Sam Lerman.
 import atexit
 import random
 from math import inf
+import os
 
+import torchvision
 from tqdm import tqdm
 
 import numpy as np
@@ -18,8 +20,8 @@ import torch
 from torch.utils.data import IterableDataset, Dataset, DataLoader
 
 from World.Memory import Memory, Batch
-from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform
-from Hyperparams.minihydra import instantiate, Args
+from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, worker_init_fn
+from Hyperparams.minihydra import instantiate, Args, added_modules
 
 
 class Replay:
@@ -40,6 +42,9 @@ class Replay:
         self.trajectory_flag = Flag()  # Tell worker to include experience trajectories as well
 
         self.reload = reload
+
+        # CPU workers
+        num_workers = max(1, min(num_workers, os.cpu_count()))
 
         self.memory = Memory(num_workers=num_workers,
                              gpu_capacity=gpu_capacity,
@@ -99,6 +104,81 @@ class Replay:
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
+        # self.action_spec = {'shape': (1,),
+        #                     'discrete_bins': len(classes),
+        #                     'low': 0,
+        #                     'high': len(classes) - 1,
+        #                     'discrete': True}
+        #
+        # self.obs_spec = {'shape': obs_shape,
+        #                  'mean': mean,
+        #                  'stddev': stddev,
+        #                  'low': low,
+        #                  'high': high}
+
+        # Unique classes in dataset - warning: treats multi-label as single-label for now
+        # # TODO Save/Only do once - debug speech command on Macula
+        # classes = subset if subset is not None \
+        #     else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
+        #     else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
+        #     else [print(f'Identifying unique {"train" if train else "eval"} classes... '
+        #                 f'This can take some time for large datasets.'),
+        #           sorted(list(set(str(exp[1]) for exp in dataset)))][1]
+        #
+        # # Can select a subset of classes
+        # if subset:
+        #     task += '_Classes_' + '_'.join(map(str, classes))
+        #     print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
+        #     dataset = ClassSubset(dataset, classes)
+        #
+        # # Map unique classes to integers
+        # dataset = ClassToIdx(dataset, classes)
+        #
+        # # Transform inputs
+        # transform = instantiate(transform)
+        # if transform:
+        #     task += '_Transformed'  # Note: These name changes only apply to replay buffer and not benchmarking yet
+        # dataset = Transform(dataset, transform)
+
+
+
+        # """Create Replay and compute stats"""
+        #
+        # replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
+        #
+        # stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
+        #
+        # # Parallelism-protection, but note that clashes may still occur in multi-process dataset creation
+        # if replay_path.exists() and not len(stats_path):
+        #     warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be'
+        #                   f' creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c)'
+        #                   f' and delete the existing path (`rm -r <Path>`) and try again to re-create.\nPath: '
+        #                   f'{colored(replay_path, "green")}\n{"Also: " + stats_path[0] if len(stats_path) else ""}'
+        #                   f'{colored("Wait (do nothing)", "yellow")} '
+        #                   f'{colored("or kill (ctrl-c), delete path (rm -r <Path>) and try again.", "red")}')
+        #     while not len(stats_path):
+        #         sleep(10)  # Wait 10 sec
+        #
+        #         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
+        #
+        # # Offline and generate don't use training rollouts (unless streaming)
+        # if (offline or generate) and not (stream or train or replay_path.exists()):
+        #     # But still need to create training replay & compute stats
+        #     Classify(dataset_, None, task_, True, offline, generate, stream, batch_size, num_workers, subset, None,
+        #              None, seed, transform, **kwargs)
+        #
+        # # Create replay
+        # if train and (offline or generate) and not (replay_path.exists() or stream):
+        #     self.create_replay(replay_path)
+        #
+        # stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
+        #
+        # # Compute stats
+        # mean, stddev, low_, high_ = map(json.loads, open(stats_path[0]).readline().split('_')) if len(stats_path) \
+        #     else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train and not stream else (None,) * 4
+        # low, high = low_ if low is None else low, high_ if high is None else high
+
+        added_modules.update({'torchvision': torchvision})
         transform = instantiate(transform)
 
         # Parallel worker for batch loading
@@ -174,12 +254,6 @@ class Replay:
 
         # Infinite if stream, else num episodes in Memory
         return int(5e11) if self.stream else len(self.memory)
-
-
-def worker_init_fn(worker_id):
-    seed = np.random.get_state()[1][0] + worker_id
-    np.random.seed(seed)
-    random.seed(int(seed))
 
 
 class Worker:

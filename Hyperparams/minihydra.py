@@ -27,7 +27,7 @@ yaml_search_paths = [app]  # List of paths
 added_modules = {}
 
 
-# Something like this
+# Something like this  TODO Support /__init__.py files
 def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, perhaps _target_: -> Path:
     if args is None:
         return
@@ -58,32 +58,33 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
     file = file.replace('.', '/')
     module = module[0]
     for i, path in enumerate(yaml_search_paths):
-        if not os.path.exists(path + '/' + file + '.py'):
-            if i == len(yaml_search_paths) - 1:
-                raise FileNotFoundError(f'Could not find {module} in /{file}.py. '
-                                        f'Search paths include: {yaml_search_paths}')
-            continue
+        for j, file in enumerate([file + '/__init__', file]):
+            if not os.path.exists(path + '/' + file + '.py'):
+                if i == len(yaml_search_paths) - 1 and j == 1:
+                    raise FileNotFoundError(f'Could not find {module} in /{file}.py. '
+                                            f'Search paths include: {yaml_search_paths}')
+                continue
 
-        # Reuse cached imports
-        if file.replace('/', '.') + '_inst' in sys.modules:
-            return getattr(sys.modules[file.replace('/', '.') + '_inst'], module)(**args)
+            # Reuse cached imports
+            if file.replace('/', '.') + '_inst' in sys.modules:
+                return getattr(sys.modules[file.replace('/', '.') + '_inst'], module)(**args)
 
-        # Reuse cached imports
-        for key, value in sys.modules.items():
-            if hasattr(value, '__file__') and value.__file__ and path + '/' + file + '.py' in value.__file__:
-                try:
-                    return getattr(value, module)(**args)
-                except AttributeError:
-                    if i == len(yaml_search_paths) - 1:
-                        raise AttributeError(f'Could not initialize {module} in /{file}.py.')
-                    continue
+            # Reuse cached imports
+            for key, value in sys.modules.items():
+                if hasattr(value, '__file__') and value.__file__ and path + '/' + file + '.py' in value.__file__:
+                    try:
+                        return getattr(value, module)(**args)
+                    except AttributeError:
+                        if i == len(yaml_search_paths) - 1 and j == 1:
+                            raise AttributeError(f'Could not initialize {module} in /{file}.py.')
+                        continue
 
-        # Import
-        spec = importlib.util.spec_from_file_location(file.replace('/', '.'), path + '/' + file + '.py')
-        foo = importlib.util.module_from_spec(spec)
-        sys.modules[file.replace('/', '.') + '_inst'] = foo
-        spec.loader.exec_module(foo)
-        return getattr(foo, module)(**args)
+            # Import
+            spec = importlib.util.spec_from_file_location(file.replace('/', '.'), path + '/' + file + '.py')
+            foo = importlib.util.module_from_spec(spec)
+            sys.modules[file.replace('/', '.') + '_inst'] = foo
+            spec.loader.exec_module(foo)
+            return getattr(foo, module)(**args)
 
 
 def open_yaml(source):
@@ -109,11 +110,11 @@ def recursive_Args(args):
     if isinstance(args, (dict, Args)):
         args = Args(args)
 
-    items = enumerate(args) if isinstance(args, (list, tuple)) \
+    items = enumerate(args) if isinstance(args, list) \
         else args.items() if isinstance(args, Args) else ()  # Iterate through lists, tuples, or dicts
 
     for key, value in items:
-        args[key] = recursive_Args(value)  # Recurse through inner values
+        args[key] = _parse(recursive_Args(value))  # Recurse through inner values
 
     return args
 
@@ -155,6 +156,17 @@ def read(source, parse_task=True):
     return args
 
 
+def _parse(value):
+    if isinstance(value, str):
+        if re.compile(r'^\[.*\]$').match(value) or re.compile(r'^\{.*\}$').match(value) or \
+                re.compile(r'^-?[0-9]*.?[0-9]+(e-?[0-9]*.?[0-9]+)?$').match(value):
+            value = ast.literal_eval(value)
+        elif isinstance(value, str) and value.lower() in ['true', 'false', 'null', 'inf']:
+            value = True if value.lower() == 'true' else False if value.lower() == 'false' \
+                else None if value.lower() == 'null' else inf
+    return value
+
+
 def parse(args=None):
     # Parse command-line
     for sys_arg in sys.argv[1:]:
@@ -166,12 +178,7 @@ def parse(args=None):
                 setattr(arg, key, Args())
             arg = getattr(arg, key)
         setattr(arg, keys[-1], value)
-        if re.compile(r'^\[.*\]$').match(value) or re.compile(r'^\{.*\}$').match(value) or \
-                re.compile(r'^-?[0-9]*.?[0-9]+$').match(value):
-            arg[keys[-1]] = ast.literal_eval(value)
-        elif isinstance(value, str) and value.lower() in ['true', 'false', 'null', 'inf']:
-            arg[keys[-1]] = True if value.lower() == 'true' else False if value.lower() == 'false' \
-                else None if value.lower() == 'null' else inf
+        arg[keys[-1]] = _parse(value)
     return args
 
 
@@ -194,7 +201,10 @@ def interpolate(arg, args=None):
     def _interpolate(match_obj):
         if match_obj.group() is not None:
             try:
-                return str(get(args, match_obj.group()[2:][:-1]))
+                out = str(get(args, match_obj.group()[2:][:-1]))
+                if '???' in out:
+                    return str(match_obj.group())
+                return out
             except AttributeError:
                 pass
 
@@ -208,7 +218,9 @@ def interpolate(arg, args=None):
                 arg[key] = re.sub(r'\$\{[^((\$\{)|\})]+\}', _interpolate, value)  # Strings
             elif re.compile(r'\$\{[^((\$\{)|\})]+\}').match(value):
                 try:
-                    arg[key] = get(args, value[2:][:-1])  # Objects
+                    out = get(args, value[2:][:-1])
+                    if not (isinstance(out, str) and '???' in out):
+                        arg[key] = out  # Objects
                 except AttributeError:
                     pass
 
