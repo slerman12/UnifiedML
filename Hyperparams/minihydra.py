@@ -11,9 +11,9 @@ See full hydra here: https://github.com/facebookresearch/hydra
 import ast
 import importlib.util
 import inspect
+import os.path
 import re
 import sys
-from copy import deepcopy
 from functools import partial
 from math import inf
 import yaml
@@ -36,7 +36,7 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
     if '_recursive_' in args:
         args.pop('_recursive_')
 
-    args = deepcopy(args)
+    args = recursive_Args(args)
     args.update(kwargs)
 
     file, *module = args.pop('_target_').rsplit('.', 1)
@@ -58,25 +58,32 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
     file = file.replace('.', '/')
     module = module[0]
     for i, path in enumerate(yaml_search_paths):
-        try:
-            # Reuse cached imports
-            if file + '.' + module + '_inst' in sys.modules:
-                return getattr(sys.modules[file + '.' + module + '_inst'], module)(**args)
-
-            # Reuse cached imports
-            for key, value in sys.modules.items():
-                if hasattr(value, '__file__') and value.__file__ and path + '/' + file + '.py' in value.__file__:
-                    return getattr(value, module)(**args)
-
-            # Import
-            spec = importlib.util.spec_from_file_location(module, path + '/' + file + '.py')
-            foo = importlib.util.module_from_spec(spec)
-            sys.modules[file + '.' + module + '_inst'] = foo
-            spec.loader.exec_module(foo)
-            return getattr(foo, module)(**args)
-        except (FileNotFoundError, AttributeError):
+        if not os.path.exists(path + '/' + file + '.py'):
             if i == len(yaml_search_paths) - 1:
-                assert False, f'Could not find {module} in /{file}.py. Search paths include: {yaml_search_paths}'
+                raise FileNotFoundError(f'Could not find {module} in /{file}.py. '
+                                        f'Search paths include: {yaml_search_paths}')
+            continue
+
+        # Reuse cached imports
+        if file.replace('/', '.') + '_inst' in sys.modules:
+            return getattr(sys.modules[file.replace('/', '.') + '_inst'], module)(**args)
+
+        # Reuse cached imports
+        for key, value in sys.modules.items():
+            if hasattr(value, '__file__') and value.__file__ and path + '/' + file + '.py' in value.__file__:
+                try:
+                    return getattr(value, module)(**args)
+                except AttributeError:
+                    if i == len(yaml_search_paths) - 1:
+                        raise AttributeError(f'Could not initialize {module} in /{file}.py.')
+                    continue
+
+        # Import
+        spec = importlib.util.spec_from_file_location(file.replace('/', '.'), path + '/' + file + '.py')
+        foo = importlib.util.module_from_spec(spec)
+        sys.modules[file.replace('/', '.') + '_inst'] = foo
+        spec.loader.exec_module(foo)
+        return getattr(foo, module)(**args)
 
 
 def open_yaml(source):
@@ -99,7 +106,7 @@ class Args(dict):
 
 # Allow access via attributes recursively
 def recursive_Args(args):
-    if isinstance(args, dict):
+    if isinstance(args, (dict, Args)):
         args = Args(args)
 
     items = enumerate(args) if isinstance(args, (list, tuple)) \
@@ -124,7 +131,7 @@ def read(source, parse_task=True):
     if 'imports' in args:
         imports = args.pop('imports')
 
-        self = deepcopy(args)
+        self = recursive_Args(args)
 
         for module in imports:
             module = self if module == 'self' else read(module + '.yaml', parse_task=False)
@@ -204,8 +211,6 @@ def interpolate(arg, args=None):
                     arg[key] = get(args, value[2:][:-1])  # Objects
                 except AttributeError:
                     pass
-
-                # print(value, get(args, value[2:][:-1]), arg[key])
 
         for rule in grammar:
             if isinstance(value, str):

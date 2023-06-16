@@ -17,7 +17,7 @@ if __name__ == '__main__':
         f.write(fr"""defaults:
   - _self_
 
-Env: Datasets.Suites.DMC.DMC
+Env: World.Environments.DMC.DMC
 suite: dmc
 task_name: {task}
 discrete: false

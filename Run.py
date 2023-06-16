@@ -3,19 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 from Hyperparams.minihydra import instantiate, get_args  # minihydra conveniently and cleanly manages sys args
-
-import Utils
+from Utils import init, MT, MP, save, load
 
 
 @get_args(source='Hyperparams/args.yaml')  # Hyper-param arg files located in ./Hyperparams
 def main(args):
-
     if args.multi_task:
-        # Handover to multi-task launcher
-        return Utils.MT.launch(args.multi_task)
+        return MT.launch(args.multi_task)  # Handover to multi-task launcher
 
     # Set random seeds, device
-    Utils.init(args)
+    init(args)
 
     # Train, test environments
     env = instantiate(args.environment)
@@ -26,11 +23,11 @@ def main(args):
             setattr(args, arg, getattr(generalize.env, arg))
 
     # Agent
-    agent = Utils.load(args.load_path, args.device, args.agent) if args.load \
+    agent = load(args.load_path, args.device, args.agent) if args.load \
         else instantiate(args.agent).to(args.device)
 
     # Unify multi-task models (if exist)
-    agent = Utils.MT.unify_agent_models(agent, args.agent, args.device, args.load and args.load_path)
+    agent = MT.unify_agent_models(agent, args.agent, args.device, args.load and args.load_path)
 
     train_steps = args.train_steps + agent.step
 
@@ -87,16 +84,17 @@ def main(args):
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
                 logs = agent.learn(replay)  # Learn
                 if args.mixed_precision:
-                    Utils.MP.update()  # For training speedup via automatic mixed precision
+                    MP.update()  # For training speedup via automatic mixed precision
 
                 if args.log_per_episodes:
                     logger.log(logs, 'Train')
 
         if training and args.save_per_steps and agent.step % args.save_per_steps == 0 or (converged and args.save):
-            Utils.save(args.save_path, agent, args.agent, 'frame', 'step', 'episode', 'epoch')
+            save(args.save_path, agent, args.agent, 'frame', 'step', 'episode', 'epoch')
 
         if training and args.load_per_steps and agent.step % args.load_per_steps == 0:
-            agent = Utils.load(args.load_path, args.device, args.agent, ['frame', 'step', 'episode', 'epoch'], True)
+            agent = load(args.load_path, args.device, args.agent, ['frame', 'step', 'episode', 'epoch'], True)
 
 
-main()
+if __name__ == '__main__':
+    main()

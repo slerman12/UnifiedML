@@ -38,7 +38,7 @@ if __name__ == '__main__':
         f.write(r"""defaults:
   - _self_
 
-Env: Datasets.Suites.Atari.Atari
+Env: World.Environments.Atari.Atari
 suite: atari
 task_name: {}
 discrete: true

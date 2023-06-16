@@ -1,5 +1,5 @@
 # Default task
-task: atari/pong
+task: classify/mnist
 
 # Agent
 obs_spec: ???  # To be specified later

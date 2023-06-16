@@ -1,8 +1,8 @@
 defaults:
   - _self_
 
-Env: Datasets.Suites.Classify.Classify
-Dataset: Datasets.Suites._TinyImageNet.TinyImageNet
+Env: World.Environments.Classify.Classify
+Dataset: World.Datasets.TinyImageNet.TinyImageNet
 environment:
     dataset: ${dataset}
     test_dataset: ${test_dataset}

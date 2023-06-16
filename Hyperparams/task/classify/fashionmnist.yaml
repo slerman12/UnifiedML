@@ -1,7 +1,7 @@
 defaults:
   - _self_
 
-Env: Datasets.Suites.Classify.Classify
+Env: World.Environments.Classify.Classify
 Dataset: torchvision.datasets.FashionMNIST
 environment:
     dataset: ${dataset}
