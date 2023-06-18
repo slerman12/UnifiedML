@@ -8,8 +8,6 @@
 
 [//]: # (Broad examples with links below ./Examples ./1. blablabla 2. blablabla)
 
-## Install
-
 ```console
 pip install UnifiedML
 ```
