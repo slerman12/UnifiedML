@@ -34,29 +34,6 @@ from Hyperparams.minihydra import Args
 launch_args = {}
 
 
-# Launches UnifiedML from inside a launching app with specified args
-def launch(**hyperparams):
-    original = list(sys.argv)
-
-    command_line_args = {arg.split('=')[0] for arg in sys.argv if '=' in arg}
-    added = set()
-
-    for key, value in hyperparams.items():
-        if isinstance(value, (str, bool)):
-            if key not in command_line_args:
-                sys.argv.insert(-2, f'{key}={value}')  # For Hydra registered resolvers in Utils
-                added.add(key)
-
-    global launch_args
-    launch_args = {key: hyperparams[key] for key in hyperparams.keys() - command_line_args - added}
-
-    from .Run import main
-    main()  # Run
-
-    launch_args = {}
-    sys.argv = original
-
-
 # Sets all Pytorch and Numpy random seeds
 def set_seeds(seed):
     torch.manual_seed(seed)

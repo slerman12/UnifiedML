@@ -184,15 +184,12 @@ class Replay:
 
         # Parallel worker for batch loading
 
-        # from Hyperparams.minihydra import yaml_search_paths
-        # print(yaml_search_paths)
-
         create_worker = Offline if offline else Online
 
         worker = create_worker(memory=self.memory,
                                fetch_per=None if offline else fetch_per,
                                transform=transform,
-                               frame_stack=frame_stack,
+                               frame_stack=frame_stack or 1,
                                nstep=self.nstep,
                                trajectory_flag=self.trajectory_flag,
                                discount=discount)
@@ -227,6 +224,7 @@ class Replay:
                 self.epoch += 1
                 self._replay = None  # Reset iterator when depleted
                 sample = next(self.replay)
+
             return Batch({key: value.to(self.device, non_blocking=True) for key, value in sample.items()})
 
     def __iter__(self):
@@ -354,9 +352,9 @@ class Worker:
             # Cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
             experience.reward = np.dot(discounts[:-1], traj_r)
-            experience['discount'] = discounts[-1:]
+            experience['discount'] = discounts[-1:]  # TODO discounts[-1] ?
         else:
-            experience['discount'] = 1.0
+            experience['discount'] = 1  # TODO does it have to be a float / warning: not float64 ?
 
         return experience
 

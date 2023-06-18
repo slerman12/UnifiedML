@@ -60,7 +60,7 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
         module = module[0]
     else:
         module = file
-        file = 'Utils'
+        file = 'Utils'  # TODO Generalize this / allow added modules
     for i, path in enumerate(yaml_search_paths):
         for j, file in enumerate([file + '/__init__', file]):
             if not os.path.exists(path + '/' + file + '.py'):
@@ -84,11 +84,9 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
                         continue
 
             # Import
-            spec = importlib.util.spec_from_file_location(file.replace('/', '.'), path + '/' + file + '.py')
-            foo = importlib.util.module_from_spec(spec)
-            sys.modules[file.replace('/', '.') + '_inst'] = foo
-            spec.loader.exec_module(foo)
-            return getattr(foo, module)(**args)
+            package = importlib.import_module(file.replace('/', '.'))
+            sys.modules[file.replace('/', '.') + '_inst'] = package
+            return getattr(package, module)(**args)
 
 
 def open_yaml(source):

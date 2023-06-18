@@ -35,6 +35,10 @@ def main(args):
     train_steps = args.train_steps + agent.step
 
     # Experience replay
+    # args.replay.pop('_target_')
+    # from World.Replay import Replay
+    # replay = Replay(**args.replay,
+    #                 meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
     replay = instantiate(args.replay,
                          meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
 
