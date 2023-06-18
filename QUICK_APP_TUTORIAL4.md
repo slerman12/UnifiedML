@@ -27,11 +27,9 @@ if __name__ == '__main__':
     ML.launch(Model=model, Dataset='CIFAR10', task='classify')
 ```
 
-Tasks (```task=```) include ```classify```, ```regression```, ```RL```, and ```generate```.
-
 ### Command-line
 
-Let's now run it with the command-line tool instead:
+Let's now run use the command-line tool:
 
 ```diff
 # MyApp.py
