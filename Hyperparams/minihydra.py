@@ -22,7 +22,7 @@ import yaml
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 # minihydra.yaml_search_paths.append(path)
-yaml_search_paths = [app]  # List of paths
+yaml_search_paths = [app, '']  # List of paths
 
 added_modules = {}
 
@@ -164,7 +164,7 @@ def _parse(value):
     if isinstance(value, str):
         if re.compile(r'^\[.*\]$').match(value) or re.compile(r'^\{.*\}$').match(value) or \
                 re.compile(r'^-?[0-9]*.?[0-9]+(e-?[0-9]*.?[0-9]+)?$').match(value):
-            value = ast.literal_eval(value)
+            value = ast.literal_eval(value)  # TODO Custom with no quotes required for strings
         elif isinstance(value, str) and value.lower() in ['true', 'false', 'null', 'inf']:
             value = True if value.lower() == 'true' else False if value.lower() == 'false' \
                 else None if value.lower() == 'null' else inf
@@ -206,7 +206,7 @@ def interpolate(arg, args=None):
         if match_obj.group() is not None:
             try:
                 out = str(get(args, match_obj.group()[2:][:-1]))
-                if '???' in out:
+                if out == '???':
                     return str(match_obj.group())
                 return out
             except AttributeError:
@@ -223,7 +223,7 @@ def interpolate(arg, args=None):
             elif re.compile(r'\$\{[^((\$\{)|\})]+\}').match(value):
                 try:
                     out = get(args, value[2:][:-1])
-                    if not (isinstance(out, str) and '???' in out):
+                    if not (isinstance(out, str) and out == '???'):
                         arg[key] = out  # Objects
                 except AttributeError:
                     pass

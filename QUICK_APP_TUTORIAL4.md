@@ -1,6 +1,6 @@
 <img width="20%" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
 
-# Welcome 
+# Welcome
 
 [//]: # (Cheat sheet)
 
@@ -16,21 +16,37 @@ pip install UnifiedML
 
 ## Quick start
 
-### Purely command-line example
-
-**Run.py:**
-
 ```python
 from torch import nn
 
-model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
+import ML
+
+model = nn.Sequential(nn.Linear(3 * 32 * 32, 128),
+                      nn.Linear(128, 10))
+
+if __name__ == '__main__':
+    # Launch training on CIFAR-10 according to the defaults of task "classify"
+    ML.launch(Model=model, Dataset='CIFAR10', task='classify')
 ```
 
-**Run it:**
+Tasks (```task=```) include ```classify```, ```regression```, ```RL```, and ```generate```.
 
-```console
-ML Model=model Dataset=CIFAR10
+### Command-line
+
+Let's now run it with the command-line tool instead:
+
+```diff
+# MyApp.py
+from torch import nn
+
+model = nn.Sequential(nn.Linear(3 * 32 * 32, 128),
+                      nn.Linear(128, 10))
+
+# Command-line
++ # ML Model=MyApp.model Dataset=CIFAR10 task=classify
 ```
+
+The command-line flags accept paths such as ```Model=MyApp.model``` or a custom dataset ```Dataset=Path.To.MyDataset```.
 
 ### Pure-Code example
 
@@ -106,11 +122,11 @@ For image classification, extra hard disk memory is used to store the re-formatt
 
 ## Hyperparams
 
-Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. 
+Hyperparams can be passed in via command-line, code, recipe, or any combination thereof.
 
 ---
 
-**Here's how to write the same program in 5 different ways:** 
+**Here's how to write the same program in 5 different ways:**
 
 ### 1. Purely command-line
 
@@ -159,7 +175,7 @@ Define recipes in a ```.yaml``` file like this one:
 defaults:
   - classify@_global_
   - _self_
-Dataset: MNIST 
+Dataset: MNIST
 Eyes: CNN
 eyes:
   depth: 5
@@ -223,7 +239,7 @@ ML task=cifar_recipe accelerate=true
 This recipe exactly trains CIFAR10 to 94% accuracy in 5 minutes on 1 GPU.
 
 * ```ResNet18``` points to the architecture [here]().
-* We could have also written the direct path: 
+* We could have also written the direct path:
 ```diff
 + Eyes: UnifiedML.Blocks.Architectures.Vision.ResNet18.ResNet18
 ```
@@ -238,7 +254,7 @@ Plot task=cifar_recipe
 
 Corresponding plots save in ```Benchmarking/Experiment-Name/Plots/```:
 
-We can use flags like ```experiment=``` to distinguish experiments. 
+We can use flags like ```experiment=``` to distinguish experiments.
 
 * Another option is to use [WandB]():
 
@@ -324,7 +340,7 @@ Click to expand
 
 ## Useful flags
 
-* ```norm=true```: enables normalization 
+* ```norm=true```: enables normalization
 * ```offline=true```: ...
 * ```Optim=```
 
@@ -466,7 +482,7 @@ Replays are recommended for RL because on-policy algorithmic support is currentl
 
 ---
 
-The code in this repo was programmed and conceived by **Sam Lerman** under the support of PhD advisor [Dr. Chenliang Xu](), project PI lead [Dr. Niaz Abdolrahim](), and funding from the NSF Materials Science something-something grant [#](). 
+The code in this repo was programmed and conceived by **Sam Lerman** under the support of PhD advisor [Dr. Chenliang Xu](), project PI lead [Dr. Niaz Abdolrahim](), and funding from the NSF Materials Science something-something grant [#]().
 
 [Sam Lerman]() will graduate in 2023 and needs your support.
 
