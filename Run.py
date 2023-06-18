@@ -23,22 +23,18 @@ def main(args):
     for arg in ('obs_spec', 'action_spec', 'evaluate_episodes'):
         if hasattr(generalize.env, arg):
             setattr(args, arg, getattr(generalize.env, arg))
-    interpolate(args)
+    interpolate(args)  # Update args
 
     # Agent
     agent = load(args.load_path, args.device, args.agent) if args.load \
         else instantiate(args.agent).to(args.device)
 
-    # Unify multi-task models (if exist)
+    # Synchronize multi-task models (if exist)
     agent = MT.unify_agent_models(agent, args.agent, args.device, args.load and args.load_path)
 
     train_steps = args.train_steps + agent.step
 
     # Experience replay
-    # args.replay.pop('_target_')
-    # from World.Replay import Replay
-    # replay = Replay(**args.replay,
-    #                 meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
     replay = instantiate(args.replay,
                          meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
 

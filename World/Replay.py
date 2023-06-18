@@ -28,7 +28,7 @@ class Replay:
     def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
                  save=False, mem_size=None, fetch_per=1000,
-                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=True, shuffle=True,
+                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=False, shuffle=True,
                  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,)):
 
         self.device = device
@@ -218,9 +218,9 @@ class Replay:
             # Sampling
             try:
                 sample = next(self.replay)
-            except StopIteration as stop:
+            except StopIteration:
                 if not self.reload:
-                    raise stop
+                    raise StopIteration
                 self.epoch += 1
                 self._replay = None  # Reset iterator when depleted
                 sample = next(self.replay)

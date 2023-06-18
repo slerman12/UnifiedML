@@ -167,22 +167,19 @@ class AC2Agent(torch.nn.Module):
             replay.include_trajectories()
 
         batch = next(replay)
-        obs, action, reward, discount, next_obs, label, *traj, step, ids, meta = Utils.to_torch(
-            batch, self.device)
-        traj_o, traj_a, traj_r, traj_l = traj
 
         # "Perceive"
 
         # Augment, encode present
-        obs = self.aug(obs)
-        features = self.encoder(obs, pool=False)
-        obs = self.encoder.pool(features)
+        batch.obs = self.aug(batch.obs)
+        features = self.encoder(batch.obs, pool=False)
+        batch.obs = self.encoder.pool(features)
 
         if replay.nstep > 0 and not self.generate:
             with torch.no_grad():
                 # Augment, encode future
-                next_obs = self.aug(next_obs)
-                next_obs = self.encoder(next_obs)
+                batch.next_obs = self.aug(batch.next_obs)
+                batch.next_obs = self.encoder(batch.next_obs)
 
         # "Journal Teachings"
 
@@ -192,7 +189,7 @@ class AC2Agent(torch.nn.Module):
         # Online -> Offline conversion
         if replay.offline:
             self.step += 1
-            self.frame += len(obs)
+            self.frame += len(batch.obs)
             self.epoch = logs['epoch'] = replay.epoch
             logs['step'] = self.step
             logs['frame'] += 1  # Offline is 1 behind Online in training loop
@@ -200,24 +197,24 @@ class AC2Agent(torch.nn.Module):
 
         # "Acquire Wisdom"
 
-        instruct = not self.generate and label.nelement()  # Are labels present?
+        instruct = not self.generate and batch.label.nelement()  # Are labels present?
 
         # Classification
         if (self.supervise or replay.offline) and instruct:
             # "Via Example" / "Parental Support" / "School"
 
             # Inference
-            Pi = self.actor(obs)
+            Pi = self.actor(batch.obs)
             y_predicted = (Pi.All_Qs if self.discrete else Pi.mean).mean(1)  # Average over ensembles
 
             # Cross entropy error
-            error = cross_entropy(y_predicted, label.long(),
+            error = cross_entropy(y_predicted, batch.label.long(),
                                   reduction='none' if self.RL and replay.offline else 'mean')
 
             # Accuracy computation
             if self.log or self.RL and replay.offline:
                 index = y_predicted.argmax(1, keepdim=True)  # Predicted class
-                correct = (index.squeeze(1) == label).float()
+                correct = (index.squeeze(1) == batch.label).float()
                 accuracy = correct.mean()
 
                 if self.log:
@@ -246,27 +243,30 @@ class AC2Agent(torch.nn.Module):
                     action = (index if self.discrete else y_predicted).detach()
                     reward = correct if self.discrete else -error.detach()  # reward = -error
                 else:  # Use Replay action from Online training
-                    reward = (action.squeeze(1) == label).float() if self.discrete \
-                        else -cross_entropy(action.squeeze(1), label.long(), reduction='none')  # reward = -error
+                    # reward = -error
+                    reward = (batch.action.squeeze(1) == batch.label).float() if self.discrete \
+                        else -cross_entropy(batch.action.squeeze(1), batch.label.long(), reduction='none')
 
             # Generative modeling
             if self.generate:
                 # "Imagine"
 
-                action, reward = obs, torch.ones(len(obs), 1, device=self.device)  # Discriminate Real
+                batch.action = batch.obs
+                batch.reward = torch.ones(len(batch.obs), 1, device=self.device)  # Discriminate Real
 
                 # Critic loss
-                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward)
+                critic_loss = QLearning.ensembleQLearning(self.critic, self.actor,
+                                                          batch.obs, batch.action, batch.reward)
 
                 # Update discriminator
                 Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
                 next_obs = None
 
-                Pi = self.actor(obs)
+                Pi = self.actor(batch.obs)
                 generated_image = Pi.best.flatten(1)  # Imagined image
 
-                action, reward = generated_image, torch.zeros_like(reward)  # Discriminate Fake
+                batch.action, batch.reward = generated_image, torch.zeros_like(batch.reward)  # Discriminate Fake
 
             # Update reward log
             if self.log:
@@ -275,7 +275,8 @@ class AC2Agent(torch.nn.Module):
             # "Discern" / "Discriminate"
 
             # Critic loss
-            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, obs, action, reward, discount, next_obs,
+            critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, batch.obs, batch.action, batch.reward,
+                                                      batch.discount, batch.next_obs,
                                                       self.step, logs=logs)
 
             # "Foretell"
@@ -288,7 +289,7 @@ class AC2Agent(torch.nn.Module):
 
             # Dynamics loss
             dynamics_loss = 0 if self.depth == 0 or self.generate \
-                else SelfSupervisedLearning.dynamicsLearning(features, traj_o, traj_a, traj_r,
+                else SelfSupervisedLearning.dynamicsLearning(features, batch.traj_o, batch.traj_a, batch.traj_r,
                                                              self.encoder, self.dynamics, self.projector, self.predictor,
                                                              depth=self.depth, action_dim=self.action_dim, logs=logs)
 
@@ -308,7 +309,7 @@ class AC2Agent(torch.nn.Module):
             # "Change, Grow,  Ascend"
 
             # Actor loss
-            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, obs.detach(), action,
+            actor_loss = PolicyLearning.deepPolicyGradient(self.actor, self.critic, batch.obs.detach(), batch.action,
                                                            self.step, logs=logs)
 
             # Update actor

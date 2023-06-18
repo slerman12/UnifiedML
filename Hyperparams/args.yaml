@@ -146,7 +146,7 @@ replay:
   prefetch_factor: 3
   pin_memory: false
   pin_device_memory: false
-  reload: false
+  reload: true
   shuffle: true
   dataset: ${dataset}
   transform: ${transform}
