@@ -26,9 +26,9 @@ from Hyperparams.minihydra import instantiate, Args, added_modules
 
 class Replay:
     def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
-                 gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=0, ram_capacity=1e6, hd_capacity=inf,
+                 gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
                  save=False, mem_size=None, fetch_per=1000,
-                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, reload=False, shuffle=True,
+                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, shuffle=True,
                  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,)):
 
         self.device = device
@@ -41,8 +41,6 @@ class Replay:
             return
 
         self.trajectory_flag = Flag()  # Tell worker to include experience trajectories as well
-
-        self.reload = reload
 
         # CPU workers
         num_workers = max(1, min(num_workers, os.cpu_count()))
@@ -207,35 +205,27 @@ class Replay:
 
         # Replay
 
-        self._replay = None
+        self.replay = iter(self)
 
     # Allows iteration via "next" (e.g. batch = next(replay))
     def __next__(self):
         if self.stream:
-            # Streaming
+            # Environment streaming
             return self.stream
         else:
-            # Sampling
+            # Replay sampling
             try:
                 sample = next(self.replay)
             except StopIteration:
-                if not self.reload:
-                    raise StopIteration
                 self.epoch += 1
-                self._replay = None  # Reset iterator when depleted
+                self.replay = iter(self)
                 sample = next(self.replay)
 
             return Batch({key: value.to(self.device, non_blocking=True) for key, value in sample.items()})
 
     def __iter__(self):
-        self._replay = iter(self.batches)
+        self.replay = iter(self.batches)
         return self.replay
-
-    @property
-    def replay(self):
-        if self._replay is None:
-            self._replay = iter(self.batches)  # Recreates the iterator when exhausted
-        return self._replay
 
     def include_trajectories(self):
         self.trajectory_flag.set()
@@ -255,11 +245,8 @@ class Replay:
         self.memory.writable_tape(batch, ind, step)
 
     def __len__(self):
-        if not self.reload:
-            return len(self.batches)
-
         # Infinite if stream, else num episodes in Memory
-        return int(5e11) if self.stream else len(self.memory)
+        return inf if self.stream else len(self.memory)
 
 
 class Worker:

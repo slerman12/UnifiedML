@@ -66,6 +66,7 @@ class AC2Agent(torch.nn.Module):
             recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for " seeing " via Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
 
+
         self.discrete_as_continuous = action_spec.discrete and not self.discrete
 
         # Discrete -> continuous conversion
@@ -132,7 +133,7 @@ class AC2Agent(torch.nn.Module):
         # "Birth"
 
     def act(self, obs):
-        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):
+        with torch.no_grad(), Utils.act_mode(self.encoder, self.actor, self.critic):  # Should probably be done in env
             obs = torch.as_tensor(obs, device=self.device).float()
 
             # Exponential moving average (EMA) shadows
@@ -154,9 +155,9 @@ class AC2Agent(torch.nn.Module):
                 self.step += 1
                 self.frame += len(obs)
 
-                # Creator may store distribution as action rather than sampled action
-                if Pi.store is not None:
-                    store = {'action': Pi.store.cpu().numpy()}
+            # Creator may store distribution as action rather than sampled action
+            if Pi.store is not None:
+                store = {'action': Pi.store.cpu().numpy()}
 
             return action, store
 
@@ -191,7 +192,6 @@ class AC2Agent(torch.nn.Module):
             self.step += 1
             self.frame += len(batch.obs)
             self.epoch = logs['epoch'] = replay.epoch
-            logs['step'] = self.step
             logs['frame'] += 1  # Offline is 1 behind Online in training loop
             logs.pop('episode')
 
@@ -240,11 +240,11 @@ class AC2Agent(torch.nn.Module):
                 # "Via Feedback" / "Test Score" / "Letter Grade"
 
                 if replay.offline:
-                    action = (index if self.discrete else y_predicted).detach()
-                    reward = correct if self.discrete else -error.detach()  # reward = -error
+                    batch.action = (index if self.discrete else y_predicted).detach()
+                    batch.reward = correct if self.discrete else -error.detach()  # reward = -error
                 else:  # Use Replay action from Online training
                     # reward = -error
-                    reward = (batch.action.squeeze(1) == batch.label).float() if self.discrete \
+                    batch.reward = (batch.action.squeeze(1) == batch.label).float() if self.discrete \
                         else -cross_entropy(batch.action.squeeze(1), batch.label.long(), reduction='none')
 
             # Generative modeling
@@ -261,7 +261,7 @@ class AC2Agent(torch.nn.Module):
                 # Update discriminator
                 Utils.optimize(critic_loss, self.critic, epoch=self.epoch if replay.offline else self.episode)
 
-                next_obs = None
+                batch.next_obs = None
 
                 Pi = self.actor(batch.obs)
                 generated_image = Pi.best.flatten(1)  # Imagined image
@@ -270,7 +270,7 @@ class AC2Agent(torch.nn.Module):
 
             # Update reward log
             if self.log:
-                logs.update({'reward': reward})
+                logs.update({'reward': batch.reward})
 
             # "Discern" / "Discriminate"
 

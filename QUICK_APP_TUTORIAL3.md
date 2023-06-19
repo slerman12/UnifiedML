@@ -6,7 +6,11 @@
 
 [//]: # (Small scale &#40;horizontally below&#41;, medium scale, large scale)
 
-[//]: # (Broad examples with links below ./Examples ./1. blablabla 2. blablabla)
+[//]: # (Broad examples in readme with links below to more examples ./Examples ./1. blablabla 2. blablabla)
+
+[//]: # (See our library Tributaries for mass-deploying UnifiedMl apps on remote servers)
+
+[//]: # (Check out minhydra / leviathan for how we handle sys args & hyperparams)
 
 ## Install
 

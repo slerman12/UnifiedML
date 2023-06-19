@@ -172,6 +172,7 @@ class MonteCarlo(nn.Module):
 
         # If continuous-action is a discrete distribution  TODO Discrete norm? Also, can do env-rounding here if needed
         if self.discrete_as_continuous:
+            self.store = action
             action = action.argmax(1)  # Argmax
 
         return action

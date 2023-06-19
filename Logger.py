@@ -44,6 +44,7 @@ class Logger:
 
         # "Predicted vs. Actual" - logged only for classify for now
         self.predicted = {} if log_actions else None
+        self.probas = {} if log_actions else None
 
         self.aggregation = aggregation  # mean, median, last, max, min, or sum
         self.default_aggregations = {'step': np.ma.max, 'frame': np.ma.max, 'episode': np.ma.max, 'epoch': np.ma.max,
@@ -69,7 +70,17 @@ class Logger:
                 for exp in exp:
                     if name not in self.predicted:
                         self.predicted[name] = {'Predicted': [], 'Actual': []}
-                    self.predicted[name]['Predicted'].append(exp.action.squeeze())
+                    action = exp.action.squeeze()
+                    if exp.action.shape[1] > 1:
+                        if name not in self.probas:
+                            self.probas[name] = []
+                        self.probas[name].append(action)
+                        # Corner case when Eval batch size is 1, batch dim gets squeezed out
+                        for value in self.probas[name]:
+                            if len(value.shape) <= 1:
+                                value.shape = (1, *value.shape)
+                        action = exp.action.argmax(1).squeeze()
+                    self.predicted[name]['Predicted'].append(action)
                     self.predicted[name]['Actual'].append(exp.label.squeeze())
                     # Corner case when Eval batch size is 1, batch dim gets squeezed out
                     for key, value in self.predicted[name].items():
@@ -115,6 +126,17 @@ class Logger:
             df.to_csv(file_name, index=False)
 
             self.predicted[name] = {'Predicted': [], 'Actual': []}
+
+        if self.probas is not None and name in self.probas:
+            file_name = Path(self.path) / f'{self.task}_{self.seed}_Predicted_Probas_{name}.csv'
+
+            self.probas[name] = np.concatenate(self.probas[name])
+
+            df = pd.DataFrame(self.probas[name], columns=list(range(self.probas[name][0].shape[-1])))
+            df['Step'] = int(logs['step'])
+            df.to_csv(file_name, index=False)
+
+            self.probas[name] = []
 
     # Aggregate list of scalars or batched-values of arbitrary lengths
     def aggregate(self, log_name):
