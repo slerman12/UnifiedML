@@ -277,12 +277,14 @@ class Worker:
             self.memory.set_worker(self.worker)
             self.initialized = True
 
-        self.samples_since_last_fetch += 1
-
         # Periodically update memory
-        while self.fetch_per and not self.samples_since_last_fetch % self.fetch_per or not len(self.memory) or update:
+        while self.fetch_per and not self.samples_since_last_fetch % self.fetch_per or update:
             self.memory.update()
-            update = False
+
+            if len(self.memory):
+                break
+
+        self.samples_since_last_fetch += 1
 
         _index = index
 
