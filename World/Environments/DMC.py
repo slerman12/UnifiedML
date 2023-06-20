@@ -128,9 +128,10 @@ class DMC:
         obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
 
         # Create experience
-        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None}
+        exp = {'obs': obs, 'action': action, 'reward': reward, 'done': self.episode_done}
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
+        exp['action'] = np.expand_dims(exp['action'], 0)
         # Channel-first
         exp['obs'] = exp['obs'].transpose(0, 3, 1, 2)
 
@@ -152,7 +153,7 @@ class DMC:
         obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': time_step.reward, 'label': None}
+        exp = {'obs': obs, 'reward': time_step.reward, 'done': False}  # TODO Auto-add Done
         # Add batch dim
         exp['obs'] = np.expand_dims(exp['obs'], 0)
         # Channel-first

@@ -34,7 +34,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
 
             # Weigh each action's pessimistic Q-value by its probability
             next_action_prob = next_q.size(1) < 2 or next_Pi.log_prob(next_action).softmax(-1)  # Action probability
-            next_v = (next_q * next_action_prob).sum(-1, keepdim=True)  # Expected Q-value = E_a[Q(obs, a)]
+            next_v = (next_q * next_action_prob).sum(-1)  # Expected Q-value = E_a[Q(obs, a)]
 
             target_Q += discount * next_v  # Add expected future discounted-cumulative-reward to reward
 
@@ -44,7 +44,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
     criterion = binary_cross_entropy if critic.binary else mse_loss
 
     # Temporal difference (TD) error
-    q_loss = criterion(Qs.float(), target_Q.unsqueeze(1).float().expand_as(Qs))
+    q_loss = criterion(Qs.float(), target_Q.unsqueeze(1).unsqueeze(1).float().expand_as(Qs))
 
     if logs is not None:
         logs['temporal_difference_error'] = q_loss

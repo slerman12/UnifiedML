@@ -197,7 +197,7 @@ class AC2Agent(torch.nn.Module):
 
         # "Acquire Wisdom"
 
-        instruct = not self.generate and batch.label.nelement()  # Are labels present?
+        instruct = not self.generate and 'label' in batch
 
         # Classification
         if (self.supervise or replay.offline) and instruct:

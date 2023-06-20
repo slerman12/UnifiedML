@@ -150,7 +150,7 @@ class Atari:
         obs = np.expand_dims(obs, 0)
 
         # Create experience
-        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None}
+        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'done': self.episode_done}  # TODO Auto-done
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -188,7 +188,7 @@ class Atari:
         obs = np.expand_dims(obs, 0)
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': np.zeros([]), 'label': None}
+        exp = {'obs': obs, 'action': None, 'reward': np.zeros([]), 'label': None, 'done': False}  # TODO Auto-done
 
         # Reset frame stack
         self.frames.clear()

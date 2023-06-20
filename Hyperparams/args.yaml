@@ -136,8 +136,8 @@ replay:
   stream: ${stream}
   gpu_capacity: 0
   pinned_capacity: 0
-  tensor_ram_capacity: 0
-  ram_capacity: 1e6
+  tensor_ram_capacity: 1e6
+  ram_capacity: 0
   hd_capacity: inf
   save: false  # Maybe if online and save
 #  load: ${load}  # TODO For Online, might want to overwrite

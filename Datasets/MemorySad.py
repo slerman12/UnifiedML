@@ -45,8 +45,6 @@ class Memory:
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
 
-        atexit.register(self.cleanup)
-
         _, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)  # Shared memory can create a lot of file descriptors
         resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))  # Increase soft limit to hard limit
 
@@ -164,13 +162,6 @@ class Memory:
     def __len__(self):
         return len(self.episodes)
 
-    def cleanup(self):
-        for batch in self.batches:
-            for mem in batch.mems:
-                if mem.mode == 'shared':
-                    mem.shm.close()
-                    mem.shm.unlink()
-
     def set_save_path(self, save_path):
         self.save_path = save_path
 
@@ -194,7 +185,7 @@ class Memory:
         previous_num_batches = inf
 
         for i, mmap_path in enumerate(tqdm(mmap_paths, desc=desc)):
-            num_batches, key, identifier, _ = mmap_path.stem.split('_', 3)\
+            num_batches, key, identifier, _ = mmap_path.stem.split('_', 3)
 
             if i == 0:
                 self.id = identifier
@@ -270,8 +261,6 @@ class Episode:
             stored_experience[key] = datum
 
     def __getitem__(self, step):
-        if isinstance(step, slice):
-            return [self.experience(s) for s in range(len(self))[step]]  # Slicing
         return self.experience(step)
 
     def __len__(self):
@@ -311,9 +300,6 @@ class Experience:
     def __setitem__(self, key, experience):
         self.episode_trace[self.step][key][self.ind] = experience
 
-    def __contains__(self, key):
-        return key in self.keys()
-
     def __iter__(self):
         return iter(self.episode_trace[self.step].keys())
 
@@ -329,7 +315,7 @@ class Batch(dict):
         yield from self.values()
 
     def size(self):
-        for key, mem in self.items():
+        for mem in self.values():
             try:
                 if hasattr(mem, '__len__') and len(mem) > 1:
                     return len(mem)
@@ -347,8 +333,7 @@ def as_numpy(data):
 
 class Mem:
     def __init__(self, mem, path=None):
-        self.shm = None
-        self.mem = None if mem is None else as_numpy(mem)
+        self._mem = None if mem is None else as_numpy(mem)
         self.path = str(path)
         self.saved = False
 
@@ -357,8 +342,8 @@ class Mem:
         if mem is None:
             self.shape, self.dtype = (), None
         else:
-            self.shape = tuple(self.mem.shape)
-            self.dtype = self.mem.dtype
+            self.shape = tuple(self._mem.shape)
+            self.dtype = self._mem.dtype
             self.path += '_' + str(self.shape) + '_' + self.dtype.name
 
         # Note: Hash is rounded to 16 places
@@ -366,65 +351,67 @@ class Mem:
 
         self.main_worker = os.getpid()
 
-    def __getstate__(self):
+    @contextlib.contextmanager
+    def mem(self):
         if self.mode == 'shared':
-            self.shm.close()
+            shm = SharedMemory(name=self.name)
+            yield np.ndarray(self.shape, dtype=self.dtype, buffer=shm.buf)
+            shm.close()
+        else:
+            yield self._mem
+
+    def __getstate__(self):
         return self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, \
-            self.mem if self.mode in ('pinned', 'shared_tensor', 'gpu') else None
+            self._mem if self.mode in ('pinned', 'shared_tensor', 'gpu') else None
 
     def __setstate__(self, state):
         self.path, self.saved, self.mode, self.main_worker, self.shape, self.dtype, mem = state
         self.name = str(int(hashlib.sha256(self.path.rsplit('/', 1)[-1].encode('utf-8')).hexdigest(), 16) % 10 ** 16)
 
         if self.mode == 'shared':
-            self.shm = SharedMemory(name=self.name)
-            self.mem = np.ndarray(self.shape, dtype=self.dtype, buffer=self.shm.buf)
+            self._mem = None
         elif self.mode == 'mmap':
-            self.shm = None
-            self.mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+            self._mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
         else:
-            self.shm = None
-            self.mem = mem
+            self._mem = mem
 
     def __getitem__(self, ind):
-        return self.mem[ind] if self.shape else self.mem
+        with self.mem() as mem:
+            return mem[ind] if self.shape else mem
 
     def __setitem__(self, ind, value):
-        self.mem[ind if self.shape else ...] = value
+        with self.mem() as mem:
+            mem[ind if self.shape else ...] = value
 
-        if self.mode == 'mmap':
-            self.mem.flush()  # Write to hard disk
+            if self.mode == 'mmap':
+                mem.flush()  # Write to hard disk
 
-        self.saved = False
-
-    @property
-    def datums(self):
-        return self.mem
+            self.saved = False
 
     def tensor(self):
-        return torch.as_tensor(self.mem).to(non_blocking=True)
+        with self.mem() as mem:
+            return torch.as_tensor(mem).to(non_blocking=True)
 
     def pinned(self):
-        if self.mode != 'pinned':
-            with self.cleanup():
-                self.mem = torch.as_tensor(self.mem).share_memory_().to(non_blocking=True).pin_memory()  # if cuda!
-            self.mode = 'pinned'
+        with self.mem() as mem:
+            if self.mode != 'pinned':
+                self._mem = torch.as_tensor(mem).share_memory_().to(non_blocking=True).pin_memory()  # if cuda!
+                self.mode = 'pinned'
 
         return self
 
     def shared_tensor(self):
         if self.mode != 'shared_tensor':
-            with self.cleanup():
-                mem = float('nan') if self.mem is None else self.mem  # TODO keep as None
-                self.mem = torch.as_tensor(mem).share_memory_().to(non_blocking=True)
-            self.mode = 'shared_tensor'
+            with self.mem() as mem:
+                self._mem = torch.as_tensor(mem).share_memory_().to(non_blocking=True)
+                self.mode = 'shared_tensor'
 
         return self
 
     def gpu(self):
         if self.mode != 'gpu':
-            with self.cleanup():
-                self.mem = torch.as_tensor(self.mem).cuda(non_blocking=True)
+            with self.mem() as mem:
+                self._mem = torch.as_tensor(mem).cuda(non_blocking=True)
 
             self.mode = 'gpu'
 
@@ -432,19 +419,16 @@ class Mem:
 
     def shared(self):
         if self.mode != 'shared':
-            with self.cleanup():
-                if isinstance(self.mem, torch.Tensor):
-                    self.mem = self.mem.numpy()
-                mem = self.mem
-                try:
-                    self.shm = SharedMemory(create=True, name=self.name, size=mem.nbytes)
-                except FileExistsError:
-                    self.shm = SharedMemory(name=self.name)
-                self.mem = np.ndarray(self.shape, dtype=self.dtype, buffer=self.shm.buf)
+            with self.mem() as mem:
+                if isinstance(mem, torch.Tensor):
+                    mem = mem.numpy()
+                shm = SharedMemory(create=True, name=self.name, size=mem.nbytes)
+                _mem = np.ndarray(self.shape, dtype=self.dtype, buffer=shm.buf)
                 if self.shape:
-                    self.mem[:] = mem[:]
+                    _mem[:] = mem[:]
                 else:
-                    self.mem[...] = mem  # In case of 0-dim array
+                    _mem[...] = mem  # In case of 0-dim array
+                shm.close()
 
             self.mode = 'shared'
 
@@ -452,19 +436,19 @@ class Mem:
 
     def mmap(self):
         if self.mode != 'mmap':
-            with self.cleanup():
+            with self.mem() as mem:
                 if self.main_worker == os.getpid() and not self.saved:  # For online transitions
-                    mem = self.mem.copy() if isinstance(self.mem, np.memmap) \
-                        else self.mem  # If already memory mapped, copy to prevent overwrite
+                    mem = mem.copy() if isinstance(mem, np.memmap) \
+                        else mem  # If already memory mapped, copy to prevent overwrite
 
-                    self.mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
+                    self._mem = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
                     if self.shape:
-                        self.mem[:] = mem[:]
+                        self._mem[:] = mem[:]
                     else:
-                        self.mem[...] = mem  # In case of 0-dim array
-                    self.mem.flush()  # Write to hard disk
+                        self._mem[...] = mem  # In case of 0-dim array
+                    self._mem.flush()  # Write to hard disk
                 else:
-                    self.mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
+                    self._mem = np.memmap(self.path, self.dtype, 'r+', shape=self.shape)
 
             self.mode = 'mmap'
             self.saved = True
@@ -472,28 +456,30 @@ class Mem:
         return self
 
     def to(self, mode):
-        if mode == 'pinned':
-            return self.pinned()
-        if mode == 'shared_tensor':
-            return self.shared_tensor()
-        if mode == 'shared':
-            return self.shared()
-        elif mode == 'mmap':
-            return self.mmap()
-        else:
-            assert False, f'Mode "{mode}" not supported."'
+        with self.cleanup():
+            if mode == 'pinned':
+                return self.pinned()
+            if mode == 'shared_tensor':
+                return self.shared_tensor()
+            if mode == 'shared':
+                return self.shared()
+            elif mode == 'mmap':
+                return self.mmap()
+            else:
+                assert False, f'Mode "{mode}" not supported."'
 
     @contextlib.contextmanager
     def cleanup(self):
         yield
         if self.mode == 'shared':
-            self.shm.close()
             if self.main_worker == os.getpid():
-                self.shm.unlink()
-            self.shm = None
+                shm = SharedMemory(name=self.name)
+                shm.close()
+                shm.unlink()
 
     def __bool__(self):
-        return bool(self.mem)
+        with self.mem() as mem:
+            return bool(mem)
 
     def __len__(self):
         return self.shape[0] if self.shape else 1
@@ -503,19 +489,18 @@ class Mem:
             _, shape, dtype = self.path.rsplit('_', 2)
             mem = np.memmap(self.path, dtype, 'r+', shape=eval(shape))
 
-            if self.mem is None:
-                self.mem = mem
-                self.shm = None
+            if self._mem is None:
+                self._mem = mem
                 self.mode = 'mmap'
                 self.shape = eval(shape)
-                self.dtype = self.mem.dtype
+                self.dtype = self._mem.dtype
             else:
-                if isinstance(self.mem, torch.Tensor):
+                if isinstance(self._mem, torch.Tensor):
                     mem = torch.as_tensor(mem)
                 if self.shape:
-                    self.mem[:] = mem[:]
+                    self._mem[:] = mem[:]
                 else:
-                    self.mem[...] = mem  # In case of 0-dim array
+                    self._mem[...] = mem  # In case of 0-dim array
 
             self.saved = True
 
@@ -525,10 +510,11 @@ class Mem:
         if not self.saved:
             mmap = np.memmap(self.path, self.dtype, 'w+', shape=self.shape)
 
-            if self.shape:
-                mmap[:] = self.mem[:]
-            else:
-                mmap[...] = self.mem  # In case of 0-dim array
+            with self.mem() as mem:
+                if self.shape:
+                    mmap[:] = mem[:]
+                else:
+                    mmap[...] = mem  # In case of 0-dim array
 
             mmap.flush()  # Write to hard disk
             self.saved = True

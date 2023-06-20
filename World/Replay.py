@@ -56,7 +56,7 @@ class Replay:
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
         # TODO Mark that training if not marked, and use card universally, and don't include str handling
 
-        if dataset_config is not None:
+        if dataset_config is not None and dataset_config._target_ is not None:
             # Pytorch Dataset or Memory path
             dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)
 
@@ -272,7 +272,7 @@ class Worker:
         except AttributeError:
             return 0
 
-    def sample(self, index=None):
+    def sample(self, index=None, update=False):
         if not self.initialized:
             self.memory.set_worker(self.worker)
             self.initialized = True
@@ -280,15 +280,22 @@ class Worker:
         self.samples_since_last_fetch += 1
 
         # Periodically update memory
-        if self.fetch_per and not self.samples_since_last_fetch % self.fetch_per:
+        while self.fetch_per and not self.samples_since_last_fetch % self.fetch_per or not len(self.memory) or update:
             self.memory.update()
+            update = False
+
+        _index = index
 
         # Sample index
         if index is None:
-            index = random.randint(0, len(self.memory))  # Random sample an episode
+            index = random.randint(0, len(self.memory) - 1)  # Random sample an episode
 
         # Retrieve from Memory
         episode = self.memory[index]
+
+        if len(episode) < self.nstep + 1:  # TODO support <nstep
+            return self.sample(_index, update=True)
+
         step = random.randint(0, len(episode) - self.nstep - 1)  # Randomly sample sub-episode
         experience = Args(episode[step])
 
@@ -314,12 +321,13 @@ class Worker:
             for _ in range(self.frame_stack - idx - 1):  # If not enough frames, reuse the first
                 frames = traj[:1] + frames
             frames = torch.concat([torch.as_tensor(frame[key])
-                                   for frame in frames]).reshape(frames.shape[1] * self.frame_stack, *frames.shape[2:])
+                                   for frame in frames]).reshape(frames[0][key].shape[0] * self.frame_stack,
+                                                                 *frames[0][key].shape[1:])
             return frames
 
         # Present
         if self.frame_stack > 1:
-            experience.obs = frame_stack(experience, 'obs', step)  # Need experience as own dict/Batch for this
+            experience.obs = frame_stack(episode, 'obs', step)  # Need experience as own dict/Batch for this
 
         # Future
         if self.nstep:
@@ -327,21 +335,24 @@ class Worker:
             experience.action = episode[step + 1].action
             experience['next_obs'] = frame_stack(episode, 'obs', step + self.nstep)
 
-            # Trajectory TODO
-            # if self.trajectory_flag:
-            # traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
-            #                          for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
-            # traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
             traj_r = torch.as_tensor([experience.reward
                                       for experience in episode[step + 1:step + self.nstep + 1]])
-            # traj_l = episode['label'][idx:idx + self.nstep + 1]
+
+            # Trajectory TODO
+            if self.trajectory_flag:
+                experience['traj_r'] = traj_r
+                traj_o = np.concatenate([episode['obs'][max(0, idx - i):max(idx + self.nstep + 1 - i, self.nstep + 1)]
+                                         for i in range(self.frame_stack - 1, -1, -1)], 1)  # Frame_stack
+                traj_a = episode['action'][idx + 1:idx + self.nstep + 1]
+                if 'label' in experience:
+                    traj_l = episode['label'][idx:idx + self.nstep + 1]
 
             # Cumulative discounted reward
             discounts = self.discount ** np.arange(self.nstep + 1)
-            experience.reward = np.dot(discounts[:-1], traj_r)
-            experience['discount'] = discounts[-1:]  # TODO discounts[-1] ?
+            experience.reward = np.dot(discounts[:-1], traj_r).astype('float32')
+            experience['discount'] = discounts[-1].astype('float32')
         else:
-            experience['discount'] = 1  # TODO does it have to be a float / warning: not float64 ?
+            experience['discount'] = 1
 
         return experience
 
@@ -371,5 +382,5 @@ class Flag:
 
     def __bool__(self):
         if not self._flag:
-            self._flag = self.flag
+            self._flag = bool(self.flag)
         return self._flag
