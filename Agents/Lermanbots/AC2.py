@@ -21,6 +21,39 @@ from Blocks.Critics import EnsembleQCritic
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
 
 
+class Profiler:
+    def __init__(self, print_per=None):
+        self.starts = {}
+        self.profiles = {}
+        self.counts = {}
+        self.print_per = print_per
+        self.step = {}
+
+    def start(self, name):
+        self.starts[name] = time.time()
+
+    def stop(self, name):
+        if name in self.profiles:
+            self.profiles[name] += time.time() - self.starts[name]
+            self.counts[name] += 1
+            self.step[name] += 1
+        else:
+            self.profiles[name] = time.time() - self.starts[name]
+            self.counts[name] = 1
+            self.step[name] = 1
+        if self.print_per and self.step[name] % self.print_per == 0:
+            self.print()
+
+    def print(self):
+        for name in self.profiles:
+            print(name, ':', self.profiles[name] / self.counts[name])
+        self.profiles.clear()
+        self.counts.clear()
+
+
+profiler = Profiler(100)
+
+
 class AC2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2)
     RL, classification, generative modeling; online, offline; self-supervised learning; critic/actor ensembles;
@@ -65,7 +98,6 @@ class AC2Agent(torch.nn.Module):
             # Remove encoder, replace trunk with random noise
             recipes.encoder.Eyes = torch.nn.Identity()  # Generate "imagines" — no need for " seeing " via Eyes
             recipes.actor.trunk = Utils.Rand(size=trunk_dim)  # Generator observes random Gaussian noise as input
-
 
         self.discrete_as_continuous = action_spec.discrete and not self.discrete
 
@@ -313,6 +345,6 @@ class AC2Agent(torch.nn.Module):
                                                            self.step, logs=logs)
 
             # Update actor
-            Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
+            Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode, toprint=True)
 
         return logs

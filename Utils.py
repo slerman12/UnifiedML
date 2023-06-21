@@ -6,7 +6,6 @@ import ast
 import math
 import sys
 import random
-import time
 from functools import cached_property
 import re
 import warnings
@@ -451,7 +450,7 @@ class Ensemble(nn.Module):
 
     def forward(self, *x, **kwargs):
         return torch.stack([m(*x, **kwargs) for m in self.ensemble],
-                           self.dim)
+                           self.dim) if len(self) > 1 else self.ensemble[0](*x, **kwargs).unsqueeze(self.dim)
 
     def __len__(self):
         return len(self.ensemble)
@@ -704,6 +703,40 @@ class MixedPrecision:
 MP = MixedPrecision()  # AutoCast + GradScaler scales gradients for automatic mixed precision training speedup
 
 
+import time
+class Profiler:
+    def __init__(self, print_per=None):
+        self.starts = {}
+        self.profiles = {}
+        self.counts = {}
+        self.print_per = print_per
+        self.step = {}
+
+    def start(self, name):
+        self.starts[name] = time.time()
+
+    def stop(self, name):
+        if name in self.profiles:
+            self.profiles[name] += time.time() - self.starts[name]
+            self.counts[name] += 1
+            self.step[name] += 1
+        else:
+            self.profiles[name] = time.time() - self.starts[name]
+            self.counts[name] = 1
+            self.step[name] = 1
+        if self.print_per and self.step[name] % self.print_per == 0:
+            self.print()
+
+    def print(self):
+        for name in self.profiles:
+            print(name, ':', self.profiles[name] / self.counts[name])
+        self.profiles.clear()
+        self.counts.clear()
+
+
+profiler = Profiler(100)
+
+
 # Backward pass on a loss; clear the grads of models; update EMAs; step optimizers and schedulers
 def optimize(loss, *models, clear_grads=True, backward=True, retain_graph=False, step_optim=True, epoch=0, ema=True):
     # Clear grads
@@ -743,5 +776,5 @@ def schedule(schedule, step):
         match = re.match(r'linear\((.+),(.+),(.+)\)', schedule)
         if match:
             start, stop, duration = [float(g) for g in match.groups()]
-            mix = np.clip(step / duration, 0.0, 1.0)
+            mix = float(np.clip(step / duration, 0.0, 1.0))
             return (1.0 - mix) * start + mix * stop

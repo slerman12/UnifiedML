@@ -14,6 +14,40 @@ from Distributions import TruncatedNormal, NormalizedCategorical
 import Utils
 
 
+import time
+class Profiler:
+    def __init__(self, print_per=None):
+        self.starts = {}
+        self.profiles = {}
+        self.counts = {}
+        self.print_per = print_per
+        self.step = {}
+
+    def start(self, name):
+        self.starts[name] = time.time()
+
+    def stop(self, name):
+        if name in self.profiles:
+            self.profiles[name] += time.time() - self.starts[name]
+            self.counts[name] += 1
+            self.step[name] += 1
+        else:
+            self.profiles[name] = time.time() - self.starts[name]
+            self.counts[name] = 1
+            self.step[name] = 1
+        if self.print_per and self.step[name] % self.print_per == 0:
+            self.print()
+
+    def print(self):
+        for name in self.profiles:
+            print(name, ':', self.profiles[name] / self.counts[name])
+        self.profiles.clear()
+        self.counts.clear()
+
+
+profiler = Profiler(100)
+
+
 class Creator(nn.Module):
     """Creates a policy distribution for sampling actions and ensembles and computing probabilistic measures."""
     def __init__(self, action_spec, discrete=False, rand_steps=0, temp_schedule=None, policy=None, ActionExtractor=None,
@@ -54,10 +88,9 @@ class Creator(nn.Module):
 
 
 # Policy
-class MonteCarlo(nn.Module):
+class MonteCarlo:
     """Exploration and exploitation policy distribution compatible with discrete and continuous spaces and ensembles."""
     def __init__(self, action_spec, discrete, mean, stddev, step=1, rand=False, temp_schedule=1, ActionExtractor=None):
-        super().__init__()
 
         self.discrete = discrete
         self.discrete_as_continuous = action_spec.discrete and not self.discrete

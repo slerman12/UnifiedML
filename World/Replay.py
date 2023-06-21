@@ -238,7 +238,7 @@ class Replay:
             if self.stream:
                 self.stream = batch  # For streaming directly from Environment  TODO N-step in {0, 1}
             else:
-                self.memory.add(batch)
+                self.memory.add(batch)  # TODO Thread
 
     def writable_tape(self, batch, ind, step):
         assert isinstance(batch, (dict, Batch)), f'expected \'batch\' to be dict or Batch, got {type(batch)}.'

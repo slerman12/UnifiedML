@@ -13,7 +13,7 @@ import Utils
 
 class MLP(nn.Module):
     """
-    MLP Architecture generalized to broadcast input shapes
+    MLP architecture generalized to broadcast input shapes
     """
     def __init__(self, input_shape=128, output_shape=1024, hidden_dim=1024, depth=1, activation=nn.ReLU(inplace=True),
                  dropout=0, binary=False, bias=True):
@@ -52,6 +52,6 @@ class MLP(nn.Module):
 
 
 class Dense(MLP):
-    """A fully-connected layer"""
+    """FC layer"""
     def __init__(self, input_shape=128, output_shape=1024, bias=True):
         super().__init__(input_shape, output_shape, depth=0, bias=bias)
