@@ -97,7 +97,7 @@ def open_yaml(source):
             return recursive_Args(args)
         except FileNotFoundError:
             continue
-    raise FileNotFoundError(source, 'not found.')
+    raise FileNotFoundError(f'{source} not found. Searched: {yaml_search_paths + [""]}')
 
 
 class Args(dict):

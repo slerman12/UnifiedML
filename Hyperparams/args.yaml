@@ -142,7 +142,7 @@ replay:
   save: false  # Maybe if online and save
 #  load: ${load}  # TODO For Online, might want to overwrite
   mem_size: null
-  fetch_per: 1000
+  fetch_per: 1
   prefetch_factor: 3
   pin_memory: false
   pin_device_memory: false

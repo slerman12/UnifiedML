@@ -19,7 +19,7 @@ from Blocks.Actors import EnsemblePiActor
 from Blocks.Critics import EnsembleQCritic
 
 from Losses import QLearning, PolicyLearning, SelfSupervisedLearning
-
+profiler = Utils.Profiler(100)
 
 class AC2Agent(torch.nn.Module):
     """Actor Critic Creator (AC2)
@@ -172,6 +172,11 @@ class AC2Agent(torch.nn.Module):
 
         # Augment, encode present
         batch.obs = self.aug(batch.obs)
+
+        assert not torch.isnan(batch.obs).any()
+        assert not torch.isnan(batch.next_obs).any()
+
+        profiler.start('encoder')
         features = self.encoder(batch.obs, pool=False)
         batch.obs = self.encoder.pool(features)
 
@@ -180,6 +185,11 @@ class AC2Agent(torch.nn.Module):
                 # Augment, encode future
                 batch.next_obs = self.aug(batch.next_obs)
                 batch.next_obs = self.encoder(batch.next_obs)
+
+        assert not torch.isnan(batch.obs).any()
+        assert not torch.isnan(batch.next_obs).any()
+        profiler.stop('encoder')
+        profiler.start('critic')
 
         # "Journal Teachings"
 
@@ -304,6 +314,10 @@ class AC2Agent(torch.nn.Module):
         Utils.optimize(None,  # Using gradients from previous losses
                        self.encoder, epoch=self.epoch if replay.offline else self.episode)
 
+        assert not torch.isnan(next(self.critic.parameters())[0]).any()
+        profiler.stop('critic')
+        profiler.start('actor')
+
         if self.RL and not self.discrete:
             # "Change, Grow,  Ascend"
 
@@ -312,6 +326,9 @@ class AC2Agent(torch.nn.Module):
                                                            self.step, logs=logs)
 
             # Update actor
-            Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode, toprint=True)
+            Utils.optimize(actor_loss, self.actor, epoch=self.epoch if replay.offline else self.episode)
+
+        assert not torch.isnan(next(self.actor.parameters())[0]).any()
+        profiler.stop('actor')
 
         return logs

@@ -8,6 +8,7 @@ A new Replay memory. Programmed by Sam Lerman.
 
 import atexit
 import random
+from threading import Thread, Lock
 from math import inf
 import os
 
@@ -27,7 +28,7 @@ from Hyperparams.minihydra import instantiate, Args, added_modules
 class Replay:
     def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
-                 save=False, mem_size=None, fetch_per=1000,
+                 save=False, mem_size=None, fetch_per=1,
                  prefetch_factor=3, pin_memory=False, pin_device_memory=False, shuffle=True,
                  dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,)):
 
@@ -51,6 +52,8 @@ class Replay:
                              tensor_ram_capacity=tensor_ram_capacity,
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
+
+        self.add_lock = Lock()  # For adding to memory concurrently
 
         dataset_config = dataset
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
@@ -238,7 +241,11 @@ class Replay:
             if self.stream:
                 self.stream = batch  # For streaming directly from Environment  TODO N-step in {0, 1}
             else:
-                self.memory.add(batch)  # TODO Thread
+                def add():
+                    with self.add_lock:
+                        self.memory.add(batch)  # Add to memory
+
+                Thread(target=add).start()  # Threading TODO Maybe parallel?
 
     def writable_tape(self, batch, ind, step):
         assert isinstance(batch, (dict, Batch)), f'expected \'batch\' to be dict or Batch, got {type(batch)}.'
