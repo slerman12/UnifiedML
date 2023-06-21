@@ -5,44 +5,10 @@
 import math
 
 import torch
-from torch.distributions import Normal, Categorical
+from torch.distributions import Categorical
 from torch.distributions.utils import _standard_normal
 
 import Utils
-
-
-import time
-class Profiler:
-    def __init__(self, print_per=None):
-        self.starts = {}
-        self.profiles = {}
-        self.counts = {}
-        self.print_per = print_per
-        self.step = {}
-
-    def start(self, name):
-        self.starts[name] = time.time()
-
-    def stop(self, name):
-        if name in self.profiles:
-            self.profiles[name] += time.time() - self.starts[name]
-            self.counts[name] += 1
-            self.step[name] += 1
-        else:
-            self.profiles[name] = time.time() - self.starts[name]
-            self.counts[name] = 1
-            self.step[name] = 1
-        if self.print_per and self.step[name] % self.print_per == 0:
-            self.print()
-
-    def print(self):
-        for name in self.profiles:
-            print(name, ':', self.profiles[name] / self.counts[name])
-        self.profiles.clear()
-        self.counts.clear()
-
-
-profiler = Profiler(100)
 
 
 class TruncatedNormal:

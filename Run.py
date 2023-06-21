@@ -8,40 +8,6 @@ from Hyperparams.minihydra import instantiate, get_args, interpolate  # minihydr
 from Utils import init, MT, MP, save, load
 
 
-import time
-
-
-class Profiler:
-    def __init__(self, print_per=None):
-        self.starts = {}
-        self.profiles = {}
-        self.counts = {}
-        self.print_per = print_per
-        self.step = 0
-
-    def start(self, name):
-        self.starts[name] = time.time()
-
-    def stop(self, name):
-        if name in self.profiles:
-            self.profiles[name] += time.time() - self.starts[name]
-            self.counts[name] += 1
-        else:
-            self.profiles[name] = time.time() - self.starts[name]
-            self.counts[name] = 1
-        if self.print_per and self.step % self.print_per == 0:
-            self.print()
-
-    def print(self):
-        for name in self.profiles:
-            print(name, ':', self.profiles[name] / self.counts[name])
-        self.profiles.clear()
-        self.counts.clear()
-
-
-profiler = Profiler()
-
-
 @get_args(source='Hyperparams/args.yaml')  # Hyper-param arg files located in ./Hyperparams
 def main(args):
     if args.multi_task:
@@ -89,7 +55,6 @@ def main(args):
                 logger.log(logs, 'Eval', exp if converged else None)
 
             logger.dump_logs('Eval')
-            profiler.print()
 
             if args.log_media:
                 vlogger.dump(vlogs, f'{agent.step}')
@@ -101,13 +66,9 @@ def main(args):
             break
 
         # Rollout
-        profiler.start('act')
         experiences, logs, _ = env.rollout(agent.train(), steps=1)  # agent.train() just sets agent.training to True
-        profiler.stop('act')
 
-        profiler.start('add')
         replay.add(experiences)
-        profiler.stop('add')
 
         if env.episode_done:
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
@@ -120,9 +81,7 @@ def main(args):
         if training and (args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged):
 
             for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
-                profiler.start('learn')
                 logs = agent.learn(replay)  # Learn
-                profiler.stop('learn')
                 if args.mixed_precision:
                     MP.update()  # For training speedup via automatic mixed precision
 
