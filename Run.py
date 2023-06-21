@@ -4,10 +4,9 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import torch.multiprocessing
 
-import Utils
 from Hyperparams.minihydra import instantiate, get_args, interpolate  # minihydra conveniently and cleanly manages sys args
 from Utils import init, MT, MP, save, load
-profiler = Utils.Profiler(100)
+
 
 @get_args(source='Hyperparams/args.yaml')  # Hyper-param arg files located in ./Hyperparams
 def main(args):
@@ -69,9 +68,7 @@ def main(args):
         # Rollout
         experiences, logs, _ = env.rollout(agent.train(), steps=1)  # agent.train() just sets agent.training to True
 
-        profiler.start('add')
         replay.add(experiences)
-        profiler.stop('add')
 
         if env.episode_done:
             if args.log_per_episodes and (agent.episode - 2 * replay.offline) % args.log_per_episodes == 0:
