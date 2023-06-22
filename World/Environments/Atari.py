@@ -67,7 +67,7 @@ class Atari:
                                     sticky_action_proba,              # Sticky action probability
                                     full_action_space=
                                     action_space_union,               # Use all atari actions
-                                    render_mode=None                  # None | human | rgb_array
+                                    render_mode='rgb_array'           # None | human | rgb_array
                                     )
         except gym.error.NameNotFound as e:
             # If Atari not installed
@@ -117,8 +117,7 @@ class Atari:
         # Step env
         reward = np.zeros([])
         for _ in range(self.action_repeat):
-            # TODO New Gym API now returns 5 values: Also, 2 values for reset(), and Render
-            obs, _reward, self.episode_done, info = self.env.step(int(_action))  # Atari requires scalar int action
+            obs, _reward, self.episode_done, _, _ = self.env.step(int(_action))  # Atari requires scalar int action
             reward += _reward
             if self.last_2_frame_pool:
                 last_frame = self.last_frame
@@ -150,7 +149,7 @@ class Atari:
         obs = np.expand_dims(obs, 0)
 
         # Create experience
-        exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None, 'done': self.episode_done}  # TODO Auto-done
+        exp = {'obs': obs, 'action': action, 'reward': reward, 'done': self.episode_done}  # TODO Auto-done
 
         self.exp = AttrDict(exp)  # Experience
 
@@ -164,7 +163,7 @@ class Atari:
         return np.concatenate(list(self.frames), axis=1)
 
     def reset(self):
-        obs = self.env.reset()
+        obs, _ = self.env.reset()
         self.episode_done = False
 
         # Last frame
@@ -188,7 +187,7 @@ class Atari:
         obs = np.expand_dims(obs, 0)
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': np.zeros([]), 'label': None, 'done': False}  # TODO Auto-done
+        exp = {'obs': obs, 'reward': np.zeros([]), 'done': False}  # TODO Auto-done
 
         # Reset frame stack
         self.frames.clear()
@@ -198,7 +197,7 @@ class Atari:
         return self.exp
 
     def render(self):
-        return self.env.render(mode='rgb_array')  # rgb_array | human
+        return self.env.render()
 
     def adapt_to_discrete(self, action):
         shape = self.action_spec['shape']

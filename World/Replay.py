@@ -302,10 +302,10 @@ class Worker:
         # Retrieve from Memory
         episode = self.memory[index]
 
-        if len(episode) < self.nstep + 1:  # TODO support <nstep
+        if len(episode) < bool(self.nstep) + 1:  # Make sure at least one nstep is present if nstep
             return self.sample(_index, update=True)
 
-        step = random.randint(0, len(episode) - self.nstep - 1)  # Randomly sample sub-episode
+        step = random.randint(0, len(episode) - 1 - bool(self.nstep))  # Randomly sample experience in episode
         experience = Args(episode[step])
 
         # Frame stack / N-step
@@ -342,10 +342,11 @@ class Worker:
         if self.nstep:
             # Transition
             experience.action = episode[step + 1].action
-            experience['next_obs'] = frame_stack(episode, 'obs', step + self.nstep)
 
             traj_r = torch.as_tensor([experience.reward
                                       for experience in episode[step + 1:step + self.nstep + 1]])
+
+            experience['next_obs'] = frame_stack(episode, 'obs', step + len(traj_r))
 
             # Trajectory TODO
             if self.trajectory_flag:
@@ -357,9 +358,9 @@ class Worker:
                     traj_l = episode['label'][idx:idx + self.nstep + 1]
 
             # Cumulative discounted reward
-            discounts = self.discount ** np.arange(self.nstep + 1)
+            discounts = self.discount ** np.arange(len(traj_r) + 1)
             experience.reward = np.dot(discounts[:-1], traj_r).astype('float32')
-            experience['discount'] = discounts[-1].astype('float32')
+            experience['discount'] = 0 if episode[step + len(traj_r)].done else discounts[-1].astype('float32')
         else:
             experience['discount'] = 1
 
