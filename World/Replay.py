@@ -53,7 +53,7 @@ class Replay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
-        self.add_lock = Lock()  # For adding to memory concurrently
+        self.add_lock = Lock()  # For adding to memory in concurrency
 
         dataset_config = dataset
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
@@ -245,7 +245,7 @@ class Replay:
                     with self.add_lock:
                         self.memory.add(batch)  # Add to memory
 
-                Thread(target=add).start()  # Threading TODO Maybe parallel?
+                Thread(target=add).start()  # Threading
 
     def writable_tape(self, batch, ind, step):
         assert isinstance(batch, (dict, Batch)), f'expected \'batch\' to be dict or Batch, got {type(batch)}.'

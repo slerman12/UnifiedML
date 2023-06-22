@@ -78,8 +78,9 @@ class CNNEncoder(nn.Module):
                                f'{tuple(obs.shape[1:])}, ≠ {self.obs_shape}')
 
         # Optionally append a 1D context to channels, broadcasting
-        obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes or (1,)).expand(-1, -1, *obs.shape[2:])
-                                for c in context]], 1)
+        if context:
+            obs = torch.cat([obs, *[c.reshape(obs.shape[0], c.shape[-1], *axes or (1,)).expand(-1, -1, *obs.shape[2:])
+                                    for c in context]], 1)
 
         # CNN encode
         h = self.Eyes(obs)

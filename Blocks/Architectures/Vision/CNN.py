@@ -96,7 +96,7 @@ def cnn_broadcast(input_shape, x):
         lead_shape = input.shape[:-1]  # Otherwise, assume all dims are batch dims except last
 
     # Broadcast as in the docstring above
-    x = torch.cat(
+    x = (torch.cat if len(x) > 1 else (lambda _x, dim: _x[0]))(
         [input if len(input_shape) < len(input.shape) and input.shape[-len(input_shape):] == input_shape
          else input.view(*lead_shape, -1, *spatial_shape) if math.prod(input.shape[len(lead_shape):]) %
                                                              math.prod(spatial_shape) == 0

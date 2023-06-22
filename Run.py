@@ -80,7 +80,7 @@ def main(args):
         # Train agent
         if training and (args.learn_per_steps and agent.step % args.learn_per_steps == 0 or converged):
 
-            for _ in range(args.learn_steps_after if converged else 1):  # Additional updates after all rollouts
+            for _ in range(args.learn_steps_after if converged else args.learn_steps):
                 logs = agent.learn(replay)  # Learn
                 if args.mixed_precision:
                     MP.update()  # For training speedup via automatic mixed precision
