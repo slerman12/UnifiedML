@@ -26,4 +26,5 @@ for r in [0, 0.05, 0.1, 0.2, 0.3, 1]:
     print(f'index for random float {r}: {i}, proba of index: {proba(i)}')  # O(1) read/sample complexity
 
 # Use pyskiplist for sorted inserts/replace/deletes.
-# O(1) sampling, O(log(N)) insert/replace/delete.
+# O(log(N)) sampling, O(log(N)) insert/replace/delete. - or use sorted list for offline.
+# Maybe episodes can have a running tally for prioritization; this aggregate gets sampled; then it has another sampler
