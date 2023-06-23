@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import os
+import time
 import warnings
 from collections import deque
 
@@ -83,7 +84,7 @@ class DMC:
             render_kwargs = dict(height=84, width=84, camera_id=camera_id)
             self.env = pixels.Wrapper(self.env,
                                       pixels_only=True,  # No proprioception (key <- 'position')
-                                      render_kwargs=render_kwargs)
+                                      render_kwargs=render_kwargs)  # Should be applied after action repeat!
 
         # Channel-first
         obs_shape = self.env.observation_spec()[self.key].shape
@@ -118,10 +119,13 @@ class DMC:
         reward = np.zeros([])
         for _ in range(self.action_repeat):
             time_step = self.env.step(action)
+            # time_step = self.env._env.step(action)
             reward += time_step.reward
             self.episode_done = time_step.step_type == StepType.LAST
             if self.episode_done:
                 break
+
+        # time_step = self.env._add_pixel_observation(time_step)  # Render as pixels
 
         obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
 

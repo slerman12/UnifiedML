@@ -302,10 +302,13 @@ class Worker:
         # Retrieve from Memory
         episode = self.memory[index]
 
-        if len(episode) < bool(self.nstep) + 1:  # Make sure at least one nstep is present if nstep
+        nstep = bool(self.nstep)  # Allows dynamic nstep
+        nstep = self.nstep  # Without step as input, models may not have a way to distinguish later steps of episode
+
+        if len(episode) < nstep + 1:  # Make sure at least one nstep is present if nstep
             return self.sample(_index, update=True)
 
-        step = random.randint(0, len(episode) - 1 - bool(self.nstep))  # Randomly sample experience in episode
+        step = random.randint(0, len(episode) - 1 - nstep)  # Randomly sample experience in episode
         experience = Args(episode[step])
 
         # Frame stack / N-step
