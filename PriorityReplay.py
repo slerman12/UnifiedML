@@ -4,6 +4,7 @@ alpha = 1.01
 N = 10  # len(memory)
 
 
+# Partial sum of power series https://www.wolframalpha.com/input?i=1+%2B+x+%2B+x%5E2+%2B+...+series
 def index_cumulative(index):
     return index + 1 if alpha == 1 \
         else (alpha ** (1 + index) - 1) / (alpha - 1)
@@ -12,10 +13,12 @@ def index_cumulative(index):
 total = index_cumulative(N - 1)
 
 
+# Derived from rand = index_cumulative(index) / index_cumulative(total)
 def prioritized_index(rand):  # rand is a random value between 0 and 1.
-    return max(0, round(math.log(rand * total * (alpha - 1) + 1, alpha) - 1))
+    return max(0, round(math.log(rand * total * (alpha - 1) + 1, alpha) - 1))  # Return index
 
 
+# Derived from: size of segment = index_cumulative(index) / index_cumulative(total)
 # (N * proba(index)) ** -beta / [(N * proba(N - 1)) ** -beta] = importance sampling weight to multiply in loss term
 def proba(index):  # Proba of sampling that index
     return (index_cumulative(index) - index_cumulative(index - 1)) / total
@@ -63,3 +66,18 @@ for r in [0, 0.05, 0.1, 0.2, 0.3, 1]:
 # I could change alpha to fit a running tally of the priority distribution
 # bisect.insort segments is actually faster. Can add to segments and occasionally rebalance by slicing and merging.
 # Can use above to sample from segments and episodes.
+
+
+# More advanced
+# Divide into k percentiles
+# Keep track of percentiles with each add/rewrite based on running statistics of total, count, and added
+# Power-law distribution w.r.t. the k percentiles
+# Percentiles like centroids for clustering
+#       For example, the median increments to the next index when two values of larger magnitude are added
+#       Can keep track for each percentile
+#           keep count (-2, 2, 0, 1, or 2) increment/decrement index/update value when -2 or 2; reset to 0
+#           O(k) for adding, then O(N/k) for adding, then O(M) for adding
+#           Not counting list insert, it's O(log...) for comparing. Percentile updates may be vectorized, still O(k).
+#       Then sample from k via power-law (e.g. the above)
+#       And then sample from that segment via power-law (e.g. the above)
+#       Then sample experience via power-law (e.g. the above)
