@@ -81,3 +81,9 @@ for r in [0, 0.05, 0.1, 0.2, 0.3, 1]:
 #       Then sample from k via power-law (e.g. the above)
 #       And then sample from that segment via power-law (e.g. the above)
 #       Then sample experience via power-law (e.g. the above)
+
+# No need for large data structures and re-balancing (see time complexities of sum-trees (log(MN) for both add/sample)
+# and segment trees (...) respectively)
+
+# This might generalize to d dimensions if centroids are d-dimensional. Have to compute stats for each d_i and maintain
+# each sorting combination.
