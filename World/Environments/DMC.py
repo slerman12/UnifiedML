@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
 import os
-import time
 import warnings
 from collections import deque
 
@@ -118,14 +117,14 @@ class DMC:
         # Step env
         reward = np.zeros([])
         for _ in range(self.action_repeat):
-            time_step = self.env.step(action)
-            # time_step = self.env._env.step(action)
+            # time_step = self.env.step(action)
+            time_step = self.env._env.step(action)  # Don't render yet
             reward += time_step.reward
             self.episode_done = time_step.step_type == StepType.LAST
             if self.episode_done:
                 break
 
-        # time_step = self.env._add_pixel_observation(time_step)  # Render as pixels
+        time_step = self.env._add_pixel_observation(time_step)  # Render pixels
 
         obs = time_step.observation[self.key].copy()  # DMC returns numpy arrays with negative strides, need to copy
 
