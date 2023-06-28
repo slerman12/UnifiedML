@@ -180,6 +180,17 @@ class Replay:
         #     else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train and not stream else (None,) * 4
         # low, high = low_ if low is None else low, high_ if high is None else high
 
+        # Step 1 Dataset operations:
+        #   - Find out number of classes or take specified subset
+        #   - Map class labels to ints [0 - num_classes - 1]
+        #   - Apply dataset.transform
+        #   - Build Memory with card including subset and transform and num_classes
+        # Step 2 Memory operations:
+        #   - Search for card with or without dataset.transform, with or without subset, with or without stats
+        #   - Create a new memory if dataset.transform in dataset and not in card, with the transform.
+        #           --> Same for / together with subset
+        #           --> Same for / together with needed stats
+
         added_modules.update({'torchvision': torchvision})
         transform = instantiate(transform)
 
