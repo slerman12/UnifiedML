@@ -2,10 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # MIT_LICENSE file in the root directory of this source tree.
-"""
-A new Replay memory. Programmed by Sam Lerman.
-"""
-
 import atexit
 import random
 from threading import Thread, Lock
@@ -21,17 +17,16 @@ import torch
 from torch.utils.data import IterableDataset, Dataset, DataLoader
 
 from World.Memory import Memory, Batch
-from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, worker_init_fn, compute_stats
-from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
+from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, worker_init_fn, compute_stats
+from Hyperparams.minihydra import instantiate, added_modules, open_yaml, Args
 
 
 class Replay:
     def __init__(self, path='Replay/', batch_size=1, device='cpu', num_workers=0, offline=True, stream=False,
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
                  save=False, mem_size=None, fetch_per=1,
-                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, shuffle=True,
-                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, norm=False, standardize=False,
-                 obs_spec=None, action_spec=None, meta_shape=(0,)):  # TODO Make sure Minihydra doesn't send copies of these but actual
+                 prefetch_factor=3, pin_memory=False, pin_device_memory=False, shuffle=True, rewrite_shape=None,
+                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, agent_specs=None):
 
         self.device = device
         self.offline = offline
@@ -54,12 +49,16 @@ class Replay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
-        self.meta_shape = meta_shape  # For rewritable memory
+        self.rewrite_shape = rewrite_shape  # For rewritable memory
 
         self.add_lock = Lock()  # For adding to memory in concurrency
 
         dataset_config = dataset
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
+
+        # Optional specs that can be set based on data
+        norm, standardize, obs_spec, action_spec = [getattr(agent_specs, spec, None)
+                                                    for spec in ['norm', 'standardize', 'obs_spec', 'action_spec']]
 
         if dataset_config is not None and dataset_config._target_ is not None:
             # Pytorch Dataset or Memory path
@@ -108,42 +107,6 @@ class Replay:
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
-        # """Create Replay and compute stats"""
-        #
-        # replay_path = Path(f'./Datasets/ReplayBuffer/Classify/{task}_Buffer')
-        #
-        # stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
-        #
-        # # Parallelism-protection, but note that clashes may still occur in multi-process dataset creation
-        # if replay_path.exists() and not len(stats_path):
-        #     warnings.warn(f'Incomplete or corrupted replay. If you launched multiple processes, then another one may be'
-        #                   f' creating the replay still, in which case, just wait. Otherwise, kill this process (ctrl-c)'
-        #                   f' and delete the existing path (`rm -r <Path>`) and try again to re-create.\nPath: '
-        #                   f'{colored(replay_path, "green")}\n{"Also: " + stats_path[0] if len(stats_path) else ""}'
-        #                   f'{colored("Wait (do nothing)", "yellow")} '
-        #                   f'{colored("or kill (ctrl-c), delete path (rm -r <Path>) and try again.", "red")}')
-        #     while not len(stats_path):
-        #         sleep(10)  # Wait 10 sec
-        #
-        #         stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
-        #
-        # # Offline and generate don't use training rollouts (unless streaming)
-        # if (offline or generate) and not (stream or train or replay_path.exists()):
-        #     # But still need to create training replay & compute stats
-        #     Classify(dataset_, None, task_, True, offline, generate, stream, batch_size, num_workers, subset, None,
-        #              None, seed, transform, **kwargs)
-        #
-        # # Create replay
-        # if train and (offline or generate) and not (replay_path.exists() or stream):
-        #     self.create_replay(replay_path)
-        #
-        # stats_path = glob.glob(f'./Datasets/ReplayBuffer/Classify/{task}_Stats*')
-        #
-        # # Compute stats
-        # mean, stddev, low_, high_ = map(json.loads, open(stats_path[0]).readline().split('_')) if len(stats_path) \
-        #     else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train and not stream else (None,) * 4
-        # low, high = low_ if low is None else low, high_ if high is None else high
-
         added_modules.update({'torchvision': torchvision})
         transform = instantiate(transform)
 
@@ -171,14 +134,15 @@ class Replay:
                                                    persistent_workers=bool(num_workers))
 
         # Fill in necessary obs_spec and action_spc stats from dataset
-        if norm and ('low' not in obs_spec or 'high' not in obs_spec
-                     or obs_spec.low is None or obs_spec.high is None) \
-                or standardize and ('mean' not in obs_spec or 'stddev' not in obs_spec
-                                    or obs_spec.mean is None or obs_spec.stddev is None):
-            if 'stats' not in card:
-                card['stats'] = compute_stats(self.batches)
-            if obs_spec is not None:
-                obs_spec.update(card.stats)
+        if offline:
+            if norm and ('low' not in obs_spec or 'high' not in obs_spec
+                         or obs_spec.low is None or obs_spec.high is None) \
+                    or standardize and ('mean' not in obs_spec or 'stddev' not in obs_spec
+                                        or obs_spec.mean is None or obs_spec.stddev is None):
+                if 'stats' not in card:
+                    card['stats'] = compute_stats(self.batches)
+                if obs_spec is not None:
+                    obs_spec.update(card.stats)
 
         # Save to hard disk if Offline
         if isinstance(dataset, Dataset) and offline:
@@ -198,7 +162,7 @@ class Replay:
     def __next__(self):
         if self.stream:
             # Environment streaming
-            return self.stream
+            sample = self.stream
         else:
             # Replay sampling
             try:
@@ -208,7 +172,8 @@ class Replay:
                 self.replay = iter(self)
                 sample = next(self.replay)
 
-            return Batch({key: value.to(self.device, non_blocking=True) for key, value in sample.items()})
+        return Batch({key: torch.as_tensor(value, device=self.device).to(non_blocking=True)
+                      for key, value in sample.items()})
 
     def __iter__(self):
         self.replay = iter(self.batches)
@@ -230,6 +195,9 @@ class Replay:
                         self.memory.add(batch)  # Add to memory
 
                 Thread(target=add).start()  # Threading
+
+    def set_tape(self, shape):
+        self.rewrite_shape = shape or [0]
 
     def writable_tape(self, batch, ind, step):
         assert isinstance(batch, (dict, Batch)), f'expected \'batch\' to be dict or Batch, got {type(batch)}.'

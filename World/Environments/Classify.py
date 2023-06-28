@@ -95,7 +95,7 @@ class Classify:
                               'high': high})
 
         # Fill in necessary obs_spec and action_spc stats from dataset  TODO Only when norm or standardize
-        if train:
+        if train and offline:
             self.obs_spec.update(compute_stats(self.batches))
 
         # TODO Alt, load_dataset can output Args of recollected stats as well; maybe specify what to save in card replay
@@ -133,7 +133,7 @@ class Classify:
         self.episode_done = False
 
         # Create experience
-        exp = {'obs': obs, 'action': None, 'reward': np.array([]), 'label': label}
+        exp = {'obs': obs, 'label': label}
 
         self.exp = Args(exp)  # Experience
 

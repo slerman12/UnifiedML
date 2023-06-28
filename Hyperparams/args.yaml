@@ -151,10 +151,11 @@ replay:
   frame_stack: ${frame_stack}
   nstep: ${nstep}
   discount: ${discount}
-  norm: ${norm}
-  standardize: ${standardize}
-  obs_spec: ${obs_spec}
-  action_spec: ${action_spec}
+  agent_specs:
+    norm: ${norm}
+    standardize: ${standardize}
+    obs_spec: ${obs_spec}
+    action_spec: ${action_spec}
 
 logger:
   _target_: Logger.Logger
