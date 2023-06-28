@@ -25,18 +25,18 @@ def main(args):
             setattr(args, arg, getattr(generalize.env, arg))
     interpolate(args)  # Update args
 
+    # Experience replay
+    replay = instantiate(args.replay)
+
     # Agent
     agent = load(args.load_path, args.device, args.agent) if args.load \
         else instantiate(args.agent).to(args.device)
+    replay.meta_shape = getattr(agent, 'meta_shape', replay.meta_shape)  # Optional agent-specific rewritable data
 
     # Synchronize multi-task models (if exist)
     agent = MT.unify_agent_models(agent, args.agent, args.device, args.load and args.load_path)
 
     train_steps = args.train_steps + agent.step
-
-    # Experience replay
-    replay = instantiate(args.replay,
-                         meta_shape=getattr(agent, 'meta_shape', [0]))  # Optional agent-specific metadata can be stored
 
     # Logger / Vlogger
     logger = instantiate(args.logger)

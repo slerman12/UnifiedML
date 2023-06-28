@@ -22,7 +22,7 @@ from torch.utils.data import IterableDataset, Dataset, DataLoader
 
 from World.Memory import Memory, Batch
 from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, worker_init_fn, compute_stats
-from Hyperparams.minihydra import instantiate, Args, added_modules
+from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
 
 
 class Replay:
@@ -54,15 +54,16 @@ class Replay:
                              ram_capacity=ram_capacity,
                              hd_capacity=hd_capacity)
 
+        self.meta_shape = meta_shape  # For rewritable memory
+
         self.add_lock = Lock()  # For adding to memory in concurrency
 
         dataset_config = dataset
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
-        card['train'] = True  # TODO Is this right?
 
         if dataset_config is not None and dataset_config._target_ is not None:
             # Pytorch Dataset or Memory path
-            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)  # TODO Why is this Offline???
+            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)
 
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
 
@@ -82,6 +83,8 @@ class Replay:
 
                 if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
                     self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False')
+
+                card = open_yaml(dataset + 'card.yaml')
             else:
                 batches = DataLoader(dataset, batch_size=mem_size or batch_size)
 
@@ -89,8 +92,8 @@ class Replay:
                 for data in tqdm(batches, desc='Loading Dataset into accelerated Memory...'):
                     self.memory.add(datums_as_batch(data))
 
-            if hasattr(dataset, 'num_classes'):
-                card['num_classes'] = dataset.num_classes
+                if hasattr(dataset, 'num_classes'):
+                    card['num_classes'] = dataset.num_classes
 
             if action_spec is not None:
                 if 'discrete_bins' not in action_spec or action_spec.discrete_bins is None:
@@ -172,7 +175,8 @@ class Replay:
                      or obs_spec.low is None or obs_spec.high is None) \
                 or standardize and ('mean' not in obs_spec or 'stddev' not in obs_spec
                                     or obs_spec.mean is None or obs_spec.stddev is None):
-            compute_stats(self.batches, card)
+            if 'stats' not in card:
+                card['stats'] = compute_stats(self.batches)
             if obs_spec is not None:
                 obs_spec.update(card.stats)
 

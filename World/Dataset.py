@@ -118,13 +118,12 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
 
 
 # Computes mean, stddev, low, high
-def compute_stats(batches, card):
+def compute_stats(batches):
     cnt = 0
     fst_moment, snd_moment = None, None
     low, high = np.inf, -np.inf
 
-    for batch in tqdm(batches, 'Computing mean, stddev, low, high for standardization/normalization. '
-                               'This only has to be done once'):
+    for batch in tqdm(batches, 'Computing mean, stddev, low, high for standardization/normalization.'):
         obs = batch.obs if 'obs' in batch else batch[0]
         b, c, *hw = obs.shape
         if not hw:
@@ -141,15 +140,13 @@ def compute_stats(batches, card):
 
         cnt += nb_pixels
 
-        low, high = min(obs.min(), low), max(obs.max(), high)
+        low, high = min(obs.min(), low).item(), max(obs.max(), high).item()
 
     stddev = torch.sqrt(snd_moment - fst_moment ** 2)
     stddev[stddev == 0] = 1
 
     mean, stddev = fst_moment.tolist(), stddev.tolist()
-    card['stats'] = Args(mean=mean, stddev=stddev, low=low, high=high)  # Save stat values for future reuse
-
-    return mean, stddev, low.item(), high.item()
+    return Args(mean=mean, stddev=stddev, low=low, high=high)  # Save stat values for future reuse
 
 
 # Check if is valid path for instantiation
@@ -297,7 +294,10 @@ def get_dataset_path(dataset_config, path):
         if 'stats' in card:
             card.pop('stats')
 
-        if not hasattr(dataset_config, '_target_') and not card or dataset_config == card:
+        if 'num_classes' in card:
+            card.pop('num_classes')
+
+        if not hasattr(dataset_config, '_target_') and not card or dataset_config.to_dict() == card:
             count = int(file.rsplit('/', 2)[-2])
             break
         else:

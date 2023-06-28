@@ -36,7 +36,8 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
     if '_recursive_' in args:
         args.pop('_recursive_')
 
-    args = recursive_Args(args)
+    # args = recursive_Args(args)  # Why does it need to make a copy?
+    args = Args(args)
     args.update(kwargs)
 
     file, *module = args.pop('_target_').rsplit('.', 1)
@@ -105,6 +106,9 @@ class Args(dict):
         super().__init__()
         self.__dict__ = self  # Allows access via attributes
         self.update({**(_dict or {}), **kwargs})
+
+    def to_dict(self):
+        return {**{key: self[key].to_dict() if isinstance(self[key], Args) else self[key] for key in self}}
 
 
 # Allow access via attributes recursively

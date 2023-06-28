@@ -20,6 +20,8 @@ import numpy as np
 import torch
 import torch.multiprocessing as mp
 
+from Hyperparams.minihydra import Args
+
 
 class Memory:
     def __init__(self, save_path=None, num_workers=1, gpu_capacity=0, pinned_capacity=0,
@@ -226,6 +228,8 @@ class Memory:
                     mem.save()
 
         if card:
+            if isinstance(card, Args):
+                card = card.to_dict()
             with open(self.save_path + 'card.yaml', 'w') as file:
                 yaml.dump(card, file)
 

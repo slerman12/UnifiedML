@@ -96,10 +96,7 @@ class Classify:
 
         # Fill in necessary obs_spec and action_spc stats from dataset  TODO Only when norm or standardize
         if train:
-            card = {}
-            compute_stats(self.batches, card)
-            if self.obs_spec is not None:
-                self.obs_spec.update(card['stats'])
+            self.obs_spec.update(compute_stats(self.batches))
 
         # TODO Alt, load_dataset can output Args of recollected stats as well; maybe specify what to save in card replay
 
