@@ -22,7 +22,7 @@ import yaml
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 # minihydra.yaml_search_paths.append(path)
-yaml_search_paths = [app, '']  # List of paths
+yaml_search_paths = [app, '']  # List of paths  # TODO Make sure includes cwd / add to sys.path / ML should be priority
 
 added_modules = {}
 

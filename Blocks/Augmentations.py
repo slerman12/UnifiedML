@@ -37,7 +37,7 @@ class RandomShiftsAug(nn.Module):
                               2 * self.pad + 1,
                               size=(n, 1, 1, 2),
                               device=obs.device,
-                              dtype=obs.dtype)
+                              dtype=obs.dtype).float()
         shift *= 2.0 / (h + 2 * self.pad)
 
         grid = base_grid + shift
@@ -51,7 +51,7 @@ class RandomShiftsAug(nn.Module):
 
             obs, grid = obs.to('cpu'), grid.to('cpu')
 
-        output = F.grid_sample(obs,
+        output = F.grid_sample(obs.float() if obs.device.type == 'cpu' else obs,
                                grid,
                                padding_mode='zeros',
                                align_corners=False).to(device)

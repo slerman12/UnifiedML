@@ -302,8 +302,8 @@ class Worker:
         # Retrieve from Memory
         episode = self.memory[index]
 
-        nstep = bool(self.nstep)  # Allows dynamic nstep
-        nstep = self.nstep  # Without step as input, models may not have a way to distinguish later steps of episode
+        # nstep = bool(self.nstep)  # Allows dynamic nstep
+        nstep = self.nstep  # But w/o step as input, models can't distinguish later episode steps
 
         if len(episode) < nstep + 1:  # Make sure at least one nstep is present if nstep
             return self.sample(_index, update=True)
