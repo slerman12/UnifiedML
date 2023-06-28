@@ -21,7 +21,7 @@ import torch
 from torch.utils.data import IterableDataset, Dataset, DataLoader
 
 from World.Memory import Memory, Batch
-from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, worker_init_fn
+from World.Dataset import load_dataset, datums_as_batch, get_dataset_path, Transform, worker_init_fn, compute_stats
 from Hyperparams.minihydra import instantiate, Args, added_modules
 
 
@@ -30,7 +30,8 @@ class Replay:
                  gpu_capacity=0, pinned_capacity=0, tensor_ram_capacity=1e6, ram_capacity=0, hd_capacity=inf,
                  save=False, mem_size=None, fetch_per=1,
                  prefetch_factor=3, pin_memory=False, pin_device_memory=False, shuffle=True,
-                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, meta_shape=(0,)):
+                 dataset=None, transform=None, frame_stack=1, nstep=None, discount=1, norm=False, standardize=False,
+                 obs_spec=None, action_spec=None, meta_shape=(0,)):  # TODO Make sure Minihydra doesn't send copies of these but actual
 
         self.device = device
         self.offline = offline
@@ -57,11 +58,11 @@ class Replay:
 
         dataset_config = dataset
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
-        # TODO Mark that training if not marked, and use card universally, and don't include str handling
+        card['train'] = True  # TODO Is this right?
 
         if dataset_config is not None and dataset_config._target_ is not None:
             # Pytorch Dataset or Memory path
-            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)
+            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)  # TODO Why is this Offline???
 
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
 
@@ -82,67 +83,27 @@ class Replay:
                 if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
                     self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False')
             else:
-                # TODO Apply dataset.transform on this
-                batches = DataLoader(Transform(dataset), batch_size=mem_size or batch_size)
+                batches = DataLoader(dataset, batch_size=mem_size or batch_size)
 
                 # Add Dataset into Memory in batch-size chunks
                 for data in tqdm(batches, desc='Loading Dataset into accelerated Memory...'):
                     self.memory.add(datums_as_batch(data))
 
-            if save_path:
-                # Save to hard disk if Offline
-                if isinstance(dataset, Dataset) and offline:
-                    # if accelerate and self.memory.num_batches <= sum(self.memory.capacities[:-1]):
-                    #     root = 'World/ReplayBuffer/Offline/'
-                    #     self.memory.set_save_path(root + get_dataset_path(dataset_config, root))
-                    #     save = True
-                    if save or self.memory.num_batches > sum(self.memory.capacities[:-1]):  # Until save-delete check
-                        self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
-                                              'This only has to be done once', card=card)
+            if hasattr(dataset, 'num_classes'):
+                card['num_classes'] = dataset.num_classes
+
+            if action_spec is not None:
+                if 'discrete_bins' not in action_spec or action_spec.discrete_bins is None:
+                    action_spec['discrete_bins'] = card.num_classes
+
+                if 'high' not in action_spec or action_spec.high is None:
+                    action_spec['high'] = card.num_classes - 1
 
         # Save Online replay on terminate  Maybe delete if not save
         if not offline and save:
             atexit.register(lambda: self.memory.save(desc='Saving Replay Memory...', card=card))
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
-
-        # self.action_spec = {'shape': (1,),
-        #                     'discrete_bins': len(classes),
-        #                     'low': 0,
-        #                     'high': len(classes) - 1,
-        #                     'discrete': True}
-        #
-        # self.obs_spec = {'shape': obs_shape,
-        #                  'mean': mean,
-        #                  'stddev': stddev,
-        #                  'low': low,
-        #                  'high': high}
-
-        # Unique classes in dataset - warning: treats multi-label as single-label for now
-        # # TODO Save/Only do once - debug speech command on Macula
-        # classes = subset if subset is not None \
-        #     else range(len(getattr(dataset, 'classes'))) if hasattr(dataset, 'classes') \
-        #     else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
-        #     else [print(f'Identifying unique {"train" if train else "eval"} classes... '
-        #                 f'This can take some time for large datasets.'),
-        #           sorted(list(set(str(exp[1]) for exp in dataset)))][1]
-        #
-        # # Can select a subset of classes
-        # if subset:
-        #     task += '_Classes_' + '_'.join(map(str, classes))
-        #     print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
-        #     dataset = ClassSubset(dataset, classes)
-        #
-        # # Map unique classes to integers
-        # dataset = ClassToIdx(dataset, classes)
-        #
-        # # Transform inputs
-        # transform = instantiate(transform)
-        # if transform:
-        #     task += '_Transformed'  # Note: These name changes only apply to replay buffer and not benchmarking yet
-        # dataset = Transform(dataset, transform)
-
-
 
         # """Create Replay and compute stats"""
         #
@@ -180,17 +141,6 @@ class Replay:
         #     else self.compute_stats(f'./Datasets/ReplayBuffer/Classify/{task}') if train and not stream else (None,) * 4
         # low, high = low_ if low is None else low, high_ if high is None else high
 
-        # Step 1 Dataset operations:
-        #   - Find out number of classes or take specified subset
-        #   - Map class labels to ints [0 - num_classes - 1]
-        #   - Apply dataset.transform
-        #   - Build Memory with card including subset and transform and num_classes
-        # Step 2 Memory operations:
-        #   - Search for card with or without dataset.transform, with or without subset, with or without stats
-        #   - Create a new memory if dataset.transform in dataset and not in card, with the transform.
-        #           --> Same for / together with subset
-        #           --> Same for / together with needed stats
-
         added_modules.update({'torchvision': torchvision})
         transform = instantiate(transform)
 
@@ -216,6 +166,25 @@ class Replay:
                                                    shuffle=shuffle and offline,
                                                    worker_init_fn=worker_init_fn,
                                                    persistent_workers=bool(num_workers))
+
+        # Fill in necessary obs_spec and action_spc stats from dataset
+        if norm and ('low' not in obs_spec or 'high' not in obs_spec
+                     or obs_spec.low is None or obs_spec.high is None) \
+                or standardize and ('mean' not in obs_spec or 'stddev' not in obs_spec
+                                    or obs_spec.mean is None or obs_spec.stddev is None):
+            compute_stats(self.batches, card)
+            if obs_spec is not None:
+                obs_spec.update(card.stats)
+
+        # Save to hard disk if Offline
+        if isinstance(dataset, Dataset) and offline:
+            # if accelerate and self.memory.num_batches <= sum(self.memory.capacities[:-1]):
+            #     root = 'World/ReplayBuffer/Offline/'
+            #     self.memory.set_save_path(root + get_dataset_path(dataset_config, root))
+            #     save = True
+            if save or self.memory.num_batches > sum(self.memory.capacities[:-1]):  # Until save-delete check
+                self.memory.save(desc='Memory-mapping Dataset for training acceleration and future re-use. '
+                                      'This only has to be done once', card=card)
 
         # Replay
 

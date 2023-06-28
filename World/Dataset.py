@@ -5,6 +5,7 @@
 import glob
 import inspect
 import itertools
+import math
 import os
 import random
 
@@ -17,6 +18,7 @@ from PIL.Image import Image
 
 import torchvision
 from torchvision.transforms import functional as F
+from tqdm import tqdm
 
 from World.Memory import Batch
 from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
@@ -56,41 +58,98 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
         if glob.glob(path + '*.yaml'):
             return path
 
-    # Return the Dataset module
+    # From custom module path
     if is_valid_path(dataset_config._target_, module_path=True):
-        return instantiate(dataset_config)  # TODO Recursive with transform?
+        dataset = instantiate(dataset_config)
+    # From torchvision
+    else:
+        if train is not None:
+            path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
+        os.makedirs(path, exist_ok=True)
 
-    if train is not None:
-        path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
-    os.makedirs(path, exist_ok=True)
+        # Different datasets have different specs
+        root_specs = [dict(root=path), {}]
+        train_specs = [] if train is None else [dict(train=train),
+                                                dict(version='2021_' + 'train' if train else 'valid'),
+                                                dict(subset='training' if train else 'testing'),
+                                                dict(split='train' if train else 'test'), {}]
+        download_specs = [dict(download=True), {}]
+        transform_specs = [dict(transform=None), {}]
 
-    # Different datasets have different specs
-    root_specs = [dict(root=path), {}]
-    train_specs = [] if train is None else [dict(train=train),
-                                            dict(version='2021_' + 'train' if train else 'valid'),
-                                            dict(subset='training' if train else 'testing'),
-                                            dict(split='train' if train else 'test'), {}]
-    download_specs = [dict(download=True), {}]
-    transform_specs = [dict(transform=None), {}]  # TODO Instantiate transform
+        dataset = None
 
-    dataset = None
-
-    # Instantiate dataset
-    for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
-        try:
-            root_spec, train_spec, download_spec, transform_spec = all_specs
-            specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
-            specs = {key: specs[key] for key in set(specs) - set(dataset_config)}
-            specs.update(kwargs)
-            with Lock(path + 'lock'):  # System-wide mutex-lock
-                dataset = instantiate(dataset_config, **specs)
-        except (TypeError, ValueError):
-            continue
-        break
+        # Instantiate dataset
+        for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
+            try:
+                root_spec, train_spec, download_spec, transform_spec = all_specs
+                specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
+                specs = {key: specs[key] for key in set(specs) - set(dataset_config)}
+                specs.update(kwargs)
+                with Lock(path + 'lock'):  # System-wide mutex-lock
+                    dataset = instantiate(dataset_config, **specs)
+            except (TypeError, ValueError):
+                continue
+            break
 
     assert dataset, 'Could not find Dataset.'
 
+    classes = dataset_config.subset if 'subset' in dataset_config and dataset_config.subset is not None \
+        else range(dataset.classes if isinstance(dataset.classes, int)
+                   else len(dataset.classes)) if hasattr(dataset, 'classes') \
+        else range(dataset.num_classes) if hasattr(dataset, 'num_classes') \
+        else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
+        else [print(f'Identifying unique classes... '
+                    f'This can take some time for large datasets.'),
+              sorted(list(set(str(exp[1]) for exp in dataset)))][1]
+
+    setattr(dataset, 'num_classes', len(classes))
+
+    # Can select a subset of classes
+    if 'subset' in dataset_config and dataset_config.subset is not None:
+        print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
+        dataset = ClassSubset(dataset, classes)
+
+    # Map unique classes to integers
+    dataset = ClassToIdx(dataset, classes)
+
+    dataset = Transform(dataset, instantiate(getattr(dataset_config, 'transform', None)))
+
     return dataset
+
+
+# Computes mean, stddev, low, high
+def compute_stats(batches, card):
+    cnt = 0
+    fst_moment, snd_moment = None, None
+    low, high = np.inf, -np.inf
+
+    for batch in tqdm(batches, 'Computing mean, stddev, low, high for standardization/normalization. '
+                               'This only has to be done once'):
+        obs = batch.obs if 'obs' in batch else batch[0]
+        b, c, *hw = obs.shape
+        if not hw:
+            *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
+        obs = obs.view(b, c, *hw)
+        fst_moment = torch.zeros(c) if fst_moment is None else fst_moment
+        snd_moment = torch.zeros(c) if snd_moment is None else snd_moment
+        nb_pixels = b * math.prod(hw)
+        dim = [0, *[2 + i for i in range(len(hw))]]
+        sum_ = torch.sum(obs, dim=dim)
+        sum_of_square = torch.sum(obs ** 2, dim=dim)
+        fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
+        snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
+
+        cnt += nb_pixels
+
+        low, high = min(obs.min(), low), max(obs.max(), high)
+
+    stddev = torch.sqrt(snd_moment - fst_moment ** 2)
+    stddev[stddev == 0] = 1
+
+    mean, stddev = fst_moment.tolist(), stddev.tolist()
+    card['stats'] = Args(mean=mean, stddev=stddev, low=low, high=high)  # Save stat values for future reuse
+
+    return mean, stddev, low.item(), high.item()
 
 
 # Check if is valid path for instantiation
@@ -233,7 +292,10 @@ def get_dataset_path(dataset_config, path):
         card = open_yaml(file)
 
         if not hasattr(dataset_config, '_target_'):
-            card.pop('_target_')  # TODO Also pop default attributes like transform if null
+            card.pop('_target_')
+
+        if 'stats' in card:
+            card.pop('stats')
 
         if not hasattr(dataset_config, '_target_') and not card or dataset_config == card:
             count = int(file.rsplit('/', 2)[-2])
@@ -242,41 +304,6 @@ def get_dataset_path(dataset_config, path):
             count += 1
 
     return f'{dataset_class_name}{count}/'
-
-# Computes mean, stddev, low, high
-# def compute_stats(self, path):
-#     cnt = 0
-#     fst_moment, snd_moment = None, None
-#     low, high = np.inf, -np.inf
-#
-#     for obs, _ in tqdm(self.batches, 'Computing mean, stddev, low, high for standardization/normalization. '
-#                                      'This only has to be done once'):
-#
-#         b, c, *hw = obs.shape
-#         if not hw:
-#             *hw, c = c, 1  # At least 1 channel dim and spatial dim - can comment out
-#         obs = obs.view(b, c, *hw)
-#         fst_moment = torch.zeros(c) if fst_moment is None else fst_moment
-#         snd_moment = torch.zeros(c) if snd_moment is None else snd_moment
-#         nb_pixels = b * math.prod(hw)
-#         dim = [0, *[2 + i for i in range(len(hw))]]
-#         sum_ = torch.sum(obs, dim=dim)
-#         sum_of_square = torch.sum(obs ** 2, dim=dim)
-#         fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
-#         snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
-#
-#         cnt += nb_pixels
-#
-#         low, high = min(obs.min(), low), max(obs.max(), high)
-#
-#     stddev = torch.sqrt(snd_moment - fst_moment ** 2)
-#     stddev[stddev == 0] = 1
-#
-#     mean, stddev = fst_moment.tolist(), stddev.tolist()
-#     with open(path + f'_Stats_Mean_Stddev_Low_High', 'w') as f:
-#         f.write(f'{mean}_{stddev}_{low}_{high}')  # Save stat values for future reuse
-#
-#     return mean, stddev, low.item(), high.item()
 
 
 # # Map class labels to Tensor integers

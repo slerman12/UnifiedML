@@ -10,7 +10,7 @@ import numpy as np
 
 from torch.utils.data import DataLoader, Dataset
 
-from World.Dataset import load_dataset, Transform, ClassSubset, ClassToIdx, worker_init_fn
+from World.Dataset import load_dataset, Transform, ClassSubset, ClassToIdx, worker_init_fn, compute_stats
 from Hyperparams.minihydra import Args
 
 
@@ -67,28 +67,6 @@ class Classify:
         if train and len(dataset) == 0:
             return
 
-        assert isinstance(dataset, Dataset), 'Classify requires a Pytorch Dataset.'
-
-        classes = subset if subset is not None \
-            else range(dataset.classes if isinstance(dataset.classes, int)
-                       else len(dataset.classes)) if hasattr(dataset, 'classes') \
-            else dataset.class_to_idx.keys() if hasattr(dataset, 'class_to_idx') \
-            else [print(f'Identifying unique {"train" if train else "eval"} classes... '
-                        f'This can take some time for large datasets.'),
-                  sorted(list(set(str(exp[1]) for exp in dataset)))][1]  # TODO Save in card, then load_dataset can attr
-
-        # Can select a subset of classes
-        if subset:
-            task += '_Classes_' + '_'.join(map(str, classes))
-            print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
-            dataset = ClassSubset(dataset, classes)  # TODO dataset.subset in load_dataset auto / +card
-
-        # Map unique classes to integers
-        dataset = ClassToIdx(dataset, classes)  # TODO dataset.subset in load_dataset auto
-
-        # Transform
-        dataset = Transform(dataset, transform)  # TODO dataset.transform in load_dataset auto / +card
-
         # CPU workers
         num_workers = max(1, min(num_workers, os.cpu_count()))
 
@@ -107,16 +85,21 @@ class Classify:
         obs_shape = (1,) * (2 - len(obs_shape)) + obs_shape  # At least 1 channel dim and spatial dim - can comment out
 
         self.action_spec = Args({'shape': (1,),
-                                 'discrete_bins': len(classes),
+                                 'discrete_bins': dataset.num_classes,
                                  'low': 0,
-                                 'high': len(classes) - 1,
+                                 'high': dataset.num_classes - 1,
                                  'discrete': True})
 
         self.obs_spec = Args({'shape': obs_shape,
-                              'mean': None,  # TODO Replay can compute these and add to card, load_dataset can set as attr
-                              'stddev': None,  # TODO Replay can compute these and add to card, load_dataset can set as attr
                               'low': low,
                               'high': high})
+
+        # Fill in necessary obs_spec and action_spc stats from dataset  TODO Only when norm or standardize
+        if train:
+            card = {}
+            compute_stats(self.batches, card)
+            if self.obs_spec is not None:
+                self.obs_spec.update(card['stats'])
 
         # TODO Alt, load_dataset can output Args of recollected stats as well; maybe specify what to save in card replay
 
