@@ -113,7 +113,7 @@ class Args(dict):
 
 # Allow access via attributes recursively
 def recursive_Args(args):
-    if isinstance(args, (dict, Args)):
+    if isinstance(args, dict):
         args = Args(args)
 
     items = enumerate(args) if isinstance(args, list) \

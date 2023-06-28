@@ -12,6 +12,8 @@ from torch import as_tensor
 
 from torchvision.transforms.functional import resize, rgb_to_grayscale
 
+from Hyperparams.minihydra import Args
+
 
 class SuperMario:
     """
@@ -33,7 +35,7 @@ class SuperMario:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    An "exp" (experience) is an Args consisting of "obs", "action" (prior to adapting), "reward", and "label"
     as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
@@ -144,7 +146,7 @@ class SuperMario:
         # Create experience
         exp = {'obs': obs, 'action': action, 'reward': reward, 'label': None}
 
-        self.exp = AttrDict(exp)  # Experience
+        self.exp = Args(exp)  # Experience
 
         return self.exp
 
@@ -185,7 +187,7 @@ class SuperMario:
         # Reset frame stack
         self.frames.clear()
 
-        self.exp = AttrDict(exp)  # Experience
+        self.exp = Args(exp)  # Experience
 
         return self.exp
 
@@ -210,11 +212,3 @@ class SuperMario:
 
         # Round to nearest decimal/int corresponding to discrete bins, high, and low
         return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
-
-
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super().__init__()
-        self.__dict__ = self
-        self.update(_dict)

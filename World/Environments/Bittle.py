@@ -10,6 +10,8 @@ from bleak import BleakScanner, BleakClient
 
 import numpy as np
 
+from Hyperparams.minihydra import Args
+
 
 class Bittle:
     """
@@ -31,7 +33,7 @@ class Bittle:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    An "exp" (experience) is an Args consisting of "obs", "action" (prior to adapting), "reward", and "label"
     as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
@@ -73,7 +75,7 @@ class Bittle:
                             'high': 180,
                             'discrete': False}
 
-        self.exp = AttrDict()  # Experience dictionary
+        self.exp = Args()  # Experience dictionary
 
         # self.frames = deque([], frame_stack or 1)  # TODO
 
@@ -197,14 +199,6 @@ def parallelize(run, forever=False):
     thread.start()
 
     return event
-
-
-# Access a dict with attribute or key (for aesthetic)
-class AttrDict(dict):
-    def __init__(self, _dict=None):
-        super().__init__()
-        self.__dict__ = self
-        self.update(_dict or {})
 
 
 """Action constraints

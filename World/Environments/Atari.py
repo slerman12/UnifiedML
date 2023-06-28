@@ -16,6 +16,8 @@ from torch import as_tensor
 
 from torchvision.transforms.functional import resize
 
+from Hyperparams.minihydra import Args
+
 
 class Atari:
     """
@@ -37,7 +39,7 @@ class Atari:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    An "exp" (experience) is an Args consisting of "obs", "action" (prior to adapting), "reward", and "label"
     as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
@@ -92,17 +94,17 @@ class Atari:
         self.color = color
         channels = 3 if color == 'rgb' else 1
 
-        self.obs_spec = {'shape': (channels * frame_stack, screen_size, screen_size),
-                         'mean': None,
-                         'stddev': None,
-                         'low': 0,
-                         'high': 255}
+        self.obs_spec = Args({'shape': (channels * frame_stack, screen_size, screen_size),
+                              'mean': None,
+                              'stddev': None,
+                              'low': 0,
+                              'high': 255})
 
-        self.action_spec = {'shape': (1,),
-                            'discrete_bins': self.env.action_space.n,
-                            'low': 0,
-                            'high': self.env.action_space.n - 1,
-                            'discrete': True}
+        self.action_spec = Args({'shape': (1,),
+                                 'discrete_bins': self.env.action_space.n,
+                                 'low': 0,
+                                 'high': self.env.action_space.n - 1,
+                                 'discrete': True})
 
         self.exp = None
 
@@ -151,7 +153,7 @@ class Atari:
         # Create experience
         exp = {'obs': obs, 'action': action, 'reward': reward, 'done': self.episode_done}  # TODO Auto-done
 
-        self.exp = AttrDict(exp)  # Experience
+        self.exp = Args(exp)  # Experience
 
         return self.exp
 
@@ -192,7 +194,7 @@ class Atari:
         # Reset frame stack
         self.frames.clear()
 
-        self.exp = AttrDict(exp)  # Experience
+        self.exp = Args(exp)  # Experience
 
         return self.exp
 
@@ -216,11 +218,3 @@ class Atari:
 
         # Round to nearest decimal/int corresponding to discrete bins, high, and low
         return np.round((action - low) / (high - low) * (discrete_bins - 1)) / (discrete_bins - 1) * (high - low) + low
-
-
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super().__init__()
-        self.__dict__ = self
-        self.update(_dict)

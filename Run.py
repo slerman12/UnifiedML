@@ -4,7 +4,8 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import torch.multiprocessing
 
-from Hyperparams.minihydra import instantiate, get_args, interpolate  # minihydra conveniently and cleanly manages sys args
+from Hyperparams.minihydra import instantiate, get_args, interpolate, \
+    Args  # minihydra conveniently and cleanly manages sys args
 from Utils import init, MT, MP, save, load
 
 

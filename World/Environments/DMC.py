@@ -10,6 +10,8 @@ from dm_env import StepType
 
 import numpy as np
 
+from Hyperparams.minihydra import Args
+
 
 class DMC:
     """
@@ -31,7 +33,7 @@ class DMC:
 
     Recommended: Discrete environments should have a conversion strategy for adapting continuous actions (e.g. argmax)
 
-    An "exp" (experience) is an AttrDict consisting of "obs", "action" (prior to adapting), "reward", and "label"
+    An "exp" (experience) is an Args consisting of "obs", "action" (prior to adapting), "reward", and "label"
     as numpy arrays with batch dim or None. "reward" is an exception: should be numpy array, can be empty/scalar/batch.
 
     ---
@@ -93,17 +95,17 @@ class DMC:
         # Frame stack
         obs_shape[0] *= frame_stack
 
-        self.obs_spec = {'shape': obs_shape,
+        self.obs_spec = Args({'shape': obs_shape,
                          'mean': None,
                          'stddev': None,
                          'low': 0,
-                         'high': 255}
+                         'high': 255})
 
-        self.action_spec = {'shape': self.env.action_spec().shape,
+        self.action_spec = Args({'shape': self.env.action_spec().shape,
                             'discrete_bins': None,  # Should be None for continuous
                             'low': -1,
                             'high': 1,
-                            'discrete': False}
+                            'discrete': False})
 
         self.exp = None  # Experience
 
@@ -136,7 +138,7 @@ class DMC:
         # Channel-first
         exp['obs'] = exp['obs'].transpose(0, 3, 1, 2)
 
-        self.exp = AttrDict(exp)  # Experience
+        self.exp = Args(exp)  # Experience
 
         return self.exp
 
@@ -163,17 +165,9 @@ class DMC:
         # Reset frame stack
         self.frames.clear()
 
-        self.exp = AttrDict(exp)  # Experience
+        self.exp = Args(exp)  # Experience
 
         return self.exp
 
     def render(self):
         return self.env.physics.render(height=256, width=256, camera_id=0)
-
-
-# Access a dict with attribute or key (purely for aesthetic reasons)
-class AttrDict(dict):
-    def __init__(self, _dict):
-        super().__init__()
-        self.__dict__ = self
-        self.update(_dict)

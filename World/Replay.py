@@ -103,7 +103,8 @@ class Replay:
 
         # Save Online replay on terminate  Maybe delete if not save
         if not offline and save:
-            atexit.register(lambda: self.memory.save(desc='Saving Replay Memory...', card=card))
+            self.memory.set_save_path('World/ReplayBuffer/Online/' + path)
+            atexit.register(self.memory.save, desc='Saving Replay Memory...', card=card)
 
         # TODO Add meta datum if meta_shape, and make sure add() also does - or make dynamic
 
@@ -133,7 +134,7 @@ class Replay:
                                                    worker_init_fn=worker_init_fn,
                                                    persistent_workers=bool(num_workers))
 
-        # Fill in necessary obs_spec and action_spc stats from dataset
+        # Fill in necessary obs_spec and action_spec stats from dataset
         if offline:
             if norm and ('low' not in obs_spec or 'high' not in obs_spec
                          or obs_spec.low is None or obs_spec.high is None) \
@@ -205,7 +206,7 @@ class Replay:
 
     def __len__(self):
         # Infinite if stream, else num episodes in Memory
-        return inf if self.stream else len(self.memory)
+        return int(9e9) if self.stream else len(self.memory)
 
 
 class Worker:
