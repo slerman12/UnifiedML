@@ -118,11 +118,11 @@ class Classify:
         self.exp.reward = correct
         self.exp.action = action  # Note: can store argmax instead
 
-        self.episode_done = True
+        self.exp.done = self.episode_done = True
 
         return self.exp
 
-    def reset(self):
+    def reset(self):  # The reset step is never stored in isolation
         obs, label = [np.array(b, dtype='float32') for b in self.sample()]
         label = np.expand_dims(label, 1)
 
@@ -133,7 +133,7 @@ class Classify:
         self.episode_done = False
 
         # Create experience
-        exp = {'obs': obs, 'label': label}
+        exp = {'obs': obs, 'label': label, 'done': False}
 
         self.exp = Args(exp)  # Experience
 

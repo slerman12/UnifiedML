@@ -61,9 +61,6 @@ class Replay:
                                                     for spec in ['norm', 'standardize', 'obs_spec', 'action_spec']]
 
         if dataset_config is not None and dataset_config._target_ is not None:
-            # Pytorch Dataset or Memory path
-            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config)
-
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
 
             if offline:
@@ -75,15 +72,15 @@ class Replay:
             # Memory save-path
             self.memory.set_save_path(save_path)
 
+            # Pytorch Dataset or Memory path
+            dataset = load_dataset('World/ReplayBuffer/Offline/', dataset_config) if offline else save_path
+
             # Fill Memory
             if isinstance(dataset, str):
                 # Load Memory from path
-                self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
-
-                if not offline and dataset != 'World/ReplayBuffer/Online/' + path:
-                    self.memory.saved(False, desc='Setting saved flag of Online version of Offline Replay to False')
-
-                card = open_yaml(dataset + 'card.yaml')
+                if os.path.exists(dataset):
+                    self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
+                    card = open_yaml(dataset + 'card.yaml')
             else:
                 batches = DataLoader(dataset, batch_size=mem_size or batch_size)
 
@@ -91,8 +88,8 @@ class Replay:
                 for data in tqdm(batches, desc='Loading Dataset into accelerated Memory...'):
                     self.memory.add(datums_as_batch(data))
 
-                if hasattr(dataset, 'num_classes'):
-                    card['num_classes'] = dataset.num_classes
+            if hasattr(dataset, 'num_classes'):
+                card['num_classes'] = dataset.num_classes
 
             if action_spec is not None:
                 if 'discrete_bins' not in action_spec or action_spec.discrete_bins is None:
@@ -101,7 +98,7 @@ class Replay:
                 if 'high' not in action_spec or action_spec.high is None:
                     action_spec['high'] = card.num_classes - 1
 
-        # Save Online replay on terminate  Maybe delete if not save
+        # Save Online replay on terminate  TODO Maybe delete if not save
         if not offline and save:
             self.memory.set_save_path('World/ReplayBuffer/Online/' + path)
             atexit.register(self.memory.save, desc='Saving Replay Memory...', card=card)
@@ -274,6 +271,9 @@ class Worker:
         # Add metadata
         experience['episode_index'] = index
         experience['episode_step'] = step
+
+        if 'label' in experience and experience.label.dtype == torch.int64:
+            experience.label = experience.label.long()
 
         return experience
 

@@ -222,6 +222,9 @@ class Memory:
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
         assert self.save_path is not None, 'Memory save_path must be set to save memories.'
 
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path, exist_ok=True)
+
         for trace in tqdm(self.traces, desc=desc, total=self.num_batches):
             for batch in trace:
                 for mem in batch.mems:
