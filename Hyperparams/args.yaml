@@ -138,7 +138,7 @@ replay:
   tensor_ram_capacity: 1e6
   ram_capacity: 0
   hd_capacity: inf
-  save: true
+  save: ${offline}
 #  load: ${load}  # TODO For Online, might want to overwrite
   mem_size: null
   fetch_per: 1

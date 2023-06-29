@@ -44,7 +44,7 @@ def ensembleQLearning(critic, actor, obs, action, reward, discount=1, next_obs=N
     criterion = binary_cross_entropy if critic.binary else mse_loss
 
     # Temporal difference (TD) error
-    q_loss = criterion(Qs.float(), target_Q.unsqueeze(1).unsqueeze(1).float().expand_as(Qs))
+    q_loss = criterion(Qs.float(), target_Q.view(-1, 1, 1).float().expand_as(Qs))
 
     if logs is not None:
         logs['temporal_difference_error'] = q_loss

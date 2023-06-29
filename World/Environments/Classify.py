@@ -124,7 +124,8 @@ class Classify:
 
     def reset(self):  # The reset step is never stored in isolation
         obs, label = [np.array(b, dtype='float32') for b in self.sample()]
-        label = np.expand_dims(label, 1)
+        if len(label.shape) == 1:
+            label = np.expand_dims(label, 1)
 
         batch_size = obs.shape[0]
 

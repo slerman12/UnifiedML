@@ -225,20 +225,22 @@ class Memory:
         assert self.main_worker == os.getpid(), 'Only main worker can call save.'
         assert self.save_path is not None, 'Memory save_path must be set to save memories.'
 
-        if not os.path.exists(self.save_path):
-            os.makedirs(self.save_path, exist_ok=True)
+        if self.num_batches > 0:
 
-        for trace in tqdm(self.traces, desc=desc, total=self.num_traces, position=0):
-            for batch in (tqdm(trace, desc='Saving Batches in Episode Trace.',
-                               position=1,  leave=None) if len(trace) > 1 else trace):
-                for mem in batch.mems:
-                    mem.save()
+            if not os.path.exists(self.save_path):
+                os.makedirs(self.save_path, exist_ok=True)
 
-        if card:
-            if isinstance(card, Args):
-                card = card.to_dict()
-            with open(self.save_path + 'card.yaml', 'w') as file:
-                yaml.dump(card, file)
+            for trace in tqdm(self.traces, desc=desc, total=self.num_traces, position=0):
+                for batch in (tqdm(trace, desc='Saving Batches in Episode Trace.',
+                                   position=1,  leave=None) if len(trace) > 1 else trace):
+                    for mem in batch.mems:
+                        mem.save()
+
+            if card:
+                if isinstance(card, Args):
+                    card = card.to_dict()
+                with open(self.save_path + 'card.yaml', 'w') as file:
+                    yaml.dump(card, file)
 
     def saved(self, saved=True, desc='Setting saved flag in Mems...'):
         assert self.main_worker == os.getpid(), 'Only main worker can call saved.'

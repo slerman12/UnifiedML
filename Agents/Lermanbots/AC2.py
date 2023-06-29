@@ -4,6 +4,7 @@
 # MIT_LICENSE file in the root directory of this source tree.
 import time
 import warnings
+from copy import copy
 
 import torch
 from torch.nn.functional import cross_entropy
@@ -48,6 +49,8 @@ class AC2Agent(torch.nn.Module):
         self.num_actors = max(num_critics, num_actors) if self.discrete and self.RL else num_actors
 
         self.depth = depth  # Dynamics prediction depth
+
+        action_spec = copy(action_spec)  # Non-destructive copy
 
         # Image augmentation
         self.aug = Utils.instantiate(recipes.aug) or RandomShiftsAug(pad=4)
@@ -275,7 +278,7 @@ class AC2Agent(torch.nn.Module):
 
             # Critic loss
             critic_loss = QLearning.ensembleQLearning(self.critic, self.actor, batch.obs, batch.action, batch.reward,
-                                                      batch.discount, batch.next_obs,
+                                                      batch.discount, getattr(batch, 'next_obs', None),
                                                       self.step, logs=logs)
 
             # "Foretell"

@@ -55,6 +55,7 @@ class Replay:
 
         dataset_config = dataset
         card = Args({'_target_': dataset_config}) if isinstance(dataset_config, str) else dataset_config
+        # Perhaps if Online, include whether discrete -> continuous, since action shape changes in just that case
 
         # Optional specs that can be set based on data
         norm, standardize, obs_spec, action_spec = [getattr(agent_specs, spec, None)
@@ -92,13 +93,18 @@ class Replay:
             if hasattr(dataset, 'num_classes'):
                 card['num_classes'] = dataset.num_classes
 
-            if action_spec is not None:
+            if action_spec is not None and action_spec.discrete:
                 if 'discrete_bins' not in action_spec or action_spec.discrete_bins is None:
                     action_spec['discrete_bins'] = card.num_classes
 
                 if 'high' not in action_spec or action_spec.high is None:
                     action_spec['high'] = card.num_classes - 1
+
+                if 'low' not in action_spec or action_spec.low is None:
+                    action_spec['low'] = 0
         elif not offline:
+            self.memory.set_save_path('World/ReplayBuffer/Online/' + path)
+
             # Load Memory from path
             dataset = 'World/ReplayBuffer/Online/' + path
             if os.path.exists(dataset):

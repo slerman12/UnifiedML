@@ -238,9 +238,13 @@ def datums_as_batch(datums):
         #     dtype = {}
 
         # Note: need to parse label TODO
+        obs = torch.as_tensor(obs)
+        label = torch.as_tensor(label)
 
-        return Batch({'obs': torch.as_tensor(obs),
-                      'label': torch.as_tensor(label, dtype=torch.long).view(-1, 1), 'done': True})
+        if len(label.shape) == 1:
+            label = label.view(-1, 1)
+
+        return Batch({'obs': obs, 'label': label, 'done': True})
 
 
 class Transform(Dataset):
