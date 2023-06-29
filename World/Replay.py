@@ -62,6 +62,7 @@ class Replay:
 
         if dataset_config is not None and dataset_config._target_ is not None:
             # TODO Can system-lock w.r.t. save path if load_dataset is Dataset and Offline, then recompute load_dataset
+            #   Only one process should save a previously non-existent memory at a time
 
             if offline:
                 root = 'World/ReplayBuffer/Offline/'
@@ -97,6 +98,12 @@ class Replay:
 
                 if 'high' not in action_spec or action_spec.high is None:
                     action_spec['high'] = card.num_classes - 1
+        elif not offline:
+            # Load Memory from path
+            dataset = 'World/ReplayBuffer/Online/' + path
+            if os.path.exists(dataset):
+                self.memory.load(dataset, desc=f'Loading Replay from {dataset}')
+                card = open_yaml(dataset + 'card.yaml')
 
         # Save Online replay on terminate  TODO Maybe delete if not save
         if not offline and save:

@@ -112,6 +112,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
     # Map unique classes to integers
     dataset = ClassToIdx(dataset, classes)
 
+    # Add transforms to dataset
     dataset = Transform(dataset, instantiate(getattr(dataset_config, 'transform', None)))
 
     return dataset
@@ -263,19 +264,6 @@ class Transform(Dataset):
 
     def __len__(self):
         return self.__dataset.__len__()
-
-
-# TODO ExperienceTransform - adds nstep and transform/replay.transform, anything else - operates on specified key(s)?
-#   Perhaps DatumsTransform first - applies datums_as_batch if not using Replay
-# TODO FrameStackTransform - operates on specified key(s)
-# TODO TrajectoryTransform - operates on specified key(s)
-# Perhaps move to Transform.py
-
-
-#   TODO BatchDimTransform? (if not using Replay)
-# def add_batch_dim(datum):
-#     datum = torch.as_tensor(datum)
-#     return datum[None, ...] if datum.shape else datum.view([1])
 
 
 def get_dataset_path(dataset_config, path):

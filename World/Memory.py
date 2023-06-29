@@ -46,6 +46,7 @@ class Memory:
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
+        self.num_traces = 1
 
         atexit.register(self.cleanup)
 
@@ -75,6 +76,7 @@ class Memory:
 
             if batch['done']:
                 self.episode_trace = []
+                self.num_traces += 1
 
             self.num_experiences += batch_size
             self.enforce_capacity()  # Note: Last batch does enter RAM before capacity is enforced
@@ -208,6 +210,7 @@ class Memory:
 
                 if int(num_batches) > previous_num_batches:
                     self.add(batch)  # TODO More efficient to add Batch of Mems and not, for example, doubly mmap
+                    # TODO Also, make sure Mem is marked saved
                     batch = {}
 
             batch[key] = Mem(None, path=mmap_path).load().mem
@@ -225,8 +228,9 @@ class Memory:
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path, exist_ok=True)
 
-        for trace in tqdm(self.traces, desc=desc, total=self.num_batches):
-            for batch in trace:
+        for trace in tqdm(self.traces, desc=desc, total=self.num_traces, position=0):
+            for batch in (tqdm(trace, desc='Saving Batches in Episode Trace.',
+                               position=1,  leave=None) if len(trace) > 1 else trace):
                 for mem in batch.mems:
                     mem.save()
 
