@@ -138,7 +138,7 @@ class Replay:
         self.batches = torch.utils.data.DataLoader(dataset=worker,
                                                    batch_size=batch_size,
                                                    num_workers=num_workers,
-                                                   pin_memory=pin_memory and 'cuda' in device and not pin_device_memory,
+                                                   pin_memory=pin_memory and 'cuda' in device,  # or pin_device_memory,
                                                    prefetch_factor=prefetch_factor if num_workers else 2,
                                                    shuffle=shuffle and offline,
                                                    worker_init_fn=worker_init_fn,

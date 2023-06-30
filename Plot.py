@@ -10,9 +10,6 @@ from functools import reduce
 import glob
 from pathlib import Path
 
-import hydra
-from omegaconf import OmegaConf
-
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -362,7 +359,8 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
     for csv_name in csv_names:
         # Parse file names
         experiment, agent, suite, task_seed_eval = csv_name.split('/')[2:]
-        split_size = 3 if 'Generate' in task_seed_eval else 5 if 'Predicted_vs_Actual' in task_seed_eval else 2
+        split_size = 3 if 'Generate' in task_seed_eval else 5 if 'Predicted_vs_Actual' in task_seed_eval \
+            else 4 if 'Predicted_Probas' in task_seed_eval else 2
         task_seed = task_seed_eval.rsplit('_', split_size)
         task, seed, eval = task_seed[0], task_seed[1], '_'.join(task_seed[2:]).replace('.csv', '')
 
@@ -374,7 +372,7 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
 
         mode = 'train' if plot_train else 'eval'
 
-        if eval.lower() not in [mode, f'predicted_vs_actual_{mode}']:
+        if eval.lower() not in [mode, f'predicted_vs_actual_{mode}', f'predicted_probas_{mode}']:
             include = False
 
         # Include based on spec
@@ -395,7 +393,8 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
         csv = pd.read_csv(csv_name)
 
         # Track max step total across all csvs
-        if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower():
+        if 'step' in csv.columns and 'predicted_vs_actual' not in eval.lower() \
+                and 'predicted_probas' not in eval.lower():
             length = int(csv.loc[csv['step'] <= steps, 'step'].max())
             # if length == 0:
             #     continue
@@ -420,6 +419,8 @@ def get_data(specs, steps=np.inf, plot_train=False, verbose=False):
 
         if 'predicted_vs_actual' in eval.lower():
             predicted_vs_actual.append(csv)
+        elif 'predicted_probas' in eval.lower():
+            pass
         else:
             performance.append(csv)
 
@@ -630,6 +631,7 @@ low = {**atari_random}
 high = {**atari_human}
 
 
+# TODO minihydra
 if __name__ == "__main__":
 
     @hydra.main(config_path='Hyperparams', config_name='args')  # Note: This still outputs a Hydra params file
