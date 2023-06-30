@@ -17,6 +17,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+import yaml
 from torch.optim import *
 from torch.optim.lr_scheduler import *
 
@@ -27,8 +28,7 @@ from Blocks.Augmentations import RandomShiftsAug, IntensityAug  # For direct acc
 from Blocks.Architectures import *  # For direct accessibility via command line
 
 from Hyperparams import minihydra
-from Hyperparams.minihydra import Args
-
+from Hyperparams.minihydra import Args, open_yaml
 
 launch_args = {}
 
@@ -101,8 +101,12 @@ def load(path, device='cuda', args=None, preserve=(), distributed=False, attr=''
     while True:
         try:
             to_load = torch.load(path, map_location=device)  # Load
-            args = args or Args({})
-            args.update(torch.load(f'{root}/{name}.args'))  # Load
+            # args = args or Args({})
+            # args.update(torch.load(f'{root}/{name}.args'))
+            original_args = torch.load(f'{root}/{name}.args')  # Note: loading without args uses paths of original args
+            args = args or original_args
+            if 'obs_spec' in original_args:
+                args['obs_spec'] = original_args['obs_spec']  # Since norm and standardize stats may change
             break
         except Exception as e:  # Pytorch's load and save are not atomic transactions, can conflict in distributed setup
             if not distributed:

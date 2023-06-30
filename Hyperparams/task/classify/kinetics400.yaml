@@ -1,6 +1,3 @@
-defaults:
-  - _self_
-
 Env: World.Environments.Classify.Classify
 Dataset: World.Datasets.Kinetics400.Kinetics400
 environment:

@@ -121,16 +121,17 @@ class AC2Agent(torch.nn.Module):
                                         Eyes=MLP(self.projector.repr_shape, hidden_dim, hidden_dim, 2),
                                         lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay)
 
-        # When discrete, Critic <- Actor
-        if self.discrete:
-            recipes.critic.trunk = self.actor.trunk
-            recipes.critic.Q_head = self.actor.Pi_head.ensemble
+        if self.RL:
+            # When discrete, Critic <- Actor
+            if self.discrete:
+                recipes.critic.trunk = self.actor.trunk
+                recipes.critic.Q_head = self.actor.Pi_head.ensemble
 
-        self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
-                                      ensemble_size=self.num_actors if self.discrete else num_critics,
-                                      discrete=self.discrete, ignore_obs=self.generate,
-                                      lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
-                                      ema_decay=ema_decay * (RL and not generate or ema))
+            self.critic = EnsembleQCritic(self.encoder.repr_shape, trunk_dim, hidden_dim, action_spec, **recipes.critic,
+                                          ensemble_size=self.num_actors if self.discrete else num_critics,
+                                          discrete=self.discrete, ignore_obs=self.generate,
+                                          lr=lr, lr_decay_epochs=lr_decay_epochs, weight_decay=weight_decay,
+                                          ema_decay=ema_decay * (RL and not generate or ema))
 
         # "Birth"
 

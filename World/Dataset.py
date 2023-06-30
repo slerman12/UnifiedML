@@ -20,6 +20,7 @@ import torchvision
 from torchvision.transforms import functional as F
 from tqdm import tqdm
 
+import Utils
 from World.Memory import Batch
 from Hyperparams.minihydra import instantiate, Args, added_modules, open_yaml
 
@@ -58,38 +59,43 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
         if glob.glob(path + '*.yaml'):
             return path
 
+    # Different datasets have different specs
+    root_specs = [dict(root=path), {}]
+    train_specs = [] if train is None else [dict(train=train),
+                                            dict(version='2021_' + 'train' if train else 'valid'),
+                                            dict(subset='training' if train else 'testing'),
+                                            dict(split='train' if train else 'test'), {}]
+    download_specs = [dict(download=True), {}]
+    transform_specs = [dict(transform=None), {}]
+
+    dataset = None
+    is_torchvision = False
+
     # From custom module path
     if is_valid_path(dataset_config._target_, module_path=True):
-        dataset = instantiate(dataset_config)
-    # From torchvision
+        root_specs = download_specs = transform_specs = [{}]  # Won't assume any signature args except possibly train
+    # From torchvision Dataset
     else:
+        is_torchvision = True
         if train is not None:
             path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
         os.makedirs(path, exist_ok=True)
 
-        # Different datasets have different specs
-        root_specs = [dict(root=path), {}]
-        train_specs = [] if train is None else [dict(train=train),
-                                                dict(version='2021_' + 'train' if train else 'valid'),
-                                                dict(subset='training' if train else 'testing'),
-                                                dict(split='train' if train else 'test'), {}]
-        download_specs = [dict(download=True), {}]
-        transform_specs = [dict(transform=None), {}]
-
-        dataset = None
-
-        # Instantiate dataset
-        for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
-            try:
-                root_spec, train_spec, download_spec, transform_spec = all_specs
-                specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
-                specs = {key: specs[key] for key in set(specs) - set(dataset_config)}
-                specs.update(kwargs)
+    # Instantiate dataset
+    for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
+        try:
+            root_spec, train_spec, download_spec, transform_spec = all_specs
+            specs = dict(**root_spec, **train_spec, **download_spec, **transform_spec)
+            specs = {key: specs[key] for key in set(specs) - set(dataset_config)}
+            specs.update(kwargs)
+            if is_torchvision:
                 with Lock(path + 'lock'):  # System-wide mutex-lock
-                    dataset = instantiate(dataset_config, **specs)
-            except (TypeError, ValueError):
-                continue
-            break
+                    dataset = Utils.instantiate(dataset_config, **specs)
+            else:
+                dataset = Utils.instantiate(dataset_config, **specs)
+        except (TypeError, ValueError):
+            continue
+        break
 
     assert dataset, 'Could not find Dataset.'
 
@@ -141,7 +147,7 @@ def compute_stats(batches):
 
         cnt += nb_pixels
 
-        low, high = min(obs.min(), low).item(), max(obs.max(), high).item()
+        low, high = min(obs.min().item(), low), max(obs.max().item(), high)
 
     stddev = torch.sqrt(snd_moment - fst_moment ** 2)
     stddev[stddev == 0] = 1
@@ -163,7 +169,7 @@ def is_valid_path(path, dir_path=False, module_path=False, module=False):
     if module_path and not truth and path.count('.') > 0:
         try:
             *root, file, module = path.replace('.', '/').rsplit('/', 2)
-            root = (root[0] if root else '') + '/'
+            root = root[0] + '/' if root else ''
             truth = os.path.exists(root + file + '.py')
         except FileNotFoundError:
             pass
@@ -286,7 +292,7 @@ def get_dataset_path(dataset_config, path):
         if 'stats' in card:
             card.pop('stats')
 
-        if 'num_classes' in card:
+        if 'num_classes' in card and 'num_classes' not in dataset_config:
             card.pop('num_classes')
 
         if not hasattr(dataset_config, '_target_') and not card or dataset_config.to_dict() == card:

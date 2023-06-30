@@ -26,12 +26,12 @@ def main(args):
     interpolate(args)  # Update args
 
     # Experience replay
-    replay = instantiate(args.replay)
+    replay = instantiate(args.replay) if args.train_steps else None
 
     # Agent
     agent = load(args.load_path, args.device, args.agent) if args.load \
         else instantiate(args.agent).to(args.device)
-    replay.set_tape(getattr(agent, 'rewrite_shape', ()))  # Optional rewritable memory
+    # replay.set_tape(getattr(agent, 'rewrite_shape', ()))  # Optional rewritable memory
 
     # Synchronize multi-task models (if exist)
     agent = MT.unify_agent_models(agent, args.agent, args.device, args.load and args.load_path)

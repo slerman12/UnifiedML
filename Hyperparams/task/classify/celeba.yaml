@@ -1,6 +1,3 @@
-defaults:
-  - _self_
-
 Env: World.Environments.Classify.Classify
 Dataset: torchvision.datasets.CelebA
 environment:

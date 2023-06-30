@@ -1,6 +1,3 @@
-defaults:
-  - _self_
-
 Env: World.Environments.Atari.Atari
 suite: atari
 task_name: Crossbow
@@ -14,7 +11,7 @@ stddev_schedule: 'linear(1.0,0.1,20000)'
 
 # Atari has two augmentations
 aug:
-    _target_: Utils.Sequential
+    _target_: Utils.Sequential  # TODO This negates the interpolatability of Aug
     _targets_: [RandomShiftsAug, IntensityAug]
     pad: 4
     noise: 0.05

@@ -22,7 +22,7 @@ import yaml
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 # minihydra.yaml_search_paths.append(path)
-yaml_search_paths = [app, '']  # List of paths  # TODO Make sure includes cwd / add to sys.path / ML should be priority
+yaml_search_paths = [app, os.getcwd(), '']  # List of paths  # TODO add to sys.path / ML should be priority
 
 added_modules = {}
 
@@ -127,7 +127,10 @@ def recursive_Args(args):
 
 def recursive_update(args, args2):
     for key, value in args2.items():
-        args[key] = recursive_update(args.get(key, {}), value) if isinstance(value, type(args2)) else value
+        if isinstance(value, type(args2)) and key in args:
+            args[key].update(recursive_update(args.get(key, {}), value))
+        else:
+            args[key] = value
     return args
 
 

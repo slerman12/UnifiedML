@@ -95,7 +95,7 @@ class Classify:
                               'high': high})
 
         # Fill in necessary obs_spec and action_spc stats from dataset  TODO Only when norm or standardize
-        if train and offline:
+        if train and (offline or generate):
             self.obs_spec.update(compute_stats(self.batches))
 
         # TODO Alt, load_dataset can output Args of recollected stats as well; maybe specify what to save in card replay

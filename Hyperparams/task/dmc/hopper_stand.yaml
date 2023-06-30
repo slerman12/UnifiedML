@@ -1,6 +1,3 @@
-defaults:
-  - _self_
-
 Env: World.Environments.DMC.DMC
 suite: dmc
 task_name: hopper_stand

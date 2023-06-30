@@ -46,7 +46,7 @@ class Memory:
         # Counters
         self.num_batches_deleted = torch.zeros([], dtype=torch.int64).share_memory_()
         self.num_batches = self.num_experiences = self.num_experiences_mmapped = self.num_episodes_deleted = 0
-        self.num_traces = 1
+        self.num_traces = 0
 
         atexit.register(self.cleanup)
 
