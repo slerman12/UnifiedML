@@ -11,6 +11,7 @@ import glob
 from pathlib import Path
 
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import numpy as np
@@ -21,10 +22,8 @@ from matplotlib import ticker, dates, lines
 from matplotlib.ticker import FuncFormatter, PercentFormatter
 import seaborn as sns
 
-
-# TODO Confidence/Accuracy visual on raw probas (Accuracy segment w/ vertical confidence/avg-proba segment per class)
-#   Uncertainty per class, Average accuracy and uncertainty (%), class
-#   Note: heatmap axes should match
+from Hyperparams.minihydra import get_args, grammar
+import Utils
 
 
 def plot(path, plot_experiments=None, plot_agents=None, plot_suites=None, plot_tasks=None, steps=None,
@@ -631,12 +630,10 @@ low = {**atari_random}
 high = {**atari_human}
 
 
-# TODO minihydra
 if __name__ == "__main__":
 
-    @hydra.main(config_path='Hyperparams', config_name='args')  # Note: This still outputs a Hydra params file
+    @get_args(source='Hyperparams/args.yaml')  # Converts global arg defaults to plotting args
     def main(args):
-        OmegaConf.set_struct(args, False)
         del args.plotting['_target_']
         if 'path' not in sys_args:
             if isinstance(args.plotting.plot_experiments, str):
@@ -647,8 +644,8 @@ if __name__ == "__main__":
         plot(**args.plotting)
 
     # Format path names
-    # e.g. Checkpoints/Agents.DQNAgent -> Checkpoints/DQNAgent
-    OmegaConf.register_new_resolver("format", lambda name: name.split('.')[-1])
+    # e.g. "Checkpoints/Agents.DQNAgent" -> "Checkpoints/DQNAgent"
+    grammar.append(lambda arg: Utils.parse(arg, 'format', lambda name: name.split('.')[-1]))
 
     sys_args = []
     for i in range(1, len(sys.argv)):
