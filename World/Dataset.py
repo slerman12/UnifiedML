@@ -8,6 +8,7 @@ import itertools
 import math
 import os
 import random
+from copy import copy
 
 import numpy as np
 
@@ -74,12 +75,18 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
     # From custom module path
     if is_valid_path(dataset_config._target_, module_path=True):
         root_specs = download_specs = transform_specs = [{}]  # Won't assume any signature args except possibly train
-    # From torchvision Dataset
+    # From torchvision Dataset  TODO It shouldn't re-download for every version of the dataset
     else:
         is_torchvision = True
         if train is not None:
             path += ('Downloaded_Train/' if train else 'Downloaded_Eval/')
         os.makedirs(path, exist_ok=True)
+
+    dataset_config = copy(dataset_config)
+    if 'Transform' in dataset_config:
+        dataset_config.pop('Transform')
+    transform = dataset_config.pop('transform') if 'transform' in dataset_config else None
+    subset = dataset_config.pop('subset') if 'subset' in dataset_config else None
 
     # Instantiate dataset
     for all_specs in itertools.product(root_specs, train_specs, download_specs, transform_specs):
@@ -99,7 +106,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
 
     assert dataset, 'Could not find Dataset.'
 
-    classes = dataset_config.subset if 'subset' in dataset_config and dataset_config.subset is not None \
+    classes = subset if subset is not None \
         else range(dataset.classes if isinstance(dataset.classes, int)
                    else len(dataset.classes)) if hasattr(dataset, 'classes') \
         else range(dataset.num_classes) if hasattr(dataset, 'num_classes') \
@@ -111,15 +118,14 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
     setattr(dataset, 'num_classes', len(classes))
 
     # Can select a subset of classes
-    if 'subset' in dataset_config and dataset_config.subset is not None:
-        print(f'Selecting subset of classes from dataset... This can take some time for large datasets.')
+    if subset is not None:
         dataset = ClassSubset(dataset, classes)
 
     # Map unique classes to integers
     dataset = ClassToIdx(dataset, classes)
 
     # Add transforms to dataset
-    dataset = Transform(dataset, instantiate(getattr(dataset_config, 'transform', None)))
+    dataset = Transform(dataset, instantiate(transform if getattr(transform, '_target_', None) else None))
 
     return dataset
 
@@ -289,11 +295,17 @@ def get_dataset_path(dataset_config, path):
         if not hasattr(dataset_config, '_target_'):
             card.pop('_target_')
 
-        if 'stats' in card:
+        if 'stats' in card and 'stats' not in dataset_config:
             card.pop('stats')
 
         if 'num_classes' in card and 'num_classes' not in dataset_config:
             card.pop('num_classes')
+
+        # Just a shorthand
+        if 'Transform' in card:
+            card.pop('Transform')
+        if 'Transform' in dataset_config:
+            dataset_config.pop('Transform')
 
         if not hasattr(dataset_config, '_target_') and not card or dataset_config.to_dict() == card:
             count = int(file.rsplit('/', 2)[-2])
@@ -328,7 +340,8 @@ class ClassSubset(torch.utils.data.Subset):
         self.__dict__.update(dataset.__dict__)
 
         # Find subset indices which only contain the specified classes, multi-label or single-label
-        indices = [i for i in range(len(dataset)) if str(dataset[i][1]) in map(str, classes)]
+        indices = [i for i in tqdm(range(len(dataset)), desc='Selecting subset of classes from dataset...')
+                   if str(dataset[i][1]) in map(str, classes)]
 
         # Initialize
         super().__init__(dataset=dataset, indices=indices)

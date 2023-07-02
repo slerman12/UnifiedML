@@ -32,10 +32,6 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
     if args is None:
         return
 
-    # For compatibility with old Hydra syntax
-    if '_recursive_' in args:
-        args.pop('_recursive_')
-
     # args = recursive_Args(args)  # Why does it need to make a copy?
     args = Args(args)
     args.update(kwargs)
@@ -147,7 +143,7 @@ def read(source, parse_task=True):
             module = self if module == 'self' else read(module + '.yaml', parse_task=False)
             recursive_update(args, module)
 
-    # Parse task
+    # Parse task  TODO Save these in minihydra: log_dir:
     if parse_task:  # Not needed in imports recursions
         for sys_arg in sys.argv[1:]:
             key, value = sys_arg.split('=', 1)
@@ -177,7 +173,7 @@ def _parse(value):
 
 
 def parse(args=None):
-    # Parse command-line
+    # Parse command-line  TODO Save these in minihydra: log_dir:
     for sys_arg in sys.argv[1:]:
         arg = args
         keys, value = sys_arg.split('=', 1)

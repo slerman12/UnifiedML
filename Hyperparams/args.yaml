@@ -28,25 +28,28 @@ multi_task: null
 Env: ???  # To be specified later, defaults per respective task
 env:
   _target_: ${Env}
-  _recursive_: false
-  subset: null
-  Transform: null
-  transform:
-    _target_: ${env.Transform}
 Dataset: null  # Defaults per respective Classify task
 TestDataset: null
 dataset:
   _target_: ${Dataset}
+  subset: null
+  Transform: null
+  transform:
+    _target_: ${dataset.Transform}
 test_dataset:
   _target_: ${TestDataset}  # Note: When no TestDataset provided, THEN test_dataset should _default_ to ${dataset}  TODO
+  subset: null
+  Transform: null
+  transform:
+    _target_: ${test_dataset.Transform}
 suite: ???  # To be specified later, defaults per respective task
 task_name: ???  # To be specified later, defaults per respective task
 frame_stack: 3
 truncate_episode_steps: 1000
 action_repeat: 1
 # Replay
-RAM_capacity: 1000000  # Shorthand for capacity
-capacity: ${RAM_capacity}
+ram_capacity: 1e6  # Shorthand for replay.ram_capacity
+capacity: ${ram_capacity}
 nstep: 10
 batch_size: 256
 discount: 0.99
@@ -87,7 +90,6 @@ experiment: Exp
 
 environment:
   _target_: World.Environment.Environment
-  _recursive_: false
   env: ${env}
   suite: ${suite}
   task: ${task_name}
@@ -101,7 +103,6 @@ environment:
 
 agent:
   _target_: ${Agent}
-  _recursive_: false
   obs_spec: ${obs_spec}
   action_spec: ${action_spec}
   num_actions: ${num_actions}
@@ -135,8 +136,8 @@ replay:
   stream: ${stream}
   gpu_capacity: 0
   pinned_capacity: 0
-  tensor_ram_capacity: 1e6
-  ram_capacity: 0
+  ram_capacity: ${ram_capacity}
+  np_ram_capacity: 0
   hd_capacity: inf
   save: ${offline}
 #  load: ${load}  # TODO For Online, might want to overwrite
@@ -303,14 +304,3 @@ recipes:
     ActionExtractor: ${action_extractor}
     optim: ${creator.optim}
     scheduler: ${creator.scheduler}
-
-hydra:
-  output_subdir: ${logger.path}${task_name}_${seed}_Hydra
-  run:
-    dir: ./
-  sweep:
-    dir: ./
-    subdir: ./
-  job:
-    env_set:
-      PYTHONWARNINGS: 'ignore:resource_tracker'  # Disables warning

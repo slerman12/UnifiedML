@@ -28,8 +28,8 @@ environment:
     high: {'null' if task == 'Custom' else 1}
     batch_size: ${{batch_size}}
     num_workers: ${{num_workers}}
-env:
-    transform: {'transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])' if task == 'CelebA' else 'null'}
+dataset:
+    Transform: {'transforms.Compose([transforms.Resize(64),transforms.CenterCrop(64)])' if task == 'CelebA' else 'null'}
 logger:
     log_actions: ${{not:${{generate}}}}
 suite: classify

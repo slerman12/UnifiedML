@@ -52,7 +52,7 @@ class Classify:
 
     """
     def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, stream=False,
-                 batch_size=8, num_workers=1, subset=None, low=None, high=None, transform=None, **kwargs):
+                 batch_size=8, num_workers=1, low=None, high=None, transform=None, **kwargs):
         self.episode_done = False
 
         if train and (offline or generate) and not stream:
