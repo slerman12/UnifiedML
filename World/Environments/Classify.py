@@ -51,21 +51,20 @@ class Classify:
     An "evaluate_episodes" attribute divides evaluation across batches since batch=episode in this environment.
 
     """
-    def __init__(self, dataset, test_dataset=None, task='MNIST', train=True, offline=True, generate=False, stream=False,
-                 batch_size=8, num_workers=1, low=None, high=None, transform=None, **kwargs):
+    def __init__(self, dataset, test_dataset=None, train=True, offline=True, generate=False,
+                 batch_size=8, num_workers=1, low=None, high=None, **kwargs):
         self.episode_done = False
 
-        if train and (offline or generate) and not stream:
-            return  # TODO Default for Env?
-
-        if not train and test_dataset._target_ is not None:
-            dataset = test_dataset
+        if not train:
+            # Inherit from test_dataset
+            if test_dataset._target_ is not None:
+                dataset = test_dataset
+            elif test_dataset.subset is not None:
+                dataset.subset = test_dataset.subset
+            elif test_dataset.transform._target_ is not None:
+                dataset.transform = test_dataset.transform
 
         dataset = load_dataset('World/ReplayBuffer/Offline/', dataset, allow_memory=False, train=train)
-
-        # If the training dataset is empty, we will assume train_steps=0
-        if train and len(dataset) == 0:
-            return
 
         # CPU workers
         num_workers = max(1, min(num_workers, os.cpu_count()))

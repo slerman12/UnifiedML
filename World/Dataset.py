@@ -119,7 +119,7 @@ def load_dataset(path, dataset_config, allow_memory=True, train=True, **kwargs):
 
     # Can select a subset of classes
     if subset is not None:
-        dataset = ClassSubset(dataset, classes)
+        dataset = ClassSubset(dataset, classes, train)
 
     # Map unique classes to integers
     dataset = ClassToIdx(dataset, classes)
@@ -335,12 +335,14 @@ class ClassToIdx(Dataset):
 
 # Select classes from dataset e.g. python Run.py task=classify/mnist 'env.subset=[0,2,3]'
 class ClassSubset(torch.utils.data.Subset):
-    def __init__(self, dataset, classes):
+    def __init__(self, dataset, classes, train=None):
         # Inherit attributes of given dataset
         self.__dict__.update(dataset.__dict__)
 
+        train = '' if train is None else 'train' if train else 'test'
+
         # Find subset indices which only contain the specified classes, multi-label or single-label
-        indices = [i for i in tqdm(range(len(dataset)), desc='Selecting subset of classes from dataset...')
+        indices = [i for i in tqdm(range(len(dataset)), desc=f'Selecting subset of classes from {train} dataset...')
                    if str(dataset[i][1]) in map(str, classes)]
 
         # Initialize
