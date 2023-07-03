@@ -88,8 +88,7 @@ class Environment:
                 'frame': agent.frame * self.action_repeat,
                 'epoch' if self.offline or self.generate else 'episode':
                     (self.offline or self.generate) and agent.epoch or agent.episode,
-                'accuracy' if self.suite == 'classify' else 'reward':
-                    self.episode_reward / max(1, self.episode_step * self.suite == 'classify'),  # Accuracy is %
+                'accuracy' if self.suite == 'classify' else 'reward': self.episode_reward,  # TODO custom metrics
                 'fps': frames / (sundown - self.daybreak)} if not self.disable \
             else None
 

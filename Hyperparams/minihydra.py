@@ -14,7 +14,6 @@ import inspect
 import os.path
 import re
 import sys
-from functools import partial
 from math import inf
 import yaml
 
@@ -22,7 +21,11 @@ import yaml
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 # minihydra.yaml_search_paths.append(path)
-yaml_search_paths = [app, os.getcwd(), '']  # List of paths  # TODO add to sys.path / ML should be priority
+yaml_search_paths = [app, os.getcwd(), '']  # List of paths
+
+for path in yaml_search_paths:
+    if path not in sys.path:
+        sys.path.append(path)
 
 added_modules = {}
 
@@ -31,6 +34,9 @@ added_modules = {}
 def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, perhaps _target_: -> Path:
     if args is None:
         return
+
+    if isinstance(args, str):
+        args = Args(_target_=args)
 
     # args = recursive_Args(args)  # Why does it need to make a copy?
     args = Args(args)
@@ -83,7 +89,17 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
             # Import
             package = importlib.import_module(file.replace('/', '.'))
             sys.modules[file.replace('/', '.') + '_inst'] = package
-            return getattr(package, module)(**args)
+            module = getattr(package, module)
+            return module(**args) if callable(module) else module
+
+import git
+repo = git.Repo('../')
+# origin = repo.remote(name='origin')
+# origin.pull()
+repo.git.add(update=True)
+repo.index.commit('preparing tributaries')
+origin = repo.remote(name='origin')
+origin.push()
 
 
 def open_yaml(source):
@@ -244,7 +260,8 @@ def multirun(args):
     return args
 
 
-def decorate(func, source):
+# Can just get args, no decorator
+def just_args(source=None):
     if source is not None:
         yaml_search_paths.append(app + '/' + source.split('/', 1)[0])
 
@@ -253,10 +270,11 @@ def decorate(func, source):
     args = interpolate(args)  # Command-line requires quotes for interpolation
     # args = multirun(args)
 
-    return func(args)
+    return args
 
 
+# Can decorate a method with args in signature
 def get_args(source=None):
     def decorator_func(func):
-        return partial(decorate, func, source)
+        return lambda: func(just_args(source))
     return decorator_func

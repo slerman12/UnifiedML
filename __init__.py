@@ -18,15 +18,16 @@ app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 # Imports UnifiedML paths and the paths of any launching app
 def import_paths():
-    sys.path.extend([UnifiedML, app, os.getcwd()])
+    sys.path.append(UnifiedML)
 
     from Hyperparams.minihydra import yaml_search_paths
 
-    yaml_search_paths.append(UnifiedML)  # Adds UnifiedML to search path
+    if UnifiedML not in yaml_search_paths:
+        yaml_search_paths.append(UnifiedML)  # Adds UnifiedML to search path
 
     # Adds Hyperparams dir to search path
     for path in [UnifiedML, app, os.getcwd()]:
-        if os.path.exists(path + '/Hyperparams'):
+        if path + '/Hyperparams' not in yaml_search_paths and os.path.exists(path + '/Hyperparams'):
             yaml_search_paths.append(path + '/Hyperparams')
 
 

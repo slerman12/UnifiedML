@@ -12,6 +12,26 @@
 
 [//]: # (Check out minhydra / leviathan for how we handle sys args & hyperparams)
 
+[//]: # (### Tutorials)
+
+[//]: # (How would you like to use UnifiedML?)
+
+[//]: # (- [As quick boilerplate for training simple neural network models]&#40;&#41;)
+
+[//]: # (  - something something)
+
+[//]: # (  - something something)
+
+[//]: # (- [As a general-purpose, accelerated trainer like Pytorch Lightning]&#40;&#41;)
+
+[//]: # (  - isn't this the same )
+
+[//]: # (- [As a library like Huggingface]&#40;&#41;)
+
+[//]: # (- [As a research tool and generalist agent like GATO]&#40;&#41; )
+
+[//]: # (- [As a decision-maker and real-world, real-time actor A.K.A. robots]&#40;&#41;)
+
 ## Install
 
 ```console
