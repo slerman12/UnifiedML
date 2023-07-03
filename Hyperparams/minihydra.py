@@ -21,7 +21,7 @@ import yaml
 app = '/'.join(str(inspect.stack()[-1][1]).split('/')[:-1])
 
 # minihydra.yaml_search_paths.append(path)
-yaml_search_paths = [app, os.getcwd(), '']  # List of paths
+yaml_search_paths = [app, os.getcwd(), '', '/']  # List of paths  TODO Both '' and '/' needed?
 
 for path in yaml_search_paths:
     if path not in sys.path:
@@ -58,7 +58,7 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
         except AttributeError:
             pass
 
-    file = file.replace('.', '/')
+    file = file.replace('.', '/').replace('.py', '')  # TODO: Can it search relative to absolute paths?
     if module:
         module = module[0]
     else:
@@ -91,15 +91,6 @@ def instantiate(args, **kwargs):  # TODO Allow regular system paths + .Module, p
             sys.modules[file.replace('/', '.') + '_inst'] = package
             module = getattr(package, module)
             return module(**args) if callable(module) else module
-
-import git
-repo = git.Repo('../')
-# origin = repo.remote(name='origin')
-# origin.pull()
-repo.git.add(update=True)
-repo.index.commit('preparing tributaries')
-origin = repo.remote(name='origin')
-origin.push()
 
 
 def open_yaml(source):
