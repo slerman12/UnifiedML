@@ -5,7 +5,7 @@
 import torch.multiprocessing
 
 from World.Replay import Replay
-from Hyperparams.minihydra import instantiate, get_args, interpolate  # minihydra conveniently and cleanly manages sys args
+from minihydra import instantiate, get_args, interpolate  # minihydra conveniently and cleanly manages sys args
 from Utils import init, MT, MP, save, load
 
 

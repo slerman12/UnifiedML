@@ -10,7 +10,7 @@ from torch import nn
 from torch.optim import SGD
 import torch.multiprocessing as mp
 
-from Hyperparams.minihydra import get_args, instantiate, interpolate
+from minihydra import get_args, instantiate, interpolate
 from Utils import init
 from World.Memory import Mem, Batch
 from World.Replay import Replay
