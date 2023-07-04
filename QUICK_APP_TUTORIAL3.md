@@ -490,7 +490,9 @@ Replays are recommended for RL because on-policy algorithmic support is currentl
 
 ---
 
-The code in this repo was programmed and conceived by **Sam Lerman** under the support of PhD advisor [Dr. Chenliang Xu](), project PI lead [Dr. Niaz Abdolrahim](), and funding from the NSF Materials Science something-something grant [#](). 
+This project was built and conceived by [Sam Lerman] under the funding and support of PhD advisor [Chenliang Xu]() as an effort to build a single unified, generalist agent, though the term didn't exist when it began. A great thank you to the [XRD]() team as well for using UnifiedML and providing helpful feedback, insight, and support, and XRD project PI [Niaz Abdolrahim] also for funding and support.
+
+[//]: # (The code in this repo was programmed and conceived by **Sam Lerman** under the support of PhD advisor [Dr. Chenliang Xu]&#40;&#41;, project PI lead [Dr. Niaz Abdolrahim]&#40;&#41;, and funding from the NSF Materials Science something-something grant [#]&#40;&#41;. )
 
 [Sam Lerman]() will graduate in 2023 and needs your support.
 
