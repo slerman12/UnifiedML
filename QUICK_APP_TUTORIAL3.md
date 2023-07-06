@@ -197,21 +197,22 @@ import ML
 ML.launch()
 ```
 
-**Run it:**
+**Run:**
 
 ```console
-python Run.py task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
+python Run.py task=classify Dataset=MNIST Eyes=CNN eyes.depth=5
 ```
 
 ### 3. Code
 
-**Run.py:**
 ```python
+# Run.py
+
 import ML
-ML.launch('+eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
+ML.launch('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 ```
 
-**Run it:**
+**Run:**
 
 ```console
 python Run.py
@@ -233,7 +234,7 @@ eyes:
   depth: 5
 ```
 
-**Run it:**
+**Run:**
 
 ```console
 ML task=Recipe
@@ -243,10 +244,11 @@ ML task=Recipe
 
 The order of hyperparam priority is command-line > code > recipe.
 
-
-**Recipe.yaml:**
+Here's a combined example:
 
 ```yaml
+# Recipe.yaml
+
 defaults:
   - classify@_global_
   - _self_
@@ -255,15 +257,16 @@ eyes:
   depth: 5
 ```
 
-**Run.py:**
 ```python
+# Run.py
+
 import ML
 from torchvision.datasets import MNIST
 
 ML.launch(Dataset=MNIST)  # Note: Can directly pass in classes
 ```
 
-**Run it:**
+**Run:**
 
 ```console
 python Run.py task=recipe 
