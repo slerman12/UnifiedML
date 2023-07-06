@@ -176,7 +176,7 @@ Hyperparams can be passed in via command-line, code, recipe, or any combination 
 
 ---
 
-### **Here's how to write the same program in 5 different ways:** 
+### Here's how to write the same program in 5 different ways. 
 
 [//]: # (TODO Put in expanders)
 
