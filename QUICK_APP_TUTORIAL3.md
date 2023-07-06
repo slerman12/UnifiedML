@@ -41,13 +41,9 @@ pip install UnifiedML
 ## What is UnifiedML?
 
 <p align="center">
-<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f"><br><br>
+<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f#gh-light-mode-only "><br><br>
+<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f#gh-dark-mode-only "><br><br>
 </p>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" src="https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f">
-  <img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f"><br><br>
-</picture>
 
 UnifiedML is a toolbox for defining ML tasks and training them individually, or together in a single general intelligence.
 
