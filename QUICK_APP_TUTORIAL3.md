@@ -46,7 +46,7 @@ UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent
 
 Our vision is to bring together the world of ML into one model, for the purpose of giving humanity the world-knowledge and decision-agent to restore spirit and happiness to our collective insanity, if we use it wisely.
 
-To do that, we need a decentralized effort to unify the world's tasks under a shared hyperparameter language, including data, environments, and learning objectives.
+To do that, we need a decentralized effort to unify the world's tasks under a shared hyperparameter language, including data, environments, and learning objectives. To use it wisely, we need a lot of luck and human intelligence.
 
 ## Quick start
 
