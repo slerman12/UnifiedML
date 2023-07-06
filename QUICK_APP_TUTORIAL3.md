@@ -117,12 +117,12 @@ There are many built-in datasets, architectures, and so on, such as CIFAR10.
 
 from torch import nn
 
-import ML
+from ML import main
 
 model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
 
 if __name__ == '__main__':
-    ML.main(Model=model, Dataset='CIFAR10')
+    main(Model=model, Dataset='CIFAR10')
 ```
 
 **Run:**
@@ -183,7 +183,7 @@ python Run.py accelerate=true
 ...
 
 if __name__ == '__main__':
-    ML.main(accelerate=True)
+    main(accelerate=True)
 ```
 
 &#9432; For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
@@ -209,9 +209,9 @@ Trains a 5-layer CNN classifier on MNIST.
 **Run.py:**
 
 ```python
-import ML
+from ML import main
 if __name__ == '__main__':
-    ML.main()
+    main()
 ```
 
 **Run:**
@@ -225,9 +225,9 @@ python Run.py task=classify Dataset=MNIST Eyes=CNN eyes.depth=5
 ```python
 # Run.py
 
-import ML
+from ML import main
 if __name__ == '__main__':
-    ML.main('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
+    main('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 ```
 
 **Run:**
@@ -278,11 +278,11 @@ eyes:
 ```python
 # Run.py
 
-import ML
+from ML import main
 from torchvision.datasets import MNIST
 
 if __name__ == '__main__':
-    ML.main(Dataset=MNIST)  # Note: Can directly pass in classes
+    main(Dataset=MNIST)  # Note: Can directly pass in classes
 ```
 
 **Run:**
@@ -496,24 +496,24 @@ python Run.py load=Checkpoints/MyExp/Dataset/GANAgent/MNIST_0.pt
 Load in-code via the same syntax:
 
 ```python
-import ML
+from ML import main
 
 if __name__ == '__main__':
   # Resume training, potentially w/ different hyperparams
-  agent = ML.main(load='MyExp', experiment='MyExp', Agent='GANAgent', Dataset='MNIST')  # The launcher also returns the agent.
+  agent = main(load='MyExp', experiment='MyExp', Agent='GANAgent', Dataset='MNIST')  # The launcher also returns the agent.
 ```
 
 or with ```ML.load_agent(path)```:
 
 ```python
-import ML
+from ML import main, load_agent
 
 if __name__ == '__main__':
   # Load 
-  agent = ML.load_agent('MyExp')
+  agent = load_agent('MyExp')
 
   # Resume training, potentially w/ different hyperparams
-  agent = ML.main(experiment='MyExp', Agent=agent, Dataset='MNIST')  # The launcher also returns the agent.
+  agent = main(experiment='MyExp', Agent=agent, Dataset='MNIST')  # The launcher also returns the agent.
 ```
 
 ## Building an agent
