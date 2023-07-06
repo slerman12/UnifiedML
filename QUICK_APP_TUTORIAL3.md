@@ -94,6 +94,8 @@ model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
 ML Model=Run.model Dataset=CIFAR10
 ```
 
+There are many built-in datasets, architectures, and so on, such as CIFAR10.
+
 ### Pure-Code training example
 
 ```python
@@ -169,6 +171,14 @@ ML.launch(accelerate=True)
 ```
 
 &#9432; For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
+
+### Custom dataset
+
+### Inference
+
+### Losses & optimisation
+
+### Environments
 
 ## Syntax semantics
 
