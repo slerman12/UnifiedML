@@ -222,9 +222,9 @@ python Run.py
 
 Define recipes in a ```.yaml``` file like this one:
 
-**Recipe.yaml:**
-
 ```yaml
+# recipe.yaml
+
 defaults:
   - classify@_global_
   - _self_
@@ -237,7 +237,7 @@ eyes:
 **Run:**
 
 ```console
-ML task=Recipe
+ML task=recipe
 ```
 
 #### 5. All of the above
@@ -247,7 +247,7 @@ The order of hyperparam priority is command-line > code > recipe.
 Here's a combined example:
 
 ```yaml
-# Recipe.yaml
+# recipe.yaml
 
 defaults:
   - classify@_global_
