@@ -256,7 +256,7 @@ ML task=recipe
 
 #### 5. All of the above
 
-The order of hyperparam priority is command-line > code > recipe.
+The order of hyperparam priority is ```command-line > code > recipe```.
 
 Here's a combined example:
 
