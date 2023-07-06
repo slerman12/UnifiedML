@@ -41,7 +41,7 @@ pip install UnifiedML
 ## What is UnifiedML?
 
 <p align="center">
-<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/82e2310a-b397-44e8-805c-65bcb13d24c1"><br><br>
+<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f"><br><br>
 </p>
 
 UnifiedML is a toolbox for defining ML tasks and training them individually, or together in a single general intelligence.
@@ -171,16 +171,6 @@ ML.launch(accelerate=True)
 ```
 
 &#9432; For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
-
-### Custom dataset
-
-### Inference
-
-### Losses & optimisation
-
-### Environments
-
-## Syntax semantics
 
 Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. 
 
