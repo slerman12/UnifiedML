@@ -160,7 +160,7 @@ Just include them as args to your model and UnifiedML will detect and fill them 
 ML Model=Run.Model
 ```
 
-Thus, you can pass in paths to classes as well as objects, with various [syntax semantics for quickly specifying arguments](#Syntax).
+Thus, paths can be classes or objects. Later, we'll see [how to instantiate them with custom arguments](#syntax).
 
 ### Acceleration
 
