@@ -66,7 +66,7 @@ ML Eyes=MyFile.model Dataset=CIFAR10
 
 The above theoretically trains CIFAR10.
 
-### Example
+### Full example
 
 ```python
 # Run.py
