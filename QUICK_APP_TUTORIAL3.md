@@ -44,7 +44,7 @@ pip install UnifiedML
 <img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/82e2310a-b397-44e8-805c-65bcb13d24c1"><br><br>
 </p>
 
-UnifiedML is a toolbox for defining ML tasks and training them individually or together in a single general intelligence.
+UnifiedML is a toolbox for defining ML tasks and training them individually, or together in a single general intelligence.
 
 [//]: # (UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick Tutorial]&#40;#quick-start&#41; and then see [Defining Tasks]&#40;#recipes&#41;.)
 
@@ -78,7 +78,7 @@ ML Eyes=./MyFile.py.model
 [//]: # ()
 [//]: # (The above theoretically trains CIFAR10.)
 
-### Full example
+### Training example
 
 ```python
 # Run.py
@@ -94,7 +94,7 @@ model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
 ML Model=Run.model Dataset=CIFAR10
 ```
 
-### Pure-Code example
+### Pure-Code training example
 
 ```python
 # Run.py
