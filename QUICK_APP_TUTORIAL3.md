@@ -176,11 +176,11 @@ Hyperparams can be passed in via command-line, code, recipe, or any combination 
 
 ---
 
-**Here's how to write the same program in 5 different ways:** 
+### **Here's how to write the same program in 5 different ways:** 
 
 [//]: # (TODO Put in expanders)
 
-### 1. Purely command-line
+#### 1. Purely command-line
 
 ```console
 ML task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
@@ -188,7 +188,7 @@ ML task=classify Dataset=MNIST Eyes=CNN +eyes.depth=5
 
 Trains a 5-layer CNN classifier on MNIST.
 
-### 2. Command line
+#### 2. Command line
 
 **Run.py:**
 
@@ -203,7 +203,7 @@ ML.launch()
 python Run.py task=classify Dataset=MNIST Eyes=CNN eyes.depth=5
 ```
 
-### 3. Code
+#### 3. Code
 
 ```python
 # Run.py
@@ -218,7 +218,7 @@ ML.launch('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 python Run.py
 ```
 
-### 4. Recipe
+#### 4. Recipe
 
 Define recipes in a ```.yaml``` file like this one:
 
@@ -240,7 +240,7 @@ eyes:
 ML task=Recipe
 ```
 
-### 5. All of the above
+#### 5. All of the above
 
 The order of hyperparam priority is command-line > code > recipe.
 
