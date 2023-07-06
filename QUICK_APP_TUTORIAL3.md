@@ -1,4 +1,4 @@
-<img width="20%" src="https://github.com/slerman12/Assets/assets/9126603/32c5d597-15e1-4197-9279-a727459d2615"><br><br>
+<img width="20%" src="https://github.com/AGI-init/Assets/assets/92597756/f3df44c8-b989-4951-9443-d2b4203b5c4e"><br><br>
 
 # Welcome 
 
@@ -38,29 +38,53 @@
 pip install UnifiedML
 ```
 
+## What is UnifiedML?
+
+<img width="20%" src="https://github.com/AGI-init/Assets/assets/92597756/82e2310a-b397-44e8-805c-65bcb13d24c1"><br><br>
+
+UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized.
+
+Our vision is to bring together the world of ML into one model, for the purpose of giving humanity the world-knowledge and decision-agent to restore spirit and happiness to our collective insanity, if we use it wisely.
+
+To do that, we need a decentralized effort to unify the world's tasks under a shared hyperparameter language, including data, environments, and learning objectives.
+
 ## Quick start
 
-### Purely command-line example
+Wherever you run ```ML```, it'll search the current directory for any specified paths. Paths to architectures, agents, environments, etc. can be specified with module-import dot notation e.g. 
+```console
+ML Eyes=MyFile.model
+``` 
+or regular directory paths e.g. 
+```console
+ML Eyes=./MyFile.py.model
+```
 
-**Run.py:**
+with many defaults provided, such as ready-to use datasets, envs, and agents, e.g.
+```console
+ML Eyes=MyFile.model Dataset=CIFAR10
+```
+
+### Example
 
 ```python
+# Run.py
+
 from torch import nn
 
 model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
 ```
 
-**Run it:**
+**Run:**
 
 ```console
-ML Model=model Dataset=CIFAR10
+ML Model=Run.model Dataset=CIFAR10
 ```
 
 ### Pure-Code example
 
-**Run.py:**
-
 ```python
+# Run.py
+
 from torch import nn
 
 import ML
@@ -70,7 +94,7 @@ model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
 ML.launch(Model=model, Dataset='CIFAR10')
 ```
 
-**Run it:**
+**Run:**
 
 ```console
 python Run.py
@@ -80,12 +104,10 @@ python Run.py
 
 UnifiedML automatically detects the shape signature of your model.
 
-**Run.py:**
-
 ```diff
-from torch import nn
+# Run.py
 
-import ML
+from torch import nn
 
 class Model(nn.Module): 
 +   def __init__(self, in_features, out_features):
@@ -95,15 +117,15 @@ class Model(nn.Module):
 
     def forward(self, x):
         return self.model(x)
-
-ML.launch(Model=Model, Dataset='CIFAR10')
 ```
 
-Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```.
+Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```. Just pass them in as args to your model and UnifiedML will detect and fill them in.
 
 ```console
-python Run.py
+ML Model=Run.Model
 ```
+
+Thus, you can pass in paths to classes like above as well as objects, with various [syntax semantics for quickly specifying arguments.](#Syntax)
 
 ## Acceleration
 
@@ -135,6 +157,8 @@ Hyperparams can be passed in via command-line, code, recipe, or any combination 
 ---
 
 **Here's how to write the same program in 5 different ways:** 
+
+[//]: # (TODO Put in expanders)
 
 ### 1. Purely command-line
 
