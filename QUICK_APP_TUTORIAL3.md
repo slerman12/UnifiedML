@@ -188,11 +188,11 @@ if __name__ == '__main__':
 
 &#9432; For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
 
-Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. 
-
 ---
 
 ### Here's how to write the same program in 5 different ways. 
+
+Hyperparams can be passed in via command-line, code, recipe, or any combination thereof.
 
 [//]: # (TODO Put in expanders)
 
