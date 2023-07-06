@@ -48,7 +48,7 @@ pip install UnifiedML
 
 <p align="center">
 <picture>
-  <source width="40%" media="(prefers-color-scheme: dark)" srcset="https://github.com/AGI-init/Assets/assets/92597756/f8b74f97-7a5a-4643-b08d-a23f8305b5b8">
+  <source width="40%" media="(prefers-color-scheme: dark)" srcset="https://github.com/AGI-init/Assets/assets/92597756/b72f416e-2c50-4330-ab0e-a53e0523ded6">
   <img width="40%" alt="Text changing depending on mode. Light: 'Light' Dark: 'Dark'" src="https://github.com/AGI-init/Assets/assets/92597756/d92e6b3f-9625-427c-87ef-909b3ec40f08">
 <br><br>
 </picture>
