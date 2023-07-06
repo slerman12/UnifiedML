@@ -218,16 +218,16 @@ ML.launch('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 python Run.py
 ```
 
-#### 4. Recipe
+#### 4. Recipes
 
 Define recipes in a ```.yaml``` file like this one:
 
 ```yaml
 # recipe.yaml
 
-defaults:
-  - classify@_global_
-  - _self_
+imports:
+  - classify
+  - self
 Dataset: MNIST 
 Eyes: CNN
 eyes:
@@ -249,9 +249,9 @@ Here's a combined example:
 ```yaml
 # recipe.yaml
 
-defaults:
-  - classify@_global_
-  - _self_
+imports:
+  - classify
+  - self
 Eyes: CNN
 eyes:
   depth: 5
