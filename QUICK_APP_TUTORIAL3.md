@@ -40,12 +40,11 @@ pip install UnifiedML
 
 ## What is UnifiedML?
 
-[//]: # (<p align="center">)
+<p align="center">
 <img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/82e2310a-b397-44e8-805c-65bcb13d24c1"><br><br>
+</p>
 
-[//]: # (</p>)
-
-UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick tutorial](#quick-start) and then see [Defining tasks](#recipes).
+UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick Tutorial](#quick-start) and then see [Defining Tasks](#recipes).
 
 Our vision is to bring together the world of ML into one model, for the purpose of giving humanity the world-knowledge and decision-agent to restore spirit and happiness to our collective insanity, if we use it wisely.
 
@@ -105,7 +104,7 @@ ML.launch(Model=model, Dataset='CIFAR10')
 python Run.py
 ```
 
-## Architecture shapes
+### Architecture shapes
 
 UnifiedML automatically detects the shape signature of your model.
 
@@ -132,7 +131,7 @@ ML Model=Run.Model
 
 Thus, you can pass in paths to classes as well as objects, with various [syntax semantics for quickly specifying arguments.](#Syntax)
 
-## Acceleration
+### Acceleration
 
 With ```accelerate=True```:
 * Memory mapping
@@ -148,6 +147,8 @@ python Run.py accelerate=true
 **or in Run.py:**
 
 ```python
+# Run.py
+
 ...
 
 ML.launch(accelerate=True)
