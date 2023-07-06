@@ -127,7 +127,7 @@ Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_fe
 ML Model=Run.Model
 ```
 
-Thus, you can pass in paths to classes like above as well as objects, with various [syntax semantics for quickly specifying arguments.](#Syntax)
+Thus, you can pass in paths to classes as well as objects, with various [syntax semantics for quickly specifying arguments.](#Syntax)
 
 ## Acceleration
 
