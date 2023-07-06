@@ -298,6 +298,22 @@ python Run.py task=recipe
 1. The ```hyperparam.``` syntax is used to modify arguments of flag ```Hyperparam```. We reserve ```Uppercase=Path.To.Class``` for the class itself and ```lowercase.key=value``` for argument tinkering, as in ```eyes.depth=5``` [in 1, 2, and 3](#1-purely-command-line).
 2. Note: we often use the "```task```" and "```recipe```" terms interchangeably. Both refer to the ```task=``` flag.
 
+### Inference
+
+### Custom datasets
+
+### Losses & optimisation
+
+### Custom environments
+
+### Built-ins
+
+**Agents**: <br>
+**Domains**: <br>
+**Datasets**: ...<br>
+**Envs**: <br>
+**Architecture parts**: [```ResNet18```](), [```TIMM```](), ...
+
 ## Example: Training a ResNet18 on CIFAR10
 
 Define recipes in a ```.yaml``` file like this one:
