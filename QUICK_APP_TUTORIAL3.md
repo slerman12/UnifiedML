@@ -64,6 +64,8 @@ with many defaults provided, such as ready-to use datasets, envs, and agents, e.
 ML Eyes=MyFile.model Dataset=CIFAR10
 ```
 
+The above theoretically trains CIFAR10.
+
 ### Example
 
 ```python
