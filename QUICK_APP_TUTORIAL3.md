@@ -41,8 +41,8 @@ pip install UnifiedML
 ## What is UnifiedML?
 
 <p align="center">
-![What is](https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f#gh-light-mode-only | width=40)
-![What is_dark](https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f#gh-dark-mode-only | width=40)
+![What_is](https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f#gh-light-mode-only)
+![What_is_dark](https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f#gh-dark-mode-only)
 <br><br>
 </p>
 
