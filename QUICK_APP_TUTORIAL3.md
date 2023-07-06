@@ -96,7 +96,7 @@ ML Model=Run.model Dataset=CIFAR10
 
 There are many built-in datasets, architectures, and so on, such as CIFAR10.
 
-### Pure-Code training example
+### Equivalent Pure-Code training example
 
 ```python
 # Run.py
