@@ -131,7 +131,7 @@ Thus, you can pass in paths to classes as well as objects, with various [syntax 
 
 ## Acceleration
 
-With ```accelerate=True```, learning benefits from:
+With ```accelerate=True```:
 * Memory mapping
 * Adaptive RAM, CUDA, and pinned-memory caching
 * Truly-shared RAM parallelism
