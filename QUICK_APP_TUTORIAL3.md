@@ -58,7 +58,7 @@ pip install UnifiedML
 
 [//]: # (![What_is]&#40;https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f#gh-light-mode-only&#41;)
 
-UnifiedML is a toolbox or engine for defining ML tasks and training them individually, or together in a single general intelligence.
+UnifiedML is a toolbox & engine for defining ML tasks and training them individually, or together in a single general intelligence.
 
 [//]: # (UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick Tutorial]&#40;#quick-start&#41; and then see [Defining Tasks]&#40;#recipes&#41;.)
 
@@ -121,7 +121,8 @@ import ML
 
 model = nn.Sequential(nn.Linear(3 * 32 * 32, 128), nn.Linear(128, 10))
 
-ML.launch(Model=model, Dataset='CIFAR10')
+if __name__ == '__main__':
+    ML.launch(Model=model, Dataset='CIFAR10')
 ```
 
 **Run:**
@@ -181,7 +182,8 @@ python Run.py accelerate=true
 
 ...
 
-ML.launch(accelerate=True)
+if __name__ == '__main__':
+    ML.launch(accelerate=True)
 ```
 
 &#9432; For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
@@ -208,7 +210,8 @@ Trains a 5-layer CNN classifier on MNIST.
 
 ```python
 import ML
-ML.launch()
+if __name__ == '__main__':
+    ML.launch()
 ```
 
 **Run:**
@@ -223,7 +226,8 @@ python Run.py task=classify Dataset=MNIST Eyes=CNN eyes.depth=5
 # Run.py
 
 import ML
-ML.launch('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
+if __name__ == '__main__':
+    ML.launch('eyes.depth=5', task='classify', Dataset='MNIST', Eyes='CNN')
 ```
 
 **Run:**
@@ -277,7 +281,8 @@ eyes:
 import ML
 from torchvision.datasets import MNIST
 
-ML.launch(Dataset=MNIST)  # Note: Can directly pass in classes
+if __name__ == '__main__':
+    ML.launch(Dataset=MNIST)  # Note: Can directly pass in classes
 ```
 
 **Run:**
@@ -493,8 +498,9 @@ Load in-code via the same syntax:
 ```python
 import ML
 
-# Resume training, potentially w/ different hyperparams
-agent = ML.launch(load='MyExp', experiment='MyExp', Agent='GANAgent', Dataset='MNIST')  # The launcher also returns the agent.
+if __name__ == '__main__':
+  # Resume training, potentially w/ different hyperparams
+  agent = ML.launch(load='MyExp', experiment='MyExp', Agent='GANAgent', Dataset='MNIST')  # The launcher also returns the agent.
 ```
 
 or with ```ML.load_agent(path)```:
@@ -502,11 +508,12 @@ or with ```ML.load_agent(path)```:
 ```python
 import ML
 
-# Load 
-agent = ML.load_agent('MyExp')
+if __name__ == '__main__':
+  # Load 
+  agent = ML.load_agent('MyExp')
 
-# Resume training, potentially w/ different hyperparams
-agent = ML.launch(experiment='MyExp', Agent=agent, Dataset='MNIST')  # The launcher also returns the agent.
+  # Resume training, potentially w/ different hyperparams
+  agent = ML.launch(experiment='MyExp', Agent=agent, Dataset='MNIST')  # The launcher also returns the agent.
 ```
 
 ## Building an agent
