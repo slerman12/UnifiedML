@@ -10,7 +10,7 @@
 
 See our library [Tributaries]() for mass-deploying UnifiedML apps on remote servers.
 
-Check out [minhydra / leviathan]() for how we handle sys args & hyperparams.
+Check out [minihydra / leviathan]() for how we handle sys args & hyperparams.
 
 [//]: # (### Tutorials)
 
