@@ -133,13 +133,13 @@ class Model(nn.Module):
         return self.model(x)
 ```
 
-Just pass them in as args to your model and UnifiedML will detect and fill them in.
+Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```.
+
+Just include them as args to your model and UnifiedML will detect and fill them in.
 
 ```console
 ML Model=Run.Model
 ```
-
-Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```.
 
 Thus, you can pass in paths to classes as well as objects, with various [syntax semantics for quickly specifying arguments](#Syntax).
 
