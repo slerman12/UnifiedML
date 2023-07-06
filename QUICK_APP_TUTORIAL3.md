@@ -44,29 +44,39 @@ pip install UnifiedML
 <img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/82e2310a-b397-44e8-805c-65bcb13d24c1"><br><br>
 </p>
 
-UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick Tutorial](#quick-start) and then see [Defining Tasks](#recipes).
+UnifiedML is a toolbox for defining ML tasks and training them individually or together in a single general intelligence.
 
-Our vision is to bring together the world of ML into one model, for the purpose of giving humanity the world-knowledge and decision-agent to restore spirit and happiness to our collective insanity, if we use it wisely.
+[//]: # (UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick Tutorial]&#40;#quick-start&#41; and then see [Defining Tasks]&#40;#recipes&#41;.)
 
-To do that, we need a decentralized effort to unify the world's tasks under a shared hyperparameter language, including data, environments, and learning objectives. To use it wisely, we need a lot of luck and human intelligence.
+[//]: # ()
+[//]: # (Our vision is to bring together the world of ML into one model, for the purpose of giving humanity the world-knowledge and decision-agent to restore spirit and happiness to our collective insanity, if we use it wisely.)
+
+[//]: # ()
+[//]: # (To do that, we need a decentralized effort to unify the world's tasks under a shared hyperparameter language, including data, environments, and learning objectives. To use it wisely, we need a lot of luck and human intelligence.)
 
 ## Quick start
 
-Wherever you run ```ML```, it'll search the current directory for any specified paths. Paths to architectures, agents, environments, etc. can be specified with module-import dot notation e.g. 
+Wherever you run ```ML```, it'll search the current directory for any specified paths. 
+
+Paths to architectures, agents, environments, etc. via dot notation: 
 ```console
 ML Eyes=MyFile.model
 ``` 
-or regular directory paths e.g. 
+or regular directory paths: 
 ```console
 ML Eyes=./MyFile.py.model
 ```
 
-with many defaults provided, such as ready-to use datasets, envs, and agents, e.g.
-```console
-ML Eyes=MyFile.model Dataset=CIFAR10
-```
+[//]: # (with many defaults provided, such as ready-to use datasets, envs, and agents, e.g.)
 
-The above theoretically trains CIFAR10.
+[//]: # (```console)
+
+[//]: # (ML Eyes=MyFile.model Dataset=CIFAR10)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (The above theoretically trains CIFAR10.)
 
 ### Full example
 
@@ -123,17 +133,19 @@ class Model(nn.Module):
         return self.model(x)
 ```
 
-Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```. Just pass them in as args to your model and UnifiedML will detect and fill them in.
+Just pass them in as args to your model and UnifiedML will detect and fill them in.
 
 ```console
 ML Model=Run.Model
 ```
 
-Thus, you can pass in paths to classes as well as objects, with various [syntax semantics for quickly specifying arguments.](#Syntax)
+Inferrable signature arguments include ```in_shape```, ```out_shape```, ```in_features```, ```out_features```, ```in_channels```, ```out_channels```, ```in_dim```, ```out_dim```.
+
+Thus, you can pass in paths to classes as well as objects, with various [syntax semantics for quickly specifying arguments](#Syntax).
 
 ### Acceleration
 
-With ```accelerate=True```:
+With ```accelerate=True```.
 * Memory mapping
 * Adaptive RAM, CUDA, and pinned-memory caching
 * Truly-shared RAM parallelism
@@ -154,9 +166,9 @@ python Run.py accelerate=true
 ML.launch(accelerate=True)
 ```
 
-For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
+&#9432; For image classification, extra hard disk memory is used to store the re-formatted dataset. For RL, there's no downside.
 
-## Hyperparams
+## Syntax semantics
 
 Hyperparams can be passed in via command-line, code, recipe, or any combination thereof. 
 
