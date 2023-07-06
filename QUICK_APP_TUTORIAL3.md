@@ -555,7 +555,7 @@ This project was built and conceived by [Sam Lerman]() under the funding and sup
 
 A great thank you to our [XRD]() team as well, using UnifiedML, providing helpful feedback, insight, and support.
 
-And XRD project PI [Niaz Abdolrahim] also (for funding and support).
+And XRD Project PI [Niaz Abdolrahim]() (for funding and support).
 
 [//]: # (The code in this repo was programmed and conceived by **Sam Lerman** under the support of PhD advisor [Dr. Chenliang Xu]&#40;&#41;, project PI lead [Dr. Niaz Abdolrahim]&#40;&#41;, and funding from the NSF Materials Science something-something grant [#]&#40;&#41;. )
 
