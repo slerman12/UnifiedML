@@ -308,11 +308,17 @@ python Run.py task=recipe
 
 ### Built-ins
 
-**Agents**: <br>
-**Domains**: <br>
-**Datasets**: ...<br>
-**Envs**: <br>
-**Architecture parts**: [```ResNet18```](), [```TIMM```](), ...
+- **Agents**: <br>
+- **Domains**: <br>
+- **Datasets**: ...<br>
+- **Envs**: <br>
+- **Architecture parts**: [```ResNet18```](), [```TIMM```](), ...
+
+### Plotting & media
+
+### Stats & logs
+
+### Saving & loading & transfer learning
 
 ## Example: Training a ResNet18 on CIFAR10
 
