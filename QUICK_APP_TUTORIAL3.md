@@ -40,9 +40,16 @@ pip install UnifiedML
 
 ## What is UnifiedML?
 
-<p align="center">
-<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/d92e6b3f-9625-427c-87ef-909b3ec40f08"><br><br>
-</p>
+[//]: # (<p align="center">)
+
+[//]: # (<img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/d92e6b3f-9625-427c-87ef-909b3ec40f08"><br><br>)
+
+[//]: # (</p>)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f">
+  <img alt="Text changing depending on mode. Light: 'Light' Dark: 'Dark'" src="https://github.com/AGI-init/Assets/assets/92597756/d92e6b3f-9625-427c-87ef-909b3ec40f08">
+</picture>
 
 [//]: # (![What_is_dark]&#40;https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f#gh-dark-mode-only&#41;)
 
