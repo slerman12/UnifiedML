@@ -44,6 +44,11 @@ pip install UnifiedML
 <img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f"><br><br>
 </p>
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" src="https://github.com/AGI-init/Assets/assets/92597756/05c0f5bb-c4b8-495c-abca-bfe6d4c5b16f">
+  <img width="40%" src="https://github.com/AGI-init/Assets/assets/92597756/79d39050-9424-4ae8-a125-f52002443f1f"><br><br>
+</picture>
+
 UnifiedML is a toolbox for defining ML tasks and training them individually, or together in a single general intelligence.
 
 [//]: # (UnifiedML is as much a hyperparameters engine for ML as it is a generalist agent. It's built on a novel framework for automatically unifying tasks across wide and diverse domains. Using it is easy. It's simultaneously a trainer like Pytorch Lightning, a library like Huggingface, and a RL/robotics/generative/etc. toolbox for defining ML tasks that can be unified, and generalized. Read the [Quick Tutorial]&#40;#quick-start&#41; and then see [Defining Tasks]&#40;#recipes&#41;.)
